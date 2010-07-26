@@ -1,0 +1,25 @@
+# global rules
+
+obj
+bin
+
+.*
+!.gitignore
+*.d
+*.o
+*.ko
+*.mod.c
+*.o.*
+*.map
+*.hex
+*~
+
+Module.symvers
+Module.markers
+*.order
+
+*.mcp
+*.mcs
+*.mcw
+
+
