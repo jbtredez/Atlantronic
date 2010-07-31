@@ -19,6 +19,7 @@
 src := src
 obj := obj
 bin := bin
+doc := doc
 
 # ajout de la configuration perso si elle existe
 -include .cfg
@@ -115,8 +116,15 @@ $(bin)/%:
 	@mkdir -p `dirname $@`
 	@$(LD) $(LDFLAGS) $^ -o $@ -Wl,-Map="$@.map"
 
+doc:
+	@mkdir -p $(doc)
+	@doxygen Doxyfile > /dev/null
+
+.PHONY: doc
+
 clean:
 	@rm -frv $(obj)
 	@rm -frv $(bin)
+	@rm -frv $(doc)
 
 .PHONY: clean
