@@ -33,6 +33,7 @@
 #define NB_ELEMENT_QUEUE_LOG   10
 
 extern int ajouterLog(const char* msg, ...);
+extern int ajouterLogFromISR(const char* msg, ...);
 
 extern int logInitialise();
 
@@ -48,6 +49,15 @@ extern int logInitialise();
 	}				\
 	else if(type < 0) { \
 		ajouterLog( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),tempsMatch(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
+	} \
+}while(0)
+
+# define meslogFromISR(type, niveau, msg, arg ...) do{	\
+	if(type >= niveau){				\
+		ajouterLogFromISR( "%li\t%s:%i\t%s: "msg"\n",tempsMatch(),#type,niveau,__FUNCTION__,##arg);	\
+	}				\
+	else if(type < 0) { \
+		ajouterLogFromISR( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),tempsMatch(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
 	} \
 }while(0)
 

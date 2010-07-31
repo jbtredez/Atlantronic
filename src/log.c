@@ -73,6 +73,36 @@ int ajouterLog(const char* msg, ...)
 	return 0;
 }
 
+int ajouterLogFromISR(const char* msg, ...)
+{
+	portBASE_TYPE xHigherPriorityTaskWoken;
+
+	char* buffer = pvPortMalloc(TAILLE_MESSAGE_MAX);
+	//! @todo gérer une erreur d'alloc
+
+	va_list ap;
+	va_start(ap, msg);
+
+	vsnprintf(buffer, TAILLE_MESSAGE_MAX, msg, ap);
+
+	va_end(ap);
+
+	if(xQueueSendToBackFromISR(queueLog, &buffer, &xHigherPriorityTaskWoken) != pdTRUE) {
+		// la queue est pleine, on libère la mémoire et le message est perdu
+		//! @todo led d'erreur de log ??
+		vPortFree(buffer);
+	}
+
+	// on a réveillé une tache de priorité plus importante que la tache actuelle (interrompue)
+	// la fonction bug de temps en temps avec la simulation sous linux, on s'en passe
+	#ifndef __GCC_POSIX__
+	portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
+	#endif
+
+	return 0;
+}
+
+
 //! tache de log
 //! en cas d'erreur d'initialisation, la tache n'est pas crée et ne sera donc pas lancée
 void tacheLog(void * arg)

@@ -90,6 +90,9 @@ typedef struct tskTaskControlBlock
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	signed char				pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
 
+	uint32_t event;
+	uint32_t eventMask;
+
 	#if ( portSTACK_GROWTH > 0 )
 		portSTACK_TYPE *pxEndOfStack;			/*< Used for stack overflow checking on architectures where the stack grows up from low memory. */
 	#endif
@@ -1877,6 +1880,9 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const signed char * const 
 	listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), configMAX_PRIORITIES - ( portTickType ) uxPriority );
 	listSET_LIST_ITEM_OWNER( &( pxTCB->xEventListItem ), pxTCB );
 
+	pxTCB->event = 0;
+	pxTCB->eventMask = 0;
+
 	#if ( portCRITICAL_NESTING_IN_TCB == 1 )
 	{
 		pxTCB->uxCriticalNesting = ( unsigned portBASE_TYPE ) 0;
@@ -2310,6 +2316,142 @@ void vTaskExitCritical( void )
 #endif
 /*-----------------------------------------------------------*/
 
+//! @todo description
+uint32_t vTaskWaitEvent(uint32_t mask)
+{
+	uint32_t ev;
+	uint32_t eventArrived;
 
+	portENTER_CRITICAL();
+	pxCurrentTCB->eventMask = mask;
+	eventArrived = pxCurrentTCB->event & pxCurrentTCB->eventMask;
+	portEXIT_CRITICAL();
 
+	if(! eventArrived )
+	{
+		vTaskSuspend(NULL);
+	}
 
+	portENTER_CRITICAL();
+	ev = pxCurrentTCB->event;
+	portEXIT_CRITICAL();
+
+	return ev;
+}
+
+//! @todo description
+void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
+{
+	tskTCB *pxNextTCB;
+	tskTCB *pxFirstTCB;
+
+	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, pxTaskList );
+	do
+	{
+		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, pxTaskList );
+		if(pxNextTCB)
+		{
+			pxNextTCB->event |= mask;
+		}
+	}
+	while( pxNextTCB != pxFirstTCB );
+}
+
+//! @todo description
+void vTaskSetEvent(uint32_t mask)
+{
+	tskTCB *pxNextTCB, *pxFirstTCB;
+	unsigned portBASE_TYPE i;
+
+	portENTER_CRITICAL();
+
+	for(i = 0; i < configMAX_PRIORITIES; i++)
+		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
+
+	xTaskUpdateEvent(&xDelayedTaskList1, mask);
+	xTaskUpdateEvent(&xDelayedTaskList2, mask);
+	xTaskUpdateEvent(&xPendingReadyList, mask);
+
+	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+	do
+	{
+		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+
+		if(pxNextTCB)
+		{
+			pxNextTCB->event |= mask;
+			if( pxNextTCB->event & pxNextTCB->eventMask )
+			{
+				if( xTaskIsTaskSuspended( pxNextTCB ) == pdTRUE )
+				{
+					traceTASK_RESUME( pxNextTCB );
+
+					/* As we are in a critical section we can access the ready
+					lists even if the scheduler is suspended. */
+					vListRemove(  &( pxNextTCB->xGenericListItem ) );
+					prvAddTaskToReadyQueue( pxNextTCB );
+
+					/* We may have just resumed a higher priority task. */
+					if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
+					{
+						/* This yield may not cause the task just resumed to run, but
+						will leave the lists in the correct state for the next yield. */
+						portYIELD_WITHIN_API();
+					}
+				}
+			}
+		}
+	}
+	while( pxNextTCB != pxFirstTCB );
+
+	portEXIT_CRITICAL();
+}
+
+//! @todo description
+void vTaskSetEventFromISR(uint32_t mask)
+{
+	tskTCB *pxNextTCB;
+	tskTCB *pxFirstTCB;
+	unsigned portBASE_TYPE i;
+
+	for(i = 0; i < configMAX_PRIORITIES; i++)
+		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
+
+	xTaskUpdateEvent(&xDelayedTaskList1, mask);
+	xTaskUpdateEvent(&xDelayedTaskList2, mask);
+	xTaskUpdateEvent(&xPendingReadyList, mask);
+
+	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+	do
+	{
+		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+		if(pxNextTCB)
+		{
+			pxNextTCB->event |= mask;
+			if( pxNextTCB->event & pxNextTCB->eventMask )
+			{
+				xTaskResumeFromISR( (xTaskHandle) pxNextTCB);
+			}
+		}
+	}
+	while( pxNextTCB != pxFirstTCB );
+}
+
+//! @todo description
+void vTaskClearEvent(uint32_t mask)
+{
+	portENTER_CRITICAL();
+	pxCurrentTCB->event &= ~mask;
+	portEXIT_CRITICAL();
+}
+
+//! @todo description
+uint32_t vTaskGetEvent()
+{
+	uint32_t ev;
+	portENTER_CRITICAL();
+	ev = pxCurrentTCB->event;
+	portEXIT_CRITICAL();
+
+	return ev;
+}

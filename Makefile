@@ -43,8 +43,15 @@ MARCH ?= core2
 
 DEF+=USE_STDIO=1 __GCC_POSIX__=1
 LDSCRIPT:=scripts/elfPC.ld
+
+ifeq ($(DEBUG),1)
+CFLAGS:=-march=$(MARCH) -x c $(addprefix -D,$(DEF)) -Wall -Wextra
+LDFLAGS:=-march=$(MARCH) -T $(LDSCRIPT) -pthread -lrt -ldl
+else
 CFLAGS:=-march=$(MARCH) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
 LDFLAGS:=-march=$(MARCH) -T $(LDSCRIPT) -O3 -pthread -lrt -ldl
+endif
+
 
 INCLUDES+=-Isrc/rtos/portable/GCC/Posix
 OBJ+=rtos/portable/GCC/Posix/port.o
@@ -61,7 +68,7 @@ CFLAGS:=-mprocessor=$(PIC) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-
 ASFLAGS:=-mprocessor=$(PIC) -Wa,--keep-locals,--gdwarf-2
 LDFLAGS:=-mprocessor=$(PIC) -T $(LDSCRIPT) -O3 -Wl,--defsym=__MPLAB_BUILD=1,--defsym=_min_heap_size=0,--defsym=_min_heap_size=0
 
-INCLUDES+=-Isrc/rtos/portable/MPLAB/pic32mx
+INCLUDES+=-Isrc/rtos/portable/MPLAB/PIC32MX
 OBJ+=rtos/portable/MPLAB/PIC32MX/port.o
 OBJ+= rtos/portable/MPLAB/PIC32MX/port_asm.o
 endif
