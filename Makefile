@@ -12,8 +12,7 @@
 #       - on suppose qu'on veut compiler le programme foo
 #       - BIN += foo
 #       - obj-foo += foo.o bar.o foo2.o
-#   - en fonction de la variable SIMU, les fichiers dépendants à l'architecture sont ajoutés (variable OBJ).
-#
+#       - lib-foo += -lncurses
 
 # dossiers
 src := src
@@ -23,11 +22,6 @@ doc := doc
 
 # ajout de la configuration perso si elle existe
 -include .cfg
-
-ifneq ($(MAKECMDGOALS),clean)
-MK:=$(shell find . -name 'build.mk')
--include $(MK)
-endif
 
 INCLUDES:=-I. -Iinclude -Iinclude/rtos
 
@@ -53,9 +47,8 @@ CFLAGS:=-march=$(MARCH) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-fra
 LDFLAGS:=-march=$(MARCH) -T $(LDSCRIPT) -O3 -pthread -lrt -ldl
 endif
 
-
 INCLUDES+=-Isrc/rtos/portable/GCC/Posix
-OBJ+=rtos/portable/GCC/Posix/port.o
+OBJ-PORT+=rtos/portable/GCC/Posix/port.o
 else
 CC:=wine pic32-gcc
 AS:=wine pic32-gcc
@@ -70,12 +63,14 @@ ASFLAGS:=-mprocessor=$(PIC) -Wa,--keep-locals,--gdwarf-2
 LDFLAGS:=-mprocessor=$(PIC) -T $(LDSCRIPT) -O3 -Wl,--defsym=__MPLAB_BUILD=1,--defsym=_min_heap_size=0,--defsym=_min_heap_size=0
 
 INCLUDES+=-Isrc/rtos/portable/MPLAB/PIC32MX
-OBJ+=rtos/portable/MPLAB/PIC32MX/port.o
-OBJ+= rtos/portable/MPLAB/PIC32MX/port_asm.o
+OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port.o
+OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port_asm.o
 endif
 
-OBJ:=$(addprefix $(obj)/, $(OBJ))
-DEP:=$(OBJ:.o=.d)
+ifneq ($(MAKECMDGOALS),clean)
+MK:=$(shell find . -name 'build.mk')
+-include $(MK)
+endif
 
 # règles
 $(obj)/%.d: $(obj)/%.o
@@ -99,13 +94,12 @@ all: $(addprefix $(bin)/, $(addsuffix .hex, $(BIN)))
 endif
 .PHONY: all
 
-$(foreach var,$(BIN),$(eval $(bin)/$(var):$(addprefix $(obj)/,$(obj-$(var)) ) $(OBJ)))
+$(foreach var,$(BIN),$(eval $(bin)/$(var):$(addprefix $(obj)/,$(obj-$(var)) )))
 $(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/,$(obj-$(var):.o=.d))))
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
 endif
-
 
 %.hex: %
 	@echo [HEX] $<
@@ -114,7 +108,7 @@ endif
 $(bin)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(LD) $(LDFLAGS) $^ -o $@ -Wl,-Map="$@.map"
+	@$(LD) $(LDFLAGS) $($(patsubst $(bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
 
 doc:
 	@mkdir -p $(doc)

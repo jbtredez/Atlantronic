@@ -6,4 +6,6 @@ obj-rtos += rtos/queue.o
 obj-rtos += rtos/tasks.o
 obj-rtos += rtos/croutine.o
 obj-rtos += rtos/portable/MemMang/heap_3.o
+obj-rtos += $(OBJ-PORT)
 BIN+= rtos
+
