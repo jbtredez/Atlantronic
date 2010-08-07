@@ -1,5 +1,5 @@
-#ifndef _TEMPS_H_
-#define _TEMPS_H_
+#ifndef TEMPS_H
+#define TEMPS_H
 
 //! @file temps.c
 //! @brief Gestion du temps et de la durée du match
@@ -28,5 +28,13 @@ extern unsigned long tempsSystemeFromISR();
 //!
 //! @return temps écoulé en tick depuis le début du match
 extern unsigned long tempsMatchFromISR();
+
+//! initialise le temps de début du match
+//!
+extern void tempsStartMatch();
+
+//! initialise le temps de début du match depuis une interruption
+//!
+extern void tempsStartMatchFromISR();
 
 #endif

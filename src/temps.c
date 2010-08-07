@@ -2,12 +2,11 @@
 //! @brief Gestion du temps et de la durée du match
 //! @author Jean-Baptiste Trédez
 
-//! @todo gestion du go (mettre tempsDebutMatch à la bonne valeur)
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "temps.h"
 #include "module.h"
+#include "log.h"
 
 // on souhaite que la fonction vApplicationTickHook() soit appelée à chaque interruption du timer
 // autant générer une erreur si on le désactive par mégarde 
@@ -20,7 +19,6 @@
 
 //! temps (modulo 2^32 tick) depuis le lancement du pic (depuis l'appel de vTaskStartScheduler())
 //!   - codé sur au moins 32 bits : à 1kHz, il faut 90000 tick pour un match (> 2^16)
-//!   - débordement avant le lancement du match non prévu (> 49 jours :))
 //!
 //! ATTENTION : membre privé au fichier :
 //!   - mis à jour en interruption.
@@ -35,7 +33,7 @@ static volatile unsigned long tempsFinMatch;
 
 //! fonction d'initialisation du module
 //! ATTENTION : la fonction doit être appelée avant l'activation du timer (donc avant vTaskStartScheduler())
-int _initModuleTemps()
+static int _initModuleTemps()
 {
 	// interruption du timer non lancée, pas de protection
 	temps = 0;
@@ -63,8 +61,13 @@ module_init(_initModuleTemps, INIT_TEMPS);
 void vApplicationTickHook()
 {
 	temps++;
-	if(temps == tempsFinMatch){
-		//! @todo faire un truc de bien, fin du match
+	if(temps == tempsFinMatch)
+	{
+		if(tempsDebutMatch != tempsFinMatch)
+		{
+			tempsDebutMatch = tempsFinMatch;
+			meslogFromISR(_info_, 1, "fin du match");
+		}
 	}
 }
 
@@ -81,10 +84,13 @@ unsigned long tempsSysteme()
 
 unsigned long tempsMatch()
 {
-	unsigned long tps;
+	unsigned long tps = 0;
 
 	portENTER_CRITICAL();
-	tps = temps - tempsDebutMatch;
+	if(tempsDebutMatch != tempsFinMatch)
+	{
+		tps = temps - tempsDebutMatch;
+	}
 	portEXIT_CRITICAL();
 
 	return tps;
@@ -97,5 +103,26 @@ unsigned long tempsSystemeFromISR()
 
 unsigned long tempsMatchFromISR()
 {
-	return temps - tempsDebutMatch;
+	unsigned long tps = 0;
+
+	if(tempsDebutMatch != tempsFinMatch)
+	{
+		tps = temps - tempsDebutMatch;
+	}
+
+	return tps;
+}
+
+void tempsStartMatch()
+{
+	portENTER_CRITICAL();
+	tempsDebutMatch = temps;
+	tempsFinMatch = temps + DUREE_MATCH_TICK;
+	portEXIT_CRITICAL();
+}
+
+void tempsStartMatchFromISR()
+{
+	tempsDebutMatch = temps;
+	tempsFinMatch = temps + DUREE_MATCH_TICK;
 }
