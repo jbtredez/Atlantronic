@@ -2,6 +2,9 @@
 //! @brief Tache de log
 //! @author Jean-Baptiste Trédez
 
+#ifndef LOG_H
+#define LOG_H
+
 #include "temps.h"
 #include <stdio.h>
 #include <errno.h>
@@ -74,3 +77,4 @@ extern int logInitialise();
 	ajouterLog( LOG_ROUGE("%li\t_erreur_\t%s:%s:%i\t"msg": %s""\n"),tempsMatch(),__FILE__,__FUNCTION__,__LINE__,##arg,strerror(errno));	\
 }while(0) //!< Macro de log d'erreur formate (récupère l'erreur dans ERRNO)
 
+#endif
