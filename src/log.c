@@ -15,13 +15,11 @@
 #include "queue.h"
 #include "log.h"
 #include "string.h"
+#include "priorite.h"
 #include <stdarg.h>
 
 //! @todo réglage au pif
 #define TAILLE_STACK_LOG       10
-
-//! @todo déménager dans un fichier de priorité
-#define PRIORITE_TACHE_LOG     1
 
 void tacheLog(void *);
 
