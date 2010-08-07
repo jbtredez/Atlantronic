@@ -1,5 +1,5 @@
-#ifndef _INIT_H_
-#define _INIT_H_
+#ifndef INIT_H
+#define INIT_H
 
 //! @file init.h
 //! @brief Contient l'ordre d'initialisation des modules s'ils sont présent et l'ordre de fermeture

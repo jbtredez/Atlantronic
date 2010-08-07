@@ -1,5 +1,5 @@
-#ifndef _MODULE_H_
-#define _MODULE_H_
+#ifndef MODULE_H
+#define MODULE_H
 
 //! @file module.h
 //! @brief fournit les fonctions d'enregistrement des points d'entrée et de sortie des modules
