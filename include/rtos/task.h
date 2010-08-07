@@ -1,3 +1,9 @@
+//! @file task.h
+//! @brief noyau freeRTOS modifié
+//!
+//! Afin de voir les modifications réalisées :
+//!    git diff 23f9696a820a86ec5f00f780aa1bc4031f80c4e5 include/rtos/task.h
+
 /*
     FreeRTOS V6.0.5 - Copyright (C) 2010 Real Time Engineers Ltd.
 
@@ -751,7 +757,7 @@ void vTaskResume( xTaskHandle pxTaskToResume ) PRIVILEGED_FUNCTION;
  * \defgroup vTaskResumeFromISR vTaskResumeFromISR
  * \ingroup TaskCtrl
  */
-portBASE_TYPE xTaskResumeFromISR( xTaskHandle pxTaskToResume ) PRIVILEGED_FUNCTION;
+portBASE_TYPE xTaskResumeFromISR( xTaskHandle pxTaskToResume ) PRIVILEGED_FUNCTION __attribute__((warn_unused_result));
 
 /*-----------------------------------------------------------
  * SCHEDULER CONTROL
@@ -1255,7 +1261,10 @@ void vTaskPriorityDisinherit( xTaskHandle * const pxMutexHolder ) PRIVILEGED_FUN
  */
 signed portBASE_TYPE xTaskGenericCreate( pdTASK_CODE pvTaskCode, const signed char * const pcName, unsigned short usStackDepth, void *pvParameters, unsigned portBASE_TYPE uxPriority, xTaskHandle *pxCreatedTask, portSTACK_TYPE *puxStackBuffer, const xMemoryRegion * const xRegions ) PRIVILEGED_FUNCTION;
 
-//! @todo description
+//! attendre l'arrivée d'un évènement
+//! La fonction suspend la tache jusqu'a l'arrivée d'un évènement parmi ceux attendus
+//!
+//! @param mask masque indiquant les évènements pouvant réveiller la tache
 uint32_t vTaskWaitEvent(uint32_t mask);
 
 //! @todo description

@@ -1,3 +1,9 @@
+//! @file tasks.c
+//! @brief noyau freeRTOS modifié
+//!
+//! Afin de voir les modifications réalisées :
+//!    git diff 23f9696a820a86ec5f00f780aa1bc4031f80c4e5 src/rtos/tasks.c
+
 /*
     FreeRTOS V6.0.5 - Copyright (C) 2010 Real Time Engineers Ltd.
 
@@ -2357,11 +2363,16 @@ void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
 	while( pxNextTCB != pxFirstTCB );
 }
 
-//! @todo description
+//! Le but est de mettre à jour les variables event de toutes les taches
+//! et de placer toutes les taches qui attendent un des évènements
+//! parmi "mask" dans la liste "ready".
+//! Une fois ce travail réalisé, si on a réveillé une tache plus prioritaire,
+//! il faut laisser la main.
 void vTaskSetEvent(uint32_t mask)
 {
 	tskTCB *pxNextTCB, *pxFirstTCB;
 	unsigned portBASE_TYPE i;
+	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
 	portENTER_CRITICAL();
 
@@ -2386,17 +2397,15 @@ void vTaskSetEvent(uint32_t mask)
 				{
 					traceTASK_RESUME( pxNextTCB );
 
-					/* As we are in a critical section we can access the ready
-					lists even if the scheduler is suspended. */
+					// As we are in a critical section we can access the ready
+					// lists even if the scheduler is suspended
 					vListRemove(  &( pxNextTCB->xGenericListItem ) );
 					prvAddTaskToReadyQueue( pxNextTCB );
 
-					/* We may have just resumed a higher priority task. */
+					// We may have just resumed a higher priority task
 					if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
 					{
-						/* This yield may not cause the task just resumed to run, but
-						will leave the lists in the correct state for the next yield. */
-						portYIELD_WITHIN_API();
+						xHigherPriorityTaskWoken = 1;
 					}
 				}
 			}
@@ -2405,14 +2414,20 @@ void vTaskSetEvent(uint32_t mask)
 	while( pxNextTCB != pxFirstTCB );
 
 	portEXIT_CRITICAL();
+
+	if( xHigherPriorityTaskWoken )
+	{
+		portYIELD_WITHIN_API();
+	}
 }
 
-//! @todo description
+//! cf vTaskSetEvent mais depuis une interruption
 void vTaskSetEventFromISR(uint32_t mask)
 {
 	tskTCB *pxNextTCB;
 	tskTCB *pxFirstTCB;
 	unsigned portBASE_TYPE i;
+	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
 	for(i = 0; i < configMAX_PRIORITIES; i++)
 		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
@@ -2430,11 +2445,20 @@ void vTaskSetEventFromISR(uint32_t mask)
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
-				xTaskResumeFromISR( (xTaskHandle) pxNextTCB);
+				if( xTaskResumeFromISR( (xTaskHandle) pxNextTCB) )
+				{
+					xHigherPriorityTaskWoken = 1;
+				}
 			}
 		}
 	}
 	while( pxNextTCB != pxFirstTCB );
+
+	// on a réveillé une tache de priorité plus importante que la tache actuelle (interrompue)
+	// la fonction bug de temps en temps avec la simulation sous linux, on s'en passe
+	#ifndef __GCC_POSIX__
+	portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
+	#endif
 }
 
 //! @todo description
