@@ -111,7 +111,7 @@ $(bin)/%:
 	@$(LD) $(LDFLAGS) $($(patsubst $(bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
 
 doc:
-	@mkdir -p $(doc)
+	@mkdir -p $(doc)/doxygen
 	@doxygen Doxyfile > /dev/null
 
 .PHONY: doc
