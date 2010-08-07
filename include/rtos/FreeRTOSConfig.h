@@ -6,7 +6,7 @@
 	#include <p32xxxx.h>
 #endif
 
-#define configUSE_PREEMPTION			1
+#define configUSE_PREEMPTION			0
 #define configUSE_IDLE_HOOK				1 // laisser à 1 (simu sur pc => nanosleep dans la tache idle ; coroutines => ordonnancement dans la tache idle)
 #define configUSE_TICK_HOOK				1 // laisser à 1 : gestion du temps le temps par vApplicationTickHook
 #define configTICK_RATE_HZ				( ( portTickType ) 1000 )
