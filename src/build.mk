@@ -1,4 +1,5 @@
 obj-rtos += main.o
+obj-rtos += control.o
 obj-rtos += robot_state.o
 obj-rtos += io/encoders.o
 obj-rtos += time2.o

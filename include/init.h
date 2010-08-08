@@ -25,7 +25,11 @@
 //#define INIT_USB                      "03"
 //#define INIT_I2C                      "04"
 //#define INIT_CAN                      "05"
+#define INIT_CONTROL                  "06"
+#define INIT_TEST                     "30"
 
 #define ERR_INIT_LOG               -1
+#define ERR_INIT_CONTROL           -6
+#define ERR_INIT_TEST             -30
 
 #endif
