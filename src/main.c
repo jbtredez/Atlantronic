@@ -39,8 +39,8 @@ void vApplicationIdleHook()
 	// en simulation, histoire de ne pas pomper 100% du temps processeur, on met un nanosleep dans la tache idle
 	#ifdef __GCC_POSIX__
 		struct timespec xTimeToSleep, xTimeSlept;
-		xTimeToSleep.tv_sec = 1;
-		xTimeToSleep.tv_nsec = 0;
+		xTimeToSleep.tv_sec = 0;
+		xTimeToSleep.tv_nsec = 1000;
 		nanosleep( &xTimeToSleep, &xTimeSlept );
 	#endif
 }
