@@ -5,7 +5,7 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "temps.h"
+#include "time2.h"
 #include <stdio.h>
 #include <errno.h>
 
@@ -44,33 +44,33 @@ extern int log_add_from_isr(const char* msg, ...);
 //! bloc viré (optimisation du compilo activé) selon le type et le niveau de log activé
 # define meslog(type, niveau, msg, arg ...) do{	\
 	if(type >= niveau){				\
-		log_add( "%li\t%s:%i\t%s: "msg"\n",tempsMatch(),#type,niveau,__FUNCTION__,##arg);	\
+		log_add( "%li\t%s:%i\t%s: "msg"\n",time_match(),#type,niveau,__FUNCTION__,##arg);	\
 	}				\
 	else if(type < 0) { \
-		log_add( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),tempsMatch(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
+		log_add( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),time_match(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
 	} \
 }while(0)
 
 # define meslogFromISR(type, niveau, msg, arg ...) do{	\
 	if(type >= niveau){				\
-		log_add_from_isr( "%li\t%s:%i\t%s: "msg"\n",tempsMatch(),#type,niveau,__FUNCTION__,##arg);	\
+		log_add_from_isr( "%li\t%s:%i\t%s: "msg"\n",time_match(),#type,niveau,__FUNCTION__,##arg);	\
 	}				\
 	else if(type < 0) { \
-		log_add_from_isr( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),tempsMatch(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
+		log_add_from_isr( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),time_match(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
 	} \
 }while(0)
 
 # define meslogc(couleur, type, niveau, msg, arg ...) do{	\
 	if(type >= niveau){				\
-		log_add( LOG_COULEUR(couleur, "%li\t%s:%i\t%s: "msg"\n" ),tempsMatch(),#type,niveau,__FUNCTION__,##arg);	\
+		log_add( LOG_COULEUR(couleur, "%li\t%s:%i\t%s: "msg"\n" ),time_match(),#type,niveau,__FUNCTION__,##arg);	\
 	}				\
 	else if(type < 0) { \
-		log_add( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),tempsMatch(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
+		log_add( LOG_ROUGE("%li\t%s:%i\t%s:%s:%i "msg"\n"),time_match(),#type,niveau,__FILE__,__FUNCTION__,__LINE__,##arg);\
 	} \
 }while(0)
 
 # define logerror(msg,arg ...)	do{	\
-	log_add( LOG_ROUGE("%li\t_erreur_\t%s:%s:%i\t"msg": %s""\n"),tempsMatch(),__FILE__,__FUNCTION__,__LINE__,##arg,strerror(errno));	\
+	log_add( LOG_ROUGE("%li\t_erreur_\t%s:%s:%i\t"msg": %s""\n"),time_match(),__FILE__,__FUNCTION__,__LINE__,##arg,strerror(errno));	\
 }while(0) //!< Macro de log d'erreur formate (récupère l'erreur dans ERRNO)
 
 #endif

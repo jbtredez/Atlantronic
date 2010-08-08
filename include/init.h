@@ -17,7 +17,7 @@
 //! de garder les mêmes numéros sauf exception
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init, décroissant pour la destruction)
 
-#define INIT_TEMPS                    "00"
+#define INIT_TIME                     "00"
 #define INIT_LOG                      "01"
 //#define INIT_VFS                      "02"
 //#define INIT_USB                      "03"

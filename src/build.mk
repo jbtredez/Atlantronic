@@ -1,5 +1,5 @@
 obj-rtos += main.o
-obj-rtos += temps.o
+obj-rtos += time2.o
 obj-rtos += log.o
 obj-rtos += rtos/list.o
 obj-rtos += rtos/queue.o

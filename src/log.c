@@ -59,7 +59,8 @@ int log_add(const char* msg, ...)
 	va_start(ap, msg);
 
 	vsnprintf(buffer, LOG_SIZE, msg, ap);
-	if(xQueueSendToBack(log_queue, &buffer, 0) != pdTRUE) {
+	if(xQueueSendToBack(log_queue, &buffer, 0) != pdTRUE)
+	{
 		// la queue est pleine, on libère la mémoire et le message est perdu
 		//! @todo led d'erreur de log ??
 		vPortFree(buffer);
@@ -84,7 +85,8 @@ int log_add_from_isr(const char* msg, ...)
 
 	va_end(ap);
 
-	if(xQueueSendToBackFromISR(log_queue, &buffer, &xHigherPriorityTaskWoken) != pdTRUE) {
+	if(xQueueSendToBackFromISR(log_queue, &buffer, &xHigherPriorityTaskWoken) != pdTRUE)
+	{
 		// la queue est pleine, on libère la mémoire et le message est perdu
 		//! @todo led d'erreur de log ??
 		vPortFree(buffer);
@@ -106,7 +108,8 @@ void log_task(void * arg)
 
 	char* msg = NULL;
 
-	while(1){
+	while(1)
+	{
 		if(xQueueReceive(log_queue, &msg, portMAX_DELAY))
 		{
 			size_t len = strlen(msg);
