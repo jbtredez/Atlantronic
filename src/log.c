@@ -1,7 +1,8 @@
 //! @file log.c
-//! @brief Tache de log
+//! @brief Log Task
 //! @author Jean-Baptiste Trédez
 //!
+//! @todo translate
 //! Le but est de gérer l'écriture des log dans une tache de faible priorité.
 //! L'utilisation d'une tache permet aux autres taches de ne pas attendre l'écriture
 //! avant de poursuivre leur exécution.
@@ -15,52 +16,50 @@
 #include "queue.h"
 #include "log.h"
 #include "string.h"
-#include "priorite.h"
+#include "priority.h"
 #include <stdarg.h>
 
 //! @todo réglage au pif
-#define TAILLE_STACK_LOG       10
+#define LOG_STACK_SIZE       10
 
-void tacheLog(void *);
+void log_task(void *);
 
-static xQueueHandle queueLog;
+static xQueueHandle log_queue;
 
-//! fonction d'initialisation du module
-//! ATTENTION : la fonction doit être appelée avant l'activation du timer (donc avant vTaskStartScheduler())
-int _initModuleLog()
+static int log_module_init()
 {
-	queueLog = xQueueCreate(NB_ELEMENT_QUEUE_LOG, sizeof(char* ));
+	log_queue = xQueueCreate(LOG_QUEUE_SIZE, sizeof(char* ));
 
-	if(queueLog == 0){
+	if(log_queue == 0)
+	{
 		return ERR_INIT_LOG;
 	}
 
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(tacheLog, (const signed char *) "log", TAILLE_STACK_LOG, NULL, PRIORITE_TACHE_LOG, &xHandle);
+	portBASE_TYPE err = xTaskCreate(log_task, (const signed char *) "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
 
-	if(err != pdPASS){
+	if(err != pdPASS)
+	{
 		return ERR_INIT_LOG;
 	}
 
-	// pas d'erreur
 	return 0;
 }
 
-// enregistrement de la fonction d'initialisation
-module_init(_initModuleLog, INIT_LOG);
+module_init(log_module_init, INIT_LOG);
 
 //!@todo vTaskDelete dans exit + gestionaire de signal pour le pc => fin propre et vérification de la mémoire avec valgrind/memcheck
 
-int ajouterLog(const char* msg, ...)
+int log_add(const char* msg, ...)
 {
-	char* buffer = pvPortMalloc(TAILLE_MESSAGE_MAX);
+	char* buffer = pvPortMalloc(LOG_SIZE);
 	//! @todo gérer une erreur d'alloc
 
 	va_list ap;
 	va_start(ap, msg);
 
-	vsnprintf(buffer, TAILLE_MESSAGE_MAX, msg, ap);
-	if(xQueueSendToBack(queueLog, &buffer, 0) != pdTRUE) {
+	vsnprintf(buffer, LOG_SIZE, msg, ap);
+	if(xQueueSendToBack(log_queue, &buffer, 0) != pdTRUE) {
 		// la queue est pleine, on libère la mémoire et le message est perdu
 		//! @todo led d'erreur de log ??
 		vPortFree(buffer);
@@ -71,21 +70,21 @@ int ajouterLog(const char* msg, ...)
 	return 0;
 }
 
-int ajouterLogFromISR(const char* msg, ...)
+int log_add_from_isr(const char* msg, ...)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken;
 
-	char* buffer = pvPortMalloc(TAILLE_MESSAGE_MAX);
+	char* buffer = pvPortMalloc(LOG_SIZE);
 	//! @todo gérer une erreur d'alloc
 
 	va_list ap;
 	va_start(ap, msg);
 
-	vsnprintf(buffer, TAILLE_MESSAGE_MAX, msg, ap);
+	vsnprintf(buffer, LOG_SIZE, msg, ap);
 
 	va_end(ap);
 
-	if(xQueueSendToBackFromISR(queueLog, &buffer, &xHigherPriorityTaskWoken) != pdTRUE) {
+	if(xQueueSendToBackFromISR(log_queue, &buffer, &xHigherPriorityTaskWoken) != pdTRUE) {
 		// la queue est pleine, on libère la mémoire et le message est perdu
 		//! @todo led d'erreur de log ??
 		vPortFree(buffer);
@@ -100,25 +99,22 @@ int ajouterLogFromISR(const char* msg, ...)
 	return 0;
 }
 
-
-//! tache de log
-//! en cas d'erreur d'initialisation, la tache n'est pas crée et ne sera donc pas lancée
-void tacheLog(void * arg)
+//! Log task
+void log_task(void * arg)
 {
 	(void) arg;
 
 	char* msg = NULL;
 
 	while(1){
-		if(xQueueReceive(queueLog, &msg, portMAX_DELAY))
+		if(xQueueReceive(log_queue, &msg, portMAX_DELAY))
 		{
-			size_t taille = strlen(msg);
-			if( fwrite(msg, 1, taille, stdout) == taille)
+			size_t len = strlen(msg);
+			if( fwrite(msg, 1, len, stdout) == len)
 			{
 				//! @todo on n'a pas pu écrire le message
 			}
 
-			// on libère la mémoire
 			vPortFree(msg);
 		}
 	}
