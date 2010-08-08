@@ -1,4 +1,5 @@
 obj-rtos += main.o
+obj-rtos += io/encoders.o
 obj-rtos += time2.o
 obj-rtos += log.o
 obj-rtos += rtos/list.o
