@@ -2422,7 +2422,7 @@ void vTaskSetEvent(uint32_t mask)
 }
 
 //! cf vTaskSetEvent mais depuis une interruption
-void vTaskSetEventFromISR(uint32_t mask)
+unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 {
 	tskTCB *pxNextTCB;
 	tskTCB *pxFirstTCB;
@@ -2454,11 +2454,7 @@ void vTaskSetEventFromISR(uint32_t mask)
 	}
 	while( pxNextTCB != pxFirstTCB );
 
-	// on a réveillé une tache de priorité plus importante que la tache actuelle (interrompue)
-	// la fonction bug de temps en temps avec la simulation sous linux, on s'en passe
-	#ifndef __GCC_POSIX__
-	portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
-	#endif
+	return xHigherPriorityTaskWoken;
 }
 
 //! @todo description

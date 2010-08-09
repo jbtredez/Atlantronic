@@ -1271,7 +1271,7 @@ uint32_t vTaskWaitEvent(uint32_t mask);
 void vTaskSetEvent(uint32_t mask);
 
 //! @todo description
-void vTaskSetEventFromISR(uint32_t mask);
+unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask);
 //! @todo description
 void vTaskClearEvent();
 //! @todo description

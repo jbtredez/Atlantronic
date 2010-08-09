@@ -60,8 +60,8 @@ void vApplicationTickHook()
 	{
 		if(time_start != time_end)
 		{
-			time_start = time_end;
 			meslogFromISR(_info_, 1, "fin du match");
+			time_start = time_end;
 		}
 	}
 }

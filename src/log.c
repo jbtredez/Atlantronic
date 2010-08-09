@@ -71,7 +71,7 @@ int log_add(const char* msg, ...)
 	return 0;
 }
 
-int log_add_from_isr(const char* msg, ...)
+portBASE_TYPE log_add_from_isr(const char* msg, ...)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken;
 
@@ -92,13 +92,7 @@ int log_add_from_isr(const char* msg, ...)
 		vPortFree(buffer);
 	}
 
-	// on a réveillé une tache de priorité plus importante que la tache actuelle (interrompue)
-	// la fonction bug de temps en temps avec la simulation sous linux, on s'en passe
-	#ifndef __GCC_POSIX__
-	portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
-	#endif
-
-	return 0;
+	return xHigherPriorityTaskWoken;
 }
 
 //! Log task
