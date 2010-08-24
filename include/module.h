@@ -4,6 +4,14 @@
 //! @file module.h
 //! @brief fournit les fonctions d'enregistrement des points d'entrée et de sortie des modules
 //! @author Jean-Baptiste Trédez
+//!
+//! Prévu pour gcc et pic32-gcc
+//! Fonctionnement :
+//!    - un utilisateur créer une fonction "int mon_module_init()" qui retourne 0 si l'init s'est bien faite, un code d'erreur sinon
+//!    - l'utilisateur enregistre la fonction avec : monule_init(mon_module_init, INIT_MON_MODULE) ou INIT_MON_MODULE est la priorité du module (cf init.h)
+//!    - (fonctionnement interne) la macro module_init enregistre un pointeur vers la fonction mon_module_init dans la section .initcall.init.INIT_MON_MODULE
+//!    - (fonctionnement interne) à l'édition des liens, on utilise un script (scripts/elcPC.ld par exemple) qui permet de trier les sections .initcall.init.* et on range le tout dans la section .init.data. Les pointeurs __initcall_start et __initcall_end sont définis au début de la section .init.data et à la fin. On peut voir l'ensemble comme un tableau de pointeur de fonction débutant à __initcall_start et se terminant à __initcall_end
+//!    - l'utilisateur utilise la fonction initModules dans le programme principal, ce qui a pour effet de lire les pointeurs de fonctions enregistrés dans la section .init.data dans le bon ordre grâce à __initcall_start et __initcall_end
 
 #include "init.h"
 
@@ -35,14 +43,17 @@ typedef int (*exitcall_t)();
 //! garantir aux fonctions d'initialisation que  leurs dépendances sont
 //! initialisées avant.
 //!
-//! @return 0 si tout va bien, -1 sinon
+//! @return 0 si tout va bien, le code d'erreur de la fonction d'initialisation sinon
 static inline int initModules()
 {
 	extern initcall_t __initcall_start[], __initcall_end[];
 	initcall_t* init;
-	for(init = __initcall_start; init < __initcall_end; init++){
-		if((*init)())
-			return -1;
+	int err;
+	for(init = __initcall_start; init < __initcall_end; init++)
+	{
+		err = (*init)();
+		if(err)
+			return err;
 	}
 
 	return 0;
