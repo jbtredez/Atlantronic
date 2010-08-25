@@ -9,7 +9,7 @@
 #include "control.h"
 #include "priority.h"
 #include "log.h"
-#include "robot_state.h"
+#include "odometry.h"
 #include "vect_pos.h"
 
 //! @todo réglage au pif
@@ -54,8 +54,8 @@ static void control_task(void* arg)
 
 	while(1)
 	{
-		robot_state_update_odometry();
-		pos = robot_state_get_position();
+		odometry_update();
+		pos = odometry_get_position();
 
 		//////! @todo asservissement - choix ECN/ESEO
 		switch(state)

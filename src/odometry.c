@@ -1,8 +1,8 @@
-//! @file robot_state.c
+//! @file odometry.c
 //! @brief State of the robot
 //! @author Jean-Baptiste Trédez
 
-#include "robot_state.h"
+#include "odometry.h"
 #include "io/encoders.h"
 #include "module.h"
 #include "robot_parameters.h"
@@ -16,7 +16,7 @@ static float v_rotate;     //!< en "rd / unité de temps"
 
 static struct vect_pos pos;
 
-static int robot_state_module_init()
+static int odometry_module_init()
 {
 	encoders_right = encoders_get_right();
 	encoders_left = encoders_get_left();
@@ -28,9 +28,9 @@ static int robot_state_module_init()
 	return 0;
 };
 
-module_init(robot_state_module_init, INIT_ROBOT_STATE);
+module_init(odometry_module_init, INIT_ODOMETRY);
 
-void robot_state_update_odometry()
+void odometry_update()
 {
 	portENTER_CRITICAL();
 	uint16_t enc_right_old = encoders_right;
@@ -66,7 +66,7 @@ void robot_state_update_odometry()
 	portEXIT_CRITICAL();
 }
 
-struct vect_pos robot_state_get_position()
+struct vect_pos odometry_get_position()
 {
 	struct vect_pos p;
 	portENTER_CRITICAL();
