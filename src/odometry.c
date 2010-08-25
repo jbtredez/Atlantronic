@@ -1,5 +1,5 @@
 //! @file odometry.c
-//! @brief State of the robot
+//! @brief Odometry
 //! @author Jean-Baptiste Trédez
 
 #include "odometry.h"
@@ -14,16 +14,16 @@ static uint16_t encoders_left;
 static float v_distance;   //!< en "m / unité de temps"
 static float v_rotate;     //!< en "rd / unité de temps"
 
-static struct vect_pos pos;
+static struct vect_pos odometry_pos;
 
 static int odometry_module_init()
 {
 	encoders_right = encoders_get_right();
 	encoders_left = encoders_get_left();
 
-	pos.x = 0;
-	pos.y = 0;
-	pos.alpha = 0;
+	odometry_pos.x = 0;
+	odometry_pos.y = 0;
+	odometry_pos.alpha = 0;
 
 	return 0;
 };
@@ -49,7 +49,7 @@ void odometry_update()
 	float v_d = PARAM_DIST_ODO_GAIN * (delta_right + delta_left);
 	float v_r = PARAM_ROT_ODO_GAIN  * (delta_right - delta_left);
 
-	float ca = cos(pos.alpha);
+	float ca = cos(odometry_pos.alpha);
 	float dx = v_d * ca;
 	float dy = v_d * ca;
 	float da = v_r;
@@ -60,9 +60,9 @@ void odometry_update()
 	encoders_left  = enc_left;
 	v_distance = v_d;
 	v_rotate   = v_r;
-	pos.x += dx;
-	pos.y += dy;
-	pos.alpha += da;
+	odometry_pos.x += dx;
+	odometry_pos.y += dy;
+	odometry_pos.alpha += da;
 	portEXIT_CRITICAL();
 }
 
@@ -70,7 +70,7 @@ struct vect_pos odometry_get_position()
 {
 	struct vect_pos p;
 	portENTER_CRITICAL();
-	p = pos;
+	p = odometry_pos;
 	portEXIT_CRITICAL();
 	return p;
 }
