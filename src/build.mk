@@ -1,6 +1,7 @@
 obj-rtos += main.o
 obj-rtos += control.o
 obj-rtos += odometry.o
+obj-rtos += beacon.o
 obj-rtos += io/encoders.o
 obj-rtos += io/pwm.o
 obj-rtos += time2.o

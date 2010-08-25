@@ -22,6 +22,7 @@
 #define INIT_ENCODERS                 "02"
 #define INIT_PWM                      "03"
 #define INIT_ODOMETRY                 "04"
+#define INIT_BEACON                   "05"
 //#define INIT_VFS                      "02"
 //#define INIT_USB                      "03"
 //#define INIT_I2C                      "04"
