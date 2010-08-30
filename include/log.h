@@ -6,6 +6,7 @@
 #define LOG_H
 
 #include "time2.h"
+#include "portmacro.h"
 #include <stdio.h>
 #include <errno.h>
 

@@ -18,8 +18,8 @@ static struct vect_pos odometry_pos;
 
 static int odometry_module_init()
 {
-	encoders_right = encoders_get_right();
-	encoders_left = encoders_get_left();
+	encoders_right = encoders_get(ENCODERS_MOT_RIGHT);
+	encoders_left = encoders_get(ENCODERS_MOT_LEFT);
 
 	odometry_pos.x = 0;
 	odometry_pos.y = 0;
@@ -37,8 +37,8 @@ void odometry_update()
 	uint16_t enc_left_old  = encoders_left;
 	portEXIT_CRITICAL();
 
-	uint16_t enc_right = encoders_get_right();
-	uint16_t enc_left = encoders_get_left();
+	uint16_t enc_right = encoders_get(ENCODERS_MOT_RIGHT);
+	uint16_t enc_left = encoders_get(ENCODERS_MOT_LEFT);
 
 	float delta_right = (float) ((int16_t) (enc_right - enc_right_old) );
 	float delta_left  = (float) ((int16_t) (enc_left  - enc_left_old ) );
@@ -49,9 +49,8 @@ void odometry_update()
 	float v_d = PARAM_DIST_ODO_GAIN * (delta_right + delta_left);
 	float v_r = PARAM_ROT_ODO_GAIN  * (delta_right - delta_left);
 
-	float ca = cos(odometry_pos.alpha);
-	float dx = v_d * ca;
-	float dy = v_d * ca;
+	float dx = v_d * cos(odometry_pos.alpha);
+	float dy = v_d * sin(odometry_pos.alpha);
 	float da = v_r;
 
 	// update

@@ -19,6 +19,7 @@
 
 #define INIT_TIME                     "00"
 #define INIT_LOG                      "01"
+#define INIT_MODEL                    "02"
 #define INIT_ENCODERS                 "02"
 #define INIT_PWM                      "03"
 #define INIT_ODOMETRY                 "04"

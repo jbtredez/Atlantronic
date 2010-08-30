@@ -6,27 +6,32 @@
 #include "module.h"
 #include "init.h"
 
+#ifdef __GCC_POSIX__
+#include "simu/model.h"
+#endif
+
+#ifdef __GCC_PIC32__
 static int encoders_module_init()
 {
-	#ifdef __GCC_PIC32__
 	#warning TODO : initialiser les codeurs et filtres
-	#endif
 
 	return 0;
 }
 
 module_init(encoders_module_init, INIT_ENCODERS);
 
-uint16_t encoders_get_right()
+#endif
+
+uint16_t encoders_get(unsigned int num)
 {
+	#ifdef __GCC_POSIX__
+	return model_encoders_get(num);
+	#endif
+
+	#ifdef __GCC_PIC32__
 	#warning TODO encodeurs
+	#endif
 
 	return 0;
 }
 
-uint16_t encoders_get_left()
-{
-	#warning TODO encodeurs
-
-	return 0;
-}
