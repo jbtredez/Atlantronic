@@ -4,6 +4,9 @@
 
 #ifdef __GCC_POSIX__
 	#include <time.h>
+	#include <signal.h>
+	#include <unistd.h>
+	#include <pthread.h>
 #endif
 
 #include "FreeRTOS.h"
@@ -11,8 +14,46 @@
 #include "module.h"
 #include "log.h"
 
+#ifdef __GCC_POSIX__
+static struct sigaction action;
+static int n_sig_int;
+
+void* end_sched(void *arg)
+{
+	(void) arg;
+	vTaskEndScheduler();
+
+	return NULL;
+}
+
+static void signal_handler(int sig)
+{
+	(void) sig;
+	n_sig_int++;
+	if(n_sig_int > 2)
+	{
+		kill(getpid(),SIGKILL);
+	}
+	else
+	{
+		pthread_t id;
+		pthread_create(&id,NULL,end_sched,NULL);
+	}
+}
+#endif
+
 int main()
 {
+	#ifdef __GCC_POSIX__
+	n_sig_int = 0;
+	action.sa_handler = signal_handler;
+	sigemptyset(&(action.sa_mask));
+	if(sigaction(SIGINT, &action, NULL))
+	{
+		logerror("sigaction");
+	}
+	#endif
+
 	int init = initModules();
 	if(init){
 		if(init < ERR_INIT_LOG){
@@ -25,6 +66,9 @@ int main()
 	vTaskStartScheduler();
 
 	// on n'arrive jamais ici sur un pic
+	#ifdef __GCC_POSIX__
+	exitModules();
+	#endif
 
 	return 0;
 }
