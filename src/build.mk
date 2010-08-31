@@ -2,8 +2,6 @@ obj-rtos += main.o
 obj-rtos += control.o
 obj-rtos += odometry.o
 obj-rtos += beacon.o
-obj-rtos += simu/model.o
-obj-rtos += simu/model_motor.o
 obj-rtos += io/encoders.o
 obj-rtos += io/pwm.o
 obj-rtos += time2.o
@@ -16,3 +14,7 @@ obj-rtos += $(OBJ-PORT)
 lib-rtos += -lm
 BIN+= rtos
 
+ifeq ($(SIMU),1)
+obj-rtos += simu/model.o
+obj-rtos += simu/model_motor.o
+endif
