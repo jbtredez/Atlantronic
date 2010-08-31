@@ -31,6 +31,8 @@
 #define INIT_CONTROL                  "06"
 #define INIT_TEST                     "30"
 
+#define EXIT_MODEL                    "00"
+
 #define ERR_INIT_LOG               -1
 #define ERR_INIT_CONTROL           -6
 #define ERR_INIT_TEST             -30

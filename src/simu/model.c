@@ -18,6 +18,7 @@
 
 static struct model_motor model_motors[PWM_NB];
 static unsigned long model_time;
+FILE* model_log_file;
 
 //! state
 static double X[9];
@@ -36,7 +37,7 @@ enum
 
 #define MODEL_FREQ_MULT     10
 
-static int modele_module_init()
+static int model_module_init()
 {
 	memset(X, 0x00, sizeof(X));
 	model_motors[0].pwm  = 0;
@@ -53,10 +54,21 @@ static int modele_module_init()
 
 	model_time = 0;
 
+	model_log_file = fopen("log/pos.txt","w");
+
 	return 0;
 }
 
-module_init(modele_module_init, INIT_MODEL);
+module_init(model_module_init, INIT_MODEL);
+
+static int model_module_exit()
+{
+	fclose(model_log_file);
+
+	return 0;
+}
+
+module_exit(model_module_exit, EXIT_MODEL);
 
 void model_dx(double *x, double* dx)
 {
@@ -118,8 +130,8 @@ void model_update()
 				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6;
 			}
 		}
-
 		model_time++;
+		fprintf(model_log_file, "%lu\t%f\t%f\t%f\n", model_time, X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
 	}
 
 	portEXIT_CRITICAL();
