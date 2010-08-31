@@ -9,6 +9,7 @@
 #include "portmacro.h"
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 # ifndef DCOULEUR
 # define DCOULEUR	1 //!< erreur affichées en rouge par défaut.
