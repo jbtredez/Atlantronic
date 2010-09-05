@@ -28,7 +28,7 @@
 #define PARAM_DIST_ODO_GAIN                (M_PI / (PARAM_ODO_RED * PARAM_ENCODERS_RES) )
 #define PARAM_ROT_ODO_GAIN                 (2.0f * M_PI / (PARAM_ENCODERS_RES * PARAM_VOIE_ODO * PARAM_ODO_RED))
 #define PARAM_DIST_MOD_GAIN                (1.0f / (2.0f * PARAM_MOT_RED))
-#define PARAM_ROT_MOD_GAIN                 (1.0f / (PARAM_VOIE_MOT))
+#define PARAM_ROT_MOD_GAIN                 (1.0f / (PARAM_VOIE_MOT * PARAM_MOT_RED))
 
 
 #endif

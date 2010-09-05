@@ -73,7 +73,7 @@ module_exit(model_module_exit, EXIT_MODEL);
 void model_dx(double *x, double* dx)
 {
 	model_motor_dx(&model_motors[PWM_RIGHT], x, dx);
-	model_motor_dx(&model_motors[PWM_RIGHT], x+3, dx+3);
+	model_motor_dx(&model_motors[PWM_LEFT], x+3, dx+3);
 
 	double v_right = x[MODEL_MOT_RIGHT_W] * PARAM_RIGHT_MOT_WHEEL_RADIUS * PARAM_RIGHT_MOT_WHEEL_WAY;
 	double v_left = x[MODEL_MOT_LEFT_W] * PARAM_LEFT_MOT_WHEEL_RADIUS  * PARAM_LEFT_MOT_WHEEL_WAY;
