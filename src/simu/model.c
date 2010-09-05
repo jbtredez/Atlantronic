@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 #include <memory.h>
 #include "simu/model.h"
 #include "simu/model_motor.h"
@@ -54,7 +55,11 @@ static int model_module_init()
 
 	model_time = 0;
 
-	model_log_file = fopen("log/pos.txt","w");
+	model_log_file = fopen("log/model_state.txt","w");
+	if(model_log_file == NULL)
+	{
+		logerror("fopen");
+	}
 
 	return 0;
 }
@@ -131,7 +136,8 @@ void model_update()
 			}
 		}
 		model_time++;
-		fprintf(model_log_file, "%lu\t%f\t%f\t%f\n", model_time, X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
+
+		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
 	}
 
 	portEXIT_CRITICAL();
