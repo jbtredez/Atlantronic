@@ -121,6 +121,12 @@ doc:
 
 .PHONY: doc
 
+toutout:
+	@+make SIMU=1
+	@+make SIMU=0
+
+.PHONY: toutout
+
 clean:
 	@rm -frv $(obj)
 	@rm -frv $(bin)
