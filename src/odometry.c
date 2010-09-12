@@ -81,3 +81,21 @@ struct vect_pos odometry_get_position()
 	return p;
 }
 
+float odometry_get_speed_curv_abs()
+{
+	float v;
+	portENTER_CRITICAL();
+	v = v_distance;
+	portEXIT_CRITICAL();
+	return v;
+}
+
+float odometry_get_speed_rot()
+{
+	float v;
+	portENTER_CRITICAL();
+	v = v_rotate;
+	portEXIT_CRITICAL();
+	return v;
+}
+

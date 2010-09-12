@@ -12,4 +12,8 @@ void odometry_update();
 
 struct vect_pos odometry_get_position();
 
+float odometry_get_speed_curv_abs();
+
+float odometry_get_speed_rot();
+
 #endif
