@@ -24,6 +24,11 @@ static int odometry_module_init()
 	odometry_pos.x = 0;
 	odometry_pos.y = 0;
 	odometry_pos.alpha = 0;
+	odometry_pos.ca = 1;
+	odometry_pos.sa = 0;
+
+	v_distance = 0;
+	v_rotate = 0;
 
 	return 0;
 };
@@ -49,8 +54,8 @@ void odometry_update()
 	float v_d = PARAM_DIST_ODO_GAIN * (delta_right + delta_left);
 	float v_r = PARAM_ROT_ODO_GAIN  * (delta_right - delta_left);
 
-	float dx = v_d * cos(odometry_pos.alpha);
-	float dy = v_d * sin(odometry_pos.alpha);
+	float dx = v_d * odometry_pos.ca;
+	float dy = v_d * odometry_pos.sa;
 	float da = v_r;
 
 	// update
@@ -62,6 +67,8 @@ void odometry_update()
 	odometry_pos.x += dx;
 	odometry_pos.y += dy;
 	odometry_pos.alpha += da;
+	odometry_pos.ca = cos(odometry_pos.alpha);
+	odometry_pos.sa = sin(odometry_pos.alpha);
 	portEXIT_CRITICAL();
 }
 
@@ -73,3 +80,4 @@ struct vect_pos odometry_get_position()
 	portEXIT_CRITICAL();
 	return p;
 }
+
