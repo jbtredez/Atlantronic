@@ -5,7 +5,9 @@
 //! @brief Asservissement
 //! @author Jean-Baptiste Trédez
 
-////////! @todo asservissement - choix ECN/ESEO
+#include <stdint.h>
+#include "vect_pos.h"
+
 enum control_state
 {
 	READY,          //!< no trajectory ongoing
@@ -13,6 +15,9 @@ enum control_state
 	STRAIGHT,       //!< go straight
 	ARC,            //!< arc
 };
-////////
+
+void control_straight(float dist);
+
+void control_rotate(float angle);
 
 #endif
