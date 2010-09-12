@@ -30,6 +30,8 @@ SIMU ?= 1
 DEBUG ?= 0
 
 ifeq ($(SIMU),1)
+_obj:=$(obj)/gcc_posix
+_bin:=$(bin)
 CC:=gcc
 AS:=gcc
 LD:=gcc
@@ -51,6 +53,8 @@ endif
 INCLUDES+=-Isrc/rtos/portable/GCC/Posix
 OBJ-PORT+=rtos/portable/GCC/Posix/port.o
 else
+_obj:=$(obj)/pic32
+_bin:=$(bin)/pic32
 CC:=wine pic32-gcc
 AS:=wine pic32-gcc
 LD:=wine pic32-gcc
@@ -74,29 +78,29 @@ MK:=$(shell find . -name 'build.mk')
 endif
 
 # règles
-$(obj)/%.d: $(obj)/%.o
+$(_obj)/%.d: $(_obj)/%.o
 
-$(obj)/%.o: $(src)/%.c
+$(_obj)/%.o: $(src)/%.c
 	@echo [CC] $<
 	@mkdir -p `dirname $@`
 	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
 	@# conversion des \ en / (format unix) dans les chemins (mais pas en bout de ligne) (compilo gcc modifié par MPLAB - version windows)
 	@sed -i 's/\\/\//g;s/ \// \\/g' $(@:.o=.d)
 
-$(obj)/%.o: $(src)/%.S
+$(_obj)/%.o: $(src)/%.S
 	@echo [AS] $<
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
 ifeq ($(SIMU),1)
-all: $(addprefix $(bin)/,$(BIN))
+all: $(addprefix $(_bin)/,$(BIN))
 else
-all: $(addprefix $(bin)/, $(addsuffix .hex, $(BIN)))
+all: $(addprefix $(_bin)/, $(addsuffix .hex, $(BIN)))
 endif
 .PHONY: all
 
-$(foreach var,$(BIN),$(eval $(bin)/$(var):$(addprefix $(obj)/,$(obj-$(var)) )))
-$(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/,$(obj-$(var):.o=.d))))
+$(foreach var,$(BIN),$(eval $(_bin)/$(var):$(addprefix $(_obj)/,$(obj-$(var)) )))
+$(foreach var,$(BIN),$(eval DEP += $(addprefix $(_obj)/,$(obj-$(var):.o=.d))))
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
@@ -106,10 +110,10 @@ endif
 	@echo [HEX] $<
 	@$(HEX) $<
 
-$(bin)/%:
+$(_bin)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(LD) $(LDFLAGS) $($(patsubst $(bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
+	@$(LD) $(LDFLAGS) $($(patsubst $(_bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
 
 doc:
 	@mkdir -p $(doc)/doxygen
