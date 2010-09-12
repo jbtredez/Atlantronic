@@ -29,6 +29,7 @@
 //#define INIT_I2C                      "04"
 //#define INIT_CAN                      "05"
 #define INIT_CONTROL                  "06"
+#define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 
 #define EXIT_MODEL                    "00"
