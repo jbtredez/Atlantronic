@@ -4,3 +4,5 @@ Requirements:
 doc : 
 	- doxygen >= 1.6.3
 		- graphviz >= 2.26.3
+tests:
+	gnuplot
