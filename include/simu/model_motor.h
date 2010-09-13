@@ -17,5 +17,10 @@ struct model_motor
 	float cp;       //!< couple de pertes (frottements de la roue sur le sol + frottements / transmission)
 };
 
-//! @param x state (i, theta, w) 
+//! Calcule la dérivée de l'état du moteur à partir de l'état et des paramètres du moteur
+//! La dérivée est calculée par unité de temps (dt = 1)
+//!
+//! @param m moteur
+//! @param x etat du moteur (i, theta, w)
+//! @param dx réponse : dérivée de l'état par unité de temps
 void model_motor_dx(struct model_motor *m, double *x, double *dx);
