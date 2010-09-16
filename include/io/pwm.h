@@ -2,7 +2,7 @@
 #define PWM_H
 
 //! @file pwm.h
-//! @brief Encoders
+//! @brief PWM
 //! @author Jean-Baptiste Trédez
 
 #include <stdint.h>

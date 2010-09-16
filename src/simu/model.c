@@ -36,8 +36,11 @@ enum
 	MODEL_POS_ALPHA
 };
 
+//! Multiplicateur de la fréquence du noyau
+//! La fréquence du modèle est la fréquence du noyau multipliée par cette valeur
 #define MODEL_FREQ_MULT     10
 
+//! module init
 static int model_module_init()
 {
 	memset(X, 0x00, sizeof(X));
