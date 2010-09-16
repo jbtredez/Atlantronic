@@ -52,6 +52,10 @@ int main()
 	fprintf(p, "set xlabel \"t\"\n");
 	fprintf(p, "plot \"log/test_trapeze.txt\" using 1:2 t \"acceleration\"  with lines, \"log/test_trapeze.txt\" using 1:3 t \"vitesse\" with lines, \"log/test_trapeze.txt\" using 1:4 t \"position\" with lines\n");
 	fflush(p);
+
+	// on ne ferme pas le programme tout de suite pour permettre de zoomer par exemple
+	getchar();
+
 	fclose(p);
 
 	return 0;
