@@ -1,0 +1,53 @@
+digraph robot
+{
+	size="6,6";
+	// modules - taches
+	node [color=lawngreen, style=filled ]
+	strategy
+	control
+	cli
+	log
+
+	// modules - fonctions
+	node [color=lightblue2, style=filled ]
+	avoidance
+	"colision detection"
+	positions
+	odometry
+	beacon
+
+	// io
+	node [color=lightblue3, style=filled ]
+	{
+		rank=same;
+		"io/pwm"
+		"io/encoders"
+		"io/beacon"
+		"io/usb"
+		"io/can"
+		"io/i2c"
+		"io/led"
+	}
+
+	// modèle - simulation
+	node [color=magenta, style=filled ]
+	model
+	model_motor
+
+	// liens
+	strategy -> avoidance
+	strategy -> control
+	avoidance -> control
+	control -> "colision detection"
+	"colision detection" -> positions
+	positions -> odometry
+	positions -> beacon
+
+	beacon -> "io/beacon"
+	odometry -> "io/encoders"
+	control -> "io/pwm"
+	"io/pwm" -> model
+	"io/encoders" -> model
+	"io/beacon" -> model
+	model -> model_motor	
+}

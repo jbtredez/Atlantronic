@@ -2,7 +2,7 @@
 
 obj
 bin
-doc
+doc/doxygen
 
 .*
 !.gitignore
