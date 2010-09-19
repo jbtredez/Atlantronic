@@ -35,6 +35,7 @@ _bin:=$(bin)
 CC:=gcc
 AS:=gcc
 LD:=gcc
+DOT:=dot
 
 MARCH ?= core2
 
@@ -60,7 +61,7 @@ AS:=wine pic32-gcc
 LD:=wine pic32-gcc
 HEX:=wine pic32-bin2hex
 
-PIC:=32MX575F256H
+PIC:=32MX795F512L
 LDSCRIPT:=scripts/elf32pic32mx.ld
 DEF+=MPLAB_PIC32MX_PORT __GCC_PIC32__ NDEBUG
 CFLAGS:=-mprocessor=$(PIC) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
@@ -76,6 +77,9 @@ ifneq ($(MAKECMDGOALS),clean)
 MK:=$(shell find . -name 'build.mk')
 -include $(MK)
 endif
+
+SRC_DOC=$(shell find . -name '*.dot')
+BIN_DOC=$(SRC_DOC:.dot=.png)
 
 # règles
 $(_obj)/%.d: $(_obj)/%.o
@@ -115,7 +119,11 @@ $(_bin)/%:
 	@mkdir -p `dirname $@`
 	@$(LD) $(LDFLAGS) $($(patsubst $(_bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
 
-doc:
+%.png: %.dot
+	@echo [DOT] $@
+	@$(DOT) $< -Tpng -o $@
+
+doc: $(BIN_DOC)
 	@mkdir -p $(doc)/doxygen
 	@doxygen Doxyfile > /dev/null
 
@@ -130,6 +138,6 @@ toutout:
 clean:
 	@rm -frv $(obj)
 	@rm -frv $(bin)
-	@rm -frv $(doc)
+	@rm -frv $(doc)/doxygen
 
 .PHONY: clean
