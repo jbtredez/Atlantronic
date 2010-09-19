@@ -14,6 +14,7 @@ doc/doxygen
 *.map
 *.hex
 *~
+*.png
 
 Module.symvers
 Module.markers
