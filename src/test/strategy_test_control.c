@@ -2,6 +2,7 @@
 #include "task.h"
 #include "module.h"
 #include "control.h"
+#include "time2.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       10
@@ -26,7 +27,10 @@ module_init(strategy_test_control_module_init, INIT_STRATEGY);
 
 static void strategy_test_control_task()
 {
-	control_straight(1000);
+	time_start_match();
+//	control_straight(-1000);
+//	control_rotate(-10);
+	control_goto(1000,-1000);
 
 	vTaskDelete(NULL);
 }
