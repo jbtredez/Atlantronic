@@ -27,14 +27,10 @@
 static void control_task(void *);
 static float sinc( float x );
 
-struct control_param_straight
-{
-	float distance;
-};
-
-struct control_param_rotate
+struct control_param_ad
 {
 	float angle;
+	float distance;
 };
 
 struct control_param_arc
@@ -52,8 +48,7 @@ static struct trapeze trapeze;
 
 union
 {
-	struct control_param_straight straight;
-	struct control_param_rotate rotate;
+	struct control_param_ad ad;
 	struct control_param_arc arc;
 } control_param;
 
@@ -92,6 +87,11 @@ static int control_module_init()
 	pid_av.ki = 1500;
 	pid_av.kd = 200;
 	pid_av.max_out = 65535;
+
+	pid_rot.kp = 40000;
+	pid_rot.ki = 1500000;
+	pid_rot.kd = 200000;
+	pid_rot.max_out = 65535;
 	/////
 
 	state = READY;
@@ -110,8 +110,8 @@ static void control_task(void* arg)
 
 	///// TODO
 	float kx = 0.02;
-	float ky = 0;
-	float kalpha = 0;
+	float ky = 0.0002;
+	float kalpha = 0.002;
 	////
 
 	while(1)
@@ -127,22 +127,62 @@ static void control_task(void* arg)
 			switch(state)
 			{
 				case STRAIGHT:
-					trapeze_apply(&trapeze, control_param.straight.distance);
-					cons.x += trapeze.v * cons.ca;
-					cons.y += trapeze.v * cons.sa;
-					cons.ca = cos(cons.alpha);
-					cons.sa = sin(cons.alpha);
-					v_dist_cons = trapeze.v;
-					v_rot_cons = 0;
-					break;
 				case ROTATE:
-					trapeze_apply(&trapeze, control_param.rotate.angle);
-					cons.x += trapeze.v * cons.ca;
-					cons.y += trapeze.v * cons.sa;
-					cons.ca = cos(cons.alpha);
-					cons.sa = sin(cons.alpha);
-					v_dist_cons = 0;
-					v_rot_cons = trapeze.v;
+				case GOTO:
+					if(control_param.ad.angle)
+					{
+						// TODO marge en dur
+						if(fabs(dest.alpha - pos.alpha) < 0.01f)
+						{
+							control_param.ad.angle = 0;
+							cons.alpha = dest.alpha;
+							cons.ca = dest.ca;
+							cons.sa = dest.sa;
+							v_dist_cons = 0;
+							v_rot_cons = 0;
+							trapeze_reset(&trapeze);
+						}
+						else
+						{
+							trapeze_set(&trapeze, 1000*TE*TE/(M_PI*PARAM_VOIE_MOT), 1000*TE/(M_PI*PARAM_VOIE_MOT));
+							trapeze_apply(&trapeze, control_param.ad.angle);
+							cons.alpha += trapeze.v;
+							cons.ca = cos(cons.alpha);
+							cons.sa = sin(cons.alpha);
+							v_dist_cons = 0;
+							v_rot_cons = trapeze.v;
+						}
+					}
+					else if(control_param.ad.distance)
+					{
+						// TODO marges en dur
+						if( fabsf(dest.x - pos.x) < 1.0f)
+						{
+							if(fabsf(dest.y - pos.y) < 1.0f)
+							{
+								control_param.ad.distance = 0;
+								cons = dest;
+								v_dist_cons = 0;
+								v_rot_cons = 0;
+								trapeze_reset(&trapeze);
+							}
+						}
+						else
+						{
+							trapeze_set(&trapeze, 1000*TE*TE, 1000*TE);
+							trapeze_apply(&trapeze, control_param.ad.distance);
+							cons.x += trapeze.v * cons.ca;
+							cons.y += trapeze.v * cons.sa;
+							v_dist_cons = trapeze.v;
+							v_rot_cons = 0;
+						}
+					}
+					else
+					{
+						v_dist_cons = 0;
+						v_rot_cons = 0;
+						state = READY;
+					}
 					break;
 				case ARC:
 					// TODO
@@ -164,7 +204,7 @@ static void control_task(void* arg)
 			float v_r = odometry_get_speed_rot();
 
 //TODO à virer, test
-	meslog(_info_, 1, "%f - %f - %f", trapeze.distance, pos.x, v_d_c/TE);
+	meslog(_info_, 1, "%f   %f   %f : %f   %f   %f", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
 
 			// régulation en vitesse
 			float u_av = pid_apply(&pid_av, v_d_c - v_d);
@@ -208,8 +248,8 @@ void control_straight(float dist)
 	dest = cons;
 	dest.x += dest.ca * dist;
 	dest.y += dest.sa * dist;
-	control_param.straight.distance = dist;
-	trapeze_set(&trapeze, 1000*TE*TE, 1000*TE);
+	control_param.ad.angle = 0;
+	control_param.ad.distance = dist;
 	portEXIT_CRITICAL();
 }
 
@@ -224,7 +264,31 @@ void control_rotate(float angle)
 	dest.alpha += angle;
 	dest.ca = cos(dest.alpha);
 	dest.sa = sin(dest.alpha);
-	control_param.rotate.angle = angle;
-	trapeze_set(&trapeze, 1000*TE*TE/(M_PI*PARAM_VOIE_MOT), 1000*TE/(M_PI*PARAM_VOIE_MOT));
+	control_param.ad.angle = angle;
+	control_param.ad.distance = 0;
+	portEXIT_CRITICAL();
+}
+
+void control_goto(float x, float y)
+{
+	portENTER_CRITICAL();
+	state = GOTO;
+	// TODO voir / env evenement
+	trapeze_reset(&trapeze);
+	cons = odometry_get_position();
+	dest = cons;
+
+	float dx = x - cons.x;
+	float dy = y - cons.y;
+	float angle = atan2(dy, dx);
+	float distance = sqrt(dx*dx+dy*dy);
+
+	dest.alpha += angle;
+	dest.ca = cos(dest.alpha);
+	dest.sa = sin(dest.alpha);
+	dest.x = x;
+	dest.y = y;
+	control_param.ad.angle = angle;
+	control_param.ad.distance = distance;
 	portEXIT_CRITICAL();
 }
