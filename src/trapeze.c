@@ -23,18 +23,19 @@ void trapeze_apply(struct trapeze* t, float distance)
 	}
 
 	// saturation de v_max à cause de la saturation en accélération
-	if( v < v_max )
+	float v_abs = fabs(v);
+	if( v_abs < v_max )
 	{
-		if( v_max - v > a_max )
+		if( v_max - v_abs > a_max )
 		{
-			v_max = v + a_max;
+			v_max = v_abs + a_max;
 		}
 	}
 	else
 	{
-		if( v - v_max > a_max )
+		if( v_abs - v_max > a_max )
 		{
-			v_max = v - a_max;
+			v_max = v_abs - a_max;
 		}
 	}
 
@@ -48,7 +49,7 @@ void trapeze_apply(struct trapeze* t, float distance)
 	else if( d < - v_max)
 	{
 		distance_filtre = t->distance - v_max;
-		v = v_max;
+		v = -v_max;
 	}
 	else
 	{
