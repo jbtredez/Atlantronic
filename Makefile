@@ -29,6 +29,8 @@ SIMU ?= 1
 
 DEBUG ?= 0
 
+BIT ?= 32
+
 ifeq ($(SIMU),1)
 _obj:=$(obj)/gcc_posix
 _bin:=$(bin)
@@ -40,15 +42,15 @@ DOT:=dot
 MARCH ?= core2
 
 DEF+=USE_STDIO=1 __GCC_POSIX__=1
-LDSCRIPT:=scripts/elfPC.ld
+LDSCRIPT:=scripts/elf_linux_$(BIT).ld
 
 ifeq ($(DEBUG),1)
-CFLAGS:=-march=$(MARCH) -x c $(addprefix -D,$(DEF)) -Wall -Wextra
-LDFLAGS:=-march=$(MARCH) -T $(LDSCRIPT) -pthread -lrt -ldl
+CFLAGS:=-march=$(MARCH) -m$(BIT) -x c $(addprefix -D,$(DEF)) -Wall -Wextra
+LDFLAGS:=-march=$(MARCH) -m$(BIT) -T $(LDSCRIPT) -pthread -lrt -ldl
 else
 DEF+= NDEBUG
-CFLAGS:=-march=$(MARCH) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
-LDFLAGS:=-march=$(MARCH) -T $(LDSCRIPT) -O3 -pthread -lrt -ldl
+CFLAGS:=-march=$(MARCH) -m$(BIT) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
+LDFLAGS:=-march=$(MARCH) -m$(BIT) -T $(LDSCRIPT) -O3 -pthread -lrt -ldl
 endif
 
 INCLUDES+=-Isrc/rtos/portable/GCC/Posix
