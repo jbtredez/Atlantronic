@@ -22,7 +22,7 @@ static unsigned long model_time;
 FILE* model_log_file;
 
 //! state
-static double X[9];
+static double X[11];
 enum
 {
 	MODEL_MOT_RIGHT_I,
@@ -33,7 +33,9 @@ enum
 	MODEL_MOT_LEFT_W,
 	MODEL_POS_X,
 	MODEL_POS_Y,
-	MODEL_POS_ALPHA
+	MODEL_POS_ALPHA,
+	MODEL_ODO_RIGHT_THETA,
+	MODEL_ODO_LEFT_THETA
 };
 
 //! Multiplicateur de la fréquence du noyau
@@ -92,6 +94,9 @@ void model_dx(double *x, double* dx)
 	dx[MODEL_POS_X] = v_d * cos(x[MODEL_POS_ALPHA]);
 	dx[MODEL_POS_Y] = v_d * sin(x[MODEL_POS_ALPHA]);
 	dx[MODEL_POS_ALPHA] = v_r;
+
+	dx[MODEL_ODO_RIGHT_THETA] = (v_d / PARAM_DIST_ODO_GAIN + v_r / PARAM_ROT_ODO_GAIN )/(2 * PARAM_RIGHT_ODO_WHEEL_RADIUS * PARAM_RIGHT_ODO_WHEEL_WAY);
+	dx[MODEL_ODO_LEFT_THETA] = (v_d / PARAM_DIST_ODO_GAIN - v_r / PARAM_ROT_ODO_GAIN )/(2 * PARAM_LEFT_ODO_WHEEL_RADIUS  * PARAM_LEFT_ODO_WHEEL_WAY);
 }
 
 void model_update()
@@ -100,11 +105,11 @@ void model_update()
 	unsigned long t = time_sys();
 	int i,j;
 
-	double x[9];
-	double k1[9];
-	double k2[9];
-	double k3[9];
-	double k4[9];
+	double x[11];
+	double k1[11];
+	double k2[11];
+	double k3[11];
+	double k4[11];
 
 	portENTER_CRITICAL();
 
@@ -115,32 +120,32 @@ void model_update()
 			// intégration runge-kutta 4
 			model_dx(X, k1);
 
-			for(j=0; j<9; j++)
+			for(j=0; j<11; j++)
 			{
 				x[j] = X[j] + k1[j] * te / 2;
 			}
 			model_dx(x, k2);
 
-			for(j=0; j<9; j++)
+			for(j=0; j<11; j++)
 			{
 				x[j] = X[j] + k2[j] * te / 2;
 			}
 			model_dx(x, k3);
 
-			for(j=0; j<9; j++)
+			for(j=0; j<11; j++)
 			{
 				x[j] = X[j] + k3[j] * te;
 			}
 			model_dx(x, k4);
 
-			for(j=0; j<9; j++)
+			for(j=0; j<11; j++)
 			{
 				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6;
 			}
 		}
 		model_time++;
 
-		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
+		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 	}
 
 	portEXIT_CRITICAL();
@@ -165,10 +170,10 @@ uint16_t model_encoders_get(unsigned int num)
 	switch(num)
 	{
 		case PWM_RIGHT:
-			rep = (uint16_t) ((X[1] * PARAM_ODO_RED * PARAM_ENCODERS_RES * PARAM_RIGHT_MOT_WHEEL_RADIUS * PARAM_RIGHT_MOT_WHEEL_WAY * PARAM_RIGHT_ODO_WHEEL_WAY) / (2 * M_PI * PARAM_MOT_RED * PARAM_RIGHT_ODO_WHEEL_RADIUS));
+			rep = (uint16_t) X[MODEL_ODO_RIGHT_THETA];
 			break;
 		case PWM_LEFT:
-			rep = (uint16_t) ((X[4] * PARAM_ODO_RED * PARAM_ENCODERS_RES * PARAM_LEFT_MOT_WHEEL_RADIUS * PARAM_LEFT_MOT_WHEEL_WAY * PARAM_LEFT_ODO_WHEEL_WAY) / (2 * M_PI * PARAM_MOT_RED * PARAM_LEFT_ODO_WHEEL_RADIUS));
+			rep = (uint16_t) X[MODEL_ODO_LEFT_THETA];
 			break;
 		default:
 			rep = 0;
