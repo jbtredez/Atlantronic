@@ -3,14 +3,15 @@
 #include "module.h"
 #include "control.h"
 #include "time2.h"
+#include "event.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       10
 
 static void strategy_test_control_task();
-static int strategy_test_control_module_init();
+int strategy_test_control_module_init();
 
-static int strategy_test_control_module_init()
+int strategy_test_control_module_init()
 {
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(strategy_test_control_task, (const signed char *) "strategy_test_control", STRATEGY_TEST_CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
@@ -28,9 +29,11 @@ module_init(strategy_test_control_module_init, INIT_STRATEGY);
 static void strategy_test_control_task()
 {
 	time_start_match();
-//	control_straight(-1000);
-//	control_rotate(-10);
+
+	vTaskClearEvent(EVENT_CONTROL_READY);
 	control_goto(1000,-1000);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_goto(1500,-1000);
 
 	vTaskDelete(NULL);
 }
