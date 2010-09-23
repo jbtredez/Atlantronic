@@ -45,8 +45,8 @@ DEF+=USE_STDIO=1 __GCC_POSIX__=1
 LDSCRIPT:=scripts/elf_linux_$(BIT).ld
 
 ifeq ($(DEBUG),1)
-CFLAGS:=-march=$(MARCH) -m$(BIT) -x c $(addprefix -D,$(DEF)) -Wall -Wextra
-LDFLAGS:=-march=$(MARCH) -m$(BIT) -T $(LDSCRIPT) -pthread -lrt -ldl
+CFLAGS:=-march=$(MARCH) -m$(BIT) -g -x c $(addprefix -D,$(DEF)) -Wall -Wextra
+LDFLAGS:=-march=$(MARCH) -m$(BIT) -g -T $(LDSCRIPT) -pthread -lrt -ldl
 else
 DEF+= NDEBUG
 CFLAGS:=-march=$(MARCH) -m$(BIT) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
