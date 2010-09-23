@@ -15,9 +15,10 @@
 #include "pid.h"
 #include "trapeze.h"
 #include "robot_parameters.h"
+#include "event.h"
 
 //! @todo réglage au pif
-#define CONTROL_STACK_SIZE       10
+#define CONTROL_STACK_SIZE       50
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        5
@@ -88,7 +89,7 @@ static int control_module_init()
 	pid_av.kd = 200;
 	pid_av.max_out = 65535;
 
-	pid_rot.kp = 40000;
+	pid_rot.kp = 400000;
 	pid_rot.ki = 1500000;
 	pid_rot.kd = 200000;
 	pid_rot.max_out = 65535;
@@ -156,9 +157,12 @@ static void control_task(void* arg)
 					else if(control_param.ad.distance)
 					{
 						// TODO marges en dur
-						if( fabsf(dest.x - pos.x) < 1.0f)
+						float ex = pos.ca  * (dest.x - pos.x) + pos.sa * (dest.y - pos.y);
+						float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
+
+						if( fabsf(ex) < 1.0f)
 						{
-							if(fabsf(dest.y - pos.y) < 1.0f)
+							if(fabsf(ey) < 10.0f)
 							{
 								control_param.ad.distance = 0;
 								cons = dest;
@@ -182,6 +186,7 @@ static void control_task(void* arg)
 						v_dist_cons = 0;
 						v_rot_cons = 0;
 						state = READY;
+						vTaskSetEvent(EVENT_CONTROL_READY);
 					}
 					break;
 				case ARC:
@@ -204,7 +209,7 @@ static void control_task(void* arg)
 			float v_r = odometry_get_speed_rot();
 
 //TODO à virer, test
-	meslog(_info_, 1, "%f   %f   %f : %f   %f   %f", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
+	printf("%f   %f   %f : %f   %f   %f\n", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
 
 			// régulation en vitesse
 			float u_av = pid_apply(&pid_av, v_d_c - v_d);
@@ -276,19 +281,16 @@ void control_goto(float x, float y)
 	// TODO voir / env evenement
 	trapeze_reset(&trapeze);
 	cons = odometry_get_position();
-	dest = cons;
 
-	float dx = x - cons.x;
-	float dy = y - cons.y;
-	float angle = atan2(dy, dx);
-	float distance = sqrt(dx*dx+dy*dy);
-
-	dest.alpha += angle;
-	dest.ca = cos(dest.alpha);
-	dest.sa = sin(dest.alpha);
 	dest.x = x;
 	dest.y = y;
-	control_param.ad.angle = angle;
-	control_param.ad.distance = distance;
+	float dx = x - cons.x;
+	float dy = y - cons.y;
+	dest.alpha = atan2(dy, dx);
+	dest.ca = cos(dest.alpha);
+	dest.sa = sin(dest.alpha);
+
+	control_param.ad.angle = dest.alpha - cons.alpha;
+	control_param.ad.distance = sqrt(dx*dx+dy*dy);
 	portEXIT_CRITICAL();
 }
