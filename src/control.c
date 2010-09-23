@@ -196,6 +196,9 @@ static void control_task(void* arg)
 					// TODO cas d'erreur de prog
 					break;
 			}
+		}
+
+		// TODO voir si on coupe l'assert en mode READY
 
 			// calcul de l'erreur de position dans le repère du robot
 			float ex = pos.ca  * (cons.x - pos.x) + pos.sa * (cons.y - pos.y);
@@ -209,8 +212,10 @@ static void control_task(void* arg)
 			float v_r = odometry_get_speed_rot();
 
 //TODO à virer, test
-	printf("%f   %f   %f : %f   %f   %f\n", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
-
+	if(state != READY)
+	{
+		meslog(_info_, 1, "%f   %f   %f : %f   %f   %f", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
+	}
 			// régulation en vitesse
 			float u_av = pid_apply(&pid_av, v_d_c - v_d);
 			float u_rot = pid_apply(&pid_rot, v_r_c - v_r);
@@ -235,7 +240,6 @@ static void control_task(void* arg)
 
 			pwm_set(0, (uint32_t)u1, sens1);
 			pwm_set(1, (uint32_t)u2, sens2);
-		}
 
 		portEXIT_CRITICAL();
 
