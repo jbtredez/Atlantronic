@@ -503,6 +503,9 @@ tskTCB * pxNewTCB;
 			prvAddTaskToReadyQueue( pxNewTCB );
 
 			xReturn = pdPASS;
+			#ifdef __GCC_POSIX__
+				printf("tache %p : %s\n", pxNewTCB, pxNewTCB->pcTaskName);
+			#endif
 			traceTASK_CREATE( pxNewTCB );
 		}
 		portEXIT_CRITICAL();
@@ -2351,16 +2354,20 @@ void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
 	tskTCB *pxNextTCB;
 	tskTCB *pxFirstTCB;
 
-	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, pxTaskList );
-	do
+	if( !listLIST_IS_EMPTY(pxTaskList) )
 	{
-		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, pxTaskList );
-		if(pxNextTCB)
+		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, pxTaskList );
+		do
 		{
-			pxNextTCB->event |= mask;
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, pxTaskList );
+
+			if(pxNextTCB)
+			{
+				pxNextTCB->event |= mask;
+			}
 		}
+		while( pxNextTCB != pxFirstTCB );
 	}
-	while( pxNextTCB != pxFirstTCB );
 }
 
 //! Le but est de mettre à jour les variables event de toutes les taches
