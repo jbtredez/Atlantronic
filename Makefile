@@ -27,7 +27,7 @@ INCLUDES:=-I. -Iinclude -Iinclude/rtos
 
 SIMU ?= 1
 
-DEBUG ?= 0
+DEBUG ?= 1
 
 BIT ?= 32
 
