@@ -2,7 +2,7 @@
 //! @brief PID control
 //! @author Jean-Baptiste Trédez
 
-#include "pid.h"
+#include "control/pid.h"
 
 void pid_init(struct pid *pid)
 {

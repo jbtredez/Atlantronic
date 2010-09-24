@@ -1,7 +1,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "module.h"
-#include "control.h"
+#include "control/control.h"
 #include "time2.h"
 #include "event.h"
 
