@@ -158,18 +158,18 @@ static void control_task(void* arg)
 					{
 						// TODO marges en dur
 						float ex = pos.ca  * (dest.x - pos.x) + pos.sa * (dest.y - pos.y);
-						float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
+						//float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
 
 						if( fabsf(ex) < 1.0f)
 						{
-							if(fabsf(ey) < 10.0f)
-							{
+							//if(fabsf(ey) < 10.0f)
+							//{
 								control_param.ad.distance = 0;
 								cons = dest;
 								v_dist_cons = 0;
 								v_rot_cons = 0;
 								trapeze_reset(&trapeze);
-							}
+							//}
 						}
 						else
 						{
@@ -251,7 +251,7 @@ void control_straight(float dist)
 {
 	portENTER_CRITICAL();
 	state = STRAIGHT;
-	// TODO voir / env evenement
+	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = odometry_get_position();
 	dest = cons;
@@ -266,7 +266,7 @@ void control_rotate(float angle)
 {
 	portENTER_CRITICAL();
 	state = ROTATE;
-	// TODO voir / env evenement
+	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = odometry_get_position();
 	dest = cons;
@@ -282,7 +282,7 @@ void control_goto(float x, float y)
 {
 	portENTER_CRITICAL();
 	state = GOTO;
-	// TODO voir / env evenement
+	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = odometry_get_position();
 
@@ -297,4 +297,12 @@ void control_goto(float x, float y)
 	control_param.ad.angle = dest.alpha - cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy);
 	portEXIT_CRITICAL();
+}
+
+int32_t control_get_state()
+{
+	portENTER_CRITICAL();
+	int32_t tmp = state;
+	portEXIT_CRITICAL();
+	return tmp;
 }

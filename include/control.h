@@ -23,4 +23,6 @@ void control_rotate(float angle);
 
 void control_goto(float x, float y);
 
+int32_t control_get_state();
+
 #endif
