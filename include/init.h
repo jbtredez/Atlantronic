@@ -21,6 +21,7 @@
 #define INIT_LOG                      "01"
 #define INIT_MODEL                    "02"
 #define INIT_ENCODERS                 "02"
+#define INIT_CURRENT                  "02"
 #define INIT_PWM                      "03"
 #define INIT_ODOMETRY                 "04"
 #define INIT_BEACON                   "05"

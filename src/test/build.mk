@@ -13,6 +13,7 @@ obj-test_control += odometry.o
 obj-test_control += control/pid.o
 obj-test_control += beacon.o
 obj-test_control += io/encoders.o
+obj-test_control += io/current.o
 obj-test_control += io/pwm.o
 obj-test_control += time2.o
 obj-test_control += log.o

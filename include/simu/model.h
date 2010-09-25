@@ -19,6 +19,8 @@ void model_pwm_set(unsigned int num, uint32_t val, int dir);
 //! @return valeur du codeur
 uint16_t model_encoders_get(unsigned int num);
 
+uint32_t model_current_get(unsigned int num);
+
 //! Mise à jour du modèle
 //!
 void model_update();

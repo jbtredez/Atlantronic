@@ -9,6 +9,7 @@
 #include "simu/model.h"
 #include "simu/model_motor.h"
 #include "io/encoders.h"
+#include "io/current.h"
 #include "io/pwm.h"
 #include "module.h"
 #include "log.h"
@@ -185,3 +186,26 @@ uint16_t model_encoders_get(unsigned int num)
 	return rep;
 }
 
+uint32_t model_current_get(unsigned int num)
+{
+	uint32_t rep;
+
+	portENTER_CRITICAL();
+	model_update();
+	switch(num)
+	{
+		case CURRENT_MOT_RIGHT:
+			rep = (uint16_t) X[MODEL_MOT_RIGHT_I];
+			break;
+		case CURRENT_MOT_LEFT:
+			rep = (uint16_t) X[MODEL_MOT_LEFT_I];
+			break;
+		default:
+			rep = 0;
+			meslog(_erreur_, 0, "num = %d", num);
+			break;
+	}
+	portEXIT_CRITICAL();
+
+	return rep;
+}
