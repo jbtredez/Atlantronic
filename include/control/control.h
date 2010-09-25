@@ -10,7 +10,8 @@
 
 enum control_state
 {
-	READY,          //!< no trajectory ongoing
+	READY_ASSERT,          //!< no trajectory ongoing
+	READY_FREE,
 	ROTATE,         //!< rotate
 	STRAIGHT,       //!< go straight
 	GOTO,           //!< goto
@@ -22,6 +23,8 @@ void control_straight(float dist);
 void control_rotate(float angle);
 
 void control_goto(float x, float y);
+
+void control_free();
 
 int32_t control_get_state();
 

@@ -95,7 +95,7 @@ static int control_module_init()
 	pid_rot.max_out = 65535;
 	/////
 
-	state = READY;
+	state = READY_FREE;
 
 	return 0;
 }
@@ -121,85 +121,86 @@ static void control_task(void* arg)
 		pos = odometry_get_position();
 
 		portENTER_CRITICAL();
-		if(state != READY)
-		{
-			// TODO fenetre autour de dest et v_r, v_d, si on y est, state=READY + ev
-			// calcul du prochain point
-			switch(state)
-			{
-				case STRAIGHT:
-				case ROTATE:
-				case GOTO:
-					if(control_param.ad.angle)
-					{
-						// TODO marge en dur
-						if(fabs(dest.alpha - pos.alpha) < 0.01f)
-						{
-							control_param.ad.angle = 0;
-							cons.alpha = dest.alpha;
-							cons.ca = dest.ca;
-							cons.sa = dest.sa;
-							v_dist_cons = 0;
-							v_rot_cons = 0;
-							trapeze_reset(&trapeze);
-						}
-						else
-						{
-							trapeze_set(&trapeze, 1000*TE*TE/(M_PI*PARAM_VOIE_MOT), 1000*TE/(M_PI*PARAM_VOIE_MOT));
-							trapeze_apply(&trapeze, control_param.ad.angle);
-							cons.alpha += trapeze.v;
-							cons.ca = cos(cons.alpha);
-							cons.sa = sin(cons.alpha);
-							v_dist_cons = 0;
-							v_rot_cons = trapeze.v;
-						}
-					}
-					else if(control_param.ad.distance)
-					{
-						// TODO marges en dur
-						float ex = pos.ca  * (dest.x - pos.x) + pos.sa * (dest.y - pos.y);
-						//float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
 
-						if( fabsf(ex) < 1.0f)
-						{
-							//if(fabsf(ey) < 10.0f)
-							//{
-								control_param.ad.distance = 0;
-								cons = dest;
-								v_dist_cons = 0;
-								v_rot_cons = 0;
-								trapeze_reset(&trapeze);
-							//}
-						}
-						else
-						{
-							trapeze_set(&trapeze, 1000*TE*TE, 1000*TE);
-							trapeze_apply(&trapeze, control_param.ad.distance);
-							cons.x += trapeze.v * cons.ca;
-							cons.y += trapeze.v * cons.sa;
-							v_dist_cons = trapeze.v;
-							v_rot_cons = 0;
-						}
+		// calcul du prochain point
+		switch(state)
+		{
+			case READY_FREE:
+				break;
+			case READY_ASSERT:
+				break;
+			case STRAIGHT:
+			case ROTATE:
+			case GOTO:
+				if(control_param.ad.angle)
+				{
+					// TODO marge en dur
+					if(fabs(dest.alpha - pos.alpha) < 0.01f)
+					{
+						control_param.ad.angle = 0;
+						cons.alpha = dest.alpha;
+						cons.ca = dest.ca;
+						cons.sa = dest.sa;
+						v_dist_cons = 0;
+						v_rot_cons = 0;
+						trapeze_reset(&trapeze);
 					}
 					else
 					{
+						trapeze_set(&trapeze, 1000*TE*TE/(M_PI*PARAM_VOIE_MOT), 1000*TE/(M_PI*PARAM_VOIE_MOT));
+						trapeze_apply(&trapeze, control_param.ad.angle);
+						cons.alpha += trapeze.v;
+						cons.ca = cos(cons.alpha);
+						cons.sa = sin(cons.alpha);
 						v_dist_cons = 0;
-						v_rot_cons = 0;
-						state = READY;
-						vTaskSetEvent(EVENT_CONTROL_READY);
+						v_rot_cons = trapeze.v;
 					}
-					break;
-				case ARC:
-					// TODO
-					break;
-				default:
-					// TODO cas d'erreur de prog
-					break;
-			}
+				}
+				else if(control_param.ad.distance)
+				{
+					// TODO marges en dur
+					float ex = pos.ca  * (dest.x - pos.x) + pos.sa * (dest.y - pos.y);
+					//float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
+
+					if( fabsf(ex) < 1.0f)
+					{
+						//if(fabsf(ey) < 10.0f)
+						//{
+							control_param.ad.distance = 0;
+							cons = dest;
+							v_dist_cons = 0;
+							v_rot_cons = 0;
+							trapeze_reset(&trapeze);
+						//}
+					}
+					else
+					{
+						trapeze_set(&trapeze, 1000*TE*TE, 1000*TE);
+						trapeze_apply(&trapeze, control_param.ad.distance);
+						cons.x += trapeze.v * cons.ca;
+						cons.y += trapeze.v * cons.sa;
+						v_dist_cons = trapeze.v;
+						v_rot_cons = 0;
+					}
+				}
+				else
+				{
+					v_dist_cons = 0;
+					v_rot_cons = 0;
+					state = READY_ASSERT;
+					vTaskSetEvent(EVENT_CONTROL_READY);
+				}
+				break;
+			case ARC:
+				// TODO
+				break;
+			default:
+				// TODO cas d'erreur de prog
+				break;
 		}
 
-		// TODO voir si on coupe l'assert en mode READY
-
+		if(state != READY_FREE)
+		{
 			// calcul de l'erreur de position dans le repère du robot
 			float ex = pos.ca  * (cons.x - pos.x) + pos.sa * (cons.y - pos.y);
 			float ey = -pos.sa * (cons.x - pos.x) + pos.ca * (cons.y - pos.y);
@@ -212,7 +213,7 @@ static void control_task(void* arg)
 			float v_r = odometry_get_speed_rot();
 
 //TODO à virer, test
-	if(state != READY)
+	if(state != READY_ASSERT)
 	{
 		meslog(_info_, 1, "%f   %f   %f : %f   %f   %f", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
 	}
@@ -238,8 +239,14 @@ static void control_task(void* arg)
 				u2 = -u2;
 			}
 
-			pwm_set(0, (uint32_t)u1, sens1);
-			pwm_set(1, (uint32_t)u2, sens2);
+			pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
+			pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
+		}
+		else
+		{
+			pwm_set(PWM_RIGHT, 0, 1);
+			pwm_set(PWM_LEFT, 0, 1);
+		}
 
 		portEXIT_CRITICAL();
 
@@ -305,4 +312,12 @@ int32_t control_get_state()
 	int32_t tmp = state;
 	portEXIT_CRITICAL();
 	return tmp;
+}
+
+void control_free()
+{
+	portENTER_CRITICAL();
+	state = READY_FREE;
+	vTaskSetEvent(EVENT_CONTROL_READY);
+	portEXIT_CRITICAL();
 }
