@@ -1,3 +1,8 @@
-set xrange [-1500:1500];
-set yrange [-1050:1050];
-plot "log/model_state.txt" using 8:9
+#!/usr/bin/gnuplot
+
+set xrange [-1600:1600];
+set yrange [-1150:1150];
+set nokey
+plot "scripts/tool/table" using 1:2 with lines lc rgbcolor "black", "log/model_state.txt" using 8:9
+
+pause -1
