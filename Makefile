@@ -42,7 +42,7 @@ DOT:=dot
 MARCH ?= core2
 
 DEF+=USE_STDIO=1 __GCC_POSIX__=1
-LDSCRIPT:=scripts/elf_linux_$(BIT).ld
+LDSCRIPT:=scripts/ld/elf_linux_$(BIT).ld
 
 ifeq ($(DEBUG),1)
 CFLAGS:=-march=$(MARCH) -m$(BIT) -g -x c $(addprefix -D,$(DEF)) -Wall -Wextra
@@ -64,7 +64,7 @@ LD:=wine pic32-gcc
 HEX:=wine pic32-bin2hex
 
 PIC:=32MX795F512L
-LDSCRIPT:=scripts/elf32pic32mx.ld
+LDSCRIPT:=scripts/ld/elf32pic32mx.ld
 DEF+=MPLAB_PIC32MX_PORT __GCC_PIC32__ NDEBUG
 CFLAGS:=-mprocessor=$(PIC) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
 ASFLAGS:=-mprocessor=$(PIC) -Wa,--keep-locals,--gdwarf-2
