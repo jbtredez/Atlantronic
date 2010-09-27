@@ -25,55 +25,17 @@ doc := doc
 
 INCLUDES:=-I. -Iinclude -Iinclude/rtos
 
-SIMU ?= 1
+DOT:=dot
+
+ARCH ?= gcc_posix
+#ARCH:=pic32
 
 DEBUG ?= 1
 
 BIT ?= 32
 
-ifeq ($(SIMU),1)
-_obj:=$(obj)/gcc_posix
-_bin:=$(bin)
-CC:=gcc
-AS:=gcc
-LD:=gcc
-DOT:=dot
-
-MARCH ?= core2
-
-DEF+=USE_STDIO=1 __GCC_POSIX__=1
-LDSCRIPT:=scripts/ld/elf_linux_$(BIT).ld
-
-ifeq ($(DEBUG),1)
-CFLAGS:=-march=$(MARCH) -m$(BIT) -g -x c $(addprefix -D,$(DEF)) -Wall -Wextra
-LDFLAGS:=-march=$(MARCH) -m$(BIT) -g -T $(LDSCRIPT) -pthread -lrt -ldl
-else
-DEF+= NDEBUG
-CFLAGS:=-march=$(MARCH) -m$(BIT) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
-LDFLAGS:=-march=$(MARCH) -m$(BIT) -T $(LDSCRIPT) -O3 -pthread -lrt -ldl
-endif
-
-INCLUDES+=-Isrc/rtos/portable/GCC/Posix
-OBJ-PORT+=rtos/portable/GCC/Posix/port.o
-else
-_obj:=$(obj)/pic32
-_bin:=$(bin)/pic32
-CC:=wine pic32-gcc
-AS:=wine pic32-gcc
-LD:=wine pic32-gcc
-HEX:=wine pic32-bin2hex
-
-PIC:=32MX795F512L
-LDSCRIPT:=scripts/ld/elf32pic32mx.ld
-DEF+=MPLAB_PIC32MX_PORT __GCC_PIC32__ NDEBUG
-CFLAGS:=-mprocessor=$(PIC) -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
-ASFLAGS:=-mprocessor=$(PIC) -Wa,--keep-locals,--gdwarf-2
-LDFLAGS:=-mprocessor=$(PIC) -T $(LDSCRIPT) -O3 -Wl,--defsym=__MPLAB_BUILD=1,--defsym=_min_heap_size=0,--defsym=_min_heap_size=0,--report-mem
-
-INCLUDES+=-Isrc/rtos/portable/MPLAB/PIC32MX
-OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port.o
-OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port_asm.o
-endif
+SIMU:=0
+include src/arch/$(ARCH)/Makefile
 
 ifneq ($(MAKECMDGOALS),clean)
 MK:=$(shell find . -name 'build.mk')
@@ -84,29 +46,29 @@ SRC_DOC=$(shell find . -name '*.dot')
 BIN_DOC=$(SRC_DOC:.dot=.png)
 
 # règles
-$(_obj)/%.d: $(_obj)/%.o
+$(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 
-$(_obj)/%.o: $(src)/%.c
+$(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $<
 	@mkdir -p `dirname $@`
 	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
 	@# conversion des \ en / (format unix) dans les chemins (mais pas en bout de ligne) (compilo gcc modifié par MPLAB - version windows)
 	@sed -i 's/\\/\//g;s/ \// \\/g' $(@:.o=.d)
 
-$(_obj)/%.o: $(src)/%.S
+$(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $<
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
 ifeq ($(SIMU),1)
-all: $(addprefix $(_bin)/,$(BIN))
+all: $(addprefix $(bin)/$(ARCH)/,$(BIN))
 else
-all: $(addprefix $(_bin)/, $(addsuffix .hex, $(BIN)))
+all: $(addprefix $(bin)/$(ARCH)/, $(addsuffix .hex, $(BIN)))
 endif
 .PHONY: all
 
-$(foreach var,$(BIN),$(eval $(_bin)/$(var):$(addprefix $(_obj)/,$(obj-$(var)) )))
-$(foreach var,$(BIN),$(eval DEP += $(addprefix $(_obj)/,$(obj-$(var):.o=.d))))
+$(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
+$(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
@@ -116,10 +78,10 @@ endif
 	@echo [HEX] $<
 	@$(HEX) $<
 
-$(_bin)/%:
+$(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(LD) $(LDFLAGS) $($(patsubst $(_bin)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
+	@$(LD) $(LDFLAGS) $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
 
 %.png: %.dot
 	@echo [DOT] $@
@@ -132,8 +94,8 @@ doc: $(BIN_DOC)
 .PHONY: doc
 
 toutout:
-	@+make SIMU=1
-	@+make SIMU=0
+	@+make ARCH=gcc_posix
+	@+make ARCH=pic32
 
 .PHONY: toutout
 
