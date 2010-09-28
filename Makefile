@@ -60,9 +60,9 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
-ifeq ($(SIMU),1)
 all: $(addprefix $(bin)/$(ARCH)/,$(BIN))
-else
+
+ifeq ($(ARCH),pic32)
 all: $(addprefix $(bin)/$(ARCH)/, $(addsuffix .hex, $(BIN)))
 endif
 .PHONY: all
@@ -81,7 +81,7 @@ endif
 $(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(LD) $(LDFLAGS) $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map"
+	@$(LD) $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map" $(LDFLAGS)
 
 %.png: %.dot
 	@echo [DOT] $@
