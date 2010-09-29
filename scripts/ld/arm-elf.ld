@@ -73,6 +73,7 @@ SECTIONS
 	.iplt           : { *(.iplt) }
 	.text           :
 	{
+		KEEP(*(.isr_vector))
 		*(.text.unlikely .text.*_unlikely)
 		*(.text .stub .text.* .gnu.linkonce.t.*)
 		/* .gnu.warning sections are handled specially by elf32.em.  */

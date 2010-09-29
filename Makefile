@@ -95,6 +95,7 @@ doc: $(BIN_DOC)
 
 toutout:
 	@+make ARCH=gcc_posix
+	@+make ARCH=arm_cm3
 	@+make ARCH=pic32
 
 .PHONY: toutout

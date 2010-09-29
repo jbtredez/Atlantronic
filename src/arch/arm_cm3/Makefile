@@ -7,14 +7,40 @@ MTUNE:=cortex-m3
 
 LDSCRIPT:=scripts/ld/arm-elf.ld
 
+CFLAGS:=-mcpu=$(MCPU)
+CFLAGS+=-msoft-float
+CFLAGS+=-mfpu=vfp
+CFLAGS+=-mthumb
+CFLAGS+=-x c
+CFLAGS+=-Wall
+CFLAGS+=-Wextra
+
+LDFLAGS:=--entry isr_reset
+LDFLAGS+=-mcpu=$(MCPU)
+LDFLAGS+=-msoft-float
+LDFLAGS+=-mfpu=vfp
+LDFLAGS+=-mthumb
+LDFLAGS+=-T $(LDSCRIPT)
+LDFLAGS+=-lgcc
+LDFLAGS+=-lc
+LDFLAGS+=-lm
+LDFLAGS+=-lnosys
+LDFLAGS+=-lg 
+
 ifeq ($(DEBUG),1)
-CFLAGS:=-mcpu=$(MCPU) -mfpu=vfp -mthumb -msoft-float -gdwarf-2 -x c $(addprefix -D,$(DEF)) -Wall -Wextra
-LDFLAGS:=-mcpu=$(MCPU) -mfpu=vfp -mthumb -msoft-float -gdwarf-2 -T $(LDSCRIPT) -lgcc -lc -lm -lnosys -lg
+CFLAGS+=-gdwarf-2
+CFLAGS+=$(addprefix -D,$(DEF))
+
+LDFLAGS+=-gdwarf-2
 else
 DEF+= NDEBUG
-CFLAGS:=-mcpu=$(MCPU) -mtune=$(MTUNE) -mthumb -msoft-float -O3 -x c $(addprefix -D,$(DEF)) -Wall -Wextra -fomit-frame-pointer
-LDFLAGS:=-mcpu=$(MCPU) -mtune=$(MTUNE) -mthumb -msoft-float -lc -lm -lgcc -T $(LDSCRIPT) -O3
+CFLAGS+=-O3
+CFLAGS+=-fomit-frame-pointer
+CFLAGS+=$(addprefix -D,$(DEF))
+
+LDFLAGS+=-O3
 endif
 
 INCLUDES+=-Isrc/rtos/portable/GCC/ARM_CM3
 OBJ-PORT+=rtos/portable/GCC/ARM_CM3/port.o
+OBJ-PORT+=isr.o
