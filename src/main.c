@@ -42,6 +42,17 @@ static void signal_handler(int sig)
 }
 #endif
 
+void init_panic(int init)
+{
+	(void) init;
+
+	//! @todo allumer une led
+	while(1)
+	{
+
+	}
+}
+
 int main()
 {
 	#ifdef __GCC_POSIX__
@@ -55,12 +66,10 @@ int main()
 	#endif
 
 	int init = initModules();
-	if(init){
-		if(init < ERR_INIT_LOG){
-			// on a initialisé les log
-			meslog(_erreur_, 0, "init : %i", init);
-		}
-		//! @todo allumer une led
+
+	if(init)
+	{		
+		init_panic(init);
 	}
 
 	vTaskStartScheduler();
