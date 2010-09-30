@@ -57,7 +57,7 @@ SECTIONS
 		__initcall_end = .;
 
 		__data_end__ = .;
-	} > FLASH
+	} > SRAM AT > FLASH
 
 	/* Section .bss :
 	   Données à mettre à zéro. C'est réalisé dans la fonction isr_reset (fichier isr.c)
