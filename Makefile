@@ -28,7 +28,6 @@ INCLUDES:=-I. -Iinclude -Iinclude/rtos
 DOT:=dot
 
 ARCH ?= gcc_posix
-#ARCH:=pic32
 
 DEBUG ?= 1
 
@@ -60,12 +59,18 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
-all: $(addprefix $(bin)/$(ARCH)/,$(BIN))
+all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN))
 
 ifeq ($(ARCH),pic32)
-all: $(addprefix $(bin)/$(ARCH)/, $(addsuffix .hex, $(BIN)))
+all-$(ARCH): $(addprefix $(bin)/$(ARCH)/, $(addsuffix .hex, $(BIN)))
 endif
-.PHONY: all
+
+.PHONY: all-$(ARCH)
+
+all:
+	@+make ARCH=gcc_posix
+	@+make ARCH=arm_cm3
+	@+make ARCH=pic32
 
 $(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
 $(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
@@ -92,13 +97,6 @@ doc: $(BIN_DOC)
 	@doxygen Doxyfile > /dev/null
 
 .PHONY: doc
-
-toutout:
-	@+make ARCH=gcc_posix
-	@+make ARCH=arm_cm3
-	@+make ARCH=pic32
-
-.PHONY: toutout
 
 clean:
 	@rm -frv $(obj)

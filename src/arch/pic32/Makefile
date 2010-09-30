@@ -14,4 +14,3 @@ INCLUDES+=-Isrc/rtos/portable/MPLAB/PIC32MX
 OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port.o
 OBJ-PORT+= rtos/portable/MPLAB/PIC32MX/port_asm.o
 
-#cflags-
