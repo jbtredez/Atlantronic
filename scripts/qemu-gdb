@@ -1,0 +1,4 @@
+#!/bin/bash
+
+qemu-system-arm -s -S -cpu cortex-m3 -M lm3s811evb -kernel $*
+#qemu-system-arm -cpu cortex-m3 -smp 1
