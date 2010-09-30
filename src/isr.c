@@ -18,11 +18,11 @@ extern void xPortSysTickHandler(void);
 extern void vPortSVCHandler( void );
 extern int main(void);
 
-extern unsigned long _etext;
-extern unsigned long __data_start;
-extern unsigned long _edata;
-extern unsigned long __bss_start;
-extern unsigned long _bss_end__;
+extern unsigned long __text_end__;
+extern unsigned long __data_start__;
+extern unsigned long __data_end__;
+extern unsigned long __bss_start__;
+extern unsigned long __bss_end__;
 extern unsigned long _stack;
 
 __attribute__ ((section(".isr_vector")))
@@ -86,8 +86,8 @@ void isr_reset(void)
 	//
 	// Copy the data segment initializers from flash to SRAM.
 	//
-	pulSrc = &_etext;
-	for(pulDest = &__data_start; pulDest < &_edata; )
+	pulSrc = &__text_end__;
+	for(pulDest = &__data_start__; pulDest < &__data_end__; )
 	{
 		*pulDest++ = *pulSrc++;
 	}
@@ -96,8 +96,8 @@ void isr_reset(void)
     // Zero fill the bss segment.  This is done with inline assembly since this
     // will clear the value of pulDest if it is not kept in a register.
     //
-    __asm("    ldr     r0, =__bss_start\n"
-          "    ldr     r1, =_bss_end__\n"
+    __asm("    ldr     r0, =__bss_start__\n"
+          "    ldr     r1, =__bss_end__\n"
           "    mov     r2, #0\n"
           "    .thumb_func\n"
           "zero_loop:\n"

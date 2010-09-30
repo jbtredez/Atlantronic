@@ -15,8 +15,7 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 
-LDFLAGS:=--entry isr_reset
-LDFLAGS+=-mcpu=$(MCPU)
+LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-msoft-float
 LDFLAGS+=-mfpu=vfp
 LDFLAGS+=-mthumb
