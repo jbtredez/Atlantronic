@@ -15,11 +15,11 @@ ENTRY(isr_reset)
 MEMORY
 {
     FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 64K
-    SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 8K
+    SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
 /* placement du haut de la stack : tout au bout de la SRAM */
-_stack = 0x20000000 + 8K;
+_ram_top = 0x20000000 + 64K;
 
 SECTIONS
 {
@@ -31,6 +31,12 @@ SECTIONS
 	{
 		KEEP(*(.isr_vector))
 		*(.text)
+		/* tableau (trié) des fonctions d'init */
+		__initcall_start = .;
+		*(.initcall.init)
+		*(SORT(.initcall.init.*))
+		__initcall_end = .;
+
 		*(.init)
 		*(.rodata*)
 		*(.fini)
@@ -49,13 +55,6 @@ SECTIONS
 		__data_start__ = .;
 		*(vtable)
 		*(.data)
-
-		/* tableau (trié) des fonctions d'init */
-		__initcall_start = .;
-		*(.initcall.init)
-		*(SORT(.initcall.init.*))
-		__initcall_end = .;
-
 		__data_end__ = .;
 	} > SRAM AT > FLASH
 
@@ -69,6 +68,8 @@ SECTIONS
 		*(COMMON)
 		__bss_end__ = .;
 	} > SRAM
+
+	_stack_top = _ram_top - 16;
 
 	PROVIDE (end = .);
 }

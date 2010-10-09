@@ -23,13 +23,13 @@ extern unsigned long __data_start__;
 extern unsigned long __data_end__;
 extern unsigned long __bss_start__;
 extern unsigned long __bss_end__;
-extern unsigned long _stack;
+extern unsigned long _stack_top;
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
 {
 	// core level - cortex-m3
-	(void*)&_stack,                         // The initial stack pointer
+	(void (*)(void))(&_stack_top),          // The initial stack pointer
 	isr_reset,                              // The reset handler
 	isr_nmi,                                // The NMI handler
 	isr_hard_fault,                         // The hard fault handler
@@ -77,6 +77,27 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+  (void*)0,
+  (void*)0,
+  (void*)0,
+  (void*)0,
+  (void*)0,
+  (void*)0,
+  (void*)0,
+//  (void*)0xF108F85F // RAM boot.
 };
 
 void isr_reset(void)
