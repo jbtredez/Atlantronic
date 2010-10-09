@@ -24,7 +24,19 @@ obj-test_control += rtos/portable/MemMang/heap_3.o
 obj-test_control += $(OBJ-PORT)
 lib-test_control += -lm
 BIN += test_control
+
+ifeq ($(SIMU),0)
+obj-test_control += syscalls.o
+endif
+
 ifeq ($(SIMU),1)
 obj-test_control += simu/model.o
 obj-test_control += simu/model_motor.o
+endif
+
+ifeq ($(SIMU),0)
+obj-test_svc += test/test_svc.o
+obj-test_svc += syscalls.o
+obj-test_svc += isr.o
+BIN+=test_svc
 endif

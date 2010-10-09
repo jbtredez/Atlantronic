@@ -17,6 +17,10 @@ obj-rtos += $(OBJ-PORT)
 lib-rtos += -lm
 BIN+= rtos
 
+ifeq ($(SIMU),0)
+obj-rtos += syscalls.o
+endif
+
 ifeq ($(SIMU),1)
 obj-rtos += simu/model.o
 obj-rtos += simu/model_motor.o

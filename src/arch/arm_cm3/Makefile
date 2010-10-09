@@ -1,6 +1,9 @@
-CC:=arm-elf-gcc
-AS:=arm-elf-gcc
-LD:=arm-elf-gcc
+CROSSCOMPILE:=arm-elf-
+#CROSSCOMPILE:=arm-none-eabi-
+
+CC:=$(CROSSCOMPILE)gcc
+AS:=$(CROSSCOMPILE)gcc
+LD:=$(CROSSCOMPILE)gcc
 
 MCPU:=cortex-m3
 MTUNE:=cortex-m3
@@ -14,6 +17,7 @@ CFLAGS+=-mthumb
 CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
+CFLAGS+=-mno-thumb-interwork
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-msoft-float
@@ -23,7 +27,7 @@ LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
-LDFLAGS+=-lnosys
+#LDFLAGS+=-lnosys
 LDFLAGS+=-lg 
 
 ifeq ($(DEBUG),1)
