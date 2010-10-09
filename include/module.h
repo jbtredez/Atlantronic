@@ -5,7 +5,7 @@
 //! @brief fournit les fonctions d'enregistrement des points d'entrée et de sortie des modules
 //! @author Jean-Baptiste Trédez
 //!
-//! Prévu pour gcc et pic32-gcc
+//! Prévu pour gcc
 //! Fonctionnement :
 //!    - un utilisateur créer une fonction "int mon_module_init()" qui retourne 0 si l'init s'est bien faite, un code d'erreur sinon
 //!    - l'utilisateur enregistre la fonction avec : monule_init(mon_module_init, INIT_MON_MODULE) ou INIT_MON_MODULE est la priorité du module (cf init.h)
@@ -18,24 +18,13 @@
 typedef int (*initcall_t)();
 typedef int (*exitcall_t)();
 
-#ifdef __GCC_PIC32__
-	// microchip a déjà défini __section__ pour autre chose ...
-	#define module_init(fn, lv) \
-		static const initcall_t __initcall_##fn __attribute__((used)) \
-		__attribute__((section(".initcall.init." lv))) = fn
+#define module_init(fn, lv) \
+	static const initcall_t __initcall_##fn __attribute__((used)) \
+	__attribute__((__section__(".initcall.init." lv))) = fn
 
-	#define module_exit(fn, lv) \
-		static const exitcall_t __exitcall_##fn __attribute__((used)) \
-		__attribute__((section(".exitcall.exit." lv))) = fn
-#else
-	#define module_init(fn, lv) \
-		static const initcall_t __initcall_##fn __attribute__((used)) \
-		__attribute__((__section__(".initcall.init." lv))) = fn
-
-	#define module_exit(fn, lv) \
-		static const exitcall_t __exitcall_##fn __attribute__((used)) \
-		__attribute__((__section__(".exitcall.exit." lv))) = fn
-#endif
+#define module_exit(fn, lv) \
+	static const exitcall_t __exitcall_##fn __attribute__((used)) \
+	__attribute__((__section__(".exitcall.exit." lv))) = fn
 
 //! Fonction d'initialisation des modules
 //! Les modules sont initialisés dans l'ordre
