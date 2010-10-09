@@ -61,16 +61,11 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 # cibles
 all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN))
 
-ifeq ($(ARCH),pic32)
-all-$(ARCH): $(addprefix $(bin)/$(ARCH)/, $(addsuffix .hex, $(BIN)))
-endif
-
 .PHONY: all-$(ARCH)
 
 all:
 	@+make ARCH=gcc_posix
 	@+make ARCH=arm_cm3
-	@+make ARCH=pic32
 
 $(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
 $(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
