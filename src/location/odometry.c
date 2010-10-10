@@ -2,7 +2,7 @@
 //! @brief Odometry
 //! @author Jean-Baptiste Trédez
 
-#include "odometry.h"
+#include "location/odometry.h"
 #include "io/encoders.h"
 #include "module.h"
 #include "robot_parameters.h"

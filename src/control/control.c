@@ -9,7 +9,7 @@
 #include "control/control.h"
 #include "priority.h"
 #include "log.h"
-#include "odometry.h"
+#include "location/location.h"
 #include "vect_pos.h"
 #include "io/pwm.h"
 #include "control/pid.h"
@@ -117,8 +117,8 @@ static void control_task(void* arg)
 
 	while(1)
 	{
-		odometry_update();
-		pos = odometry_get_position();
+		location_update();
+		pos = location_get_position();
 
 		portENTER_CRITICAL();
 
@@ -209,8 +209,8 @@ static void control_task(void* arg)
 			float v_d_c = v_dist_cons * cos(ealpha) + kx * ex;
 			float v_r_c = v_rot_cons + ky * v_dist_cons * sinc(ealpha) * ey + kalpha * ealpha;
 
-			float v_d = odometry_get_speed_curv_abs();
-			float v_r = odometry_get_speed_rot();
+			float v_d = location_get_speed_curv_abs();
+			float v_r = location_get_speed_rot();
 
 //TODO à virer, test
 	if(state != READY_ASSERT)
@@ -260,7 +260,7 @@ void control_straight(float dist)
 	state = STRAIGHT;
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
-	cons = odometry_get_position();
+	cons = location_get_position();
 	dest = cons;
 	dest.x += dest.ca * dist;
 	dest.y += dest.sa * dist;
@@ -275,7 +275,7 @@ void control_rotate(float angle)
 	state = ROTATE;
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
-	cons = odometry_get_position();
+	cons = location_get_position();
 	dest = cons;
 	dest.alpha += angle;
 	dest.ca = cos(dest.alpha);
@@ -291,7 +291,7 @@ void control_goto(float x, float y)
 	state = GOTO;
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
-	cons = odometry_get_position();
+	cons = location_get_position();
 
 	dest.x = x;
 	dest.y = y;

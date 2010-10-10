@@ -1,9 +1,10 @@
 obj-rtos += main.o
 obj-rtos += control/control.o
-obj-rtos += trapeze.o
-obj-rtos += odometry.o
 obj-rtos += control/pid.o
-obj-rtos += beacon.o
+obj-rtos += trapeze.o
+obj-rtos += location/location.o
+obj-rtos += location/odometry.o
+obj-rtos += location/beacon.o
 obj-rtos += io/encoders.o
 obj-rtos += io/current.o
 obj-rtos += io/pwm.o

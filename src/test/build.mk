@@ -8,10 +8,11 @@ endif
 obj-test_control += main.o
 obj-test_control += test/strategy_test_control.o
 obj-test_control += control/control.o
-obj-test_control += trapeze.o
-obj-test_control += odometry.o
 obj-test_control += control/pid.o
-obj-test_control += beacon.o
+obj-test_control += trapeze.o
+obj-test_control += location/odometry.o
+obj-test_control += location/location.o
+obj-test_control += location/beacon.o
 obj-test_control += io/encoders.o
 obj-test_control += io/current.o
 obj-test_control += io/pwm.o

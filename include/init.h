@@ -25,11 +25,12 @@
 #define INIT_PWM                      "03"
 #define INIT_ODOMETRY                 "04"
 #define INIT_BEACON                   "05"
+#define INIT_LOCATION                 "06"
 //#define INIT_VFS                      "02"
 //#define INIT_USB                      "03"
 //#define INIT_I2C                      "04"
 //#define INIT_CAN                      "05"
-#define INIT_CONTROL                  "06"
+#define INIT_CONTROL                  "15"
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 

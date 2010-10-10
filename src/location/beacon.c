@@ -2,7 +2,7 @@
 //! @brief Beacon
 //! @author Jean-Baptiste Trédez
 
-#include "beacon.h"
+#include "location/beacon.h"
 #include "module.h"
 #include "robot_parameters.h"
 #include "portmacro.h"
