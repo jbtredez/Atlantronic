@@ -5,4 +5,5 @@ set yrange [-1150:1150];
 set nokey
 plot "scripts/tool/table" using 1:2 with lines lc rgbcolor "black", "log/model_state.txt" using 8:9
 
+# la pause sert à laisser gnuplot lancé (pour zoomer par exemple)
 pause -1

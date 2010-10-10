@@ -12,7 +12,7 @@ digraph robot
 	node [color=lightblue2, style=filled ]
 	avoidance
 	"colision detection"
-	positions
+	location
 	odometry
 	beacon
 
@@ -39,9 +39,10 @@ digraph robot
 	strategy -> control
 	avoidance -> control
 	control -> "colision detection"
-	"colision detection" -> positions
-	positions -> odometry
-	positions -> beacon
+	control -> location
+	"colision detection" -> location
+	location -> odometry
+	location -> beacon
 
 	beacon -> "io/beacon"
 	odometry -> "io/encoders"
