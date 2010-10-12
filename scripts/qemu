@@ -1,4 +1,7 @@
 #!/bin/bash
 
-qemu-system-arm -cpu cortex-m3 -M lm3s811evb -kernel $*
-#qemu-system-arm -cpu cortex-m3 -smp 1
+SCRIPT=`readlink -f $0`
+SCRIPT_DIR=`dirname $SCRIPT`
+ATLANTRONIC_DIR=`dirname $SCRIPT_DIR`
+
+$ATLANTRONIC_DIR/qemu/arm-softmmu/qemu-system-arm -M atlantronic -kernel $*
