@@ -1,0 +1,3 @@
+[submodule "qemu"]
+	path = qemu
+	url = git@github.com:jbtredez/qemu.git
