@@ -118,7 +118,8 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	pxTopOfStack--; /* Offset added to account for the way the MCU uses the stack on entry/exit of interrupts. */
 	*pxTopOfStack = portINITIAL_XPSR;	/* xPSR */
 	pxTopOfStack--;
-	*pxTopOfStack = ( portSTACK_TYPE ) pxCode;	/* PC */
+	// XXX patch moche, comprendre d'ou vient le problème
+	*pxTopOfStack =  pxCode-1;	/* PC */
 	pxTopOfStack--;
 	*pxTopOfStack = 0;	/* LR */
 	pxTopOfStack -= 5;	/* R12, R3, R2 and R1. */
@@ -129,6 +130,9 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 }
 /*-----------------------------------------------------------*/
 
+// doc utile : 0xfffffff1 : retour handler mode
+//             0xfffffffd : retour thread mode, et utilisation de process stack
+//             0xfffffff9 : retour thread mode, et utilisation de main stack
 void vPortSVCHandler( void )
 {
 	__asm volatile (
@@ -136,14 +140,14 @@ void vPortSVCHandler( void )
 					"	ldr r1, [r3]					\n" /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
 					"	ldr r0, [r1]					\n" /* The first item in pxCurrentTCB is the task top of stack. */
 					"	ldmia r0!, {r4-r11}				\n" /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
-					"   ldr r14, [r0,#24]               \n" /* copie de pc dans r14 pour brancher desuss après */
 					"	msr psp, r0						\n" /* Restore the task stack pointer. */
 					"	mov r0, #0 						\n"
 					"	msr	basepri, r0					\n"
-					"	bx r14							\n"
+					"	ldr lr, =0xfffffffd			    \n"
+					"	bx lr							\n"
 					"									\n"
 					"	.align 2						\n"
-					"pxCurrentTCBConst2: .word pxCurrentTCB				\n"
+					"pxCurrentTCBConst2: .word pxCurrentTCB	\n"
 				);
 }
 /*-----------------------------------------------------------*/
