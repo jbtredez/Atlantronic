@@ -118,8 +118,8 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	pxTopOfStack--; /* Offset added to account for the way the MCU uses the stack on entry/exit of interrupts. */
 	*pxTopOfStack = portINITIAL_XPSR;	/* xPSR */
 	pxTopOfStack--;
-	// XXX patch moche, comprendre d'ou vient le problème
-	*pxTopOfStack =  pxCode-1;	/* PC */
+	// TODO patch moche, l'éditeur de liens change le dernier bit. Comme on sait que tout est aligné sur 4 octets, on remet à zéro les deux derniers bits
+	*pxTopOfStack =  ((uint32_t) pxCode) & 0xfffffffc;	/* PC */
 	pxTopOfStack--;
 	*pxTopOfStack = 0;	/* LR */
 	pxTopOfStack -= 5;	/* R12, R3, R2 and R1. */
