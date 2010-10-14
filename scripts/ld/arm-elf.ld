@@ -11,10 +11,9 @@ section .bss en ram : choses à initialiser à 0 (fait par isr_reset dans isr.c)
 /* point d'entrée */
 ENTRY(isr_reset)
 
-/* zones mémoires : TODO à modifier FLASH 256K, SRAM 64K. Ce sont les valeurs pour la machine émulée sous qemu (trouver comment modifier cela sous qemu) */
 MEMORY
 {
-    FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 64K
+    FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 256K
     SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
