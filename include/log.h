@@ -31,12 +31,15 @@
 #define _info_             1
 #define _erreur_          -1
 
-#define LOG_SIZE         128
+// TODO revoir le système de log, ca le fait pas pour la cible arm (mémoire)
+#define LOG_SIZE         64
 
 #define LOG_QUEUE_SIZE   10
 
 int log_add(const char* msg, ...);
 portBASE_TYPE log_add_from_isr(const char* msg, ...);
+
+#ifdef __GCC_POSIX__
 
 //! Macro de log formatés. Permet de faire des log par type avec plusieurs niveaux de log
 //! C'est une macro pour permettre d'avoir __FILE__, __FUNCTION__ et __LINE__ valide
@@ -74,5 +77,17 @@ portBASE_TYPE log_add_from_isr(const char* msg, ...);
 # define logerror(msg,arg ...)	do{	\
 	log_add( LOG_ROUGE("%li\t_erreur_\t%s:%s:%i\t"msg": %s""\n"),time_match(),__FILE__,__FUNCTION__,__LINE__,##arg,strerror(errno));	\
 }while(0) //!< Macro de log d'erreur formate (récupère l'erreur dans ERRNO)
+
+#else
+
+# define meslog(type, niveau, msg, arg ...)
+
+# define meslogFromISR(type, niveau, msg, arg ...)
+
+# define meslogc(couleur, type, niveau, msg, arg ...)
+
+# define logerror(msg,arg ...)
+
+#endif
 
 #endif

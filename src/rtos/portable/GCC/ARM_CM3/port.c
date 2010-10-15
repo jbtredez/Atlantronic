@@ -143,7 +143,7 @@ void vPortSVCHandler( void )
 					"	msr psp, r0						\n" /* Restore the task stack pointer. */
 					"	mov r0, #0 						\n"
 					"	msr	basepri, r0					\n"
-					"	ldr lr, =0xfffffffd			    \n"
+					"	ldr lr, =0xfffffffd			    \n" // Au branchement sur 0xfffffffd, on retourne en thread mode avec utilisation de la stack process (on a mis le bon pointeur msr psp, r0). On va dépiler automatiquement r0,r1,r2,r3, r12, lr et brancher sur le pc.
 					"	bx lr							\n"
 					"									\n"
 					"	.align 2						\n"
@@ -245,7 +245,7 @@ void xPortPendSVHandler( void )
 	"	ldr r0, [r1]						\n" /* The first item in pxCurrentTCB is the task top of stack. */
 	"	ldmia r0!, {r4-r11}					\n" /* Pop the registers. */
 	"	msr psp, r0							\n"
-	"	bx r14								\n"
+	"	bx lr								\n"
 	"										\n"
 	"	.align 2							\n"
 	"pxCurrentTCBConst: .word pxCurrentTCB	\n"

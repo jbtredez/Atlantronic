@@ -18,7 +18,7 @@
 #include "event.h"
 
 //! @todo réglage au pif
-#define CONTROL_STACK_SIZE       50
+#define CONTROL_STACK_SIZE       150
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        5
@@ -212,11 +212,6 @@ static void control_task(void* arg)
 			float v_d = location_get_speed_curv_abs();
 			float v_r = location_get_speed_rot();
 
-//TODO à virer, test
-	if(state != READY_ASSERT)
-	{
-		meslog(_info_, 1, "%f   %f   %f : %f   %f   %f", cons.x, cons.y, cons.alpha, pos.x, pos.y, pos.alpha);
-	}
 			// régulation en vitesse
 			float u_av = pid_apply(&pid_av, v_d_c - v_d);
 			float u_rot = pid_apply(&pid_rot, v_r_c - v_r);
