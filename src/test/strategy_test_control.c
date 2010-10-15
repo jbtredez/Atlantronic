@@ -6,7 +6,7 @@
 #include "event.h"
 
 //! @todo réglage au pif
-#define STRATEGY_TEST_CONTROL_STACK_SIZE       10
+#define STRATEGY_TEST_CONTROL_STACK_SIZE       64
 
 static void strategy_test_control_task();
 int strategy_test_control_module_init();
