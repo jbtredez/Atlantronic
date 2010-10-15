@@ -20,7 +20,7 @@
 #include <stdarg.h>
 
 //! @todo réglage au pif
-#define LOG_STACK_SIZE       10
+#define LOG_STACK_SIZE       64
 
 void log_task(void *);
 
