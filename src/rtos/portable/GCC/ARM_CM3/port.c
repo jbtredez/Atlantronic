@@ -118,8 +118,8 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	pxTopOfStack--; /* Offset added to account for the way the MCU uses the stack on entry/exit of interrupts. */
 	*pxTopOfStack = portINITIAL_XPSR;	/* xPSR */
 	pxTopOfStack--;
-	// TODO patch moche, l'éditeur de liens change le dernier bit. Comme on sait que tout est aligné sur 4 octets, on remet à zéro les deux derniers bits
-	*pxTopOfStack =  ((uint32_t) pxCode) & 0xfffffffc;	/* PC */
+	// TODO (vérifier) : mise à 0 du dernier bit, lorsqu'on branche avec bx ou blx, c'est automatique mais ici on branche pas directement mais sur l'adresse spéciale 0xfffffffd. Voir si c'est juste pour qemu ou sur le matos réel.
+	*pxTopOfStack =  ((uint32_t) pxCode) & 0xfffffffe;	/* PC */
 	pxTopOfStack--;
 	*pxTopOfStack = 0;	/* LR */
 	pxTopOfStack -= 5;	/* R12, R3, R2 and R1. */
