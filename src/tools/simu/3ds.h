@@ -20,7 +20,8 @@ struct bloc3DS{
 //! @class modele3DS
 //! @brief Representation d'un objet 3DS
 //! @todo TODO constructeur avec chargement + tester double chargement (voir si on a bien fusion)
-class modele3DS : public modele3D{
+class modele3DS : public modele3D
+{
 public:
     modele3DS(); //!< Constructeur
 	~modele3DS(); //!< Destructeur

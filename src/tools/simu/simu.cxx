@@ -89,7 +89,7 @@ int main(int argc, char** argv)
 
 	table.chargement("table.3ds");
 	tomate.chargement("tomate.3ds");
-	tomate.objets[0].translation(0,0,100);
+	tomate.translation(0,0,100);
 
 	// création de la fenêtre
 	GtkWidget* fenetrePrincipale = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -357,16 +357,16 @@ static gboolean clavierRelease(GtkWidget* widget, GdkEventKey* event, gpointer d
 	switch(event->keyval)
 	{
 		case GDK_Up:
-			tomate.objets[0].translation(0,100,0);
+			tomate.translation(0,100,0);
 			break;
 		case GDK_Down:
-			tomate.objets[0].translation(0,-100,0);
+			tomate.translation(0,-100,0);
 			break;
 		case GDK_Left:
-			tomate.objets[0].translation(-100,0,0);
+			tomate.translation(-100,0,0);
 			break;
 		case GDK_Right:
-			tomate.objets[0].translation(100,0,0);
+			tomate.translation(100,0,0);
 			break;
 		default:
 			break;
