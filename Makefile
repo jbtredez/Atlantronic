@@ -51,8 +51,6 @@ $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $<
 	@mkdir -p `dirname $@`
 	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
-	@# conversion des \ en / (format unix) dans les chemins (mais pas en bout de ligne) (compilo gcc modifié par MPLAB - version windows)
-	@sed -i 's/\\/\//g;s/ \// \\/g' $(@:.o=.d)
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $<
