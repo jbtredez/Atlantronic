@@ -11,8 +11,6 @@
 #define STM32F10X_CL
 #include "stm32f10x.h"
 
-#include "Motor.h"
-
 // TODO : voir / envoyer à qemu le system_clock_scale
 
 class ArmRcc

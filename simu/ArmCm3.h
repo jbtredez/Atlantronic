@@ -2,10 +2,11 @@
 #define ARM_CM3_H
 
 #include <stdint.h>
+#include "CpuEmu.h"
 //#include "ArmTim.h"
 #include "ArmRcc.h"
 
-class ArmCm3
+class ArmCm3 : public CpuEmu
 {
 public:
 	ArmCm3();
