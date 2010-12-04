@@ -36,7 +36,7 @@ void* CpuEmu::lecture()
 			if(io.cmd == WRITE_MEMORY)
 			{
 				write(fd_to_qemu, &ack, sizeof(ack));
-				printf("commande : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
+//				printf("commande : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
 				mem_write(io.offset, io.val);
 			}
 			else if(io.cmd == READ_MEMORY)

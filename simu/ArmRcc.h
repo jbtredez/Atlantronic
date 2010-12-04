@@ -5,27 +5,19 @@
 //! @brief RCC
 //! @author Jean-Baptiste Trédez
 
-#include <stdint.h>
-
-#include <stdint.h>
-#define STM32F10X_CL
-#include "stm32f10x.h"
+#include "ArmMem.h"
 
 // TODO : voir / envoyer à qemu le system_clock_scale
 
-class ArmRcc
+class ArmRcc : public ArmMem<RCC_TypeDef>
 {
 public:
 	ArmRcc();
 	~ArmRcc();
 
-	void mem_write(uint64_t offset, uint32_t val);
-	uint32_t mem_read(uint64_t offset);
-
 private:
 	int system_clock_scale;
 	void update();
-	RCC_TypeDef RCC;
 };
 
 #endif

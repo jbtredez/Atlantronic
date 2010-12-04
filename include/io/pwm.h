@@ -2,7 +2,7 @@
 #define PWM_H
 
 //! @file pwm.h
-//! @brief PWM
+//! @brief PWM interface
 //! @author Jean-Baptiste Trédez
 
 #include <stdint.h>
@@ -17,6 +17,6 @@
 //!
 //! @param num pwm id
 //! @param val new value
-void pwm_set(unsigned int num, uint32_t val, int dir);
+void pwm_set(unsigned int num, uint16_t val, int dir);
 
 #endif

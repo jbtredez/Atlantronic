@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include "CpuEmu.h"
-//#include "ArmTim.h"
+#include "ArmTimMotor.h"
 #include "ArmRcc.h"
 
 class ArmCm3 : public CpuEmu
@@ -17,14 +17,7 @@ public:
 
 private:
 	ArmRcc RCC;
-/*	ArmTim TIM1;
-	ArmTim TIM2;
-	ArmTim TIM3;
-	ArmTim TIM4;
-	ArmTim TIM5;
-	ArmTim TIM6;
-	ArmTim TIM7;
-*/
+	ArmTimMotor TIM1;
 };
 
 #endif
