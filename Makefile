@@ -1,8 +1,6 @@
 # @file Makefile
 # @author Jean-Baptiste Trédez
 #
-# TODO : vite fait - à tester et améliorer
-#
 # fichier de configuration : .cfg
 # les fichiers objets *.o sont construits à partir des fichiers *.c ou *.S
 #
@@ -36,6 +34,11 @@ BIT ?= 32
 SIMU:=0
 include src/arch/$(ARCH)/Makefile
 
+AS:=$(CROSSCOMPILE)as
+CC:=$(CROSSCOMPILE)gcc
+CXX:=$(CROSSCOMPILE)g++
+DOT:=dot
+
 ifneq ($(MAKECMDGOALS),clean)
 MK:=$(shell find . -name 'build.mk')
 -include $(MK)
@@ -52,6 +55,11 @@ $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@mkdir -p `dirname $@`
 	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
 
+$(obj)/$(ARCH)/%.o: $(src)/%.cxx
+	@echo [CXX] $<
+	@mkdir -p `dirname $@`
+	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
+
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $<
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
@@ -65,6 +73,8 @@ all:
 	@+make ARCH=gcc_posix
 	@+make ARCH=arm_cm3
 
+.PHONY: all
+
 $(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
 $(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
 
@@ -72,14 +82,10 @@ ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
 endif
 
-%.hex: %
-	@echo [HEX] $<
-	@$(HEX) $<
-
 $(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(LD) $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) $^ -o $@ -Wl,-Map="$@.map" $(LDFLAGS)
+	@$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
 
 %.png: %.dot
 	@echo [DOT] $@

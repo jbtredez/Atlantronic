@@ -1,10 +1,6 @@
 CROSSCOMPILE:=arm-elf-
 #CROSSCOMPILE:=arm-none-eabi-
 
-CC:=$(CROSSCOMPILE)gcc
-AS:=$(CROSSCOMPILE)gcc
-LD:=$(CROSSCOMPILE)gcc
-
 MCPU:=cortex-m3
 MTUNE:=cortex-m3
 
