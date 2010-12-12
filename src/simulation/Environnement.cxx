@@ -22,8 +22,6 @@ Environnement::Environnement()
 		guienv = device->getGUIEnvironment();
 
 		device->setWindowCaption(L"Atlantronic - Simulation");
-//		smgr->addCameraSceneNode(0, vector3df(0,1000,-2200), vector3df(0,0,0));
-//		smgr->addCameraSceneNode(0, vector3df(0,2775,-2400), vector3df(0,0,0));
 		camera = smgr->addCameraSceneNode();
 		camera->setFarValue(20000.f);
 		camera->setTarget(vector3df(0,0,0));
@@ -36,12 +34,7 @@ Environnement::Environnement()
 
 		if(table)
 		{
-			IAnimatedMeshSceneNode* node = smgr->addAnimatedMeshSceneNode( table );
-			if (node)
-		    {
-		            node->setMaterialFlag(EMF_LIGHTING, false);
-		            node->setMD2Animation(scene::EMAT_STAND);
-		    }
+			smgr->addAnimatedMeshSceneNode( table );
 		}
 		else
 		{
@@ -51,12 +44,7 @@ Environnement::Environnement()
 		robot = smgr->getMesh( "media/robot2009.3ds");
 		if(robot)
 		{
-			IAnimatedMeshSceneNode* node = smgr->addAnimatedMeshSceneNode( robot );
-			if (node)
-		    {
-		            node->setMaterialFlag(EMF_LIGHTING, false);
-		            node->setMD2Animation(scene::EMAT_STAND);
-		    }
+			smgr->addAnimatedMeshSceneNode( robot );
 		}
 		else
 		{
