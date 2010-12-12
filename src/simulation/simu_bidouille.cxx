@@ -1,6 +1,8 @@
 #include <irrlicht/irrlicht.h>
 #include <irrlicht/driverChoice.h>
+#include "Environnement.h"
 
+#if 0
 using namespace irr;
 using namespace gui;
 
@@ -646,7 +648,7 @@ public:
 private:
 	SEvent::SJoystickEvent JoystickState;
 };
-
+#endif
 
 /*
 Most of the hard work is done. We only need to create the Irrlicht Engine
@@ -658,14 +660,23 @@ is quite useful for a mesh viewer.
 */
 int main(int argc, char* argv[])
 {
-	// ask user for driver
-	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
-	if (driverType==video::EDT_COUNT)
-		return 1;
+	(void) argc;
+	(void) argv;
 
+	Environnement env;
+
+	bool continuer;
+
+	do
+	{
+		continuer = env.update();
+		usleep(100000);
+	} while(continuer);
+
+#if 0
 	// create device and exit if creation failed
 	MyEventReceiver receiver;
-	Device = createDevice(driverType, core::dimension2d<u32>(1080, 960),
+	Device = createDevice(video::EDT_OPENGL, core::dimension2d<u32>(1080, 960),
 		16, false, false, false, &receiver);
 
 	if (Device == 0)
@@ -832,6 +843,7 @@ int main(int argc, char* argv[])
 	}
 
 	Device->drop();
+#endif
 	return 0;
 }
 

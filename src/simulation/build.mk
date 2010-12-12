@@ -1,5 +1,6 @@
 ifeq ($(ARCH),gcc_posix)
 obj-simu += simulation/simu_bidouille.o
+obj-simu += simulation/Environnement.o
 obj-simu += simulation/ArmCm3.o 
 obj-simu += simulation/ArmRcc.o
 obj-simu += simulation/ArmTimMotor.o

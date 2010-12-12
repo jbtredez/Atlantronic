@@ -9,6 +9,8 @@ CFLAGS+=-m$(BIT)
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 
+CXXFLAGS:=$(CFLAGS)
+
 LDFLAGS:=-march=$(MARCH)
 LDFLAGS+=-m$(BIT)
 LDFLAGS+=-T $(LDSCRIPT)
