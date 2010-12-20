@@ -53,12 +53,12 @@ $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $<
 	@mkdir -p `dirname $@`
-	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
+	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo [CXX] $<
 	@mkdir -p `dirname $@`
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || rm -vfr $(@:.o=.d)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $<
