@@ -650,29 +650,24 @@ private:
 };
 #endif
 
-/*
-Most of the hard work is done. We only need to create the Irrlicht Engine
-device and all the buttons, menus and toolbars. We start up the engine as
-usual, using createDevice(). To make our application catch events, we set our
-eventreceiver as parameter. As you can see, there is also a call to
-IrrlichtDevice::setResizeable(). This makes the render window resizeable, which
-is quite useful for a mesh viewer.
-*/
+#include "Robot.h"
+
 int main(int argc, char* argv[])
 {
 	(void) argc;
 	(void) argv;
 
 	Environnement env;
-
-	bool continuer;
-
-	do
+	if(! env.ready())
 	{
-		continuer = env.update();
-		usleep(100000);
-	} while(continuer);
+		return -1;
+	}
 
+//	env.setPositionRobot1(-1300, -850, 0);
+	env.setPositionRobot1(0, 0, 0);
+	env.setPositionRobot2( 1300, -850, 180);
+
+	env.loop();
 #if 0
 	// create device and exit if creation failed
 	MyEventReceiver receiver;

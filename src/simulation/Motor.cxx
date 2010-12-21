@@ -2,7 +2,14 @@
 
 Motor::Motor()
 {
-
+	pwm  = 0;
+	gain_pwm = 24.0f/65536;
+	f  = 0;
+	r  = 1.1;
+	j  = 0.0001;
+	k  = 0.0363;
+	l  = 201e-6;
+	cp = 0;
 }
 
 Motor::~Motor()
@@ -15,10 +22,10 @@ Motor::~Motor()
 //!
 //! @param x etat du moteur (i, theta, w)
 //! @param dx réponse : dérivée de l'état par unité de temps
-void Motor::update_dx(double *x, double* dx)
+void Motor::compute_dx(double *x, double* dx)
 {
 	// di/dt = ( u - ri - kw ) / L
-	dx[0] = ( gain_pwm * pwm * dir - r * x[0] - k * x[2]) / l;
+	dx[0] = ( gain_pwm * pwm - r * x[0] - k * x[2]) / l;
 
 	// dtheta/dt = w
 	dx[1] = x[2];

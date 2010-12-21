@@ -11,7 +11,10 @@
 
 static int pwm_module_init()
 {
-	#warning TODO : initialiser les pwm
+	#warning TODO : initialiser les pwm (temporaire - simu)
+	TIM1->CCR1 = 0;
+	TIM1->CCR2 = 0;
+	TIM1->RESERVED0 = 1;
 
 	return 0;
 }
@@ -22,7 +25,7 @@ void pwm_set(unsigned int num, uint16_t val, int dir)
 {
 	#warning TODO : pwm_set (temporaire - simu)
 	int16_t val2 = (val >> 1) * dir;
-	if(num == 1)
+	if(num == PWM_RIGHT)
 	{
 		TIM1->CCR1 = val2;
 	}

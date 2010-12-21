@@ -13,10 +13,9 @@ public:
 	Motor();
 	~Motor();
 
-	void update_dx(double *x, double* dx);
+	void compute_dx(double *x, double* dx);
 
-	uint32_t pwm;   //!< pwm
-	int dir;        //!< direction
+	int32_t pwm;   //!< pwm
 	float gain_pwm; //!< gain entre la pwm et u
 	float f;        //!< coefficient de frottement dynamique du moteur
 	float r;        //!< résistance du moteur

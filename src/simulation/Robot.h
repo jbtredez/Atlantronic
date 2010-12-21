@@ -2,16 +2,21 @@
 #define ROBOT_H
 
 #include "ArmCm3.h"
+#include "Model.h"
+#include "Motor.h"
+#include "EnvironnementInterface.h"
 
-class Robot
+class Robot : public Model
 {
 public:
-	Robot();
+	Robot(EnvironnementInterface* env);
 	~Robot();
+
+	void start();
 
 	enum
 	{
-		MODEL_MOT_RIGHT_I,
+		MODEL_MOT_RIGHT_I = 0,
 		MODEL_MOT_RIGHT_THETA,
 		MODEL_MOT_RIGHT_W,
 		MODEL_MOT_LEFT_I,
@@ -25,12 +30,16 @@ public:
 		MODEL_SIZE
 	};
 
-	double x[MODEL_SIZE]; //!< etat du robot
+	double X[MODEL_SIZE]; //!< etat du robot
 
 private:
+	EnvironnementInterface* env;
 	ArmCm3 cpu;
+	Motor motor[4];
+	uint64_t model_time;
 
-//	void update_model();
+	void update(uint64_t vm_clk);
+	void compute_dx(double *x, double* dx);
 };
 
 
