@@ -106,27 +106,29 @@ void Environnement::update()
 	robot1->setRotation( vector3df(0, - robotQemu1.X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
 	pthread_mutex_unlock(&mutexUpdateLoop);
 	// on débloque la tache "loop" pour rafraichir
-	pthread_cond_broadcast(&condUpdate);
+//	pthread_cond_broadcast(&condUpdate);
 }
 
 void Environnement::loop()
 {
 	struct timespec timeout;
-	timeout.tv_sec  = 0;
+	timeout.tv_sec  = 1;
 	timeout.tv_nsec = 100000000;
 
-	pthread_mutex_lock(&mutexUpdateLoop);
+	//pthread_mutex_lock(&mutexUpdateLoop);
 	while( device->run() )
 	{
+		pthread_mutex_lock(&mutexUpdateLoop);
 		driver->beginScene(true, true, SColor(255,100,101,140));
 		smgr->drawAll();
 		guienv->drawAll();
 
 		driver->endScene();
-
-		pthread_cond_timedwait(&condUpdate, &mutexUpdateLoop, &timeout);
+		pthread_mutex_unlock(&mutexUpdateLoop);
+		usleep(100000);
+		//pthread_cond_timedwait(&condUpdate, &mutexUpdateLoop, &timeout);
 	}
-	pthread_mutex_unlock(&mutexUpdateLoop);
+	//pthread_mutex_unlock(&mutexUpdateLoop);
 }
 
 Environnement::~Environnement()

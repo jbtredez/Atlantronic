@@ -5,6 +5,7 @@
 //! Multiplicateur de la fréquence du noyau
 //! La fréquence du modèle 1000 * MODEL_FREQ_MULT Hz
 #define MODEL_FREQ_MULT     10
+#define MODEL_KHZ           72000
 
 Robot::Robot(EnvironnementInterface* e) :
 	env(e),
@@ -39,7 +40,7 @@ void Robot::update(	uint64_t vm_clk )
 	motor[0].pwm = cpu.TIM1.getPwm(0);
 	motor[1].pwm = cpu.TIM1.getPwm(1);
 
-	while(model_time < vm_clk)
+	while(model_time < (uint64_t) (vm_clk / MODEL_KHZ))
 	{
 		for(i=0; i<MODEL_FREQ_MULT; i++)
 		{
@@ -79,6 +80,7 @@ void Robot::update(	uint64_t vm_clk )
 
 	cpu.TIM3.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
 	cpu.TIM4.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);
+//	printf("pos : %f\t%f\t%f\n", X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
 //	printf("codeurs : %i     %i\n", (uint16_t) X[MODEL_ODO_RIGHT_THETA], (uint16_t) X[MODEL_ODO_LEFT_THETA]);
 }
 
