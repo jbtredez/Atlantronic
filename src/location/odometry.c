@@ -40,10 +40,9 @@ void odometry_update()
 	portENTER_CRITICAL();
 	uint16_t enc_right_old = encoders_right;
 	uint16_t enc_left_old  = encoders_left;
-	portEXIT_CRITICAL();
-
 	uint16_t enc_right = encoders_get(ENCODERS_MOT_RIGHT);
 	uint16_t enc_left = encoders_get(ENCODERS_MOT_LEFT);
+	portEXIT_CRITICAL();
 
 	float delta_right = (float) ((int16_t) (enc_right - enc_right_old) );
 	float delta_left  = (float) ((int16_t) (enc_left  - enc_left_old ) );
