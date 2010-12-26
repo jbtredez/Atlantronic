@@ -663,9 +663,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-//	env.setPositionRobot1(-1300, -850, 0);
-	env.setPositionRobot1(0, 0, 0);
-	env.setPositionRobot2( 1300, -850, 180);
+	env.configure(0,0,0);
+	env.start();
 
 	env.loop();
 #if 0
