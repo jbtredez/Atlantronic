@@ -23,7 +23,7 @@
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        5
 
-#define TE                         ((float)CONTROL_TICK_PERIOD) / ((float)configTICK_RATE_HZ)
+#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)configTICK_RATE_HZ)
 
 static void control_task(void *);
 static float sinc( float x );
@@ -58,7 +58,7 @@ static struct pid pid_rot;
 
 static float sinc( float x )
 {
-	if( fabs(x) < 0.001 )
+	if( fabs(x) < 0.01 )
 	{
 		return 1.0;
 	}
@@ -147,7 +147,7 @@ static void control_task(void* arg)
 					}
 					else
 					{
-						trapeze_set(&trapeze, 1000*TE*TE/(M_PI*PARAM_VOIE_MOT), 1000*TE/(M_PI*PARAM_VOIE_MOT));
+						trapeze_set(&trapeze, 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT));
 						trapeze_apply(&trapeze, control_param.ad.angle);
 						cons.alpha += trapeze.v;
 						cons.ca = cos(cons.alpha);
@@ -175,7 +175,7 @@ static void control_task(void* arg)
 					}
 					else
 					{
-						trapeze_set(&trapeze, 1000*TE*TE, 1000*TE);
+						trapeze_set(&trapeze, 1000.0f*TE*TE, 1000.0f*TE);
 						trapeze_apply(&trapeze, control_param.ad.distance);
 						cons.x += trapeze.v * cons.ca;
 						cons.y += trapeze.v * cons.sa;

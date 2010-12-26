@@ -455,9 +455,9 @@ void Environnement::update()
 
 void Environnement::loop()
 {
-	struct timespec timeout;
-	timeout.tv_sec  = 1;
-	timeout.tv_nsec = 100000000;
+//	struct timespec timeout;
+//	timeout.tv_sec  = 0;
+//	timeout.tv_nsec = 100000000;
 
 	//pthread_mutex_lock(&mutexUpdateLoop);
 	while( device->run() )

@@ -30,10 +30,15 @@ static void strategy_test_control_task()
 {
 	time_start_match();
 
-	control_goto(1000,-1000);
+	control_straight(1050);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_rotate(1.57);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_straight(500);
+/*	control_goto(1000,-1000);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
 	control_goto(1500,-1000);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
-
+*/
 	vTaskDelete(NULL);
 }
