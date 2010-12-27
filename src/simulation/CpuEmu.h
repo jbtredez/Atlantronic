@@ -26,7 +26,7 @@ class CpuEmu
 public:
 	CpuEmu();
 	virtual ~CpuEmu();
-	void start();
+	void start(const char* pipe_name, const char* prog);
 
 protected:
 	virtual void mem_write(uint64_t offset, uint32_t val) = 0;

@@ -1,5 +1,6 @@
 #include "Environnement.h"
 #include <unistd.h>
+#include "log.h"
 
 using namespace irr;
 using namespace core;
@@ -8,9 +9,11 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-Environnement::Environnement() :
-	robotQemu1(this)
+Environnement::Environnement()
 {
+	initLog();
+	robotQemu[0] = NULL;
+	robotQemu[1] = NULL;
 	m_ready = false;
 	bool init = true;
 	pthread_mutex_init(&mutexUpdateLoop, NULL);
@@ -44,30 +47,34 @@ Environnement::Environnement() :
 		}
 		else
 		{
+			meslog(_erreur_, "tableMesh == NULL");
+			device->drop();
+			
+			init = false;
+		}
+
+		robotMesh[0] = smgr->getMesh( "media/robot2009.3ds");
+
+		if(robotMesh[0])
+		{
+			robot[0] = smgr->addAnimatedMeshSceneNode( robotMesh[0] );
+		}
+		else
+		{
+			meslog(_erreur_, "robotMesh[0] == NULL");
 			device->drop();
 			init = false;
 		}
 
-		robot1Mesh = smgr->getMesh( "media/robot2009.3ds");
+		robotMesh[1] = smgr->getMesh( "media/robot2011.3ds");
 
-		if(robot1Mesh)
+		if(robotMesh[1])
 		{
-			robot1 = smgr->addAnimatedMeshSceneNode( robot1Mesh );
+			robot[1] = smgr->addAnimatedMeshSceneNode( robotMesh[1] );
 		}
 		else
 		{
-			device->drop();
-			init = false;
-		}
-
-		robot2Mesh = smgr->getMesh( "media/robot2011.3ds");
-
-		if(robot2Mesh)
-		{
-			robot2 = smgr->addAnimatedMeshSceneNode( robot2Mesh );
-		}
-		else
-		{
+			meslog(_erreur_, "robotMesh[1] == NULL");
 			device->drop();
 			init = false;
 		}
@@ -83,6 +90,7 @@ Environnement::Environnement() :
 		}
 		else
 		{
+			meslog(_erreur_, "pionMesh == NULL");
 			device->drop();
 			init = false;
 		}
@@ -96,33 +104,44 @@ Environnement::Environnement() :
 		}
 		else
 		{
+			meslog(_erreur_, "roiMesh == NULL");
 			device->drop();
 			init = false;
 		}
 
 		reineMesh = smgr->getMesh( "media/reine.3ds");
 
-		if(roiMesh)
+		if(reineMesh)
 		{
 			reine[0] = smgr->addAnimatedMeshSceneNode( reineMesh );
 			reine[1] = smgr->addAnimatedMeshSceneNode( reineMesh );
 		}
 		else
 		{
+			meslog(_erreur_, "reineMesh == NULL");
 			device->drop();
 			init = false;
 		}
 
+		//world = NewtonCreate(0,0);
+
 		m_ready = init;
+	}
+	else
+	{
+		meslog(_erreur_, "device == NULL");
 	}
 }
 
-void Environnement::start()
+void Environnement::start(const char* prog1, const char* prog2)
 {
+	robotQemu[0] = new Robot(this);
+	robotQemu[1] = new Robot(this);
+
 	setPositionRobot1(-1300, -850, 0);
-//	setPositionRobot1(0, 0, 0);
 	setPositionRobot2( 1300, -850, 180);
-	robotQemu1.start();
+	robotQemu[0]->start("/tmp/robot0", prog1);
+	robotQemu[1]->start("/tmp/robot1", prog2);
 }
 
 bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
@@ -424,17 +443,20 @@ bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
 
 void Environnement::setPositionRobot1(double x, double y, double alpha)
 {
-	robot1->setPosition( vector3df(x, 0, y));
-	robot1->setRotation( vector3df(0, - alpha, 0) );
-	robotQemu1.X[Robot::MODEL_POS_X] = x;
-	robotQemu1.X[Robot::MODEL_POS_Y] = y;
-	robotQemu1.X[Robot::MODEL_POS_ALPHA] = - alpha * M_PI / 180.0f;
+	robot[0]->setPosition( vector3df(x, 0, y));
+	robot[0]->setRotation( vector3df(0, - alpha, 0) );
+	robotQemu[0]->X[Robot::MODEL_POS_X] = x;
+	robotQemu[0]->X[Robot::MODEL_POS_Y] = y;
+	robotQemu[0]->X[Robot::MODEL_POS_ALPHA] = - alpha * M_PI / 180.0f;
 }
 
 void Environnement::setPositionRobot2(double x, double y, double alpha)
 {
-	robot2->setPosition( vector3df(x, 0, y));
-	robot2->setRotation( vector3df(0, -alpha, 0) );
+	robot[1]->setPosition( vector3df(x, 0, y));
+	robot[1]->setRotation( vector3df(0, -alpha, 0) );
+	robotQemu[1]->X[Robot::MODEL_POS_X] = x;
+	robotQemu[1]->X[Robot::MODEL_POS_Y] = y;
+	robotQemu[1]->X[Robot::MODEL_POS_ALPHA] = - alpha * M_PI / 180.0f;
 }
 
 bool Environnement::OnEvent(const irr::SEvent& event)
@@ -446,8 +468,10 @@ void Environnement::update()
 {
 	// attention, fonction appelée depuis une autre tache que la tache "loop"
 	pthread_mutex_lock(&mutexUpdateLoop);
-	robot1->setPosition( vector3df(robotQemu1.X[Robot::MODEL_POS_X], 0, robotQemu1.X[Robot::MODEL_POS_Y]));
-	robot1->setRotation( vector3df(0, - robotQemu1.X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
+	robot[0]->setPosition( vector3df(robotQemu[0]->X[Robot::MODEL_POS_X], 0, robotQemu[0]->X[Robot::MODEL_POS_Y]));
+	robot[0]->setRotation( vector3df(0, - robotQemu[0]->X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
+	robot[1]->setPosition( vector3df(robotQemu[1]->X[Robot::MODEL_POS_X], 0, robotQemu[1]->X[Robot::MODEL_POS_Y]));
+	robot[1]->setRotation( vector3df(0, - robotQemu[1]->X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
 	pthread_mutex_unlock(&mutexUpdateLoop);
 	// on débloque la tache "loop" pour rafraichir
 //	pthread_cond_broadcast(&condUpdate);

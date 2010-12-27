@@ -20,9 +20,9 @@ Robot::~Robot()
 
 }
 
-void Robot::start()
+void Robot::start(const char* pipe_name, const char* prog)
 {
-	cpu.start();
+	cpu.start(pipe_name, prog);
 }
 
 void Robot::update(	uint64_t vm_clk )

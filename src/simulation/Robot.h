@@ -12,7 +12,7 @@ public:
 	Robot(EnvironnementInterface* env);
 	~Robot();
 
-	void start();
+	void start(const char* pipe_name, const char* prog);
 
 	enum
 	{

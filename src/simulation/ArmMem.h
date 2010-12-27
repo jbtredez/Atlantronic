@@ -44,7 +44,7 @@ void ArmMem<MEM_TypeDef>::mem_write(uint64_t offset, uint32_t val)
 {
 	if(offset > sizeof(MEM_TypeDef) - sizeof(uint32_t))
 	{
-		meslog(_erreur_, "MEM - write - non supporté - offset %i\n", offset);
+		meslog(_erreur_, "MEM - write - non supporté - offset %li\n", offset);
 		return;
 	}
 	else
@@ -60,7 +60,7 @@ uint32_t ArmMem<MEM_TypeDef>::mem_read(uint64_t offset)
 	uint32_t rep = 0;
 	if(offset > sizeof(MEM_TypeDef) - sizeof(uint32_t))
 	{
-		meslog(_erreur_, "MEM - read - non supporté - offset %i\n", offset);
+		meslog(_erreur_, "MEM - read - non supporté - offset %li\n", offset);
 	}
 	else
 	{

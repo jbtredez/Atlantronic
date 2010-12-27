@@ -650,6 +650,7 @@ private:
 };
 #endif
 
+#include "log.h"
 #include "Robot.h"
 
 int main(int argc, char* argv[])
@@ -657,16 +658,20 @@ int main(int argc, char* argv[])
 	(void) argc;
 	(void) argv;
 
+	initLog();
+
 	Environnement env;
+
 	if(! env.ready())
 	{
+		meslog(_erreur_, "environnement non initialisé");
 		return -1;
 	}
 
 	env.configure(0,0,0);
-	env.start();
-
+	env.start("bin/arm_cm3/test_control", "bin/arm_cm3/test_control");
 	env.loop();
+
 #if 0
 	// create device and exit if creation failed
 	MyEventReceiver receiver;

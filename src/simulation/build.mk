@@ -7,9 +7,11 @@ obj-simu += simulation/ArmTim.o
 obj-simu += simulation/CpuEmu.o
 obj-simu += simulation/Motor.o
 obj-simu += simulation/Robot.o
+obj-simu += simulation/log.o
 
 lib-simu += -lstdc++
 lib-simu += -lIrrlicht
+lib-simu += -lNewton
 lib-simu += -lGL
 lib-simu += -lXxf86vm
 lib-simu += -lXext

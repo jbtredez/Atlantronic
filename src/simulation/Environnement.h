@@ -2,10 +2,12 @@
 #define ENVIRONNEMENT_H
 
 #include <irrlicht/irrlicht.h>
+#include <Newton.h>
+#include <pthread.h>
 #include "Robot.h"
 #include "Model.h"
 #include "EnvironnementInterface.h"
-#include <pthread.h>
+
 
 class Environnement : public irr::IEventReceiver, public EnvironnementInterface
 {
@@ -13,14 +15,12 @@ public:
 	Environnement();
 	~Environnement();
 
-
-
 	void setPositionRobot1(double x, double y, double alpha);
 	void setPositionRobot2(double x, double y, double alpha);
 
 	bool configure(unsigned int a, unsigned int b, unsigned int c);
 
-	void start();
+	void start(const char* prog1, const char* prog2);
 	void loop();
 
 	inline bool ready();
@@ -41,21 +41,21 @@ protected:
 	irr::scene::IAnimatedMeshSceneNode *pions[15];
 	irr::scene::IAnimatedMeshSceneNode *roi[2];
 	irr::scene::IAnimatedMeshSceneNode *reine[2];
-	irr::scene::IAnimatedMeshSceneNode *robot1;
-	irr::scene::IAnimatedMeshSceneNode *robot2;
+	irr::scene::IAnimatedMeshSceneNode *robot[2];
 
 	irr::scene::IAnimatedMesh* tableMesh;
 	irr::scene::IAnimatedMesh* pionMesh;
 	irr::scene::IAnimatedMesh* roiMesh;
 	irr::scene::IAnimatedMesh* reineMesh;
-	irr::scene::IAnimatedMesh* robot1Mesh;
-	irr::scene::IAnimatedMesh* robot2Mesh;
+	irr::scene::IAnimatedMesh* robotMesh[2];
 	irr::scene::ICameraSceneNode* camera;
 
-	Robot robotQemu1;
+	Robot* robotQemu[2];
 
 	pthread_mutex_t mutexUpdateLoop;
 	pthread_cond_t condUpdate;
+
+//	NewtonWorld *world;
 
 	bool m_ready;
 };
