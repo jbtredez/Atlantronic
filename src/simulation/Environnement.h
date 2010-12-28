@@ -6,63 +6,43 @@
 #include <pthread.h>
 #include "Robot.h"
 #include "Model.h"
-#include "EnvironnementInterface.h"
+#include "Table.h"
+#include "Pion.h"
 
-
-class Environnement : public irr::IEventReceiver, public EnvironnementInterface
+class Environnement : public irr::IEventReceiver
 {
 public:
 	Environnement();
 	~Environnement();
 
-	void setPositionRobot1(double x, double y, double alpha);
-	void setPositionRobot2(double x, double y, double alpha);
-
-	bool configure(unsigned int a, unsigned int b, unsigned int c);
-
-	void start(const char* prog1, const char* prog2);
 	void loop();
-
-	inline bool ready();
+	bool configure(unsigned int a, unsigned int b, unsigned int c);
+	void start(const char* prog1, const char* prog2);
 
 protected:
+	void irrlichtInit();
+	void newtonInit();
+	void loadAll();
 	bool OnEvent(const irr::SEvent& event);
-	void update();
 
-	int confCarte[3]; // numéro de la configuration (cf spec TODO mettre à jour les spec)
-	irr::core::vector3df config[19];
-
+	// irrlicht
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::gui::IGUIEnvironment* guienv;
-
-	irr::scene::IAnimatedMeshSceneNode *table;
-	irr::scene::IAnimatedMeshSceneNode *pions[15];
-	irr::scene::IAnimatedMeshSceneNode *roi[2];
-	irr::scene::IAnimatedMeshSceneNode *reine[2];
-	irr::scene::IAnimatedMeshSceneNode *robot[2];
-
-	irr::scene::IAnimatedMesh* tableMesh;
-	irr::scene::IAnimatedMesh* pionMesh;
-	irr::scene::IAnimatedMesh* roiMesh;
-	irr::scene::IAnimatedMesh* reineMesh;
-	irr::scene::IAnimatedMesh* robotMesh[2];
 	irr::scene::ICameraSceneNode* camera;
 
-	Robot* robotQemu[2];
+	// newton
+	NewtonWorld *newtonWorld;
 
-	pthread_mutex_t mutexUpdateLoop;
-	pthread_cond_t condUpdate;
+	// elements
+	Pion* pions[19];// 15 pions, 2 roi, 2 reines
+	Table* table;
+	Robot* robot[2];
 
-//	NewtonWorld *world;
-
-	bool m_ready;
+	// configuration
+	int confCarte[3]; // numéro de la configuration (cf spec TODO mettre à jour les spec)
+	irr::core::vector3df config[19];
 };
-
-inline bool Environnement::ready()
-{
-	return m_ready;
-}
 
 #endif

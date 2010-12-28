@@ -7,17 +7,83 @@
 #define MODEL_FREQ_MULT     10
 #define MODEL_KHZ           72000
 
-Robot::Robot(EnvironnementInterface* e) :
-	env(e),
+using namespace irr;
+using namespace core;
+using namespace scene;
+using namespace video;
+using namespace io;
+using namespace gui;
+
+Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier) :
+	newtonWorld(newtonWorld),
 	cpu(this)
 {
+	float m = 10;
+	// grosse inertie au pif (c'est pas un pion qui va nous faire tourner)
+	float Iyy = 10000;
+	float Ixx = 10000;
+	float Izz = 10000;
+	float dx = 0.3f;
+	float dy = 0.3f;
+	float dz = 0.3f;
+	matrix4 offset;
+
 	memset(X, 0x00, sizeof(X));
 	model_time = 0;
+
+	mesh = smgr->getMesh( fichier );
+
+	if(mesh)
+	{
+		node = smgr->addAnimatedMeshSceneNode( mesh );
+		node->setMaterialFlag(EMF_BACK_FACE_CULLING, true);
+
+		offset.makeIdentity();
+		offset.setTranslation( vector3df(0, dy/2.0f, 0) );
+		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld,  dx, dy, dz, 0, offset.pointer());
+
+		body = NewtonCreateBody(newtonWorld, treeCollision);
+		NewtonReleaseCollision(newtonWorld, treeCollision);
+		NewtonBodySetUserData(body, this);
+		NewtonBodySetMassMatrix(body, m, Ixx, Iyy, Izz);
+		NewtonBodySetTransformCallback(body, transformCallback);
+		// FIXME : voir si on met la gravité sur le robot
+	}
+	else
+	{
+		meslog(_erreur_, "impossible de charger le fichier 'media/pion.3ds'");
+	}
 }
 
 Robot::~Robot()
 {
 
+}
+
+void Robot::transformCallback(const NewtonBody *nbody, const float* mat, int)
+{
+	Robot* p = (Robot*) NewtonBodyGetUserData(nbody);
+	matrix4 m;
+	memcpy(m.pointer(), mat, sizeof(float)*16);
+	p->node->setRotation(m.getRotationDegrees());
+	// attention, conversion en m => mm
+	p->node->setPosition(m.getTranslation()*1000);
+}
+
+void Robot::setPosition(float x, float y, float alpha)
+{
+	// FIXME bug sur l'orientation ?
+
+	matrix4 m;
+	// newton en m et non mm
+	m.setTranslation( vector3df(x/1000, 0, y/1000));
+	m.setRotationDegrees( vector3df(0, -alpha, 0));
+	NewtonBodySetMatrix(body, m.pointer());
+	node->setPosition( vector3df(x, 0, y) );
+	node->setRotation( vector3df(0, -alpha, 0) );
+	X[MODEL_POS_X] = x;
+	X[MODEL_POS_Y] = y;
+	X[MODEL_POS_ALPHA] = alpha*M_PI/180;
 }
 
 void Robot::start(const char* pipe_name, const char* prog)
@@ -44,6 +110,8 @@ void Robot::update(	uint64_t vm_clk )
 	{
 		for(i=0; i<MODEL_FREQ_MULT; i++)
 		{
+			double xprec = X[MODEL_POS_X];
+			double yprec = X[MODEL_POS_Y];
 			// intégration runge-kutta 4
 			compute_dx(X, k1);
 
@@ -67,8 +135,15 @@ void Robot::update(	uint64_t vm_clk )
 
 			for(j=0; j<MODEL_SIZE; j++)
 			{
-				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6;
+				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6.0f;
 			}
+
+			// FIXME : vitesses divisées par 10 pour que ca marche ...
+			float speedT[3] = {(X[MODEL_POS_X] - xprec) / (te*10000), 0, (X[MODEL_POS_Y] - yprec) / (te*10000)};
+			float speedA[3] = {0,-(k1[MODEL_POS_ALPHA] + 2* k2[MODEL_POS_ALPHA] + 2*k3[MODEL_POS_ALPHA] + k4[MODEL_POS_ALPHA]) / 60.0f,0};
+			NewtonBodySetVelocity(body, speedT);
+			NewtonBodySetOmega(body, speedA);
+			NewtonUpdate(newtonWorld, te);
 		}
 		model_time++;
 
@@ -76,7 +151,7 @@ void Robot::update(	uint64_t vm_clk )
 //		printf( "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 	}
 
-	env->update();
+//	env->update();
 
 	cpu.TIM3.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
 	cpu.TIM4.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);

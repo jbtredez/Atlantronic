@@ -1,18 +1,20 @@
 #ifndef ROBOT_H
 #define ROBOT_H
 
+#include <irrlicht/irrlicht.h>
+#include <Newton.h>
 #include "ArmCm3.h"
 #include "Model.h"
 #include "Motor.h"
-#include "EnvironnementInterface.h"
 
 class Robot : public Model
 {
 public:
-	Robot(EnvironnementInterface* env);
+	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier);
 	~Robot();
 
 	void start(const char* pipe_name, const char* prog);
+	void setPosition(float x, float y, float alpha);
 
 	enum
 	{
@@ -33,13 +35,17 @@ public:
 	double X[MODEL_SIZE]; //!< etat du robot
 
 private:
-	EnvironnementInterface* env;
+	static void transformCallback(const NewtonBody *nbody, const float* mat, int);
+	void update(uint64_t vm_clk);
+	void compute_dx(double *x, double* dx);
+
+	NewtonWorld* newtonWorld;
 	ArmCm3 cpu;
 	Motor motor[4];
 	uint64_t model_time;
-
-	void update(uint64_t vm_clk);
-	void compute_dx(double *x, double* dx);
+	irr::scene::IAnimatedMesh *mesh;
+	irr::scene::IAnimatedMeshSceneNode *node;
+	NewtonBody* body;
 };
 
 

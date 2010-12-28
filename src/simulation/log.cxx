@@ -17,7 +17,7 @@ int initLog()
 		init++;
 		_logStdout = stdout;
 		_logStderr = stderr;
-		clock_gettime(NULL, &debutProgramme);
+		clock_gettime(0, &debutProgramme);
 	}
 
 	return 0;

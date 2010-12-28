@@ -9,18 +9,71 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-Environnement::Environnement()
+Environnement::Environnement() :
+	device(NULL),
+	driver(NULL),
+	smgr(NULL),
+	guienv(NULL),
+	camera(NULL),
+	newtonWorld(NULL)
 {
 	initLog();
-	robotQemu[0] = NULL;
-	robotQemu[1] = NULL;
-	m_ready = false;
-	bool init = true;
-	pthread_mutex_init(&mutexUpdateLoop, NULL);
-	pthread_cond_init(&condUpdate, NULL);
+	for(int i=0; i<19; i++)
+	{
+		pions[i] = NULL;
+	}
+	table = NULL;
+	robot[0] = NULL;
+	robot[1] = NULL;
 
-	device = createDevice(EDT_OPENGL, dimension2d<u32>(1080, 960),
-		16, false, false, false, this);
+	confCarte[0] = -1;
+	confCarte[1] = -1;
+	confCarte[2] = -1;
+
+	irrlichtInit();
+	newtonInit();
+	loadAll();
+}
+
+Environnement::~Environnement()
+{
+	for(int i=0; i<19; i++)
+	{
+		if(pions[i])
+		{
+			delete pions[i];
+		}
+	}
+
+	if(table)
+	{
+		delete table;
+	}
+
+	if(robot[0])
+	{
+		delete robot[0];
+	}
+
+	if(robot[1])
+	{
+		delete robot[1];
+	}
+
+	if(newtonWorld)
+	{
+		NewtonDestroy(newtonWorld);
+	}
+
+	if(device)
+	{
+		device->drop();
+	}
+}
+
+void Environnement::irrlichtInit()
+{
+	device = createDevice(EDT_OPENGL, dimension2d<u32>(1080, 960), 16, false, false, false, this);
 
 	if(device)
 	{
@@ -29,103 +82,82 @@ Environnement::Environnement()
 		guienv = device->getGUIEnvironment();
 
 		device->setWindowCaption(L"Atlantronic - Simulation");
-		camera = smgr->addCameraSceneNode();
+
+		camera = smgr->addCameraSceneNodeFPS();
 		camera->setFarValue(20000.f);
 		camera->setTarget(vector3df(0,0,0));
 		camera->setPosition(vector3df(0,1000,-2200));
 
 		smgr->addLightSceneNode(0, vector3df(0,1000,0), SColorf(1.0f,1.0f,1.0f),2000);
 		smgr->setAmbientLight(SColorf(0.3f,0.3f,0.3f));
+	}
+	else
+	{
+		meslog(_erreur_, "device == NULL");
+	}
+}
 
-		tableMesh = smgr->getMesh( "media/table.3ds");
+void Environnement::newtonInit()
+{
+	newtonWorld = NewtonCreate();
+	NewtonSetSolverModel(newtonWorld, 0);
 
-		if(tableMesh)
+	float min[3] = {-2, -2, -2};
+	float max[3] = { 2,  2,  2};
+
+	NewtonSetWorldSize( newtonWorld, min, max );
+
+	int i = NewtonMaterialGetDefaultGroupID(newtonWorld);
+	NewtonMaterialSetDefaultFriction   (newtonWorld, i, i, 0.8f, 0.4f);
+	NewtonMaterialSetDefaultElasticity (newtonWorld, i, i, 0.0f);
+	NewtonMaterialSetDefaultSoftness   (newtonWorld, i, i, 0.0f);
+	NewtonMaterialSetCollisionCallback (newtonWorld, i, i, NULL, NULL, NULL);
+}
+
+void Environnement::loadAll()
+{
+	if(device && newtonWorld)
+	{
+		table = new Table(newtonWorld, smgr);
+		for(int i=0; i<15; i++)
 		{
-			table = smgr->addAnimatedMeshSceneNode( tableMesh );
-			table->setPosition(vector3df(0, -10, 0));
-			table->setRotation(vector3df(0, 180, 0));
+			pions[i] = new Pion(newtonWorld, smgr, "media/pion.3ds");
 		}
-		else
+		pions[15] = new Pion(newtonWorld, smgr, "media/roi.3ds");
+		pions[16] = new Pion(newtonWorld, smgr, "media/roi.3ds");
+		pions[17] = new Pion(newtonWorld, smgr, "media/reine.3ds");
+		pions[18] = new Pion(newtonWorld, smgr, "media/reine.3ds");
+
+		robot[0] = new Robot(newtonWorld, smgr, "media/robot2011.3ds");
+		robot[1] = new Robot(newtonWorld, smgr, "media/robot2011.3ds");
+	}
+	else
+	{
+		meslog(_erreur_, "Environnement non initialisé");
+	}
+}
+
+bool Environnement::OnEvent(const irr::SEvent& event)
+{
+	(void) event;
+
+	return false;
+}
+
+void Environnement::loop()
+{
+	if(device)
+	{
+		while( device->run() )
 		{
-			meslog(_erreur_, "tableMesh == NULL");
-			device->drop();
-			
-			init = false;
+//			NewtonUpdate(newtonWorld, 0.1f);
+			driver->beginScene(true, true, SColor(255,100,101,140));
+			smgr->drawAll();
+			guienv->drawAll();
+
+			driver->endScene();
+			usleep(100000);
 		}
-
-		robotMesh[0] = smgr->getMesh( "media/robot2009.3ds");
-
-		if(robotMesh[0])
-		{
-			robot[0] = smgr->addAnimatedMeshSceneNode( robotMesh[0] );
-		}
-		else
-		{
-			meslog(_erreur_, "robotMesh[0] == NULL");
-			device->drop();
-			init = false;
-		}
-
-		robotMesh[1] = smgr->getMesh( "media/robot2011.3ds");
-
-		if(robotMesh[1])
-		{
-			robot[1] = smgr->addAnimatedMeshSceneNode( robotMesh[1] );
-		}
-		else
-		{
-			meslog(_erreur_, "robotMesh[1] == NULL");
-			device->drop();
-			init = false;
-		}
-
-		pionMesh = smgr->getMesh( "media/pion.3ds");
-
-		if(pionMesh)
-		{
-			for(int i=0; i< 15; i++)
-			{
-				pions[i] = smgr->addAnimatedMeshSceneNode( pionMesh );
-			}
-		}
-		else
-		{
-			meslog(_erreur_, "pionMesh == NULL");
-			device->drop();
-			init = false;
-		}
-
-		roiMesh = smgr->getMesh( "media/roi.3ds");
-
-		if(roiMesh)
-		{
-			roi[0] = smgr->addAnimatedMeshSceneNode( roiMesh );
-			roi[1] = smgr->addAnimatedMeshSceneNode( roiMesh );
-		}
-		else
-		{
-			meslog(_erreur_, "roiMesh == NULL");
-			device->drop();
-			init = false;
-		}
-
-		reineMesh = smgr->getMesh( "media/reine.3ds");
-
-		if(reineMesh)
-		{
-			reine[0] = smgr->addAnimatedMeshSceneNode( reineMesh );
-			reine[1] = smgr->addAnimatedMeshSceneNode( reineMesh );
-		}
-		else
-		{
-			meslog(_erreur_, "reineMesh == NULL");
-			device->drop();
-			init = false;
-		}
-
-		//world = NewtonCreate(0,0);
-
-		m_ready = init;
 	}
 	else
 	{
@@ -135,13 +167,11 @@ Environnement::Environnement()
 
 void Environnement::start(const char* prog1, const char* prog2)
 {
-	robotQemu[0] = new Robot(this);
-	robotQemu[1] = new Robot(this);
-
-	setPositionRobot1(-1300, -850, 0);
-	setPositionRobot2( 1300, -850, 180);
-	robotQemu[0]->start("/tmp/robot0", prog1);
-	robotQemu[1]->start("/tmp/robot1", prog2);
+	robot[0]->setPosition(-1300, -850, 0);
+	robot[1]->setPosition( 1300, -850, 180);
+	robot[0]->start("/tmp/robot0", prog1);
+//FIXME : voir comment faire / NewtonUpdate
+//	robot[1]->start("/tmp/robot1", prog2);
 }
 
 bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
@@ -303,7 +333,7 @@ bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
 			config[15] = V5;
 			break;
 		default:
-			// TODO : log erreur
+			meslog(_erreur_, "configuration (carte verte) erronée : %i", a);
 			res = false;
 			break;
 	}
@@ -363,7 +393,7 @@ bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
 			config[5] = I15;
 			break;
 		default:
-			// TODO : log erreur
+			meslog(_erreur_, "configuration (linge 1) erronée : %i", b);
 			res = false;
 			break;
 	}
@@ -417,7 +447,7 @@ bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
 			config[7] = I25;
 			break;
 		default:
-			// TODO : log erreur
+			meslog(_erreur_, "configuration (linge 1) erronée : %i", c);
 			res = false;
 			break;
 	}
@@ -428,81 +458,11 @@ bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)
 		config[i].X = -config[i].X;
 	}
 
-	for(int i=0; i<15; i++)
+	for(int i=0; i<19; i++)
 	{
-		pions[i]->setPosition(config[i]);
+		config[i].Y = 500;
+		pions[i]->setPosition(config[i], vector3df(0,0,0) );
 	}
-
-	roi[0]->setPosition(config[15]);
-	roi[1]->setPosition(config[16]);
-	reine[0]->setPosition(config[17]);
-	reine[1]->setPosition(config[18]);
 
 	return true;
-}
-
-void Environnement::setPositionRobot1(double x, double y, double alpha)
-{
-	robot[0]->setPosition( vector3df(x, 0, y));
-	robot[0]->setRotation( vector3df(0, - alpha, 0) );
-	robotQemu[0]->X[Robot::MODEL_POS_X] = x;
-	robotQemu[0]->X[Robot::MODEL_POS_Y] = y;
-	robotQemu[0]->X[Robot::MODEL_POS_ALPHA] = - alpha * M_PI / 180.0f;
-}
-
-void Environnement::setPositionRobot2(double x, double y, double alpha)
-{
-	robot[1]->setPosition( vector3df(x, 0, y));
-	robot[1]->setRotation( vector3df(0, -alpha, 0) );
-	robotQemu[1]->X[Robot::MODEL_POS_X] = x;
-	robotQemu[1]->X[Robot::MODEL_POS_Y] = y;
-	robotQemu[1]->X[Robot::MODEL_POS_ALPHA] = - alpha * M_PI / 180.0f;
-}
-
-bool Environnement::OnEvent(const irr::SEvent& event)
-{
-	return false;
-}
-
-void Environnement::update()
-{
-	// attention, fonction appelée depuis une autre tache que la tache "loop"
-	pthread_mutex_lock(&mutexUpdateLoop);
-	robot[0]->setPosition( vector3df(robotQemu[0]->X[Robot::MODEL_POS_X], 0, robotQemu[0]->X[Robot::MODEL_POS_Y]));
-	robot[0]->setRotation( vector3df(0, - robotQemu[0]->X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
-	robot[1]->setPosition( vector3df(robotQemu[1]->X[Robot::MODEL_POS_X], 0, robotQemu[1]->X[Robot::MODEL_POS_Y]));
-	robot[1]->setRotation( vector3df(0, - robotQemu[1]->X[Robot::MODEL_POS_ALPHA] * 180 / M_PI, 0) );
-	pthread_mutex_unlock(&mutexUpdateLoop);
-	// on débloque la tache "loop" pour rafraichir
-//	pthread_cond_broadcast(&condUpdate);
-}
-
-void Environnement::loop()
-{
-//	struct timespec timeout;
-//	timeout.tv_sec  = 0;
-//	timeout.tv_nsec = 100000000;
-
-	//pthread_mutex_lock(&mutexUpdateLoop);
-	while( device->run() )
-	{
-		pthread_mutex_lock(&mutexUpdateLoop);
-		driver->beginScene(true, true, SColor(255,100,101,140));
-		smgr->drawAll();
-		guienv->drawAll();
-
-		driver->endScene();
-		pthread_mutex_unlock(&mutexUpdateLoop);
-		usleep(100000);
-		//pthread_cond_timedwait(&condUpdate, &mutexUpdateLoop, &timeout);
-	}
-	//pthread_mutex_unlock(&mutexUpdateLoop);
-}
-
-Environnement::~Environnement()
-{
-	if(device)
-	{
-		device->drop();
-	}
 }
