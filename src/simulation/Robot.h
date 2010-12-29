@@ -3,6 +3,7 @@
 
 #include <irrlicht/irrlicht.h>
 #include <Newton.h>
+#include <pthread.h>
 #include "ArmCm3.h"
 #include "Model.h"
 #include "Motor.h"
@@ -15,6 +16,8 @@ public:
 
 	void start(const char* pipe_name, const char* prog);
 	void setPosition(float x, float y, float alpha);
+	void waitRobotUpdate();
+	void setNewtonUpdated();
 
 	enum
 	{
@@ -36,10 +39,11 @@ public:
 
 private:
 	static void transformCallback(const NewtonBody *nbody, const float* mat, int);
+	static void forceAndTorqueCallback(const NewtonBody *nbody, float, int);
 	void update(uint64_t vm_clk);
 	void compute_dx(double *x, double* dx);
+	void waitNewtonUpdate();
 
-	NewtonWorld* newtonWorld;
 	ArmCm3 cpu;
 	Motor motor[4];
 	uint64_t model_time;
@@ -51,6 +55,10 @@ private:
 	irr::scene::IAnimatedMeshSceneNode* fanionNode;
 	irr::core::vector3df fanionOffset;
 	NewtonBody* body;
+
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
+	int newtonUpdateReq;
 };
 
 

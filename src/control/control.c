@@ -89,9 +89,9 @@ static int control_module_init()
 	pid_av.kd = 200;
 	pid_av.max_out = 65535;
 
-	pid_rot.kp = 400000;
-	pid_rot.ki = 1500000;
-	pid_rot.kd = 200000;
+	pid_rot.kp = 40000;
+	pid_rot.ki = 150000;
+	pid_rot.kd = 20000;
 	pid_rot.max_out = 65535;
 	/////
 

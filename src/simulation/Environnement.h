@@ -23,17 +23,20 @@ protected:
 	void irrlichtInit();
 	void newtonInit();
 	void loadAll();
+	static void* newtonTaskInit(void* arg);
+	void newtonTask();
 	bool OnEvent(const irr::SEvent& event);
 
-	// irrlicht
+	// irrlicht (boucle sur la tache principale) : basse fréquence
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::gui::IGUIEnvironment* guienv;
 	irr::scene::ICameraSceneNode* camera;
 
-	// newton
+	// newton (cadencé par une seconde tache) : haute fréquence
 	NewtonWorld *newtonWorld;
+	pthread_t id;
 
 	// elements
 	Pion* pions[19];// 15 pions, 2 roi, 2 reines

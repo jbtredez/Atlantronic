@@ -15,7 +15,6 @@ using namespace io;
 using namespace gui;
 
 Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion) :
-	newtonWorld(newtonWorld),
 	cpu(this)
 {
 	float m = 10;
@@ -27,6 +26,9 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 
 	memset(X, 0x00, sizeof(X));
 	model_time = 0;
+	pthread_mutex_init(&mutex, NULL);
+	pthread_cond_init(&cond, NULL);
+	newtonUpdateReq = 0;
 
 	mesh = smgr->getMesh( fichier );
 	fanionMesh = smgr->getMesh( fichierFanion );
@@ -73,8 +75,10 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 		NewtonReleaseCollision(newtonWorld, treeCollision);
 		NewtonBodySetUserData(body, this);
 		NewtonBodySetMassMatrix(body, m, Ixx, Iyy, Izz);
+		float dir[3] = {0,1,0};
+		NewtonConstraintCreateUpVector(newtonWorld, dir, body);
 		NewtonBodySetTransformCallback(body, transformCallback);
-		// FIXME : voir si on met la gravité sur le robot
+		NewtonBodySetForceAndTorqueCallback(body, forceAndTorqueCallback);
 	}
 }
 
@@ -88,11 +92,28 @@ void Robot::transformCallback(const NewtonBody *nbody, const float* mat, int)
 	Robot* p = (Robot*) NewtonBodyGetUserData(nbody);
 	matrix4 m;
 	memcpy(m.pointer(), mat, sizeof(float)*16);
-	p->node->setRotation(m.getRotationDegrees());
+	vector3df tr = m.getTranslation()*1000;
+	vector3df rot = m.getRotationDegrees();
+	p->node->setRotation(rot);
 	// attention, conversion en m => mm
-	p->node->setPosition(m.getTranslation()*1000 - p->origin);
-	p->fanionNode->setRotation(m.getRotationDegrees());
-	p->fanionNode->setPosition( m.getTranslation()*1000 + p->fanionOffset);
+	p->node->setPosition(tr - p->origin);
+	p->fanionNode->setRotation(rot);
+	p->fanionNode->setPosition( tr + p->fanionOffset);
+}
+
+void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
+{
+	float m, ixx, iyy, izz;
+	matrix4 mat;
+	float force[3];
+
+	NewtonBodyGetMassMatrix(nbody, &m, &ixx, &iyy, &izz);
+	NewtonBodyGetForce(nbody, force);
+	// TODO : possibilité de compenser la force latérale du robot (repère robot)
+	force[0] = 0;
+	force[1] = -9.81 * m;
+	force[2] = 0;
+	NewtonBodyAddForce(nbody, force);
 }
 
 void Robot::setPosition(float x, float y, float alpha)
@@ -120,6 +141,46 @@ void Robot::setPosition(float x, float y, float alpha)
 	node->setRotation( vector3df(0, -alpha, 0) );
 	fanionNode->setRotation( vector3df(0, -alpha, 0) );
 	fanionNode->setPosition( vector3df(x, 0, y) + fanionOffset);
+}
+
+void Robot::waitNewtonUpdate()
+{
+	bool wait;
+	pthread_mutex_lock(&mutex);
+	newtonUpdateReq = 1;
+	pthread_cond_broadcast(&cond);
+	do
+	{
+		wait = (newtonUpdateReq != 0);
+		if(wait)
+		{
+			pthread_cond_wait(&cond, &mutex);	
+		}
+	}while(wait);
+	pthread_mutex_unlock(&mutex);
+}
+
+void Robot::waitRobotUpdate()
+{
+	bool wait;
+	pthread_mutex_lock(&mutex);
+	do
+	{
+		wait = (newtonUpdateReq == 0);
+		if(wait)
+		{
+			pthread_cond_wait(&cond, &mutex);	
+		}
+	}while(wait);
+	pthread_mutex_unlock(&mutex);
+}
+
+void Robot::setNewtonUpdated()
+{
+	pthread_mutex_lock(&mutex);
+	newtonUpdateReq = 0;
+	pthread_cond_broadcast(&cond);
+	pthread_mutex_unlock(&mutex);
 }
 
 void Robot::start(const char* pipe_name, const char* prog)
@@ -187,16 +248,18 @@ void Robot::update(	uint64_t vm_clk )
 		NewtonBodySetVelocity(body, speedT);
 		NewtonBodySetOmega(body, speedA);
 
-		NewtonUpdate(newtonWorld, 0.001f);
+		waitNewtonUpdate();
+
+		NewtonBodyGetOmega(body, speedA);
 		xprec = X[MODEL_POS_X];
 		yprec = X[MODEL_POS_Y];
+		// TODO reprendre les vitesses / newton et mettre à jour  l' état X
+//		X[MODEL_POS_ALPHA] = (aprec - speedA[1])*1000;
 		aprec = X[MODEL_POS_ALPHA];
 
 //		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 //		printf( "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 	}
-
-//	env->update();
 
 	cpu.TIM3.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
 	cpu.TIM4.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);

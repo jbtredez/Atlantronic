@@ -15,7 +15,8 @@ Environnement::Environnement() :
 	smgr(NULL),
 	guienv(NULL),
 	camera(NULL),
-	newtonWorld(NULL)
+	newtonWorld(NULL),
+	id(-1)
 {
 	initLog();
 	for(int i=0; i<19; i++)
@@ -114,6 +115,30 @@ void Environnement::newtonInit()
 	NewtonMaterialSetCollisionCallback (newtonWorld, i, i, NULL, NULL, NULL);
 }
 
+void* Environnement::newtonTaskInit(void* arg)
+{
+	Environnement* env = (Environnement*) arg;
+	env->newtonTask();
+	return NULL;
+}
+
+void Environnement::newtonTask()
+{
+	if(robot[0] && robot[1])
+	{
+		while(1)
+		{
+			robot[0]->waitRobotUpdate();
+			robot[1]->waitRobotUpdate();
+
+			NewtonUpdate(newtonWorld, 0.001f);
+
+			robot[1]->setNewtonUpdated();
+			robot[0]->setNewtonUpdated();
+		}
+	}
+}
+
 void Environnement::loadAll()
 {
 	if(device && newtonWorld)
@@ -150,7 +175,6 @@ void Environnement::loop()
 	{
 		while( device->run() )
 		{
-//			NewtonUpdate(newtonWorld, 0.1f);
 			driver->beginScene(true, true, SColor(255,100,101,140));
 			smgr->drawAll();
 			guienv->drawAll();
@@ -170,8 +194,8 @@ void Environnement::start(const char* prog1, const char* prog2)
 	robot[0]->setPosition(-1300, -850,   0);
 	robot[1]->setPosition( 1300, -850, 180);
 	robot[0]->start("/tmp/robot0", prog1);
-//FIXME : voir comment faire / NewtonUpdate
-//	robot[1]->start("/tmp/robot1", prog2);
+	robot[1]->start("/tmp/robot1", prog2);
+	pthread_create(&id, NULL, newtonTaskInit, this);
 }
 
 bool Environnement::configure(unsigned int a, unsigned int b, unsigned int c)

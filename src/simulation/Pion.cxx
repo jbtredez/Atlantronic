@@ -29,7 +29,7 @@ void Pion::transformCallback(const NewtonBody *nbody, const float* mat, int)
 Pion::Pion(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier)
 {
 	float m = 0.5;
-	float r = 0.190f;
+	float r = 0.095f;
 	float h = 0.05f;
 	float Ixx = 0.25 * m * r * r + 1.0f/3.0f * m * h * h;
 	float Iyy = 0.5 * m * r * r;
@@ -51,10 +51,9 @@ Pion::Pion(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char
 // TODO offset a mettre dans le set pos
 		offset.makeIdentity();
 		offset.setTranslation(center);
-//		offset.setRotationDegrees( vector3df(0, 0, -90) );
-//		offset.setTranslation( vector3df(0, -h, 0) );
-//		NewtonCollision* treeCollision = NewtonCreateCylinder(newtonWorld, r, h, 0, offset.pointer());
-		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld, size.X, size.Y, size.Z, 0, offset.pointer());
+		offset.setRotationDegrees( vector3df(0, 0, 90) );
+		// on met r et non size.X/2 car le 3ds est plus grand que le vrai pion
+		NewtonCollision* treeCollision = NewtonCreateCylinder(newtonWorld, r, size.Y, 0, offset.pointer());
 
 		body = NewtonCreateBody(newtonWorld, treeCollision);
 		NewtonReleaseCollision(newtonWorld, treeCollision);
