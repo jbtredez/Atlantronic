@@ -14,7 +14,7 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier) :
+Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion) :
 	newtonWorld(newtonWorld),
 	cpu(this)
 {
@@ -23,24 +23,51 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 	float Iyy = 10000;
 	float Ixx = 10000;
 	float Izz = 10000;
-	float dx = 0.3f;
-	float dy = 0.3f;
-	float dz = 0.3f;
 	matrix4 offset;
 
 	memset(X, 0x00, sizeof(X));
 	model_time = 0;
 
 	mesh = smgr->getMesh( fichier );
+	fanionMesh = smgr->getMesh( fichierFanion );
 
-	if(mesh)
+	if(!mesh)
+	{
+		meslog(_erreur_, "impossible de charger le fichier %s", fichier);
+	}
+	else if(!fanionMesh)
+	{
+		meslog(_erreur_, "impossible de charger le fichier %s", fichierFanion);
+	}
+	else
 	{
 		node = smgr->addAnimatedMeshSceneNode( mesh );
 		node->setMaterialFlag(EMF_BACK_FACE_CULLING, true);
 
+		fanionNode = smgr->addAnimatedMeshSceneNode( fanionMesh );
+		fanionNode->setMaterialFlag(EMF_BACK_FACE_CULLING, true);
+
+		vector3df min = node->getBoundingBox().MinEdge;
+		vector3df max = node->getBoundingBox().MaxEdge;
+		vector3df size = max - min;
+		vector3df center = (max + min)/2.0f;
+
+		origin.X = 0;
+		origin.Y = min.Y;
+		origin.Z = center.Z;
+
+		vector3df minFanion = fanionNode->getBoundingBox().MinEdge;
+		vector3df maxFanion = fanionNode->getBoundingBox().MaxEdge;
+		vector3df sizeFanion = maxFanion - minFanion;
+		vector3df centerFanion = (maxFanion + minFanion)/2.0f;
+
+		fanionOffset.X = 0 - centerFanion.X;
+		fanionOffset.Y = size.Y - minFanion.Y;
+		fanionOffset.Z = 10 - centerFanion.Z;
+
 		offset.makeIdentity();
-		offset.setTranslation( vector3df(0, dy/2.0f, 0) );
-		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld,  dx, dy, dz, 0, offset.pointer());
+		offset.setTranslation( center/1000.0f );
+		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld,  size.X/1000.0f, size.Y/1000.0f, size.Z/1000.0f, 0, offset.pointer());
 
 		body = NewtonCreateBody(newtonWorld, treeCollision);
 		NewtonReleaseCollision(newtonWorld, treeCollision);
@@ -48,10 +75,6 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 		NewtonBodySetMassMatrix(body, m, Ixx, Iyy, Izz);
 		NewtonBodySetTransformCallback(body, transformCallback);
 		// FIXME : voir si on met la gravité sur le robot
-	}
-	else
-	{
-		meslog(_erreur_, "impossible de charger le fichier 'media/pion.3ds'");
 	}
 }
 
@@ -67,23 +90,36 @@ void Robot::transformCallback(const NewtonBody *nbody, const float* mat, int)
 	memcpy(m.pointer(), mat, sizeof(float)*16);
 	p->node->setRotation(m.getRotationDegrees());
 	// attention, conversion en m => mm
-	p->node->setPosition(m.getTranslation()*1000);
+	p->node->setPosition(m.getTranslation()*1000 - p->origin);
+	p->fanionNode->setRotation(m.getRotationDegrees());
+	p->fanionNode->setPosition( m.getTranslation()*1000 + p->fanionOffset);
 }
 
 void Robot::setPosition(float x, float y, float alpha)
 {
-	// FIXME bug sur l'orientation ?
+	// TODO : voir bug avec alpha == 180 ou alpha == -180
+	// bug lié à la réalisation
+	//   matrix4 m;
+	//   m.setRotationDegrees( vector3df(0, -alpha, 0));
+	//   m.getRotationDegrees().Y pas bon à 180 degré près
+	if(alpha == 180)
+	{
+		alpha -= 0.01;
+	}
 
 	matrix4 m;
+	X[MODEL_POS_X] = x;
+	X[MODEL_POS_Y] = y;
+	X[MODEL_POS_ALPHA] = alpha*M_PI/180;
+
 	// newton en m et non mm
 	m.setTranslation( vector3df(x/1000, 0, y/1000));
 	m.setRotationDegrees( vector3df(0, -alpha, 0));
 	NewtonBodySetMatrix(body, m.pointer());
-	node->setPosition( vector3df(x, 0, y) );
+	node->setPosition( vector3df(x, 0, y) - origin);
 	node->setRotation( vector3df(0, -alpha, 0) );
-	X[MODEL_POS_X] = x;
-	X[MODEL_POS_Y] = y;
-	X[MODEL_POS_ALPHA] = alpha*M_PI/180;
+	fanionNode->setRotation( vector3df(0, -alpha, 0) );
+	fanionNode->setPosition( vector3df(x, 0, y) + fanionOffset);
 }
 
 void Robot::start(const char* pipe_name, const char* prog)
@@ -102,6 +138,11 @@ void Robot::update(	uint64_t vm_clk )
 	double k2[MODEL_SIZE];
 	double k3[MODEL_SIZE];
 	double k4[MODEL_SIZE];
+	double xprec = X[MODEL_POS_X];
+	double yprec = X[MODEL_POS_Y];
+	double aprec = X[MODEL_POS_ALPHA];
+	float speedT[3] = {0,0,0};
+	float speedA[3] = {0,0,0};
 
 	motor[0].pwm = cpu.TIM1.getPwm(0);
 	motor[1].pwm = cpu.TIM1.getPwm(1);
@@ -110,8 +151,6 @@ void Robot::update(	uint64_t vm_clk )
 	{
 		for(i=0; i<MODEL_FREQ_MULT; i++)
 		{
-			double xprec = X[MODEL_POS_X];
-			double yprec = X[MODEL_POS_Y];
 			// intégration runge-kutta 4
 			compute_dx(X, k1);
 
@@ -137,15 +176,21 @@ void Robot::update(	uint64_t vm_clk )
 			{
 				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6.0f;
 			}
-
-			// FIXME : vitesses divisées par 10 pour que ca marche ...
-			float speedT[3] = {(X[MODEL_POS_X] - xprec) / (te*10000), 0, (X[MODEL_POS_Y] - yprec) / (te*10000)};
-			float speedA[3] = {0,-(k1[MODEL_POS_ALPHA] + 2* k2[MODEL_POS_ALPHA] + 2*k3[MODEL_POS_ALPHA] + k4[MODEL_POS_ALPHA]) / 60.0f,0};
-			NewtonBodySetVelocity(body, speedT);
-			NewtonBodySetOmega(body, speedA);
-			NewtonUpdate(newtonWorld, te);
 		}
 		model_time++;
+
+		// limitation à 1000 Hz de NewtonUpdate (cf doc)
+		// attention, conversions en m/s pour newton
+		speedT[0] = (X[MODEL_POS_X] - xprec) / (0.001f*1000);
+		speedT[2] = (X[MODEL_POS_Y] - yprec) / (0.001f*1000);
+		speedA[1] = (aprec - X[MODEL_POS_ALPHA]) / 0.001f;
+		NewtonBodySetVelocity(body, speedT);
+		NewtonBodySetOmega(body, speedA);
+
+		NewtonUpdate(newtonWorld, 0.001f);
+		xprec = X[MODEL_POS_X];
+		yprec = X[MODEL_POS_Y];
+		aprec = X[MODEL_POS_ALPHA];
 
 //		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 //		printf( "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);

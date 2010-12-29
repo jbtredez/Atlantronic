@@ -10,7 +10,7 @@
 class Robot : public Model
 {
 public:
-	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier);
+	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion);
 	~Robot();
 
 	void start(const char* pipe_name, const char* prog);
@@ -43,8 +43,13 @@ private:
 	ArmCm3 cpu;
 	Motor motor[4];
 	uint64_t model_time;
+
 	irr::scene::IAnimatedMesh *mesh;
 	irr::scene::IAnimatedMeshSceneNode *node;
+	irr::core::vector3df origin;
+	irr::scene::IAnimatedMesh* fanionMesh;
+	irr::scene::IAnimatedMeshSceneNode* fanionNode;
+	irr::core::vector3df fanionOffset;
 	NewtonBody* body;
 };
 

@@ -89,7 +89,7 @@ void Environnement::irrlichtInit()
 		camera->setPosition(vector3df(0,1000,-2200));
 
 		smgr->addLightSceneNode(0, vector3df(0,1000,0), SColorf(1.0f,1.0f,1.0f),2000);
-		smgr->setAmbientLight(SColorf(0.3f,0.3f,0.3f));
+		smgr->setAmbientLight(SColorf(0.5f,0.5f,0.5f));
 	}
 	else
 	{
@@ -128,8 +128,8 @@ void Environnement::loadAll()
 		pions[17] = new Pion(newtonWorld, smgr, "media/reine.3ds");
 		pions[18] = new Pion(newtonWorld, smgr, "media/reine.3ds");
 
-		robot[0] = new Robot(newtonWorld, smgr, "media/robot2011.3ds");
-		robot[1] = new Robot(newtonWorld, smgr, "media/robot2011.3ds");
+		robot[0] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_bleu.3ds");
+		robot[1] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_rouge.3ds");
 	}
 	else
 	{
@@ -167,7 +167,7 @@ void Environnement::loop()
 
 void Environnement::start(const char* prog1, const char* prog2)
 {
-	robot[0]->setPosition(-1300, -850, 0);
+	robot[0]->setPosition(-1300, -850,   0);
 	robot[1]->setPosition( 1300, -850, 180);
 	robot[0]->start("/tmp/robot0", prog1);
 //FIXME : voir comment faire / NewtonUpdate

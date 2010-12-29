@@ -48,7 +48,7 @@ Pion::Pion(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char
 
 		vector3df size = max - min;
 		vector3df center = (max + min)/2.0f;
-
+// TODO offset a mettre dans le set pos
 		offset.makeIdentity();
 		offset.setTranslation(center);
 //		offset.setRotationDegrees( vector3df(0, 0, -90) );
@@ -65,7 +65,7 @@ Pion::Pion(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char
 	}
 	else
 	{
-		meslog(_erreur_, "impossible de charger le fichier 'media/pion.3ds'");
+		meslog(_erreur_, "impossible de charger le fichier %s", fichier);
 	}
 }
 

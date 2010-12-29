@@ -135,7 +135,7 @@ Table::Table(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr)
 		vector3df max = node->getBoundingBox().MaxEdge;
 
 		origin = (max + min)/2.0f;
-		origin.Y = 0;
+		origin.Y = -28.0f;
 
 		matrix4 m;
 		// newton en m et non mm
