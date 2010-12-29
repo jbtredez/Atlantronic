@@ -5,5 +5,10 @@ Requirements:
 doc : 
 	- doxygen >= 1.6.3
 		- graphviz >= 2.26.3
+
+simu:
+	- irrlicht 1.7.1
+	- newton 2.24
+
 tests:
-	gnuplot
+	gnuplot / kst
