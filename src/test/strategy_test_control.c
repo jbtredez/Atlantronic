@@ -4,6 +4,7 @@
 #include "control/control.h"
 #include "time2.h"
 #include "event.h"
+#include "io/gpio.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       64
@@ -30,11 +31,38 @@ static void strategy_test_control_task()
 {
 	time_start_match();
 
-	control_straight(1300);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_rotate(1.57);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_straight(850);
+	if(getColor() == COLOR_BLUE)
+	{
+		control_straight(500);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(1550);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(-1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(550);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(-1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(1550);
+	}
+	else
+	{
+		control_straight(500);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(-1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(1550);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(550);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_straight(1550);
+	}
 /*	control_goto(1000,-1000);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
 	control_goto(1500,-1000);

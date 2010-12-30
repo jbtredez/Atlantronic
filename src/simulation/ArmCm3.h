@@ -5,6 +5,7 @@
 #include "CpuEmu.h"
 #include "ArmTim.h"
 #include "ArmRcc.h"
+#include "ArmGpio.h"
 #include "Model.h"
 
 class ArmCm3 : public CpuEmu
@@ -23,6 +24,7 @@ public:
 	ArmTim TIM1;
 	ArmTim TIM3;
 	ArmTim TIM4;
+	ArmGpio GPIOD;
 	Model *model;
 };
 

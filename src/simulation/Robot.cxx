@@ -14,7 +14,7 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion) :
+Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int color) :
 	cpu(this)
 {
 	float m = 10;
@@ -29,6 +29,8 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 	pthread_mutex_init(&mutex, NULL);
 	pthread_cond_init(&cond, NULL);
 	newtonUpdateReq = 0;
+
+	setColor(color);
 
 	mesh = smgr->getMesh( fichier );
 	fanionMesh = smgr->getMesh( fichierFanion );
@@ -114,6 +116,11 @@ void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
 	force[1] = -9.81 * m;
 	force[2] = 0;
 	NewtonBodyAddForce(nbody, force);
+}
+
+void Robot::setColor(int color)
+{
+	cpu.GPIOD.setInput(color, GPIO_IDR_IDR9);
 }
 
 void Robot::setPosition(float x, float y, float alpha)

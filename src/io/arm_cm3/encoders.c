@@ -5,9 +5,7 @@
 #include "io/encoders.h"
 #include "module.h"
 #include "init.h"
-
-#define STM32F10X_CL
-#include "cpu/stm32f10x.h"
+#include "cpu/cpu.h"
 
 static int encoders_module_init()
 {

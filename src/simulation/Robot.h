@@ -11,7 +11,7 @@
 class Robot : public Model
 {
 public:
-	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion);
+	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int color);
 	~Robot();
 
 	void start(const char* pipe_name, const char* prog);
@@ -43,6 +43,7 @@ private:
 	void update(uint64_t vm_clk);
 	void compute_dx(double *x, double* dx);
 	void waitNewtonUpdate();
+	void setColor(int color);
 
 	ArmCm3 cpu;
 	Motor motor[4];

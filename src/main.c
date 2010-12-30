@@ -9,11 +9,7 @@
 	#include <pthread.h>
 #endif
 
-#ifndef __GCC_POSIX__
-	#define STM32F10X_CL
-	#include "cpu/stm32f10x.h"
-#endif
-
+#include "cpu/cpu.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "module.h"
@@ -47,6 +43,7 @@ static void signal_handler(int sig)
 }
 #endif
 
+// TODO déménager dans un fichier rcc
 void reset_rcc(void)
 {
 #ifndef __GCC_POSIX__

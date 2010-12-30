@@ -153,8 +153,8 @@ void Environnement::loadAll()
 		pions[17] = new Pion(newtonWorld, smgr, "media/reine.3ds");
 		pions[18] = new Pion(newtonWorld, smgr, "media/reine.3ds");
 
-		robot[0] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_bleu.3ds");
-		robot[1] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_rouge.3ds");
+		robot[0] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_bleu.3ds", 1);
+		robot[1] = new Robot(newtonWorld, smgr, "media/robot2011.3ds", "media/fanion_rouge.3ds", 0);
 	}
 	else
 	{
