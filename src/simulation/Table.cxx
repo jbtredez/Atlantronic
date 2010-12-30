@@ -135,7 +135,7 @@ Table::Table(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr)
 		vector3df max = node->getBoundingBox().MaxEdge;
 
 		origin = (max + min)/2.0f;
-		origin.Y = -28.0f;
+		origin.Y = -26; // l'offset vaut environ -28.0f mais on met la table plus bas pour que les robots tombent dessus par gravité;
 
 		matrix4 m;
 		// newton en m et non mm

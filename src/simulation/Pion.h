@@ -18,6 +18,7 @@ protected:
 
 	irr::scene::IAnimatedMesh *mesh;
 	irr::scene::IAnimatedMeshSceneNode *node;
+	irr::core::vector3df origin;
 	NewtonBody* body;
 };
 

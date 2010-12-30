@@ -69,8 +69,7 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 		fanionOffset.Y = size.Y - minFanion.Y;
 		fanionOffset.Z = 10 - centerFanion.Z;
 
-		offset.makeIdentity();
-		offset.setTranslation( center/1000.0f );
+		offset.setTranslation( (center - origin)/1000.0f );
 		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld,  size.X/1000.0f, size.Y/1000.0f, size.Z/1000.0f, 0, offset.pointer());
 
 		body = NewtonCreateBody(newtonWorld, treeCollision);
@@ -111,10 +110,10 @@ void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
 
 	NewtonBodyGetMassMatrix(nbody, &m, &ixx, &iyy, &izz);
 	NewtonBodyGetForce(nbody, force);
-	// TODO : possibilité de compenser la force latérale du robot (repère robot)
-	force[0] = 0;
+// FIXME : à voir. Pour le moment, robot non perturbé
+	force[0] = - force[0];
 	force[1] = -9.81 * m;
-	force[2] = 0;
+	force[2] = - force[2];
 	NewtonBodyAddForce(nbody, force);
 }
 
@@ -211,6 +210,7 @@ void Robot::update(	uint64_t vm_clk )
 	double aprec = X[MODEL_POS_ALPHA];
 	float speedT[3] = {0,0,0};
 	float speedA[3] = {0,0,0};
+	matrix4 m;
 
 	motor[0].pwm = cpu.TIM1.getPwm(0);
 	motor[1].pwm = cpu.TIM1.getPwm(1);
@@ -258,10 +258,18 @@ void Robot::update(	uint64_t vm_clk )
 		waitNewtonUpdate();
 
 		NewtonBodyGetOmega(body, speedA);
+		NewtonBodyGetVelocity(body, speedT);
+
+		NewtonBodyGetMatrix(body, m.pointer());
+		vector3df tr = m.getTranslation()*1000;
+		vector3df rot = m.getRotationDegrees();
+
+		// TODO mettre à jour  l' état X complet
+		X[MODEL_POS_X] = m[3];
+		X[MODEL_POS_Y] = m[7];
+		X[MODEL_POS_ALPHA] = atan2(m[2], m[0]);
 		xprec = X[MODEL_POS_X];
 		yprec = X[MODEL_POS_Y];
-		// TODO reprendre les vitesses / newton et mettre à jour  l' état X
-//		X[MODEL_POS_ALPHA] = (aprec - speedA[1])*1000;
 		aprec = X[MODEL_POS_ALPHA];
 
 //		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
