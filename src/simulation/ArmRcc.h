@@ -6,6 +6,7 @@
 //! @author Jean-Baptiste Trédez
 
 #include "ArmMem.h"
+#include "log.h"
 
 // TODO : voir / envoyer à qemu le system_clock_scale
 

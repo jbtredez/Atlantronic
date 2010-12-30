@@ -38,13 +38,37 @@ void ArmCm3::mem_write(uint64_t offset, uint32_t val)
 	{
 		TIM4.mem_write(offset - TIM4_BASE, val);
 	}
+	else if( offset >= GPIOA_BASE && offset < (GPIOA_BASE + 0x400))
+	{
+		GPIOA.mem_write(offset - GPIOA_BASE, val);
+	}
+	else if( offset >= GPIOB_BASE && offset < (GPIOB_BASE + 0x400))
+	{
+		GPIOB.mem_write(offset - GPIOB_BASE, val);
+	}
+	else if( offset >= GPIOC_BASE && offset < (GPIOC_BASE + 0x400))
+	{
+		GPIOC.mem_write(offset - GPIOC_BASE, val);
+	}
 	else if( offset >= GPIOD_BASE && offset < (GPIOD_BASE + 0x400))
 	{
 		GPIOD.mem_write(offset - GPIOD_BASE, val);
 	}
+	else if( offset >= GPIOE_BASE && offset < (GPIOE_BASE + 0x400))
+	{
+		GPIOE.mem_write(offset - GPIOE_BASE, val);
+	}
+	else if( offset >= GPIOF_BASE && offset < (GPIOF_BASE + 0x400))
+	{
+		GPIOF.mem_write(offset - GPIOF_BASE, val);
+	}
+	else if( offset >= GPIOG_BASE && offset < (GPIOG_BASE + 0x400))
+	{
+		GPIOG.mem_write(offset - GPIOG_BASE, val);
+	}
 	else
 	{
-		meslog(_erreur_, "write non supporté offset %lx, val %x\n", offset, val);
+		meslog(_erreur_, "write non supporté offset %#lx, val %#x\n", offset, val);
 	}
 
 	pthread_mutex_unlock(&io);
@@ -74,13 +98,37 @@ uint32_t ArmCm3::mem_read(uint64_t offset)
 	{
 		rep = TIM4.mem_read(offset - TIM4_BASE);
 	}
+	else if( offset >= GPIOA_BASE && offset < (GPIOA_BASE + 0x400))
+	{
+		rep = GPIOA.mem_read(offset - GPIOA_BASE);
+	}
+	else if( offset >= GPIOB_BASE && offset < (GPIOB_BASE + 0x400))
+	{
+		rep = GPIOB.mem_read(offset - GPIOB_BASE);
+	}
+	else if( offset >= GPIOC_BASE && offset < (GPIOC_BASE + 0x400))
+	{
+		rep = GPIOC.mem_read(offset - GPIOC_BASE);
+	}
 	else if( offset >= GPIOD_BASE && offset < (GPIOD_BASE + 0x400))
 	{
 		rep = GPIOD.mem_read(offset - GPIOD_BASE);
 	}
+	else if( offset >= GPIOE_BASE && offset < (GPIOE_BASE + 0x400))
+	{
+		rep = GPIOE.mem_read(offset - GPIOE_BASE);
+	}
+	else if( offset >= GPIOF_BASE && offset < (GPIOF_BASE + 0x400))
+	{
+		rep = GPIOF.mem_read(offset - GPIOF_BASE);
+	}
+	else if( offset >= GPIOG_BASE && offset < (GPIOG_BASE + 0x400))
+	{
+		rep = GPIOG.mem_read(offset - GPIOG_BASE);
+	}
 	else
 	{
-		meslog(_erreur_, "read non supporté offset %lx\n", offset);
+		meslog(_erreur_, "read non supporté offset %#lx\n", offset);
 	}
 
 	pthread_mutex_unlock(&io);

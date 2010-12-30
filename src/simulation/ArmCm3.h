@@ -24,7 +24,13 @@ public:
 	ArmTim TIM1;
 	ArmTim TIM3;
 	ArmTim TIM4;
+	ArmGpio GPIOA;
+	ArmGpio GPIOB;
+	ArmGpio GPIOC;
 	ArmGpio GPIOD;
+	ArmGpio GPIOE;
+	ArmGpio GPIOF;
+	ArmGpio GPIOG;
 	Model *model;
 };
 

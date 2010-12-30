@@ -53,7 +53,6 @@ void ArmRcc::update()
 		if(MEM.CFGR & RCC_CFGR_PLLMULL9) mult = 9;
 
 		float freq = 8000000 * mult; // en Hz
-		system_clock_scale = ceil((1000000000.0f / freq));
-		printf("rcc conf => %f Mhz (clk = %i)\n", 1000.0f/((float)system_clock_scale), system_clock_scale);
+		meslog(_info_, "rcc conf => %f Mhz\n", freq/1000000.0f);
 	}
 }
