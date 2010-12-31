@@ -15,6 +15,7 @@ public:
 	~Robot();
 
 	void start(const char* pipe_name, const char* prog);
+	void stop();
 	void setPosition(float x, float y, float alpha);
 	void waitRobotUpdate();
 	void setNewtonUpdated();

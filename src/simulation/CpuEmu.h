@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define ACK               1
 #define WRITE_MEMORY      2
@@ -27,6 +28,7 @@ public:
 	CpuEmu();
 	virtual ~CpuEmu();
 	void start(const char* pipe_name, const char* prog);
+	void stop();
 
 protected:
 	virtual void mem_write(uint64_t offset, uint32_t val) = 0;
@@ -37,6 +39,7 @@ private:
 	int fd_to_qemu;
 	int fd_to_simu;
 	pthread_t id;
+	int qemu_pid;
 	void* lecture();
 	static void* lecture(void* arg);
 };

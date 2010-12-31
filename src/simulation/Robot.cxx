@@ -194,6 +194,11 @@ void Robot::start(const char* pipe_name, const char* prog)
 	cpu.start(pipe_name, prog);
 }
 
+void Robot::stop()
+{
+	cpu.stop();
+}
+
 void Robot::update(	uint64_t vm_clk )
 {
 	const double te = 1.0f/(1000 * MODEL_FREQ_MULT);

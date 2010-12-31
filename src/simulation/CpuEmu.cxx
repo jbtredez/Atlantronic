@@ -25,9 +25,9 @@ void CpuEmu::start(const char* pipe_name, const char* prog)
 		mkfifo(pipe_name_to_qemu, 0666);
 		mkfifo(pipe_name_to_simu, 0666);
 
-		int pid = fork();
+		qemu_pid = fork();
 
-		if(pid == 0)
+		if(qemu_pid == 0)
 		{
 			fclose(stdin);
 
@@ -46,14 +46,25 @@ void CpuEmu::start(const char* pipe_name, const char* prog)
 
 			execv("qemu/arm-softmmu/qemu-system-arm", arg);
 		}
-		else if(pid > 0)
+		else if(qemu_pid > 0)
 		{
 			fd_to_qemu = open(pipe_name_to_qemu, O_WRONLY);
 			fd_to_simu = open(pipe_name_to_simu, O_RDONLY);
 
-			id = 0;
+			pthread_create(&id, NULL, lecture, this);
 		}
-		pthread_create(&id, NULL, lecture, this);
+	}
+}
+
+void CpuEmu::stop()
+{
+	if(id)
+	{
+		pthread_cancel(id);
+		void* ret;
+		pthread_join(id, &ret);
+		// TODO un peu bourrin, faire mieux
+		kill(qemu_pid, SIGILL);
 	}
 }
 

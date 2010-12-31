@@ -38,6 +38,35 @@ Environnement::Environnement() :
 
 Environnement::~Environnement()
 {
+	if(robot[0])
+	{
+		robot[0]->stop();
+	}
+
+	if(robot[1])
+	{
+		robot[1]->stop();
+	}
+
+/*
+	if(id)
+	{
+		pthread_cancel(id);
+		void* ret;
+		pthread_join(id, &ret);
+	}
+*/
+
+	if(robot[0])
+	{
+		delete robot[0];
+	}
+
+	if(robot[1])
+	{
+		delete robot[1];
+	}
+
 	for(int i=0; i<19; i++)
 	{
 		if(pions[i])
@@ -49,16 +78,6 @@ Environnement::~Environnement()
 	if(table)
 	{
 		delete table;
-	}
-
-	if(robot[0])
-	{
-		delete robot[0];
-	}
-
-	if(robot[1])
-	{
-		delete robot[1];
 	}
 
 	if(newtonWorld)

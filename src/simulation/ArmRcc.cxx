@@ -53,6 +53,6 @@ void ArmRcc::update()
 		if(MEM.CFGR & RCC_CFGR_PLLMULL9) mult = 9;
 
 		float freq = 8000000 * mult; // en Hz
-		meslog(_info_, "rcc conf => %f Mhz\n", freq/1000000.0f);
+		meslog(_info_, "rcc conf => %f Mhz", freq/1000000.0f);
 	}
 }

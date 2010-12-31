@@ -68,7 +68,7 @@ void ArmCm3::mem_write(uint64_t offset, uint32_t val)
 	}
 	else
 	{
-		meslog(_erreur_, "write non supporté offset %#lx, val %#x\n", offset, val);
+		meslog(_erreur_, "write non supporté offset %#lx, val %#x", offset, val);
 	}
 
 	pthread_mutex_unlock(&io);
@@ -128,7 +128,7 @@ uint32_t ArmCm3::mem_read(uint64_t offset)
 	}
 	else
 	{
-		meslog(_erreur_, "read non supporté offset %#lx\n", offset);
+		meslog(_erreur_, "read non supporté offset %#lx", offset);
 	}
 
 	pthread_mutex_unlock(&io);
