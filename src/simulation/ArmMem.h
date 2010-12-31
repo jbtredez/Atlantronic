@@ -6,8 +6,7 @@
 //! @author Jean-Baptiste Trédez
 
 #include <stdint.h>
-#define STM32F10X_CL
-#include "stm32f10x.h"
+#include "cpu/cpu.h"
 
 #include "log.h"
 #include <math.h>

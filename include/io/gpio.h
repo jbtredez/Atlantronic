@@ -7,10 +7,11 @@
 
 #include "cpu/cpu.h"
 
-#ifdef __ARM_CM3__
-
 #define COLOR_RED                 0
 #define COLOR_BLUE    GPIO_IDR_IDR9
+
+
+#ifdef __ARM_CM3__
 
 static inline int getColor()
 {
@@ -19,9 +20,6 @@ static inline int getColor()
 #endif
 
 #ifdef __GCC_POSIX__
-
-#define COLOR_RED                 0
-#define COLOR_BLUE                1
 
 static inline int getColor()
 {

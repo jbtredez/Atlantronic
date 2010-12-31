@@ -9,8 +9,6 @@ CFLAGS+=-m$(BIT)
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 
-CXXFLAGS:=$(CFLAGS)
-
 LDFLAGS:=-march=$(MARCH)
 LDFLAGS+=-m$(BIT)
 LDFLAGS+=-T $(LDSCRIPT)
@@ -28,6 +26,7 @@ LDFLAGS+=-O3
 endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
+CXXFLAGS:=$(CFLAGS)
 
 INCLUDES+=-Isrc/rtos/portable/GCC/Posix
 OBJ-PORT+=rtos/portable/GCC/Posix/port.o
