@@ -119,6 +119,7 @@ void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
 
 void Robot::setColor(int color)
 {
+	color = color;
 	cpu.GPIOD.setInput(color, GPIO_IDR_IDR9);
 }
 
@@ -189,9 +190,9 @@ void Robot::setNewtonUpdated()
 	pthread_mutex_unlock(&mutex);
 }
 
-void Robot::start(const char* pipe_name, const char* prog)
+void Robot::start(const char* pipe_name, const char* prog, int gdb_port)
 {
-	cpu.start(pipe_name, prog);
+	cpu.start(pipe_name, prog, gdb_port);
 }
 
 void Robot::stop()

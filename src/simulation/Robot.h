@@ -14,7 +14,7 @@ public:
 	Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int color);
 	~Robot();
 
-	void start(const char* pipe_name, const char* prog);
+	void start(const char* pipe_name, const char* prog, int gdb_port);
 	void stop();
 	void setPosition(float x, float y, float alpha);
 	void waitRobotUpdate();
@@ -49,6 +49,7 @@ private:
 	ArmCm3 cpu;
 	Motor motor[4];
 	uint64_t model_time;
+	int color;
 
 	irr::scene::IAnimatedMesh *mesh;
 	irr::scene::IAnimatedMeshSceneNode *node;

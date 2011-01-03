@@ -12,7 +12,7 @@ CpuEmu::~CpuEmu()
 
 }
 
-void CpuEmu::start(const char* pipe_name, const char* prog)
+void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 {
 	if(id == 0)
 	{
@@ -31,20 +31,33 @@ void CpuEmu::start(const char* pipe_name, const char* prog)
 		{
 			fclose(stdin);
 
-			char* arg[ ] =
-			{
-				(char*) "qemu/arm-softmmu/qemu-system-arm",
-				(char*) "-M",
-				(char*) "atlantronic",
-				(char*) "-nographic",
-				(char*) "-pipe",
-				(char*) pipe_name,
-				(char*) "-kernel",
-				(char*) prog,
-				NULL
-			};
+			char* arg[12];
+			char buf_tcp[64];
 
-			execv("qemu/arm-softmmu/qemu-system-arm", arg);
+			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
+			arg[1] = (char*) "-M";
+			arg[2] = (char*) "atlantronic";
+			arg[3] = (char*) "-nographic";
+			arg[4] = (char*) "-pipe";
+			arg[5] = (char*) pipe_name;
+			arg[6] = (char*) "-kernel";
+			arg[7] = (char*) prog;
+			if(gdb_port)
+			{
+				arg[8] = (char*) "-S";
+				arg[9] = (char*) "-gdb";
+				snprintf(buf_tcp, sizeof(buf_tcp), "tcp::%i", gdb_port);
+				arg[10] = buf_tcp;
+				arg[11] = NULL;
+			}
+			else
+			{
+				arg[8] = NULL;
+			}
+
+			execv(arg[0], arg);
+			logerror("execv");
+			exit(-1);
 		}
 		else if(qemu_pid > 0)
 		{
@@ -52,6 +65,10 @@ void CpuEmu::start(const char* pipe_name, const char* prog)
 			fd_to_simu = open(pipe_name_to_simu, O_RDONLY);
 
 			pthread_create(&id, NULL, lecture, this);
+		}
+		else
+		{
+			logerror("fork");
 		}
 	}
 }

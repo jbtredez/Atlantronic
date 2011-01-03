@@ -14,7 +14,6 @@ Environnement::Environnement() :
 	driver(NULL),
 	smgr(NULL),
 	guienv(NULL),
-	camera(NULL),
 	newtonWorld(NULL),
 	id(-1)
 {
@@ -26,6 +25,8 @@ Environnement::Environnement() :
 	table = NULL;
 	robot[0] = NULL;
 	robot[1] = NULL;
+	camera[0] = NULL;
+	camera[1] = NULL;
 
 	confCarte[0] = -1;
 	confCarte[1] = -1;
@@ -103,10 +104,15 @@ void Environnement::irrlichtInit()
 
 		device->setWindowCaption(L"Atlantronic - Simulation");
 
-		camera = smgr->addCameraSceneNodeFPS();
-		camera->setFarValue(20000.f);
-		camera->setTarget(vector3df(0,0,0));
-		camera->setPosition(vector3df(0,1000,-2200));
+		camera[0] = smgr->addCameraSceneNodeFPS();
+		camera[0]->setFarValue(20000.f);
+		camera[0]->setTarget(vector3df(0,0,0));
+		camera[0]->setPosition(vector3df(0,1000,-2200));
+
+		camera[1] = smgr->addCameraSceneNode();
+		camera[1]->setFarValue(20000.f);
+		camera[1]->setTarget(vector3df(0,0,0));
+		camera[1]->setPosition(vector3df(0,1000,-2200));
 
 		smgr->addLightSceneNode(0, vector3df(0,1000,0), SColorf(1.0f,1.0f,1.0f),2000);
 		smgr->setAmbientLight(SColorf(0.5f,0.5f,0.5f));
@@ -183,9 +189,34 @@ void Environnement::loadAll()
 
 bool Environnement::OnEvent(const irr::SEvent& event)
 {
-	(void) event;
+	bool evt_traite = false;
 
-	return false;
+	if (event.EventType == EET_MOUSE_INPUT_EVENT)
+	{
+		if(event.MouseInput.Event == EMIE_RMOUSE_PRESSED_DOWN)
+		{
+			camera[1]->setInputReceiverEnabled(false);
+			camera[0]->setInputReceiverEnabled(true);
+			camera[0]->setTarget(camera[1]->getTarget());
+			camera[0]->setPosition(camera[1]->getPosition());
+			device->getCursorControl()->setVisible(false);
+			smgr->setActiveCamera(camera[0]);
+
+			evt_traite = true;
+		}
+		if(event.MouseInput.Event == EMIE_RMOUSE_LEFT_UP)
+		{
+			camera[0]->setInputReceiverEnabled(false);
+			camera[1]->setInputReceiverEnabled(true);
+			camera[1]->setTarget(camera[0]->getTarget());
+			camera[1]->setPosition(camera[0]->getPosition());
+			device->getCursorControl()->setVisible(true);
+			smgr->setActiveCamera(camera[1]);
+
+			evt_traite = true;
+		}
+	}
+	return evt_traite;
 }
 
 void Environnement::loop()
@@ -208,12 +239,12 @@ void Environnement::loop()
 	}
 }
 
-void Environnement::start(const char* prog1, const char* prog2)
+void Environnement::start(const char* prog1, const char* prog2, int gdb_port1, int gdb_port2)
 {
 	robot[0]->setPosition(-1300, -850,   0);
 	robot[1]->setPosition( 1300, -850, 180);
-	robot[0]->start("/tmp/robot0", prog1);
-	robot[1]->start("/tmp/robot1", prog2);
+	robot[0]->start("/tmp/robot0", prog1, gdb_port1);
+	robot[1]->start("/tmp/robot1", prog2, gdb_port2);
 	pthread_create(&id, NULL, newtonTaskInit, this);
 }
 

@@ -17,7 +17,7 @@ public:
 
 	void loop();
 	bool configure(unsigned int a, unsigned int b, unsigned int c);
-	void start(const char* prog1, const char* prog2);
+	void start(const char* prog1, const char* prog2, int gdb_port1, int gdb_port2);
 
 protected:
 	void irrlichtInit();
@@ -32,7 +32,7 @@ protected:
 	irr::video::IVideoDriver* driver;
 	irr::scene::ISceneManager* smgr;
 	irr::gui::IGUIEnvironment* guienv;
-	irr::scene::ICameraSceneNode* camera;
+	irr::scene::ICameraSceneNode* camera[2];
 
 	// newton (cadencé par une seconde tache) : haute fréquence
 	NewtonWorld *newtonWorld;

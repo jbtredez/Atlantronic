@@ -9,13 +9,15 @@ int main(int argc, char* argv[])
 {
 	char* prog_b = NULL;
 	char* prog_r = NULL;
+	int gdb_port_b = 0;
+	int gdb_port_r = 0;
 
 	initLog();
 
 	if(argc > 1)
 	{
 		int option = -1;
-		while( (option = getopt(argc, argv, "b:r:")) != -1)
+		while( (option = getopt(argc, argv, "b:r:g")) != -1)
 		{
 			switch(option)
 			{
@@ -24,6 +26,10 @@ int main(int argc, char* argv[])
 					break;
 				case 'r':
 					prog_r = optarg;
+					break;
+				case 'g':
+					gdb_port_b = 1235;
+					gdb_port_r = 1236;
 					break;
 				default:
 					meslog(_erreur_, "option %c inconnue", (char)option);
@@ -54,7 +60,7 @@ int main(int argc, char* argv[])
 	Environnement env;
 
 	env.configure(0,0,0);
-	env.start(prog_b, prog_r);
+	env.start(prog_b, prog_r, gdb_port_b, gdb_port_r);
 	env.loop();
 
 	return 0;

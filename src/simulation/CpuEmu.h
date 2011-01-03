@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdlib.h>
+#include "log.h"
 
 #define ACK               1
 #define WRITE_MEMORY      2
@@ -27,7 +29,7 @@ class CpuEmu
 public:
 	CpuEmu();
 	virtual ~CpuEmu();
-	void start(const char* pipe_name, const char* prog);
+	void start(const char* pipe_name, const char* prog, int gdb_port);
 	void stop();
 
 protected:
