@@ -15,6 +15,7 @@ obj-test_control += location/location.o
 obj-test_control += location/beacon.o
 obj-test_control += io/$(ARCH)/encoders.o
 obj-test_control += io/$(ARCH)/gpio.o
+obj-test_control += io/$(ARCH)/usart.o
 obj-test_control += io/current.o
 obj-test_control += io/$(ARCH)/pwm.o
 obj-test_control += time2.o

@@ -6,6 +6,7 @@ obj-rtos += location/location.o
 obj-rtos += location/odometry.o
 obj-rtos += location/beacon.o
 obj-rtos += io/$(ARCH)/gpio.o
+obj-rtos += io/$(ARCH)/usart.o
 obj-rtos += io/$(ARCH)/encoders.o
 obj-rtos += io/current.o
 obj-rtos += io/$(ARCH)/pwm.o
