@@ -23,7 +23,7 @@ static int usart_module_init(void)
 
 	USART3->CR1 = 0x00;
 //	USART3->CR1 |= USART_CR1_PEIE; // TODO : controle de parité ? (+ voir USART_CR1_PS si impaire)
-//	USART3->CR1 |= USART_CR1_TXEIE | USART_CR1_PEIE; // TODO : voir / interruption sur transmit data buffer empty et erreur parité
+	USART3->CR1 |= USART_CR1_TXEIE;// | USART_CR1_PEIE; // TODO : voir / interruption sur transmit data buffer empty et erreur parité
 	USART3->CR2 = 0; // TODO : voir / stop bit (	USART_CR2_STOP_0 et 	USART_CR2_STOP_1)
 
 	USART3->CR3 = 0;
@@ -32,6 +32,8 @@ static int usart_module_init(void)
 	USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation Rx et tx
 
 	USART3->CR1 |= USART_CR1_UE;
+
+	NVIC_EnableIRQ(USART3_IRQn);
 
 	return 0;
 }

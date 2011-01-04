@@ -303,7 +303,7 @@ typedef enum IRQn
 /**
   * @}
   */
-
+#include "core_cm3.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
