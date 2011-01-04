@@ -29,7 +29,8 @@ ARCH ?= gcc_posix
 
 DEBUG ?= 1
 
-BIT ?= 32
+# on tente de détecter la configuration native
+BIT ?= $(shell getconf LONG_BIT)
 
 SIMU:=0
 include src/arch/$(ARCH)/Makefile
