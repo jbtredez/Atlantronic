@@ -39,3 +39,8 @@ static int usart_module_init(void)
 }
 
 module_init(usart_module_init, INIT_USART);
+
+void isr_usart3(void)
+{
+	// TODO
+}

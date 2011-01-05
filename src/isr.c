@@ -13,6 +13,8 @@ static void isr_usage_fault(void);
 static void isr_debug_monitor(void);
 static void isr_unexpected(void);
 
+void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
+
 extern void xPortPendSVHandler(void);
 extern void xPortSysTickHandler(void);
 extern void vPortSVCHandler( void );
@@ -86,7 +88,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
+	isr_usart3,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,

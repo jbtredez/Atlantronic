@@ -31,6 +31,7 @@ public:
 	virtual ~CpuEmu();
 	void start(const char* pipe_name, const char* prog, int gdb_port);
 	void stop();
+	void set_it(uint32_t it);
 
 protected:
 	virtual void mem_write(uint64_t offset, uint32_t val) = 0;
@@ -40,6 +41,7 @@ protected:
 private:
 	int fd_to_qemu;
 	int fd_to_simu;
+	int fd_ctrl;
 	pthread_t id;
 	int qemu_pid;
 	void* lecture();

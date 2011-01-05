@@ -18,12 +18,15 @@ void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 	{
 		char pipe_name_to_qemu[1024];
 		char pipe_name_to_simu[1024];
+		char pipe_name_ctrl[1024];
 
 		snprintf(pipe_name_to_qemu, sizeof(pipe_name_to_qemu), "%s_to_qemu", pipe_name);
 		snprintf(pipe_name_to_simu, sizeof(pipe_name_to_simu), "%s_to_simu", pipe_name);
+		snprintf(pipe_name_ctrl, sizeof(pipe_name_ctrl), "%s_ctrl", pipe_name);
 
 		mkfifo(pipe_name_to_qemu, 0666);
 		mkfifo(pipe_name_to_simu, 0666);
+		mkfifo(pipe_name_ctrl, 0666);
 
 		qemu_pid = fork();
 
@@ -63,6 +66,7 @@ void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 		{
 			fd_to_qemu = open(pipe_name_to_qemu, O_WRONLY);
 			fd_to_simu = open(pipe_name_to_simu, O_RDONLY);
+			fd_ctrl = open(pipe_name_ctrl, O_WRONLY);
 
 			pthread_create(&id, NULL, lecture, this);
 		}
@@ -137,3 +141,9 @@ void* CpuEmu::lecture()
 
 	return NULL;
 }
+
+void CpuEmu::set_it(uint32_t it)
+{
+	write(fd_ctrl, &it, sizeof(it));
+}
+
