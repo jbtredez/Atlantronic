@@ -7,6 +7,6 @@
 
 #include "cpu/cpu.h"
 
-
+void usart_write(unsigned char* buf, uint16_t size);
 
 #endif

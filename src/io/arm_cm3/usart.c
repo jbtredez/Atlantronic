@@ -1,8 +1,40 @@
 #include "io/usart.h"
 #include "module.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
+
+#define USART_WRITE_BUF_SIZE     256
+#define USART_READ_BUF_SIZE      256
+
+#if USART_WRITE_BUF_SIZE < 2
+#error USART_WRITE_BUF_SIZE trop petit
+#elif ((USART_WRITE_BUF_SIZE & (USART_WRITE_BUF_SIZE-1)) != 0)
+#error USART_WRITE_BUF_SIZE doit être une puissance de 2.
+#endif
+
+#if USART_READ_BUF_SIZE < 2
+#error USART_READ_BUF_SIZE trop petit
+#elif ((USART_READ_BUF_SIZE & (USART_READ_BUF_SIZE-1)) != 0)
+#error USART_READ_BUF_SIZE doit être une puissance de 2.
+#endif
+
+static uint8_t  usart_write_buf[USART_WRITE_BUF_SIZE];
+static uint32_t usart_write_buf_in;
+static uint32_t usart_write_buf_out;
+static xSemaphoreHandle usart_write_mutex;
 
 static int usart_module_init(void)
 {
+	usart_write_buf_in = 0;
+	usart_write_buf_out = 0;
+
+	usart_write_mutex = xSemaphoreCreateMutex();
+	if( usart_write_mutex == NULL)
+	{
+		return ERR_INIT_USART;
+	}
+
 	// USART3 (remapage partiel) => Tx = PC10, Rx = PC11
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
@@ -21,13 +53,13 @@ static int usart_module_init(void)
 	// TODO : BRR
 //	USART3->BRR = ; // USARTDIV : selon baud rate
 
+	// 1 start bit, 8 bits data, 1 stop bit, pas de parité
+	// interruption sur TXE (transmit data register empty)
 	USART3->CR1 = 0x00;
-//	USART3->CR1 |= USART_CR1_PEIE; // TODO : controle de parité ? (+ voir USART_CR1_PS si impaire)
-	USART3->CR1 |= USART_CR1_TXEIE;// | USART_CR1_PEIE; // TODO : voir / interruption sur transmit data buffer empty et erreur parité
-	USART3->CR2 = 0; // TODO : voir / stop bit (	USART_CR2_STOP_0 et 	USART_CR2_STOP_1)
-
+	USART3->CR1 |= USART_CR1_TXEIE | USART_CR1_RXNEIE;
+// TODO ; voir si on active d'autres it ( TCIE, IDLEIE)
+	USART3->CR2 = 0;
 	USART3->CR3 = 0;
-//	USART3->CR3 |= USART_CR3_DMAR | USART_CR3_DMAT; // TODO : voir / DMA
 
 	USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation Rx et tx
 
@@ -42,5 +74,53 @@ module_init(usart_module_init, INIT_USART);
 
 void isr_usart3(void)
 {
-	// TODO
+	// lecture : un octet est arrivé
+	if(USART3->SR & USART_SR_RXNE)
+	{
+		// TODO lecture
+	}
+
+	// écriture : pas d'octets dans le registre d'envoi
+	if(USART3->SR & USART_SR_TXE)
+	{
+		// TODO : voir si c'est bien effacé en hard par une écriture sur DR
+		//USART3->SR &= ~USART_SR_TXE;
+
+		if(usart_write_buf_in != usart_write_buf_out)
+		{
+			USART3->DR = usart_write_buf[usart_write_buf_out & (USART_WRITE_BUF_SIZE -1)] & ((uint16_t)0x01FF);
+			usart_write_buf_out++;
+		}
+		else
+		{
+			// on désactive l'it si on a plus rien a envoyer
+			USART3->CR1 &= ~USART_CR1_TXEIE;
+		}
+	}
+}
+
+void usart_write(unsigned char* buf, uint16_t size)
+{
+	xSemaphoreTake(usart_write_mutex, portMAX_DELAY);
+
+	for( ; size--; )
+	{
+		// cas d'overflow de in et pas de out non géré (out > in) mais on va pas déborder le uint32_t (4Go sur l'usart...)
+		if( (usart_write_buf_in - usart_write_buf_out) < USART_WRITE_BUF_SIZE )
+		{
+			usart_write_buf[usart_write_buf_in & (USART_WRITE_BUF_SIZE -1)] = *buf;
+			buf++;
+			usart_write_buf_in++;
+			// a priori, il suffit de le faire une fois
+			//USART3->CR1 |= USART_CR1_TXEIE;
+		}
+		else
+		{
+			// TODO remonter une erreur (log, led...)
+			portTickType xLastWakeTime = xTaskGetTickCount();
+			vTaskDelayUntil(&xLastWakeTime, 2);
+		}
+	}
+	USART3->CR1 |= USART_CR1_TXEIE;
+	xSemaphoreGive(usart_write_mutex);
 }
