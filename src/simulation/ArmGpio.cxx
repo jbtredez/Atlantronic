@@ -11,7 +11,7 @@ ArmGpio::~ArmGpio()
 }
 
 
-void ArmGpio::update()
+void ArmGpio::update(uint64_t offset)
 {
 	// TODO : pas de vérif de la config
 }

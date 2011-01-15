@@ -11,7 +11,7 @@ ArmTim::~ArmTim()
 }
 
 
-void ArmTim::update()
+void ArmTim::update(uint64_t offset)
 {
 
 }

@@ -1,5 +1,18 @@
 #include "CpuEmu.h"
 
+#define IRQ               1
+#define WRITE_MEMORY      2
+#define READ_MEMORY       3
+
+struct atlantronic_memory_io
+{
+	uint8_t cmd;
+	uint64_t vm_clk;
+	uint64_t offset;
+	uint32_t val;
+	uint32_t it;
+};
+
 CpuEmu::CpuEmu()
 {
 	fd_to_qemu = -1;
@@ -18,15 +31,12 @@ void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 	{
 		char pipe_name_to_qemu[1024];
 		char pipe_name_to_simu[1024];
-		char pipe_name_ctrl[1024];
 
 		snprintf(pipe_name_to_qemu, sizeof(pipe_name_to_qemu), "%s_to_qemu", pipe_name);
 		snprintf(pipe_name_to_simu, sizeof(pipe_name_to_simu), "%s_to_simu", pipe_name);
-		snprintf(pipe_name_ctrl, sizeof(pipe_name_ctrl), "%s_ctrl", pipe_name);
 
 		mkfifo(pipe_name_to_qemu, 0666);
 		mkfifo(pipe_name_to_simu, 0666);
-		mkfifo(pipe_name_ctrl, 0666);
 
 		qemu_pid = fork();
 
@@ -66,7 +76,6 @@ void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 		{
 			fd_to_qemu = open(pipe_name_to_qemu, O_WRONLY);
 			fd_to_simu = open(pipe_name_to_simu, O_RDONLY);
-			fd_ctrl = open(pipe_name_ctrl, O_WRONLY);
 
 			pthread_create(&id, NULL, lecture, this);
 		}
@@ -99,7 +108,6 @@ void* CpuEmu::lecture()
 {
 	struct atlantronic_memory_io io;
 	int n;
-	uint8_t ack = ACK;
 
 	while(1)
 	{
@@ -111,7 +119,6 @@ void* CpuEmu::lecture()
 		{
 			if(io.cmd == WRITE_MEMORY)
 			{
-				write(fd_to_qemu, &ack, sizeof(ack));
 				//printf("commande : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
 				mem_write(io.offset, io.val);
 			}
@@ -119,13 +126,15 @@ void* CpuEmu::lecture()
 			{
 				io.val = mem_read( io.offset);
 				//printf("read : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
-				write(fd_to_qemu, &io, sizeof(io));
 			}
 			else
 			{
 				printf("erreur protocole\n");
 				return NULL;
 			}
+
+			write_irq();
+			write(fd_to_qemu, &io, sizeof(io));
 		}
 		else if(n < 0)
 		{
@@ -142,8 +151,21 @@ void* CpuEmu::lecture()
 	return NULL;
 }
 
+void CpuEmu::write_irq()
+{
+	struct atlantronic_memory_io io;
+	io.cmd = IRQ;
+
+	while(! irq.empty())
+	{
+		io.val = irq.front();
+		write(fd_to_qemu, &io, sizeof(io));
+		irq.pop_front();
+	}
+}
+
 void CpuEmu::set_it(uint32_t it)
 {
-	write(fd_ctrl, &it, sizeof(it));
+	irq.push_back(it);
 }
 

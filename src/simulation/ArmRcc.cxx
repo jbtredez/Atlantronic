@@ -13,7 +13,7 @@ ArmRcc::~ArmRcc()
 
 }
 
-void ArmRcc::update()
+void ArmRcc::update(uint64_t offset)
 {
 	if(MEM.BDCR & RCC_BDCR_LSEON)
 	{

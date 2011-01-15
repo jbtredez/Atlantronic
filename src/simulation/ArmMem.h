@@ -22,7 +22,7 @@ public:
 	uint32_t mem_read(uint64_t offset);
 
 protected:
-	virtual void update() = 0;
+	virtual void update(uint64_t offset) = 0;
 	MEM_TypeDef MEM;
 };
 
@@ -49,7 +49,7 @@ void ArmMem<MEM_TypeDef>::mem_write(uint64_t offset, uint32_t val)
 	else
 	{
 		*((uint32_t*)(((unsigned char*)(&MEM)) + offset)) = val;
-		update();
+		update(offset);
 	}
 }
 

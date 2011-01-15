@@ -17,8 +17,7 @@ public:
 	~ArmRcc();
 
 private:
-	int system_clock_scale;
-	void update();
+	void update(uint64_t offset);
 };
 
 #endif

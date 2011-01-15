@@ -1,6 +1,8 @@
 #include "ArmCm3.h"
 
-ArmCm3::ArmCm3(Model *m)
+ArmCm3::ArmCm3(Model *m) :
+	CpuEmu(),
+	USART3(this, USART3_IRQn)
 {
 	pthread_mutex_init(&io, NULL);
 	model = m;
@@ -66,6 +68,10 @@ void ArmCm3::mem_write(uint64_t offset, uint32_t val)
 	{
 		GPIOG.mem_write(offset - GPIOG_BASE, val);
 	}
+	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
+	{
+		USART3.mem_write(offset - USART3_BASE, val);
+	}
 	else
 	{
 		meslog(_erreur_, "write non supporté offset %#lx, val %#x", offset, val);
@@ -125,6 +131,10 @@ uint32_t ArmCm3::mem_read(uint64_t offset)
 	else if( offset >= GPIOG_BASE && offset < (GPIOG_BASE + 0x400))
 	{
 		rep = GPIOG.mem_read(offset - GPIOG_BASE);
+	}
+	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
+	{
+		rep = USART3.mem_read(offset - USART3_BASE);
 	}
 	else
 	{

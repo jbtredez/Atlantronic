@@ -5,6 +5,7 @@ obj-simu += simulation/ArmCm3.o
 obj-simu += simulation/ArmRcc.o
 obj-simu += simulation/ArmTim.o
 obj-simu += simulation/ArmGpio.o
+obj-simu += simulation/ArmUsart.o
 obj-simu += simulation/CpuEmu.o
 obj-simu += simulation/Motor.o
 obj-simu += simulation/Robot.o

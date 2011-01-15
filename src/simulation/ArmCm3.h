@@ -6,6 +6,7 @@
 #include "ArmTim.h"
 #include "ArmRcc.h"
 #include "ArmGpio.h"
+#include "ArmUsart.h"
 #include "Model.h"
 
 class ArmCm3 : public CpuEmu
@@ -31,6 +32,7 @@ public:
 	ArmGpio GPIOE;
 	ArmGpio GPIOF;
 	ArmGpio GPIOG;
+	ArmUsart USART3;
 	Model *model;
 };
 
