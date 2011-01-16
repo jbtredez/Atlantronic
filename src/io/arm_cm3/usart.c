@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"
+#include "io/rcc.h"
 
 #define USART_WRITE_BUF_SIZE     256
 #define USART_READ_BUF_SIZE      256
@@ -50,9 +51,15 @@ static int usart_module_init(void)
 
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // usart3 clock enable
 
-	// TODO : BRR
-	// usart : 1Mb/s
-//	USART3->BRR = ; // USARTDIV : selon baud rate
+	// usart : v = 1Mb/s, PCLK = 36 Mhz
+	// USARTDIV = PCLK / (16 * v) = 2.25
+	// mantisse sur 12 bits : 0x02
+	// fraction sur 4 bits : 0.25 * 16 = 0x04
+	// erreur de fréquence : 0% (pas d'arrondi)
+	#if( RCC_PCLK1 != 36000000)
+	#error usart3->BRR à recalculer
+	#endif
+	USART3->BRR = (((uint16_t)0x02) << 4) | (uint16_t)0x04;
 
 	// 1 start bit, 8 bits data, 1 stop bit, pas de parité
 	// interruption sur TXE (transmit data register empty)
