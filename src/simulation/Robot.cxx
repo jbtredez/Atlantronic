@@ -17,6 +17,11 @@ using namespace gui;
 Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int color) :
 	cpu(this)
 {
+	ax12[0] = new Ax12(0);
+	cpu.USART3.connect(ax12[0]);
+	ax12[1] = new Ax12(1);
+	cpu.USART3.connect(ax12[1]);
+
 	float m = 10;
 	// grosse inertie au pif (c'est pas un pion qui va nous faire tourner)
 	float Iyy = 10000;

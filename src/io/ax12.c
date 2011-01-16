@@ -17,7 +17,8 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
 
 static int ax12_module_init()
 {
-	ax12_ping(22);
+	ax12_reset(0xFE);
+//	ax12_ping(1);
 
 	return 0;
 }
@@ -26,12 +27,54 @@ module_init(ax12_module_init, INIT_AX12);
 
 void ax12_ping(uint8_t id)
 {
-	uint8_t buffer[5];
+	uint8_t buffer[6];
 	buffer[0] = 0xFF;
 	buffer[1] = 0xFF;
 	buffer[2] = id;
 	buffer[3] = 0x02;
-	buffer[4] = ax12_checksum(buffer, sizeof(buffer));
+	buffer[4] = AX12_INSTRUCTION_PING;
+	buffer[5] = ax12_checksum(buffer, sizeof(buffer));
+
+	usart_write(buffer, sizeof(buffer));
+}
+
+void ax12_read(uint8_t id, uint8_t start, uint8_t length)
+{
+	uint8_t buffer[8];
+	buffer[0] = 0xFF;
+	buffer[1] = 0xFF;
+	buffer[2] = id;
+	buffer[3] = 0x04;
+	buffer[4] = AX12_INSTRUCTION_READ_DATA;
+	buffer[5] = start;
+	buffer[6] = length;
+	buffer[7] = ax12_checksum(buffer, sizeof(buffer));
+
+	usart_write(buffer, sizeof(buffer));
+}
+
+void ax12_action(uint8_t id)
+{
+	uint8_t buffer[6];
+	buffer[0] = 0xFF;
+	buffer[1] = 0xFF;
+	buffer[2] = id;
+	buffer[3] = 0x02;
+	buffer[4] = AX12_INSTRUCTION_ACTION;
+	buffer[5] = ax12_checksum(buffer, sizeof(buffer));
+
+	usart_write(buffer, sizeof(buffer));
+}
+
+void ax12_reset(uint8_t id)
+{
+	uint8_t buffer[6];
+	buffer[0] = 0xFF;
+	buffer[1] = 0xFF;
+	buffer[2] = id;
+	buffer[3] = 0x02;
+	buffer[4] = AX12_INSTRUCTION_RESET;
+	buffer[5] = ax12_checksum(buffer, sizeof(buffer));
 
 	usart_write(buffer, sizeof(buffer));
 }

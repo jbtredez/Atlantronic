@@ -27,7 +27,10 @@ void ArmUsart::update(uint64_t offset)
 			}
 			if( offsetof(typeof(MEM), DR) == offset)
 			{
-				meslog(_info_, "USART->DB : %#.2x", MEM.DR); 
+				for(unsigned int i=0; i < devices.size(); i++)
+				{
+					devices[i]->usart_read(MEM.DR & 0xFF);
+				}
 				MEM.SR |= USART_SR_TXE;
 			}
 
@@ -39,3 +42,7 @@ void ArmUsart::update(uint64_t offset)
 	}
 }
 
+void ArmUsart::connect(UsartDevice* dev)
+{
+	devices.push_back(dev);
+}

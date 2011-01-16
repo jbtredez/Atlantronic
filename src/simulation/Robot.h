@@ -7,6 +7,7 @@
 #include "ArmCm3.h"
 #include "Model.h"
 #include "Motor.h"
+#include "Ax12.h"
 
 class Robot : public Model
 {
@@ -47,6 +48,7 @@ private:
 	void setColor(int color);
 
 	ArmCm3 cpu;
+	Ax12* ax12[2];
 	Motor motor[4];
 	uint64_t model_time;
 	int color;
