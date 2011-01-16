@@ -51,6 +51,7 @@ static int usart_module_init(void)
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // usart3 clock enable
 
 	// TODO : BRR
+	// usart : 1Mb/s
 //	USART3->BRR = ; // USARTDIV : selon baud rate
 
 	// 1 start bit, 8 bits data, 1 stop bit, pas de parité
@@ -58,10 +59,13 @@ static int usart_module_init(void)
 	USART3->CR1 = 0x00;
 	USART3->CR1 |= USART_CR1_TXEIE | USART_CR1_RXNEIE;
 // TODO ; voir si on active d'autres it ( TCIE, IDLEIE)
-	USART3->CR2 = 0;
-	USART3->CR3 = 0;
+	USART3->CR2 = 0x00;
+	USART3->CR3 = 0x00;
 
 	USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation Rx et tx
+
+	// passage en mode half duplex
+	USART3->CR3 |= USART_CR3_HDSEL;
 
 	USART3->CR1 |= USART_CR1_UE;
 
@@ -112,15 +116,15 @@ void usart_write(unsigned char* buf, uint16_t size)
 			buf++;
 			usart_write_buf_in++;
 			// a priori, il suffit de le faire une fois
-			//USART3->CR1 |= USART_CR1_TXEIE;
+			USART3->CR1 |= USART_CR1_TXEIE;
 		}
 		else
 		{
 			// TODO remonter une erreur (log, led...)
+			size++; // on n'a finalement pas écris notre octet
 			portTickType xLastWakeTime = xTaskGetTickCount();
 			vTaskDelayUntil(&xLastWakeTime, 2);
 		}
 	}
-	USART3->CR1 |= USART_CR1_TXEIE;
 	xSemaphoreGive(usart_write_mutex);
 }

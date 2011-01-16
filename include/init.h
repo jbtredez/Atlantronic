@@ -17,14 +17,16 @@
 //! de garder les mêmes numéros sauf exception
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init, décroissant pour la destruction)
 
-#define INIT_TIME                     "00"
-#define INIT_GPIO                     "01"
-#define INIT_USART                    "02"
+#define INIT_RCC                      "00"
+#define INIT_TIME                     "01"
+#define INIT_GPIO                     "02"
+#define INIT_USART                    "03"
 #define INIT_LOG                      "05"
 #define INIT_MODEL                    "06"
 #define INIT_ENCODERS                 "07"
 #define INIT_CURRENT                  "08"
 #define INIT_PWM                      "09"
+#define INIT_AX12                     "10"
 #define INIT_ODOMETRY                 "10"
 #define INIT_BEACON                   "11"
 #define INIT_LOCATION                 "12"
