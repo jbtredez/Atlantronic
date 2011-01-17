@@ -17,9 +17,10 @@ public:
 	~ArmUsart();
 
 	void connect(UsartDevice* dev);
+	uint32_t mem_read(uint64_t offset);
+	void mem_write(uint64_t offset, uint32_t val);
 
 protected:
-	void update(uint64_t offset);
 	CpuEmu* cpu;
 	uint32_t it;
 	std::vector<UsartDevice*> devices;

@@ -15,8 +15,6 @@ public:
 
 	int32_t getPwm(int num);
 	void setEncoder(uint16_t val);
-
-	void update(uint64_t offset);
 };
 
 #endif

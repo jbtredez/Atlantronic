@@ -9,9 +9,10 @@
 
 #define PRIORITY_TASK_LOG             1
 #define PRIORITY_TASK_STRATEGY        2
-#define PRIORITY_TASK_CONTROL         3
+#define PRIORITY_TASK_AX12            3
+#define PRIORITY_TASK_CONTROL         4
 
 // priority : 0 ... configMAX_PRIORITIES-1
-#define configMAX_PRIORITIES			( ( unsigned portBASE_TYPE ) 4 )
+#define configMAX_PRIORITIES			( ( unsigned portBASE_TYPE ) 5 )
 
 #endif

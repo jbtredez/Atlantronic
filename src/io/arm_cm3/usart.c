@@ -21,20 +21,18 @@
 #endif
 
 static uint8_t  usart_write_buf[USART_WRITE_BUF_SIZE];
-static uint32_t usart_write_buf_in;
-static uint32_t usart_write_buf_out;
-static xSemaphoreHandle usart_write_mutex;
+static volatile uint32_t usart_write_buf_in;
+static volatile uint32_t usart_write_buf_out;
+static uint8_t  usart_read_buf[USART_READ_BUF_SIZE];
+static volatile uint32_t usart_read_buf_in;
+static volatile uint32_t usart_read_buf_out;
 
 static int usart_module_init(void)
 {
 	usart_write_buf_in = 0;
 	usart_write_buf_out = 0;
-
-	usart_write_mutex = xSemaphoreCreateMutex();
-	if( usart_write_mutex == NULL)
-	{
-		return ERR_INIT_USART;
-	}
+	usart_read_buf_in = 0;
+	usart_read_buf_out = 0;
 
 	// USART3 (remapage partiel) => Tx = PC10, Rx = PC11
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
@@ -88,7 +86,18 @@ void isr_usart3(void)
 	// lecture : un octet est arrivé
 	if(USART3->SR & USART_SR_RXNE)
 	{
-		// TODO lecture
+		// TODO : voir si c'est bien effacé en hard par une lecture sur DR
+		//USART3->SR &= ~USART_SR_RXNE;
+
+		if( ((usart_read_buf_in - usart_read_buf_out) & ~(USART_READ_BUF_SIZE-1)) == 0)
+		{
+			usart_read_buf[usart_read_buf_in & (USART_READ_BUF_SIZE-1)] = USART3->DR & 0xFF;
+			usart_read_buf_in++;
+		}
+		// else
+		// {
+		// problemes, reception reportée si on ne fait pas USART3->SR &= ~USART_SR_RXNE; et en cas de débordement, TODO gestion erreur
+		// }
 	}
 
 	// écriture : pas d'octets dans le registre d'envoi
@@ -112,8 +121,6 @@ void isr_usart3(void)
 
 void usart_write(unsigned char* buf, uint16_t size)
 {
-	xSemaphoreTake(usart_write_mutex, portMAX_DELAY);
-
 	for( ; size--; )
 	{
 		// cas d'overflow de in et pas de out non géré (out > in) mais on va pas déborder le uint32_t (4Go sur l'usart...)
@@ -133,5 +140,10 @@ void usart_write(unsigned char* buf, uint16_t size)
 			vTaskDelayUntil(&xLastWakeTime, 2);
 		}
 	}
-	xSemaphoreGive(usart_write_mutex);
+}
+
+uint16_t usart_read(unsigned char* buf, uint16_t size)
+{
+	// TODO
+	return 0;
 }

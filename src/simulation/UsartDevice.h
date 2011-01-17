@@ -10,7 +10,9 @@ class UsartDevice
 	public:
 		UsartDevice(){};
 		virtual ~UsartDevice(){};
-		virtual void usart_read(unsigned char octet) = 0;
+		virtual void usart_read(uint8_t octet) = 0;
+		virtual uint8_t usart_write() = 0;
+		virtual bool usart_write_request() = 0;
 };
 
 #endif

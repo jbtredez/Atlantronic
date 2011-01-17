@@ -72,6 +72,7 @@ Ax12::Ax12(uint8_t Id) :
 	msg_size = 0;
 	msg_expected_size = 4;
 	memcpy(control_table, control_table_init, sizeof(control_table_init));
+	send_buffer_size = 0;
 }
 
 Ax12::~Ax12()
@@ -89,20 +90,44 @@ void Ax12::usart_read(uint8_t octet)
 	}
 }
 
-uint8_t Ax12::checksum()
+uint8_t Ax12::usart_write()
+{
+	uint8_t rep = send_buffer[send_buffer_count];
+	send_buffer_count++;
+	return rep;
+}
+
+bool Ax12::usart_write_request()
+{
+	return send_buffer_count != send_buffer_size;
+}
+
+uint8_t Ax12::checksum(uint8_t* buf, uint8_t size)
 {
 	uint8_t i = 2;
 	uint8_t checksum = 0;
 
-	for(; i< msg_size - 1 ; i++)
+	for(; i< size - 1 ; i++)
 	{
-		checksum += msg[i];
+		checksum += buf[i];
 	}
 	checksum = ~checksum;
 
 	return checksum;
 }
 
+void Ax12::sendStatus()
+{
+	send_buffer_size = 6;
+	send_buffer_count = 0;
+
+	send_buffer[0] = 0xff;
+	send_buffer[1] = 0xff;
+	send_buffer[2] = id;
+	send_buffer[3] = 0x02;
+	send_buffer[4] = 0x00;
+	send_buffer[5] = checksum(send_buffer, send_buffer_size);
+}
 void Ax12::process_msg()
 {
 	if(msg[0] != 0xFF || msg[1] != 0xFF)
@@ -126,11 +151,12 @@ void Ax12::process_msg()
 		return;
 	}
 
-	if(checksum() != msg[msg_size-1])
+	uint8_t chksum = checksum(msg, msg_size);
+	if( chksum != msg[msg_size-1])
 	{
 		msg_size = 0;
 		msg_expected_size = 4;
-		meslog(_erreur_, "checksum");
+		meslog(_erreur_, "checksum : reçu = %#.2x, cal = %#.2x", msg[msg_size-1], chksum);
 		return;
 	}
 
@@ -138,10 +164,18 @@ void Ax12::process_msg()
 	{
 		case AX12_INSTRUCTION_PING:
 			meslog(_info_, "ax12 %i, ping", id);
-			// TODO			
+			sendStatus();
 			break;
 		case AX12_INSTRUCTION_READ_DATA:
 			meslog(_info_, "ax12 %i, read %#.2x - %#.2x", id, msg[5], msg[6]);
+			// TODO
+			break;
+		case AX12_INSTRUCTION_WRITE_DATA:
+			meslog(_info_, "ax12 %i, write", id);
+			// TODO
+			break;
+		case AX12_INSTRUCTION_REG_WRITE:
+			meslog(_info_, "ax12 %i, reg write", id);
 			// TODO
 			break;
 		case AX12_INSTRUCTION_ACTION:
@@ -151,6 +185,10 @@ void Ax12::process_msg()
 		case AX12_INSTRUCTION_RESET:
 			meslog(_info_, "ax12 %i, reset", id);
 			// TODO	
+			break;
+		case AX12_INSTRUCTION_SYNC_WRITE:
+			meslog(_info_, "ax12 %i, sync write", id);
+			// TODO
 			break;
 		default:
 			meslog(_erreur_, "instrucion inconnue");

@@ -14,7 +14,9 @@ public:
 	ArmRcc();
 	~ArmRcc();
 
-private:
+	void mem_write(uint64_t offset, uint32_t val);
+
+protected:
 	void update(uint64_t offset);
 };
 

@@ -14,3 +14,11 @@ void usart_write(unsigned char* buf, uint16_t size)
 	(void) size;
 	// TODO
 }
+
+uint16_t usart_read(unsigned char* buf, uint16_t size)
+{
+	(void) buf;
+	(void) size;
+	// TODO
+	return 0;
+}

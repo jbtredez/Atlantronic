@@ -10,13 +10,6 @@ ArmTim::~ArmTim()
 
 }
 
-
-void ArmTim::update(uint64_t offset)
-{
-
-}
-
-
 int32_t ArmTim::getPwm(int num)
 {
 // FIXME: temporaire. Ce n'est pas correct.

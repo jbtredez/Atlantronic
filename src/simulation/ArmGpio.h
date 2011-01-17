@@ -13,8 +13,6 @@ public:
 	ArmGpio();
 	~ArmGpio();
 
-	void update(uint64_t offset);
-
 	void setInput(uint32_t val);
 	void setInput(uint32_t val, uint32_t pin); //!< pour pin, utiliser les constantes GPIO_IDR_IDR0, ... GPIO_IDR_IDR15
 

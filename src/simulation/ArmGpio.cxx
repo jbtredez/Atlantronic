@@ -10,12 +10,6 @@ ArmGpio::~ArmGpio()
 
 }
 
-
-void ArmGpio::update(uint64_t offset)
-{
-	// TODO : pas de vérif de la config
-}
-
 void ArmGpio::setInput(uint32_t val)
 {
 	MEM.IDR = val;

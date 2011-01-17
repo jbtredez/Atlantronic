@@ -13,6 +13,12 @@ ArmRcc::~ArmRcc()
 
 }
 
+void ArmRcc::mem_write(uint64_t offset, uint32_t val)
+{
+	ArmMem<RCC_TypeDef>::mem_write(offset, val);
+	update(offset);
+}
+
 void ArmRcc::update(uint64_t offset)
 {
 	if(MEM.BDCR & RCC_BDCR_LSEON)
