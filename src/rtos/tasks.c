@@ -96,8 +96,8 @@ typedef struct tskTaskControlBlock
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	signed char				pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
 
-	uint32_t event;
-	uint32_t eventMask;
+	unsigned portBASE_TYPE event;
+	unsigned portBASE_TYPE eventMask;
 
 	#if ( portSTACK_GROWTH > 0 )
 		portSTACK_TYPE *pxEndOfStack;			/*< Used for stack overflow checking on architectures where the stack grows up from low memory. */
@@ -2328,24 +2328,37 @@ void vTaskExitCritical( void )
 //! @todo description
 uint32_t vTaskWaitEvent(uint32_t mask)
 {
-	uint32_t ev;
-	uint32_t eventArrived;
+	// atomique
+	pxCurrentTCB->eventMask = mask;
 
 	portENTER_CRITICAL();
-	pxCurrentTCB->eventMask = mask;
-	eventArrived = pxCurrentTCB->event & pxCurrentTCB->eventMask;
-	portEXIT_CRITICAL();
-
-	if(! eventArrived )
+	if(! (pxCurrentTCB->event & mask) )
 	{
-		vTaskSuspend(NULL);
+		{
+			traceTASK_SUSPEND( pxCurrentTCB );
+
+			/* Remove task from the ready/delayed list and place in the	suspended list. */
+			vListRemove( &( pxCurrentTCB->xGenericListItem ) );
+
+			/* Is the task waiting on an event also? */
+			if( pxCurrentTCB->xEventListItem.pvContainer )
+			{
+				vListRemove( &( pxCurrentTCB->xEventListItem ) );
+			}
+
+			vListInsertEnd( ( xList * ) &xSuspendedTaskList, &( pxCurrentTCB->xGenericListItem ) );
+		}
+		portEXIT_CRITICAL();
+
+		portYIELD_WITHIN_API();
+	}
+	else
+	{
+		portEXIT_CRITICAL();
 	}
 
-	portENTER_CRITICAL();
-	ev = pxCurrentTCB->event;
-	portEXIT_CRITICAL();
-
-	return ev;
+	// lecture de event atomique
+	return pxCurrentTCB->event;
 }
 
 //! @todo description
@@ -2475,10 +2488,6 @@ void vTaskClearEvent(uint32_t mask)
 //! @todo description
 uint32_t vTaskGetEvent()
 {
-	uint32_t ev;
-	portENTER_CRITICAL();
-	ev = pxCurrentTCB->event;
-	portEXIT_CRITICAL();
-
-	return ev;
+	// lecture atomique de event
+	return pxCurrentTCB->event;
 }

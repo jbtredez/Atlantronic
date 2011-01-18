@@ -7,7 +7,9 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "event.h"
 
+#define AX12_INSTRUCTION_READ_COMPLETE    0x00
 #define AX12_INSTRUCTION_PING             0x01
 #define AX12_INSTRUCTION_READ_DATA        0x02
 #define AX12_INSTRUCTION_WRITE_DATA       0x03
@@ -26,6 +28,7 @@ struct ax12_request
 	uint8_t instruction;
 	uint8_t argc;
 	uint8_t arg[AX12_ARG_MAX];
+	struct ax12_request* rep;
 };
 
 static void ax12_task(void *arg);
@@ -51,11 +54,6 @@ static int ax12_module_init()
 		return ERR_INIT_AX12;
 	}
 
-	ax12_reset(0xFE);
-	ax12_ping(1);
-//	ax12_action(1);
-//	ax12_write8(1, 0x02, 0x06);
-//	ax12_write16(1, 0x02, 0x1516);
 	return 0;
 }
 
@@ -79,14 +77,65 @@ static void ax12_task(void* arg)
 			ax12_buffer[2] = req.id;
 			ax12_buffer[3] = 0x02 + req.argc;
 			ax12_buffer[4] = req.instruction;
-			for( i = 5; i < size - 1 ; i++)
+			for( i = 0; i < req.argc ; i++)
 			{
-				ax12_buffer[i] = req.arg[i];
+				ax12_buffer[5+i] = req.arg[i];
 			}
-			ax12_buffer[i] = ax12_checksum(ax12_buffer, size);
+			ax12_buffer[size-1] = ax12_checksum(ax12_buffer, size);
 			usart_write(ax12_buffer, size);
 
-			// TODO read
+			// pas de broadcast (et status des ax12 à 2) => réponse attendue
+			if(req.id != 0xFE)
+			{
+				// TODO gérer le timeout
+				portTickType xLastWakeTime = xTaskGetTickCount();
+				i = 0;
+				if(req.instruction != AX12_INSTRUCTION_READ_DATA)
+				{
+					size = 6;
+				}
+				else
+				{
+					size = 6 + req.arg[1];
+				}
+
+				do
+				{
+					vTaskDelayUntil(&xLastWakeTime, 1);
+					i += usart_read(ax12_buffer, size);
+				}while(i != size);
+
+				if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req.id || ax12_buffer[3] != size - 4)
+				{
+					// TODO erreur protocole
+				}
+
+				if( ax12_buffer[size-1] != ax12_checksum(ax12_buffer, size))
+				{
+					// TODO erreur checksum
+				}
+				else
+				{
+					// traiter du message reçu
+					if(ax12_buffer[4])
+					{
+						// TODO erreur ax12
+					}
+					if(size == 7)
+					{
+						req.rep->arg[0] = ax12_buffer[5];
+						req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+						vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+					}
+					else if(size == 8)
+					{
+						req.rep->arg[0] = ax12_buffer[5];
+						req.rep->arg[1] = ax12_buffer[6];
+						req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+						vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+					}
+				}
+			}
 		}
 	}
 }
@@ -102,9 +151,52 @@ void ax12_ping(uint8_t id)
 	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
 }
 
-void ax12_read(uint8_t id, uint8_t start, uint8_t length)
+uint8_t ax12_read8(uint8_t id, uint8_t offset)
 {
-	// TODO
+	volatile struct ax12_request req;
+	req.id = id;
+	req.instruction = AX12_INSTRUCTION_READ_DATA;
+	req.arg[0] = offset;
+	req.arg[1] = 0x01;
+	req.argc = 2;
+	req.rep = (struct ax12_request*) &req;
+
+	vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
+
+	// si c'est plein, on va attendre
+	xQueueSendToBack(ax12_queue, (void*) &req, portMAX_DELAY);
+
+	do
+	{
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
+	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
+
+	return req.arg[0];
+}
+
+uint16_t ax12_read16(uint8_t id, uint8_t offset)
+{
+	volatile struct ax12_request req;
+	req.id = id;
+	req.instruction = AX12_INSTRUCTION_READ_DATA;
+	req.arg[0] = offset;
+	req.arg[1] = 0x02;
+	req.argc = 2;
+	req.rep = (struct ax12_request*) &req;
+
+	vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
+
+	// si c'est plein, on va attendre
+	xQueueSendToBack(ax12_queue, (void*) &req, portMAX_DELAY);
+
+	do
+	{
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
+	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
+
+	return req.arg[0] + (req.arg[1] << 8);
 }
 
 void ax12_write8(uint8_t id, uint8_t offset, uint8_t data)

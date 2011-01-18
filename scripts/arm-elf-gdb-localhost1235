@@ -1,0 +1,3 @@
+#!/bin/bash
+
+arm-elf-gdb -q -ex "target remote localhost:1235" $*

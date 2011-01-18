@@ -129,21 +129,39 @@ void usart_write(unsigned char* buf, uint16_t size)
 			usart_write_buf[usart_write_buf_in & (USART_WRITE_BUF_SIZE -1)] = *buf;
 			buf++;
 			usart_write_buf_in++;
-			// a priori, il suffit de le faire une fois
-			USART3->CR1 |= USART_CR1_TXEIE;
 		}
 		else
 		{
 			// TODO remonter une erreur (log, led...)
+			USART3->CR1 |= USART_CR1_TXEIE;
 			size++; // on n'a finalement pas écris notre octet
 			portTickType xLastWakeTime = xTaskGetTickCount();
 			vTaskDelayUntil(&xLastWakeTime, 2);
 		}
 	}
+	USART3->CR1 |= USART_CR1_TXEIE;
 }
 
 uint16_t usart_read(unsigned char* buf, uint16_t size)
 {
-	// TODO
-	return 0;
+	uint16_t s = usart_read_buf_in - usart_read_buf_out;
+
+	// on limite la copie si nécessaire
+	if( s > size)
+	{
+		s = size;
+	}
+	else
+	{
+		size = s;
+	}
+
+	for( ; s-- ; )
+	{
+		*buf = usart_read_buf[usart_read_buf_out & (USART_READ_BUF_SIZE -1)];
+		usart_read_buf_out++;
+		buf++;
+	}
+
+	return size;
 }

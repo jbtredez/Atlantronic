@@ -99,7 +99,7 @@ uint8_t Ax12::usart_write()
 
 bool Ax12::usart_write_request()
 {
-	return send_buffer_count != send_buffer_size;
+	return send_buffer_count < send_buffer_size;
 }
 
 uint8_t Ax12::checksum(uint8_t* buf, uint8_t size)
@@ -128,6 +128,65 @@ void Ax12::sendStatus()
 	send_buffer[4] = 0x00;
 	send_buffer[5] = checksum(send_buffer, send_buffer_size);
 }
+
+void Ax12::process_write_data()
+{
+	meslog(_info_, "ax12 %i, write", id);
+
+	uint8_t write_offset = msg[5];
+	uint8_t write_size = msg_size - 7;
+	uint8_t* buf = msg + 6;
+
+	if(write_offset + write_size <= sizeof(control_table))
+	{
+		for( ; write_size--; )
+		{
+			control_table[write_offset] = *buf;
+			buf++;
+			write_offset++;
+		}
+	}
+	else
+	{
+		meslog(_erreur_, "ecriture en dehors des limites : offset %#.2x, taille : %#.2x", write_offset, write_size);
+	}
+
+	if(msg[2] != 0xFE)
+	{
+		sendStatus();
+	}
+}
+
+void Ax12::process_read_data()
+{
+	meslog(_info_, "ax12 %i, read", id);
+
+	unsigned int read_offset = msg[5];
+	unsigned int argc = msg[6];
+
+	if(read_offset + argc > sizeof(control_table))
+	{
+		meslog(_erreur_, "lecture en dehors des limites : offset %#.2x, taille : %#.2x", read_offset, argc);
+		sendStatus();
+		return;
+	}
+
+	send_buffer_size = 6 + argc;
+	send_buffer_count = 0;
+
+	send_buffer[0] = 0xff;
+	send_buffer[1] = 0xff;
+	send_buffer[2] = id;
+	send_buffer[3] = 0x02 + argc;
+	send_buffer[4] = 0x00;
+	for( int i = 5; i < send_buffer_size - 1 ; i++)
+	{
+		send_buffer[i] = control_table[read_offset];
+		read_offset++;
+	}
+	send_buffer[send_buffer_size - 1] = checksum(send_buffer, send_buffer_size);
+}
+
 void Ax12::process_msg()
 {
 	if(msg[0] != 0xFF || msg[1] != 0xFF)
@@ -144,6 +203,7 @@ void Ax12::process_msg()
 		return;
 	}
 
+	// on a reçu tout le message, est-ce qu'il est pour nous ?
 	if(msg[2] != id && msg[2] != 0xFE)
 	{
 		msg_size = 0;
@@ -164,30 +224,49 @@ void Ax12::process_msg()
 	{
 		case AX12_INSTRUCTION_PING:
 			meslog(_info_, "ax12 %i, ping", id);
-			sendStatus();
+			if(msg[2] != 0xFE)
+			{
+				sendStatus();
+			}
 			break;
 		case AX12_INSTRUCTION_READ_DATA:
-			meslog(_info_, "ax12 %i, read %#.2x - %#.2x", id, msg[5], msg[6]);
-			// TODO
+			process_read_data();
 			break;
 		case AX12_INSTRUCTION_WRITE_DATA:
-			meslog(_info_, "ax12 %i, write", id);
-			// TODO
+			process_write_data();
 			break;
 		case AX12_INSTRUCTION_REG_WRITE:
 			meslog(_info_, "ax12 %i, reg write", id);
+			meslog(_erreur_, "ax12 %i, reg write : pas implémenté", id);
 			// TODO
+			if(msg[2] != 0xFE)
+			{
+				sendStatus();
+			}
 			break;
 		case AX12_INSTRUCTION_ACTION:
 			meslog(_info_, "ax12 %i, action", id);
+			meslog(_erreur_, "ax12 %i, action : pas implémenté", id);
 			// TODO	
+			if(msg[2] != 0xFE)
+			{
+				sendStatus();
+			}
 			break;
 		case AX12_INSTRUCTION_RESET:
 			meslog(_info_, "ax12 %i, reset", id);
-			// TODO	
+			if(msg[2] != 0xFE)
+			{
+				sendStatus();
+			}
 			break;
 		case AX12_INSTRUCTION_SYNC_WRITE:
 			meslog(_info_, "ax12 %i, sync write", id);
+			if(msg[2] != 0xFE)
+			{
+				meslog(_erreur_, "AX12_INSTRUCTION_SYNC_WRITE mais id != 0xFE");
+			}
+			meslog(_erreur_, "ax12 %i, sync write : pas implémenté", id);
 			// TODO
 			break;
 		default:

@@ -22,14 +22,19 @@ uint32_t ArmUsart::mem_read(uint64_t offset)
 	// reception activée
 	if( MEM.CR1 & USART_CR1_RE)
 	{
-		for(unsigned int i=0; i < devices.size(); i++)
+		if( offsetof(typeof(MEM), DR) == offset )
 		{
-			if (devices[i]->usart_write_request())
+			for(unsigned int i=0; i < devices.size(); i++)
 			{
-				MEM.SR |= USART_SR_RXNE;
-				MEM.DR = devices[i]->usart_write();
+				if (devices[i]->usart_write_request())
+				{
+					MEM.DR = devices[i]->usart_write();
+				}
+				if (devices[i]->usart_write_request())
+				{
+					MEM.SR |= USART_SR_RXNE;
+				}
 			}
-
 			if( (MEM.CR1 & USART_CR1_RXNEIE) && (MEM.SR & USART_SR_RXNE) )
 			{
 				cpu->set_it(it);
@@ -59,7 +64,6 @@ void ArmUsart::mem_write(uint64_t offset, uint32_t val)
 						if( MEM.CR1 & USART_CR1_RE )
 						{
 							MEM.SR |= USART_SR_RXNE;
-							MEM.DR = devices[i]->usart_write();
 						}
 					}
 				}

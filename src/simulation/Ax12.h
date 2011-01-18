@@ -18,6 +18,8 @@ protected:
 	void usart_read(uint8_t octet);
 	uint8_t usart_write();
 	void process_msg();
+	void process_write_data();
+	void process_read_data();
 	uint8_t checksum(uint8_t* buf, uint8_t size);
 	bool usart_write_request();
 	void sendStatus();
