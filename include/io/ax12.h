@@ -15,4 +15,11 @@ void ax12_write16(uint8_t id, uint8_t offset, uint16_t data);
 void ax12_action(uint8_t id);
 void ax12_reset(uint8_t id);
 
+#define AX12_LED             0x19
+
+static inline void ax12_led(uint8_t id, uint8_t on)
+{
+	ax12_write8(id, AX12_LED, on);
+}
+
 #endif
