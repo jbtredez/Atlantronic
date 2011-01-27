@@ -1,0 +1,4 @@
+#!/bin/bash
+
+openocd -d2 -f scripts/jtag/conf -c init -c targets -c "halt" -c "flash write_image erase $1" -c "verify_image $1" -c "reset run" -c shutdown
+

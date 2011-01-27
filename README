@@ -12,3 +12,7 @@ simu:
 
 tests:
 	gnuplot / kst
+
+jtag:
+	- openocd 0.4.0
+	- libftdi 0.18

@@ -54,27 +54,30 @@ $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $<
 	@mkdir -p `dirname $@`
-	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $(@:.o=.d) ; exit 1 )
+	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo [CXX] $<
 	@mkdir -p `dirname $@`
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $(@:.o=.d) ; exit 1 )
+	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $<
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
+# cible par defaut :
+all-$(ARCH):
+
+all:
+	@+make ARCH=gcc_posix all-gcc_posix
+	@+make ARCH=arm_cm3 all-arm_cm3
+
+.PHONY: all
+
 all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN))
 
 .PHONY: all-$(ARCH)
-
-all:
-	@+make ARCH=gcc_posix
-	@+make ARCH=arm_cm3
-
-.PHONY: all
 
 $(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
 $(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
