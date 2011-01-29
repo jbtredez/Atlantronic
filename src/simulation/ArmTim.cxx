@@ -2,7 +2,7 @@
 
 ArmTim::ArmTim()
 {
-	MEM.RESERVED0 = 0;
+
 }
 
 ArmTim::~ArmTim()
@@ -12,26 +12,25 @@ ArmTim::~ArmTim()
 
 int32_t ArmTim::getPwm(int num)
 {
-// FIXME: temporaire. Ce n'est pas correct.
 	int32_t val = 0;
 
-	if(	MEM.RESERVED0 == 1)
+	if(	MEM.CR1 & TIM_CR1_CEN )
 	{
 		if(num == 0)
 		{
-			val = ((int16_t) MEM.CCR1 ) *2;
+			val = MEM.CCR1;
 		}
 		else if(num == 1)
 		{
-			val = ((int16_t) MEM.CCR2 ) *2;
+			val = MEM.CCR2;
 		}
 		else if(num == 2)
 		{
-			val = ((int16_t) MEM.CCR3 ) *2;
+			val = MEM.CCR3;
 		}
-		else if(num == 2)
+		else if(num == 3)
 		{
-			val = ((int16_t) MEM.CCR4 ) *2;
+			val = MEM.CCR4;
 		}
 		else
 		{

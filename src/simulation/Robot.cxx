@@ -223,8 +223,23 @@ void Robot::update(	uint64_t vm_clk )
 	float speedA[3] = {0,0,0};
 	matrix4 m;
 
-	motor[0].pwm = cpu.TIM1.getPwm(0);
-	motor[1].pwm = cpu.TIM1.getPwm(1);
+	if( cpu.GPIOE.getOutput(GPIO_ODR_ODR8) )
+	{
+		motor[0].pwm = cpu.TIM1.getPwm(0);
+	}
+	else
+	{
+		motor[0].pwm = -cpu.TIM1.getPwm(0);
+	}
+
+	if( cpu.GPIOE.getOutput(GPIO_ODR_ODR10) )
+	{
+		motor[1].pwm = cpu.TIM1.getPwm(1);
+	}
+	else
+	{
+		motor[1].pwm = -cpu.TIM1.getPwm(1);
+	}
 
 	while(model_time < (uint64_t) (vm_clk / MODEL_KHZ))
 	{
