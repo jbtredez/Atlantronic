@@ -15,7 +15,7 @@ public:
 
 	void compute_dx(double *x, double* dx);
 
-	int32_t pwm;   //!< pwm
+	float pwm;      //!< pwm
 	float gain_pwm; //!< gain entre la pwm et u
 	float f;        //!< coefficient de frottement dynamique du moteur
 	float r;        //!< résistance du moteur

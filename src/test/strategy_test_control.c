@@ -33,23 +33,27 @@ static void strategy_test_control_task()
 
 	if(getColor() == COLOR_BLUE)
 	{
-		control_straight(500);
+		control_straight(1800);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-		control_straight(1550);
+		control_straight(1000);
+//		vTaskWaitEvent(EVENT_CONTROL_READY);
+//		control_straight(550);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(-1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-		control_straight(550);
+		control_straight(200);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(-1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_straight(1550);
+
+		vTaskWaitEvent(EVENT_CONTROL_READY);
 	}
 	else
 	{
-		control_straight(500);
+/*		control_straight(500);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(-1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
@@ -61,7 +65,7 @@ static void strategy_test_control_task()
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-		control_straight(1550);
+		control_straight(1550);*/
 	}
 /*	control_goto(1000,-1000);
 	vTaskWaitEvent(EVENT_CONTROL_READY);

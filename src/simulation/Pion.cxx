@@ -58,7 +58,9 @@ Pion::Pion(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char
 		offset.setRotationDegrees( vector3df(0, 0, 90) );
 		NewtonCollision* treeCollision = NewtonCreateCylinder(newtonWorld, r, h, 0, offset.pointer());
 
-		body = NewtonCreateBody(newtonWorld, treeCollision);
+		matrix4 identity;
+
+		body = NewtonCreateBody(newtonWorld, treeCollision, identity.pointer());
 		NewtonReleaseCollision(newtonWorld, treeCollision);
 		NewtonBodySetUserData(body, this);
 		NewtonBodySetMassMatrix(body, m, Ixx, Iyy, Izz);

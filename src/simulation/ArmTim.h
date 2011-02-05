@@ -13,7 +13,7 @@ public:
 	ArmTim();
 	~ArmTim();
 
-	int32_t getPwm(int num);
+	float getPwm(int num);
 	void setEncoder(uint16_t val);
 };
 

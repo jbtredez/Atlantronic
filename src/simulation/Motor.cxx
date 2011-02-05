@@ -3,7 +3,7 @@
 Motor::Motor()
 {
 	pwm  = 0;
-	gain_pwm = 24.0f/65536;
+	gain_pwm = 24.0f;
 	f  = 0;
 	r  = 1.1;
 	j  = 0.0001;

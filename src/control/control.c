@@ -85,14 +85,14 @@ static int control_module_init()
 
 	// TODO
 	pid_av.kp = 40;
-	pid_av.ki = 1500;
+	pid_av.ki = 100;
 	pid_av.kd = 200;
-	pid_av.max_out = 65535;
+	pid_av.max_out = 1800;
 
-	pid_rot.kp = 40000;
-	pid_rot.ki = 150000;
+	pid_rot.kp = 100000;
+	pid_rot.ki = 50000;
 	pid_rot.kd = 20000;
-	pid_rot.max_out = 65535;
+	pid_rot.max_out = 1800;
 	/////
 
 	state = READY_FREE;
@@ -232,6 +232,17 @@ static void control_task(void* arg)
 			{
 				sens2 = -1;
 				u2 = -u2;
+			}
+
+			// TODO saturer autrement
+			if(u1 > 1800)
+			{
+				u1 = 1800;
+			}
+
+			if(u2 > 1800)
+			{
+				u2 = 1800;
 			}
 
 			pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);

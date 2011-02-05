@@ -110,7 +110,8 @@ NewtonBody* Table::createNewtonTree(NewtonWorld *world, IAnimatedMeshSceneNode *
 
 	NewtonTreeCollisionEndBuild(treeCollision, 1);
 
-	NewtonBody* treeBody = NewtonCreateBody(world, treeCollision);
+	matrix4 identity;
+	NewtonBody* treeBody = NewtonCreateBody(world, treeCollision, identity.pointer());
 
 	NewtonReleaseCollision(world, treeCollision);
 

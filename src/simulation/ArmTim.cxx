@@ -10,27 +10,27 @@ ArmTim::~ArmTim()
 
 }
 
-int32_t ArmTim::getPwm(int num)
+float ArmTim::getPwm(int num)
 {
-	int32_t val = 0;
+	float val = 0;
 
-	if(	MEM.CR1 & TIM_CR1_CEN )
+	if(	MEM.CR1 & TIM_CR1_CEN && MEM.ARR > 0)
 	{
 		if(num == 0)
 		{
-			val = MEM.CCR1;
+			val = ((float) MEM.CCR1) / ((float) MEM.ARR);
 		}
 		else if(num == 1)
 		{
-			val = MEM.CCR2;
+			val = ((float) MEM.CCR2) / ((float) MEM.ARR);
 		}
 		else if(num == 2)
 		{
-			val = MEM.CCR3;
+			val = ((float) MEM.CCR3) / ((float) MEM.ARR);
 		}
 		else if(num == 3)
 		{
-			val = MEM.CCR4;
+			val = ((float) MEM.CCR4) / ((float) MEM.ARR);
 		}
 		else
 		{

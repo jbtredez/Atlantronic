@@ -21,6 +21,14 @@ public:
 	void waitRobotUpdate();
 	void setNewtonUpdated();
 
+private:
+	static void transformCallback(const NewtonBody *nbody, const float* mat, int);
+	static void forceAndTorqueCallback(const NewtonBody *nbody, float, int);
+	void update(uint64_t vm_clk);
+	void compute_dx(double *x, double* dx);
+	void waitNewtonUpdate();
+	void setColor(int color);
+
 	enum
 	{
 		MODEL_MOT_RIGHT_I = 0,
@@ -37,15 +45,8 @@ public:
 		MODEL_SIZE
 	};
 
+	double Xold[MODEL_SIZE]; //!< etat du robot sauvegardé
 	double X[MODEL_SIZE]; //!< etat du robot
-
-private:
-	static void transformCallback(const NewtonBody *nbody, const float* mat, int);
-	static void forceAndTorqueCallback(const NewtonBody *nbody, float, int);
-	void update(uint64_t vm_clk);
-	void compute_dx(double *x, double* dx);
-	void waitNewtonUpdate();
-	void setColor(int color);
 
 	ArmCm3 cpu;
 	Ax12* ax12[2];

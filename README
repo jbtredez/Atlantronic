@@ -8,7 +8,7 @@ doc :
 
 simu:
 	- irrlicht 1.7.1
-	- newton 2.24
+	- newton 2.29
 
 tests:
 	gnuplot / kst

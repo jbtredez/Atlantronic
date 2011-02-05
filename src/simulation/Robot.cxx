@@ -14,7 +14,7 @@ using namespace video;
 using namespace io;
 using namespace gui;
 
-Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int color) :
+Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const char* fichier, const char* fichierFanion, int Color) :
 	cpu(this)
 {
 	ax12[0] = new Ax12(0);
@@ -23,19 +23,16 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 	cpu.USART3.connect(ax12[1]);
 
 	float m = 10;
-	// grosse inertie au pif (c'est pas un pion qui va nous faire tourner)
-	float Iyy = 10000;
-	float Ixx = 10000;
-	float Izz = 10000;
 	matrix4 offset;
 
 	memset(X, 0x00, sizeof(X));
+	memset(Xold, 0x00, sizeof(Xold));
 	model_time = 0;
 	pthread_mutex_init(&mutex, NULL);
 	pthread_cond_init(&cond, NULL);
 	newtonUpdateReq = 0;
 
-	setColor(color);
+	setColor(Color);
 
 	mesh = smgr->getMesh( fichier );
 	fanionMesh = smgr->getMesh( fichierFanion );
@@ -61,6 +58,10 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 		vector3df size = max - min;
 		vector3df center = (max + min)/2.0f;
 
+		float Ixx = m*size.X*size.X/(6.0f*1000.0f*1000.0f);
+		float Iyy = Ixx;
+		float Izz = Iyy;
+
 		origin.X = 0;
 		origin.Y = min.Y;
 		origin.Z = center.Z;
@@ -77,7 +78,9 @@ Robot::Robot(NewtonWorld *newtonWorld, irr::scene::ISceneManager* smgr, const ch
 		offset.setTranslation( (center - origin)/1000.0f );
 		NewtonCollision* treeCollision = NewtonCreateBox(newtonWorld,  size.X/1000.0f, size.Y/1000.0f, size.Z/1000.0f, 0, offset.pointer());
 
-		body = NewtonCreateBody(newtonWorld, treeCollision);
+		matrix4 identity;
+
+		body = NewtonCreateBody(newtonWorld, treeCollision, identity.pointer());
 		NewtonReleaseCollision(newtonWorld, treeCollision);
 		NewtonBodySetUserData(body, this);
 		NewtonBodySetMassMatrix(body, m, Ixx, Iyy, Izz);
@@ -122,9 +125,9 @@ void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
 	NewtonBodyAddForce(nbody, force);
 }
 
-void Robot::setColor(int color)
+void Robot::setColor(int Color)
 {
-	color = color;
+	color = Color;
 	cpu.GPIOD.setInput(color, GPIO_IDR_IDR9);
 }
 
@@ -144,6 +147,9 @@ void Robot::setPosition(float x, float y, float alpha)
 	X[MODEL_POS_X] = x;
 	X[MODEL_POS_Y] = y;
 	X[MODEL_POS_ALPHA] = alpha*M_PI/180;
+	Xold[MODEL_POS_X] = X[MODEL_POS_X];
+	Xold[MODEL_POS_Y] = X[MODEL_POS_Y];
+	Xold[MODEL_POS_ALPHA] = X[MODEL_POS_ALPHA];
 
 	// newton en m et non mm
 	m.setTranslation( vector3df(x/1000, 0, y/1000));
@@ -216,11 +222,12 @@ void Robot::update(	uint64_t vm_clk )
 	double k2[MODEL_SIZE];
 	double k3[MODEL_SIZE];
 	double k4[MODEL_SIZE];
-	double xprec = X[MODEL_POS_X];
-	double yprec = X[MODEL_POS_Y];
-	double aprec = X[MODEL_POS_ALPHA];
 	float speedT[3] = {0,0,0};
 	float speedA[3] = {0,0,0};
+	double v_d;
+	double v_r;
+	double dx;
+	double dy;
 	matrix4 m;
 
 	if( cpu.GPIOE.getOutput(GPIO_ODR_ODR8) )
@@ -271,13 +278,13 @@ void Robot::update(	uint64_t vm_clk )
 				X[j] += (k1[j] + 2* k2[j] + 2*k3[j] + k4[j]) * te / 6.0f;
 			}
 		}
-		model_time++;
 
+		model_time++;
 		// limitation à 1000 Hz de NewtonUpdate (cf doc)
 		// attention, conversions en m/s pour newton
-		speedT[0] = (X[MODEL_POS_X] - xprec) / (0.001f*1000);
-		speedT[2] = (X[MODEL_POS_Y] - yprec) / (0.001f*1000);
-		speedA[1] = (aprec - X[MODEL_POS_ALPHA]) / 0.001f;
+		speedT[0] = (X[MODEL_POS_X] - Xold[MODEL_POS_X]) / (0.001f*1000);
+		speedT[2] = (X[MODEL_POS_Y] - Xold[MODEL_POS_Y]) / (0.001f*1000);
+		speedA[1] = (Xold[MODEL_POS_ALPHA] - X[MODEL_POS_ALPHA]) / 0.001f;
 		NewtonBodySetVelocity(body, speedT);
 		NewtonBodySetOmega(body, speedA);
 
@@ -290,13 +297,45 @@ void Robot::update(	uint64_t vm_clk )
 		vector3df tr = m.getTranslation()*1000;
 		vector3df rot = m.getRotationDegrees();
 
-		// TODO mettre à jour  l' état X complet
-		X[MODEL_POS_X] = m[3];
-		X[MODEL_POS_Y] = m[7];
+		X[MODEL_POS_X] = tr.X;
+		X[MODEL_POS_Y] = tr.Z;
 		X[MODEL_POS_ALPHA] = atan2(m[2], m[0]);
-		xprec = X[MODEL_POS_X];
-		yprec = X[MODEL_POS_Y];
-		aprec = X[MODEL_POS_ALPHA];
+
+		v_r = fmod(X[MODEL_POS_ALPHA] - Xold[MODEL_POS_ALPHA] + M_PI, 2*M_PI);
+		if(v_r < 0)
+		{
+			v_r += M_PI;
+		}
+		else
+		{
+			v_r -= M_PI;
+		}
+
+		dx = X[MODEL_POS_X] - Xold[MODEL_POS_X];
+		dy = X[MODEL_POS_Y] - Xold[MODEL_POS_Y];
+		v_d = sqrt(dx*dx + dy*dy);
+		double speed_alpha = atan2(dy, dx);
+		if( fabs(fmod(speed_alpha - Xold[MODEL_POS_ALPHA] + M_PI, 2*M_PI) - M_PI) > M_PI/2)
+		{
+			v_d = - v_d;
+		}
+/*
+		if(color == 1)
+			printf("%f\t%f\t%f ------ %f\t%f\t%f -------- %f\t%f\t%f\n", X[MODEL_POS_ALPHA], Xold[MODEL_POS_ALPHA], v_r, dx, dy, v_d, X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
+*/
+		X[MODEL_ODO_RIGHT_THETA] = Xold[MODEL_ODO_RIGHT_THETA] + (v_d / PARAM_DIST_ODO_GAIN + v_r / PARAM_ROT_ODO_GAIN )/(2 * PARAM_RIGHT_ODO_WHEEL_RADIUS * PARAM_RIGHT_ODO_WHEEL_WAY);
+		X[MODEL_ODO_LEFT_THETA] = Xold[MODEL_ODO_LEFT_THETA] + (v_d / PARAM_DIST_ODO_GAIN - v_r / PARAM_ROT_ODO_GAIN )/(2 * PARAM_LEFT_ODO_WHEEL_RADIUS  * PARAM_LEFT_ODO_WHEEL_WAY);
+
+		double v_right = (v_d / PARAM_DIST_MOD_GAIN + v_r / PARAM_ROT_MOD_GAIN) / 2.0f;
+		double v_left = (v_d / PARAM_DIST_MOD_GAIN - v_r / PARAM_ROT_MOD_GAIN ) / 2.0f;
+
+		X[MODEL_MOT_RIGHT_W] = v_right / (PARAM_RIGHT_MOT_WHEEL_RADIUS * PARAM_RIGHT_MOT_WHEEL_WAY) * 1000.0f;
+		X[MODEL_MOT_LEFT_W]  = v_left  / (PARAM_LEFT_MOT_WHEEL_RADIUS  * PARAM_LEFT_MOT_WHEEL_WAY ) * 1000.0f;
+
+		X[MODEL_MOT_RIGHT_THETA] = Xold[MODEL_MOT_RIGHT_THETA] + X[MODEL_MOT_RIGHT_W] * 0.001f;
+		X[MODEL_MOT_LEFT_THETA] = Xold[MODEL_MOT_LEFT_THETA] + X[MODEL_MOT_LEFT_W] * 0.001f;
+
+		memcpy(Xold, X, sizeof(X));
 
 //		fprintf(model_log_file, "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 //		printf( "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
