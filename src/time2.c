@@ -7,6 +7,7 @@
 #include "time2.h"
 #include "module.h"
 #include "log.h"
+#include "event.h"
 
 // configUSE_TICK_HOOK has to be set
 #if ( configUSE_TICK_HOOK == 0 )
@@ -61,6 +62,7 @@ void vApplicationTickHook()
 		if(time_start != time_end)
 		{
 			meslogFromISR(_info_, 1, "fin du match");
+			vTaskSetEventFromISR(EVENT_END);
 			time_start = time_end;
 		}
 	}

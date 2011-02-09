@@ -95,7 +95,7 @@ static int control_module_init()
 	pid_rot.max_out = 1800;
 	/////
 
-	state = READY_FREE;
+	state = CONTROL_READY_FREE;
 
 	return 0;
 }
@@ -122,16 +122,21 @@ static void control_task(void* arg)
 
 		portENTER_CRITICAL();
 
+		if(vTaskGetEvent() | EVENT_END)
+		{
+			state = CONTROL_END;
+		}
+
 		// calcul du prochain point
 		switch(state)
 		{
-			case READY_FREE:
+			case CONTROL_READY_FREE:
 				break;
-			case READY_ASSERT:
+			case CONTROL_READY_ASSERT:
 				break;
-			case STRAIGHT:
-			case ROTATE:
-			case GOTO:
+			case CONTROL_STRAIGHT:
+			case CONTROL_ROTATE:
+			case CONTROL_GOTO:
 				if(control_param.ad.angle)
 				{
 					// TODO marge en dur
@@ -187,19 +192,22 @@ static void control_task(void* arg)
 				{
 					v_dist_cons = 0;
 					v_rot_cons = 0;
-					state = READY_ASSERT;
+					state = CONTROL_READY_ASSERT;
 					vTaskSetEvent(EVENT_CONTROL_READY);
 				}
 				break;
-			case ARC:
+			case CONTROL_ARC:
 				// TODO
+				break;
+			case CONTROL_END:
+
 				break;
 			default:
 				// TODO cas d'erreur de prog
 				break;
 		}
 
-		if(state != READY_FREE)
+		if(state != CONTROL_READY_FREE && state != CONTROL_END)
 		{
 			// calcul de l'erreur de position dans le repère du robot
 			float ex = pos.ca  * (cons.x - pos.x) + pos.sa * (cons.y - pos.y);
@@ -263,7 +271,10 @@ static void control_task(void* arg)
 void control_straight(float dist)
 {
 	portENTER_CRITICAL();
-	state = STRAIGHT;
+	if(state != CONTROL_END)
+	{
+		state = CONTROL_STRAIGHT;
+	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = location_get_position();
@@ -278,7 +289,10 @@ void control_straight(float dist)
 void control_rotate(float angle)
 {
 	portENTER_CRITICAL();
-	state = ROTATE;
+	if(state != CONTROL_END)
+	{
+		state = CONTROL_ROTATE;
+	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = location_get_position();
@@ -294,7 +308,10 @@ void control_rotate(float angle)
 void control_goto(float x, float y)
 {
 	portENTER_CRITICAL();
-	state = GOTO;
+	if(state != CONTROL_END)
+	{
+		state = CONTROL_GOTO;
+	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
 	trapeze_reset(&trapeze);
 	cons = location_get_position();
@@ -323,7 +340,10 @@ int32_t control_get_state()
 void control_free()
 {
 	portENTER_CRITICAL();
-	state = READY_FREE;
-	vTaskSetEvent(EVENT_CONTROL_READY);
+	if(state != CONTROL_END)
+	{
+		state = CONTROL_READY_FREE;
+		vTaskSetEvent(EVENT_CONTROL_READY);
+	}
 	portEXIT_CRITICAL();
 }

@@ -8,5 +8,6 @@
 #define EVENT_GO                  0x01
 #define EVENT_CONTROL_READY       0x02
 #define EVENT_AX12_READ_COMPLETE  0x04
+#define EVENT_END                 0x08
 
 #endif

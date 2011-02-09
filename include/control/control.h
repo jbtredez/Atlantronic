@@ -10,12 +10,13 @@
 
 enum control_state
 {
-	READY_ASSERT,          //!< no trajectory ongoing
-	READY_FREE,
-	ROTATE,         //!< rotate
-	STRAIGHT,       //!< go straight
-	GOTO,           //!< goto
-	ARC,            //!< arc
+	CONTROL_READY_ASSERT,          //!< no trajectory ongoing
+	CONTROL_READY_FREE,
+	CONTROL_ROTATE,         //!< rotate
+	CONTROL_STRAIGHT,       //!< go straight
+	CONTROL_GOTO,           //!< goto
+	CONTROL_ARC,            //!< arc
+	CONTROL_END,    //!< end : halted forever
 };
 
 void control_straight(float dist);
