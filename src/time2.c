@@ -113,13 +113,19 @@ unsigned long time_match_from_isr()
 void time_start_match()
 {
 	portENTER_CRITICAL();
-	time_start = time;
-	time_end = time + DUREE_MATCH_TICK;
+	if(time_start != time_end)
+	{
+		time_start = time;
+		time_end = time + DUREE_MATCH_TICK;
+	}
 	portEXIT_CRITICAL();
 }
 
 void time_start_match_from_isr()
 {
-	time_start = time;
-	time_end = time + DUREE_MATCH_TICK;
+	if(time_start != time_end)
+	{
+		time_start = time;
+		time_end = time + DUREE_MATCH_TICK;
+	}
 }
