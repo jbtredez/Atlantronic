@@ -122,7 +122,7 @@ static void control_task(void* arg)
 
 		portENTER_CRITICAL();
 
-		if(vTaskGetEvent() | EVENT_END)
+		if(vTaskGetEvent() & EVENT_END)
 		{
 			state = CONTROL_END;
 		}
