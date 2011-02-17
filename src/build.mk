@@ -9,6 +9,7 @@ obj-rtos += io/$(ARCH)/rcc.o
 obj-rtos += io/$(ARCH)/gpio.o
 obj-rtos += io/$(ARCH)/usart.o
 obj-rtos += io/$(ARCH)/encoders.o
+obj-rtos += io/$(ARCH)/systick.o
 obj-rtos += io/ax12.o
 obj-rtos += io/current.o
 obj-rtos += io/$(ARCH)/pwm.o

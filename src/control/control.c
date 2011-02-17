@@ -21,9 +21,9 @@
 #define CONTROL_STACK_SIZE       150
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
-#define CONTROL_TICK_PERIOD        5
+#define CONTROL_TICK_PERIOD        5*72000
 
-#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)configTICK_RATE_HZ)
+#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)72000000)//(float) ((float)CONTROL_TICK_PERIOD) / ((float)configTICK_RATE_HZ)
 
 static void control_task(void *);
 static float sinc( float x );
@@ -71,7 +71,7 @@ static float sinc( float x )
 static int control_module_init()
 {
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(control_task, (const signed char *) "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
+	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
 	if(err != pdPASS)
 	{
@@ -106,7 +106,7 @@ static void control_task(void* arg)
 {
 	(void) arg;
 
-	portTickType xLastWakeTime = xTaskGetTickCount();
+	portTickType wake_time = 0;//xTaskGetTickCount();
 	struct vect_pos pos;
 
 	///// TODO
@@ -264,7 +264,8 @@ static void control_task(void* arg)
 
 		portEXIT_CRITICAL();
 
-		vTaskDelayUntil(&xLastWakeTime, CONTROL_TICK_PERIOD);
+		wake_time += CONTROL_TICK_PERIOD;
+		vTaskDelayUntil(wake_time);
 	}
 }
 

@@ -15,7 +15,7 @@ int strategy_test_control_module_init();
 int strategy_test_control_module_init()
 {
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(strategy_test_control_task, (const signed char *) "strategy_test_control", STRATEGY_TEST_CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
+	portBASE_TYPE err = xTaskCreate(strategy_test_control_task, "strategy_test_control", STRATEGY_TEST_CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
 
 	if(err != pdPASS)
 	{

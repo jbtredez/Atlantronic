@@ -67,6 +67,8 @@ extern "C" {
  *-----------------------------------------------------------
  */
 
+#include <stdint.h>
+
 /* Type definitions. */
 #define portCHAR		char
 #define portFLOAT		float
@@ -76,13 +78,8 @@ extern "C" {
 #define portSTACK_TYPE  unsigned long
 #define portBASE_TYPE   long
 
-#if( configUSE_16_BIT_TICKS == 1 )
-	typedef unsigned portSHORT portTickType;
-	#define portMAX_DELAY ( portTickType ) 0xffff
-#else
-	typedef unsigned portLONG portTickType;
-	#define portMAX_DELAY ( portTickType ) 0xffffffff
-#endif
+typedef uint64_t portTickType;
+#define portMAX_DELAY ( portTickType ) 0xffffffffffffffff
 /*-----------------------------------------------------------*/
 
 /* Architecture specifics. */

@@ -143,7 +143,7 @@ void* CpuEmu::lecture()
 		}
 		else
 		{
-			printf("erreur protocole\n");
+			printf("erreur protocole ( n = %d != %lu)\n", n, sizeof(io));
 			return NULL;
 		}
 	}

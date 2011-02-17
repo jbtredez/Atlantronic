@@ -135,8 +135,7 @@ void usart_write(unsigned char* buf, uint16_t size)
 			// TODO remonter une erreur (log, led...)
 			USART3->CR1 |= USART_CR1_TXEIE;
 			size++; // on n'a finalement pas écris notre octet
-			portTickType xLastWakeTime = xTaskGetTickCount();
-			vTaskDelayUntil(&xLastWakeTime, 2);
+			vTaskDelay(2*72000);
 		}
 	}
 	USART3->CR1 |= USART_CR1_TXEIE;

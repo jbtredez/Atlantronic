@@ -16,7 +16,7 @@ static void isr_unexpected(void);
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
 
 extern void xPortPendSVHandler(void);
-extern void xPortSysTickHandler(void);
+extern void isr_systick(void);
 extern void vPortSVCHandler( void );
 extern int main(void);
 
@@ -46,7 +46,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_debug_monitor,                      // Debug monitor handler
 	0,                                      // Reserved
 	xPortPendSVHandler,                     // The PendSV handler
-	xPortSysTickHandler,                    // The SysTick handler
+	isr_systick,                            // The SysTick handler
 
 	// chip level
 	isr_unexpected,

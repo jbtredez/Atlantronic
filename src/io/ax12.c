@@ -47,7 +47,7 @@ static int ax12_module_init()
 	}
 
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(ax12_task, (const signed char *) "ax12", AX12_STACK_SIZE, NULL, PRIORITY_TASK_AX12, &xHandle);
+	portBASE_TYPE err = xTaskCreate(ax12_task, "ax12", AX12_STACK_SIZE, NULL, PRIORITY_TASK_AX12, &xHandle);
 
 	if(err != pdPASS)
 	{
@@ -87,8 +87,6 @@ static void ax12_task(void* arg)
 			// pas de broadcast (et status des ax12 à 2) => réponse attendue
 			if(req.id != 0xFE)
 			{
-				// TODO gérer le timeout
-				portTickType xLastWakeTime = xTaskGetTickCount();
 				i = 0;
 				if(req.instruction != AX12_INSTRUCTION_READ_DATA)
 				{
@@ -99,9 +97,12 @@ static void ax12_task(void* arg)
 					size = 6 + req.arg[1];
 				}
 
+				// TODO gérer le timeout
+				portTickType wake_time = xTaskGetTickCount();
 				do
 				{
-					vTaskDelayUntil(&xLastWakeTime, 1);
+					wake_time += 72000;
+					vTaskDelayUntil(wake_time);
 					i += usart_read(ax12_buffer, size);
 				}while(i != size);
 

@@ -36,7 +36,7 @@ static int log_module_init()
 	}
 
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(log_task, (const signed char *) "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
+	portBASE_TYPE err = xTaskCreate(log_task, "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
 
 	if(err != pdPASS)
 	{

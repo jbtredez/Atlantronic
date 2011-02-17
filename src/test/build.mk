@@ -17,6 +17,7 @@ obj-test_control += io/$(ARCH)/rcc.o
 obj-test_control += io/$(ARCH)/encoders.o
 obj-test_control += io/$(ARCH)/gpio.o
 obj-test_control += io/$(ARCH)/usart.o
+obj-test_control += io/$(ARCH)/systick.o
 obj-test_control += io/current.o
 obj-test_control += io/ax12.o
 obj-test_control += io/$(ARCH)/pwm.o

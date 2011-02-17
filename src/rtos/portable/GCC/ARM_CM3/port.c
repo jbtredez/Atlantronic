@@ -90,11 +90,6 @@ variable. */
 static unsigned portBASE_TYPE uxCriticalNesting = 0xaaaaaaaa;
 
 /*
- * Setup the timer to generate the tick interrupts.
- */
-static void prvSetupTimerInterrupt( void );
-
-/*
  * Exception handlers.
  */
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
@@ -169,14 +164,6 @@ void vPortStartFirstTask( void )
  */
 portBASE_TYPE xPortStartScheduler( void )
 {
-	/* Make PendSV, CallSV and SysTick the same priroity as the kernel. */
-	*(portNVIC_SYSPRI2) |= portNVIC_PENDSV_PRI;
-	*(portNVIC_SYSPRI2) |= portNVIC_SYSTICK_PRI;
-
-	/* Start the timer that generates the tick ISR.  Interrupts are disabled
-	here already. */
-	prvSetupTimerInterrupt();
-
 	/* Initialise the critical nesting count ready for the first task. */
 	uxCriticalNesting = 0;
 
@@ -252,34 +239,6 @@ void xPortPendSVHandler( void )
 	::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
 	);
 }
-/*-----------------------------------------------------------*/
 
-void xPortSysTickHandler( void )
-{
-unsigned long ulDummy;
 
-	/* If using preemption, also force a context switch. */
-	#if configUSE_PREEMPTION == 1
-		*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
-	#endif
-
-	ulDummy = portSET_INTERRUPT_MASK_FROM_ISR();
-	{
-		vTaskIncrementTick();
-	}
-	portCLEAR_INTERRUPT_MASK_FROM_ISR( ulDummy );
-}
-/*-----------------------------------------------------------*/
-
-/*
- * Setup the systick timer to generate the tick interrupts at the required
- * frequency.
- */
-void prvSetupTimerInterrupt( void )
-{
-	/* Configure SysTick to interrupt at the requested rate. */
-	*(portNVIC_SYSTICK_LOAD) = ( configCPU_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
-	*(portNVIC_SYSTICK_CTRL) = portNVIC_SYSTICK_CLK | portNVIC_SYSTICK_INT | portNVIC_SYSTICK_ENABLE;
-}
-/*-----------------------------------------------------------*/
 

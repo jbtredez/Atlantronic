@@ -69,6 +69,9 @@ extern "C" {
  *-----------------------------------------------------------
  */
 
+#include <stdint.h>
+#include "io/systick.h"
+
 /* Type definitions. */
 #define portCHAR		char
 #define portFLOAT		float
@@ -78,17 +81,14 @@ extern "C" {
 #define portSTACK_TYPE	unsigned portLONG
 #define portBASE_TYPE	long
 
-#if( configUSE_16_BIT_TICKS == 1 )
-	typedef unsigned portSHORT portTickType;
-	#define portMAX_DELAY ( portTickType ) 0xffff
-#else
-	typedef unsigned portLONG portTickType;
-	#define portMAX_DELAY ( portTickType ) 0xffffffff
-#endif
+typedef uint64_t portTickType;
+#define portMAX_DELAY ( portTickType ) 0xffffffffffffffff
+
 /*-----------------------------------------------------------*/	
 
 /* Architecture specifics. */
 #define portSTACK_GROWTH			( -1 )
+// TODO : a modifier
 #define portTICK_RATE_MS			( ( portTickType ) 1000 / configTICK_RATE_HZ )		
 #define portBYTE_ALIGNMENT			8
 /*-----------------------------------------------------------*/	
@@ -145,8 +145,6 @@ extern void vPortExitCritical( void );
 /* Task function macros as described on the FreeRTOS.org WEB site. */
 #define portTASK_FUNCTION_PROTO( vFunction, pvParameters ) void vFunction( void *pvParameters )
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
-
-#define portNOP()
 
 #ifdef __cplusplus
 }
