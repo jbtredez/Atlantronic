@@ -16,6 +16,8 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-mno-thumb-interwork
+CFLAGS+=-O2
+CFLAGS+=-fomit-frame-pointer
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-msoft-float
@@ -29,18 +31,15 @@ LDFLAGS+=-lm
 LDFLAGS+=-lg 
 
 ifeq ($(DEBUG),1)
-CFLAGS+=-gdwarf-2
-CFLAGS+=$(addprefix -D,$(DEF))
-
-LDFLAGS+=-gdwarf-2
+CFLAGS+=-g3
+LDFLAGS+=-g3
 else
 DEF+= NDEBUG
 CFLAGS+=-O3
-CFLAGS+=-fomit-frame-pointer
-CFLAGS+=$(addprefix -D,$(DEF))
-
 LDFLAGS+=-O3
 endif
+
+CFLAGS+=$(addprefix -D,$(DEF))
 
 INCLUDES+=-Isrc/rtos/portable/GCC/ARM_CM3
 OBJ-PORT+=rtos/portable/GCC/ARM_CM3/port.o
