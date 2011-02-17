@@ -105,5 +105,6 @@ clean:
 	@rm -frv $(obj)
 	@rm -frv $(bin)
 	@rm -frv $(doc)/doxygen
+	@find . -name \*~ -exec rm \-fv {} \;
 
 .PHONY: clean
