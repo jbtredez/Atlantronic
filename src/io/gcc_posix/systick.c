@@ -21,3 +21,20 @@ int systick_reconfigure(uint64_t tick)
 	// TODO
 	return 0;
 }
+
+int64_t systick_get_time()
+{
+	// TODO
+	return 0;
+}
+
+int64_t systick_get_match_time()
+{
+	// TODO
+	return 0;
+}
+
+void systick_start_match()
+{
+	// TODO
+}

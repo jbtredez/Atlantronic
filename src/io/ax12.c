@@ -98,7 +98,7 @@ static void ax12_task(void* arg)
 				}
 
 				// TODO gérer le timeout
-				portTickType wake_time = xTaskGetTickCount();
+				portTickType wake_time = systick_get_time();
 				do
 				{
 					wake_time += 72000;

@@ -1104,32 +1104,6 @@ signed portBASE_TYPE xAlreadyYielded = pdFALSE;
 	return xAlreadyYielded;
 }
 
-
-
-
-
-
-/*-----------------------------------------------------------
- * PUBLIC TASK UTILITIES documented in task.h
- *----------------------------------------------------------*/
-
-
-
-portTickType xTaskGetTickCount( void )
-{
-portTickType xTicks;
-
-	/* Critical section required if running on a 16 bit processor. */
-	portENTER_CRITICAL();
-	{
-		xTicks = xTickCount;
-	}
-	portEXIT_CRITICAL();
-
-	return xTicks;
-}
-/*-----------------------------------------------------------*/
-
 unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 {
 	/* A critical section is not required because the variables are of type

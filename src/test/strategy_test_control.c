@@ -2,9 +2,10 @@
 #include "task.h"
 #include "module.h"
 #include "control/control.h"
-#include "time2.h"
+#include "io/systick.h"
 #include "event.h"
 #include "io/gpio.h"
+#include "io/systick.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       64
@@ -29,15 +30,22 @@ module_init(strategy_test_control_module_init, INIT_STRATEGY);
 
 static void strategy_test_control_task()
 {
-	time_start_match();
+	// TODO : pour les tests
+	systick_start_match();
+	vTaskSetEvent(EVENT_GO);
 
 	if(getColor() == COLOR_BLUE)
 	{
-		control_straight(1800);
+#if 1
+		control_straight(-1800);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
+#endif
+#if 0
 		control_rotate(1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-		control_straight(1000);
+#endif
+#if 0
+		//control_straight(1000);
 //		vTaskWaitEvent(EVENT_CONTROL_READY);
 //		control_straight(550);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
@@ -48,7 +56,7 @@ static void strategy_test_control_task()
 		control_rotate(-1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_straight(1550);
-
+#endif
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 	}
 	else

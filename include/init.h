@@ -19,7 +19,7 @@
 
 #define INIT_RCC                      "00"
 #define INIT_SYSTICK                  "01"
-#define INIT_TIME                     "01"
+#define INIT_END                      "01"
 #define INIT_GPIO                     "02"
 #define INIT_USART                    "03"
 #define INIT_USB                      "04"
@@ -46,5 +46,6 @@
 #define ERR_INIT_AX12              -3
 #define ERR_INIT_CONTROL           -6
 #define ERR_INIT_TEST             -30
+#define ERR_INIT_END               -2
 
 #endif

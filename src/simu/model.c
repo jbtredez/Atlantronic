@@ -13,7 +13,7 @@
 #include "io/pwm.h"
 #include "module.h"
 #include "log.h"
-#include "time2.h"
+#include "io/systick.h"
 #include "vect_pos.h"
 #include "robot_parameters.h"
 #include "rtos/FreeRTOSConfig.h"
@@ -102,6 +102,8 @@ void model_dx(double *x, double* dx)
 
 void model_update()
 {
+	// TODO simu posix a revoir
+/*
 	const double te = 1.0f/(configTICK_RATE_HZ * MODEL_FREQ_MULT);
 	unsigned long t = time_sys();
 	int i,j;
@@ -150,6 +152,7 @@ void model_update()
 	}
 
 	portEXIT_CRITICAL();
+*/
 }
 
 void model_pwm_set(unsigned int num, uint32_t val, int dir)

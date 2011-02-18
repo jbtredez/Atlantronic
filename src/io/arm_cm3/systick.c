@@ -1,8 +1,11 @@
+//! @file systick.c
+//! @brief Systick module
+//! @author Jean-Baptiste Trédez
+
 #include "io/systick.h"
 #include "module.h"
 #include "rtos/FreeRTOSConfig.h"
 #include "portmacro.h"
-
 
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_SYSPRI2			( ( volatile unsigned long *) 0xe000ed20 )
@@ -12,11 +15,14 @@
 
 volatile int32_t systick_last_load_used;
 volatile int64_t systick_time;
+volatile int64_t systick_time_start_match;
 
 extern void vTaskIncrementTick( void );
 
 static int systick_module_init()
 {
+	systick_time_start_match = 0;
+
 	// Make PendSV, CallSV and SysTick the same priroity as the kernel
 	*(portNVIC_SYSPRI2) |= portNVIC_PENDSV_PRI;
 	*(portNVIC_SYSPRI2) |= portNVIC_SYSTICK_PRI;
@@ -65,19 +71,46 @@ int systick_reconfigure(uint64_t tick)
 
 void isr_systick( void )
 {
-unsigned long ulDummy;
+	unsigned long ulDummy;
 
 	systick_time += systick_last_load_used;
 	systick_last_load_used = SYSTICK_MAXCOUNT;
 
-	/* If using preemption, also force a context switch. */
-	#if configUSE_PREEMPTION == 1
-		*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
-	#endif
+	*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
 
 	ulDummy = portSET_INTERRUPT_MASK_FROM_ISR();
 	{
 		vTaskIncrementTick();
 	}
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( ulDummy );
+}
+
+int64_t systick_get_time()
+{
+	int64_t t;
+	portENTER_CRITICAL();
+	t = systick_time + systick_last_load_used - systick_time_start_match - SysTick->VAL;
+	portEXIT_CRITICAL();
+
+	return t;
+}
+
+int64_t systick_get_match_time()
+{
+	int64_t t;
+	portENTER_CRITICAL();
+	t = systick_time + systick_last_load_used - SysTick->VAL;
+	portEXIT_CRITICAL();
+
+	return t;
+}
+
+void systick_start_match()
+{
+	portENTER_CRITICAL();
+	if( systick_time_start_match == 0)
+	{
+		systick_time_start_match = systick_time + systick_last_load_used - SysTick->VAL;
+	}
+	portEXIT_CRITICAL();
 }
