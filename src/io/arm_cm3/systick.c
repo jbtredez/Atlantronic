@@ -13,6 +13,10 @@
 #define portNVIC_PENDSV_PRI			( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 16 )
 #define portNVIC_SYSTICK_PRI		( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 24 )
 
+// --> 1 cycle pour le rechargement du systick (on a compté systick_last_load_used + 1)
+// --> 8 cycles (tests) entre la lecture du SysTick->VAL  (systick_time -= SysTick->VAL) et le rearmement du timer
+#define SYSTICK_REPROGRAM_TIME     10
+
 volatile int32_t systick_last_load_used;
 volatile int64_t systick_time;
 volatile int64_t systick_time_start_match;
@@ -44,16 +48,12 @@ module_init(systick_module_init, INIT_SYSTICK);
 
 int systick_reconfigure(uint64_t tick)
 {
-	// le 10 :
-	// --> 1 cycle pour le rechargement du systick (on a compté systick_last_load_used + 1)
-	// --> 9 cycles (tests) entre la lecture du SysTick->VAL  (systick_time -= SysTick->VAL) et le rearmement du timer
-	
-	systick_time += systick_last_load_used + 10;
+	systick_time += systick_last_load_used + SYSTICK_REPROGRAM_TIME;
 	int64_t delta = tick - systick_time + SysTick->VAL;
 	if(delta < 100)
 	{
 		// le temps de faire la fin du context switch, on sera bon.
-		systick_time = systick_time - systick_last_load_used - 10;
+		systick_time = systick_time - systick_last_load_used - SYSTICK_REPROGRAM_TIME;
 		return -1;
 	}
 
