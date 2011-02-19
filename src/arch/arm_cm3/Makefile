@@ -16,8 +16,9 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-mno-thumb-interwork
-CFLAGS+=-O2
+CFLAGS+=-O1
 CFLAGS+=-fomit-frame-pointer
+CFLAGS+=-g3
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-msoft-float
@@ -29,14 +30,14 @@ LDFLAGS+=-lc
 LDFLAGS+=-lm
 #LDFLAGS+=-lnosys
 LDFLAGS+=-lg 
+LDFLAGS+=-g3
 
 ifeq ($(DEBUG),1)
-CFLAGS+=-g3
-LDFLAGS+=-g3
+
 else
 DEF+= NDEBUG
-CFLAGS+=-O3
-LDFLAGS+=-O3
+#CFLAGS+=-O3
+#LDFLAGS+=-O3
 endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
