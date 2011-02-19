@@ -2311,20 +2311,17 @@ void vTaskSetEvent(uint32_t mask)
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
-				if( xTaskIsTaskSuspended( pxNextTCB ) == pdTRUE )
+				traceTASK_RESUME( pxNextTCB );
+
+				// As we are in a critical section we can access the ready
+				// lists even if the scheduler is suspended
+				vListRemove(  &( pxNextTCB->xGenericListItem ) );
+				prvAddTaskToReadyQueue( pxNextTCB );
+
+				// We may have just resumed a higher priority task
+				if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
 				{
-					traceTASK_RESUME( pxNextTCB );
-
-					// As we are in a critical section we can access the ready
-					// lists even if the scheduler is suspended
-					vListRemove(  &( pxNextTCB->xGenericListItem ) );
-					prvAddTaskToReadyQueue( pxNextTCB );
-
-					// We may have just resumed a higher priority task
-					if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
-					{
-						xHigherPriorityTaskWoken = 1;
-					}
+					xHigherPriorityTaskWoken = 1;
 				}
 			}
 		}
