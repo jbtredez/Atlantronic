@@ -14,7 +14,7 @@
 #define portNVIC_SYSTICK_PRI		( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 24 )
 
 // --> 1 cycle pour le rechargement du systick (on a compté systick_last_load_used + 1)
-// --> 8 cycles (tests) entre la lecture du SysTick->VAL  (systick_time -= SysTick->VAL) et le rearmement du timer
+// --> SYSTICK_REPROGRAM_TIME-1 cycles (tests) entre la lecture du SysTick->VAL  (systick_time -= SysTick->VAL) et le rearmement du timer
 #define SYSTICK_REPROGRAM_TIME     10
 
 volatile int32_t systick_last_load_used;
@@ -61,7 +61,7 @@ int systick_reconfigure(uint64_t tick)
 	// de val et la reprogramation de sysclk afin de ne pas perdre de tick
 	systick_time -= SysTick->VAL;
 	
-	SysTick->LOAD = tick - systick_time;
+	SysTick->LOAD = (tick - systick_time) & SYSTICK_MAXCOUNT;
 	SysTick->VAL = 0x00;   // recharge du systick au prochain cycle
 	systick_last_load_used = SysTick->LOAD;
 	SysTick->LOAD = SYSTICK_MAXCOUNT;

@@ -32,8 +32,8 @@ static void end_task(void *arg)
 	(void) arg;
 
 	vTaskWaitEvent(EVENT_GO);
-//	vTaskDelay(DUREE_MATCH_TICK);
-//	vTaskSetEvent(EVENT_END);
+	vTaskDelay(DUREE_MATCH_TICK);
+	vTaskSetEvent(EVENT_END);
 
 	vTaskDelete(NULL);
 }
