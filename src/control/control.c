@@ -23,7 +23,7 @@
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        5*72000
 
-#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)72000000)//(float) ((float)CONTROL_TICK_PERIOD) / ((float)configTICK_RATE_HZ)
+#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)72000000)
 
 static void control_task(void *);
 static float sinc( float x );
@@ -106,7 +106,7 @@ static void control_task(void* arg)
 {
 	(void) arg;
 
-	portTickType wake_time = 0;//xTaskGetTickCount();
+	portTickType wake_time = systick_get_time();
 	struct vect_pos pos;
 
 	///// TODO
