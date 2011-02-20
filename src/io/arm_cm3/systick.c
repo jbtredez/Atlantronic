@@ -20,6 +20,7 @@
 volatile int32_t systick_last_load_used;
 volatile int64_t systick_time;
 volatile int64_t systick_time_start_match;
+void isr_systick( void );
 
 extern void vTaskIncrementTick( void );
 

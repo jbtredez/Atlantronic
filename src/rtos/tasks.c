@@ -1,62 +1,8 @@
 //! @file tasks.c
-//! @brief noyau freeRTOS modifié
+//! @brief noyau freeRTOS v6.0.5 modifié
 //!
 //! Afin de voir les modifications réalisées :
 //!    git diff 23f9696a820a86ec5f00f780aa1bc4031f80c4e5 src/rtos/tasks.c
-
-/*
-    FreeRTOS V6.0.5 - Copyright (C) 2010 Real Time Engineers Ltd.
-
-    ***************************************************************************
-    *                                                                         *
-    * If you are:                                                             *
-    *                                                                         *
-    *    + New to FreeRTOS,                                                   *
-    *    + Wanting to learn FreeRTOS or multitasking in general quickly       *
-    *    + Looking for basic training,                                        *
-    *    + Wanting to improve your FreeRTOS skills and productivity           *
-    *                                                                         *
-    * then take a look at the FreeRTOS eBook                                  *
-    *                                                                         *
-    *        "Using the FreeRTOS Real Time Kernel - a Practical Guide"        *
-    *                  http://www.FreeRTOS.org/Documentation                  *
-    *                                                                         *
-    * A pdf reference manual is also available.  Both are usually delivered   *
-    * to your inbox within 20 minutes to two hours when purchased between 8am *
-    * and 8pm GMT (although please allow up to 24 hours in case of            *
-    * exceptional circumstances).  Thank you for your support!                *
-    *                                                                         *
-    ***************************************************************************
-
-    This file is part of the FreeRTOS distribution.
-
-    FreeRTOS is free software; you can redistribute it and/or modify it under
-    the terms of the GNU General Public License (version 2) as published by the
-    Free Software Foundation AND MODIFIED BY the FreeRTOS exception.
-    ***NOTE*** The exception to the GPL is included to allow you to distribute
-    a combined work that includes FreeRTOS without being obliged to provide the
-    source code for proprietary components outside of the FreeRTOS kernel.
-    FreeRTOS is distributed in the hope that it will be useful, but WITHOUT
-    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
-    more details. You should have received a copy of the GNU General Public 
-    License and the FreeRTOS license exception along with FreeRTOS; if not it 
-    can be viewed here: http://www.freertos.org/a00114.html and also obtained 
-    by writing to Richard Barry, contact details for whom are available on the
-    FreeRTOS WEB site.
-
-    1 tab == 4 spaces!
-
-    http://www.FreeRTOS.org - Documentation, latest information, license and
-    contact details.
-
-    http://www.SafeRTOS.com - A version that is certified for use in safety
-    critical systems.
-
-    http://www.OpenRTOS.com - Commercial support, development, porting,
-    licensing and training services.
-*/
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,7 +42,7 @@ typedef struct tskTaskControlBlock
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	char				    pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
 
-	unsigned portBASE_TYPE event;
+	volatile unsigned portBASE_TYPE event;
 	unsigned portBASE_TYPE eventMask;
 
 	#if ( portSTACK_GROWTH > 0 )
@@ -140,10 +86,7 @@ PRIVILEGED_DATA tskTCB * volatile pxCurrentTCB = NULL;
 /* Lists for ready and blocked tasks. --------------------*/
 
 PRIVILEGED_DATA static xList pxReadyTasksLists[ configMAX_PRIORITIES ];	/*< Prioritised ready tasks. */
-PRIVILEGED_DATA static xList xDelayedTaskList1;							/*< Delayed tasks. */
-PRIVILEGED_DATA static xList xDelayedTaskList2;							/*< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
-PRIVILEGED_DATA static xList * volatile pxDelayedTaskList ;				/*< Points to the delayed task list currently being used. */
-PRIVILEGED_DATA static xList * volatile pxOverflowDelayedTaskList;		/*< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
+PRIVILEGED_DATA static xList xDelayedTaskList;							/*< Delayed tasks. */
 PRIVILEGED_DATA static xList xPendingReadyList;							/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready queue when the scheduler is resumed. */
 
 #if ( INCLUDE_vTaskDelete == 1 )
@@ -277,7 +220,7 @@ PRIVILEGED_DATA static unsigned portBASE_TYPE uxTaskNumber 						= ( unsigned po
 {																													\
 register tskTCB *pxTCB;																								\
 																													\
-	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( pxDelayedTaskList ) ) != NULL )						\
+	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )						\
 	{																												\
 		if( xTickCount < listGET_LIST_ITEM_VALUE( &( pxTCB->xGenericListItem ) ) )									\
 		{																											\
@@ -626,7 +569,7 @@ tskTCB * pxNewTCB;
 				/* The list item will be inserted in wake time order. */
 				listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), wake_time );
 
-				vListInsert( ( xList * ) pxDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
+				vListInsert( ( xList * ) &xDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
 			}
 		}
 		xAlreadyYielded = xTaskResumeAll();
@@ -676,7 +619,7 @@ tskTCB * pxNewTCB;
 				/* The list item will be inserted in wake time order. */
 				listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 
-				vListInsert( ( xList * ) pxDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
+				vListInsert( ( xList * ) &xDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
 			}
 			xAlreadyYielded = xTaskResumeAll();
 		}
@@ -1059,7 +1002,7 @@ signed portBASE_TYPE xAlreadyYielded = pdFALSE;
 
 				/* Move any readied tasks from the pending list into the
 				appropriate ready list. */
-				while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY(  ( ( xList * ) &xPendingReadyList ) ) ) != NULL )
+				while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xPendingReadyList ) ) != NULL )
 				{
 					vListRemove( &( pxTCB->xEventListItem ) );
 					vListRemove( &( pxTCB->xGenericListItem ) );
@@ -1141,14 +1084,9 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 				}
 			}while( uxQueue > ( unsigned short ) tskIDLE_PRIORITY );
 
-			if( !listLIST_IS_EMPTY( pxDelayedTaskList ) )
+			if( !listLIST_IS_EMPTY( &xDelayedTaskList ) )
 			{
-				prvListTaskWithinSingleList( pcWriteBuffer, ( xList * ) pxDelayedTaskList, tskBLOCKED_CHAR );
-			}
-
-			if( !listLIST_IS_EMPTY( pxOverflowDelayedTaskList ) )
-			{
-				prvListTaskWithinSingleList( pcWriteBuffer, ( xList * ) pxOverflowDelayedTaskList, tskBLOCKED_CHAR );
+				prvListTaskWithinSingleList( pcWriteBuffer, ( xList * ) &xDelayedTaskList, tskBLOCKED_CHAR );
 			}
 
 			#if( INCLUDE_vTaskDelete == 1 )
@@ -1206,14 +1144,9 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 				}
 			}while( uxQueue > ( unsigned short ) tskIDLE_PRIORITY );
 
-			if( !listLIST_IS_EMPTY( pxDelayedTaskList ) )
+			if( !listLIST_IS_EMPTY( &xDelayedTaskList ) )
 			{
-				prvGenerateRunTimeStatsForTasksInList( pcWriteBuffer, ( xList * ) pxDelayedTaskList, ulTotalRunTime );
-			}
-
-			if( !listLIST_IS_EMPTY( pxOverflowDelayedTaskList ) )
-			{
-				prvGenerateRunTimeStatsForTasksInList( pcWriteBuffer, ( xList * ) pxOverflowDelayedTaskList, ulTotalRunTime );
+				prvGenerateRunTimeStatsForTasksInList( pcWriteBuffer, ( xList * ) &xDelayedTaskList, ulTotalRunTime );
 			}
 
 			#if ( INCLUDE_vTaskDelete == 1 )
@@ -1332,18 +1265,9 @@ void vTaskIncrementTick( void )
 		}while( usQueue > ( unsigned short ) tskIDLE_PRIORITY );
 
 		/* Remove any TCB's from the delayed queue. */
-		while( !listLIST_IS_EMPTY( &xDelayedTaskList1 ) )
+		while( !listLIST_IS_EMPTY( &xDelayedTaskList ) )
 		{
-			listGET_OWNER_OF_NEXT_ENTRY( pxTCB, &xDelayedTaskList1 );
-			vListRemove( ( xListItem * ) &( pxTCB->xGenericListItem ) );
-
-			prvDeleteTCB( ( tskTCB * ) pxTCB );
-		}
-
-		/* Remove any TCB's from the overflow delayed queue. */
-		while( !listLIST_IS_EMPTY( &xDelayedTaskList2 ) )
-		{
-			listGET_OWNER_OF_NEXT_ENTRY( pxTCB, &xDelayedTaskList2 );
+			listGET_OWNER_OF_NEXT_ENTRY( pxTCB, &xDelayedTaskList );
 			vListRemove( ( xListItem * ) &( pxTCB->xGenericListItem ) );
 
 			prvDeleteTCB( ( tskTCB * ) pxTCB );
@@ -1479,7 +1403,7 @@ void vTaskSwitchContext( void )
 
 	// TODO : gérer un temps max pour les taches de même priorité
 	tskTCB *pxTCB;
-	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( pxDelayedTaskList ) ) != NULL )
+	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )
 	{
 		if( systick_reconfigure(pxTCB->xGenericListItem.xItemValue) == 0)
 		{
@@ -1547,16 +1471,7 @@ portTickType xTimeToWake;
 
 			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 
-			if( xTimeToWake < xTickCount )
-			{
-				/* Wake time has overflowed.  Place this item in the overflow list. */
-				vListInsert( ( xList * ) pxOverflowDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
-			}
-			else
-			{
-				/* The wake time has not overflowed, so we can use the current block list. */
-				vListInsert( ( xList * ) pxDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
-			}
+			vListInsert( ( xList * ) &xDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
 		}
 	}
 	#else
@@ -1567,16 +1482,7 @@ portTickType xTimeToWake;
 
 			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 
-			if( xTimeToWake < xTickCount )
-			{
-				/* Wake time has overflowed.  Place this item in the overflow list. */
-				vListInsert( ( xList * ) pxOverflowDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
-			}
-			else
-			{
-				/* The wake time has not overflowed, so we can use the current block list. */
-				vListInsert( ( xList * ) pxDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
-			}
+			vListInsert( ( xList * ) &xDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
 	}
 	#endif
 }
@@ -1849,8 +1755,7 @@ unsigned portBASE_TYPE uxPriority;
 		vListInitialise( ( xList * ) &( pxReadyTasksLists[ uxPriority ] ) );
 	}
 
-	vListInitialise( ( xList * ) &xDelayedTaskList1 );
-	vListInitialise( ( xList * ) &xDelayedTaskList2 );
+	vListInitialise( ( xList * ) &xDelayedTaskList );
 	vListInitialise( ( xList * ) &xPendingReadyList );
 
 	#if ( INCLUDE_vTaskDelete == 1 )
@@ -1864,11 +1769,6 @@ unsigned portBASE_TYPE uxPriority;
 		vListInitialise( ( xList * ) &xSuspendedTaskList );
 	}
 	#endif
-
-	/* Start with pxDelayedTaskList using list1 and the pxOverflowDelayedTaskList
-	using list2. */
-	pxDelayedTaskList = &xDelayedTaskList1;
-	pxOverflowDelayedTaskList = &xDelayedTaskList2;
 }
 /*-----------------------------------------------------------*/
 
@@ -1892,7 +1792,7 @@ static void prvCheckTasksWaitingTermination( void )
 
 				portENTER_CRITICAL();
 				{
-					pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( ( ( xList * ) &xTasksWaitingTermination ) );
+					pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xTasksWaitingTermination );
 					vListRemove( &( pxTCB->xGenericListItem ) );
 					--uxCurrentNumberOfTasks;
 					--uxTasksDeleted;
@@ -2297,8 +2197,7 @@ void vTaskSetEvent(uint32_t mask)
 	for(i = 0; i < configMAX_PRIORITIES; i++)
 		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
 
-	xTaskUpdateEvent(&xDelayedTaskList1, mask);
-	xTaskUpdateEvent(&xDelayedTaskList2, mask);
+	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
 
 	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
@@ -2347,8 +2246,7 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	for(i = 0; i < configMAX_PRIORITIES; i++)
 		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
 
-	xTaskUpdateEvent(&xDelayedTaskList1, mask);
-	xTaskUpdateEvent(&xDelayedTaskList2, mask);
+	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
 
 	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );

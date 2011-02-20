@@ -71,9 +71,6 @@ FreeRTOS.org versions prior to V4.4.0 did not include this definition. */
 #define portNVIC_SYSTICK_LOAD		( ( volatile unsigned long *) 0xe000e014 )
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_SYSPRI2			( ( volatile unsigned long *) 0xe000ed20 )
-#define portNVIC_SYSTICK_CLK		0x00000004
-#define portNVIC_SYSTICK_INT		0x00000002
-#define portNVIC_SYSTICK_ENABLE		0x00000001
 #define portNVIC_PENDSVSET			0x10000000
 #define portNVIC_PENDSV_PRI			( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 16 )
 #define portNVIC_SYSTICK_PRI		( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 24 )
@@ -93,7 +90,6 @@ static unsigned portBASE_TYPE uxCriticalNesting = 0xaaaaaaaa;
  * Exception handlers.
  */
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
-void xPortSysTickHandler( void );
 void vPortSVCHandler( void ) __attribute__ (( naked ));
 
 /*
