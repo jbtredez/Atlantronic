@@ -38,6 +38,8 @@ include src/arch/$(ARCH)/Makefile
 AS:=$(CROSSCOMPILE)as
 CC:=$(CROSSCOMPILE)gcc
 CXX:=$(CROSSCOMPILE)g++
+OBJCOPY:=$(CROSSCOMPILE)objcopy
+STRIP:=$(CROSSCOMPILE)strip
 DOT:=dot
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -90,6 +92,9 @@ $(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
 	@$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
+	@$(OBJCOPY) --only-keep-debug $@ $@.debug
+	@$(OBJCOPY) --add-gnu-debuglink $@.debug $@
+	@$(STRIP) $@
 
 %.png: %.dot
 	@echo [DOT] $@
