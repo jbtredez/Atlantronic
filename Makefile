@@ -23,8 +23,6 @@ doc := doc
 
 INCLUDES:=-I. -Iinclude -Iinclude/rtos
 
-DOT:=dot
-
 ARCH ?= gcc_posix
 
 DEBUG ?= 1
