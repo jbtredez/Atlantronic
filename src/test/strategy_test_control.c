@@ -8,7 +8,7 @@
 #include "io/systick.h"
 
 //! @todo réglage au pif
-#define STRATEGY_TEST_CONTROL_STACK_SIZE       64
+#define STRATEGY_TEST_CONTROL_STACK_SIZE       100
 
 static void strategy_test_control_task();
 int strategy_test_control_module_init();
@@ -33,21 +33,20 @@ static void strategy_test_control_task()
 	// TODO : pour les tests
 	systick_start_match();
 	vTaskSetEvent(EVENT_GO);
+//	vTaskWaitEvent(EVENT_END);
 
 	if(getColor() == COLOR_BLUE)
 	{
-#if 1
-		control_straight(-1800);
+		control_straight(1800);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-#endif
-#if 0
 		control_rotate(1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
-#endif
+		control_straight(1000);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
+		control_rotate(10570);
+		vTaskWaitEvent(EVENT_CONTROL_READY);
 #if 0
-		//control_straight(1000);
-//		vTaskWaitEvent(EVENT_CONTROL_READY);
-//		control_straight(550);
+		control_straight(550);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_rotate(-1.57);
 		vTaskWaitEvent(EVENT_CONTROL_READY);
@@ -75,10 +74,6 @@ static void strategy_test_control_task()
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_straight(1550);*/
 	}
-/*	control_goto(1000,-1000);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_goto(1500,-1000);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-*/
+
 	vTaskDelete(NULL);
 }

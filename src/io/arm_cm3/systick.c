@@ -41,7 +41,7 @@ static int systick_module_init()
 	SysTick->CTRL = (1 << SYSTICK_CLKSOURCE) | (1<<SYSTICK_ENABLE) | (1<<SYSTICK_TICKINT);
 	SysTick->VAL = 0x00; // recharge du systick au prochain cycle
 	systick_last_load_used = SysTick->LOAD;
-	
+
 	return 0;
 }
 
@@ -72,18 +72,15 @@ int systick_reconfigure(uint64_t tick)
 
 void isr_systick( void )
 {
-	unsigned long ulDummy;
+	*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
+
+	portSET_INTERRUPT_MASK();
 
 	systick_time += systick_last_load_used;
 	systick_last_load_used = SYSTICK_MAXCOUNT;
+	vTaskIncrementTick();
 
-	*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
-
-	ulDummy = portSET_INTERRUPT_MASK_FROM_ISR();
-	{
-		vTaskIncrementTick();
-	}
-	portCLEAR_INTERRUPT_MASK_FROM_ISR( ulDummy );
+	portCLEAR_INTERRUPT_MASK();
 }
 
 int64_t systick_get_time()

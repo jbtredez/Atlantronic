@@ -18,7 +18,7 @@
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init, décroissant pour la destruction)
 
 #define INIT_RCC                      "00"
-#define INIT_SYSTICK                  "01"
+#define INIT_SYSTICK                  "40" // TODO a voir
 #define INIT_END                      "01"
 #define INIT_GPIO                     "02"
 #define INIT_USART                    "03"
@@ -38,6 +38,8 @@
 #define INIT_CONTROL                  "15"
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
+#define INIT_TEST_TASK1               "31"
+#define INIT_TEST_TASK2               "32"
 
 #define EXIT_MODEL                    "00"
 

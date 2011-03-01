@@ -209,35 +209,6 @@ PRIVILEGED_DATA static unsigned portBASE_TYPE uxTaskNumber 						= ( unsigned po
 /*-----------------------------------------------------------*/
 
 /*
- * Macro that looks at the list of tasks that are currently delayed to see if
- * any require waking.
- *
- * Tasks are stored in the queue in the order of their wake time - meaning
- * once one tasks has been found whose timer has not expired we need not look
- * any further down the list.
- */
-#define prvCheckDelayedTasks()																						\
-{																													\
-register tskTCB *pxTCB;																								\
-																													\
-	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )						\
-	{																												\
-		if( xTickCount < listGET_LIST_ITEM_VALUE( &( pxTCB->xGenericListItem ) ) )									\
-		{																											\
-			break;																									\
-		}																											\
-		vListRemove( &( pxTCB->xGenericListItem ) );																\
-		/* Is the task waiting on an event also? */																	\
-		if( pxTCB->xEventListItem.pvContainer )																		\
-		{																											\
-			vListRemove( &( pxTCB->xEventListItem ) );																\
-		}																											\
-		prvAddTaskToReadyQueue( pxTCB );																			\
-	}																												\
-}
-/*-----------------------------------------------------------*/
-
-/*
  * Several functions take an xTaskHandle parameter that can optionally be NULL,
  * where NULL is used to indicate that the handle of the currently executing
  * task should be used in place of the parameter.  This macro simply checks to
@@ -1229,7 +1200,22 @@ void vTaskIncrementTick( void )
 		uxMissedTicks = 0;
 
 		/* See if this tick has made a timeout expire. */
-		prvCheckDelayedTasks();
+		tskTCB *pxTCB;
+
+		while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )
+		{
+			if( xTickCount < listGET_LIST_ITEM_VALUE( &( pxTCB->xGenericListItem ) ) )
+			{
+				break;
+			}
+			vListRemove( &( pxTCB->xGenericListItem ) );
+			/* Is the task waiting on an event also? */
+			if( pxTCB->xEventListItem.pvContainer )
+			{
+				vListRemove( &( pxTCB->xEventListItem ) );
+			}
+			prvAddTaskToReadyQueue( pxTCB );
+		}
 	}
 	else
 	{
@@ -1371,7 +1357,6 @@ void vTaskIncrementTick( void )
 
 #endif
 /*-----------------------------------------------------------*/
-
 void vTaskSwitchContext( void )
 {
 	if( uxSchedulerSuspended != ( unsigned portBASE_TYPE ) pdFALSE )
@@ -1403,8 +1388,14 @@ void vTaskSwitchContext( void )
 
 	// TODO : gérer un temps max pour les taches de même priorité
 	tskTCB *pxTCB;
-	while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )
+	while(xDelayedTaskList.uxNumberOfItems)
 	{
+		pxTCB = xDelayedTaskList.xListEnd.pxNext->pvOwner;
+		if( pxTCB == NULL )
+		{
+			break;
+		}
+
 		if( systick_reconfigure(pxTCB->xGenericListItem.xItemValue) == 0)
 		{
 			break;
@@ -1422,6 +1413,7 @@ void vTaskSwitchContext( void )
 	}
 
 	/* Find the highest priority queue that contains ready tasks. */
+
 	while( listLIST_IS_EMPTY( &( pxReadyTasksLists[ uxTopReadyPriority ] ) ) )
 	{
 		--uxTopReadyPriority;
@@ -1592,6 +1584,7 @@ void vTaskMissedYield( void )
  * void prvIdleTask( void *pvParameters );
  *
  */
+
 static portTASK_FUNCTION( prvIdleTask, pvParameters )
 {
 	/* Stop warnings. */
@@ -1752,11 +1745,11 @@ unsigned portBASE_TYPE uxPriority;
 
 	for( uxPriority = 0; uxPriority < configMAX_PRIORITIES; uxPriority++ )
 	{
-		vListInitialise( ( xList * ) &( pxReadyTasksLists[ uxPriority ] ) );
+		vListInitialise( &( pxReadyTasksLists[ uxPriority ] ) );
 	}
 
-	vListInitialise( ( xList * ) &xDelayedTaskList );
-	vListInitialise( ( xList * ) &xPendingReadyList );
+	vListInitialise( &xDelayedTaskList );
+	vListInitialise( &xPendingReadyList );
 
 	#if ( INCLUDE_vTaskDelete == 1 )
 	{
@@ -1766,7 +1759,7 @@ unsigned portBASE_TYPE uxPriority;
 
 	#if ( INCLUDE_vTaskSuspend == 1 )
 	{
-		vListInitialise( ( xList * ) &xSuspendedTaskList );
+		vListInitialise( &xSuspendedTaskList );
 	}
 	#endif
 }

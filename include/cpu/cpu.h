@@ -4,6 +4,10 @@
 #define STM32F10X_CL
 #include "cpu/stm32f10x.h"
 
+#ifndef __GCC_POSIX__
+#include "arch/arm_cm3/asm_base_func.h"
+#endif
+
 #ifdef __GCC_POSIX__
 	// accès mémoire directs non valides
 	#undef InterruptType
