@@ -1,4 +1,4 @@
-#include "io/gpio.h"
+#include "arch/arm_cm3/gpio.h"
 #include "module.h"
 
 static int gpio_module_init(void)

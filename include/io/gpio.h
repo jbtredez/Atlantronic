@@ -5,28 +5,12 @@
 //! @brief Gpio mapping
 //! @author Jean-Baptiste Trédez
 
-#include "cpu/cpu.h"
-
-#define COLOR_RED                 0
-#define COLOR_BLUE    GPIO_IDR_IDR9
-
-
 #ifdef __ARM_CM3__
-
-static inline int getColor()
-{
-	return GPIOD->IDR & COLOR_BLUE;
-}
+#include "arch/arm_cm3/gpio.h"
 #endif
 
 #ifdef __GCC_POSIX__
-
-static inline int getColor()
-{
-	// pour les tests Linux on est bleu pour le moment
-	return COLOR_BLUE;
-}
-
+#include "arch/gcc_posix/gpio.h"
 #endif
 
 #endif

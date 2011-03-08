@@ -1,4 +1,4 @@
-#include "io/gpio.h"
+#include "arch/gcc_posix/gpio.h"
 #include "module.h"
 
 static int gpio_module_init(void)
