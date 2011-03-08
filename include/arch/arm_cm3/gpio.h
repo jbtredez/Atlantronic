@@ -10,9 +10,21 @@
 #define COLOR_RED                 0
 #define COLOR_BLUE    GPIO_IDR_IDR9
 
+#define LED_0                  0x01
+#define LED_1                  0x02
+#define LED_2                  0x04
+#define LED_3                  0x08
+#define LED_4                  0x10
+#define LED_5                  0x20
+
 static inline int getColor()
 {
 	return GPIOD->IDR & COLOR_BLUE;
+}
+
+static inline void setLed(uint8_t mask)
+{
+	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
 }
 
 #endif
