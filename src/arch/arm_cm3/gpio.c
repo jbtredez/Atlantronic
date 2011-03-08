@@ -24,6 +24,8 @@ static int gpio_module_init(void)
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL &= (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
 
+	setLed(0x3F);
+
 	return 0;
 }
 

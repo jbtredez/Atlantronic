@@ -13,6 +13,7 @@
 #include "task.h"
 #include "module.h"
 #include "log.h"
+#include "io/gpio.h"
 
 #ifdef __GCC_POSIX__
 static struct sigaction action;
@@ -42,11 +43,10 @@ static void signal_handler(int sig)
 }
 #endif
 
-void init_panic(int init)
+void init_panic(uint8_t init)
 {
-	(void) init;
+	setLed(init);
 
-	//! @todo allumer une led
 	while(1)
 	{
 
@@ -55,7 +55,7 @@ void init_panic(int init)
 
 int main()
 {
-	#ifdef __GCC_POSIX__
+#ifdef __GCC_POSIX__
 	n_sig_int = 0;
 	action.sa_handler = signal_handler;
 	sigemptyset(&(action.sa_mask));
@@ -63,21 +63,16 @@ int main()
 	{
 		logerror("sigaction");
 	}
-	#endif
+#endif
 
-	int init = initModules();
+	uint8_t error = initModules();
 
-	if(init)
-	{		
-		init_panic(init);
-	}
-
-	vTaskStartScheduler();
-
-	// on n'arrive jamais ici sur un pic
-	#ifdef __GCC_POSIX__
+#ifdef __GCC_POSIX__
 	exitModules();
-	#endif
+#else
+	// on n'arrive jamais ici sur la cible
+	init_panic(error);	
+#endif	
 
 	return 0;
 }

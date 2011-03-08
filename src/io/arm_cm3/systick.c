@@ -42,7 +42,9 @@ static int systick_module_init()
 	SysTick->VAL = 0x00; // recharge du systick au prochain cycle
 	systick_last_load_used = SysTick->LOAD;
 
-	return 0;
+	vTaskStartScheduler();
+
+	return ERR_SYSTICK;
 }
 
 module_init(systick_module_init, INIT_SYSTICK);

@@ -17,12 +17,19 @@
 //! de garder les mêmes numéros sauf exception
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init, décroissant pour la destruction)
 
+#include "error.h"
+
+// init frequence cpu, bus internes...
 #define INIT_RCC                      "00"
-#define INIT_SYSTICK                  "40" // TODO a voir
-#define INIT_END                      "01"
-#define INIT_GPIO                     "02"
-#define INIT_USART                    "03"
-#define INIT_USB                      "04"
+
+// init gpio pour afficher les erreurs sur les led
+#define INIT_GPIO                     "01"
+
+// init de la communication
+#define INIT_USART                    "02"
+#define INIT_USB                      "03"
+
+
 #define INIT_LOG                      "05"
 #define INIT_MODEL                    "06"
 #define INIT_ENCODERS                 "07"
@@ -35,19 +42,16 @@
 //#define INIT_VFS                      "02"
 //#define INIT_I2C                      "04"
 //#define INIT_CAN                      "05"
+#define INIT_END                      "14"
 #define INIT_CONTROL                  "15"
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 #define INIT_TEST_TASK1               "31"
 #define INIT_TEST_TASK2               "32"
 
-#define EXIT_MODEL                    "00"
+// init de l'ordonanceur en DERNIER !
+#define INIT_SYSTICK                  "51"
 
-#define ERR_INIT_LOG               -1
-#define ERR_INIT_USART             -2
-#define ERR_INIT_AX12              -3
-#define ERR_INIT_CONTROL           -6
-#define ERR_INIT_TEST             -30
-#define ERR_INIT_END               -2
+#define EXIT_MODEL                    "00"
 
 #endif
