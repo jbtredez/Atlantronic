@@ -16,6 +16,7 @@
 #define LED_3                  0x08
 #define LED_4                  0x10
 #define LED_5                  0x20
+#define LED_WARNING           0x200
 
 static inline int getColor()
 {
@@ -25,6 +26,11 @@ static inline int getColor()
 static inline void setLed(uint8_t mask)
 {
 	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
+}
+
+static inline void setWarning(uint8_t mask)
+{
+	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
 }
 
 #endif

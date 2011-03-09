@@ -13,7 +13,7 @@ ENTRY(isr_reset)
 
 MEMORY
 {
-    FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 256K
+    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256K
     SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
@@ -26,7 +26,7 @@ SECTIONS
 	   La section débute par le vecteur d'interruption (section .isr_vector, fichier isr.c).
 	   La section doit impérativement débuter en 0x00 pour placer le vecteur au bon endroit
 	*/
-	.text : AT (0x00)
+	.text : AT (0x08000000)
 	{
 		KEEP(*(.isr_vector))
 		*(.text)
