@@ -1,11 +1,12 @@
 //! @file task1.c
-//! @brief Tests : task 1
+//! @brief Tests : test des led
 //! @author Jean-Baptiste Trédez
 
 #include "module.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "math.h"
+#include "io/gpio.h"
 
 #define TASK1_STACK_SIZE          100
 #define PRIORITY_TEST_TASK1        1
@@ -32,16 +33,21 @@ static void task1_task(void* arg)
 {
 	(void) arg;
 
-//	while(1) ;
-	#if 1
 	while(1)
 	{
-		int64_t i;
-		static volatile float x = 0.3587;
-		for(i = 0; i < 10000LL; i++)
-		{
-			x++;
-		}
+		setLed(LED_WARNING);
+		vTaskDelay(72000000);
+		setLed(LED_0);
+		vTaskDelay(72000000);
+		setLed(LED_1);
+		vTaskDelay(72000000);
+		setLed(LED_2);
+		vTaskDelay(72000000);
+		setLed(LED_3);
+		vTaskDelay(72000000);
+		setLed(LED_4);
+		vTaskDelay(72000000);
+		setLed(LED_5);
+		vTaskDelay(72000000);
 	}
-	#endif
 }
