@@ -9,8 +9,6 @@ static int gpio_module_init(void)
 	// PE0 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
 
-	setWarning(LED_WARNING);
-
 	// activation GPIOD
 	RCC->APB2ENR |= RCC_APB2ENR_IOPDEN;
 	// PD9 entrée input flotante
@@ -32,7 +30,7 @@ static int gpio_module_init(void)
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
 
-	setLed(0x3F);
+	setLed(LED_0 | LED_1 | LED_2 | LED_3 | LED_4 | LED_5 | LED_WARNING);
 
 	return 0;
 }

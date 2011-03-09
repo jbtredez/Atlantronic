@@ -23,13 +23,9 @@ static inline int getColor()
 	return GPIOD->IDR & COLOR_BLUE;
 }
 
-static inline void setLed(uint8_t mask)
+static inline void setLed(uint32_t mask)
 {
 	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
-}
-
-static inline void setWarning(uint8_t mask)
-{
 	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
 }
 
