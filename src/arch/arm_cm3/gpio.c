@@ -11,8 +11,12 @@ static int gpio_module_init(void)
 
 	// activation GPIOD
 	RCC->APB2ENR |= RCC_APB2ENR_IOPDEN;
+	// PD8 entrée input flotante
+	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE8 & ~ GPIO_CRH_CNF8_1) | GPIO_CRH_CNF8_0;
 	// PD9 entrée input flotante
 	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE9 & ~ GPIO_CRH_CNF9_1) | GPIO_CRH_CNF9_0;
+	// PD10 entrée input flotante
+	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE10 & ~ GPIO_CRH_CNF10_1) | GPIO_CRH_CNF10_0;
 
 	// LED sur PE0, PE1, PE2, PE3, PE4, PE5
 	// activation GPIOE

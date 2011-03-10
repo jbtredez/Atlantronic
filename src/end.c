@@ -9,6 +9,7 @@
 
 #define END_STACK_SIZE           50
 const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;
+uint32_t color = COLOR_BLUE;
 
 static void end_task(void *arg);
 
@@ -31,7 +32,32 @@ static void end_task(void *arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO);
+	uint32_t old_btn = BTN_2;
+	uint32_t btn = BTN_2;
+	setLed(0x30);		// TODO + ARU
+	
+	while(getBTN(BTN_1) == BTN_1)
+	{
+		btn = getBTN(BTN_2);
+		
+		if(btn != old_btn && btn > 0)
+		{
+			if(color == COLOR_BLUE)
+			{
+				color = COLOR_RED;
+				setLed(0x06);		// TODO + ARU
+			}
+			else
+			{
+				color = COLOR_BLUE;
+				setLed(0x30);		// TODO + ARU
+			}
+		}
+		
+		old_btn = btn;
+	}
+
+	vTaskSetEvent(EVENT_GO);
 	vTaskDelay(DUREE_MATCH_TICK);
 	vTaskSetEvent(EVENT_END);
 
