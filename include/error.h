@@ -4,6 +4,8 @@
 #include "io/gpio.h"
 
 
+// code 0x00 réservé : fin du match
+
 #define ERR_NMI                 0x01
 #define ERR_HARD_FAULT          0x02
 #define ERR_MPU_FAULT           0x03
@@ -18,5 +20,7 @@
 #define ERR_INIT_CONTROL        0x0b
 #define ERR_INIT_TEST           0x0c
 #define ERR_INIT_END            0x0d
+
+#define ERR_ARU                0x201      //!< 2 led rouges
 
 #endif
