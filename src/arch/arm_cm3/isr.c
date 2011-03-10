@@ -4,6 +4,8 @@
 
 #include "io/debug.h"
 #include "rtos/FreeRTOSConfig.h"
+#include "error.h"
+#include "io/gpio.h"
 
 void isr_reset(void) __attribute__ ((naked));
 static void isr_nmi(void);
@@ -172,6 +174,8 @@ void isr_context_switch( void )
 
 static void isr_nmi(void)
 {
+	setLed(ERR_NMI);
+
 	while(debug_mode())
 	{
 
@@ -180,6 +184,8 @@ static void isr_nmi(void)
 
 static void isr_hard_fault(void)
 {
+	setLed(ERR_HARD_FAULT);
+
 	while(debug_mode())
 	{
 
@@ -188,6 +194,8 @@ static void isr_hard_fault(void)
 
 static void isr_mpu_fault(void)
 {
+	setLed(ERR_MPU_FAULT);
+
 	while(debug_mode())
 	{
 
@@ -196,6 +204,8 @@ static void isr_mpu_fault(void)
 
 static void isr_bus_fault(void)
 {
+	setLed(ERR_BUS_FAULT);
+
 	while(debug_mode())
 	{
 
@@ -204,6 +214,8 @@ static void isr_bus_fault(void)
 
 static void isr_usage_fault(void)
 {
+	setLed(ERR_USAGE_FAULT);
+
 	while(debug_mode())
 	{
 
@@ -212,6 +224,8 @@ static void isr_usage_fault(void)
 
 static void isr_debug_monitor(void)
 {
+	setLed(ERR_DEBUG_MONITOR);
+
 	while(debug_mode())
 	{
 
@@ -220,6 +234,8 @@ static void isr_debug_monitor(void)
 
 static void isr_unexpected(void)
 {
+	setLed(ERR_UNEXPECTED_ISR);
+
 	while(debug_mode())
 	{
 
