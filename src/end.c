@@ -35,5 +35,7 @@ static void end_task(void *arg)
 	vTaskDelay(DUREE_MATCH_TICK);
 	vTaskSetEvent(EVENT_END);
 
+	setLed(0x00);
+
 	vTaskDelete(NULL);
 }
