@@ -22,6 +22,7 @@ volatile int64_t systick_time;
 volatile int64_t systick_time_start_match;
 void isr_systick( void );
 
+extern void vTaskStartScheduler(void);
 extern void vTaskIncrementTick( void );
 
 static int systick_module_init()
