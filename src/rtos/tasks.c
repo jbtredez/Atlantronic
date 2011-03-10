@@ -2158,7 +2158,7 @@ void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
 	tskTCB *pxNextTCB;
 	tskTCB *pxFirstTCB;
 
-	if( !listLIST_IS_EMPTY(pxTaskList) )
+	if( pxTaskList->uxNumberOfItems )
 	{
 		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, pxTaskList );
 		do
@@ -2193,13 +2193,13 @@ void vTaskSetEvent(uint32_t mask)
 	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
 
-	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
-	do
+	if( xSuspendedTaskList.uxNumberOfItems )
 	{
-		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
-
-		if(pxNextTCB)
+		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+		do
 		{
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
@@ -2217,8 +2217,8 @@ void vTaskSetEvent(uint32_t mask)
 				}
 			}
 		}
+		while( pxNextTCB != pxFirstTCB );
 	}
-	while( pxNextTCB != pxFirstTCB );
 
 	portEXIT_CRITICAL();
 
@@ -2242,12 +2242,13 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
 
-	listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
-	do
+	if( xSuspendedTaskList.uxNumberOfItems)
 	{
-		listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
-		if(pxNextTCB)
+		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+		do
 		{
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
@@ -2257,8 +2258,8 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 				}
 			}
 		}
+		while( pxNextTCB != pxFirstTCB );
 	}
-	while( pxNextTCB != pxFirstTCB );
 
 	return xHigherPriorityTaskWoken;
 }
