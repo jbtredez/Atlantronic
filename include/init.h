@@ -29,6 +29,8 @@
 #define INIT_USART                    "02"
 #define INIT_USB                      "03"
 
+// init adc
+#define INIT_ADC                      "04"
 
 #define INIT_LOG                      "05"
 #define INIT_MODEL                    "06"

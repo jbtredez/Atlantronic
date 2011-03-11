@@ -58,6 +58,7 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	*pxTopOfStack = portINITIAL_XPSR;	/* xPSR */
 	pxTopOfStack--;
 	// mise à 0 du dernier bit. Lorsqu'on branche avec bx ou blx, c'est automatique mais ici on branche pas directement mais sur l'adresse spéciale 0xfffffffd et on va mettre la valeur dans pc.
+	// utile uniquement a cause d'un bug qemu
 	*pxTopOfStack =  ((uint32_t) pxCode) & 0xfffffffe;	/* PC */
 	pxTopOfStack--;
 	*pxTopOfStack = 0;	/* LR */
