@@ -23,7 +23,7 @@ doc := doc
 
 INCLUDES:=-I. -Iinclude -Iinclude/rtos
 
-ARCH ?= gcc_posix
+ARCH ?= arm_cm3
 
 DEBUG ?= 1
 
