@@ -15,8 +15,9 @@ static int encoders_module_init()
 	// GPIOA utilisee, configuration de PA0 et PA1
 	RCC->APB2ENR |=  RCC_APB2ENR_IOPAEN;
 	GPIOA->CRL   &= ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0 | GPIO_CRL_MODE1 | GPIO_CRL_CNF1);     // on efface la conf de PA0 et PA1
-	GPIOA->CRL   |=  GPIO_CRL_CNF0_1;                // PA0 : input pull-up / pull-down
-	GPIOA->CRL   |=  GPIO_CRL_CNF1_1;                // PA1 : input pull-up / pull-down
+
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
 
 	TIM2->CR1 = 0x00;
 	TIM2->CR2 = 0x00;
@@ -33,6 +34,7 @@ static int encoders_module_init()
 
 	// pas d'inversions de polarité
 	TIM2->CCER = 0x00;
+	TIM2->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
 
 	TIM2->CCR1 = 0;
 
@@ -64,6 +66,7 @@ static int encoders_module_init()
 
 	// pas d'inversions de polarité
 	TIM4->CCER = 0x00;
+	TIM4->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
 
 	TIM4->CCR1 = 0;
 
