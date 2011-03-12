@@ -82,6 +82,7 @@ void isr_exit9_5(void)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
 		gpio_go = 1;
+		setLed(0x23F);
 		systick_start_match();
 		vTaskSetEventFromISR(EVENT_GO);
 	}
