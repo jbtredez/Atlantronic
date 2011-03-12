@@ -8,11 +8,7 @@
 #include "cpu/cpu.h"
 
 #define COLOR_RED                 0
-#define COLOR_BLUE    GPIO_IDR_IDR9
-
-#define BTN_1         GPIO_IDR_IDR8
-#define BTN_2         GPIO_IDR_IDR9
-#define BTN_3        GPIO_IDR_IDR10
+#define COLOR_BLUE                1
 
 #define LED_0                  0x01
 #define LED_1                  0x02
@@ -22,10 +18,7 @@
 #define LED_5                  0x20
 #define LED_WARNING           0x200
 
-static inline int getBTN(uint32_t mask)
-{
-	return GPIOD->IDR & mask;
-}
+extern volatile uint32_t color;
 
 static inline void setLed(uint32_t mask)
 {

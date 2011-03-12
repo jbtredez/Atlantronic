@@ -6,10 +6,12 @@
 #include "io/systick.h"
 
 volatile uint32_t color;
+volatile uint8_t gpio_go;
 
 static int gpio_module_init(void)
 {
 	color = COLOR_BLUE;
+	gpio_go = 0;
 
 	// LED warning
 	// activation GPIOB
@@ -62,20 +64,24 @@ void isr_exit9_5(void)
 	if( EXTI->PR & EXTI_PR_PR9)
 	{
 		EXTI->PR |= EXTI_PR_PR9;
-		if(color == COLOR_BLUE)
+		if(gpio_go == 0)
 		{
-			color = COLOR_RED;
-			setLed(0x06);
-		}
-		else
-		{
-			color = COLOR_BLUE;
-			setLed(0x30);
+			if(color == COLOR_BLUE)
+			{
+				color = COLOR_RED;
+				setLed(0x06);
+			}
+			else
+			{
+				color = COLOR_BLUE;
+				setLed(0x30);
+			}
 		}
 	}
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
+		gpio_go = 1;
 		systick_start_match();
 		vTaskSetEventFromISR(EVENT_GO);
 	}

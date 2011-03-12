@@ -13,9 +13,6 @@
 static void strategy_test_control_task();
 int strategy_test_control_module_init();
 
-// TODO moche, c'est dans end.c
-extern uint32_t color;
-
 int strategy_test_control_module_init()
 {
 	xTaskHandle xHandle;
@@ -33,10 +30,7 @@ module_init(strategy_test_control_module_init, INIT_STRATEGY);
 
 static void strategy_test_control_task()
 {
-	// TODO : pour les tests
-	systick_start_match();
-	vTaskSetEvent(EVENT_GO);
-//	vTaskWaitEvent(EVENT_END);
+	vTaskWaitEvent(EVENT_GO);
 
 	if(color == COLOR_BLUE)
 	{
