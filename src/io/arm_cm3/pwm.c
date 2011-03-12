@@ -10,6 +10,8 @@
 
 static int pwm_module_init()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+
 	// TIM1 full remap => CH1/4 : PE9, PE11, PE13, PE14
 	AFIO->MAPR &= ~AFIO_MAPR_TIM1_REMAP;
 	AFIO->MAPR |= AFIO_MAPR_TIM1_REMAP_FULLREMAP;
@@ -22,8 +24,8 @@ static int pwm_module_init()
 
 	// conf patte de sens : PE8 et PE10
 	GPIOE->CRH   &= ~(GPIO_CRH_MODE8 | GPIO_CRH_CNF8 | GPIO_CRH_MODE10 | GPIO_CRH_CNF10);     // on efface la conf de PE8 et PE10
-	GPIOE->CRH   |=  GPIO_CRH_CNF8_1 | GPIO_CRH_MODE8_0 | GPIO_CRH_MODE8_1;               	  // PE8  : alternate output push-pull, 50MHz
-	GPIOE->CRH   |=  GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1;                // PE10 : alternate output push-pull, 50MHz
+	GPIOE->CRH   |=  GPIO_CRH_MODE8_0 | GPIO_CRH_MODE8_1;                  // PE8  : output push-pull, 50MHz
+	GPIOE->CRH   |=  GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1;                // PE10 : output push-pull, 50MHz
 
 	// activation clock sur le timer 1
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -38,31 +40,33 @@ static int pwm_module_init()
 	//  - profiter un max de la plage des 16bits pour la PWM
 	//  - PWM a environ 40 kHz
 	// pour PSC = 0, TIM1CLK = 72 MHz
-	// donc ARR = TIM1CLK / 40000 = 1800 pour une PWM à 40 kHz. On a une resolution de 1800 sur une periode
+	// donc ARR = TIM1CLK / 40000 - 1 = 1799 pour une PWM à 40 kHz. On a une resolution de 1800 sur une periode
 
 	TIM1->PSC = 0x00;
-	TIM1->ARR = 1800;
+	TIM1->ARR = 1799;
 
-	// TODO : nombre de periodes de PWM  + 1 avant un update event
-	//TIM1->RCR
-//TODO : voir SMCR
-
+	TIM1->RCR =0x00;
 	TIM1->CR1 = 0x00;
 	TIM1->CR2 = 0x00;
 
+	TIM1->CR1 |= /*TIM_CR1_ARPE |*/ TIM_CR1_URS;
+	TIM1->SMCR = 0x00;
+
 	// mise à jour "update generation"
-//	TIM1->EGR |= TIM_EGR_UG;
+	TIM1->EGR |= TIM_EGR_UG;
 
 	TIM1->CCER = 0x00;
 	TIM1->CCMR1 = 0x00;
 	TIM1->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1PE; // mode PWM 1 sur le canal 1 avec preload
 	TIM1->CCMR1 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2PE; // mode PWM 1 sur le canal 2 avec preload
+	TIM1->CCER |= TIM_CCER_CC1E | TIM_CCER_CC2E;
 
 	TIM1->CCR1 = 0x00; // pwm initiale a 0 sur le canal 1
 	TIM1->CCR2 = 0x00; // pwm initiale a 0 sur le canal 2
 
 	// on active le tout
 	TIM1->CR1 |= TIM_CR1_CEN;
+	TIM1->BDTR |= TIM_BDTR_MOE;
 
 	return 0;
 }
