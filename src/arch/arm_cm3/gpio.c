@@ -1,8 +1,16 @@
 #include "arch/arm_cm3/gpio.h"
 #include "module.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "event.h"
+#include "io/systick.h"
+
+volatile uint32_t color;
 
 static int gpio_module_init(void)
 {
+	color = COLOR_BLUE;
+
 	// LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
@@ -34,9 +42,41 @@ static int gpio_module_init(void)
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
 
+	// PD8 => it sur front montant
+	// PD9 => it sur front montant
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI8_PD;
+	EXTI->IMR |= EXTI_IMR_MR9 | EXTI_IMR_MR8;
+	EXTI->RTSR |= EXTI_RTSR_TR9 | EXTI_RTSR_TR8;
+	NVIC_EnableIRQ(EXTI9_5_IRQn);
+
 	setLed(LED_0 | LED_1 | LED_2 | LED_3 | LED_4 | LED_5 | LED_WARNING);
 
 	return 0;
 }
 
 module_init(gpio_module_init, INIT_GPIO);
+
+void isr_exit9_5(void)
+{
+	if( EXTI->PR & EXTI_PR_PR9)
+	{
+		EXTI->PR |= EXTI_PR_PR9;
+		if(color == COLOR_BLUE)
+		{
+			color = COLOR_RED;
+			setLed(0x06);
+		}
+		else
+		{
+			color = COLOR_BLUE;
+			setLed(0x30);
+		}
+	}
+	if( EXTI->PR & EXTI_PR_PR8)
+	{
+		EXTI->PR |= EXTI_PR_PR8;
+		systick_start_match();
+		vTaskSetEventFromISR(EVENT_GO);
+	}
+}
