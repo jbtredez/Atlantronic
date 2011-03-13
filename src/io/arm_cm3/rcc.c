@@ -13,11 +13,7 @@ static int rcc_module_init()
 	RCC->CR |= (uint32_t)0x00000001;
 
 	// Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits
-#ifndef STM32F10X_CL
-	RCC->CFGR &= (uint32_t)0xF8FF0000;
-#else
 	RCC->CFGR &= (uint32_t)0xF0FF0000;
-#endif
 
 	// Reset HSEON, CSSON and PLLON bits
 	RCC->CR &= (uint32_t)0xFEF6FFFF;
@@ -28,10 +24,6 @@ static int rcc_module_init()
 	// Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits
 	RCC->CFGR &= (uint32_t)0xFF80FFFF;
 
-#ifndef STM32F10X_CL
-	// Disable all interrupts and clear pending bits
-	RCC->CIR = (uint32_t)0x009F0000;
-#else
 	// Reset PLL2ON and PLL3ON bits
 	RCC->CR &= (uint32_t)0xEBFFFFFF;
 
@@ -40,8 +32,6 @@ static int rcc_module_init()
 
 	// Reset CFGR2 register
 	RCC->CFGR2 = (uint32_t)0x00000000;
-#endif
-
 
 	// configuration
 
