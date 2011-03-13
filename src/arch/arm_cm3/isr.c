@@ -20,6 +20,7 @@ static void isr_context_switch( void ) __attribute__ ((naked));
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") ));
+void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") ));
 
 extern void isr_systick(void);
 extern void vPortSVCHandler( void );
@@ -94,7 +95,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_usart3,
-	isr_unexpected,
+	isr_exit15_10,
 	isr_unexpected,
 	isr_unexpected,
   (void*)0,

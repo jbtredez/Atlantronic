@@ -46,11 +46,13 @@ static int gpio_module_init(void)
 
 	// PD8 => it sur front montant
 	// PD9 => it sur front montant
+	// PD10 => it sur front montant
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI8_PD;
-	EXTI->IMR |= EXTI_IMR_MR9 | EXTI_IMR_MR8;
-	EXTI->RTSR |= EXTI_RTSR_TR9 | EXTI_RTSR_TR8;
+	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
+	EXTI->IMR |= EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
+	EXTI->RTSR |= EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
+	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 	setLed(LED_0 | LED_1 | LED_2 | LED_3 | LED_4 | LED_5 | LED_WARNING);
 
@@ -61,6 +63,14 @@ module_init(gpio_module_init, INIT_GPIO);
 
 void isr_exit9_5(void)
 {
+	if( EXTI->PR & EXTI_PR_PR8)
+	{
+		EXTI->PR |= EXTI_PR_PR8;
+		gpio_go = 1;
+		setLed(0x23F);
+		systick_start_match();
+		vTaskSetEventFromISR(EVENT_GO);
+	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{
 		EXTI->PR |= EXTI_PR_PR9;
@@ -78,12 +88,13 @@ void isr_exit9_5(void)
 			}
 		}
 	}
-	if( EXTI->PR & EXTI_PR_PR8)
+}
+
+void isr_exit15_10(void)
+{
+	if( EXTI->PR & EXTI_PR_PR10)
 	{
-		EXTI->PR |= EXTI_PR_PR8;
-		gpio_go = 1;
-		setLed(0x23F);
-		systick_start_match();
-		vTaskSetEventFromISR(EVENT_GO);
+		EXTI->PR |= EXTI_PR_PR10;
+		// TODO action btn3
 	}
 }
