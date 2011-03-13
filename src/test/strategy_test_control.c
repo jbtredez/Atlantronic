@@ -31,8 +31,10 @@ module_init(strategy_test_control_module_init, INIT_STRATEGY);
 static void strategy_test_control_task()
 {
 	vTaskWaitEvent(EVENT_GO);
+	
+//	control_straight(1800);
 
-	if(color == COLOR_BLUE)
+	if(getcolor() == COLOR_BLUE)
 	{
 		control_straight(1800);
 		vTaskWaitEvent(EVENT_CONTROL_READY);

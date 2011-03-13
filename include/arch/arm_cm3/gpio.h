@@ -18,7 +18,11 @@
 #define LED_5                  0x20
 #define LED_WARNING           0x200
 
-extern volatile uint32_t color;
+static inline uint32_t getcolor()
+{
+	extern volatile uint32_t color;
+	return color;
+}
 
 static inline void setLed(uint32_t mask)
 {
