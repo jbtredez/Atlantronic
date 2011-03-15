@@ -34,18 +34,16 @@ static int usart_module_init(void)
 	usart_read_buf_in = 0;
 	usart_read_buf_out = 0;
 
-	// USART3 (remapage partiel) => Tx = PC10, Rx = PC11
+	// USART3 (remapage partiel) => Tx = PC10, (Rx = PC11 pas utilisé en half duplex)
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
-	// remap PC10 / PC11
+	// remap PC10 (et PC11)
 	AFIO->MAPR &= ~AFIO_MAPR_USART3_REMAP;
 	AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_PARTIALREMAP;
 
-	// GPIOC utilisee, configuration de PC10 et PC11
+	// GPIOC utilisee, configuration de PC10
 	RCC->APB2ENR |=  RCC_APB2ENR_IOPCEN;
-	GPIOC->CRH   &= ~(GPIO_CRH_MODE11 | GPIO_CRH_CNF11 | GPIO_CRH_MODE10 | GPIO_CRH_CNF10);     // on efface la conf de PC10 et PC11
-	GPIOC->CRH   |=  GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1;               	// Tx = PC10 : alternate output push-pull, 50MHz
-	GPIOC->CRH   |=  GPIO_CRH_CNF11_0;                                                          // Rx = PC11 : input floating
+	GPIOC->CRH = ( GPIOC->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10 ) | GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1; // Tx = PC10 : alternate output push-pull, 50MHz
 
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // usart3 clock enable
 
@@ -67,7 +65,7 @@ static int usart_module_init(void)
 	USART3->CR2 = 0x00;
 	USART3->CR3 = 0x00;
 
-	USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation Rx et tx
+	USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation l'envoi et la reception
 
 	// passage en mode half duplex
 	USART3->CR3 |= USART_CR3_HDSEL;
@@ -86,9 +84,6 @@ void isr_usart3(void)
 	// lecture : un octet est arrivé
 	if(USART3->SR & USART_SR_RXNE)
 	{
-		// TODO : voir si c'est bien effacé en hard par une lecture sur DR
-		//USART3->SR &= ~USART_SR_RXNE;
-
 		if( ((usart_read_buf_in - usart_read_buf_out) & ~(USART_READ_BUF_SIZE-1)) == 0)
 		{
 			usart_read_buf[usart_read_buf_in & (USART_READ_BUF_SIZE-1)] = USART3->DR & 0xFF;
@@ -103,9 +98,6 @@ void isr_usart3(void)
 	// écriture : pas d'octets dans le registre d'envoi
 	if(USART3->SR & USART_SR_TXE)
 	{
-		// TODO : voir si c'est bien effacé en hard par une écriture sur DR
-		//USART3->SR &= ~USART_SR_TXE;
-
 		if(usart_write_buf_in != usart_write_buf_out)
 		{
 			USART3->DR = usart_write_buf[usart_write_buf_out & (USART_WRITE_BUF_SIZE -1)] & ((uint16_t)0x01FF);
