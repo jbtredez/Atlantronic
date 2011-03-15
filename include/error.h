@@ -22,6 +22,7 @@
 #define ERR_INIT_TEST           0x20c
 #define ERR_INIT_END            0x20d
 
-
+#define ERR_USART_READ_OVERFLOW         0x20e
+#define ERR_USART_WRITE_OVERFLOW        0x20f
 
 #endif

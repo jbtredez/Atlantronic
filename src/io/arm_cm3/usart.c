@@ -4,6 +4,8 @@
 #include "semphr.h"
 #include "task.h"
 #include "io/rcc.h"
+#include "error.h"
+#include "io/gpio.h"
 
 #define USART_WRITE_BUF_SIZE     256
 #define USART_READ_BUF_SIZE      256
@@ -89,10 +91,14 @@ void isr_usart3(void)
 			usart_read_buf[usart_read_buf_in & (USART_READ_BUF_SIZE-1)] = USART3->DR & 0xFF;
 			usart_read_buf_in++;
 		}
-		// else
-		// {
-		// problemes, reception reportée si on ne fait pas USART3->SR &= ~USART_SR_RXNE; et en cas de débordement, TODO gestion erreur
-		// }
+		else
+		{
+			// plus de place dispo. Le buffer est assez grand contenir plusieures trames.
+			// si on n'a toujours pas dépilé les messages, c'est un bug.
+			setLed(ERR_USART_READ_OVERFLOW);
+			// perte de l'octet
+			USART3->SR &= ~USART_SR_RXNE;
+		}
 	}
 
 	// écriture : pas d'octets dans le registre d'envoi
@@ -124,7 +130,7 @@ void usart_write(unsigned char* buf, uint16_t size)
 		}
 		else
 		{
-			// TODO remonter une erreur (log, led...)
+			setLed(ERR_USART_WRITE_OVERFLOW);
 			USART3->CR1 |= USART_CR1_TXEIE;
 			size++; // on n'a finalement pas écris notre octet
 			vTaskDelay(2*72000);
