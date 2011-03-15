@@ -262,3 +262,29 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size)
 
 	return checksum;
 }
+
+// fonction non inline pour permettre l'utilisation depuis gdb
+void ax12_set_led(uint8_t id, uint8_t on)
+{
+	ax12_write8(id, AX12_LED, on);
+}
+
+// fonction non inline pour permettre l'utilisation depuis gdb
+void ax12_set_moving_speed(uint8_t id, uint16_t speed)
+{
+	ax12_write16(id, AX12_MOVING_SPEED, speed & AX12_MAX_MOVING_SPEED);
+}
+
+// fonction non inline pour permettre l'utilisation depuis gdb
+void ax12_set_goal_position(uint8_t id, uint16_t goal)
+{
+	ax12_write16(id, AX12_GOAL_POSITION, goal & AX12_MAX_GOAL_POSITION);
+}
+
+void ax12_set_id(uint8_t old_id, uint8_t id)
+{
+	if(id <= 0xfd)
+	{
+		ax12_write8(old_id, AX12_ID, id);
+	}
+}
