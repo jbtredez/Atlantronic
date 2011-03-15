@@ -288,3 +288,18 @@ void ax12_set_id(uint8_t old_id, uint8_t id)
 		ax12_write8(old_id, AX12_ID, id);
 	}
 }
+
+void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
+{
+	ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
+}
+
+void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
+{
+	ax12_write16(id, AX12_TORQUE_LIMIT_EEPROM, torque_limit & AX12_MAX_TORQUE_LIMIT);
+}
+
+void ax12_set_torque_enable(uint8_t id, uint8_t enable)
+{
+	ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
+}
