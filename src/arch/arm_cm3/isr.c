@@ -18,6 +18,7 @@ static void isr_unexpected(void);
 static void isr_context_switch( void ) __attribute__ ((naked));
 
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
+void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") ));
@@ -66,7 +67,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
+	isr_dma1_channel1,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
