@@ -8,26 +8,25 @@ static void adc_task(void* arg);
 
 struct
 {
-	volatile uint32_t aru;
 	volatile uint32_t potard1;
+	volatile uint32_t aru;
 	volatile uint32_t potard2;
 } adc_dma ;
 
 int adc_module_init()
 {
-	// ARU
 	// activation de GPIOA
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-	// PA5 entrée AN5
-	GPIOA->CRL = (GPIOA->CRL & ~GPIO_CRL_MODE0 & ~GPIO_CRL_CNF0);
+	// PA4 entrée AN4
+	GPIOA->CRL = (GPIOA->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4);
 
-	// Potard 1 et 2 sur PC1 (AN11) et PC3 (AN13)
+	// PC0 (AN10) et PC4 (AN14)
 	// activation de GPIOC
 	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
-	// PC1 entrée AN11
-	GPIOC->CRL = (GPIOC->CRL & ~GPIO_CRL_MODE1 & ~GPIO_CRL_CNF1);
-	// PC3 entrée AN13
-	GPIOC->CRL = (GPIOC->CRL & ~GPIO_CRL_MODE3 & ~GPIO_CRL_CNF3);
+	// PC0 entrée AN10
+	GPIOC->CRL = (GPIOC->CRL & ~GPIO_CRL_MODE0 & ~GPIO_CRL_CNF0);
+	// PC4 entrée AN14
+	GPIOC->CRL = (GPIOC->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4);
 
 	// activation clock adc 1 et adc 2
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
@@ -45,13 +44,13 @@ int adc_module_init()
 
 	ADC1->SQR1 = 0x00;
 	ADC1->SQR2 = 0x00;
-	ADC1->SQR3 =                  ADC_SQR3_SQ1_2 |                  ADC_SQR3_SQ1_0 | // 0101 : AN5
-	 			 ADC_SQR3_SQ2_3 |                  ADC_SQR3_SQ2_1 | ADC_SQR3_SQ2_0 | // 1011 : AN11
-	 			 ADC_SQR3_SQ3_3 | ADC_SQR3_SQ3_2                  | ADC_SQR3_SQ3_0;  // 1101 : AN13
+	ADC1->SQR3 =                  ADC_SQR3_SQ1_2                                   | // 0100 : AN4
+	 			 ADC_SQR3_SQ2_3 |                  ADC_SQR3_SQ2_1                  | // 1010 : AN10
+	 			 ADC_SQR3_SQ3_3 | ADC_SQR3_SQ3_2 | ADC_SQR3_SQ3_1                 ;  // 1110 : AN14
 
-	ADC1->SMPR2 = (ADC1->SMPR2 & ~ADC_SMPR2_SMP5); // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN5
-	ADC1->SMPR1 = (ADC1->SMPR1 & ~ADC_SMPR1_SMP11); // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN11
-	ADC1->SMPR1 = (ADC1->SMPR1 & ~ADC_SMPR1_SMP13); // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN13
+	ADC1->SMPR2 = (ADC1->SMPR2 & ~ADC_SMPR2_SMP4) | ADC_SMPR2_SMP4; // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN5
+	ADC1->SMPR1 = (ADC1->SMPR1 & ~ADC_SMPR1_SMP10) | ADC_SMPR1_SMP10; // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN11
+	ADC1->SMPR1 = (ADC1->SMPR1 & ~ADC_SMPR1_SMP14) | ADC_SMPR1_SMP14; // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN13
 
 	ADC1->SQR1 = (ADC1->SQR1 & ~ADC_SQR1_L) | ADC_SQR1_L_1; // 3 conversions - 1
 

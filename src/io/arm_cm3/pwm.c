@@ -68,6 +68,8 @@ static int pwm_module_init()
 	TIM1->CR1 |= TIM_CR1_CEN;
 	TIM1->BDTR |= TIM_BDTR_MOE;
 
+// TODO PWM_UP_*
+
 	return 0;
 }
 
@@ -75,29 +77,33 @@ module_init(pwm_module_init, INIT_PWM);
 
 void pwm_set(unsigned int num, uint16_t val, int dir)
 {
-	if(num == PWM_RIGHT)
+// TODO PWM_UP_*
+	switch(num)
 	{
-		TIM1->CCR1 = val;
-		if(dir > 0)
-		{
-			GPIOE->ODR |= GPIO_ODR_ODR8;
-		}
-		else
-		{
-			GPIOE->ODR &= ~GPIO_ODR_ODR8;
-		}
-	}
-	else
-	{
-		TIM1->CCR2 = val;
-		if(dir > 0)
-		{
-			GPIOE->ODR |= GPIO_ODR_ODR10;
-		}
-		else
-		{
-			GPIOE->ODR &= ~GPIO_ODR_ODR10;
-		}
+		case PWM_RIGHT:
+			if(dir > 0)
+			{
+				GPIOE->ODR |= GPIO_ODR_ODR8;
+			}
+			else
+			{
+				GPIOE->ODR &= ~GPIO_ODR_ODR8;
+			}
+			TIM1->CCR1 = val;
+			break;
+		case PWM_LEFT:
+			if(dir > 0)
+			{
+				GPIOE->ODR |= GPIO_ODR_ODR10;
+			}
+			else
+			{
+				GPIOE->ODR &= ~GPIO_ODR_ODR10;
+			}
+			TIM1->CCR2 = val;
+			break;
+		default:
+			break;
 	}
 }
 

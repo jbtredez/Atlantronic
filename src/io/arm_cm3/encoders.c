@@ -9,12 +9,17 @@
 
 static int encoders_module_init()
 {
+	// activation de la clock sur AFIO
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+
 	// Timer 2 pas remape : PA0, PA1, PA2, PA3
 	AFIO->MAPR &= ~AFIO_MAPR_TIM2_REMAP;
 
 	// GPIOA utilisee, configuration de PA0 et PA1
 	RCC->APB2ENR |=  RCC_APB2ENR_IOPAEN;
 	GPIOA->CRL   &= ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0 | GPIO_CRL_MODE1 | GPIO_CRL_CNF1);     // on efface la conf de PA0 et PA1
+	GPIOA->CRL   |=  GPIO_CRL_CNF0_1;               // PA0 : input pull-up / pull-down
+	GPIOA->CRL   |=  GPIO_CRL_CNF1_1;               // PA1 : input pull-up / pull-down
 
 	// activation de la clock sur le timer 2
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -41,17 +46,14 @@ static int encoders_module_init()
 	// on active le tout
 	TIM2->CR1 |= TIM_CR1_CEN;
 
-	// activation de la clock sur AFIO
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-
 	// Timer 4 : remap : PD12, PD13, PD14, PD15
 	AFIO->MAPR |= AFIO_MAPR_TIM4_REMAP;
 
 	// GPIOD utilisee, configuration de PD12 et PD13
 	RCC->APB2ENR |=  RCC_APB2ENR_IOPDEN;
-	GPIOA->CRH   &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12 | GPIO_CRH_MODE13 | GPIO_CRH_CNF13);     // on efface la conf de PD12 et PD13
-	GPIOA->CRH   |=  GPIO_CRH_CNF12_1;               // PD12 : input pull-up / pull-down
-	GPIOA->CRH   |=  GPIO_CRH_CNF13_1;               // PD13 : input pull-up / pull-down
+	GPIOD->CRH   &= ~(GPIO_CRH_MODE12 | GPIO_CRH_CNF12 | GPIO_CRH_MODE13 | GPIO_CRH_CNF13);     // on efface la conf de PD12 et PD13
+	GPIOD->CRH   |=  GPIO_CRH_CNF12_1;               // PD12 : input pull-up / pull-down
+	GPIOD->CRH   |=  GPIO_CRH_CNF13_1;               // PD13 : input pull-up / pull-down
 
 	// activation de la clock sur le timer 4
 	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
@@ -88,11 +90,11 @@ uint16_t encoders_get(unsigned int num)
 	uint16_t val;
 	if(num == ENCODERS_MOT_RIGHT)
 	{
-		val = TIM2->CNT;
+		val = TIM4->CNT;
 	}
 	else
 	{
-		val = TIM4->CNT;
+		val = TIM2->CNT;
 	}
 
 	return val;

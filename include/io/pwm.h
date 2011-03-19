@@ -12,6 +12,8 @@
 
 #define PWM_RIGHT    0
 #define PWM_LEFT     1
+#define PWM_UP_RIGHT 2
+#define PWM_UP_LEFT  3
 
 //! set a pwm
 //!
