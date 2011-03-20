@@ -1,4 +1,3 @@
-ifeq ($(ARCH),gcc_posix)
 obj-simu += simulation/simu.o
 obj-simu += simulation/Environnement.o
 obj-simu += simulation/ArmCm3.o 
@@ -25,5 +24,5 @@ lib-simu += -ljpeg
 lib-simu += -lpng
 lib-simu += -lbz2
 
-BIN+= simu
-endif
+BIN-linux += simu
+

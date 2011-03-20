@@ -6,6 +6,7 @@
 #include "event.h"
 #include "io/gpio.h"
 #include "io/systick.h"
+#include "location/odometry.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       100
@@ -27,11 +28,13 @@ int strategy_test_control_module_init()
 }
 
 module_init(strategy_test_control_module_init, INIT_STRATEGY);
-#include "location/odometry.h"
 
 static void strategy_test_control_task()
 {
-	odometry_set_position(-1410.0f, -850.0f, 0.0f);
+	if(getcolor() == COLOR_BLUE)
+	{
+		odometry_set_position(-1410.0f, -850.0f, 0.0f);
+	}
 
 	vTaskWaitEvent(EVENT_GO);
 

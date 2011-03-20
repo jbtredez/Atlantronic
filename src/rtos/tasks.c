@@ -416,9 +416,7 @@ tskTCB * pxNewTCB;
 			prvAddTaskToReadyQueue( pxNewTCB );
 
 			xReturn = pdPASS;
-			#ifdef __GCC_POSIX__
-				printf("tache %p : %s\n", pxNewTCB, pxNewTCB->pcTaskName);
-			#endif
+
 			traceTASK_CREATE( pxNewTCB );
 		}
 		portEXIT_CRITICAL();

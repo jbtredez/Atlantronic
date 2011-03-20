@@ -39,7 +39,7 @@
 int log_add(const char* msg, ...);
 portBASE_TYPE log_add_from_isr(const char* msg, ...);
 
-#ifdef __GCC_POSIX__
+#if 0
 
 //! Macro de log formatés. Permet de faire des log par type avec plusieurs niveaux de log
 //! C'est une macro pour permettre d'avoir __FILE__, __FUNCTION__ et __LINE__ valide

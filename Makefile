@@ -67,20 +67,18 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 
 # cibles
 # cible par defaut :
-all-$(ARCH):
-
 all:
-	@+make ARCH=gcc_posix all-gcc_posix
+	@+make ARCH=linux all-linux
 	@+make ARCH=arm_cm3 all-arm_cm3
 
 .PHONY: all
 
-all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN))
+all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN-$(ARCH)))
 
 .PHONY: all-$(ARCH)
 
-$(foreach var,$(BIN),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
-$(foreach var,$(BIN),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
+$(foreach var,$(BIN-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
+$(foreach var,$(BIN-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)

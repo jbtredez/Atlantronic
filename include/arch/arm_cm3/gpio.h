@@ -24,10 +24,6 @@ static inline uint32_t getcolor()
 	return color;
 }
 
-static inline void setLed(uint32_t mask)
-{
-	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
-	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
-}
+void setLed(uint32_t mask);
 
 #endif

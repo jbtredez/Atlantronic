@@ -98,3 +98,9 @@ void isr_exit15_10(void)
 		// TODO action btn3
 	}
 }
+
+void setLed(uint32_t mask)
+{
+	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
+	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
+}

@@ -1,4 +1,3 @@
-ifeq ($(SIMU),0)
 obj-test_end += main.o
 obj-test_end += end.o
 obj-test_end += syscalls.o
@@ -12,5 +11,5 @@ obj-test_end += rtos/tasks.o
 obj-test_end += rtos/portable/MemMang/heap_2.o
 obj-test_end += $(OBJ-PORT)
 lib-led += -lm
-BIN += test_end
-endif
+BIN-arm_cm3 += test_end
+
