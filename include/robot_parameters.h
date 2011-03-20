@@ -7,20 +7,20 @@
 
 #include <math.h>
 
-#define PARAM_RIGHT_ODO_WHEEL_RADIUS          50.0f
-#define PARAM_LEFT_ODO_WHEEL_RADIUS           50.0f
+#define PARAM_RIGHT_ODO_WHEEL_RADIUS          40.1f
+#define PARAM_LEFT_ODO_WHEEL_RADIUS           40.1f
 #define PARAM_RIGHT_MOT_WHEEL_RADIUS          50.0f
 #define PARAM_LEFT_MOT_WHEEL_RADIUS           50.0f
 
-#define PARAM_RIGHT_ODO_WHEEL_WAY                 1
+#define PARAM_RIGHT_ODO_WHEEL_WAY                -1
 #define PARAM_LEFT_ODO_WHEEL_WAY                  1
-#define PARAM_RIGHT_MOT_WHEEL_WAY                 1
-#define PARAM_LEFT_MOT_WHEEL_WAY                  1
+#define PARAM_RIGHT_MOT_WHEEL_WAY                -1
+#define PARAM_LEFT_MOT_WHEEL_WAY                 -1
 
-#define PARAM_VOIE_ODO                       200.0f
-#define PARAM_VOIE_MOT                       100.0f
+#define PARAM_VOIE_ODO                       296.0f
+#define PARAM_VOIE_MOT                       120.0f
 
-#define PARAM_ENCODERS_RES                 (4096*4)
+#define PARAM_ENCODERS_RES                     4096
 
 #define PARAM_MOT_RED                            21
 #define PARAM_ODO_RED                             1
