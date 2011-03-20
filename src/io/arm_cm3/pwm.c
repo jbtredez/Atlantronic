@@ -7,6 +7,7 @@
 #include "init.h"
 #include "cpu/cpu.h"
 #include "io/rcc.h"
+#include "robot_parameters.h"
 
 static int pwm_module_init()
 {
@@ -81,7 +82,7 @@ void pwm_set(unsigned int num, uint16_t val, int dir)
 	switch(num)
 	{
 		case PWM_RIGHT:
-			if(dir > 0)
+			if(dir*PARAM_RIGHT_MOT_WHEEL_WAY > 0)
 			{
 				GPIOE->ODR |= GPIO_ODR_ODR8;
 			}
@@ -92,7 +93,7 @@ void pwm_set(unsigned int num, uint16_t val, int dir)
 			TIM1->CCR1 = val;
 			break;
 		case PWM_LEFT:
-			if(dir > 0)
+			if(dir*PARAM_LEFT_MOT_WHEEL_WAY > 0)
 			{
 				GPIOE->ODR |= GPIO_ODR_ODR10;
 			}
