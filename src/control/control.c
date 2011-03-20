@@ -47,6 +47,11 @@ static float v_dist_cons;
 static float v_rot_cons;
 static struct trapeze trapeze;
 
+// TODO
+static float control_kx = 1;//0.02;
+static float control_ky = 0;//0.0002;
+static float control_kalpha = 200;//0.002;
+
 union
 {
 	struct control_param_ad ad;
@@ -85,13 +90,13 @@ static int control_module_init()
 
 	// TODO
 	pid_av.kp = 40;
-	pid_av.ki = 100;
-	pid_av.kd = 200;
+	pid_av.ki = 0;//100;
+	pid_av.kd = 0;//200;
 	pid_av.max_out = 1800;
 
-	pid_rot.kp = 100000;
-	pid_rot.ki = 50000;
-	pid_rot.kd = 20000;
+	pid_rot.kp = 40;//100000;
+	pid_rot.ki = 0.01;//50000;
+	pid_rot.kd = 0;//20000;
 	pid_rot.max_out = 1800;
 	/////
 
@@ -108,12 +113,6 @@ static void control_task(void* arg)
 
 	portTickType wake_time = systick_get_time();
 	struct vect_pos pos;
-
-	///// TODO
-	float kx = 0.02;
-	float ky = 0.0002;
-	float kalpha = 0.002;
-	////
 
 	while(1)
 	{
@@ -214,8 +213,8 @@ static void control_task(void* arg)
 			float ey = -pos.sa * (cons.x - pos.x) + pos.ca * (cons.y - pos.y);
 			float ealpha = cons.alpha - pos.alpha;
 
-			float v_d_c = v_dist_cons * cos(ealpha) + kx * ex;
-			float v_r_c = v_rot_cons + ky * v_dist_cons * sinc(ealpha) * ey + kalpha * ealpha;
+			float v_d_c = v_dist_cons * cos(ealpha) + control_kx * ex;
+			float v_r_c = v_rot_cons + control_ky * v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
 
 			float v_d = location_get_speed_curv_abs();
 			float v_r = location_get_speed_rot();

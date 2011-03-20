@@ -16,7 +16,7 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-mno-thumb-interwork
-CFLAGS+=-O1
+#CFLAGS+=-O1
 CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-g3
 

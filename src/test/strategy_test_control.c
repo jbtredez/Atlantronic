@@ -27,13 +27,33 @@ int strategy_test_control_module_init()
 }
 
 module_init(strategy_test_control_module_init, INIT_STRATEGY);
+#include "location/odometry.h"
 
 static void strategy_test_control_task()
 {
-	vTaskWaitEvent(EVENT_GO);
-	
-//	control_straight(1800);
+	odometry_set_position(-1410.0f, -850.0f, 0.0f);
 
+	vTaskWaitEvent(EVENT_GO);
+
+	control_goto(-350-350.0/2.0f, -1050+200);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+
+/*	control_straight(850-350);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_rotate(1.57/2.0f);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_straight(1000);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_rotate(1.57/2.0f);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_straight(1100);
+	vTaskWaitEvent(EVENT_CONTROL_READY);
+	*/
+//	control_rotate(10570);
+//	vTaskWaitEvent(EVENT_CONTROL_READY);
+		
+//	control_straight(1800);
+#if 0
 	if(getcolor() == COLOR_BLUE)
 	{
 		control_straight(1800);
@@ -73,6 +93,6 @@ static void strategy_test_control_task()
 		vTaskWaitEvent(EVENT_CONTROL_READY);
 		control_straight(1550);*/
 	}
-
+#endif
 	vTaskDelete(NULL);
 }

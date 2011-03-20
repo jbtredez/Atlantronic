@@ -77,6 +77,7 @@ int main()
 	return 0;
 }
 
+#if 0
 void vApplicationIdleHook()
 {
 	// si on utilise les coroutines, on va ordonancer le tout dans la tache idle
@@ -92,4 +93,4 @@ void vApplicationIdleHook()
 		nanosleep( &xTimeToSleep, &xTimeSlept );
 	#endif
 }
-
+#endif
