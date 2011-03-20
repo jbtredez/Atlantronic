@@ -10,6 +10,8 @@
 
 void odometry_update();
 
+void odometry_set_position(float x, float y, float alpha);
+
 struct vect_pos odometry_get_position();
 
 float odometry_get_speed_curv_abs();
