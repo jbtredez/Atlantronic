@@ -85,16 +85,21 @@ static int encoders_module_init()
 
 module_init(encoders_module_init, INIT_ENCODERS);
 
-uint16_t encoders_get(unsigned int num)
+uint16_t encoders_get(const unsigned int num)
 {
 	uint16_t val;
-	if(num == ENCODERS_MOT_RIGHT)
+	switch(num)
 	{
-		val = TIM4->CNT;
-	}
-	else
-	{
-		val = TIM2->CNT;
+		case ENCODERS_MOT_RIGHT:
+			val = TIM4->CNT;
+			break;
+		case ENCODERS_MOT_LEFT:
+			val = TIM2->CNT;
+			break;
+		default:
+			// TODO + log erreur
+			val = 0;
+			break;
 	}
 
 	return val;

@@ -10,6 +10,6 @@
 #define ENCODERS_MOT_RIGHT    0
 #define ENCODERS_MOT_LEFT     1
 
-uint16_t encoders_get(unsigned int num);
+uint16_t encoders_get(const unsigned int num);
 
 #endif
