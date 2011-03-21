@@ -19,6 +19,6 @@
 //!
 //! @param num pwm id
 //! @param val new value
-void pwm_set(unsigned int num, uint16_t val, int dir);
+void pwm_set(const unsigned int num, uint16_t val, int dir);
 
 #endif
