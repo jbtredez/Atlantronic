@@ -6,6 +6,8 @@ ArmCm3::ArmCm3(Model *m) :
 {
 	pthread_mutex_init(&io, NULL);
 	model = m;
+
+	connect_io(RCC_BASE, 0x400, &rcc);
 }
 
 ArmCm3::~ArmCm3()
@@ -18,6 +20,8 @@ void ArmCm3::update_hardware(uint64_t vm_clk)
 	model->update(vm_clk);
 }
 
+
+/*
 void ArmCm3::mem_write(uint64_t offset, uint32_t val)
 {
 	offset += PERIPH_BASE;
@@ -145,3 +149,4 @@ uint32_t ArmCm3::mem_read(uint64_t offset)
 
 	return rep;
 }
+*/

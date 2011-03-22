@@ -25,6 +25,66 @@ CpuEmu::~CpuEmu()
 
 }
 
+void CpuEmu::connect_io(uint64_t base, uint64_t range, CpuIoInterface* interface)
+{
+	struct cpu_io io;
+
+	if(base < PERIPH_BASE)
+	{
+		meslog(_erreur_, "base < PERIPH_BASE = %#lx", (uint64_t) PERIPH_BASE);
+		return;	
+	}
+
+	base -= PERIPH_BASE;
+
+	if(interface == NULL)
+	{
+		meslog(_erreur_, "interface == NULL");
+		return;
+	}
+
+	if(range < sizeof(uint32_t))
+	{
+		meslog(_erreur_, "range < 4");
+		return;
+	}
+
+	io.base = base;
+	io.end_base = base + range - sizeof(uint32_t);
+	io.interface = interface;
+
+	cpu_io.push_back(io);
+}
+
+void CpuEmu::memory_write(uint64_t offset, uint32_t val)
+{
+	for(unsigned int i = 0; i < cpu_io.size() ; i++)
+	{
+		if(cpu_io[i].base <= offset && offset <= cpu_io[i].end_base)
+		{
+			cpu_io[i].interface->memory_write(offset - cpu_io[i].base, val);
+			return;
+		}
+	}
+
+	meslog(_erreur_, "ecriture non supporté - offset %#lx, val %#x", offset, val);
+}
+
+uint32_t CpuEmu::memory_read(uint64_t offset)
+{
+	for(unsigned int i = 0; i < cpu_io.size() ; i++)
+	{
+		if(cpu_io[i].base <= offset && offset <= cpu_io[i].end_base)
+		{
+			return cpu_io[i].interface->memory_read(offset - cpu_io[i].base);
+		}
+	}
+
+	meslog(_erreur_, "lecture non supporté - offset %#lx", offset);
+
+	return 0;
+}
+
 void CpuEmu::start(const char* pipe_name, const char* prog, int gdb_port)
 {
 	if(id == 0)
@@ -120,11 +180,11 @@ void* CpuEmu::lecture()
 			if(io.cmd == WRITE_MEMORY)
 			{
 				//printf("commande : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
-				mem_write(io.offset, io.val);
+				memory_write(io.offset, io.val);
 			}
 			else if(io.cmd == READ_MEMORY)
 			{
-				io.val = mem_read( io.offset);
+				io.val = memory_read( io.offset);
 				//printf("read : %i, offset : %#.4lx val : %#.2x\n", io.cmd, io.offset, io.val);
 			}
 			else

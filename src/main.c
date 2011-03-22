@@ -22,7 +22,7 @@ int main()
 {
 	uint8_t error = initModules();
 
-	// on n'arrive jamais ici sur la cible
+	// on n'arrive normalement jamais ici sur la cible
 	init_panic(error);	
 
 	return 0;

@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include "CpuEmu.h"
 #include "ArmTim.h"
-#include "ArmRcc.h"
 #include "ArmGpio.h"
 #include "ArmUsart.h"
 #include "Model.h"
+#include "rcc.h"
 
 class ArmCm3 : public CpuEmu
 {
@@ -15,13 +15,10 @@ public:
 	ArmCm3(Model *m);
 	~ArmCm3();
 
-	void mem_write(uint64_t offset, uint32_t val);
-	uint32_t mem_read(uint64_t offset);
-
 	void update_hardware(uint64_t vm_clk);
 
 	pthread_mutex_t io;
-	ArmRcc RCC;
+	Rcc rcc;
 	ArmTim TIM1;
 	ArmTim TIM3;
 	ArmTim TIM4;

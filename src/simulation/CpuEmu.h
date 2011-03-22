@@ -12,6 +12,15 @@
 #include <stdlib.h>
 #include "log.h"
 #include <list>
+#include <vector>
+#include "cpu_io_interface.h"
+
+struct cpu_io
+{
+	uint64_t base;
+	uint64_t end_base;
+	CpuIoInterface* interface;
+};
 
 class CpuEmu
 {
@@ -21,11 +30,13 @@ public:
 	void start(const char* pipe_name, const char* prog, int gdb_port);
 	void stop();
 	void set_it(uint32_t it);
+	void connect_io(uint64_t base, uint64_t range, CpuIoInterface* interface);
 
 protected:
-	virtual void mem_write(uint64_t offset, uint32_t val) = 0;
-	virtual uint32_t mem_read(uint64_t offset) = 0;
+	void memory_write(uint64_t offset, uint32_t val);
+	uint32_t memory_read(uint64_t offset);
 	virtual void update_hardware(uint64_t vm_clk) = 0;
+	std::vector<struct cpu_io> cpu_io;
 
 private:
 	void* lecture();
