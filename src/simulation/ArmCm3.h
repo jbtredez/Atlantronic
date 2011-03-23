@@ -7,7 +7,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "tim.h"
-#include "ArmUsart.h"
+#include "usart.h"
 #include "Model.h"
 
 class ArmCm3 : public CpuEmu
@@ -36,7 +36,7 @@ public:
 	Tim tim7;
 	Adc adc1;
 	Adc adc2;
-	ArmUsart USART3;
+	Usart USART3;
 	Model *model;
 };
 

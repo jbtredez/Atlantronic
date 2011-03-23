@@ -1,7 +1,6 @@
 obj-simu += simulation/simu.o
 obj-simu += simulation/Environnement.o
 obj-simu += simulation/ArmCm3.o
-obj-simu += simulation/ArmUsart.o
 obj-simu += simulation/Ax12.o
 obj-simu += simulation/CpuEmu.o
 obj-simu += simulation/Motor.o
@@ -13,6 +12,7 @@ obj-simu += simulation/rcc.o
 obj-simu += simulation/tim.o
 obj-simu += simulation/gpio.o
 obj-simu += simulation/adc.o
+obj-simu += simulation/usart.o
 
 lib-simu += -lstdc++
 lib-simu += -lIrrlicht

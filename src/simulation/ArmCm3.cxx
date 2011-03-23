@@ -4,7 +4,7 @@ ArmCm3::ArmCm3(Model *m) :
 	CpuEmu(),
 	USART3(this, USART3_IRQn)
 {
-	pthread_mutex_init(&io, NULL);
+	pthread_mutex_init(&io, NULL); //////// TODO
 	model = m;
 
 	connect_io(RCC_BASE, 0x400, &rcc);
@@ -35,46 +35,3 @@ void ArmCm3::update_hardware(uint64_t vm_clk)
 {
 	model->update(vm_clk);
 }
-
-
-/*
-void ArmCm3::mem_write(uint64_t offset, uint32_t val)
-{
-	offset += PERIPH_BASE;
-
-	pthread_mutex_lock(&io);
-
-	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
-	{
-		USART3.mem_write(offset - USART3_BASE, val);
-	}
-	else
-	{
-		meslog(_erreur_, "write non supporté offset %#lx, val %#x", offset, val);
-	}
-
-	pthread_mutex_unlock(&io);
-}
-
-uint32_t ArmCm3::mem_read(uint64_t offset)
-{
-	uint32_t rep = 0;
-
-	offset += PERIPH_BASE;
-
-	pthread_mutex_lock(&io);
-
-	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
-	{
-		rep = USART3.mem_read(offset - USART3_BASE);
-	}
-	else
-	{
-		meslog(_erreur_, "read non supporté offset %#lx", offset);
-	}
-
-	pthread_mutex_unlock(&io);
-
-	return rep;
-}
-*/
