@@ -8,6 +8,22 @@ ArmCm3::ArmCm3(Model *m) :
 	model = m;
 
 	connect_io(RCC_BASE, 0x400, &rcc);
+	connect_io(GPIOA_BASE, 0x400, &gpioA);
+	connect_io(GPIOB_BASE, 0x400, &gpioB);
+	connect_io(GPIOC_BASE, 0x400, &gpioC);
+	connect_io(GPIOD_BASE, 0x400, &gpioD);
+	connect_io(GPIOE_BASE, 0x400, &gpioE);
+	connect_io(GPIOF_BASE, 0x400, &gpioF);
+	connect_io(GPIOG_BASE, 0x400, &gpioG);
+	connect_io(TIM1_BASE, 0x400, &tim1);
+	connect_io(TIM2_BASE, 0x400, &tim2);
+	connect_io(TIM3_BASE, 0x400, &tim3);
+	connect_io(TIM4_BASE, 0x400, &tim4);
+	connect_io(TIM5_BASE, 0x400, &tim5);
+	connect_io(TIM6_BASE, 0x400, &tim6);
+	connect_io(TIM7_BASE, 0x400, &tim7);
+	connect_io(ADC1_BASE, 0x400, &adc1);
+	connect_io(ADC2_BASE, 0x400, &adc2);
 }
 
 ArmCm3::~ArmCm3()
@@ -28,50 +44,6 @@ void ArmCm3::mem_write(uint64_t offset, uint32_t val)
 
 	pthread_mutex_lock(&io);
 
-	if( offset >= RCC_BASE && offset < (RCC_BASE + 0x400) )
-	{
-		RCC.mem_write(offset - RCC_BASE, val);
-	}
-	else if( offset >= TIM1_BASE && offset < (TIM1_BASE + 0x400) )
-	{
-		TIM1.mem_write(offset - TIM1_BASE, val);
-	}
-	else if( offset >= TIM3_BASE && offset < (TIM3_BASE + 0x400) )
-	{
-		TIM3.mem_write(offset - TIM3_BASE, val);
-	}
-	else if( offset >= TIM4_BASE && offset < (TIM4_BASE + 0x400) )
-	{
-		TIM4.mem_write(offset - TIM4_BASE, val);
-	}
-	else if( offset >= GPIOA_BASE && offset < (GPIOA_BASE + 0x400))
-	{
-		GPIOA.mem_write(offset - GPIOA_BASE, val);
-	}
-	else if( offset >= GPIOB_BASE && offset < (GPIOB_BASE + 0x400))
-	{
-		GPIOB.mem_write(offset - GPIOB_BASE, val);
-	}
-	else if( offset >= GPIOC_BASE && offset < (GPIOC_BASE + 0x400))
-	{
-		GPIOC.mem_write(offset - GPIOC_BASE, val);
-	}
-	else if( offset >= GPIOD_BASE && offset < (GPIOD_BASE + 0x400))
-	{
-		GPIOD.mem_write(offset - GPIOD_BASE, val);
-	}
-	else if( offset >= GPIOE_BASE && offset < (GPIOE_BASE + 0x400))
-	{
-		GPIOE.mem_write(offset - GPIOE_BASE, val);
-	}
-	else if( offset >= GPIOF_BASE && offset < (GPIOF_BASE + 0x400))
-	{
-		GPIOF.mem_write(offset - GPIOF_BASE, val);
-	}
-	else if( offset >= GPIOG_BASE && offset < (GPIOG_BASE + 0x400))
-	{
-		GPIOG.mem_write(offset - GPIOG_BASE, val);
-	}
 	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
 	{
 		USART3.mem_write(offset - USART3_BASE, val);
@@ -92,50 +64,6 @@ uint32_t ArmCm3::mem_read(uint64_t offset)
 
 	pthread_mutex_lock(&io);
 
-	if( offset >= RCC_BASE && offset < (RCC_BASE + 0x400) )
-	{
-		rep = RCC.mem_read(offset - RCC_BASE);
-	}
-	else if( offset >= TIM1_BASE && offset < (TIM1_BASE + 0x400) )
-	{
-		rep = TIM1.mem_read(offset - TIM1_BASE);
-	}
-	else if( offset >= TIM3_BASE && offset < (TIM3_BASE + 0x400) )
-	{
-		rep = TIM3.mem_read(offset - TIM3_BASE);
-	}
-	else if( offset >= TIM4_BASE && offset < (TIM4_BASE + 0x400) )
-	{
-		rep = TIM4.mem_read(offset - TIM4_BASE);
-	}
-	else if( offset >= GPIOA_BASE && offset < (GPIOA_BASE + 0x400))
-	{
-		rep = GPIOA.mem_read(offset - GPIOA_BASE);
-	}
-	else if( offset >= GPIOB_BASE && offset < (GPIOB_BASE + 0x400))
-	{
-		rep = GPIOB.mem_read(offset - GPIOB_BASE);
-	}
-	else if( offset >= GPIOC_BASE && offset < (GPIOC_BASE + 0x400))
-	{
-		rep = GPIOC.mem_read(offset - GPIOC_BASE);
-	}
-	else if( offset >= GPIOD_BASE && offset < (GPIOD_BASE + 0x400))
-	{
-		rep = GPIOD.mem_read(offset - GPIOD_BASE);
-	}
-	else if( offset >= GPIOE_BASE && offset < (GPIOE_BASE + 0x400))
-	{
-		rep = GPIOE.mem_read(offset - GPIOE_BASE);
-	}
-	else if( offset >= GPIOF_BASE && offset < (GPIOF_BASE + 0x400))
-	{
-		rep = GPIOF.mem_read(offset - GPIOF_BASE);
-	}
-	else if( offset >= GPIOG_BASE && offset < (GPIOG_BASE + 0x400))
-	{
-		rep = GPIOG.mem_read(offset - GPIOG_BASE);
-	}
 	else if( offset >= USART3_BASE && offset < (USART3_BASE + 0x400))
 	{
 		rep = USART3.mem_read(offset - USART3_BASE);

@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 #include "CpuEmu.h"
-#include "ArmTim.h"
-#include "ArmGpio.h"
+#include "rcc.h"
+#include "gpio.h"
+#include "adc.h"
+#include "tim.h"
 #include "ArmUsart.h"
 #include "Model.h"
-#include "rcc.h"
 
 class ArmCm3 : public CpuEmu
 {
@@ -19,16 +20,22 @@ public:
 
 	pthread_mutex_t io;
 	Rcc rcc;
-	ArmTim TIM1;
-	ArmTim TIM3;
-	ArmTim TIM4;
-	ArmGpio GPIOA;
-	ArmGpio GPIOB;
-	ArmGpio GPIOC;
-	ArmGpio GPIOD;
-	ArmGpio GPIOE;
-	ArmGpio GPIOF;
-	ArmGpio GPIOG;
+	Gpio gpioA;
+	Gpio gpioB;
+	Gpio gpioC;
+	Gpio gpioD;
+	Gpio gpioE;
+	Gpio gpioF;
+	Gpio gpioG;
+	Tim tim1;
+	Tim tim2;
+	Tim tim3;
+	Tim tim4;
+	Tim tim5;
+	Tim tim6;
+	Tim tim7;
+	Adc adc1;
+	Adc adc2;
 	ArmUsart USART3;
 	Model *model;
 };

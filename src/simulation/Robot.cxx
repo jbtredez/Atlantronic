@@ -128,7 +128,7 @@ void Robot::forceAndTorqueCallback(const NewtonBody *nbody, float, int)
 void Robot::setColor(int Color)
 {
 	color = Color;
-	cpu.GPIOD.setInput(color, GPIO_IDR_IDR9);
+	cpu.gpioD.setInput(color, GPIO_IDR_IDR9);
 }
 
 void Robot::setPosition(float x, float y, float alpha)
@@ -230,22 +230,22 @@ void Robot::update(	uint64_t vm_clk )
 	double dy;
 	matrix4 m;
 
-	if( cpu.GPIOE.getOutput(GPIO_ODR_ODR8) )
+	if( cpu.gpioE.getOutput(GPIO_ODR_ODR8) )
 	{
-		motor[0].pwm = cpu.TIM1.getPwm(0);
+		motor[0].pwm = cpu.tim1.getPwm(0);
 	}
 	else
 	{
-		motor[0].pwm = -cpu.TIM1.getPwm(0);
+		motor[0].pwm = -cpu.tim1.getPwm(0);
 	}
 
-	if( cpu.GPIOE.getOutput(GPIO_ODR_ODR10) )
+	if( cpu.gpioE.getOutput(GPIO_ODR_ODR10) )
 	{
-		motor[1].pwm = cpu.TIM1.getPwm(1);
+		motor[1].pwm = cpu.tim1.getPwm(1);
 	}
 	else
 	{
-		motor[1].pwm = -cpu.TIM1.getPwm(1);
+		motor[1].pwm = -cpu.tim1.getPwm(1);
 	}
 
 	while(model_time < (uint64_t) (vm_clk / MODEL_KHZ))
@@ -341,8 +341,8 @@ void Robot::update(	uint64_t vm_clk )
 //		printf( "%lu\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", model_time, X[MODEL_MOT_RIGHT_I], X[MODEL_MOT_RIGHT_THETA], X[MODEL_MOT_RIGHT_W], X[MODEL_MOT_LEFT_I], X[MODEL_MOT_LEFT_THETA], X[MODEL_MOT_LEFT_W], X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA], X[MODEL_ODO_RIGHT_THETA], X[MODEL_ODO_LEFT_THETA]);
 	}
 
-	cpu.TIM3.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
-	cpu.TIM4.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);
+	cpu.tim4.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
+	cpu.tim2.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);
 //	printf("pos : %f\t%f\t%f\n", X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
 //	printf("codeurs : %i     %i\n", (uint16_t) X[MODEL_ODO_RIGHT_THETA], (uint16_t) X[MODEL_ODO_LEFT_THETA]);
 }

@@ -157,7 +157,7 @@ void Rcc::memory_write(uint64_t offset, uint32_t val)
 
 uint32_t Rcc::memory_read(uint64_t offset)
 {
-	uint32_t rep;
+	uint32_t rep = 0;
 
 	switch(offset)
 	{
