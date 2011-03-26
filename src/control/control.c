@@ -48,9 +48,17 @@ static float v_rot_cons;
 static struct trapeze trapeze;
 
 // TODO
-static float control_kx = 1;//0.02;
-static float control_ky = 0;//0.0002;
-static float control_kalpha = 200;//0.002;
+// tests vite fait Tresgor :
+// kx = 1
+// ky = 0
+// kalpha = 200
+// Simulation :
+// kx = 0.02
+// ky = 0.0002
+// kalpha = 0.002
+static float control_kx = 0.02;
+static float control_ky = 0.0002;
+static float control_kalpha = 0.002;
 
 union
 {
@@ -89,14 +97,30 @@ static int control_module_init()
 	pid_init(&pid_rot);
 
 	// TODO
+	// tests vite fait Tresgor :
+	// kp = 40
+	// ki = 0
+	// kd = 0
+	// Simulation :
+	// kp = 40
+	// ki = 120
+	// kd = 0
 	pid_av.kp = 40;
-	pid_av.ki = 0;//100;
-	pid_av.kd = 0;//200;
+	pid_av.ki = 120;
+	pid_av.kd = 0;
 	pid_av.max_out = 1800;
 
-	pid_rot.kp = 40;//100000;
-	pid_rot.ki = 0.01;//50000;
-	pid_rot.kd = 0;//20000;
+	// tests vite fait Tresgor :
+	// kp = 40
+	// ki = 0
+	// kd = 0
+	// Simulation :
+	// kp = 1000000
+	// ki = 50000
+	// kd = 0
+	pid_rot.kp = 1000000;
+	pid_rot.ki = 50000;
+	pid_rot.kd = 0;
 	pid_rot.max_out = 1800;
 	/////
 
@@ -139,7 +163,7 @@ static void control_task(void* arg)
 				if(control_param.ad.angle)
 				{
 					// TODO marge en dur
-					if(fabs(dest.alpha - pos.alpha) < 0.01f)
+					if(fabs(dest.alpha - pos.alpha) < 0.05f)
 					{
 						control_param.ad.angle = 0;
 						cons.alpha = dest.alpha;
@@ -166,7 +190,7 @@ static void control_task(void* arg)
 					float ex = pos.ca  * (dest.x - pos.x) + pos.sa * (dest.y - pos.y);
 					//float ey = -pos.sa * (dest.x - pos.x) + pos.ca * (dest.y - pos.y);
 
-					if( fabsf(ex) < 1.0f)
+					if( fabsf(ex) < 2.0f)
 					{
 						//if(fabsf(ey) < 10.0f)
 						//{
@@ -251,7 +275,6 @@ static void control_task(void* arg)
 			{
 				u2 = 1800;
 			}
-
 			pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 			pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
 		}

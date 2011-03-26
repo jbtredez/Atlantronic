@@ -38,11 +38,12 @@ static void strategy_test_control_task()
 
 	//vTaskWaitEvent(EVENT_GO);
 
-	control_straight(-100);
-	//control_goto(-350-350.0/2.0f, -1050+200);
+	//control_straight(800);
+	control_goto(-350-350.0/2.0f, -1050+200);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_rotate(-1.57);
+	control_rotate(1.57);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
+	control_straight(850);
 
 /*	control_straight(850-350);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
@@ -54,7 +55,7 @@ static void strategy_test_control_task()
 	vTaskWaitEvent(EVENT_CONTROL_READY);
 	control_straight(1100);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
-	*/
+*/
 //	control_rotate(10570);
 //	vTaskWaitEvent(EVENT_CONTROL_READY);
 		
