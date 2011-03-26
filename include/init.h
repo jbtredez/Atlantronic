@@ -2,7 +2,7 @@
 #define INIT_H
 
 //! @file init.h
-//! @brief Contient l'ordre d'initialisation des modules s'ils sont présent et l'ordre de fermeture
+//! @brief Contient l'ordre d'initialisation des modules s'ils sont présent
 //! @author Jean-Baptiste Trédez
 //!
 //! il s'agit d'un tri par ordre alphabétique (donc "01" < "02" < "1" < "10" < "2" )
@@ -12,10 +12,7 @@
 //! en cas d'égalité, l'ordre d'initialisation entre ces fonctions est
 //! "la première trouvée par l'éditeur de liens sera la première exécutée".
 //!
-//! pour la fermeture, le tri est identique mais l'exécution se fait en ordre inverse
-//! (plus la priorité de fermeture est grande, plus c'est exécuté tôt). Ceci permet
-//! de garder les mêmes numéros sauf exception
-//! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init, décroissant pour la destruction)
+//! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init)
 
 #include "error.h"
 
@@ -53,7 +50,5 @@
 
 // init de l'ordonanceur en DERNIER !
 #define INIT_SYSTICK                  "51"
-
-#define EXIT_MODEL                    "00"
 
 #endif
