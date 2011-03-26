@@ -232,20 +232,20 @@ void Robot::update(	uint64_t vm_clk )
 
 	if( cpu.gpioE.getOutput(GPIO_ODR_ODR8) )
 	{
-		motor[0].pwm = cpu.tim1.getPwm(0);
+		motor[0].pwm = cpu.tim1.getPwm(0) * PARAM_RIGHT_MOT_WHEEL_WAY;
 	}
 	else
 	{
-		motor[0].pwm = -cpu.tim1.getPwm(0);
+		motor[0].pwm = -cpu.tim1.getPwm(0) * PARAM_RIGHT_MOT_WHEEL_WAY;
 	}
 
 	if( cpu.gpioE.getOutput(GPIO_ODR_ODR10) )
 	{
-		motor[1].pwm = cpu.tim1.getPwm(1);
+		motor[1].pwm = cpu.tim1.getPwm(1) * PARAM_LEFT_MOT_WHEEL_WAY;
 	}
 	else
 	{
-		motor[1].pwm = -cpu.tim1.getPwm(1);
+		motor[1].pwm = -cpu.tim1.getPwm(1) * PARAM_LEFT_MOT_WHEEL_WAY;
 	}
 
 	while(model_time < (uint64_t) (vm_clk / MODEL_KHZ))
@@ -329,8 +329,8 @@ void Robot::update(	uint64_t vm_clk )
 		double v_right = (v_d / PARAM_DIST_MOD_GAIN + v_r / PARAM_ROT_MOD_GAIN) / 2.0f;
 		double v_left = (v_d / PARAM_DIST_MOD_GAIN - v_r / PARAM_ROT_MOD_GAIN ) / 2.0f;
 
-		X[MODEL_MOT_RIGHT_W] = v_right / (PARAM_RIGHT_MOT_WHEEL_RADIUS * PARAM_RIGHT_MOT_WHEEL_WAY) * 1000.0f;
-		X[MODEL_MOT_LEFT_W]  = v_left  / (PARAM_LEFT_MOT_WHEEL_RADIUS  * PARAM_LEFT_MOT_WHEEL_WAY ) * 1000.0f;
+		X[MODEL_MOT_RIGHT_W] = v_right / (PARAM_RIGHT_MOT_WHEEL_RADIUS) * 1000.0f;
+		X[MODEL_MOT_LEFT_W]  = v_left  / (PARAM_LEFT_MOT_WHEEL_RADIUS ) * 1000.0f;
 
 		X[MODEL_MOT_RIGHT_THETA] = Xold[MODEL_MOT_RIGHT_THETA] + X[MODEL_MOT_RIGHT_W] * 0.001f;
 		X[MODEL_MOT_LEFT_THETA] = Xold[MODEL_MOT_LEFT_THETA] + X[MODEL_MOT_LEFT_W] * 0.001f;
@@ -343,8 +343,12 @@ void Robot::update(	uint64_t vm_clk )
 
 	cpu.tim4.setEncoder((uint16_t) X[MODEL_ODO_RIGHT_THETA]);
 	cpu.tim2.setEncoder((uint16_t) X[MODEL_ODO_LEFT_THETA]);
-//	printf("pos : %f\t%f\t%f\n", X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
-//	printf("codeurs : %i     %i\n", (uint16_t) X[MODEL_ODO_RIGHT_THETA], (uint16_t) X[MODEL_ODO_LEFT_THETA]);
+
+//	if(color == 1)
+//	{
+//		printf("pos : %f\t%f\t%f\n", X[MODEL_POS_X], X[MODEL_POS_Y], X[MODEL_POS_ALPHA]);
+//		printf("codeurs : %i     %i\n", (uint16_t) X[MODEL_ODO_RIGHT_THETA], (uint16_t) X[MODEL_ODO_LEFT_THETA]);
+//	}
 }
 
 void Robot::compute_dx(double *x, double* dx)
@@ -352,8 +356,8 @@ void Robot::compute_dx(double *x, double* dx)
 	motor[0].compute_dx(x, dx); // moteur droit
 	motor[1].compute_dx(x+3, dx+3); // moteur gauche
 
-	double v_right = x[MODEL_MOT_RIGHT_W] * PARAM_RIGHT_MOT_WHEEL_RADIUS * PARAM_RIGHT_MOT_WHEEL_WAY;
-	double v_left = x[MODEL_MOT_LEFT_W] * PARAM_LEFT_MOT_WHEEL_RADIUS  * PARAM_LEFT_MOT_WHEEL_WAY;
+	double v_right = x[MODEL_MOT_RIGHT_W] * PARAM_RIGHT_MOT_WHEEL_RADIUS;
+	double v_left = x[MODEL_MOT_LEFT_W] * PARAM_LEFT_MOT_WHEEL_RADIUS;
 
 	double v_d = PARAM_DIST_MOD_GAIN * (v_right + v_left);
 	double v_r = PARAM_ROT_MOD_GAIN * (v_right - v_left);
