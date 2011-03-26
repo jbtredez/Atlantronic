@@ -2,8 +2,6 @@
 //! @brief Programme principal
 //! @author Jean-Baptiste Trédez
 
-#include "FreeRTOS.h"
-#include "task.h"
 #include "module.h"
 #include "log.h"
 #include "io/gpio.h"
