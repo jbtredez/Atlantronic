@@ -5,6 +5,7 @@
 #include "location/location.h"
 #include "module.h"
 #include "portmacro.h"
+#include <math.h>
 
 static float location_v_distance;   //!< en "m / unité de temps"
 static float location_v_rotate;     //!< en "rd / unité de temps"
@@ -42,6 +43,18 @@ struct vect_pos location_get_position()
 	p = location_pos;
 	portEXIT_CRITICAL();
 	return p;
+}
+
+void location_set_position(float x, float y, float alpha)
+{
+	portENTER_CRITICAL();
+	location_pos.x = x;
+	location_pos.y = y;
+	location_pos.alpha = alpha;
+	location_pos.ca = cos(alpha);
+	location_pos.sa = sin(alpha);
+	odometry_set_position(location_pos);
+	portEXIT_CRITICAL();
 }
 
 float location_get_speed_curv_abs()

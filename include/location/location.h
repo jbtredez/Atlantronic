@@ -14,6 +14,8 @@ void location_update();
 
 struct vect_pos location_get_position();
 
+void location_set_position(float x, float y, float alpha);
+
 float location_get_speed_curv_abs();
 
 float location_get_speed_rot();

@@ -10,7 +10,7 @@
 
 void odometry_update();
 
-void odometry_set_position(float x, float y, float alpha);
+void odometry_set_position(const struct vect_pos pos);
 
 struct vect_pos odometry_get_position();
 

@@ -80,16 +80,12 @@ struct vect_pos odometry_get_position()
 	return p;
 }
 
-void odometry_set_position(float x, float y, float alpha)
+void odometry_set_position(const struct vect_pos pos)
 {
 	portENTER_CRITICAL();
 	encoders_right = encoders_get(ENCODERS_MOT_RIGHT);
 	encoders_left = encoders_get(ENCODERS_MOT_LEFT);
-	odometry_pos.x = x;
-	odometry_pos.y = y;
-	odometry_pos.alpha = alpha;
-	odometry_pos.ca = cos(alpha);
-	odometry_pos.sa = sin(alpha);
+	odometry_pos = pos;
 	portEXIT_CRITICAL();
 }
 
