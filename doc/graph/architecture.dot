@@ -1,6 +1,6 @@
 digraph robot
 {
-	size="6,6";
+	size="10,10";
 	// modules - taches
 	node [color=lawngreen, style=filled ]
 	strategy
@@ -29,11 +29,6 @@ digraph robot
 		"io/led"
 	}
 
-	// modèle - simulation
-	node [color=magenta, style=filled ]
-	model
-	model_motor
-
 	// liens
 	strategy -> avoidance
 	strategy -> control
@@ -47,8 +42,4 @@ digraph robot
 	beacon -> "io/beacon"
 	odometry -> "io/encoders"
 	control -> "io/pwm"
-	"io/pwm" -> model
-	"io/encoders" -> model
-	"io/beacon" -> model
-	model -> model_motor	
 }

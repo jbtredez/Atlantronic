@@ -96,7 +96,11 @@ $(bin)/$(ARCH)/%:
 	@echo [DOT] $@
 	@$(DOT) $< -Tpng -o $@
 
-doc: $(BIN_DOC)
+dot: $(BIN_DOC)
+
+.PHONY: dot
+
+doc: dot
 	@mkdir -p $(doc)/doxygen
 	@doxygen Doxyfile > /dev/null
 
