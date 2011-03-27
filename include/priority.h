@@ -15,6 +15,6 @@
 #define PRIORITY_TASK_END             5
 
 // priority : 0 ... configMAX_PRIORITIES-1
-#define configMAX_PRIORITIES			( ( unsigned portBASE_TYPE ) 6 )
+#define configMAX_PRIORITIES		  6
 
 #endif

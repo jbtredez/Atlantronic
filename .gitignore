@@ -6,6 +6,7 @@ doc/doxygen
 
 .*
 !.gitignore
+!.gdbinit
 *.d
 *.o
 *.ko
