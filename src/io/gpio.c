@@ -22,11 +22,11 @@ static int gpio_module_init(void)
 	// activation GPIOD
 	RCC->APB2ENR |= RCC_APB2ENR_IOPDEN;
 	// PD8 entrée input flotante
-	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE8 & ~ GPIO_CRH_CNF8_1) | GPIO_CRH_CNF8_0;
+	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE8 & ~GPIO_CRH_CNF8) | GPIO_CRH_CNF8_0;
 	// PD9 entrée input flotante
-	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE9 & ~ GPIO_CRH_CNF9_1) | GPIO_CRH_CNF9_0;
+	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_CNF9_0;
 	// PD10 entrée input flotante
-	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE10 & ~ GPIO_CRH_CNF10_1) | GPIO_CRH_CNF10_0;
+	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10) | GPIO_CRH_CNF10_0;
 
 	// LED sur PE0, PE1, PE2, PE3, PE4, PE5
 	// activation GPIOE
@@ -43,6 +43,8 @@ static int gpio_module_init(void)
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4) | GPIO_CRL_MODE4_1;
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
+
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
 	// PD8 => it sur front montant
 	// PD9 => it sur front montant

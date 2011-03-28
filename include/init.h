@@ -25,6 +25,7 @@
 // init de la communication
 #define INIT_USART                    "02"
 #define INIT_USB                      "03"
+#define INIT_CAN                      "04"
 
 // init adc
 #define INIT_ADC                      "04"
@@ -39,8 +40,6 @@
 #define INIT_BEACON                   "11"
 #define INIT_LOCATION                 "12"
 //#define INIT_VFS                      "02"
-//#define INIT_I2C                      "04"
-//#define INIT_CAN                      "05"
 #define INIT_END                      "14"
 #define INIT_CONTROL                  "15"
 #define INIT_STRATEGY                 "20"

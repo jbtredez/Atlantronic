@@ -1,5 +1,5 @@
-#ifndef _GPIO_H
-#define _GPIO_H
+#ifndef GPIO_H
+#define GPIO_H
 
 //! @file gpio.h
 //! @brief Gpio mapping

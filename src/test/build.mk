@@ -12,6 +12,7 @@ obj-test_control += io/gpio.o
 obj-test_control += io/usart.o
 obj-test_control += io/systick.o
 obj-test_control += io/adc.o
+obj-test_control += io/can.o
 obj-test_control += end.o
 obj-test_control += pince.o
 obj-test_control += io/current.o
