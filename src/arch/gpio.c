@@ -1,4 +1,4 @@
-#include "arch/arm_cm3/gpio.h"
+#include "io/gpio.h"
 #include "module.h"
 #include "FreeRTOS.h"
 #include "task.h"

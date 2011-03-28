@@ -43,5 +43,4 @@ endif
 CFLAGS+=$(addprefix -D,$(DEF))
 
 INCLUDES+=-Isrc/rtos/portable/GCC/ARM_CM3
-OBJ-PORT+=rtos/portable/GCC/ARM_CM3/port.o
-OBJ-PORT+=arch/$(ARCH)/isr.o
+
