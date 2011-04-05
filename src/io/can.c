@@ -2,6 +2,9 @@
 #include "module.h"
 #include "io/rcc.h"
 
+// TODO : ecriture multiple
+void can_write(struct can_msg *msg);
+
 static int can_module_init(void)
 {
 	// CAN_RX : PD0
@@ -42,13 +45,17 @@ static int can_module_init(void)
 	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
 
 	// TODO à voir / it... + handler
-	//CAN1->IER
-	//NVIC_EnableIRQ(CAN1_TX_IRQn);
-	//NVIC_EnableIRQ(CAN1_RX0_IRQn);
+	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
+	NVIC_EnableIRQ(CAN1_TX_IRQn);
+	NVIC_EnableIRQ(CAN1_RX0_IRQn);
+
+	// mode self-test pour le debug
+	//CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
-	//while (CAN->MSR & CAN_MCR_INRQ) ;
+	// TODO attendre que c'est prêt
+	//while (CAN1->MSR & CAN_MCR_INRQ) ;
 
 // TODO filtres / messages
 
@@ -56,3 +63,92 @@ static int can_module_init(void)
 }
 
 module_init(can_module_init, INIT_CAN);
+
+void isr_can1_tx(void)
+{
+	// fin de transmission sur la boite 0
+	if(CAN1->TSR & CAN_TSR_RQCP0)
+	{
+		CAN1->TSR |= CAN_TSR_RQCP0;
+		CAN1->IER &= ~CAN_IER_TMEIE;
+	}
+}
+
+// TODO : tests
+struct can_msg msg_rx0;
+
+void isr_can1_rx0(void)
+{
+	// TODO : tests
+	struct can_msg* msg = &msg_rx0;
+
+	// reception sur la FIFO 0
+	if(CAN1->RF0R & CAN_RF0R_FMP0)
+	{
+		if((CAN1->sFIFOMailBox[0].RIR & (uint32_t)0x00000004) == 0)
+		{
+			// ID standard
+			msg->format = CAN_STANDARD_FORMAT;
+			msg->id = (uint32_t)0x000007FF & (CAN1->sFIFOMailBox[0].RIR >> 21);
+		}
+		else
+		{
+			// ID étendu
+			msg->format = CAN_EXTENDED_FORMAT;
+			msg->id = (uint32_t)0x0003FFFF & (CAN1->sFIFOMailBox[0].RIR >> 3);
+		}
+
+		if ((CAN1->sFIFOMailBox[0].RIR & (uint32_t)0x00000002) == 0)
+		{
+			msg->type = CAN_DATA_FRAME;
+		}
+		else
+		{
+			msg->type = CAN_REMOTE_FRAME;
+		}
+
+		msg->size = (uint8_t)0x0000000F & CAN1->sFIFOMailBox[0].RDTR;
+
+		// TODO : faire mieux pour la copie en 2 copie 32 bits
+		msg->data[0] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR);
+		msg->data[1] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 8);
+		msg->data[2] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 16);
+		msg->data[3] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 24);
+
+		msg->data[4] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR);
+		msg->data[5] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 8);
+		msg->data[6] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 16);
+		msg->data[7] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 24);
+
+		CAN1->RF0R |= CAN_RF0R_RFOM0;
+	}
+}
+
+void can_write(struct can_msg *msg)
+{
+	CAN1->sTxMailBox[0].TIR  = 0;
+
+	if (msg->format == CAN_STANDARD_FORMAT)
+	{
+		CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id << 21);
+	}
+	else
+	{
+		CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id <<  3) | 0x04;
+	}
+
+	if (msg->type == CAN_REMOTE_FRAME)
+	{
+		CAN1->sTxMailBox[0].TIR |= 0x02;
+	}
+
+	// TODO remplissage par 32 bit
+	CAN1->sTxMailBox[0].TDLR = (((unsigned int)msg->data[3] << 24) | ((unsigned int)msg->data[2] << 16) | ((unsigned int)msg->data[1] <<  8) | ((unsigned int)msg->data[0]) );
+	CAN1->sTxMailBox[0].TDHR = (((unsigned int)msg->data[7] << 24) | ((unsigned int)msg->data[6] << 16) | ((unsigned int)msg->data[5] <<  8) | ((unsigned int)msg->data[4]) );
+
+	CAN1->sTxMailBox[0].TDTR &= ~CAN_TDT0R_DLC;
+	CAN1->sTxMailBox[0].TDTR |= msg->size & CAN_TDT0R_DLC;
+
+	CAN1->IER |= CAN_IER_TMEIE;
+	CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+}

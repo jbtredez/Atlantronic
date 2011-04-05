@@ -22,6 +22,8 @@ void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") ));
+void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") ));
+void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") ));
 
 extern void isr_systick(void);
 extern void vPortSVCHandler( void );
@@ -75,8 +77,8 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_adc,
-	isr_unexpected,
-	isr_unexpected,
+	isr_can1_tx,
+	isr_can1_rx0,
 	isr_unexpected,
 	isr_unexpected,
 	isr_exit9_5,
