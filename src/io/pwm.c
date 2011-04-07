@@ -9,6 +9,8 @@
 #include "io/rcc.h"
 #include "robot_parameters.h"
 
+void isr_pwm_reset(void);
+
 static int pwm_module_init()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
@@ -109,3 +111,9 @@ void pwm_set(const unsigned int num, uint16_t val, int dir)
 	}
 }
 
+void isr_pwm_reset(void)
+{
+	// on est dans une IT d'erreur, tout va mal => arrêt des moteurs
+	TIM1->CCR1 = 0;
+	TIM1->CCR2 = 0;
+}

@@ -2,7 +2,6 @@
 //! @brief isr
 //! @author Jean-Baptiste Trédez
 
-#include "io/debug.h"
 #include "rtos/FreeRTOSConfig.h"
 #include "error.h"
 #include "io/gpio.h"
@@ -16,6 +15,9 @@ static void isr_usage_fault(void);
 static void isr_debug_monitor(void);
 static void isr_unexpected(void);
 static void isr_context_switch( void ) __attribute__ ((naked));
+
+static void isr_cpu_down_safety(void); //!< tout va mal, on sauve les meubles
+void isr_pwm_reset(void) __attribute__((weak )); //!< sécurité : le module pwm met les moteurs à l'arrêt
 
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
 void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") ));
@@ -181,68 +183,55 @@ void isr_context_switch( void )
 static void isr_nmi(void)
 {
 	setLed(ERR_NMI);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_hard_fault(void)
 {
 	setLed(ERR_HARD_FAULT);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_mpu_fault(void)
 {
 	setLed(ERR_MPU_FAULT);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_bus_fault(void)
 {
 	setLed(ERR_BUS_FAULT);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_usage_fault(void)
 {
 	setLed(ERR_USAGE_FAULT);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_debug_monitor(void)
 {
 	setLed(ERR_DEBUG_MONITOR);
-
-	while(debug_mode())
-	{
-
-	}
+	isr_cpu_down_safety();
 }
 
 static void isr_unexpected(void)
 {
 	setLed(ERR_UNEXPECTED_ISR);
+	isr_cpu_down_safety();
+}
 
-	while(debug_mode())
+void isr_pwm_reset(void)
+{
+	// surchargée par le module pwm si présent
+}
+
+static void isr_cpu_down_safety(void)
+{
+	isr_pwm_reset();
+
+	while( 1 )
 	{
 
 	}
