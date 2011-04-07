@@ -32,7 +32,7 @@
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
 #define configKERNEL_INTERRUPT_PRIORITY			240
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY	191
-#define configGENERATE_RUN_TIME_STATS		0
+#define configGENERATE_RUN_TIME_STATS		1
 
 #define INCLUDE_vTaskPrioritySet        	1
 #define INCLUDE_uxTaskPriorityGet       	1

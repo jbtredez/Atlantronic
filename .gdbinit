@@ -1,3 +1,5 @@
+set prompt \033[01;32m(gdb) \033[0m
+
 define mri
 	monitor reset init
 end
@@ -10,40 +12,80 @@ end
 
 define ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
-	if pxCurrentTCB != 0
-		printf "Tache en cours : %s\n", pxCurrentTCB->pcTaskName
-	else
-		printf "Tache en cours : aucune\n"
+	set $match_time = 0
+
+	if systick_time_start_match > 0
+		set $match_time = (systick_time-systick_time_start_match)/72000000.0f
 	end
 
+	printf "uptime %f\tmatch_time %f\n", systick_time/72000000.0f, $match_time
+
+	echo \033[01;32m
+	printf " R\t"
+	if pxCurrentTCB != 0
+		printf "%s\n\n", pxCurrentTCB->pcTaskName
+	else
+		printf "aucune\n\n"
+	end
+	echo \033[0m
+
+	echo \033[01;34m
+	printf "etat\tnom\tev\tmask\tev&mask\tcpu\n"
+	echo \033[0m
 	set $nb_pri = sizeof pxReadyTasksLists / sizeof pxReadyTasksLists[0]
 	set $i = $nb_pri - 1
 	
 	while $i >= 0
-		printf "Priorité %i :\n", $i
-		ptcblist pxReadyTasksLists[$i]
+		set $n = pxReadyTasksLists[$i].uxNumberOfItems
+		set $list_end = &pxReadyTasksLists[$i].xListEnd
+		set $list_next = pxReadyTasksLists[$i].xListEnd.pxNext
+
+		while $list_next != $list_end && $n > 0
+			printf " P%i\t", $i
+			ptcb ((tskTCB*)$list_next->pvOwner)
+			set $list_next = $list_next.pxNext
+			set $n--
+		end
 		set $i--
 	end
 
-	printf "taches en attente d'être prêtes :\n"
-	ptcblist xPendingReadyList
-
-	printf "taches en attente :\n"
-	ptcblist xDelayedTaskList
-
-	printf "taches suspendues :\n"
-	ptcblist xSuspendedTaskList 
-end
-
-define ptcblist
-	set $n = $arg0.uxNumberOfItems
-	set $list_end = &$arg0.xListEnd
-	set $list_next = $arg0.xListEnd.pxNext
+	set $n = xPendingReadyList.uxNumberOfItems
+	set $list_end = &xPendingReadyList.xListEnd
+	set $list_next = xPendingReadyList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf "\t%s (event = %x)\n", ((tskTCB*) $list_next->pvOwner)->pcTaskName, ((tskTCB*) $list_next->pvOwner)->event
+		printf " PR\t"
+		ptcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
+	set $i--
+
+	set $n = xDelayedTaskList.uxNumberOfItems
+	set $list_end = &xDelayedTaskList.xListEnd
+	set $list_next = xDelayedTaskList.xListEnd.pxNext
+
+	while $list_next != $list_end && $n > 0
+		printf " D\t"
+		ptcb ((tskTCB*)$list_next->pvOwner)
+		set $list_next = $list_next.pxNext
+		set $n--
+	end
+	set $i--
+
+	set $n = xSuspendedTaskList.uxNumberOfItems
+	set $list_end = &xSuspendedTaskList.xListEnd
+	set $list_next = xSuspendedTaskList.xListEnd.pxNext
+
+	while $list_next != $list_end && $n > 0
+		printf " S\t"
+		ptcb ((tskTCB*)$list_next->pvOwner)
+		set $list_next = $list_next.pxNext
+		set $n--
+	end
+	set $i--
 end
 
+define ptcb
+	printf "%s\t%x\t%x\t%x\t%f%%\n", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100
+end
