@@ -38,7 +38,6 @@ static unsigned portBASE_TYPE uxCriticalNesting = 0xaaaaaaaa;
  * Exception handlers.
  */
 void xPortPendSVHandler( void ) __attribute__ (( naked ));
-void vPortSVCHandler( void ) __attribute__ (( naked ));
 
 /*
  * Start first task is a separate function so it can be tested in isolation.
@@ -67,28 +66,6 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	pxTopOfStack -= 8;	/* R11, R10, R9, R8, R7, R6, R5 and R4. */
 
 	return pxTopOfStack;
-}
-/*-----------------------------------------------------------*/
-
-// doc utile : 0xfffffff1 : retour handler mode
-//             0xfffffffd : retour thread mode, et utilisation de process stack
-//             0xfffffff9 : retour thread mode, et utilisation de main stack
-void vPortSVCHandler( void )
-{
-	__asm volatile (
-					"	ldr	r3, pxCurrentTCBConst2		\n" /* Restore the context. */
-					"	ldr r1, [r3]					\n" /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
-					"	ldr r0, [r1]					\n" /* The first item in pxCurrentTCB is the task top of stack. */
-					"	ldmia r0!, {r4-r11}				\n" /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
-					"	msr psp, r0						\n" /* Restore the task stack pointer. */
-					"	mov r0, #0 						\n"
-					"	msr	basepri, r0					\n"
-					"	ldr lr, =0xfffffffd			    \n" // Au branchement sur 0xfffffffd, on retourne en thread mode avec utilisation de la stack process (on a mis le bon pointeur msr psp, r0). On va dépiler automatiquement r0,r1,r2,r3, r12, lr et brancher sur le pc.
-					"	bx lr							\n"
-					"									\n"
-					"	.align 2						\n"
-					"pxCurrentTCBConst2: .word pxCurrentTCB	\n"
-				);
 }
 /*-----------------------------------------------------------*/
 

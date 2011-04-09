@@ -6,60 +6,61 @@
 #include "error.h"
 #include "io/gpio.h"
 
-void isr_reset(void) __attribute__ ((naked));
-static void isr_nmi(void);
-static void isr_hard_fault(void);
-static void isr_mpu_fault(void);
-static void isr_bus_fault(void);
-static void isr_usage_fault(void);
-static void isr_debug_monitor(void);
-static void isr_unexpected(void);
-static void isr_context_switch( void ) __attribute__ ((naked));
+void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
+static void isr_nmi(void); //!< interruption nmi
+static void isr_hard_fault(void); //!< interruption "hard fault"
+static void isr_mpu_fault(void); //!< interruption d'erreur sur le mpu
+static void isr_bus_fault(void); //!< interruption d'erreur sur le bus
+static void isr_usage_fault(void); //!< interruption d'erreur "usage fault"
+static void isr_svc( void ) __attribute__ (( naked )); //!< interruption svc (lancement de la première tache)
+static void isr_debug_monitor(void); //!< interruption debug monitor
+static void isr_unexpected(void); //!< interruption imprévue
+static void isr_context_switch( void ) __attribute__ ((naked)); //!< changement de contexte
+
 
 static void isr_cpu_down_safety(void); //!< tout va mal, on sauve les meubles
 void isr_pwm_reset(void) __attribute__((weak )); //!< sécurité : le module pwm met les moteurs à l'arrêt
 
-void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_adc(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") ));
-void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") ));
+void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
+void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 1
+void isr_adc(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption adc
+void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 5 à 9
+void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 10 à 15
+void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, tx
+void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, rx0
 
-extern void isr_systick(void);
-extern void vPortSVCHandler( void );
-extern int main(void);
+extern void isr_systick(void); //!< interruption systick (déclarée dans systick.c)
+extern int main(void); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
-extern unsigned long __text_end__;
-extern unsigned long __data_start__;
-extern unsigned long __data_end__;
-extern unsigned long __bss_start__;
-extern unsigned long __bss_end__;
-extern unsigned long _stack_top;
+extern unsigned long __text_end__; //!< fin du segment text (flash) = debut du segment data (flash) (cf arm-elf.ld)
+extern unsigned long __data_start__; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
+extern unsigned long __data_end__; //!< fin du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
+extern unsigned long __bss_start__; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
+extern unsigned long __bss_end__; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
+extern unsigned long _stack_top; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
 {
-	// core level - cortex-m3
-	(void (*)(void))(&_stack_top),          // The initial stack pointer
-	isr_reset,                              // The reset handler
-	isr_nmi,                                // The NMI handler
-	isr_hard_fault,                         // The hard fault handler
-	isr_mpu_fault,                          // The MPU fault handler
-	isr_bus_fault,                          // The bus fault handler
-	isr_usage_fault,                        // The usage fault handler
+	// processeur - cortex-m3
+	(void (*)(void))(&_stack_top),          // Stack pointer initial principal
+	isr_reset, 
+	isr_nmi,
+	isr_hard_fault,
+	isr_mpu_fault,
+	isr_bus_fault,
+	isr_usage_fault,
 	0,                                      // Reserved
 	0,                                      // Reserved
 	0,                                      // Reserved
 	0,                                      // Reserved
-	vPortSVCHandler,                        // SVCall handler
-	isr_debug_monitor,                      // Debug monitor handler
+	isr_svc,
+	isr_debug_monitor,
 	0,                                      // Reserved
-	isr_context_switch,                     // The PendSV handler
-	isr_systick,                            // The SysTick handler
+	isr_context_switch,                     // The PendSV handler => context_switch
+	isr_systick,
 
-	// chip level
+	// périphériques
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
@@ -146,36 +147,58 @@ void isr_reset(void)
 	main();
 }
 
+// doc utile : 0xfffffff1 : retour handler mode
+//             0xfffffffd : retour thread mode, et utilisation de process stack
+//             0xfffffff9 : retour thread mode, et utilisation de main stack
+void isr_svc( void )
+{
+	__asm volatile
+	(
+		"   ldr r3, pxCurrentTCBConst2          \n" // Restore the context.
+		"   ldr r1, [r3]                        \n" // Use pxCurrentTCBConst to get the pxCurrentTCB address.
+		"   ldr r0, [r1]                        \n" // The first item in pxCurrentTCB is the task top of stack.
+		"   ldmia r0!, {r4-r11}                 \n" // Pop the registers that are not automatically saved on exception entry and the critical nesting count.
+		"   msr psp, r0                         \n" // Restore the task stack pointer.
+		"   mov r0, #0                          \n"
+		"   msr basepri, r0                     \n"
+		"   ldr lr, =0xfffffffd                 \n" // Au branchement sur 0xfffffffd, on retourne en thread mode avec utilisation de la stack process (on a mis le bon pointeur msr psp, r0). On va dépiler automatiquement r0,r1,r2,r3, r12, lr et brancher sur le pc.
+		"   bx lr                               \n"
+		"                                       \n"
+		"   .align 2                            \n"
+		"pxCurrentTCBConst2: .word pxCurrentTCB	\n"
+	);
+}
+
 void isr_context_switch( void )
 {
 	/* This is a naked function. */
 
 	__asm volatile
 	(
-		"	mrs r0, psp							\n"
-		"										\n"
-		"	ldr	r3, pxCurrentTCBConst			\n" /* Get the location of the current TCB. */
-		"	ldr	r2, [r3]						\n"
-		"										\n"
-		"	stmdb r0!, {r4-r11}					\n" /* Save the remaining registers. */
-		"	str r0, [r2]						\n" /* Save the new top of stack into the first member of the TCB. */
-		"										\n"
-		"	stmdb sp!, {r3, lr} 				\n"
-		"	mov r0, %0							\n"
-		"	msr basepri, r0						\n"
-		"	bl vTaskSwitchContext				\n"
-		"	mov r0, #0							\n"
-		"	msr basepri, r0						\n"
-		"	ldmia sp!, {r3, lr} 				\n"
-		"										\n"	/* Restore the context, including the critical nesting count. */
-		"	ldr r1, [r3]						\n"
-		"	ldr r0, [r1]						\n" /* The first item in pxCurrentTCB is the task top of stack. */
-		"	ldmia r0!, {r4-r11}					\n" /* Pop the registers. */
-		"	msr psp, r0							\n"
-		"	bx lr								\n"
-		"										\n"
-		"	.align 2							\n"
-		"pxCurrentTCBConst: .word pxCurrentTCB	\n"
+		"   mrs r0, psp                         \n"
+		"                                       \n"
+		"   ldr r3, pxCurrentTCBConst           \n" // Get the location of the current TCB.
+		"   ldr r2, [r3]                        \n"
+		"                                       \n"
+		"   stmdb r0!, {r4-r11}                 \n" // Save the remaining registers.
+		"   str r0, [r2]                        \n" // Save the new top of stack into the first member of the TCB.
+		"                                       \n"
+		"   stmdb sp!, {r3, lr}                 \n"
+		"   mov r0, %0                          \n"
+		"   msr basepri, r0                     \n"
+		"   bl vTaskSwitchContext               \n"
+		"   mov r0, #0                          \n"
+		"   msr basepri, r0                     \n"
+		"   ldmia sp!, {r3, lr}                 \n"
+		"                                       \n" // Restore the context, including the critical nesting count.
+		"   ldr r1, [r3]                        \n"
+		"   ldr r0, [r1]                        \n" // The first item in pxCurrentTCB is the task top of stack.
+		"   ldmia r0!, {r4-r11}                 \n" // Pop the registers.
+		"   msr psp, r0                         \n"
+		"   bx lr                               \n"
+		"                                       \n"
+		"   .align 2                            \n"
+		"pxCurrentTCBConst: .word pxCurrentTCB  \n"
 		::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
 	);
 }
