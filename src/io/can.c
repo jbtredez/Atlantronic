@@ -48,20 +48,18 @@ static int can_module_init(void)
 	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
 	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
 
-	// TODO à voir / it... + handler
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// mode self-test pour le debug
-	//CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+
+	can_set_filter(18, CAN_STANDARD_FORMAT);
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
-	// TODO attendre que c'est prêt
-	//while (CAN1->MSR & CAN_MCR_INRQ) ;
-
-// TODO filtres / messages
+	while (CAN1->MSR & CAN_MCR_INRQ) ;
 
 	return 0;
 }
@@ -80,6 +78,7 @@ void isr_can1_tx(void)
 
 // TODO : tests
 struct can_msg msg_rx0;
+struct can_msg msg_env;
 
 void isr_can1_rx0(void)
 {
@@ -112,17 +111,8 @@ void isr_can1_rx0(void)
 		}
 
 		msg->size = (uint8_t)0x0000000F & CAN1->sFIFOMailBox[0].RDTR;
-
-		// TODO : faire mieux pour la copie en 2 copie 32 bits
-		msg->data[0] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR);
-		msg->data[1] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 8);
-		msg->data[2] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 16);
-		msg->data[3] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDLR >> 24);
-
-		msg->data[4] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR);
-		msg->data[5] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 8);
-		msg->data[6] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 16);
-		msg->data[7] = (uint32_t)0x000000FF & (CAN1->sFIFOMailBox[0].RDHR >> 24);
+		msg->_data.low = CAN1->sFIFOMailBox[0].RDLR;
+		msg->_data.high = CAN1->sFIFOMailBox[0].RDHR;
 
 		CAN1->RF0R |= CAN_RF0R_RFOM0;
 	}
@@ -164,10 +154,11 @@ void can_set_filter(unsigned int id, unsigned char format)
 	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
 	if (can_filter_id > 27)
 	{
-		// TODO code erreur led
+		setLed(ERR_CAN_FILTER_LIST_FULL);
 		return;
 	}
-	// Setup identifier information
+
+	// id du message
 	if (format == CAN_STANDARD_FORMAT)
 	{
 		msg_id  |= (uint32_t)(id << 21);

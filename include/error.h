@@ -24,5 +24,6 @@
 
 #define ERR_USART_READ_OVERFLOW         0x20e
 #define ERR_USART_WRITE_OVERFLOW        0x20f
+#define ERR_CAN_FILTER_LIST_FULL        0x210
 
 #endif
