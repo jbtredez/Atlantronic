@@ -4,7 +4,7 @@
 
 // TODO : ecriture multiple
 void can_write(struct can_msg *msg);
-void can_set_filter();
+void can_set_filter(unsigned int id, unsigned char format);
 static unsigned short can_filter_id;
 
 static int can_module_init(void)
