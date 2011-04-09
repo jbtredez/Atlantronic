@@ -4,9 +4,13 @@
 
 // TODO : ecriture multiple
 void can_write(struct can_msg *msg);
+void can_set_filter();
+static unsigned short can_filter_id;
 
 static int can_module_init(void)
 {
+	can_filter_id = 0;
+
 	// CAN_RX : PD0
 	// CAN_TX : PD1
 	// => can 1 remap 3
@@ -151,4 +155,46 @@ void can_write(struct can_msg *msg)
 
 	CAN1->IER |= CAN_IER_TMEIE;
 	CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+}
+
+void can_set_filter(unsigned int id, unsigned char format)
+{
+	uint32_t msg_id     = 0;
+
+	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
+	if (can_filter_id > 27)
+	{
+		// TODO code erreur led
+		return;
+	}
+	// Setup identifier information
+	if (format == CAN_STANDARD_FORMAT)
+	{
+		msg_id  |= (uint32_t)(id << 21);
+	}
+	else
+	{
+		msg_id  |= (uint32_t)(id <<  3) | 0x04;
+	}
+
+	// mode initialisation des filtres
+	CAN1->FMR  |=  CAN_FMR_FINIT;
+	// desactivation du filtre can_filter_id
+	CAN1->FA1R &=  ~(uint32_t)(1 << can_filter_id);
+
+	// init du filtre can_filter_id (32 bits scale conf + deux registres 32 bit id list mode)
+	CAN1->FS1R |= (uint32_t)(1 << can_filter_id);
+	CAN1->FM1R |= (uint32_t)(1 << can_filter_id);
+
+	CAN1->sFilterRegister[can_filter_id].FR1 = msg_id;
+	CAN1->sFilterRegister[can_filter_id].FR2 = msg_id;
+
+	// filtre => FIFO 0 puis activation du filtre
+	CAN1->FFA1R &= ~(uint32_t)(1 << can_filter_id);
+	CAN1->FA1R  |=  (uint32_t)(1 << can_filter_id);
+
+	// sortie du mode init des filtres
+	CAN1->FMR &= ~CAN_FMR_FINIT;
+
+	can_filter_id ++;
 }
