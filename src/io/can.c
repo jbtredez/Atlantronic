@@ -53,7 +53,7 @@ static int can_module_init(void)
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
 	// mode self-test pour le debug
-	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+//	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
 
 	can_set_filter(18, CAN_STANDARD_FORMAT);
 
@@ -136,9 +136,8 @@ void can_write(struct can_msg *msg)
 		CAN1->sTxMailBox[0].TIR |= 0x02;
 	}
 
-	// TODO remplissage par 32 bit
-	CAN1->sTxMailBox[0].TDLR = (((unsigned int)msg->data[3] << 24) | ((unsigned int)msg->data[2] << 16) | ((unsigned int)msg->data[1] <<  8) | ((unsigned int)msg->data[0]) );
-	CAN1->sTxMailBox[0].TDHR = (((unsigned int)msg->data[7] << 24) | ((unsigned int)msg->data[6] << 16) | ((unsigned int)msg->data[5] <<  8) | ((unsigned int)msg->data[4]) );
+	CAN1->sTxMailBox[0].TDLR = msg->_data.low;
+	CAN1->sTxMailBox[0].TDHR = msg->_data.high;
 
 	CAN1->sTxMailBox[0].TDTR &= ~CAN_TDT0R_DLC;
 	CAN1->sTxMailBox[0].TDTR |= msg->size & CAN_TDT0R_DLC;
