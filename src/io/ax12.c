@@ -39,6 +39,8 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
 
 static int ax12_module_init()
 {
+	usart_open(USART3_HALF_DUPLEX, USART_1000000);
+
 	ax12_queue = xQueueCreate(AX12_QUEUE_SIZE, sizeof(struct ax12_request));
 
 	if(ax12_queue == 0)
@@ -84,10 +86,20 @@ static void ax12_task(void* arg)
 			ax12_buffer[size-1] = ax12_checksum(ax12_buffer, size);
 			usart_write(ax12_buffer, size);
 
+			// TODO gérer le timeout
+			portTickType wake_time = systick_get_time();
+			i = 0;
+			do
+			{
+				wake_time += 72000;
+				vTaskDelayUntil(wake_time);
+				i += usart_read(ax12_buffer + i, size - i);
+			}while(i != size);
+			// TODO, verifier que l'on a bien ce qu'on a envoyé
+
 			// pas de broadcast (et status des ax12 à 2) => réponse attendue
 			if(req.id != 0xFE)
 			{
-				// TODO, il y a le message envoye a depiler et verifier
 				i = 0;
 				if(req.instruction != AX12_INSTRUCTION_READ_DATA)
 				{
