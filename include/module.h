@@ -16,7 +16,7 @@
 #include "init.h"
 
 typedef int (*initcall_t)();
-typedef int (*exitcall_t)();
+typedef void (*exitcall_t)();
 
 #define module_init(fn, lv) \
 	static const initcall_t __initcall_##fn __attribute__((used)) \

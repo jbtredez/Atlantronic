@@ -21,7 +21,7 @@
 #define AX12_QUEUE_SIZE             10
 #define AX12_STACK_SIZE             64
 #define AX12_ARG_MAX                 3
-#define AX12_READ_TIMEOUT        72000
+#define AX12_READ_TIMEOUT       720000
 #define AX12_INTER_FRAME_TIME      720
 
 struct ax12_request
@@ -66,6 +66,13 @@ static int ax12_module_init()
 
 module_init(ax12_module_init, INIT_AX12);
 
+static void ax12_module_exit()
+{
+	ax12_set_torque_limit(0xfe, 0x00);
+}
+
+module_exit(ax12_module_exit, EXIT_AX12);
+
 static void ax12_task(void* arg)
 {
 	(void) arg;
@@ -101,9 +108,9 @@ static void ax12_task(void* arg)
 				{
 					read_size += 6 + req.arg[1];
 				}
-				usart_set_read_dma_size(read_size);
 			}
 
+			usart_set_read_dma_size(read_size);
 			usart_send_dma_buffer(write_size);
 			
 			// TODO : verifier la sortie pour les cas d'erreur
@@ -301,6 +308,11 @@ void ax12_set_id(uint8_t old_id, uint8_t id)
 
 void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
 {
+	if( vTaskGetEvent() & EVENT_END )
+	{
+		torque_limit = 0x00;
+	}
+
 	ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 

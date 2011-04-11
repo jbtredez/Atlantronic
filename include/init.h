@@ -50,4 +50,7 @@
 // init de l'ordonanceur en DERNIER !
 #define INIT_SYSTICK                  "51"
 
+#define EXIT_CONTROL                  "15"
+#define EXIT_AX12                     "10"
+
 #endif

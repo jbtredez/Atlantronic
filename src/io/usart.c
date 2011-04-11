@@ -116,7 +116,8 @@ void isr_usart3(void)
 	}
 
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
-	USART3->DR; // lecture de DR au cas ou pour effacer les flag d'erreurs
+	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
+	USART3->DR;
 	vTaskSetEventFromISR(EVENT_USART3_ERROR);
 }
 
@@ -155,7 +156,9 @@ int8_t usart_wait_read(portTickType timeout)
 {
 	vTaskWaitEvent(EVENT_DMA3_TC | EVENT_USART3_ERROR, timeout);
 	uint32_t ev = vTaskGetEvent();
-	
+
+	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+
 	if( ev & EVENT_DMA3_TC)
 	{
 		return 0;
