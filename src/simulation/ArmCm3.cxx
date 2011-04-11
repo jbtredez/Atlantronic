@@ -24,6 +24,7 @@ ArmCm3::ArmCm3(Model *m) :
 	connect_io(TIM7_BASE, 0x400, &tim7);
 	connect_io(ADC1_BASE, 0x400, &adc1);
 	connect_io(ADC2_BASE, 0x400, &adc2);
+	connect_io(CAN1_BASE, 0x400, &can1);
 }
 
 ArmCm3::~ArmCm3()

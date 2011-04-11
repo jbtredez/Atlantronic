@@ -38,7 +38,7 @@ static void strategy_test_control_task()
 	}
 
 	pince_configure();
-	
+#if 0
 	while(1)
 	{
 		pince_open();
@@ -46,10 +46,10 @@ static void strategy_test_control_task()
 		pince_close();
 		vTaskDelay(72000000);
 	}
-
+#endif
 	pince_open();
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	//control_straight(800);
 	location_set_position(-1410.0f, -850.0f, 0.0f);
