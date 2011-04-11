@@ -1210,7 +1210,7 @@ signed portBASE_TYPE xTaskGenericCreate( pdTASK_CODE pvTaskCode, const char * co
 //! La fonction suspend la tache jusqu'a l'arrivée d'un évènement parmi ceux attendus
 //!
 //! @param mask masque indiquant les évènements pouvant réveiller la tache
-uint32_t vTaskWaitEvent(uint32_t mask);
+uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout);
 
 //! @todo description
 void vTaskSetEvent(uint32_t mask);

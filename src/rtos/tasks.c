@@ -88,6 +88,7 @@ PRIVILEGED_DATA tskTCB * volatile pxCurrentTCB = NULL;
 PRIVILEGED_DATA static xList pxReadyTasksLists[ configMAX_PRIORITIES ];	/*< Prioritised ready tasks. */
 PRIVILEGED_DATA static xList xDelayedTaskList;							/*< Delayed tasks. */
 PRIVILEGED_DATA static xList xPendingReadyList;							/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready queue when the scheduler is resumed. */
+PRIVILEGED_DATA static xList xEventList;                                //!< Taches en attente d'un évènement
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
@@ -1669,6 +1670,7 @@ unsigned portBASE_TYPE uxPriority;
 
 	vListInitialise( &xDelayedTaskList );
 	vListInitialise( &xPendingReadyList );
+	vListInitialise( &xEventList);
 
 	#if ( INCLUDE_vTaskDelete == 1 )
 	{
@@ -1986,7 +1988,7 @@ void vTaskExitCritical( void )
 /*-----------------------------------------------------------*/
 
 //! @todo description
-uint32_t vTaskWaitEvent(uint32_t mask)
+uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout)
 {
 	// atomique
 	pxCurrentTCB->eventMask = mask;
@@ -1994,20 +1996,8 @@ uint32_t vTaskWaitEvent(uint32_t mask)
 	portENTER_CRITICAL();
 	if(! (pxCurrentTCB->event & mask) )
 	{
-		{
-			traceTASK_SUSPEND( pxCurrentTCB );
-
-			/* Remove task from the ready/delayed list and place in the	suspended list. */
-			vListRemove( &( pxCurrentTCB->xGenericListItem ) );
-
-			/* Is the task waiting on an event also? */
-			if( pxCurrentTCB->xEventListItem.pvContainer )
-			{
-				vListRemove( &( pxCurrentTCB->xEventListItem ) );
-			}
-
-			vListInsertEnd( ( xList * ) &xSuspendedTaskList, &( pxCurrentTCB->xGenericListItem ) );
-		}
+		vTaskPlaceOnEventList(&xEventList, timeout);
+		
 		portEXIT_CRITICAL();
 
 		portYIELD_WITHIN_API();
@@ -2061,23 +2051,33 @@ void vTaskSetEvent(uint32_t mask)
 
 	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
+	xTaskUpdateEvent(&xSuspendedTaskList, mask);
 
-	if( xSuspendedTaskList.uxNumberOfItems )
+	if( xEventList.uxNumberOfItems )
 	{
-		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xEventList );
 		do
 		{
-			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xEventList );
 
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
 				traceTASK_RESUME( pxNextTCB );
 
-				// As we are in a critical section we can access the ready
-				// lists even if the scheduler is suspended
-				vListRemove(  &( pxNextTCB->xGenericListItem ) );
-				prvAddTaskToReadyQueue( pxNextTCB );
+				vListRemove( &( pxNextTCB->xEventListItem ) );
+
+				if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
+				{
+					vListRemove( &( pxNextTCB->xGenericListItem ) );
+					prvAddTaskToReadyQueue( pxNextTCB );
+				}
+				else
+				{
+					/* We cannot access the delayed or ready lists, so will hold this
+					task pending until the scheduler is resumed. */
+					vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxNextTCB->xEventListItem ) );
+				}
 
 				// We may have just resumed a higher priority task
 				if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
@@ -2110,18 +2110,34 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 
 	xTaskUpdateEvent(&xDelayedTaskList, mask);
 	xTaskUpdateEvent(&xPendingReadyList, mask);
+	xTaskUpdateEvent(&xSuspendedTaskList, mask);
 
-	if( xSuspendedTaskList.uxNumberOfItems)
+	if( xEventList.uxNumberOfItems)
 	{
-		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xSuspendedTaskList );
+		listGET_OWNER_OF_NEXT_ENTRY( pxFirstTCB, &xEventList );
 		do
 		{
-			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xSuspendedTaskList );
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xEventList );
 
 			pxNextTCB->event |= mask;
 			if( pxNextTCB->event & pxNextTCB->eventMask )
 			{
-				if( xTaskResumeFromISR( (xTaskHandle) pxNextTCB) )
+				vListRemove( &( pxNextTCB->xEventListItem ) );
+
+				if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
+				{
+					vListRemove( &( pxNextTCB->xGenericListItem ) );
+					prvAddTaskToReadyQueue( pxNextTCB );
+				}
+				else
+				{
+					// We cannot access the delayed or ready lists, so will hold this
+					//task pending until the scheduler is resumed.
+					vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxNextTCB->xEventListItem ) );
+				}
+
+				// We may have just resumed a higher priority task
+				if( pxNextTCB->uxPriority >= pxCurrentTCB->uxPriority )
 				{
 					xHigherPriorityTaskWoken = 1;
 				}

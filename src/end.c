@@ -31,7 +31,7 @@ static void end_task(void *arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO);
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 	vTaskDelay(DUREE_MATCH_TICK);
 	vTaskSetEvent(EVENT_END);
 

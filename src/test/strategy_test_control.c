@@ -7,6 +7,7 @@
 #include "io/gpio.h"
 #include "io/systick.h"
 #include "location/location.h"
+#include "pince.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       100
@@ -33,17 +34,32 @@ static void strategy_test_control_task()
 {
 //	if(getcolor() == COLOR_BLUE)
 	{
-		location_set_position(-1410.0f, -850.0f, 0.0f);
+		location_set_position(-1400.0f, -850.0f, 0.0f);
 	}
 
-	//vTaskWaitEvent(EVENT_GO);
+	pince_configure();
+	
+	while(1)
+	{
+		pince_open();
+		vTaskDelay(72000000);
+		pince_close();
+		vTaskDelay(72000000);
+	}
+
+	pince_open();
+
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	//control_straight(800);
+	location_set_position(-1410.0f, -850.0f, 0.0f);
 	control_goto(-350-350.0/2.0f, -1050+200);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_rotate(1.57);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
-	control_straight(850);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	control_goto(-850*0, -525*0);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+//	control_rotate(1.57);
+//	vTaskWaitEvent(EVENT_CONTROL_READY);
+//	control_straight(850);
 
 /*	control_straight(850-350);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
