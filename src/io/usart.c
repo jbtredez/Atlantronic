@@ -151,16 +151,17 @@ void usart_set_read_dma_size(uint16_t size)
 	DMA1_Channel3->CCR |= DMA_CCR3_EN;
 }
 
-// TODO : timeout
-int8_t usart_wait_read()
+int8_t usart_wait_read(portTickType timeout)
 {
-	vTaskWaitEvent(EVENT_DMA3_TC | EVENT_USART3_ERROR, portMAX_DELAY);
-	if( vTaskGetEvent() & EVENT_USART3_ERROR)
+	vTaskWaitEvent(EVENT_DMA3_TC | EVENT_USART3_ERROR, timeout);
+	uint32_t ev = vTaskGetEvent();
+	
+	if( ev & EVENT_DMA3_TC)
 	{
-		return -1;
+		return 0;
 	}
 	
-	return 0;
+	return -1;
 }
 
 void usart_set_write_dma_buffer(unsigned char* buf)

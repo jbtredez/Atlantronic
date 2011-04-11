@@ -18,9 +18,11 @@
 #define AX12_INSTRUCTION_RESET            0x06
 #define AX12_INSTRUCTION_SYNC_WRITE       0x83
 
-#define AX12_QUEUE_SIZE     10
-#define AX12_STACK_SIZE     64
-#define AX12_ARG_MAX         3
+#define AX12_QUEUE_SIZE             10
+#define AX12_STACK_SIZE             64
+#define AX12_ARG_MAX                 3
+#define AX12_READ_TIMEOUT        72000
+#define AX12_INTER_FRAME_TIME      720
 
 struct ax12_request
 {
@@ -103,10 +105,12 @@ static void ax12_task(void* arg)
 			}
 
 			usart_send_dma_buffer(write_size);
-			usart_wait_read();
+			
+			// TODO : verifier la sortie pour les cas d'erreur
+			usart_wait_read(AX12_READ_TIMEOUT);
 
 			// delai entre 2 messages sur le bus
-			vTaskDelay(720);
+			vTaskDelay(AX12_INTER_FRAME_TIME);
 #if 0
 			// pas de broadcast (et status des ax12 à 2) => réponse attendue
 			if(req.id != 0xFE)
