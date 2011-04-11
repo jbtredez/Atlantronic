@@ -33,9 +33,9 @@ struct ax12_request
 
 static void ax12_task(void *arg);
 static xQueueHandle ax12_queue;
-static uint8_t ax12_buffer[6 + AX12_ARG_MAX];
+static uint8_t ax12_write_dma_buffer[6 + AX12_ARG_MAX];
+static uint8_t ax12_read_dma_buffer[2*(6 + AX12_ARG_MAX)];
 static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
-
 
 static int ax12_module_init()
 {
@@ -56,6 +56,9 @@ static int ax12_module_init()
 		return ERR_INIT_AX12;
 	}
 
+	usart_set_write_dma_buffer(ax12_write_dma_buffer);
+	usart_set_read_dma_buffer(ax12_read_dma_buffer);
+
 	return 0;
 }
 
@@ -71,54 +74,43 @@ static void ax12_task(void* arg)
 	{
 		if(xQueueReceive(ax12_queue, &req, portMAX_DELAY))
 		{
-			uint8_t size = 6 + req.argc;
+			uint8_t write_size = 6 + req.argc;
+			uint8_t read_size = write_size;
 			uint8_t i;
 
-			ax12_buffer[0] = 0xFF;
-			ax12_buffer[1] = 0xFF;
-			ax12_buffer[2] = req.id;
-			ax12_buffer[3] = 0x02 + req.argc;
-			ax12_buffer[4] = req.instruction;
+			ax12_write_dma_buffer[0] = 0xFF;
+			ax12_write_dma_buffer[1] = 0xFF;
+			ax12_write_dma_buffer[2] = req.id;
+			ax12_write_dma_buffer[3] = 0x02 + req.argc;
+			ax12_write_dma_buffer[4] = req.instruction;
 			for( i = 0; i < req.argc ; i++)
 			{
-				ax12_buffer[5+i] = req.arg[i];
+				ax12_write_dma_buffer[5+i] = req.arg[i];
 			}
-			ax12_buffer[size-1] = ax12_checksum(ax12_buffer, size);
-			usart_write(ax12_buffer, size);
-
-			// TODO gérer le timeout
-			portTickType wake_time = systick_get_time();
-			i = 0;
-			do
-			{
-				wake_time += 72000;
-				vTaskDelayUntil(wake_time);
-				i += usart_read(ax12_buffer + i, size - i);
-			}while(i != size);
-			// TODO, verifier que l'on a bien ce qu'on a envoyé
-
-			// pas de broadcast (et status des ax12 à 2) => réponse attendue
+			ax12_write_dma_buffer[write_size-1] = ax12_checksum(ax12_write_dma_buffer, write_size);
+			
 			if(req.id != 0xFE)
 			{
-				i = 0;
 				if(req.instruction != AX12_INSTRUCTION_READ_DATA)
 				{
-					size = 6;
+					read_size += 6;
 				}
 				else
 				{
-					size = 6 + req.arg[1];
+					read_size += 6 + req.arg[1];
 				}
+				usart_set_read_dma_size(read_size);
+			}
 
-				// TODO gérer le timeout
-				portTickType wake_time = systick_get_time();
-				do
-				{
-					wake_time += 72000;
-					vTaskDelayUntil(wake_time);
-					i += usart_read(ax12_buffer, size);
-				}while(i != size);
+			usart_send_dma_buffer(write_size);
+			usart_wait_read();
 
+			// delai entre 2 messages sur le bus
+			vTaskDelay(720);
+#if 0
+			// pas de broadcast (et status des ax12 à 2) => réponse attendue
+			if(req.id != 0xFE)
+			{
 				if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req.id || ax12_buffer[3] != size - 4)
 				{
 					// TODO erreur protocole
@@ -150,6 +142,7 @@ static void ax12_task(void* arg)
 					}
 				}
 			}
+#endif
 		}
 	}
 }
@@ -182,7 +175,7 @@ uint8_t ax12_read8(uint8_t id, uint8_t offset)
 
 	do
 	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
 		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
 	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
 
@@ -206,7 +199,7 @@ uint16_t ax12_read16(uint8_t id, uint8_t offset)
 
 	do
 	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
 		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
 	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
 

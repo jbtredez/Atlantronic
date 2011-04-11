@@ -57,7 +57,6 @@ int adc_module_init()
 	// dma
 	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
 
-	DMA1->IFCR = 0x00;
 	// taille mémoire d'une donnée : 32 bits
 	// incrément automatique mémoire : 1
 	// taille mémoire périph d'une donnée : 32 bits

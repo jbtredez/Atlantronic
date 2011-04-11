@@ -1,42 +1,10 @@
 #include "io/usart.h"
-#include "module.h"
 #include "FreeRTOS.h"
-#include "semphr.h"
 #include "task.h"
 #include "io/rcc.h"
 #include "error.h"
 #include "io/gpio.h"
-
-#define USART_WRITE_BUF_SIZE     256
-#define USART_READ_BUF_SIZE      256
-
-#if USART_WRITE_BUF_SIZE < 2
-#error USART_WRITE_BUF_SIZE trop petit
-#elif ((USART_WRITE_BUF_SIZE & (USART_WRITE_BUF_SIZE-1)) != 0)
-#error USART_WRITE_BUF_SIZE doit être une puissance de 2.
-#endif
-
-#if USART_READ_BUF_SIZE < 2
-#error USART_READ_BUF_SIZE trop petit
-#elif ((USART_READ_BUF_SIZE & (USART_READ_BUF_SIZE-1)) != 0)
-#error USART_READ_BUF_SIZE doit être une puissance de 2.
-#endif
-
-static uint8_t  usart_write_buf[USART_WRITE_BUF_SIZE];
-static volatile uint32_t usart_write_buf_in;
-static volatile uint32_t usart_write_buf_out;
-static uint8_t  usart_read_buf[USART_READ_BUF_SIZE];
-static volatile uint32_t usart_read_buf_in;
-static volatile uint32_t usart_read_buf_out;
-
-static int usart_module_init(void)
-{
-
-	return 0;
-}
-
-module_init(usart_module_init, INIT_USART);
-
+#include "event.h"
 
 static void usart_set_frequency(USART_TypeDef* usart, enum usart_frequency frequency)
 {
@@ -72,11 +40,6 @@ void usart_open( enum usart_id id, enum usart_frequency frequency)
 	switch(id)
 	{
 		case USART3_HALF_DUPLEX:
-			usart_write_buf_in = 0;
-			usart_write_buf_out = 0;
-			usart_read_buf_in = 0;
-			usart_read_buf_out = 0;
-
 			// USART3 (remapage partiel) => Tx = PC10, (Rx = PC11 pas utilisé en half duplex)
 			RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
@@ -88,26 +51,42 @@ void usart_open( enum usart_id id, enum usart_frequency frequency)
 			RCC->APB2ENR |=  RCC_APB2ENR_IOPCEN;
 			GPIOC->CRH = ( GPIOC->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10 ) | GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1; // Tx = PC10 : alternate output push-pull, 50MHz
 
+			// DMA
+			RCC->AHBENR |= RCC_AHBENR_DMA1EN;
+
+			// taille mémoire d'une donnée : 8 bits
+			// incrément automatique mémoire : 1
+			// taille mémoire périph d'une donnée : 8 bits
+			// incrément automatique mémoire périph : 0
+			// transfert : mem => mem périph
+			// chan 2 => écriture
+			// chan 3 => lecture
+			DMA1_Channel2->CCR = DMA_CCR2_DIR | DMA_CCR2_MINC | DMA_CCR2_TCIE;
+			DMA1_Channel2->CPAR = (uint32_t) &USART3->DR;
+
+			DMA1_Channel3->CCR = DMA_CCR3_MINC | DMA_CCR3_TCIE;
+			DMA1_Channel3->CPAR = (uint32_t) &USART3->DR;
+
 			RCC->APB1ENR |= RCC_APB1ENR_USART3EN; // usart3 clock enable
 
 			usart_set_frequency(USART3, frequency);
 			
 			// 1 start bit, 8 bits data, 1 stop bit, pas de parité
-			// interruption sur TXE (transmit data register empty)
-			USART3->CR1 = 0x00;
-			USART3->CR1 |= USART_CR1_TXEIE | USART_CR1_RXNEIE;
-			// TODO ; voir si on active d'autres it ( TCIE, IDLEIE)
+			// activation l'envoi et la reception
+			USART3->CR1 = USART_CR1_RE | USART_CR1_TE;
 			USART3->CR2 = 0x00;
-			USART3->CR3 = 0x00;
 
-			USART3->CR1 |= (USART_CR1_RE | USART_CR1_TE);  // activation l'envoi et la reception
-
-			// passage en mode half duplex
-			USART3->CR3 |= USART_CR3_HDSEL;
-
-			USART3->CR1 |= USART_CR1_UE;
+			// activation des IT d'erreur (nécessaire avec le DMA)
+			// mode half duplex
+			// DMA en transmission
+			// DMA en reception
+			USART3->CR3 = USART_CR3_EIE | USART_CR3_HDSEL | USART_CR3_DMAT | USART_CR3_DMAR;
 
 			NVIC_EnableIRQ(USART3_IRQn);
+			NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+			NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+
+			USART3->CR1 |= USART_CR1_UE;
 			break;
 		case USART2_RXTX:
 			// TODO
@@ -118,113 +97,81 @@ void usart_open( enum usart_id id, enum usart_frequency frequency)
 	}
 }
 
-void usart_error()
-{
-	if(USART3->SR & USART_SR_PE)
-	{
-		setLed(ERR_USART_READ_SR_PE);
-	}
-
-	if(USART3->SR & USART_SR_NE)
-	{
-		setLed(ERR_USART_READ_SR_NE);
-	}
-
-	if(USART3->SR & USART_SR_FE)
-	{
-		setLed(ERR_USART_READ_SR_FE);
-	}
-
-	if(USART3->SR & USART_SR_ORE)
-	{
-		setLed(ERR_USART_READ_SR_ORE);
-	}
-}
-
 void isr_usart3(void)
 {
-	// lecture : un octet est arrivé
-	if(USART3->SR & USART_SR_RXNE)
+	// affichage de l'erreur
+	if( USART3->SR & USART_SR_FE)
 	{
-		if(USART3->SR & (USART_SR_ORE | USART_SR_NE | USART_SR_FE | USART_SR_PE))
-		{
-			usart_error();
-		}
-
-		if( ((usart_read_buf_in - usart_read_buf_out) & ~(USART_READ_BUF_SIZE-1)) == 0)
-		{
-			usart_read_buf[usart_read_buf_in & (USART_READ_BUF_SIZE-1)] = USART3->DR & 0xFF;
-			usart_read_buf_in++;
-		}
-		else
-		{
-			// plus de place dispo. Le buffer est assez grand contenir plusieures trames.
-			// si on n'a toujours pas dépilé les messages, c'est un bug.
-			setLed(ERR_USART_READ_OVERFLOW);
-			// perte de l'octet
-			USART3->SR &= ~USART_SR_RXNE;
-		}
+		setLed(ERR_USART3_READ_SR_FE);
 	}
 
-	// écriture : pas d'octets dans le registre d'envoi
-	if(USART3->SR & USART_SR_TXE)
+	if( USART3->SR & USART_SR_ORE)
 	{
-		if(usart_write_buf_in != usart_write_buf_out)
-		{
-			USART3->DR = usart_write_buf[usart_write_buf_out & (USART_WRITE_BUF_SIZE -1)] & ((uint16_t)0x01FF);
-			usart_write_buf_out++;
-		}
-		else
-		{
-			// on désactive l'it si on a plus rien a envoyer
-			USART3->CR1 &= ~USART_CR1_TXEIE;
-		}
+		setLed(ERR_USART3_READ_SR_ORE);
 	}
+
+	if( USART3->SR & USART_SR_NE)
+	{
+		setLed(ERR_USART3_READ_SR_NE);
+	}
+
+	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+	USART3->DR; // lecture de DR au cas ou pour effacer les flag d'erreurs
+	vTaskSetEventFromISR(EVENT_USART3_ERROR);
 }
 
-void usart_write(unsigned char* buf, uint16_t size)
+void isr_dma1_channel2(void)
 {
-	for( ; size--; )
+	if( DMA1->ISR | DMA_ISR_TCIF2)
 	{
-		// cas d'overflow de in et pas de out non géré (out > in) mais on va pas déborder le uint32_t (4Go sur l'usart...)
-		if( (usart_write_buf_in - usart_write_buf_out) < USART_WRITE_BUF_SIZE )
-		{
-			usart_write_buf[usart_write_buf_in & (USART_WRITE_BUF_SIZE -1)] = *buf;
-			buf++;
-			usart_write_buf_in++;
-		}
-		else
-		{
-			setLed(ERR_USART_WRITE_OVERFLOW);
-			USART3->CR1 |= USART_CR1_TXEIE;
-			size++; // on n'a finalement pas écris notre octet
-			vTaskDelay(2*72000);
-		}
+		DMA1->IFCR |= DMA_IFCR_CTCIF2;
+		DMA1_Channel2->CCR &= ~DMA_CCR2_EN;
 	}
-
-	USART3->CR1 |= USART_CR1_TXEIE;
 }
 
-uint16_t usart_read(unsigned char* buf, uint16_t size)
+void isr_dma1_channel3(void)
 {
-	uint16_t s = usart_read_buf_in - usart_read_buf_out;
-
-	// on limite la copie si nécessaire
-	if( s > size)
+	if( DMA1->ISR | DMA_ISR_TCIF3)
 	{
-		s = size;
+		DMA1->IFCR |= DMA_IFCR_CTCIF3;
+		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+		vTaskSetEventFromISR(EVENT_DMA3_TC);	
 	}
-	else
-	{
-		size = s;
-	}
-
-	for( ; s-- ; )
-	{
-		*buf = usart_read_buf[usart_read_buf_out & (USART_READ_BUF_SIZE -1)];
-		usart_read_buf_out++;
-		buf++;
-	}
-
-	return size;
 }
+
+void usart_set_read_dma_buffer(unsigned char* buf)
+{
+	DMA1_Channel3->CMAR = (uint32_t) buf;
+}
+
+void usart_set_read_dma_size(uint16_t size)
+{
+	vTaskClearEvent(EVENT_DMA3_TC | EVENT_USART3_ERROR);
+	DMA1_Channel3->CNDTR = size;
+	DMA1_Channel3->CCR |= DMA_CCR3_EN;
+}
+
+// TODO : timeout
+int8_t usart_wait_read()
+{
+	vTaskWaitEvent(EVENT_DMA3_TC | EVENT_USART3_ERROR, portMAX_DELAY);
+	if( vTaskGetEvent() & EVENT_USART3_ERROR)
+	{
+		return -1;
+	}
+	
+	return 0;
+}
+
+void usart_set_write_dma_buffer(unsigned char* buf)
+{
+	DMA1_Channel2->CMAR = (uint32_t) buf;
+}
+
+void usart_send_dma_buffer(uint16_t size)
+{
+	DMA1_Channel2->CNDTR = size;
+	USART3->SR &= ~USART_SR_TC;
+	DMA1_Channel2->CCR |= DMA_CCR2_EN;
+}
+

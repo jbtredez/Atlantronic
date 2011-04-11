@@ -6,6 +6,8 @@
 //! @author Jean-Baptiste Trédez
 
 #include "cpu/cpu.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 enum usart_id
 {
@@ -22,8 +24,13 @@ enum usart_frequency
 
 void usart_open( enum usart_id id, enum usart_frequency frequency);
 
-void usart_write(unsigned char* buf, uint16_t size);
+void usart_set_read_dma_buffer(unsigned char* buf);
+void usart_set_read_dma_size(uint16_t size);
 
-uint16_t usart_read(unsigned char* buf, uint16_t size);
+//! @return 0 si tout va bien, -1 en cas d'échec de la lecture
+int8_t usart_wait_read();
+
+void usart_set_write_dma_buffer(unsigned char* buf);
+void usart_send_dma_buffer(uint16_t size);
 
 #endif

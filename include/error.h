@@ -22,13 +22,10 @@
 #define ERR_INIT_TEST           0x20c
 #define ERR_INIT_END            0x20d
 
-#define ERR_USART_READ_OVERFLOW         0x20e
-#define ERR_USART_READ_SR_PE            0x20f
-#define ERR_USART_READ_SR_FE            0x210
-#define ERR_USART_READ_SR_NE            0x211
-#define ERR_USART_READ_SR_ORE           0x212
+#define ERR_USART3_READ_SR_FE            0x20e
+#define ERR_USART3_READ_SR_NE            0x20f
+#define ERR_USART3_READ_SR_ORE           0x210
 
-#define ERR_USART_WRITE_OVERFLOW        0x213
 #define ERR_CAN_FILTER_LIST_FULL        0x214
 
 #endif

@@ -23,6 +23,8 @@ void isr_pwm_reset(void) __attribute__((weak )); //!< sécurité : le module pwm
 
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
 void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 1
+void isr_dma1_channel2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 2
+void isr_dma1_channel3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 3
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption adc
 void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 5 à 9
 void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 10 à 15
@@ -73,8 +75,8 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_dma1_channel1,
-	isr_unexpected,
-	isr_unexpected,
+	isr_dma1_channel2,
+	isr_dma1_channel3,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
