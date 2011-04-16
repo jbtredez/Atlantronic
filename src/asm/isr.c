@@ -22,9 +22,12 @@ static void isr_cpu_down_safety(void); //!< tout va mal, on sauve les meubles
 void isr_pwm_reset(void) __attribute__((weak )); //!< sécurité : le module pwm met les moteurs à l'arrêt
 
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
+void isr_uart4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption uart4
 void isr_dma1_channel1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 1
 void isr_dma1_channel2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 2
 void isr_dma1_channel3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1, canal 3
+void isr_dma2_channel3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2, canal 3
+void isr_dma2_channel5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2, canal 5
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption adc
 void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 5 à 9
 void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 10 à 15
@@ -106,13 +109,31 @@ void (* const g_pfnVectors[])(void) =
 	isr_exit15_10,
 	isr_unexpected,
 	isr_unexpected,
-  (void*)0,
-  (void*)0,
-  (void*)0,
-  (void*)0,
-  (void*)0,
-  (void*)0,
-  (void*)0,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_uart4,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_dma2_channel3,
+	isr_unexpected,
+	isr_dma2_channel5,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected
 //  (void*)0xF108F85F // RAM boot.
 };
 

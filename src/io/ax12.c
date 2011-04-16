@@ -41,7 +41,7 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
 
 static int ax12_module_init()
 {
-	usart_open(USART3_HALF_DUPLEX, USART_1000000);
+	usart_open(UART4_HALF_DUPLEX, USART_1000000);
 
 	ax12_queue = xQueueCreate(AX12_QUEUE_SIZE, sizeof(struct ax12_request));
 

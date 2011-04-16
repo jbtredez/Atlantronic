@@ -11,8 +11,8 @@
 
 enum usart_id
 {
-	USART3_HALF_DUPLEX,
-	USART2_RXTX
+	USART3_FULL_DUPLEX,
+	UART4_HALF_DUPLEX
 };
 
 enum usart_frequency
