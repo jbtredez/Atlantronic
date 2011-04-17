@@ -11,5 +11,7 @@
 #define EVENT_END                 0x08
 #define EVENT_DMA2_3_TC           0x10
 #define EVENT_UART4_ERROR         0x20
+#define EVENT_DMA1_3_TC           0x40
+#define EVENT_USART3_ERROR        0x80
 
 #endif

@@ -36,12 +36,13 @@
 #define INIT_CURRENT                  "08"
 #define INIT_PWM                      "09"
 #define INIT_AX12                     "10"
-#define INIT_ODOMETRY                 "10"
-#define INIT_BEACON                   "11"
-#define INIT_LOCATION                 "12"
+#define INIT_ODOMETRY                 "11"
+#define INIT_HOKUYO                   "12"
+#define INIT_BEACON                   "13"
+#define INIT_LOCATION                 "14"
 //#define INIT_VFS                      "02"
-#define INIT_END                      "14"
-#define INIT_CONTROL                  "15"
+#define INIT_END                      "15"
+#define INIT_CONTROL                  "16"
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 #define INIT_TEST_TASK1               "31"
@@ -50,7 +51,7 @@
 // init de l'ordonanceur en DERNIER !
 #define INIT_SYSTICK                  "51"
 
-#define EXIT_CONTROL                  "15"
+#define EXIT_CONTROL                  "16"
 #define EXIT_AX12                     "10"
 
 #endif
