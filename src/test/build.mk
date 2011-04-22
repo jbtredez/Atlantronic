@@ -1,5 +1,7 @@
 obj-test_control += main.o
 obj-test_control += test/strategy_test_control.o
+obj-test_control += avoidance/macro_fonction.o
+obj-test_control += avoidance/evitement.o
 obj-test_control += control/control.o
 obj-test_control += control/pid.o
 obj-test_control += trapeze.o

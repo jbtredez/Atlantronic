@@ -50,8 +50,8 @@ unsigned char goTo(int departCase, int destCase, int *prbCase)
 	unsigned char res = 0;
 	int cmp=0;
 	int dc, dl, ac, al;
-	int cout1, bres;
-	int obsctacle_colonne, obstacle_ligne;
+	int cout1;
+	
 	int pathc,  pathl;
 
 	while( (numCase != destCase) && (cmp < 5) )
@@ -65,9 +65,7 @@ unsigned char goTo(int departCase, int destCase, int *prbCase)
 		
 		cout1 = coutNonRecursif(dc,dl,ac,al,&pathc,&pathl);
 		//printf("depart en (%d,%d) pour (%d,%d), cout=%d\n", dc,dl,pathc,pathl, cout1);
-		     
-		bres = Bresenham(dc,dl, pathc,pathl, &obsctacle_colonne,&obstacle_ligne);
-		if( bres >= INFINI )
+		if( cout1 >= INFINI )
 		{
 			//printf("aucun bulletin aujourd hui\n");
 			*prbCase = numCase;

@@ -99,7 +99,8 @@ int Print_Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
       
       if( (c1 >= COLONNE) || (c2 >= COLONNE) || (l1 >= LIGNE) || (l2 >= LIGNE) )
       {
-	printf("<*************** OUT OF TABLE *******************>\n");
+	printf("<*************** OUT OF TABLE *******************> $$$\n");
+	printf("out : (%d,%d) => (%d,%d)\n",c1, l1,  c2, l2);
 	return INFINI;
       }
       if( (c1 == c2) && (l1 == l2) ) return 1; //patch
@@ -157,7 +158,7 @@ int Print_Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
 			//cul de sac
 			*oc = colonne - 1;
 			*ol = ligne;
-			printf("Bresenham CUL DE SAC\n");
+			printf("Bresenham CUL DE SAC en (%d,%d)\n", *oc, *ol);
 			//return 0;
 			return INFINI;
 		    }
@@ -373,7 +374,154 @@ int Print_Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
       return compteur;
 }
 */
+void test5()
+{
+  //unsigned int bres;
+  //int obsctacle_colonne, obstacle_ligne;
+  //int tribordc, tribordl, babordc, babordl;
+  int pathc=0, pathl=0;
+  int tmpc, tmpl;
+  int cmp=0, cout1=0;
+//   int res;
+  
+  int dc=7;
+  int dl=5;
+  int ac=7;
+  int al=3;
+  
+  int ddc = dc;
+  int ddl = dl;
+/*  int dc=2;
+  int dl=5;
+  int ac=7;
+  int al=1;
+*/
+  test_init_table();
+  
+  table[7+(4*COLONNE)]=OBSTACLE;
+  table[6+(3*COLONNE)]=OBSTACLE;
+  
 
+  
+  
+//   init_best_path();
+  
+ 
+   while ( ((ac != dc) || (al != dl)) && (cmp<5) )
+   {
+     printf("Trajet restant : (%d,%d) => (%d,%d)\n", dc,dl, ac,al);
+     cout1 = coutNonRecursif(dc,dl,ac,al,&pathc,&pathl);
+     if(cout1>=INFINI)
+     {
+       printf("Infini : (%d,%d) pour (%d,%d), cout=%d\n", dc,dl,pathc,pathl, cout1);
+       break;
+     }
+      printf("depart en (%d,%d) pour (%d,%d), cout=%d\n", dc,dl,pathc,pathl, cout1);
+     Print_Bresenham(dc,dl, pathc,pathl, &tmpc, &tmpl);
+
+     dc = pathc;
+     dl = pathl;
+     cmp++;
+   }
+  table[ddc+(ddl*COLONNE)]='D';
+  table[ac+(al*COLONNE)]='A';
+  afficher_table();
+}
+
+
+void test4(void)
+{
+  int pathc=0, pathl=0;
+  int tmpc, tmpl;
+  int cmp=0, cout1=0;
+  int out=0;
+  int total=0;
+  int i,j,k,l,m,n,o,p;
+//   int res;
+  int dc=6;
+  int dl=0;
+  int ac=2;
+  int al=5;
+
+  //test_init_table();
+
+  //table[5+(3*COLONNE)]=OBSTACLE;
+
+for(i=0;i<COLONNE;i++)
+{
+  for(j=0;j<LIGNE;j++)
+  {
+    for(k=0;k<COLONNE;k++)
+    {
+      for(l=0;l<LIGNE;l++)
+      {
+	
+	for(m=0;m<COLONNE;m++)
+	{
+	   for(n=0;n<LIGNE;n++)
+	   {	
+	     for(o=0;o<COLONNE;o++)
+	     {
+     	      for(p=0;p<LIGNE;p++)
+              {
+
+        	test_init_table();
+
+	        dc=i;
+	        dl=j;
+	        ac=k;
+	        al=l;
+	        cmp=0;
+	       	table[m+(n*COLONNE)]=OBSTACLE;
+		table[o+(p*COLONNE)]=OBSTACLE;
+
+		total++;
+
+	    	if( ((i==m) && (j==n)) || ((l==n)&&(k==m)) )
+			continue;
+                if( ((i==o) && (j==p)) || ((l==p)&&(k==o)) )
+                        continue;
+		while ( ((ac != dc) || (al != dl)) && (cmp<5) )
+		{
+		     //printf("Trajet restant : (%d,%d) => (%d,%d)\n", dc,dl, ac,al);
+		     cout1 = coutNonRecursif(dc,dl,ac,al,&pathc,&pathl);
+		     if(cout1 >= INFINI )
+		     {
+			printf("Infini : (%d,%d) pour (%d,%d), cout=%d\n", i,j,pathc,pathl, cout1);
+		 	cmp = 6;
+		     }
+		     else Print_Bresenham(dc,dl, pathc,pathl, &tmpc, &tmpl);
+
+		     dc = pathc;
+		     dl = pathl;
+		     cmp++;
+        
+      
+	    	   }
+		   if(cmp==5)  printf("Deadlock : (%d,%d) pour (%d,%d), cout=%d\n", i,j,pathc,pathl, cout1);
+		   if(cmp>4) 
+		   {
+			table[i+(j*COLONNE)]='D';
+	                table[k+(l*COLONNE)]='A';
+			afficher_table();
+			/*if(out==500) 
+			{
+				printf("total cas de blocage %d\n",out);
+				exit(1);
+			}*/
+			out++;
+		   }
+	      }
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+printf("total cas de blocage %d/%d\n",out,total);
+}
 void test3(void)
 {
   //unsigned int bres;

@@ -138,17 +138,23 @@ int Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
 	    if(l1 > l2) incl = -1;
       }
       
-      
-      //printf("c1=%d l1=%d c2=%d l2=%d incl=%d\n",c1, l1, c2, l2, incl);
-      
+#ifdef BRESENHAM     
+     printf("Bresenham : calcul pour (%d,%d) => (%d,%d) avec incl=%d\n",c1, l1, c2, l2, incl);
+#endif      
       if((table[colonne+(ligne*COLONNE)]& OBSTACLE) == OBSTACLE)
       {
+#ifdef BRESENHAM	
+	printf("Bresenham : on commence dans le mur \n");
+#endif	
 	*oc = colonne;
 	*ol = ligne;
 	return 0;
       }
-//       table[colonne+(ligne*COLONNE)]='X';
-//       printf("ligne=%d colonne=%d\n",ligne,colonne);
+      
+      table[colonne+(ligne*COLONNE)]='#';
+#ifdef BRESENHAM
+      printf("Bresenham : colonne=%d ligne=%d \n",colonne, ligne);
+#endif      
       while(colonne < endc)
       {
             colonne = colonne + 1;
@@ -161,28 +167,53 @@ int Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
              	  //on tente la diago 
 		  if( ((table[colonne+(ligne*COLONNE)] & OBSTACLE) != OBSTACLE) && ((table[(colonne-1)+((ligne+incl)*COLONNE)] & OBSTACLE) != OBSTACLE) ) 
 		  {
-		        ligne = ligne + incl;
+#ifdef BRESENHAM			
+			if((table[colonne+((ligne+incl)*COLONNE)]& OBSTACLE) != OBSTACLE)  
+			{
+
+			  printf("Bresenham : diago bouché!!!!!\n");
+#endif					  
+			  ligne = ligne + incl;
+#ifdef BRESENHAM			  
+			}
+			else colonne ++;
+#endif					  			
 		  }
 		  else
 		  //la diago n est pas accessible, quel obstacle est à coté?
 		  {
 		    if( ((table[colonne+(ligne*COLONNE)] & OBSTACLE) == OBSTACLE) && ((table[(colonne-1)+((ligne+incl)*COLONNE)] & OBSTACLE) == OBSTACLE) ) 
 		    {
-			//cul de sac
-			*oc = colonne - 1;
-			*ol = ligne;
+			if( (abs(c1 - c2) == 1 ) && ( abs( l1 - l2) == 1 ) )
+			{
+#ifdef BRESENHAM
+			  printf("Bresenham SHORT CUL DE SAC\n");
+#endif
+			  *oc = colonne;
+			  *ol = ligne;
+			}
+			else
+			{    
+			  *oc = colonne - 1;
+			  *ol = ligne;
+			}
 			//printf("Bresenham CUL DE SAC\n");
 			//return 0;
-			return INFINI;
+			return 0;
 		    }
 		    else 
 		    {
-		      //printf("detour\n");
+#ifdef BRESENHAM
+		      printf("Bresenham detour\n");
+#endif		      
 		      if ((table[(colonne-1)+((ligne+incl)*COLONNE)]& OBSTACLE) != OBSTACLE) 
 		      {
+#ifdef BRESENHAM
+			printf("Bresenham detour V1\n");
+#endif			
 			colonne += -1;
 			ligne += incl;
-// 			table[colonne+(ligne*COLONNE)]='X';
+  			table[colonne+(ligne*COLONNE)]='#';
 			compteur++;
 			colonne += 1;
 			
@@ -192,11 +223,23 @@ int Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
 			//printf("Bresenham obstacle\n");
 			return 0;*/
 		      }
+#ifdef BRESENHAM
+		      else if ((table[colonne+(ligne*COLONNE)] & OBSTACLE) != OBSTACLE) 
+		      {
+			//printf("Bresenham detour V2\n");	
+			colonne += 1;
+			table[colonne+(ligne*COLONNE)]='#';
+			compteur++;
+		      }
+#endif
 		      else
 		      {
-// 			    table[colonne+(ligne*COLONNE)]='X';
+#ifdef BRESENHAM 			
+			    printf("Bresenham detour V3\n");
+#endif			    
 			    compteur++;
 			    ligne += incl;
+			    table[colonne+(ligne*COLONNE)]='#';
 			    
 			    //v2
 /*			    printf("Bresenham obstacle\n");
@@ -209,26 +252,32 @@ int Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
 		  
                   p = p + 2 * (dl - dc);
             }
-            
-// 	    printf("ligne=%d colonne=%d dans le while \n",ligne,colonne);
+#ifdef BRESENHAM            
+ 	    printf("Bresenham : colonne=%d ligne=%d dans le while \n", colonne, ligne);
+#endif	    
 	    if((table[colonne+(ligne*COLONNE)]& OBSTACLE) == OBSTACLE) 
 	    {
 	      *oc = colonne;
 	      *ol = ligne;
-	      //printf("Bresenham obstacle\n");
+#ifdef BRESENHAM	      
+	      printf("Bresenham obstacle (%d,%d)\n", *oc, *ol);
+#endif	      
 	      return 0;
 	    }
 	    compteur++;
-// 	    table[colonne+(ligne*COLONNE)]='X';
+ 	    table[colonne+(ligne*COLONNE)]='#';
       }
-      
-//       printf("ligne=%d colonne=%d\n",ligne,colonne);
+#ifdef BRESENHAM      
+      printf("Bresenham down : colonne=%d ligne=%d \n",colonne, ligne);
+#endif      
       while (ligne != endl) 
       {
 	ligne = ligne + incl;
 	if( (ligne>=LIGNE)|| (ligne < 0 ))
 	{
-	  //printf("--------------- LIGNE MIN or MAX REACHED --------------------\n");
+#ifdef BRESENHAM
+	  printf("--------------- LIGNE MIN or MAX REACHED --------------------\n");
+#endif	  
 	  return INFINI;
 	}
 // 	printf("ligne=%d colonne=%d\n",ligne,colonne);
@@ -255,6 +304,8 @@ int Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
 unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *tribordc, int *tribordl, int *babordc, int *babordl)
 {
   unsigned int ret=0;
+  int offset=0;
+  int offset2=0;
   /*
    Soit D notre point de départ définit par Xd et Yd.
    Soit A notre point d'arrivée définit par Xa et Yd.
@@ -266,30 +317,45 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
    sinon contourner par Xo + 1 et Yo – 1 ou Xo - 1 et Yo + 1 (cas n°1)
    On relance l'algo de Bresenham entre le point de déviation et le point d'arrivée.
   */
-   //printf("BF dc=%d, dl=%d ac=%d, al=%d, oc=%d, ol=%d\n", dc, dl, ac, al, oc, ol);
+
+//    printf("BF dc=%d, dl=%d ac=%d, al=%d, oc=%d, ol=%d\n", dc, dl, ac, al, oc, ol);
    
   
-   if((dc == ac) || ((al == ol+1)&&(oc == ac)) || ((al == ol-1)&&(oc == ac))
-		    || ((dl == ol+1)&&(oc == dc)) || ((dl == ol+1)&&(oc == dc)))
+   if(dc == ac) //|| ((al == ol+1)&&(oc == ac)) || ((al == ol-1)&&(oc == ac))
+		//    || ((dl == ol+1)&&(oc == dc)) || ((dl == ol+1)&&(oc == dc)))
    {
-      if( ((table[(oc-1)+(ol*COLONNE)]& OBSTACLE) != OBSTACLE) && ( oc > 0 ) ) 
+      //if( ((table[(oc-1)+(ol*COLONNE)]& OBSTACLE) != OBSTACLE) && ( oc > 0 ) ) 
+	if(oc > 0 )
 	{
-	    *tribordc = oc - 1;
+	    offset = 0;
+	    while( ((table[(oc-1-offset)+(ol*COLONNE)] & OBSTACLE) == OBSTACLE) && ((oc-offset)>0) )
+	    {
+		offset++;
+	    }
+	    *tribordc = oc - 1 - offset;
 	    *tribordl = ol;
 	    ret=1;
 	}
 	
-	if( ((table[(oc+1)+(ol*COLONNE)]& OBSTACLE) != OBSTACLE) && ( oc <(COLONNE-1)) )
+	//if( ((table[(oc+1)+(ol*COLONNE)]& OBSTACLE) != OBSTACLE) && ( oc <(COLONNE-1)) )
+	if( oc < (COLONNE-1) )
 	{
-	  if(ret) 
+	  offset = 0;
+          while(  ((table[(oc+1+offset)+(ol*COLONNE)] & OBSTACLE) == OBSTACLE) && ((oc+offset)<(COLONNE-1)) )
+          {
+             offset++;
+          }
+	  if (ret) 
 	  { 
-	      *babordc = oc + 1;
+	      *babordc = oc + 1 + offset;
 	      *babordl = ol;
+//		printf("(dc == ac) && ( oc < (COLONNE-1)) \n");
 	      ret=2;
 	  }
 	  else 
 	  {
-	      *tribordc = oc + 1;
+//	     printf("(dc == ac) && ( oc < (COLONNE-1)) ret=0\n");
+	      *tribordc = oc + 1 + offset;
 	      *tribordl = ol;
 	      ret=1;
 	  }
@@ -299,89 +365,136 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
    }
    else
    {
-     if( (dl == al) || ((ac == oc+1)&&(ol == al)) || ((ac == oc-1)&&(ol == al))
-		    || ((dc == oc+1)&&(ol == dl)) || ((dc == oc+1)&&(ol == dl)))
+     if( dl == al) //|| ((ac == oc+1)&&(ol == al)) || ((ac == oc-1)&&(ol == al)) || ((dc == oc+1)&&(ol == dl)) || ((dc == oc+1)&&(ol == dl)))
      {
-	if( ((table[oc+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE) && (ol>0) ) 
+	//if( ((table[oc+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE) && (ol>0) ) 
+	if(ol>0)
 	{
+	    offset = 0;
+            while(  ((table[oc+((ol-1-offset)*COLONNE)] & OBSTACLE) == OBSTACLE) && ((ol-offset)>0) )
+            {
+            	offset++;
+            }
+
 	    //Xo et Yo -1 
 	    *tribordc = oc;
-	    *tribordl = ol-1;
+	    *tribordl = ol-1-offset;
 	    ret=1;
 	}
 	
-	if( ((table[oc+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE) && (ol <(LIGNE-1)) )
+	//if( ((table[oc+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE) && (ol <(LIGNE-1)) )
+	if(ol <(LIGNE-1))
 	{
+          offset = 0;
+          while(  ((table[oc+((ol+1+offset)*COLONNE)] & OBSTACLE) == OBSTACLE) && ((ol+offset)<(LIGNE-1)) )
+          {
+             offset++;
+          }
+
 	  //Xo et Yo + 1
 	  if(ret) 
 	  { 
 	      *babordc = oc;
-	      *babordl = ol+1;
+	      *babordl = ol+1+offset;
 	      ret=2;
 	  }
 	  else 
 	  {
 	      *tribordc = oc;
-	      *tribordl = ol+1;
+	      *tribordl = ol+1+offset;
 	      ret=1;
 	  }
 	}
-      	
+
      }
      else
      {
-       
+
       if( (((dl - al) > 0) && ((dc - ac) > 0)) ||  (((dl - al) < 0) && ((dc - ac) < 0)) )
       {
-      
-	if (((table[(oc+1)+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc<(COLONNE-1))&&(ol>0) ) 
+
+	//if (((table[(oc+1)+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc<(COLONNE-1))&&(ol>0) )
+	if( (oc<(COLONNE-1)) && (ol>0) )
 	{
-	    //Xo + 1 et Yo – 1 
-	    *tribordc = oc+1;
-	    *tribordl = ol-1;
+            offset = 0;
+	    offset2 = 0;
+            while(  ((table[(oc+1+offset)+((ol-1-offset2)*COLONNE)] & OBSTACLE) == OBSTACLE) && ((oc+offset)<(COLONNE-1)) && ((ol-offset2)>0) )
+            {
+               offset++;
+	       offset2++;
+            }
+
+	    //Xo + 1 et Yo – 1
+	    *tribordc = oc+1+offset;
+	    *tribordl = ol-1-offset2;
 	    ret=1;
 	}
-	if( ((table[(oc-1)+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc>0)&&(ol<(LIGNE-1)) ) 
+	//if( ((table[(oc-1)+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc>0)&&(ol<(LIGNE-1)) )
+	if( (oc>0) && (ol<(LIGNE-1)) )
 	{
-	  //Xo - 1 et Yo + 1 
-	  if(ret) 
-	  { 
-	      *babordc = oc-1;
-	      *babordl = ol+1;
+          offset = 0;
+          offset2 = 0;
+          while(  ((table[(oc-1-offset)+((ol+1+offset2)*COLONNE)] & OBSTACLE) == OBSTACLE) && ((ol+offset2)<(LIGNE-1)) && ((oc-offset)>0) )
+          {
+              offset++;
+              offset2++;
+          }
+
+	  //Xo - 1 et Yo + 1
+	  if(ret)
+	  {
+	      *babordc = oc-1-offset;
+	      *babordl = ol+1+offset2;
 	      ret=2;
 	  }
-	  else 
+	  else
 	  {
-	      *tribordc = oc-1;
-	      *tribordl = ol+1;
+	      *tribordc = oc-1-offset;
+	      *tribordl = ol+1+offset2;
 	      ret=1;
 	  }
 	}
-      
       }
       else
       {
-	if(((table[(oc-1)+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(ol>0)&&(oc>0)) 
+	//if(((table[(oc-1)+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(ol>0)&&(oc>0)) 
+	if( (ol>0) && (oc>0) )
 	{
+	    offset = 0;
+            offset2 = 0;
+            while(  ((table[(oc-1-offset)+((ol-1-offset2)*COLONNE)] & OBSTACLE) == OBSTACLE) && ((ol-offset2)>0)&&((oc-offset)>0) )
+            {
+               offset++;
+               offset2++;
+            }
 	    //Xo – 1 et Yo – 1
-	    *tribordc = oc-1;
-	    *tribordl = ol-1;
+	    *tribordc = oc-1-offset;
+	    *tribordl = ol-1-offset2;
 	    ret=1;
 	}
-	
-	if(((table[(oc+1)+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc<(COLONNE-1))&&(ol<(LIGNE-1))) 
+
+	//if(((table[(oc+1)+((ol+1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc<(COLONNE-1))&&(ol<(LIGNE-1))) 
+	if( (oc<(COLONNE-1)) && (ol<(LIGNE-1)) )
 	{
+          offset = 0;
+          offset2 = 0;
+          while(  ((table[(oc+1+offset)+((ol+1+offset2)*COLONNE)]& OBSTACLE) == OBSTACLE) && ((oc+offset)<(COLONNE-1))&&((ol+offset2)<(LIGNE-1)) )
+          {
+               offset++;
+               offset2++;
+          }
+
 	  //Xo + 1 et Yo + 1
 	  if(ret) 
 	  { 
-	      *babordc = oc+1;
-	      *babordl = ol+1;
+	      *babordc = oc+1+offset;
+	      *babordl = ol+1+offset2;
 	      ret=2;
 	  }
 	  else 
 	  {
-	      *tribordc = oc+1;
-	      *tribordl = ol+1;
+	      *tribordc = oc+1+offset;
+	      *tribordl = ol+1+offset2;
 	      ret=1;
 	  }
 	}
@@ -391,7 +504,9 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
    
    //if(ret > 0) table[(*tribordc)+(*tribordl*COLONNE)]='B'; 
    //if(ret == 2) table[*babordc+(*babordl*COLONNE)]='B'; 
-   //printf("BF => ret=%d tribordc=%d tribordl=%d babordc=%d babordl=%d\n",ret,*tribordc, *tribordl, *babordc,*babordl);
+
+//    printf("BF => ret=%d tribordc=%d tribordl=%d babordc=%d babordl=%d\n",ret,*tribordc, *tribordl, *babordc,*babordl);
+   
    return ret;
 }
 
@@ -471,6 +586,7 @@ int cout(int dc, int dl, int ac, int al, int *pathc, int *pathl)
   }
 }
 
+// #define COUTREC 1
 
 int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 {
@@ -485,7 +601,9 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
   
   if( cout > 0) 
   {
-//    printf("ligne directe\n");
+#ifdef COUTREC
+    printf("ligne directe\n");
+#endif
     *pathc = ac; 
     *pathl = al;
     return cout; 
@@ -493,17 +611,23 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
   res1 = BisonFute(dc, dl, ac, al, obsctacle_colonne, obstacle_ligne, &tribordc1, &tribordl1, &babordc1, &babordl1); 
   if(res1==0) 
   {
-    //printf("pas de bulletin\n");
+#ifdef COUTREC
+    printf("pas de bulletin\n");
+#endif
     return INFINI; 
   }
   else
   {
-//     printf("obstacle en (%d,%d) : sol (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc1, tribordl1, babordc1, babordl1); 
+#ifdef COUTREC
+    printf("obstacle en (%d,%d) : sol (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc1, tribordl1, babordc1, babordl1); 
+#endif
     cout = Bresenham(dc, dl, tribordc1, tribordl1, &obsctacle_colonne,&obstacle_ligne);
     if( cout > 0) 
     {
       cout1 = cout;
-//      printf("ligne directe pour cout1 : de (%d,%d) => (%d,%d)\n", dc, dl, tribordc1, tribordl1);
+#ifdef COUTREC
+      printf("ligne directe pour cout1 : de (%d,%d) => (%d,%d)\n", dc, dl, tribordc1, tribordl1);
+#endif
       pathc1 = tribordc1; 
       pathl1 = tribordl1;
 
@@ -514,12 +638,16 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
       res2 = BisonFute(dc, dl, tribordc1, tribordl1, obsctacle_colonne, obstacle_ligne, &tribordc2, &tribordl2, &babordc2, &babordl2); 
       if(res2==0) 
       {
-// 	printf("pas de bulletin\n");
+#ifdef COUTREC
+ 	printf("pas de bulletin1\n");
+#endif
 	cout1 = INFINI; 
       }
       else
       {
-// 	printf("obstacle en (%d,%d) : sol1 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#ifdef COUTREC
+ 	printf("obstacle en (%d,%d) : sol1 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#endif
 	coutmp = Bresenham(dc, dl, tribordc2, tribordl2, &dummy_c, &dummy_l);
 	if( coutmp > 0) 
 	{
@@ -555,7 +683,9 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
       coutmp = Bresenham(dc, dl, babordc1, babordl1, &obsctacle_colonne,&obstacle_ligne);
       if( coutmp > 0) 
       {
-// 	printf("ligne directe pour cout2 : (%d,%d) => (%d,%d)\n", dc, dl, babordc1, babordl1);
+#ifdef COUTREC
+ 	printf("ligne directe pour cout2 : (%d,%d) => (%d,%d)\n", dc, dl, babordc1, babordl1);
+#endif
 	cout2 = coutmp;
 	pathc2 = babordc1; 
 	pathl2 = babordl1;
@@ -566,12 +696,16 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 	  res2 = BisonFute(dc, dl, babordc1, babordl1, obsctacle_colonne, obstacle_ligne, &tribordc2, &tribordl2, &babordc2, &babordl2); 
 	  if(res2==0) 
 	  {
-	    //printf("pas de bulletin\n");
+#ifdef COUTREC
+	    printf("pas de bulletin2\n");
+#endif
 	    cout2 = INFINI; 
 	  }
 	  else
 	  {
-// 	    printf("obstacle en (%d,%d) : sol2 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#ifdef COUTREC
+ 	    printf("obstacle en (%d,%d) : sol2 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#endif
 	    coutmp = Bresenham(dc, dl, tribordc2, tribordl2, &dummy_c, &dummy_l);
 	    if( coutmp > 0) 
 	    {
@@ -607,7 +741,9 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
     cout = Bresenham(ac, al, tribordc1, tribordl1, &obsctacle_colonne,&obstacle_ligne);
     if( cout > 0) 
     {
-//      printf("ligne directe pour cout3 : (%d,%d) => (%d,%d)\n", ac, al,tribordc1, tribordl1);
+#ifdef COUTREC
+      printf("ligne directe pour cout3 : (%d,%d) => (%d,%d)\n", ac, al,tribordc1, tribordl1);
+#endif
       cout3 = cout;
 /*      if(dc>ac) //attention on calcule à l envers puis qu on part de l arrivé pour aller au départ
       {
@@ -620,21 +756,25 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
     {
 
 	  res2 = BisonFute(ac, al, tribordc1, tribordl1, obsctacle_colonne, obstacle_ligne, &tribordc2, &tribordl2, &babordc2, &babordl2); 
-	  if(res2==0) 
+	  if(res2==0)
 	  {
-	    //printf("pas de bulletin\n");
-	    cout3 = INFINI; 
+#ifdef COUTREC
+	    printf("pas de bulletin3\n");
+#endif
+	    cout3 = INFINI;
 	  }
 	  else
 	  {
-// 	   printf("obstacle en (%d,%d) : sol3 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
-	    cout3 = Bresenham(ac, al, tribordc2, tribordl2, &dummy_c, &dummy_l);
-	    if( cout3 > 0) 
+#ifdef COUTREC
+ 	    printf("obstacle en (%d,%d) : sol3 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#endif
+	    coutmp = Bresenham(ac, al, tribordc2, tribordl2, &dummy_c, &dummy_l);
+	    if( coutmp > 0)
 	    {
 	        cout = Bresenham(tribordc2, tribordl2, tribordc1, tribordl1, &dummy_c, &dummy_l);
 		if( cout > 0 )
-		{  
-		  cout3 += cout;
+		{ 
+		  cout3 = cout + coutmp;
 /*		  if(dc>ac) //attention on calcule à l envers puis qu on part de l arrivé pour aller au départ
 		  {
 		    pathc1 = tribordc2; 
@@ -642,19 +782,23 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 		  }
 */
 		}
-		else cout1 = INFINI;
 	    }
-	    else cout3 = INFINI; //besoin de differencier avec INFINI?
-		
+
 	    if( res2 == 2)
 	    {
 	      coutmp = Bresenham(ac, al, babordc2, babordl2, &dummy_c, &dummy_l);
 	      if (coutmp > 0) 
 	      {
+#ifdef COUTREC
+		printf("sol3 via babord (%d,%d) => (%d,%d)\n", babordc2, babordl2, tribordc1, tribordl1);
+#endif
 		cout = Bresenham(babordc2, babordl2, tribordc1, tribordl1, &dummy_c, &dummy_l);
 		if( (cout > 0 ) && ((coutmp + cout) < cout3) )
 		{
 		  cout3 = cout + coutmp;
+#ifdef COUTREC
+  		  printf("sol3 via babord : OK\n");
+#endif
 /*		  if(dc>ac) //attention on calcule à l envers puis qu on part de l arrivé pour aller au départ
 		  {
 		    pathc1 = babordc2; 
@@ -662,16 +806,18 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 		  }
 */
 		}
-	      }         
+	      }
 	    }
-	  } 
+	  }
     }
     if(res1 == 2)
     {
       coutmp = Bresenham(ac, al, babordc1, babordl1, &obsctacle_colonne,&obstacle_ligne);
       if( coutmp > 0) 
       {
-// 	printf("ligne directe pour cout4 : (%d,%d) => (%d,%d)\n", ac, al, babordc1, babordl1);
+#ifdef COUTREC
+ 	printf("ligne directe pour cout4 : (%d,%d) => (%d,%d)\n", ac, al, babordc1, babordl1);
+#endif
 	cout4 = coutmp;
 /*	if(dc>ac) //attention on calcule à l envers puis qu on part de l arrivé pour aller au départ
 	{
@@ -686,12 +832,16 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 	      res2 = BisonFute(ac, al, babordc1, babordl1, obsctacle_colonne, obstacle_ligne, &tribordc2, &tribordl2, &babordc2, &babordl2); 
 	      if(res2==0) 
 	      {
-		//printf("pas de bulletin\n");
+#ifdef COUTREC
+		printf("pas de bulletin4\n");
+#endif
 		cout4 = INFINI; 
 	      }
 	      else
 	      {
-// 		printf("obstacle en (%d,%d) : sol4 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#ifdef COUTREC
+ 		printf("obstacle en (%d,%d) : sol4 (%d,%d) ou (%d,%d)\n",obsctacle_colonne, obstacle_ligne, tribordc2, tribordl2, babordc2, babordl2); 
+#endif
 		coutmp = Bresenham(ac, al, tribordc2, tribordl2, &dummy_c, &dummy_l);
 		if( coutmp > 0) 
 		{
@@ -706,8 +856,8 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 		      }
 */
 		    }
-		    else cout4 = INFINI;
-		}   
+		    
+		} 
 	      }
 	      if( res2 == 2)
 	      {
@@ -730,10 +880,14 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 	      		      
       }  
     }
-//     printf("cout1=%d, cout2=%d, cout3=%d, cout4=%d\n",cout1,cout2,cout3,cout4); 
+#ifdef COUTREC
+     printf("cout1=%d, cout2=%d, cout3=%d, cout4=%d\n",cout1,cout2,cout3,cout4); 
+#endif
     if( (cout1+cout3) < (cout2+cout4))
     {
-// 	printf("solution impair\n");
+#ifdef COUTREC
+ 	printf("solution impair\n");
+#endif
         *pathc = pathc1; 
 	*pathl = pathl1;
 	cout = cout1 + cout3;
@@ -741,7 +895,9 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
     }
     else
     {
-// 	printf("solution pair\n");
+#ifdef COUTREC
+ 	printf("solution pair\n");
+#endif
         *pathc = pathc2; 
 	*pathl = pathl2;
 	cout = cout2 + cout4;
