@@ -24,18 +24,8 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_DMA2_3_TC, EVENT_UART4_ERROR,  0 }
 };
 
-static void usart_set_frequency(enum usart_id id, enum usart_frequency frequency)
+static void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
-	#if( RCC_PCLK1 != 36000000)
-	#error usart->BRR à recalculer
-	#endif
-	// PCLK = 36 Mhz
-	// usart : v                   | 1Mb/s             | 750kb/s   | 500kb/s       | 250kb/s      | 115.2kb/s                 | 57.6kb/s         | 19.2kb/s
-	// USARTDIV = PCLK / (16 * v)  | 2.25              |    3      |   4.5         |   9          |  19,53125                 | 39,0625          | 117,1875
-	// mantisse sur 12 bits        | 0x02              |   0x03    |   0x04        |  0x09        |  0x13                     |  0x27            | 117 = 0x75
-	// fraction sur 4 bits :       | 0.25 * 16 = 0x04  |   0x00    | 0.5*16= 0x08  |  0x00        | 0.53125*16 = 8.5 => 0x09  | 0,0625×16 = 0x01 | 16 * 0.1875 = 0x03
-	// erreur de fréquence :       |  0%               |    0%     |     0%        |   0%         |         0.1597 %          |    0%            | 0%
-
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
@@ -43,40 +33,12 @@ static void usart_set_frequency(enum usart_id id, enum usart_frequency frequency
 		return;
 	}
 #endif
-	
-	switch(frequency)
-	{
-		case USART_1000000:
-			usart_device[id].usart->BRR = (((uint16_t)0x02) << 4) | (uint16_t)0x04;
-			break;
-		case USART_750000:
-			usart_device[id].usart->BRR = (((uint16_t)0x03) << 4);
-			break;
-		case USART_500000:
-			usart_device[id].usart->BRR = (((uint16_t)0x04) << 4) | (uint16_t)0x08;
-			break;
-		case USART_250000:
-			usart_device[id].usart->BRR = (((uint16_t)0x09) << 4);
-			break;
-		case USART_115200:
-			usart_device[id].usart->BRR = (((uint16_t)0x13) << 4) | (uint16_t)0x09;
-			break;
-		case USART_57600:
-			usart_device[id].usart->BRR = (((uint16_t)0x27) << 4) | (uint16_t)0x01;
-			break;
-		case USART_19200:
-			usart_device[id].usart->BRR = (((uint16_t)0x75) << 4) | (uint16_t)0x03;
-			break;
-#ifdef DEBUG
-		default:
-			setLed(ERR_USART_UNKNOWN_FREQUENCY);
-			return;
-			break;
-#endif
-	}
+
+	// TODO : pour USART1 : prendre PCLK2
+	usart_device[id].usart->BRR = ((RCC_PCLK1*2) / (frequency) + 1) / 2;
 }
 
-void usart_open( enum usart_id id, enum usart_frequency frequency)
+void usart_open( enum usart_id id, uint32_t frequency)
 {
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
@@ -173,7 +135,7 @@ void usart_open( enum usart_id id, enum usart_frequency frequency)
 	usart_device[id].usart->CR1 |= USART_CR1_UE;
 }
 
-void isr_uart3(void)
+void isr_usart3(void)
 {
 	// affichage de l'erreur
 	if( USART3->SR & USART_SR_FE)

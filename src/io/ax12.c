@@ -43,7 +43,7 @@ static uint32_t ax12_send(struct ax12_request *req);
 
 static int ax12_module_init()
 {
-	usart_open(UART4_HALF_DUPLEX, USART_1000000);
+	usart_open(UART4_HALF_DUPLEX, 1000000);
 
 	ax12_queue = xQueueCreate(AX12_QUEUE_SIZE, sizeof(struct ax12_request));
 

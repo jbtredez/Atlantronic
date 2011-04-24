@@ -15,18 +15,7 @@ enum usart_id
 	UART4_HALF_DUPLEX
 };
 
-enum usart_frequency
-{
-	USART_1000000,
-	USART_750000,
-	USART_500000,
-	USART_250000,
-	USART_115200,
-	USART_57600,
-	USART_19200
-};
-
-void usart_open( enum usart_id id, enum usart_frequency frequency);
+void usart_open( enum usart_id id, uint32_t frequency);
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_set_read_dma_size(enum usart_id id, uint16_t size);
