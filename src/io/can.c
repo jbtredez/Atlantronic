@@ -7,9 +7,18 @@ void can_write(struct can_msg *msg);
 void can_set_filter(unsigned int id, unsigned char format);
 static unsigned short can_filter_id;
 
+// TODO : tests
+struct can_msg msg_rx0;
+struct can_msg msg_env;
+
 static int can_module_init(void)
 {
 	can_filter_id = 0;
+
+	// TODO : tests
+	msg_env.id = 640;
+	msg_env.data[0] = 5;
+	msg_env.size = 5;
 
 	// CAN_RX : PD0
 	// CAN_TX : PD1
@@ -46,7 +55,10 @@ static int can_module_init(void)
 	// vitesse : 500kb => 500000*18*TQ = PCLK = 36Mhz
 	// => TQ = PCLK / (18 * 500000) = 4
 	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
-	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
+	//CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
+
+//test 250k
+	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((8-1) & CAN_BTR_BRP);
 
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
@@ -55,7 +67,7 @@ static int can_module_init(void)
 	// mode self-test pour le debug
 //	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
 
-	can_set_filter(18, CAN_STANDARD_FORMAT);
+	can_set_filter(0x710, CAN_STANDARD_FORMAT);
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
@@ -75,10 +87,6 @@ void isr_can1_tx(void)
 		CAN1->IER &= ~CAN_IER_TMEIE;
 	}
 }
-
-// TODO : tests
-struct can_msg msg_rx0;
-struct can_msg msg_env;
 
 void isr_can1_rx0(void)
 {

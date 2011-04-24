@@ -142,7 +142,7 @@ static void control_task(void* arg)
 	{
 		location_update();
 		pos = location_get_position();
-
+// TODO mutex pour laisser les IT
 		portENTER_CRITICAL();
 
 		if(vTaskGetEvent() & EVENT_END)
