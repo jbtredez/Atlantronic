@@ -30,7 +30,7 @@ define ptasks
 	echo \033[0m
 
 	echo \033[01;34m
-	printf "etat\tnom\tev\tmask\tev&mask\tcpu\n"
+	printf "etat\tdelai\tnom\tev\tmask\tev&mask\tcpu\n"
 	echo \033[0m
 	set $nb_pri = sizeof pxReadyTasksLists / sizeof pxReadyTasksLists[0]
 	set $i = $nb_pri - 1
@@ -41,8 +41,8 @@ define ptasks
 		set $list_next = pxReadyTasksLists[$i].xListEnd.pxNext
 
 		while $list_next != $list_end && $n > 0
-			printf " P%i\t", $i
-			ptcb ((tskTCB*)$list_next->pvOwner)
+			printf " P%i\t0\t", $i
+			pTcb ((tskTCB*)$list_next->pvOwner)
 			set $list_next = $list_next.pxNext
 			set $n--
 		end
@@ -54,8 +54,8 @@ define ptasks
 	set $list_next = xPendingReadyList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " PR\t"
-		ptcb ((tskTCB*)$list_next->pvOwner)
+		printf " PR\t0\t"
+		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
@@ -66,8 +66,8 @@ define ptasks
 	set $list_next = xDelayedTaskList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " D\t"
-		ptcb ((tskTCB*)$list_next->pvOwner)
+		printf " D\t%.2f\t", ($list_next->xItemValue - systick_time)/((double)72000)
+		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
@@ -78,14 +78,14 @@ define ptasks
 	set $list_next = xSuspendedTaskList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " S\t"
-		ptcb ((tskTCB*)$list_next->pvOwner)
+		printf " S\tinf\t"
+		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
 	set $i--
 end
 
-define ptcb
+define pTcb
 	printf "%s\t%x\t%x\t%x\t%f%%\n", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100
 end
