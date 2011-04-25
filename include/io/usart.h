@@ -26,4 +26,6 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout);
 void usart_set_write_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_send_dma_buffer(enum usart_id id, uint16_t size);
 
+void usart_set_frequency(enum usart_id id, uint32_t frequency);
+
 #endif

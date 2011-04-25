@@ -21,6 +21,7 @@
 #define ERR_INIT_CONTROL        0x20b
 #define ERR_INIT_TEST           0x20c
 #define ERR_INIT_END            0x20d
+#define ERR_INIT_HOKUYO         0x219
 
 #define ERR_USART3_READ_SR_FE           0x20e
 #define ERR_USART3_READ_SR_NE           0x20f

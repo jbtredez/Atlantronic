@@ -24,7 +24,7 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_DMA2_3_TC, EVENT_UART4_ERROR,  0 }
 };
 
-static void usart_set_frequency(enum usart_id id, uint32_t frequency)
+void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
