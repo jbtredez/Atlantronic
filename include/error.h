@@ -38,4 +38,11 @@
 
 #define ERR_CAN_FILTER_LIST_FULL        0x218
 
+#define ERR_HOKUYO_DISCONNECTED         0x219
+#define ERR_HOKUYO_CHECK_CMD            0x220
+#define ERR_HOKUYO_UNKNOWN_STATUS       0x221
+#define ERR_HOKUYO_CHECKSUM             0x222
+#define ERR_HOKUYO_BAUD_RATE            0x223
+#define ERR_HOKUYO_LASER_MALFUNCTION    0x224
+
 #endif

@@ -133,6 +133,8 @@ uint32_t ax12_send(struct ax12_request *req)
 	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	if( res )
 	{
+		// TODO code erreur
+		//setLed(res);
 		goto end;
 	}
 

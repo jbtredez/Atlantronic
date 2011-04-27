@@ -279,7 +279,6 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 	else if(! (ev & usart_device[id].dma_read_event))
 	{
 		res = ERR_USART_TIMEOUT;
-		setLed(ERR_USART_TIMEOUT);
 	}
 
 	return res;
