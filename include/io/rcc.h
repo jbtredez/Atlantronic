@@ -7,15 +7,17 @@
 
 
 // configuration une fois le module rcc initialisé (attention, il faut modifier le code de rcc.c si on veut changer les valeurs) :
-#define RCC_HSI           8000000
-#define RCC_HSE          25000000
-#define RCC_PREDIV2CLK    5000000
-#define RCC_PLL2CLK      40000000
-#define RCC_PREDIV1CLK    8000000
-#define RCC_PLLCLK       72000000
-#define RCC_SYSCLK       72000000
-#define RCC_HCLK         72000000
-#define RCC_PCLK1        36000000
-#define RCC_PCLK2        72000000
+#define RCC_HSI           8000000LL
+#define RCC_HSE          25000000LL
+#define RCC_PREDIV2CLK    5000000LL
+#define RCC_PLL2CLK      40000000LL
+#define RCC_PREDIV1CLK    8000000LL
+#define RCC_PLLCLK       72000000LL
+#define RCC_SYSCLK       72000000LL
+#define RCC_HCLK         72000000LL
+#define RCC_PCLK1        36000000LL
+#define RCC_PCLK2        72000000LL
+
+#define ms_to_tick(a)    (a*RCC_SYSCLK/1000)
 
 #endif
