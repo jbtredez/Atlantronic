@@ -5,6 +5,7 @@
 #include "io/hokuyo.h"
 #include "module.h"
 #include "io/usart.h"
+#include "io/rcc.h"
 
 #define HOKUYO_STACK_SIZE       100
 
@@ -12,7 +13,9 @@
 const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
-static uint8_t hokuyo_read_dma_buffer[30];
+const char* hokuyo_scan_all = "GS0044072500\n";
+
+static uint8_t hokuyo_read_dma_buffer[1370];
 
 static void hokuyo_task(void *arg);
 static uint32_t hokuyo_init();
@@ -80,7 +83,7 @@ static uint32_t hokuyo_init()
 		setLed(ERR_HOKUYO_DISCONNECTED);
 		goto end;
 	}
-	
+
 	err = hokuyo_set_speed();
 
 	if(err)
@@ -171,7 +174,7 @@ static uint32_t hokuyo_scip2()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_scip2_cmd, 8, 13, 720000, 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(50), 3);
 
 	if(err)
 	{
@@ -205,7 +208,7 @@ static uint32_t hokuyo_set_speed()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_speed_cmd, 9, 14, 720000, 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(50), 3);
 
 	if(err)
 	{
@@ -248,7 +251,49 @@ static uint32_t hokuyo_laser_on()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_laser_on_cmd, 3, 8, 720000, 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(50), 3);
+
+	if(err)
+	{
+		goto end;
+	}
+
+	err = hokuyo_check_sum(3, 5);
+
+	if(err)
+	{
+		goto end;
+	}
+
+	if( hokuyo_read_dma_buffer[3] != 0)
+	{
+		err = ERR_HOKUYO_UNKNOWN_STATUS;
+		goto end;
+	}
+
+	switch(hokuyo_read_dma_buffer[4])
+	{
+		case '0':
+		case '2':
+			// OK
+			break;
+		case '1':
+			err = ERR_HOKUYO_LASER_MALFUNCTION;
+			goto end;
+		default:
+			err = ERR_HOKUYO_UNKNOWN_STATUS;
+			goto end;
+	}
+
+end:
+	return err;
+}
+
+static uint32_t hokuyo_scan()
+{
+	uint32_t err = 0;
+
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_scan_all, 13, 1364, ms_to_tick(150), 3);
 
 	if(err)
 	{
