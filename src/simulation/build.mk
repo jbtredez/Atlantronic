@@ -11,6 +11,7 @@ obj-simu += simulation/log.o
 obj-simu += simulation/rcc.o
 obj-simu += simulation/tim.o
 obj-simu += simulation/gpio.o
+obj-simu += simulation/can.o
 obj-simu += simulation/adc.o
 obj-simu += simulation/usart.o
 

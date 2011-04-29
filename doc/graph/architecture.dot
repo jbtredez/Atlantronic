@@ -1,6 +1,6 @@
 digraph robot
 {
-	size="6,6";
+	size="10,10";
 	// modules - taches
 	node [color=lawngreen, style=filled ]
 	strategy
@@ -15,6 +15,9 @@ digraph robot
 	location
 	odometry
 	beacon
+	pince
+	ax12
+
 
 	// io
 	node [color=lightblue3, style=filled ]
@@ -25,30 +28,27 @@ digraph robot
 		"io/beacon"
 		"io/usb"
 		"io/can"
-		"io/i2c"
+		"io/adc"
+		"io/usart"
 		"io/led"
 	}
-
-	// modèle - simulation
-	node [color=magenta, style=filled ]
-	model
-	model_motor
 
 	// liens
 	strategy -> avoidance
 	strategy -> control
+	strategy -> pince
 	avoidance -> control
 	control -> "colision detection"
 	control -> location
 	"colision detection" -> location
 	location -> odometry
 	location -> beacon
+	pince -> ax12
 
+	ax12 -> "io/usart"
+	"colision detection" -> "io/adc"
+	"colision detection" -> "io/can"
 	beacon -> "io/beacon"
 	odometry -> "io/encoders"
 	control -> "io/pwm"
-	"io/pwm" -> model
-	"io/encoders" -> model
-	"io/beacon" -> model
-	model -> model_motor	
 }

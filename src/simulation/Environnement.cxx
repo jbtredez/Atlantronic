@@ -241,8 +241,8 @@ void Environnement::loop()
 
 void Environnement::start(const char* prog1, const char* prog2, int gdb_port1, int gdb_port2)
 {
-	robot[0]->setPosition(-1300, -850,   0);
-	robot[1]->setPosition( 1300, -850, 180);
+	robot[0]->setPosition(-1400, -850,   0);
+	robot[1]->setPosition( 1400, -850, 180);
 	robot[0]->start("/tmp/robot0", prog1, gdb_port1);
 	robot[1]->start("/tmp/robot1", prog2, gdb_port2);
 	pthread_create(&id, NULL, newtonTaskInit, this);

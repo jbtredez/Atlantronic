@@ -5,7 +5,7 @@
 #include "cpu/stm32f10x.h"
 
 #ifndef LINUX
-#include "arch/arm_cm3/asm_base_func.h"
+#include "asm/asm_base_func.h"
 #endif
 
 #ifdef LINUX

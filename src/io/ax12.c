@@ -18,9 +18,12 @@
 #define AX12_INSTRUCTION_RESET            0x06
 #define AX12_INSTRUCTION_SYNC_WRITE       0x83
 
-#define AX12_QUEUE_SIZE     10
-#define AX12_STACK_SIZE     64
-#define AX12_ARG_MAX         3
+#define AX12_QUEUE_SIZE             10
+#define AX12_STACK_SIZE             64
+#define AX12_ARG_MAX                 3
+#define AX12_READ_TIMEOUT       720000
+#define AX12_INTER_FRAME_TIME      720
+#define AX12_MAX_RETRY               3
 
 struct ax12_request
 {
@@ -33,12 +36,15 @@ struct ax12_request
 
 static void ax12_task(void *arg);
 static xQueueHandle ax12_queue;
-static uint8_t ax12_buffer[6 + AX12_ARG_MAX];
+static uint8_t ax12_write_dma_buffer[6 + AX12_ARG_MAX];
+static uint8_t ax12_read_dma_buffer[2*(6 + AX12_ARG_MAX)];
 static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
-
+static uint32_t ax12_send(struct ax12_request *req);
 
 static int ax12_module_init()
 {
+	usart_open(UART4_HALF_DUPLEX, 1000000);
+
 	ax12_queue = xQueueCreate(AX12_QUEUE_SIZE, sizeof(struct ax12_request));
 
 	if(ax12_queue == 0)
@@ -54,92 +60,137 @@ static int ax12_module_init()
 		return ERR_INIT_AX12;
 	}
 
+	usart_set_write_dma_buffer(UART4_HALF_DUPLEX, ax12_write_dma_buffer);
+	usart_set_read_dma_buffer(UART4_HALF_DUPLEX, ax12_read_dma_buffer);
+
 	return 0;
 }
 
 module_init(ax12_module_init, INIT_AX12);
+
+static void ax12_module_exit()
+{
+	ax12_set_torque_limit(0xfe, 0x00);
+}
+
+module_exit(ax12_module_exit, EXIT_AX12);
 
 static void ax12_task(void* arg)
 {
 	(void) arg;
 
 	struct ax12_request req;
+	int8_t res;
 
 	while(1)
 	{
 		if(xQueueReceive(ax12_queue, &req, portMAX_DELAY))
 		{
-			uint8_t size = 6 + req.argc;
-			uint8_t i;
-
-			ax12_buffer[0] = 0xFF;
-			ax12_buffer[1] = 0xFF;
-			ax12_buffer[2] = req.id;
-			ax12_buffer[3] = 0x02 + req.argc;
-			ax12_buffer[4] = req.instruction;
-			for( i = 0; i < req.argc ; i++)
+			uint8_t i = 0;
+			do
 			{
-				ax12_buffer[5+i] = req.arg[i];
+				res = ax12_send(&req);
+				// delai entre 2 messages sur le bus
+				vTaskDelay(AX12_INTER_FRAME_TIME);
+			}while(res && i < AX12_MAX_RETRY);
+		}
+	}
+}
+
+uint32_t ax12_send(struct ax12_request *req)
+{
+	uint32_t res = 0;
+	uint8_t write_size = 6 + req->argc;
+	uint8_t read_size = write_size;
+	uint8_t i;
+
+	ax12_write_dma_buffer[0] = 0xFF;
+	ax12_write_dma_buffer[1] = 0xFF;
+	ax12_write_dma_buffer[2] = req->id;
+	ax12_write_dma_buffer[3] = 0x02 + req->argc;
+	ax12_write_dma_buffer[4] = req->instruction;
+	for( i = 0; i < req->argc ; i++)
+	{
+		ax12_write_dma_buffer[5+i] = req->arg[i];
+	}
+	ax12_write_dma_buffer[write_size-1] = ax12_checksum(ax12_write_dma_buffer, write_size);
+
+	if(req->id != 0xFE)
+	{
+		if(req->instruction != AX12_INSTRUCTION_READ_DATA)
+		{
+			read_size += 6;
+		}
+		else
+		{
+			read_size += 6 + req->arg[1];
+		}
+	}
+
+	usart_set_read_dma_size(UART4_HALF_DUPLEX, read_size);
+	usart_send_dma_buffer(UART4_HALF_DUPLEX, write_size);
+
+	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
+	if( res )
+	{
+		// TODO code erreur
+		//setLed(res);
+		goto end;
+	}
+
+	// verification des données envoyées
+	for(i = 0; i< write_size ; i++)
+	{
+		if( ax12_write_dma_buffer[i] != ax12_read_dma_buffer[i] )
+		{
+			// erreur, on n'a pas lus ce qui a été envoyé
+			res = ERR_AX12_SEND_CHECK;
+			setLed(ERR_AX12_SEND_CHECK);
+			goto end;
+		}
+	}
+#if 0
+	// pas de broadcast (et status des ax12 à 2) => réponse attendue
+	if(req->id != 0xFE)
+	{
+		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req.id || ax12_buffer[3] != size - 4)
+		{
+			// erreur protocole
+			res = -1;
+			goto end;
+		}
+
+		if( ax12_buffer[size-1] != ax12_checksum(ax12_buffer, size))
+		{
+			// erreur checksum
+			res = -1;
+			goto end;
+		}
+		else
+		{
+			// traitement du message reçu
+			if(ax12_buffer[4])
+			{
+				// TODO erreur ax12
 			}
-			ax12_buffer[size-1] = ax12_checksum(ax12_buffer, size);
-			usart_write(ax12_buffer, size);
-
-			// pas de broadcast (et status des ax12 à 2) => réponse attendue
-			if(req.id != 0xFE)
+			if(size == 7)
 			{
-				// TODO, il y a le message envoye a depiler et verifier
-				i = 0;
-				if(req.instruction != AX12_INSTRUCTION_READ_DATA)
-				{
-					size = 6;
-				}
-				else
-				{
-					size = 6 + req.arg[1];
-				}
-
-				// TODO gérer le timeout
-				portTickType wake_time = systick_get_time();
-				do
-				{
-					wake_time += 72000;
-					vTaskDelayUntil(wake_time);
-					i += usart_read(ax12_buffer, size);
-				}while(i != size);
-
-				if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req.id || ax12_buffer[3] != size - 4)
-				{
-					// TODO erreur protocole
-				}
-
-				if( ax12_buffer[size-1] != ax12_checksum(ax12_buffer, size))
-				{
-					// TODO erreur checksum
-				}
-				else
-				{
-					// traitement du message reçu
-					if(ax12_buffer[4])
-					{
-						// TODO erreur ax12
-					}
-					if(size == 7)
-					{
-						req.rep->arg[0] = ax12_buffer[5];
-						req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-						vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
-					}
-					else if(size == 8)
-					{
-						req.rep->arg[0] = ax12_buffer[5];
-						req.rep->arg[1] = ax12_buffer[6];
-						req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-						vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
-					}
-				}
+				req.rep->arg[0] = ax12_buffer[5];
+				req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+				vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+			}
+			else if(size == 8)
+			{
+				req.rep->arg[0] = ax12_buffer[5];
+				req.rep->arg[1] = ax12_buffer[6];
+				req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+				vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
 			}
 		}
 	}
+#endif
+end:
+	return res;
 }
 
 void ax12_ping(uint8_t id)
@@ -170,7 +221,7 @@ uint8_t ax12_read8(uint8_t id, uint8_t offset)
 
 	do
 	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
 		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
 	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
 
@@ -194,7 +245,7 @@ uint16_t ax12_read16(uint8_t id, uint8_t offset)
 
 	do
 	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE);
+		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
 		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
 	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
 
@@ -292,6 +343,11 @@ void ax12_set_id(uint8_t old_id, uint8_t id)
 
 void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
 {
+	if( vTaskGetEvent() & EVENT_END )
+	{
+		torque_limit = 0x00;
+	}
+
 	ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 

@@ -7,6 +7,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "tim.h"
+#include "can.h"
 #include "usart.h"
 #include "Model.h"
 
@@ -36,6 +37,7 @@ public:
 	Tim tim7;
 	Adc adc1;
 	Adc adc2;
+	Can can1;
 	Usart USART3;
 	Model *model;
 };

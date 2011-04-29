@@ -36,6 +36,12 @@ SECTIONS
 		*(SORT(.initcall.init.*))
 		__initcall_end = .;
 
+		/* tableau (trié) des fonctions d'exit */
+		__exitcall_start = .;
+		*(.exitcall.exit)
+		*(SORT(.exitcall.exit.*))
+		__exitcall_end = .;
+
 		*(.init)
 		*(.rodata*)
 		*(.fini)

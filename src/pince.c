@@ -10,8 +10,8 @@ void pince_configure()
 	ax12_set_moving_speed(PINCE_AX12_RIGHT, 0x3ff);
 	ax12_set_moving_speed(PINCE_AX12_LEFT, 0x3ff);
 
-	ax12_set_torque_limit(PINCE_AX12_RIGHT, 0x3ff);
-	ax12_set_torque_limit(PINCE_AX12_LEFT, 0x3ff);
+	ax12_set_torque_limit(PINCE_AX12_RIGHT, 0x1ff);
+	ax12_set_torque_limit(PINCE_AX12_LEFT, 0x1ff);
 
 	ax12_set_torque_enable(PINCE_AX12_RIGHT, 1);
 	ax12_set_torque_enable(PINCE_AX12_LEFT, 1);
@@ -19,12 +19,12 @@ void pince_configure()
 
 void pince_open()
 {
-	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x155);
+	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
 }
 
 void pince_close()
 {
-	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x155);
-	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
+	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x295);
+	ax12_set_goal_position(PINCE_AX12_LEFT, 0x160);
 }

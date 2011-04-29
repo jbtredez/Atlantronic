@@ -90,7 +90,7 @@ int64_t systick_get_time()
 {
 	int64_t t;
 	portENTER_CRITICAL();
-	t = systick_time + systick_last_load_used - systick_time_start_match - SysTick->VAL;
+	t = systick_time + systick_last_load_used - SysTick->VAL;
 	portEXIT_CRITICAL();
 
 	return t;
@@ -100,7 +100,7 @@ int64_t systick_get_match_time()
 {
 	int64_t t;
 	portENTER_CRITICAL();
-	t = systick_time + systick_last_load_used - SysTick->VAL;
+	t = systick_time + systick_last_load_used - systick_time_start_match - SysTick->VAL;
 	portEXIT_CRITICAL();
 
 	return t;
@@ -115,3 +115,4 @@ void systick_start_match()
 	}
 	portEXIT_CRITICAL();
 }
+

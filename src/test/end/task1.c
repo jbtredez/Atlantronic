@@ -34,7 +34,7 @@ static void task1_task(void* arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO);
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	while(1)
 	{

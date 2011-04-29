@@ -21,8 +21,28 @@
 #define ERR_INIT_CONTROL        0x20b
 #define ERR_INIT_TEST           0x20c
 #define ERR_INIT_END            0x20d
+#define ERR_INIT_HOKUYO         0x219
 
-#define ERR_USART_READ_OVERFLOW         0x20e
-#define ERR_USART_WRITE_OVERFLOW        0x20f
+#define ERR_USART3_READ_SR_FE           0x20e
+#define ERR_USART3_READ_SR_NE           0x20f
+#define ERR_USART3_READ_SR_ORE          0x210
+#define ERR_UART4_READ_SR_FE            0x211
+#define ERR_UART4_READ_SR_NE            0x212
+#define ERR_UART4_READ_SR_ORE           0x213
+
+#define ERR_USART_TIMEOUT               0x214
+#define ERR_USART_UNKNOWN_DEVICE        0x215
+#define ERR_USART_UNKNOWN_FREQUENCY     0x216
+
+#define ERR_AX12_SEND_CHECK             0x217
+
+#define ERR_CAN_FILTER_LIST_FULL        0x218
+
+#define ERR_HOKUYO_DISCONNECTED         0x219
+#define ERR_HOKUYO_CHECK_CMD            0x220
+#define ERR_HOKUYO_UNKNOWN_STATUS       0x221
+#define ERR_HOKUYO_CHECKSUM             0x222
+#define ERR_HOKUYO_BAUD_RATE            0x223
+#define ERR_HOKUYO_LASER_MALFUNCTION    0x224
 
 #endif

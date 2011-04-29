@@ -9,6 +9,7 @@
 #include "location/location.h"
 #include "avoidance/evitement.h"
 #include "avoidance/macro_fonction.h"
+#include "pince.h"
 
 //! @todo réglage au pif
 #define STRATEGY_TEST_CONTROL_STACK_SIZE       100
@@ -42,6 +43,18 @@ static void strategy_test_control_task()
 		location_set_position(-1410.0f, -850.0f, 0.0f);
 	}
 
+	pince_configure();
+#if 0
+	while(1)
+	{
+		pince_open();
+		vTaskDelay(72000000);
+		pince_close();
+		vTaskDelay(72000000);
+	}
+#endif
+	pince_open();
+
 	//init table + robots	
 	init_table();
 
@@ -58,14 +71,15 @@ static void strategy_test_control_task()
 		update_table(CASE_BLEU,ROBOT_ADV);
 		//update_table(CASE_ROUGE,ROBOT_ATL); inutile debug only
 	}
-	//vTaskWaitEvent(EVENT_GO);
+
+//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	//control_straight(800);
 	//control_goto(-350-350.0/2.0f, -1050+200);
 	control_straight(350);
-	vTaskWaitEvent(EVENT_CONTROL_READY);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	//control_rotate(1.57);
-	//vTaskWaitEvent(EVENT_CONTROL_READY);
+	//vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	
 	table[5+(3*COLONNE)]=OBSTACLE;
 	table[4+(1*COLONNE)]=OBSTACLE;
@@ -74,7 +88,6 @@ static void strategy_test_control_task()
 	table[3+(4*COLONNE)]=OBSTACLE;
 
 	goTo(numCase, destCase, &prbCase);
-	//control_straight(850);
 
 /*	control_straight(850-350);
 	vTaskWaitEvent(EVENT_CONTROL_READY);
