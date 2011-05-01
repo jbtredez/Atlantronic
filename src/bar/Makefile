@@ -21,6 +21,7 @@ CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-g3
 
 LDFLAGS:=-mcpu=$(MCPU)
+LDFLAGS+=-nostartfiles
 LDFLAGS+=-msoft-float
 LDFLAGS+=-mfpu=vfp
 LDFLAGS+=-mthumb
@@ -31,6 +32,8 @@ LDFLAGS+=-lm
 #LDFLAGS+=-lnosys
 LDFLAGS+=-lg 
 LDFLAGS+=-g3
+
+DEF+=__$(ARCH)__
 
 ifeq ($(DEBUG),1)
 

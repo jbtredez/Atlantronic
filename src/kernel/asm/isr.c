@@ -5,6 +5,9 @@
 #include "kernel/FreeRTOSConfig.h"
 #include "error.h"
 
+#define BAR_NUMBER       0x00
+#define FOO_NUMBER       0x03
+
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi
 static void isr_hard_fault(void); //!< interruption "hard fault"
@@ -15,7 +18,7 @@ static void isr_svc( void ) __attribute__ (( naked )); //!< interruption svc (la
 static void isr_debug_monitor(void); //!< interruption debug monitor
 static void isr_unexpected(void); //!< interruption imprévue
 static void isr_context_switch( void ) __attribute__ ((naked)); //!< changement de contexte
-
+void isr_systick(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption systick
 
 static void isr_cpu_down_safety(void); //!< tout va mal, on sauve les meubles
 void isr_pwm_reset(void) __attribute__((weak )); //!< sécurité : le module pwm met les moteurs à l'arrêt
@@ -33,8 +36,8 @@ void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< i
 void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, tx
 void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, rx0
 
-extern void isr_systick(void); //!< interruption systick (déclarée dans systick.c)
-extern int main(void); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
+static int32_t check_card_number(); //!< fonction de vérification du numéro de carte. Retourne 0 si c'est ok
+extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
 extern unsigned long __text_end__; //!< fin du segment text (flash) = debut du segment data (flash) (cf arm-elf.ld)
 extern unsigned long __data_start__; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
@@ -136,6 +139,19 @@ void (* const g_pfnVectors[])(void) =
 //  (void*)0xF108F85F // RAM boot.
 };
 
+static int32_t check_card_number()
+{
+	uint8_t num = GPIOA->IDR & 0x03;
+
+	#if defined( __foo__ )
+	return ( num == FOO_NUMBER?0:1 );
+	#elif defined( __bar__ )
+	return ( num == BAR_NUMBER?0:1 );
+	#else
+	#error unknown card
+	#endif
+}
+
 void isr_reset(void)
 {
 	unsigned long *pulSrc, *pulDest;
@@ -166,7 +182,15 @@ void isr_reset(void)
 		"        blt     zero_loop                 "
 	);
 
-	main();
+	if( check_card_number() )
+	{
+		while(1)
+		{
+			// bug : numéro de version incorrect
+		}
+	}
+
+	__main();
 }
 
 // doc utile : 0xfffffff1 : retour handler mode

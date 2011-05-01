@@ -203,6 +203,7 @@ void Robot::setNewtonUpdated()
 
 void Robot::start(const char* pipe_name, const char* prog, int gdb_port)
 {
+	cpu.gpioA.setInput(0x03);
 	cpu.start(pipe_name, prog, gdb_port);
 }
 
