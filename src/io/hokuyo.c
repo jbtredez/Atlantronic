@@ -22,6 +22,8 @@ static uint32_t hokuyo_init();
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
+static uint32_t hokuyo_scan();
+static uint16_t hokuyo_decode16(const char data1, const char data2);
 
 static int hokuyo_module_init(void)
 {
@@ -329,4 +331,14 @@ static uint32_t hokuyo_scan()
 
 end:
 	return err;	
+}
+
+static uint16_t hokuyo_decode16(const char data1, const char data2)
+{
+	uint16_t val = data1 - 0x30;
+	val <<= 6;
+	val &= ~0x3f;
+	val |= data2 - 0x30;
+
+	return val;
 }
