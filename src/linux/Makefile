@@ -1,5 +1,8 @@
 MARCH ?= core2
 
+# on tente de détecter la configuration native
+BIT ?= $(shell getconf LONG_BIT)
+
 DEF+=LINUX
 LDSCRIPT:=scripts/ld/elf_linux_$(BIT).ld
 
