@@ -374,6 +374,137 @@ int Print_Bresenham(int c1, int l1, int c2, int l2, int *oc, int *ol)
       return compteur;
 }
 */
+void test6(void)
+{
+  int pathc=0, pathl=0;
+  int tmpc, tmpl;
+  int cmp=0, cout1=0;
+  int out=0;
+  int total=0;
+  int i,j,k,l,m,n,o,p, q,r;
+//   int res;
+  int dc=6;
+  int dl=0;
+  int ac=2;
+  int al=5;
+
+  //test_init_table();
+
+  //table[5+(3*COLONNE)]=OBSTACLE;
+
+for(i=0;i<COLONNE;i++)
+{
+  for(j=0;j<LIGNE;j++)
+  {
+    for(k=0;k<COLONNE;k++)
+    {
+      for(l=0;l<LIGNE;l++)
+      {
+	
+	for(m=0;m<COLONNE;m++)
+	{
+	   for(n=0;n<LIGNE;n++)
+	   {	
+	     for(o=0;o<COLONNE;o++)
+	     {
+     	      for(p=0;p<LIGNE;p++)
+              {
+				for(q=0;q<COLONNE;q++)
+				{
+					for(r=0;r<LIGNE;r++)
+					{
+
+        	test_init_table();
+
+	        dc=i;
+	        dl=j;
+	        ac=k;
+	        al=l;
+	        cmp=0;
+	       	table[m+(n*COLONNE)]=OBSTACLE;
+			table[o+(p*COLONNE)]=OBSTACLE;
+			table[q+(r*COLONNE)]=OBSTACLE;
+
+		total++;
+
+		//int i,j ,k,l, m,n, o,p;
+			if( ((q==k) && (r==l))  || ((q==m) && (r==n))  || ((q==o) && (r==p)) || ((q==i) && (r==j)) )
+					continue;
+	    	if( ((i==k) && (j==l))  || ((i==m) && (j==n))  || ((i==o) && (j==p))  )
+					continue;
+            if(  ((l==p)&&(k==o)) || ((l==n)&&(k==m)))
+                    continue;
+			if((m==o)&&(n==p))
+					continue;
+						
+		while ( ((ac != dc) || (al != dl)) && (cmp<5) )
+		{
+		     //printf("Trajet restant : (%d,%d) => (%d,%d)\n", dc,dl, ac,al);
+		     cout1 = coutNonRecursif(dc,dl,ac,al,&pathc,&pathl);
+		     if(cout1 >= INFINI )
+		     {
+			 //printf("Infini : (%d,%d) pour (%d,%d), cout=%d\n", i,j,pathc,pathl, cout1);
+		 	cmp = 6;
+		     }
+		     else Print_Bresenham(dc,dl, pathc,pathl, &tmpc, &tmpl);
+
+		     dc = pathc;
+		     dl = pathl;
+		     cmp++;
+        
+      
+	    	   }
+		   if(cmp==5)  printf("Deadlock : (%d,%d) pour (%d,%d), cout=%d\n", i,j,pathc,pathl, cout1);
+		   if(cmp>4) 
+		   {
+				if( 
+					((i!=0)||(j!=0)||(table[0+(1*COLONNE)]&OBSTACLE!=OBSTACLE)||(table[1+(0*COLONNE)]&OBSTACLE!=OBSTACLE)) 
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==0)&&(o==0)&&(p==2)&&(q==1)&&(r==1))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==0)&&(o==1)&&(p==1)&&(q==0)&&(r==2))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==0)&&(p==0)&&(q==1)&&(r==1))
+				    && !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==0)&&(p==4)&&(q==1)&&(r==3))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==1)&&(p==1)&&(q==0)&&(r==0))
+					&& !((m==0)&&(n==2)&&(o==1)&&(p==0)&&(q==1)&&(r==1))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==1)&&(p==1)&&(q==1)&&(r==0))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==4)&&(o==0)&&(p==2)&&(q==1)&&(r==3))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==4)&&(o==1)&&(p==3)&&(q==0)&&(r==2))
+					&& !((m==0)&&(n==2)&&(o==1)&&(p==1)&&(q==2)&&(r==0))
+					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==1)&&(p==3)&&(q==0)&&(r==4))
+					&& !((m==0)&&(n==2)&&(o==2)&&(p==0)&&(q==1)&&(r==1))
+					&& !((m==1)&&(n==0)&&(o==0)&&(p==2)&&(q==1)&&(r==1))
+					&& !((m==1)&&(n==0)&&(o==1)&&(p==1)&&(q==0)&&(r==2))
+					&& !((m==1)&&(n==1)&&(o==0)&&(p==0)&&(q==0)&&(r==2))
+				  )
+				{
+					table[i+(j*COLONNE)]='D';
+					table[k+(l*COLONNE)]='A';
+					afficher_table();
+					printf("(i==%d)&&(j==%d)&&(k==%d)&&(l==%d)&&(m==%d)&&(n==%d)&&(o==%d)&&(p==%d)&&(q==%d)&&(r==%d)\n",i,j,k,l,m,n,o,p,q,r);
+					printf("out=%d\n",out);
+					if(out>15033) exit(1);
+				}
+			/*if(out==500) 
+			{
+				printf("total cas de blocage %d\n",out);
+				exit(1);
+			}*/
+			out++;
+		   }
+	      }
+	    }
+	  }	
+	  }
+	  }
+		}
+      }
+    }
+  }
+}
+
+printf("total cas de blocage %d/%d\n",out,total);
+}
+
+
 void test5()
 {
   //unsigned int bres;
@@ -477,10 +608,14 @@ for(i=0;i<COLONNE;i++)
 
 		total++;
 
-	    	if( ((i==m) && (j==n)) || ((l==n)&&(k==m)) )
-			continue;
-                if( ((i==o) && (j==p)) || ((l==p)&&(k==o)) )
-                        continue;
+		//int i,j ,k,l, m,n, o,p;
+	    	if( ((i==k) && (j==l))  || ((i==m) && (j==n))  || ((i==o) && (j==p))  )
+					continue;
+            if(  ((l==p)&&(k==o)) || ((l==n)&&(k==m)))
+                    continue;
+			if((m==o)&&(n==p))
+					continue;
+						
 		while ( ((ac != dc) || (al != dl)) && (cmp<5) )
 		{
 		     //printf("Trajet restant : (%d,%d) => (%d,%d)\n", dc,dl, ac,al);
@@ -767,6 +902,6 @@ void test1(void)
 
 int main()
 {
-  test3();	
+  test6();	
   return 0;
 }

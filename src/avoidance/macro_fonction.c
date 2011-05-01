@@ -306,6 +306,8 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
   unsigned int ret=0;
   int offset=0;
   int offset2=0;
+  int patch1=0;
+  int patch2=0;
   /*
    Soit D notre point de départ définit par Xd et Yd.
    Soit A notre point d'arrivée définit par Xa et Yd.
@@ -320,8 +322,22 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
 
 //    printf("BF dc=%d, dl=%d ac=%d, al=%d, oc=%d, ol=%d\n", dc, dl, ac, al, oc, ol);
    
-  
-   if(dc == ac) //|| ((al == ol+1)&&(oc == ac)) || ((al == ol-1)&&(oc == ac))
+	if( (((table[(oc+1)+((ol-1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (oc-1==-1))
+	|| (((table[(oc-1)+((ol+1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (oc+1==COLONNE)))
+		patch1=1;
+	if( (((table[(oc+1)+((ol+1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (oc-1==-1))
+	|| (((table[(oc-1)+((ol-1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (oc+1==COLONNE)))
+		patch2=1;
+		
+	if( (((table[(oc-1)+((ol+1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (ol-1==-1))
+	|| (((table[(oc+1)+((ol-1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (ol+1==LIGNE)))
+		patch1=1;
+	if( (((table[(oc+1)+((ol+1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (ol-1==-1))
+	|| (((table[(oc-1)+((ol-1)*COLONNE)] & OBSTACLE) == OBSTACLE) && (ol+1==LIGNE)))
+		patch2=1;
+	
+   if( (dc == ac) && (!patch1) && (!patch2) )
+		//|| ((al == ol+1)&&(oc == ac)) || ((al == ol-1)&&(oc == ac))
 		//    || ((dl == ol+1)&&(oc == dc)) || ((dl == ol+1)&&(oc == dc)))
    {
       //if( ((table[(oc-1)+(ol*COLONNE)]& OBSTACLE) != OBSTACLE) && ( oc > 0 ) ) 
@@ -365,7 +381,7 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
    }
    else
    {
-     if( dl == al) //|| ((ac == oc+1)&&(ol == al)) || ((ac == oc-1)&&(ol == al)) || ((dc == oc+1)&&(ol == dl)) || ((dc == oc+1)&&(ol == dl)))
+     if( (dl == al) && (!patch1) && (!patch2) ) //|| ((ac == oc+1)&&(ol == al)) || ((ac == oc-1)&&(ol == al)) || ((dc == oc+1)&&(ol == dl)) || ((dc == oc+1)&&(ol == dl)))
      {
 	//if( ((table[oc+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE) && (ol>0) ) 
 	if(ol>0)
@@ -410,7 +426,7 @@ unsigned int BisonFute(int dc, int dl, int ac, int al, int oc, int ol, int *trib
      else
      {
 
-      if( (((dl - al) > 0) && ((dc - ac) > 0)) ||  (((dl - al) < 0) && ((dc - ac) < 0)) )
+      if( (((dl - al) > 0) && ((dc - ac) > 0)) ||  (((dl - al) < 0) && ((dc - ac) < 0)) || (patch1) )
       {
 
 	//if (((table[(oc+1)+((ol-1)*COLONNE)]& OBSTACLE) != OBSTACLE)&&(oc<(COLONNE-1))&&(ol>0) )
