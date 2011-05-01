@@ -7,10 +7,10 @@
 # fonctionnement :
 #   - recherche tout les fichiers build.mk dans les sous dossiers
 #   - ces fichiers indiquent les programmes à compiler et comment les compiler :
-#       - on suppose qu'on veut compiler le programme foo
-#       - BIN += foo
-#       - obj-foo += foo.o bar.o foo2.o
-#       - lib-foo += -lncurses
+#       - on suppose qu'on veut compiler le programme homologation de la carte foo
+#       - bin-foo += homologation
+#       - obj-foo-homologation += x.o y.o z.o
+#       - lib-foo-homologation += -lncurses
 
 # dossiers
 src := src
@@ -21,17 +21,23 @@ doc := doc
 # ajout de la configuration perso si elle existe
 -include .cfg
 
-INCLUDES:=-I. -Iinclude -Iinclude/rtos
-
-ARCH ?= arm_cm3
+INCLUDES:=-I. -Iinclude
 
 DEBUG ?= 1
 
-# on tente de détecter la configuration native
-BIT ?= $(shell getconf LONG_BIT)
+ifeq ($(MAKECMDGOALS),foo)
+ARCH=foo
+endif
 
-SIMU:=0
-include src/arch/$(ARCH)/Makefile
+ifeq ($(MAKECMDGOALS),bar)
+ARCH=bar
+endif
+
+ifeq ($(MAKECMDGOALS),linux)
+ARCH=linux
+endif
+
+-include src/$(ARCH)/Makefile
 
 AS:=$(CROSSCOMPILE)as
 CC:=$(CROSSCOMPILE)gcc
@@ -52,33 +58,36 @@ BIN_DOC=$(SRC_DOC:.dot=.png)
 $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 
 $(obj)/$(ARCH)/%.o: $(src)/%.c
-	@echo [CC] $<
+	@echo [CC] $@
 	@mkdir -p `dirname $@`
 	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
-	@echo [CXX] $<
+	@echo [CXX] $@
 	@mkdir -p `dirname $@`
 	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
-	@echo [AS] $<
+	@echo [AS] $@
 	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
 # cible par defaut :
+ifneq ($(ARCH),)
+$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
+
+.PHONY: $(ARCH)
+endif
+
 all:
-	@+make ARCH=linux all-linux
-	@+make ARCH=arm_cm3 all-arm_cm3
+	@+make --no-print-directory ARCH=foo
+	@+make --no-print-directory ARCH=bar
+	@+make --no-print-directory ARCH=linux
 
 .PHONY: all
 
-all-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(BIN-$(ARCH)))
-
-.PHONY: all-$(ARCH)
-
-$(foreach var,$(BIN-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(var)) )))
-$(foreach var,$(BIN-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
+$(foreach var,$(bin-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var)) )))
+$(foreach var,$(bin-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(var):.o=.d))))
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(DEP)
@@ -87,7 +96,7 @@ endif
 $(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
+	@$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
 	@$(OBJCOPY) --only-keep-debug $@ $@.debug
 	@$(OBJCOPY) --add-gnu-debuglink $@.debug $@
 	@$(STRIP) $@

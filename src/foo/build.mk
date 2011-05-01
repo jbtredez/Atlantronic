@@ -1,0 +1,26 @@
+obj-foo-homologation += kernel/main.o
+obj-foo-homologation += kernel/asm/isr.o
+obj-foo-homologation += kernel/tasks.o
+obj-foo-homologation += kernel/list.o
+obj-foo-homologation += kernel/queue.o
+obj-foo-homologation += kernel/port.o
+obj-foo-homologation += kernel/systick.o
+obj-foo-homologation += kernel/heap_3.o
+obj-foo-homologation += kernel/syscalls.o
+obj-foo-homologation += kernel/rcc.o
+obj-foo-homologation += kernel/driver/can.o
+obj-foo-homologation += kernel/driver/usart.o
+obj-foo-homologation += kernel/end.o
+obj-foo-homologation += foo/gpio.o
+obj-foo-homologation += kernel/trapeze.o
+obj-foo-homologation += foo/control/control.o
+obj-foo-homologation += foo/control/pid.o
+obj-foo-homologation += foo/pwm.o
+obj-foo-homologation += foo/location/odometry.o
+obj-foo-homologation += foo/location/location.o
+obj-foo-homologation += foo/location/beacon.o
+obj-foo-homologation += foo/encoders.o
+obj-foo-homologation += foo/ax12.o
+obj-foo-homologation += foo/pince.o
+bin-foo += homologation
+
