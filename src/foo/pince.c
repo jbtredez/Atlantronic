@@ -1,5 +1,5 @@
 #include "pince.h"
-#include "io/ax12.h"
+#include "ax12.h"
 
 #define PINCE_AX12_RIGHT      1
 #define PINCE_AX12_LEFT       2

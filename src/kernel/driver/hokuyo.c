@@ -3,7 +3,7 @@
 //! @author Jean-Baptiste Trédez
 
 #include "io/hokuyo.h"
-#include "module.h"
+#include "kernel/module.h"
 #include "io/usart.h"
 #include "io/rcc.h"
 

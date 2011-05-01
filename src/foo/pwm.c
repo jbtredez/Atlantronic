@@ -2,12 +2,12 @@
 //! @brief PWM
 //! @author Jean-Baptiste Trédez
 
-#include "io/pwm.h"
-#include "module.h"
+#include "pwm.h"
+#include "kernel/module.h"
 #include "init.h"
-#include "cpu/cpu.h"
-#include "io/rcc.h"
-#include "robot_parameters.h"
+#include "kernel/cpu/cpu.h"
+#include "kernel/rcc.h"
+#include "kernel/robot_parameters.h"
 
 void isr_pwm_reset(void);
 

@@ -7,7 +7,7 @@
 
 #include "log.h"
 #include <stdint.h>
-#include "cpu/cpu.h"
+#include "kernel/cpu/cpu.h"
 
 class CpuIoInterface
 {

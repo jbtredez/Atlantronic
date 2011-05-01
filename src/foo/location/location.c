@@ -3,8 +3,8 @@
 //! @author Jean-Baptiste Trédez
 
 #include "location/location.h"
-#include "module.h"
-#include "portmacro.h"
+#include "kernel/module.h"
+#include "kernel/portmacro.h"
 #include <math.h>
 
 static float location_v_distance;   //!< en "m / unité de temps"

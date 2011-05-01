@@ -5,8 +5,8 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include "io/systick.h"
-#include "portmacro.h"
+#include "kernel/systick.h"
+#include "kernel/portmacro.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>

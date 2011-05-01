@@ -2,9 +2,9 @@
 //! @brief Programme principal
 //! @author Jean-Baptiste Trédez
 
-#include "module.h"
-#include "log.h"
-#include "io/gpio.h"
+#include "kernel/module.h"
+#include "kernel/log.h"
+#include "gpio.h"
 
 void init_panic(uint8_t init)
 {

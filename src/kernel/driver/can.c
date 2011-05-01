@@ -1,6 +1,6 @@
-#include "io/can.h"
-#include "module.h"
-#include "io/rcc.h"
+#include "kernel/driver/can.h"
+#include "kernel/module.h"
+#include "kernel/rcc.h"
 
 // TODO : ecriture multiple
 void can_write(struct can_msg *msg);

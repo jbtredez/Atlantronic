@@ -2,10 +2,10 @@
 #define CPU_H
 
 #define STM32F10X_CL
-#include "cpu/stm32f10x.h"
+#include "kernel/cpu/stm32f10x.h"
 
 #ifndef LINUX
-#include "asm/asm_base_func.h"
+#include "kernel/asm/asm_base_func.h"
 #endif
 
 #ifdef LINUX

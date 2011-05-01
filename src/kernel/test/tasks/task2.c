@@ -2,11 +2,11 @@
 //! @brief Task waiting during the math, will send halt event.
 //! @author Jean-Baptiste Trédez
 
-#include "module.h"
+#include "kernel/module.h"
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 #include "event.h"

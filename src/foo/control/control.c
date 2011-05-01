@@ -3,18 +3,18 @@
 //! @author Jean-Baptiste Trédez
 
 #include <math.h>
-#include "FreeRTOS.h"
-#include "task.h"
-#include "module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/module.h"
 #include "control/control.h"
 #include "priority.h"
-#include "log.h"
+#include "kernel/log.h"
 #include "location/location.h"
-#include "vect_pos.h"
-#include "io/pwm.h"
+#include "kernel/vect_pos.h"
+#include "pwm.h"
 #include "control/pid.h"
-#include "trapeze.h"
-#include "robot_parameters.h"
+#include "kernel/trapeze.h"
+#include "kernel/robot_parameters.h"
 #include "event.h"
 
 //! @todo réglage au pif

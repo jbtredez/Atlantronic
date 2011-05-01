@@ -2,9 +2,8 @@
 //! @brief isr
 //! @author Jean-Baptiste Trédez
 
-#include "rtos/FreeRTOSConfig.h"
+#include "kernel/FreeRTOSConfig.h"
 #include "error.h"
-#include "io/gpio.h"
 
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi

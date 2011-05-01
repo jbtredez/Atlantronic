@@ -1,7 +1,7 @@
 #ifndef ERROR_H
 #define ERROR_H
 
-#include "io/gpio.h"
+#include "gpio.h"
 
 
 // code 0x00 réservé : fin du match

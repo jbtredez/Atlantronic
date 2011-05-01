@@ -3,9 +3,9 @@
 //! @author Jean-Baptiste Trédez
 
 #include "location/beacon.h"
-#include "module.h"
-#include "robot_parameters.h"
-#include "portmacro.h"
+#include "kernel/module.h"
+#include "kernel/robot_parameters.h"
+#include "kernel/portmacro.h"
 
 static struct vect_pos beacon_pos;
 

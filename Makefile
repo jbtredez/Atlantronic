@@ -21,7 +21,7 @@ doc := doc
 # ajout de la configuration perso si elle existe
 -include .cfg
 
-INCLUDES:=-I. -Iinclude -Iinclude/rtos
+INCLUDES:=-I. -Iinclude
 
 DEBUG ?= 1
 

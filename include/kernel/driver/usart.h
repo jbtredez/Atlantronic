@@ -5,9 +5,9 @@
 //! @brief Usart
 //! @author Jean-Baptiste Trédez
 
-#include "cpu/cpu.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "kernel/cpu/cpu.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 
 enum usart_id
 {

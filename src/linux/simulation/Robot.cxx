@@ -1,5 +1,5 @@
 #include "Robot.h"
-#include "robot_parameters.h"
+#include "kernel/robot_parameters.h"
 #include <memory.h>
 
 //! Multiplicateur de la fréquence du noyau

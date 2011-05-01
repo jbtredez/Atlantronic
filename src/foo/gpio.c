@@ -1,9 +1,9 @@
-#include "io/gpio.h"
-#include "module.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "gpio.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 #include "event.h"
-#include "io/systick.h"
+#include "kernel/systick.h"
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;

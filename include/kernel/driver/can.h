@@ -5,7 +5,7 @@
 //! @brief CAN
 //! @author Jean-Baptiste Trédez
 
-#include "cpu/cpu.h"
+#include "kernel/cpu/cpu.h"
 
 enum can_format
 {

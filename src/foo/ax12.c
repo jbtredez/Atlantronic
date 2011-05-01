@@ -2,11 +2,11 @@
 //! @brief Gestion AX12
 //! @author Jean-Baptiste Trédez
 
-#include "io/ax12.h"
-#include "module.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
+#include "ax12.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/queue.h"
 #include "event.h"
 
 #define AX12_INSTRUCTION_READ_COMPLETE    0x00

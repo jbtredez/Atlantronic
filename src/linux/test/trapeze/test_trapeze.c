@@ -2,7 +2,7 @@
 //! @brief Test functions of trapeze.c
 //! @author Jean-Baptiste Trédez
 
-#include "trapeze.h"
+#include "kernel/trapeze.h"
 #include <stdio.h>
 
 #define HZ   200

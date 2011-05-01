@@ -2,11 +2,11 @@
 //! @brief Tests : test des led
 //! @author Jean-Baptiste Trédez
 
-#include "module.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 #include "math.h"
-#include "io/gpio.h"
+#include "gpio.h"
 
 #define TASK1_STACK_SIZE          100
 #define PRIORITY_TEST_TASK1        1

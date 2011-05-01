@@ -7,7 +7,6 @@
 
 #include "log.h"
 #include <stdint.h>
-#include "cpu/cpu.h"
 #include "cpu_io_interface.h"
 
 class Gpio : public GPIO_TypeDef, public CpuIoInterface

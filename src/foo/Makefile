@@ -42,5 +42,5 @@ endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
 
-INCLUDES+=-Isrc/rtos/portable/GCC/ARM_CM3
+INCLUDES+=-Iinclude/foo
 

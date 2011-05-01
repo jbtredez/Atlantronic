@@ -5,7 +5,7 @@
 //! @brief Gpio mapping
 //! @author Jean-Baptiste Trédez
 
-#include "cpu/cpu.h"
+#include "kernel/cpu/cpu.h"
 
 #define COLOR_RED                 0
 #define COLOR_BLUE                1

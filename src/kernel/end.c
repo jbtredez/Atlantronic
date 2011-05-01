@@ -2,9 +2,9 @@
 //! @brief Task waiting during the math, will send halt event.
 //! @author Jean-Baptiste Trédez
 
-#include "module.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 #include "event.h"
 
 #define END_STACK_SIZE           50

@@ -1,6 +1,6 @@
-#include "module.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 
 #define ADC_STACK_SIZE       50
 

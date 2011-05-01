@@ -11,9 +11,9 @@
 #ifndef TASK_H
 #define TASK_H
 
-#include "io/systick.h"
-#include "portable.h"
-#include "list.h"
+#include "kernel/systick.h"
+#include "kernel/portable.h"
+#include "kernel/list.h"
 #include <stdint.h>
 
 #ifdef __cplusplus

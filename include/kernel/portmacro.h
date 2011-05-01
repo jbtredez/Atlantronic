@@ -2,7 +2,7 @@
 #define PORTMACRO_H
 
 #include <stdint.h>
-#include "io/systick.h"
+#include "kernel/systick.h"
 
 /* Type definitions. */
 #define portCHAR		char

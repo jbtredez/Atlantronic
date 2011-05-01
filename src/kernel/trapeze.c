@@ -2,7 +2,7 @@
 //! @brief Trapezoidal speed
 //! @author Jean-Baptiste Trédez
 
-#include "trapeze.h"
+#include "kernel/trapeze.h"
 #include <math.h>
 
 void trapeze_apply(struct trapeze* t, float distance)

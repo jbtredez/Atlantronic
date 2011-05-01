@@ -1,9 +1,9 @@
-#include "io/usart.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "io/rcc.h"
+#include "kernel/driver/usart.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/rcc.h"
 #include "error.h"
-#include "io/gpio.h"
+#include "gpio.h"
 #include "event.h"
 
 #define USART_MAX_DEVICE      2

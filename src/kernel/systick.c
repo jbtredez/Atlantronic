@@ -2,10 +2,10 @@
 //! @brief Systick module
 //! @author Jean-Baptiste Trédez
 
-#include "io/systick.h"
-#include "module.h"
-#include "rtos/FreeRTOSConfig.h"
-#include "portmacro.h"
+#include "kernel/systick.h"
+#include "kernel/module.h"
+#include "kernel/FreeRTOSConfig.h"
+#include "kernel/portmacro.h"
 
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_SYSPRI2			( ( volatile unsigned long *) 0xe000ed20 )

@@ -5,7 +5,7 @@
 //! @brief Gestion AX12
 //! @author Jean-Baptiste Trédez
 
-#include "io/usart.h"
+#include "kernel/driver/usart.h"
 
 void ax12_ping(uint8_t id);
 void ax12_action(uint8_t id);

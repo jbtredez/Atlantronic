@@ -2,10 +2,10 @@
 //! @brief Encoders
 //! @author Jean-Baptiste Trédez
 
-#include "io/encoders.h"
-#include "module.h"
+#include "encoders.h"
+#include "kernel/module.h"
 #include "init.h"
-#include "cpu/cpu.h"
+#include "kernel/cpu/cpu.h"
 
 static int encoders_module_init()
 {

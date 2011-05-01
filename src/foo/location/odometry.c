@@ -3,10 +3,10 @@
 //! @author Jean-Baptiste Trédez
 
 #include "location/odometry.h"
-#include "io/encoders.h"
-#include "module.h"
-#include "robot_parameters.h"
-#include "portmacro.h"
+#include "encoders.h"
+#include "kernel/module.h"
+#include "kernel/robot_parameters.h"
+#include "kernel/portmacro.h"
 
 static uint16_t encoders_right;
 static uint16_t encoders_left;

@@ -2,9 +2,9 @@
 //! @brief Gestion Reset et Clock
 //! @author Jean-Baptiste Trédez
 
-#include "io/rcc.h"
-#include "module.h"
-#include "cpu/cpu.h"
+#include "kernel/rcc.h"
+#include "kernel/module.h"
+#include "kernel/cpu/cpu.h"
 
 static int rcc_module_init()
 {

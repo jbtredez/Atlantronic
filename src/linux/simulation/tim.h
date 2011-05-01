@@ -7,7 +7,6 @@
 
 #include "log.h"
 #include <stdint.h>
-#include "cpu/cpu.h"
 #include "cpu_io_interface.h"
 
 class Tim : public TIM_TypeDef, public CpuIoInterface
