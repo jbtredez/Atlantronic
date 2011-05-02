@@ -108,7 +108,7 @@ static int control_module_init()
 	control_pid_av.kp = 40;
 	control_pid_av.ki = 120;
 	control_pid_av.kd = 0;
-	control_pid_av.max_out = 1800;
+	control_pid_av.max_out = PWM_ARR;
 
 	// tests vite fait Tresgor :
 	// kp = 40
@@ -121,7 +121,7 @@ static int control_module_init()
 	control_pid_rot.kp = 1000000;
 	control_pid_rot.ki = 50000;
 	control_pid_rot.kd = 0;
-	control_pid_rot.max_out = 1800;
+	control_pid_rot.max_out = PWM_ARR;
 	/////
 
 	control_state = CONTROL_READY_FREE;
@@ -266,14 +266,14 @@ static void control_task(void* arg)
 			}
 
 			// TODO saturer autrement
-			if(u1 > 1800)
+			if(u1 > PWM_ARR)
 			{
-				u1 = 1800;
+				u1 = PWM_ARR;
 			}
 
-			if(u2 > 1800)
+			if(u2 > PWM_ARR)
 			{
-				u2 = 1800;
+				u2 = PWM_ARR;
 			}
 			pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 			pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
