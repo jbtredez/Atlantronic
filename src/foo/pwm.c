@@ -33,20 +33,8 @@ static int pwm_module_init()
 	// activation clock sur le timer 1
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
 
-	#if( RCC_PCLK2 != 72000000)
-	#error TIM1->PSC à recalculer
-	#endif
-	// PSC = (RCC_PCLK2 / TIM1CLK) - 1 si RCC_PCLK2 == HCLK
-	// PSC = (RCC_PCLK2 * 2 / TIM1CLK) - 1 sinon
-
-	// But :
-	//  - profiter un max de la plage des 16bits pour la PWM
-	//  - PWM a environ 40 kHz
-	// pour PSC = 0, TIM1CLK = 72 MHz
-	// donc ARR = TIM1CLK / 40000 - 1 = 1799 pour une PWM à 40 kHz. On a une resolution de 1800 sur une periode
-
-	TIM1->PSC = 0x00;
-	TIM1->ARR = 1799;
+	TIM1->PSC = PWM_PSC;
+	TIM1->ARR = PWM_ARR;
 
 	TIM1->RCR =0x00;
 	TIM1->CR1 = 0x00;

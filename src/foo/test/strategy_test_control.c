@@ -42,7 +42,7 @@ static void strategy_test_control_task()
 		location_set_position(-1410.0f, -850.0f, 0.0f);
 	}
 
-	pince_configure();
+//	pince_configure();
 #if 0
 	while(1)
 	{
@@ -52,7 +52,7 @@ static void strategy_test_control_task()
 		vTaskDelay(72000000);
 	}
 #endif
-	pince_open();
+//	pince_open();
 
 	//init table + robots	
 	init_table();
