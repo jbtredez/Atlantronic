@@ -16,7 +16,7 @@ static int gpio_module_init(void)
 	// LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
-	// PE0 sortie push-pull, 2MHz
+	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
 
 	// activation GPIOD
