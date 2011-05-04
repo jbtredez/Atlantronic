@@ -6,6 +6,7 @@
 #include "kernel/module.h"
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
+#include "kernel/hokuyo_tools.h"
 
 #define HOKUYO_STACK_SIZE       100
 
@@ -15,7 +16,12 @@ const char* hokuyo_speed_cmd = "SS750000\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
-static uint8_t hokuyo_read_dma_buffer[1370];
+//!< taille de la réponse maxi avec hokuyo_scan_all :
+//!< 682 points => 1364 data
+//!< 1364 data = 21 * 64 + 20 data
+//!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
+static uint8_t hokuyo_read_dma_buffer[1432];
+static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725
 
 static void hokuyo_task(void *arg);
 static uint32_t hokuyo_init();
@@ -23,7 +29,6 @@ static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
 static uint32_t hokuyo_scan();
-static uint16_t hokuyo_decode16(const char data1, const char data2);
 
 static int hokuyo_module_init(void)
 {
@@ -160,15 +165,15 @@ static uint32_t hokuyo_check_sum(uint32_t start, uint32_t end)
 	{
 		sum += hokuyo_read_dma_buffer[start];
 	}
-	
+
 	sum &= 0x3F;
 	sum += 0x30;
-	
+
 	if(sum != hokuyo_read_dma_buffer[end])
 	{
 		err = ERR_HOKUYO_CHECKSUM;
 	}
-	
+
 	return err;
 }
 
@@ -331,14 +336,4 @@ static uint32_t hokuyo_scan()
 
 end:
 	return err;	
-}
-
-static uint16_t hokuyo_decode16(const char data1, const char data2)
-{
-	uint16_t val = data1 - 0x30;
-	val <<= 6;
-	val &= ~0x3f;
-	val |= data2 - 0x30;
-
-	return val;
 }
