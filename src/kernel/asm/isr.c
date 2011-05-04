@@ -3,7 +3,7 @@
 //! @author Jean-Baptiste Trédez
 
 #include "kernel/FreeRTOSConfig.h"
-#include "error.h"
+#include "kernel/error.h"
 
 #define BAR_NUMBER       0x00
 #define FOO_NUMBER       0x03

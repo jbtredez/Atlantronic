@@ -14,7 +14,7 @@
 //!
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init)
 
-#include "error.h"
+#include "kernel/error.h"
 
 // init frequence cpu, bus internes...
 #define INIT_RCC                      "00"

@@ -4,7 +4,6 @@
 
 #include "encoders.h"
 #include "kernel/module.h"
-#include "init.h"
 #include "kernel/cpu/cpu.h"
 
 static int encoders_module_init()

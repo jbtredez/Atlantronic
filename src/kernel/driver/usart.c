@@ -2,7 +2,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/rcc.h"
-#include "error.h"
+#include "kernel/error.h"
 #include "gpio.h"
 #include "event.h"
 

@@ -5,14 +5,8 @@
 #include "event.h"
 #include "kernel/systick.h"
 
-volatile uint32_t color;
-volatile uint8_t gpio_go;
-
 static int gpio_module_init(void)
 {
-	color = COLOR_BLUE;
-	gpio_go = 0;
-
 	// LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
@@ -69,27 +63,12 @@ void isr_exit9_5(void)
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
-		gpio_go = 1;
-		setLed(0x23F);
-		systick_start_match();
-		vTaskSetEventFromISR(EVENT_GO);
+		// TODO action btn1
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{
 		EXTI->PR |= EXTI_PR_PR9;
-		if(gpio_go == 0)
-		{
-			if(color == COLOR_BLUE)
-			{
-				color = COLOR_RED;
-				setLed(0x06);
-			}
-			else
-			{
-				color = COLOR_BLUE;
-				setLed(0x30);
-			}
-		}
+		// TODO action btn2
 	}
 }
 

@@ -1,5 +1,4 @@
 #include "log.h"
-#include "kernel/module.h"
 
 //! @file log.cxx
 //! @brief Contient l'initialisation temporelle des log
