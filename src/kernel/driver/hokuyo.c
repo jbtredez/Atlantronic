@@ -2,10 +2,10 @@
 //! @brief Hokuyo module
 //! @author Jean-Baptiste Trédez
 
-#include "io/hokuyo.h"
+#include "kernel/driver/hokuyo.h"
 #include "kernel/module.h"
-#include "io/usart.h"
-#include "io/rcc.h"
+#include "kernel/driver/usart.h"
+#include "kernel/rcc.h"
 
 #define HOKUYO_STACK_SIZE       100
 

@@ -1,5 +1,4 @@
 CROSSCOMPILE:=arm-elf-
-#CROSSCOMPILE:=arm-none-eabi-
 
 MCPU:=cortex-m3
 MTUNE:=cortex-m3
