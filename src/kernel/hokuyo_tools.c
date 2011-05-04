@@ -87,3 +87,28 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 end:
 	return res;
 }
+
+void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y)
+{
+	float alpha = -(135 / 180.0f - 44 / 512.0f) * M_PI;
+	const float pas = M_PI / 512.0f;
+
+	for( ; size--; )
+	{
+		if(*distance > 19)
+		{
+			*x = *distance * cos(alpha);
+			*y = *distance * sin(alpha);
+		}
+		else
+		{
+			*x = 0;
+			*y = 0;
+		}
+
+		distance++;
+		x++;
+		y++;
+		alpha += pas;
+	}
+}
