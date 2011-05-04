@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	
 	for(i=0; i< 682; i++)
 	{
-		fprintf(f, "%f\t%f\n", hokuyo_x[i], hokuyo_y[i]);
+		fprintf(f, "%i\t%f\t%f\n", hokuyo_distance[i], hokuyo_x[i], hokuyo_y[i]);
 	}
 
 	fclose(f);
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 	fprintf(p, "set term x11\n");
 	fprintf(p, "set mouse\n");
 	fprintf(p, "set xlabel \"y\"\n");
-	fprintf(p, "plot \"log/test_hokuyo.txt\" using 2:1 t \"hokuyo\" with lines\n");
+	fprintf(p, "plot \"log/test_hokuyo.txt\" using 3:2 t \"hokuyo\" with lines, \"log/test_hokuyo.txt\" using 3:2 t \"hokuyo\"\n");
 	fflush(p);
 
 	// on ne ferme pas le programme tout de suite pour permettre de zoomer par exemple
