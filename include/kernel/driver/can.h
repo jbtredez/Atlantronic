@@ -6,6 +6,9 @@
 //! @author Jean-Baptiste Trédez
 
 #include "kernel/cpu/cpu.h"
+#include "kernel/portmacro.h"
+
+#define CAN_ID_US         0x10
 
 enum can_format
 {
@@ -35,5 +38,7 @@ struct can_msg
 	unsigned char format; //!< format (standard ou étendu)
 	unsigned char type; //!< type
 };
+
+int can_write(struct can_msg *msg, portTickType timeout);
 
 #endif

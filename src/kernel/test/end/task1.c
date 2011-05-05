@@ -5,9 +5,9 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "math.h"
+#include <math.h>
 #include "gpio.h"
-#include "event.h"
+#include "kernel/event.h"
 
 #define TASK1_STACK_SIZE          100
 #define PRIORITY_TEST_TASK1        1

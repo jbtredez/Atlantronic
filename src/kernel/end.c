@@ -5,7 +5,7 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "event.h"
+#include "kernel/event.h"
 
 #define END_STACK_SIZE           50
 const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;

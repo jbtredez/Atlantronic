@@ -2,7 +2,7 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "event.h"
+#include "kernel/event.h"
 #include "kernel/systick.h"
 
 static int gpio_module_init(void)

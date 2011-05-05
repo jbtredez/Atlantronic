@@ -9,7 +9,7 @@
 #include "kernel/task.h"
 
 #undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
-#include "event.h"
+#include "kernel/event.h"
 
 #define TASK2_STACK_SIZE           100
 #define PRIORITY_TEST_TASK2        1

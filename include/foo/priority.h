@@ -11,6 +11,7 @@
 #define PRIORITY_TASK_STRATEGY        2
 #define PRIORITY_TASK_HOKUYO          3
 #define PRIORITY_TASK_AX12            4
+#define PRIORITY_TASK_CAN             4
 #define PRIORITY_TASK_CONTROL         5
 #define PRIORITY_TASK_ADC             6
 #define PRIORITY_TASK_END             6

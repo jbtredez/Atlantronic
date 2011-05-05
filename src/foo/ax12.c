@@ -7,7 +7,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/queue.h"
-#include "event.h"
+#include "kernel/event.h"
 
 #define AX12_INSTRUCTION_READ_COMPLETE    0x00
 #define AX12_INSTRUCTION_PING             0x01

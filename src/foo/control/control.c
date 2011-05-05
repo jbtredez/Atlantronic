@@ -15,7 +15,7 @@
 #include "control/pid.h"
 #include "kernel/trapeze.h"
 #include "kernel/robot_parameters.h"
-#include "event.h"
+#include "kernel/event.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       150

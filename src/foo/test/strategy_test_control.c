@@ -3,7 +3,7 @@
 #include "kernel/module.h"
 #include "control/control.h"
 #include "kernel/systick.h"
-#include "event.h"
+#include "kernel/event.h"
 #include "gpio.h"
 #include "location/location.h"
 #include "pince.h"

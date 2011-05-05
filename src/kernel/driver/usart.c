@@ -4,7 +4,7 @@
 #include "kernel/rcc.h"
 #include "kernel/error.h"
 #include "gpio.h"
-#include "event.h"
+#include "kernel/event.h"
 
 #define USART_MAX_DEVICE      2
 
