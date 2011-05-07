@@ -10,7 +10,7 @@
 struct can_msg msg_debug;
 
 static void can_write_mailbox(struct can_msg *msg);
-static void can_set_filter(unsigned int id, unsigned char format);
+static uint32_t can_set_filter(unsigned int id, unsigned char format);
 static unsigned short can_filter_id;
 static void can_write_task(void *arg);
 static void can_read_task(void *arg);
@@ -24,9 +24,22 @@ static xQueueHandle can_read_queue;
 #define CAN_WRITE_QUEUE_SIZE     20
 #define CAN_READ_QUEUE_SIZE      20
 
+#define CAN_MAP_SIZE             20
+
+struct can_map
+{
+	uint32_t id;
+	enum can_format format;
+	can_callback callback;
+};
+
+static uint8_t can_map_max;
+static struct can_map can_map[CAN_MAP_SIZE];
+
 static int can_module_init(void)
 {
 	can_filter_id = 0;
+	can_map_max = 0;
 
 	// CAN_RX : PD0
 	// CAN_TX : PD1
@@ -77,9 +90,6 @@ static int can_module_init(void)
 
 	// mode self-test pour le debug
 //	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
-
-	// messages autorisés
-	can_set_filter(CAN_ID_US, CAN_STANDARD_FORMAT);
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
@@ -145,13 +155,13 @@ static void can_read_task(void *arg)
 	{
 		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
 		{
-			// TODO voir comment redistribuer les messages
-			switch( msg.id )
+			int i = 0;
+			for( i = 0 ; i < can_map_max ; i++)
 			{
-				case CAN_ID_US:
-					break;
-				default:
-					break;
+				if( can_map[i].id == msg.id && can_map[i].format == msg.format)
+				{
+					can_map[i].callback(&msg);
+				}
 			}
 		}
 	}
@@ -245,15 +255,17 @@ void can_write_mailbox(struct can_msg *msg)
 	CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
 }
 
-void can_set_filter(unsigned int id, unsigned char format)
+uint32_t can_set_filter(unsigned int id, unsigned char format)
 {
-	uint32_t msg_id     = 0;
+	uint32_t msg_id = 0;
+	uint32_t res = 0;
 
 	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
 	if (can_filter_id > 27)
 	{
 		setLed(ERR_CAN_FILTER_LIST_FULL);
-		return;
+		res = ERR_CAN_FILTER_LIST_FULL;
+		goto end;
 	}
 
 	// id du message
@@ -286,16 +298,47 @@ void can_set_filter(unsigned int id, unsigned char format)
 	CAN1->FMR &= ~CAN_FMR_FINIT;
 
 	can_filter_id ++;
+
+end:
+	return res;
 }
 
-int can_write(struct can_msg *msg, portTickType timeout)
+uint32_t can_write(struct can_msg *msg, portTickType timeout)
 {
-	int res = 0;
+	uint32_t res = 0;
 
 	if( xQueueSendToBack(can_write_queue, msg, timeout) != pdPASS)
 	{
 		res = -1;
 	}
 	
+	return res;
+}
+
+uint32_t can_register(uint32_t id, enum can_format format, can_callback function)
+{
+	uint32_t res = 0;
+
+	if( can_map_max >= CAN_MAP_SIZE)
+	{
+		res = -1;
+		goto end;
+	}
+
+	can_map[can_map_max].id = id;
+	can_map[can_map_max].format = format;
+	can_map[can_map_max].callback = function;
+
+	res = can_set_filter(id, format);
+	
+	if( res )
+	{
+		// erreur, filtre plein
+		goto end;
+	}
+	
+	can_map_max++;
+
+end:
 	return res;
 }

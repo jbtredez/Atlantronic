@@ -8,8 +8,6 @@
 #include "kernel/cpu/cpu.h"
 #include "kernel/portmacro.h"
 
-#define CAN_ID_US         0x10
-
 enum can_format
 {
 	CAN_STANDARD_FORMAT,
@@ -39,6 +37,12 @@ struct can_msg
 	unsigned char type; //!< type
 };
 
-int can_write(struct can_msg *msg, portTickType timeout);
+typedef void (*can_callback)(struct can_msg *msg);
+
+uint32_t can_write(struct can_msg *msg, portTickType timeout);
+
+//! enregistre la fonction pour qu'elle soit appellée si un message avec l'identifiant "id" au format "format" est reçu
+//! le message est démasqué sur le filtre matériel du can
+uint32_t can_register(uint32_t id, enum can_format format, can_callback function);
 
 #endif
