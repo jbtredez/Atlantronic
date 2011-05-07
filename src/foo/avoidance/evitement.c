@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "control/control.h"
-#include "event.h"
+#include "kernel/event.h"
 
 #include "avoidance/macro_fonction.h"
 
