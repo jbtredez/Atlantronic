@@ -38,6 +38,7 @@
 #define INIT_AX12                     "10"
 #define INIT_ODOMETRY                 "11"
 #define INIT_HOKUYO                   "12"
+#define INIT_CAN_US                   "12"
 #define INIT_BEACON                   "13"
 #define INIT_LOCATION                 "14"
 //#define INIT_VFS                      "02"
