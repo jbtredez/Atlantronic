@@ -7,7 +7,7 @@
 #include "kernel/event.h"
 
 //!< variable déclarée pour le debug (remplissage message, envoi... depuis gdb)
-struct can_msg msg_debug;
+struct can_msg can_msg_debug;
 
 static void can_write_mailbox(struct can_msg *msg);
 static uint32_t can_set_filter(unsigned int id, unsigned char format);
