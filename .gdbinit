@@ -1,4 +1,4 @@
-set prompt \033[01;32m(gdb) \033[0m
+#set prompt \033[01;32m(gdb) \033[0m
 
 define mri
 	monitor reset init
