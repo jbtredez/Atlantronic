@@ -1,4 +1,4 @@
-obj-linux-test_avoidance += linux/test/avoidance/main.o
+obj-linux-test_avoidance += linux/test/avoidance/test_avoidance.o
 obj-linux-test_avoidance += foo/avoidance/macro_fonction.o
 
 lib-linux-test_avoidance += -lm

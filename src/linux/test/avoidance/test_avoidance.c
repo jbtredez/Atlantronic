@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "avoidance/macro_fonction.h"
+#include "foo/avoidance/macro_fonction.h"
 
 void test_init_table(void)
 {
@@ -458,7 +458,7 @@ for(i=0;i<COLONNE;i++)
 		   if(cmp>4) 
 		   {
 				if( 
-					((i!=0)||(j!=0)||(table[0+(1*COLONNE)]&OBSTACLE!=OBSTACLE)||(table[1+(0*COLONNE)]&OBSTACLE!=OBSTACLE)) 
+					((i!=0)||(j!=0)||((table[0+(1*COLONNE)]&OBSTACLE) != OBSTACLE)||( (table[1+(0*COLONNE)]&OBSTACLE) !=OBSTACLE)) 
 					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==0)&&(o==0)&&(p==2)&&(q==1)&&(r==1))
 					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==0)&&(o==1)&&(p==1)&&(q==0)&&(r==2))
 					&& !((i==0)&&(j==1)&&(k==0)&&(l==3)&&(m==0)&&(n==2)&&(o==0)&&(p==0)&&(q==1)&&(r==1))
