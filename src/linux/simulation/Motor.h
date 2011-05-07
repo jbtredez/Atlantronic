@@ -3,7 +3,7 @@
 
 //! @file Motor.h
 //! @brief Model
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 

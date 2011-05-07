@@ -3,7 +3,7 @@
 
 //! @file pwm.h
 //! @brief PWM interface
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 #include "kernel/rcc.h"

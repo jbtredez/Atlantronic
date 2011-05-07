@@ -1,6 +1,6 @@
 //! @file end.c
 //! @brief Task waiting during the math, will send halt event.
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/module.h"
 #define MPU_WRAPPERS_INCLUDED_FROM_API_FILE

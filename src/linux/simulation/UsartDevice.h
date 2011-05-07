@@ -3,7 +3,7 @@
 
 //! @file UsartDevice.h
 //! @brief UsartDevice
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 class UsartDevice
 {

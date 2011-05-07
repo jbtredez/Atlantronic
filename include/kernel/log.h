@@ -1,6 +1,6 @@
 //! @file log.h
 //! @brief Log task
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #ifndef LOG_H
 #define LOG_H

@@ -1,6 +1,6 @@
 //! @file main.c
 //! @brief Programme principal
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/module.h"
 #include "kernel/log.h"

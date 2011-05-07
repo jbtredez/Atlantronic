@@ -3,7 +3,7 @@
 
 //! @file usart.h
 //! @brief Module Usart
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

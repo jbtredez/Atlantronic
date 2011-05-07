@@ -3,7 +3,7 @@
 
 //! @file ax12.h
 //! @brief Gestion AX12
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/driver/usart.h"
 

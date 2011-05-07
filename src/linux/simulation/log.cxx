@@ -2,7 +2,7 @@
 
 //! @file log.cxx
 //! @brief Contient l'initialisation temporelle des log
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 struct timespec debutProgramme;
 FILE* _logStdout;

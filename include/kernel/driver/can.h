@@ -3,7 +3,7 @@
 
 //! @file can.h
 //! @brief CAN
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/cpu/cpu.h"
 #include "kernel/portmacro.h"

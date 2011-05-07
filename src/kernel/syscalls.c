@@ -1,6 +1,6 @@
 //! @file syscalls.c
 //! @brief Syscalls
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 //! @todo tout voir
 

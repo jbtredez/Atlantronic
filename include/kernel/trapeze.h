@@ -3,7 +3,7 @@
 
 //! @file trapeze.h
 //! @brief Trapezoidal speed
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 struct trapeze
 {

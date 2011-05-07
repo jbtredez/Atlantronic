@@ -1,6 +1,6 @@
 //! @file rcc.c
 //! @brief Gestion Reset et Clock
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/rcc.h"
 #include "kernel/module.h"

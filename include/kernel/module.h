@@ -3,7 +3,7 @@
 
 //! @file module.h
 //! @brief fournit les fonctions d'enregistrement des points d'entrée et de sortie des modules
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 //!
 //! Prévu pour gcc
 //! Fonctionnement :

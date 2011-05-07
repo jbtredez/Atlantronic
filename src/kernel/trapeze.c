@@ -1,6 +1,6 @@
 //! @file trapeze.c
 //! @brief Trapezoidal speed
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/trapeze.h"
 #include <math.h>

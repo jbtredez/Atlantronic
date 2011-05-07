@@ -1,6 +1,6 @@
 //! @file ax12.c
 //! @brief Gestion AX12
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "ax12.h"
 #include "kernel/module.h"

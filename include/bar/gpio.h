@@ -3,7 +3,7 @@
 
 //! @file gpio.h
 //! @brief Gpio mapping
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/cpu/cpu.h"
 

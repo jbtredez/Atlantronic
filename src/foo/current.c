@@ -1,6 +1,6 @@
 //! @file current_sensors.c
 //! @brief Current sensors
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "io/current.h"
 #include "module.h"

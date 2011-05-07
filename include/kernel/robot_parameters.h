@@ -3,7 +3,7 @@
 
 //! @file robot_parameters.h
 //! @brief Parameters
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <math.h>
 

@@ -3,7 +3,7 @@
 
 //! @file location.h
 //! @brief Location
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"

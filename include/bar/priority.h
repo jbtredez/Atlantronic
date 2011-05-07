@@ -3,7 +3,7 @@
 
 //! @file priority.h
 //! @brief Tasks priority
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 //!
 //! idle task priority : 0
 

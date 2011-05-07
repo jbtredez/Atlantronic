@@ -1,6 +1,6 @@
 //! @file task1.c
 //! @brief Tests : task 1
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"

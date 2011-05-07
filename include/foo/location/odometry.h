@@ -3,7 +3,7 @@
 
 //! @file odometry.h
 //! @brief Odometry
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"

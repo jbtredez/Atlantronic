@@ -1,6 +1,6 @@
 //! @file can_us.c
 //! @brief CAN - US
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 //! interface : us.h
 

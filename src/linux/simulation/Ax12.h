@@ -3,7 +3,7 @@
 
 //! @file Ax12.h
 //! @brief Ax12
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 #include "UsartDevice.h"

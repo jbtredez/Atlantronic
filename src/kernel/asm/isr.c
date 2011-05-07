@@ -1,6 +1,6 @@
 //! @file isr.c
 //! @brief isr
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/FreeRTOSConfig.h"
 #include "kernel/error.h"

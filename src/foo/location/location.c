@@ -1,6 +1,6 @@
 //! @file location.c
 //! @brief Location
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "location/location.h"
 #include "kernel/module.h"

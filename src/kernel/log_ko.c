@@ -1,6 +1,6 @@
 //! @file log.c
 //! @brief Log Task
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 //!
 //! @todo translate
 //! Le but est de gérer l'écriture des log dans une tache de faible priorité.

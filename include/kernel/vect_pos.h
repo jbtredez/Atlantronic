@@ -3,7 +3,7 @@
 
 //! @file vect_pos.h
 //! @brief vect_pos
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 //! @struct vect_pos
 //! représentation d'un vecteur sur la table

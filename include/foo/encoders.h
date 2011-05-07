@@ -3,7 +3,7 @@
 
 //! @file encoders.h
 //! @brief Encoders
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 

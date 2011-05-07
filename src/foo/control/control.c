@@ -1,6 +1,6 @@
 //! @file control.c
 //! @brief Asservissement
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <math.h>
 #include "kernel/FreeRTOS.h"

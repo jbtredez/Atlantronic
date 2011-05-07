@@ -1,6 +1,6 @@
 //! @file Ax12.cxx
 //! @brief Ax12
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "Ax12.h"
 #include "log.h"

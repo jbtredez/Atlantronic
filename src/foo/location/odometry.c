@@ -1,6 +1,6 @@
 //! @file odometry.c
 //! @brief Odometry
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "location/odometry.h"
 #include "encoders.h"

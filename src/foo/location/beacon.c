@@ -1,6 +1,6 @@
 //! @file beacon.c
 //! @brief Beacon
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "location/beacon.h"
 #include "kernel/module.h"

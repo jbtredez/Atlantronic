@@ -3,7 +3,7 @@
 
 //! @file pid.h
 //! @brief PID control
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 

@@ -1,9 +1,9 @@
-//! @file hokuyo_tools.h
-//! @brief Hokuyo tools
-//! @author Jean-Baptiste Trédez
-
 #ifndef HOKUYO_TOOLS_H
 #define HOKUYO_TOOLS_H
+
+//! @file hokuyo_tools.h
+//! @brief Hokuyo tools
+//! @author Atlantronic
 
 #include <stdint.h>
 #include <math.h>

@@ -3,7 +3,7 @@
 
 //! @file tim.h
 //! @brief Module Tim
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

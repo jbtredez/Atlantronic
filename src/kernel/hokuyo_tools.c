@@ -1,6 +1,6 @@
 //! @file hokuyo_tools.c
 //! @brief Hokuyo tools
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/hokuyo_tools.h"
 

@@ -3,7 +3,7 @@
 
 //! @file can.h
 //! @brief Module CAN
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

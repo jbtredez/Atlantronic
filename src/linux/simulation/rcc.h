@@ -3,7 +3,7 @@
 
 //! @file rcc.h
 //! @brief Module RCC
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

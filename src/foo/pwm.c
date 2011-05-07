@@ -1,6 +1,6 @@
 //! @file pwm.c
 //! @brief PWM
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "pwm.h"
 #include "kernel/module.h"

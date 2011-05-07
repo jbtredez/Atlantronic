@@ -1,6 +1,6 @@
 //! @file encoders.c
 //! @brief Encoders
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "encoders.h"
 #include "kernel/module.h"

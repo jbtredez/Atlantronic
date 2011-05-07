@@ -3,7 +3,7 @@
 
 //! @file rcc.h
 //! @brief Gestion Reset et Clock
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 
 // configuration une fois le module rcc initialisé (attention, il faut modifier le code de rcc.c si on veut changer les valeurs) :

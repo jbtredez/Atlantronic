@@ -1,6 +1,6 @@
 //! @file pid.c
 //! @brief PID control
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "control/pid.h"
 

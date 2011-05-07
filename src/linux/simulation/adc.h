@@ -3,7 +3,7 @@
 
 //! @file adc.h
 //! @brief Module Adc
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

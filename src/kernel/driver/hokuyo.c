@@ -1,6 +1,6 @@
 //! @file hokuyo.c
 //! @brief Hokuyo module
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/driver/hokuyo.h"
 #include "kernel/module.h"

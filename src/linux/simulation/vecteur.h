@@ -6,7 +6,7 @@
 
 //! @file vecteur.h
 //! @brief Contient les classes vecteur, vecteur2f et vecteur3f
-//! @author TREDEZ Jean-Baptiste
+//! @author Atlantronic
 
 //! @class vecteur
 //! @brief Representation de la position du robot ( vecteur 2D + orientation )

@@ -1,6 +1,6 @@
 //! @file test_trapeze.c
 //! @brief Test functions of trapeze.c
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/trapeze.h"
 #include <stdio.h>

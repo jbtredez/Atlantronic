@@ -3,7 +3,7 @@
 
 //! @file init.h
 //! @brief Contient l'ordre d'initialisation des modules s'ils sont présent
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 //!
 //! il s'agit d'un tri par ordre alphabétique (donc "01" < "02" < "1" < "10" < "2" )
 //! réalisé à l'édition des liens.

@@ -3,7 +3,7 @@
 
 //! @file can_id.h
 //! @brief Can - message id
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #define CAN_US_ID       0x10
 

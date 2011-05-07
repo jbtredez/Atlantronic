@@ -1,6 +1,6 @@
 //! @file task1.c
 //! @brief Tests : test des led
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"

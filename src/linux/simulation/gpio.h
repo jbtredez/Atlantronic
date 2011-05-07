@@ -3,7 +3,7 @@
 
 //! @file gpio.h
 //! @brief Module Gpio
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

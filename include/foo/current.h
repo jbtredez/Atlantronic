@@ -3,7 +3,7 @@
 
 //! @file current.h
 //! @brief Current
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include <stdint.h>
 

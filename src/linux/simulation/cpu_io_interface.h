@@ -3,7 +3,7 @@
 
 //! @file cpu_io_interface.h
 //! @brief 
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "log.h"
 #include <stdint.h>

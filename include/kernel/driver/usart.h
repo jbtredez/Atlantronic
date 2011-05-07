@@ -3,7 +3,7 @@
 
 //! @file usart.h
 //! @brief Usart
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/cpu/cpu.h"
 #include "kernel/FreeRTOS.h"

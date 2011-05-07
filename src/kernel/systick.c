@@ -1,6 +1,6 @@
 //! @file systick.c
 //! @brief Systick module
-//! @author Jean-Baptiste Trédez
+//! @author Atlantronic
 
 #include "kernel/systick.h"
 #include "kernel/module.h"
