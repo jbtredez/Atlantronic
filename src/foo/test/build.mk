@@ -126,6 +126,8 @@ obj-foo-test_control += kernel/driver/hokuyo.o
 obj-foo-test_control += foo/ax12.o
 obj-foo-test_control += foo/pince.o
 obj-foo-test_control += foo/test/strategy_test_control.o
+obj-foo-test_control += foo/avoidance/macro_fonction.o
+obj-foo-test_control += foo/avoidance/evitement.o
 obj-foo-test_control += foo/adc.o
 bin-foo += test_control
 
