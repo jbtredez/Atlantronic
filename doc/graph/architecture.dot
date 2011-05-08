@@ -7,6 +7,9 @@ digraph robot
 	control
 	cli
 	log
+	ax12
+	detection
+	pince_control
 
 	// modules - fonctions
 	node [color=lightblue2, style=filled ]
@@ -16,21 +19,20 @@ digraph robot
 	odometry
 	beacon
 	pince
-	ax12
-
+	us
+	hokuyo
 
 	// io
 	node [color=lightblue3, style=filled ]
 	{
 		rank=same;
-		"io/pwm"
-		"io/encoders"
-		"io/beacon"
-		"io/usb"
-		"io/can"
-		"io/adc"
-		"io/usart"
-		"io/led"
+		"pwm"
+		"encoders"
+		"usb"
+		"can"
+		"adc"
+		"usart"
+		"led"
 	}
 
 	// liens
@@ -41,14 +43,20 @@ digraph robot
 	control -> "colision detection"
 	control -> location
 	"colision detection" -> location
+	"colision detection" -> detection
 	location -> odometry
 	location -> beacon
 	pince -> ax12
+	pince -> pince_control
+	pince_control -> pwm
+	pince_control -> adc
+	detection -> hokuyo
+	detection -> us
 
-	ax12 -> "io/usart"
-	"colision detection" -> "io/adc"
-	"colision detection" -> "io/can"
-	beacon -> "io/beacon"
-	odometry -> "io/encoders"
-	control -> "io/pwm"
+	hokuyo -> usart
+	ax12 -> "usart"
+	us -> "can"
+	beacon -> "can"
+	odometry -> "encoders"
+	control -> "pwm"
 }
