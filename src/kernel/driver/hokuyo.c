@@ -3,77 +3,35 @@
 //! @author Atlantronic
 
 #include "kernel/driver/hokuyo.h"
-#include "kernel/module.h"
+#include "kernel/error.h"
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
 
-#define HOKUYO_STACK_SIZE       100
-
+//!< taille de la réponse maxi avec hokuyo_scan_all :
+//!< 682 points => 1364 data
+//!< 1364 data = 21 * 64 + 20 data
+//!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
+#define HOKUYO_SCAN_BUFFER_SIZE   1432
 
 const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
-//!< taille de la réponse maxi avec hokuyo_scan_all :
-//!< 682 points => 1364 data
-//!< 1364 data = 21 * 64 + 20 data
-//!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
-static uint8_t hokuyo_read_dma_buffer[1432];
-static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725
+static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
 
-static void hokuyo_task(void *arg);
-static uint32_t hokuyo_init();
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
-static uint32_t hokuyo_scan();
 
-static int hokuyo_module_init(void)
+uint32_t hokuyo_init()
 {
+	uint32_t err;
+
 	usart_open(USART3_FULL_DUPLEX, 19200);
 
 	usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
-
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(hokuyo_task, "hokuyo", HOKUYO_STACK_SIZE, NULL, PRIORITY_TASK_HOKUYO, &xHandle);
-
-	if(err != pdPASS)
-	{
-		return ERR_INIT_HOKUYO;
-	}
-
-	return 0;
-}
-
-module_init(hokuyo_module_init, INIT_HOKUYO);
-
-static void hokuyo_task(void *arg)
-{
-	(void) arg;
-	uint32_t err;
-
-	do
-	{
-		err = hokuyo_init();
-		if(err)
-		{
-			setLed(err);
-		}
-	}while(err);
-
-	while(1)
-	{
-	
-	}
-}
-
-static uint32_t hokuyo_init()
-{
-	uint32_t err;
-
-	usart_set_frequency(USART3_FULL_DUPLEX, 19200);
 
 	err = hokuyo_scip2();
 	if(err == ERR_USART_TIMEOUT)
@@ -296,11 +254,11 @@ end:
 	return err;
 }
 
-static uint32_t hokuyo_scan()
+uint32_t hokuyo_scan()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_scan_all, 13, 1364, ms_to_tick(150), 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_scan_all, 13, HOKUYO_SCAN_BUFFER_SIZE, ms_to_tick(150), 3);
 
 	if(err)
 	{
@@ -336,4 +294,9 @@ static uint32_t hokuyo_scan()
 
 end:
 	return err;	
+}
+
+uint32_t hokuyo_decode_distance(uint16_t* distance, int size)
+{
+	return hokuyo_tools_decode_buffer(hokuyo_read_dma_buffer, HOKUYO_SCAN_BUFFER_SIZE, distance, size);
 }

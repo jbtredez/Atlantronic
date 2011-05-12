@@ -37,7 +37,7 @@
 #define INIT_PWM                      "09"
 #define INIT_AX12                     "10"
 #define INIT_ODOMETRY                 "11"
-#define INIT_HOKUYO                   "12"
+#define INIT_DETECTION                "12"
 #define INIT_CAN_US                   "12"
 #define INIT_BEACON                   "13"
 #define INIT_LOCATION                 "14"
