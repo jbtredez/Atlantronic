@@ -1,6 +1,9 @@
 digraph robot
 {
-	size="10,10";
+	ratio=fill;
+	size="16,10";
+	center=true;
+
 	// modules - taches
 	node [color=lawngreen, style=filled ]
 	strategy
@@ -26,13 +29,14 @@ digraph robot
 	node [color=lightblue3, style=filled ]
 	{
 		rank=same;
-		"pwm"
-		"encoders"
-		"usb"
-		"can"
-		"adc"
-		"usart"
-		"led"
+		adc
+		gpio
+		pwm
+		encoders
+		usb
+		can
+		usart
+		led
 	}
 
 	// liens
@@ -42,8 +46,8 @@ digraph robot
 	avoidance -> control
 	control -> "colision detection"
 	control -> location
-	"colision detection" -> location
-	"colision detection" -> detection
+	"colision detection" -> adc
+	"colision detection" -> gpio
 	location -> odometry
 	location -> beacon
 	pince -> ax12
@@ -52,6 +56,7 @@ digraph robot
 	pince_control -> adc
 	detection -> hokuyo
 	detection -> us
+	detection -> location
 
 	hokuyo -> usart
 	ax12 -> "usart"
