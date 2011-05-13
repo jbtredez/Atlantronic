@@ -8,9 +8,9 @@ static void adc_task(void* arg);
 
 struct
 {
-	volatile uint32_t potard1;
-	volatile uint32_t aru;
-	volatile uint32_t potard2;
+	volatile uint16_t potard1;
+	volatile uint16_t aru;
+	volatile uint16_t potard2;
 } adc_dma ;
 
 int adc_module_init()
@@ -57,13 +57,13 @@ int adc_module_init()
 	// dma
 	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
 
-	// taille mémoire d'une donnée : 32 bits
+	// taille mémoire d'une donnée : 16 bits
 	// incrément automatique mémoire : 1
-	// taille mémoire périph d'une donnée : 32 bits
+	// taille mémoire périph d'une donnée : 16 bits
 	// incrément automatique mémoire périph : 0
 	// mode circulaire
 	// transfert : mem périph => mem
-	DMA1_Channel1->CCR = DMA_CCR1_MSIZE_1 | DMA_CCR1_PSIZE_1 | DMA_CCR1_MINC | DMA_CCR1_CIRC | DMA_CCR1_TCIE;
+	DMA1_Channel1->CCR = DMA_CCR1_MSIZE_0 | DMA_CCR1_PSIZE_0 | DMA_CCR1_MINC | DMA_CCR1_CIRC | DMA_CCR1_TCIE;
 	DMA1_Channel1->CNDTR = (0x03) & DMA_CNDTR1_NDT;
 	DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
 	DMA1_Channel1->CMAR = (uint32_t) & adc_dma;
