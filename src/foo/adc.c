@@ -1,25 +1,30 @@
+//! @file adc.c
+//! @brief ADC
+//! @author Atlantronic
+
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/event.h"
+#include "kernel/rcc.h"
+#include "adc.h"
+#include <string.h>
 
 #define ADC_STACK_SIZE       50
 
 static void adc_task(void* arg);
 
-struct
-{
-	volatile uint16_t potard1;
-	volatile uint16_t potard2;
-	volatile uint16_t i1;
-	volatile uint16_t i2;
-	volatile uint16_t i3;
-	volatile uint16_t i4;
-	volatile uint16_t vBat1;
-	volatile uint16_t vBatAru;
-} adc_dma ;
+// adc en double buffer : un en cours de remplissage par dma, un utilisable à tout moment
+struct adc_an adc_1;
+struct adc_an adc_2;
+struct adc_an* adc_dma;
+struct adc_an* adc_current;
+
 
 int adc_module_init()
 {
+	adc_dma = &adc_1;
+	adc_current = &adc_2;
 	// activation de GPIOA
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 
@@ -89,7 +94,7 @@ int adc_module_init()
 	DMA1_Channel1->CCR = DMA_CCR1_MSIZE_0 | DMA_CCR1_PSIZE_0 | DMA_CCR1_MINC | DMA_CCR1_CIRC | DMA_CCR1_TCIE;
 	DMA1_Channel1->CNDTR = (0x08) & DMA_CNDTR1_NDT;
 	DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
-	DMA1_Channel1->CMAR = (uint32_t) & adc_dma;
+	DMA1_Channel1->CMAR = (uint32_t) adc_dma;
 
 	// activation dma
 	DMA1_Channel1->CCR |= DMA_CCR1_EN;
@@ -116,6 +121,7 @@ module_init(adc_module_init, INIT_ADC);
 
 static inline void scan_AN()
 {
+	DMA1_Channel1->CMAR = (uint32_t) adc_dma;
 	ADC1->CR2 |= ADC_CR2_SWSTART;
 }
 
@@ -124,10 +130,7 @@ void isr_dma1_channel1(void)
 	if( DMA1->ISR | DMA_ISR_TCIF1)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF1;
-		if(adc_dma.vBatAru == 0)// TODO val + bateries
-		{
-			setLed(ERR_ARU);
-		}
+		vTaskSetEventFromISR(EVENT_ADC_READY);
 	}
 }
 
@@ -135,10 +138,36 @@ static void adc_task(void* arg)
 {
 	(void) arg;
 
+	portTickType wake_time = systick_get_time();
+
 	while(1)
 	{
+		vTaskClearEvent(EVENT_ADC_READY);
 		scan_AN();
+		vTaskWaitEvent(EVENT_ADC_READY, ms_to_tick(5));
 
-		vTaskDelay(720000);
+		// on change les pointeurs
+		portENTER_CRITICAL();
+		struct adc_an* tmp = adc_dma;
+		adc_dma = adc_current;
+		adc_current = tmp;
+		portEXIT_CRITICAL();
+
+		// TODO val + bateries
+		//if(adc_dma.vBatAru == 0)
+		//{
+		//	setLed(ERR_ARU);
+		//}
+
+		wake_time += ms_to_tick(10);
+		vTaskDelayUntil(wake_time);
 	}
+}
+
+void adc_get(struct adc_an* an)
+{
+	portENTER_CRITICAL();
+	// copie du contenu
+	*an = *adc_current;
+	portEXIT_CRITICAL();
 }

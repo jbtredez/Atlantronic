@@ -14,5 +14,6 @@
 #define EVENT_DMA1_3_TC           0x40
 #define EVENT_USART3_ERROR        0x80
 #define EVENT_CAN_TX_END         0x100
+#define EVENT_ADC_READY          0x200
 
 #endif
