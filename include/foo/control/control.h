@@ -10,7 +10,7 @@
 
 enum control_state
 {
-	CONTROL_READY_ASSERT,          //!< no trajectory ongoing
+	CONTROL_READY_ASSER,          //!< no trajectory ongoing
 	CONTROL_READY_FREE,
 	CONTROL_ROTATE,         //!< rotate
 	CONTROL_STRAIGHT,       //!< go straight

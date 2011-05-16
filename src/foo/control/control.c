@@ -91,11 +91,6 @@ static int control_module_init()
 		return ERR_INIT_CONTROL;
 	}
 
-	trapeze_reset(&control_trapeze);
-
-	pid_init(&control_pid_av);
-	pid_init(&control_pid_rot);
-
 	// TODO
 	// tests vite fait Tresgor :
 	// kp = 40
@@ -105,10 +100,7 @@ static int control_module_init()
 	// kp = 40
 	// ki = 120
 	// kd = 0
-	control_pid_av.kp = 40;
-	control_pid_av.ki = 120;
-	control_pid_av.kd = 0;
-	control_pid_av.max_out = PWM_ARR;
+	pid_init(&control_pid_av, 40, 120, 0, PWM_ARR);
 
 	// tests vite fait Tresgor :
 	// kp = 40
@@ -118,10 +110,7 @@ static int control_module_init()
 	// kp = 1000000
 	// ki = 50000
 	// kd = 0
-	control_pid_rot.kp = 1000000;
-	control_pid_rot.ki = 50000;
-	control_pid_rot.kd = 0;
-	control_pid_rot.max_out = PWM_ARR;
+	pid_init(&control_pid_rot, 1000000, 50000, 0, PWM_ARR);
 	/////
 
 	control_state = CONTROL_READY_FREE;
@@ -155,7 +144,7 @@ static void control_task(void* arg)
 		{
 			case CONTROL_READY_FREE:
 				break;
-			case CONTROL_READY_ASSERT:
+			case CONTROL_READY_ASSER:
 				break;
 			case CONTROL_STRAIGHT:
 			case CONTROL_ROTATE:
@@ -215,7 +204,7 @@ static void control_task(void* arg)
 				{
 					control_v_dist_cons = 0;
 					control_v_rot_cons = 0;
-					control_state = CONTROL_READY_ASSERT;
+					control_state = CONTROL_READY_ASSER;
 					vTaskSetEvent(EVENT_CONTROL_READY);
 				}
 				break;

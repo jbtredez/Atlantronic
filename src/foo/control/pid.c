@@ -4,16 +4,16 @@
 
 #include "control/pid.h"
 
-void pid_init(struct pid *pid)
+void pid_init(struct pid *pid, float kp, float ki, float kd, float max)
 {
-	pid->kp = 1;
-	pid->ki = 0;
-	pid->kd = 0;
+	pid->kp = kp;
+	pid->ki = ki;
+	pid->kd = kd;
 
 	pid->integral = 0;
 	pid->derivate = 0;
 	pid->max_integral = 0;
-	pid->max_out = 0;
+	pid->max_out = max;
 }
 
 float pid_apply(struct pid *pid, float in)
