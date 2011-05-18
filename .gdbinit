@@ -18,6 +18,10 @@ define ptasks
 		set $match_time = (systick_time-systick_time_start_match)/72000000.0f
 	end
 
+	set $static_alloc = (unsigned int)&end - (unsigned int)&__data_start__
+	set $malloc_pool = (unsigned int)heap_end_for_debug - (unsigned int)&end
+	set $ram_size = (unsigned int)&_ram_top - (unsigned int)&__data_start__
+	printf "static alloc : %i\nmalloc pool : %i\nmain stack + non utilisée : %i\n", $static_alloc, $malloc_pool, $ram_size - $static_alloc - $malloc_pool
 	printf "uptime %f\tmatch_time %f\n", systick_time/72000000.0f, $match_time
 
 	echo \033[01;32m

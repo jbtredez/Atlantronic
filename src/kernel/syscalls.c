@@ -50,6 +50,8 @@ int _close_r (struct _reent *r, int file)
 
 register char * stack_ptr asm ("sp");
 
+static char* heap_end_for_debug;
+
 caddr_t _sbrk_r (struct _reent *r, int incr)
 {
 	(void) r;
@@ -59,7 +61,7 @@ caddr_t _sbrk_r (struct _reent *r, int incr)
 	char *        prev_heap_end;
 
 	if (heap_end == NULL)
-	heap_end = & end;
+		heap_end = & end;
 
 	prev_heap_end = heap_end;
 
@@ -70,6 +72,7 @@ caddr_t _sbrk_r (struct _reent *r, int incr)
 	}
 
 	heap_end += incr;
+	heap_end_for_debug = heap_end;
 
 	return (caddr_t) prev_heap_end;
 }
@@ -91,4 +94,3 @@ int _isatty_r(struct _reent *r, int fd)
 
 	return 1;
 }
-
