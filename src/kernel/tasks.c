@@ -1297,7 +1297,7 @@ void vTaskSwitchContext( void )
 	traceTASK_SWITCHED_OUT();
 
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
-	pxCurrentTCB->cpu_time_used += systick_get_time() - pxCurrentTCB->last_start_tick_count;
+	pxCurrentTCB->cpu_time_used += systick_get_time_from_isr() - pxCurrentTCB->last_start_tick_count;
 #endif
 
 	taskFIRST_CHECK_FOR_STACK_OVERFLOW();
@@ -1341,7 +1341,7 @@ void vTaskSwitchContext( void )
 	listGET_OWNER_OF_NEXT_ENTRY( pxCurrentTCB, &( pxReadyTasksLists[ uxTopReadyPriority ] ) );
 
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
-	pxCurrentTCB->last_start_tick_count = systick_get_time();
+	pxCurrentTCB->last_start_tick_count = systick_get_time_from_isr();
 #endif
 
 	traceTASK_SWITCHED_IN();
