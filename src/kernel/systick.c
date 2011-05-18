@@ -96,6 +96,11 @@ int64_t systick_get_time()
 	return t;
 }
 
+int64_t systick_get_time_from_isr()
+{
+	return systick_time + systick_last_load_used - SysTick->VAL;
+}
+
 int64_t systick_get_match_time()
 {
 	int64_t t;

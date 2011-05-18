@@ -38,7 +38,5 @@ static void end_task(void *arg)
 	exitModules();
 	setLed(0x00);
 
-	// le vTaskDelete n'est pas encore top. On suspend la tache
-	vTaskSuspend(NULL);
-//	vTaskDelete(NULL);
+	vTaskDelete(NULL);
 }
