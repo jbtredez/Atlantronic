@@ -21,7 +21,7 @@ define ptasks
 	printf "uptime %f\tmatch_time %f\n", systick_time/72000000.0f, $match_time
 
 	echo \033[01;32m
-	printf " R\t"
+	printf "  R   "
 	if pxCurrentTCB != 0
 		printf "%s\n\n", pxCurrentTCB->pcTaskName
 	else
@@ -30,7 +30,8 @@ define ptasks
 	echo \033[0m
 
 	echo \033[01;34m
-	printf "etat\tdelai\tnom\tev\tmask\tev&mask\tcpu\n"
+	printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack (32 bit) |\n"
+	printf "      |            |          |            |            |            |    %%   | current  |   min    |\n"
 	echo \033[0m
 	set $nb_pri = sizeof pxReadyTasksLists / sizeof pxReadyTasksLists[0]
 	set $i = $nb_pri - 1
@@ -41,7 +42,7 @@ define ptasks
 		set $list_next = pxReadyTasksLists[$i].xListEnd.pxNext
 
 		while $list_next != $list_end && $n > 0
-			printf " P%i\t0\t", $i
+			printf "  P%i  |          0 |", $i
 			pTcb ((tskTCB*)$list_next->pvOwner)
 			set $list_next = $list_next.pxNext
 			set $n--
@@ -54,7 +55,7 @@ define ptasks
 	set $list_next = xPendingReadyList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " PR\t0\t"
+		printf "  PR  |          0 |"
 		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -66,7 +67,7 @@ define ptasks
 	set $list_next = xDelayedTaskList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " D\t%.2f\t", ($list_next->xItemValue - systick_time)/((double)72000)
+		printf "  D   | %10.2f |", ($list_next->xItemValue - systick_time)/((double)72000)
 		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -78,7 +79,7 @@ define ptasks
 	set $list_next = xSuspendedTaskList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf " S\tinf\t"
+		printf "  S   |        inf |"
 		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -87,5 +88,12 @@ define ptasks
 end
 
 define pTcb
-	printf "%s\t%x\t%x\t%x\t%f%%\n", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100
+	printf " %8s | %10x | %10x | %10x | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
+
+	set $stack_min_free = 0
+	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
+		set $stack_min_free++
+	end
+
+	printf " %8i |\n", $stack_min_free
 end
