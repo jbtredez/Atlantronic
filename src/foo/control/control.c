@@ -27,6 +27,7 @@
 
 static void control_task(void *);
 static float sinc( float x );
+static void control_compute();
 
 struct control_param_ad
 {
@@ -125,159 +126,166 @@ static void control_task(void* arg)
 	(void) arg;
 
 	portTickType wake_time = systick_get_time();
-	struct vect_pos pos;
 
 	while(1)
 	{
-		location_update();
-		pos = location_get_position();
-// TODO mutex pour laisser les IT
-		portENTER_CRITICAL();
-
-		if(vTaskGetEvent() & EVENT_END)
-		{
-			control_state = CONTROL_END;
-		}
-
-		// calcul du prochain point
-		switch(control_state)
-		{
-			case CONTROL_READY_FREE:
-				break;
-			case CONTROL_READY_ASSER:
-				break;
-			case CONTROL_STRAIGHT:
-			case CONTROL_ROTATE:
-			case CONTROL_GOTO:
-				if(control_param.ad.angle)
-				{
-					// TODO marge en dur
-					if(fabs(control_dest.alpha - pos.alpha) < 0.05f)
-					{
-						control_param.ad.angle = 0;
-						control_cons.alpha = control_dest.alpha;
-						control_cons.ca = control_dest.ca;
-						control_cons.sa = control_dest.sa;
-						control_v_dist_cons = 0;
-						control_v_rot_cons = 0;
-						trapeze_reset(&control_trapeze);
-					}
-					else
-					{
-						trapeze_set(&control_trapeze, 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT));
-						trapeze_apply(&control_trapeze, control_param.ad.angle);
-						control_cons.alpha += control_trapeze.v;
-						control_cons.ca = cos(control_cons.alpha);
-						control_cons.sa = sin(control_cons.alpha);
-						control_v_dist_cons = 0;
-						control_v_rot_cons = control_trapeze.v;
-					}
-				}
-				else if(control_param.ad.distance)
-				{
-					// TODO marges en dur
-					float ex = pos.ca  * (control_dest.x - pos.x) + pos.sa * (control_dest.y - pos.y);
-					//float ey = -pos.sa * (control_dest.x - pos.x) + pos.ca * (control_dest.y - pos.y);
-
-					if( fabsf(ex) < 2.0f)
-					{
-						//if(fabsf(ey) < 10.0f)
-						//{
-							control_param.ad.distance = 0;
-							control_cons = control_dest;
-							control_v_dist_cons = 0;
-							control_v_rot_cons = 0;
-							trapeze_reset(&control_trapeze);
-						//}
-					}
-					else
-					{
-						trapeze_set(&control_trapeze, 1000.0f*TE*TE, 1000.0f*TE);
-						trapeze_apply(&control_trapeze, control_param.ad.distance);
-						control_cons.x += control_trapeze.v * control_cons.ca;
-						control_cons.y += control_trapeze.v * control_cons.sa;
-						control_v_dist_cons = control_trapeze.v;
-						control_v_rot_cons = 0;
-					}
-				}
-				else
-				{
-					control_v_dist_cons = 0;
-					control_v_rot_cons = 0;
-					control_state = CONTROL_READY_ASSER;
-					vTaskSetEvent(EVENT_CONTROL_READY);
-				}
-				break;
-			case CONTROL_ARC:
-				// TODO
-				break;
-			case CONTROL_END:
-
-				break;
-			default:
-				// TODO cas d'erreur de prog
-				break;
-		}
-
-		if(control_state != CONTROL_READY_FREE && control_state != CONTROL_END)
-		{
-			// calcul de l'erreur de position dans le repère du robot
-			float ex = pos.ca  * (control_cons.x - pos.x) + pos.sa * (control_cons.y - pos.y);
-			float ey = -pos.sa * (control_cons.x - pos.x) + pos.ca * (control_cons.y - pos.y);
-			float ealpha = control_cons.alpha - pos.alpha;
-
-			float v_d_c = control_v_dist_cons * cos(ealpha) + control_kx * ex;
-			float v_r_c = control_v_rot_cons + control_ky * control_v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
-
-			float v_d = location_get_speed_curv_abs();
-			float v_r = location_get_speed_rot();
-
-			// régulation en vitesse
-			float u_av = pid_apply(&control_pid_av, v_d_c - v_d);
-			float u_rot = pid_apply(&control_pid_rot, v_r_c - v_r);
-
-			// TODO : pb de saturation
-			float u1 = u_av + u_rot;
-			float u2 = u_av - u_rot;
-
-			int sens1 = 1;
-			int sens2 = 1;
-
-			if(u1 < 0)
-			{
-				sens1 = -1;
-				u1 = -u1;
-			}
-			if(u2 < 0)
-			{
-				sens2 = -1;
-				u2 = -u2;
-			}
-
-			// TODO saturer autrement
-			if(u1 > PWM_ARR)
-			{
-				u1 = PWM_ARR;
-			}
-
-			if(u2 > PWM_ARR)
-			{
-				u2 = PWM_ARR;
-			}
-			pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
-			pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
-		}
-		else
-		{
-			pwm_set(PWM_RIGHT, 0, 1);
-			pwm_set(PWM_LEFT, 0, 1);
-		}
-
-		portEXIT_CRITICAL();
+		control_compute();
 
 		wake_time += CONTROL_TICK_PERIOD;
 		vTaskDelayUntil(wake_time);
 	}
+}
+
+static void control_compute()
+{
+	struct vect_pos pos;
+
+	float u1 = 0;
+	float u2 = 0;
+
+	int sens1 = 1;
+	int sens2 = 1;
+
+	location_update();
+	pos = location_get_position();
+
+// TODO mutex pour laisser les IT
+	portENTER_CRITICAL();
+
+	if(vTaskGetEvent() & EVENT_END)
+	{
+		control_state = CONTROL_END;
+		goto end_pwm_critical;
+	}
+
+	// calcul du prochain point
+	switch(control_state)
+	{
+		case CONTROL_READY_FREE:
+			goto end_pwm_critical;
+			break;
+		case CONTROL_READY_ASSER:
+			break;
+		case CONTROL_STRAIGHT:
+		case CONTROL_ROTATE:
+		case CONTROL_GOTO:
+			if(control_param.ad.angle)
+			{
+				// TODO marge en dur
+				if(fabs(control_dest.alpha - pos.alpha) < 0.05f)
+				{
+					control_param.ad.angle = 0;
+					control_cons.alpha = control_dest.alpha;
+					control_cons.ca = control_dest.ca;
+					control_cons.sa = control_dest.sa;
+					control_v_dist_cons = 0;
+					control_v_rot_cons = 0;
+					trapeze_reset(&control_trapeze);
+				}
+				else
+				{
+					trapeze_set(&control_trapeze, 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT));
+					trapeze_apply(&control_trapeze, control_param.ad.angle);
+					control_cons.alpha += control_trapeze.v;
+					control_cons.ca = cos(control_cons.alpha);
+					control_cons.sa = sin(control_cons.alpha);
+					control_v_dist_cons = 0;
+					control_v_rot_cons = control_trapeze.v;
+				}
+			}
+			else if(control_param.ad.distance)
+			{
+				// TODO marges en dur
+				float ex = pos.ca  * (control_dest.x - pos.x) + pos.sa * (control_dest.y - pos.y);
+				//float ey = -pos.sa * (control_dest.x - pos.x) + pos.ca * (control_dest.y - pos.y);
+
+				if( fabsf(ex) < 2.0f)
+				{
+					//if(fabsf(ey) < 10.0f)
+					//{
+						control_param.ad.distance = 0;
+						control_cons = control_dest;
+						control_v_dist_cons = 0;
+						control_v_rot_cons = 0;
+						trapeze_reset(&control_trapeze);
+					//}
+				}
+				else
+				{
+					trapeze_set(&control_trapeze, 1000.0f*TE*TE, 1000.0f*TE);
+					trapeze_apply(&control_trapeze, control_param.ad.distance);
+					control_cons.x += control_trapeze.v * control_cons.ca;
+					control_cons.y += control_trapeze.v * control_cons.sa;
+					control_v_dist_cons = control_trapeze.v;
+					control_v_rot_cons = 0;
+				}
+			}
+			else
+			{
+				control_v_dist_cons = 0;
+				control_v_rot_cons = 0;
+				control_state = CONTROL_READY_ASSER;
+				vTaskSetEvent(EVENT_CONTROL_READY);
+			}
+			break;
+		case CONTROL_ARC:
+			// TODO
+			goto end_pwm_critical;
+			break;
+		case CONTROL_END:
+			goto end_pwm_critical;
+			break;
+		default:
+			// erreur de prog ou corruption mem
+			goto end_pwm_critical;
+			break;
+	}
+
+	// calcul de l'erreur de position dans le repère du robot
+	float ex = pos.ca  * (control_cons.x - pos.x) + pos.sa * (control_cons.y - pos.y);
+	float ey = -pos.sa * (control_cons.x - pos.x) + pos.ca * (control_cons.y - pos.y);
+	float ealpha = control_cons.alpha - pos.alpha;
+
+	float v_d_c = control_v_dist_cons * cos(ealpha) + control_kx * ex;
+	float v_r_c = control_v_rot_cons + control_ky * control_v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
+
+	float v_d = location_get_speed_curv_abs();
+	float v_r = location_get_speed_rot();
+
+	// régulation en vitesse
+	float u_av = pid_apply(&control_pid_av, v_d_c - v_d);
+	float u_rot = pid_apply(&control_pid_rot, v_r_c - v_r);
+
+	// TODO : pb de saturation
+	u1 = u_av + u_rot;
+	u2 = u_av - u_rot;
+
+	if(u1 < 0)
+	{
+		sens1 = -1;
+		u1 = -u1;
+	}
+	if(u2 < 0)
+	{
+		sens2 = -1;
+		u2 = -u2;
+	}
+
+	// TODO saturer autrement
+	if(u1 > PWM_ARR)
+	{
+		u1 = PWM_ARR;
+	}
+
+	if(u2 > PWM_ARR)
+	{
+		u2 = PWM_ARR;
+	}
+
+end_pwm_critical:
+	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
+	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
+	portEXIT_CRITICAL();
 }
 
 void control_straight(float dist)
