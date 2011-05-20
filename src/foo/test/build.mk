@@ -115,6 +115,7 @@ obj-foo-test_control += kernel/driver/usart.o
 obj-foo-test_control += kernel/end.o
 obj-foo-test_control += foo/gpio.o
 obj-foo-test_control += foo/control/control.o
+obj-foo-test_control += foo/control/control_pince.o
 obj-foo-test_control += foo/control/pid.o
 obj-foo-test_control += kernel/trapeze.o
 obj-foo-test_control += foo/pwm.o

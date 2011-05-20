@@ -44,6 +44,7 @@
 //#define INIT_VFS                      "02"
 #define INIT_END                      "15"
 #define INIT_CONTROL                  "16"
+#define INIT_CONTROL_PINCE            "17"
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 #define INIT_TEST_TASK1               "31"
@@ -52,6 +53,7 @@
 // init de l'ordonanceur en DERNIER !
 #define INIT_SYSTICK                  "51"
 
+#define EXIT_CONTROL_PINCE            "17"
 #define EXIT_CONTROL                  "16"
 #define EXIT_AX12                     "10"
 
