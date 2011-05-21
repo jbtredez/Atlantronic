@@ -90,10 +90,10 @@ uint16_t encoders_get(const unsigned int num)
 	switch(num)
 	{
 		case ENCODERS_MOT_RIGHT:
-			val = TIM4->CNT;
+			val = TIM2->CNT;
 			break;
 		case ENCODERS_MOT_LEFT:
-			val = TIM2->CNT;
+			val = TIM4->CNT;
 			break;
 		default:
 			// TODO + log erreur
