@@ -141,7 +141,9 @@ void (* const g_pfnVectors[])(void) =
 
 static int32_t check_card_number()
 {
-	uint8_t num = GPIOA->IDR & 0x03;
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+
+	uint8_t num = (GPIOA->IDR >> 2 ) & 0x03;
 
 	#if defined( __foo__ )
 	return ( num == FOO_NUMBER?0:1 );
