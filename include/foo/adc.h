@@ -9,8 +9,8 @@
 
 struct adc_an
 {
-	uint16_t potard1;
-	uint16_t potard2;
+	uint16_t potard_droit;
+	uint16_t potard_gauche;
 	uint16_t i1;
 	uint16_t i2;
 	uint16_t i3;

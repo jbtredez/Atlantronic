@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-enum control_state
+enum control_pince_state
 {
 	CONTROL_PINCE_READY_ASSER,
 	CONTROL_PINCE_READY_FREE,
@@ -16,7 +16,7 @@ enum control_state
 	CONTROL_PINCE_END,    //!< end : halted forever
 };
 
-void control_pince_independant(float d1, float d2);
+void control_pince_independant(float h1, float h2);
 
 void control_pince_dual(float d, float alpha);
 

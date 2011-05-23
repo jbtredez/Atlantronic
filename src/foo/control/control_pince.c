@@ -35,8 +35,6 @@ struct {
 	union
 	{
 		struct {
-			float ind_height1;
-			float ind_height2;
 			struct trapeze ind_trapeze1;
 			struct trapeze ind_trapeze2;
 			float ind_cons1;
@@ -65,8 +63,8 @@ static int control_pince_module_init()
 		return ERR_INIT_CONTROL_PINCE;
 	}
 
-	pid_init(&control_pince_param.pid_ind_height1, 1, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_ind_height2, 1, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height1, 5, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height2, 5, 0, 0, PWM_ARR);
 	pid_init(&control_pince_param.pid_dual_height, 1, 0, 0, PWM_ARR);
 	pid_init(&control_pince_param.pid_dual_alpha, 1, 0, 0, PWM_ARR);
 
@@ -128,8 +126,8 @@ static void control_pince_compute()
 				trapeze_apply(&control_pince_param.dual_trapeze_height, control_pince_param.dual_cons_h);
 				trapeze_apply(&control_pince_param.dual_trapeze_angle, control_pince_param.dual_cons_a);
 
-				float eh = control_pince_param.dual_trapeze_height.distance - (control_pince_an.potard1 + control_pince_an.potard2);
-				float ea = control_pince_param.dual_trapeze_angle.distance - 0.5* (control_pince_an.potard2 + control_pince_an.potard1);
+				float eh = control_pince_param.dual_trapeze_height.distance - (control_pince_an.potard_droit + control_pince_an.potard_gauche);
+				float ea = control_pince_param.dual_trapeze_angle.distance - 0.5* (control_pince_an.potard_gauche + control_pince_an.potard_droit);
 
 				float uh = pid_apply(&control_pince_param.pid_dual_height, eh);
 				float ua = pid_apply(&control_pince_param.pid_dual_alpha, ea);
@@ -143,17 +141,17 @@ static void control_pince_compute()
 			{
 				// régulation en position
 				// TODO : ne pas refaire a chaque fois, juste quand on change aMax et vMax
-				trapeze_set(&control_pince_param.ind_trapeze1, 1000.0f*TE*TE, 1000.0f*TE);
-				trapeze_set(&control_pince_param.ind_trapeze2, 1000.0f*TE*TE, 1000.0f*TE);
+				trapeze_set(&control_pince_param.ind_trapeze1, 16000.0f*TE*TE, 4000.0f*TE);
+				trapeze_set(&control_pince_param.ind_trapeze2, 16000.0f*TE*TE, 4000.0f*TE);
 
 				trapeze_apply(&control_pince_param.ind_trapeze1, control_pince_param.ind_cons1);
 				trapeze_apply(&control_pince_param.ind_trapeze2, control_pince_param.ind_cons2);
 
-				float e1 = control_pince_param.ind_trapeze1.distance - control_pince_an.potard1;
-				float e2 = control_pince_param.ind_trapeze2.distance - control_pince_an.potard2;
+				float e1 = control_pince_param.ind_trapeze1.distance - control_pince_an.potard_droit;
+				float e2 = control_pince_param.ind_trapeze2.distance - control_pince_an.potard_gauche;
 
-				u1 = pid_apply(&control_pince_param.pid_dual_height, e1);
-				u2 = pid_apply(&control_pince_param.pid_dual_alpha, e2);
+				u1 = pid_apply(&control_pince_param.pid_ind_height1, e1);
+				u2 = pid_apply(&control_pince_param.pid_ind_height2, e2);
 			}
 			break;
 		case CONTROL_PINCE_END:
@@ -201,12 +199,12 @@ void control_pince_independant(float h1, float h2)
 		control_pince_state = CONTROL_PINCE_INDEPENDANT;
 	}
 	vTaskClearEvent(EVENT_CONTROL_PINCE_READY);
-	trapeze_reset(&control_pince_param.ind_trapeze1);
-	trapeze_reset(&control_pince_param.ind_trapeze2);
-	control_pince_param.ind_cons1 = control_pince_an.potard1;
-	control_pince_param.ind_cons2 = control_pince_an.potard2;
-	control_pince_param.ind_height1 = h1;
-	control_pince_param.ind_height2 = h2;
+	control_pince_param.ind_trapeze1.v = 0;
+	control_pince_param.ind_trapeze1.distance = control_pince_an.potard_droit;
+	control_pince_param.ind_trapeze2.v = 0;
+	control_pince_param.ind_trapeze2.distance = control_pince_an.potard_gauche;
+	control_pince_param.ind_cons1 = h1;
+	control_pince_param.ind_cons2 = h2;
 	portEXIT_CRITICAL();
 }
 
@@ -218,12 +216,12 @@ void control_pince_dual(float h, float alpha)
 		control_pince_state = CONTROL_PINCE_DUAL;
 	}
 	vTaskClearEvent(EVENT_CONTROL_PINCE_READY);
-	trapeze_reset(&control_pince_param.dual_trapeze_height);
-	trapeze_reset(&control_pince_param.dual_trapeze_angle);
-	control_pince_param.dual_cons_h = 0.5f*(control_pince_an.potard1 + control_pince_an.potard2);
-	control_pince_param.dual_cons_a = 0.5f*(control_pince_an.potard2 - control_pince_an.potard1);
-	control_pince_param.dual_height = h;
-	control_pince_param.dual_angle = alpha;
+	control_pince_param.ind_trapeze1.v = 0;
+	control_pince_param.ind_trapeze1.distance = 0.5f*(control_pince_an.potard_droit + control_pince_an.potard_gauche);
+	control_pince_param.ind_trapeze2.v = 0;
+	control_pince_param.ind_trapeze2.distance = 0.5f*(control_pince_an.potard_gauche - control_pince_an.potard_droit);
+	control_pince_param.dual_cons_h = h;
+	control_pince_param.dual_cons_a = alpha;
 	portEXIT_CRITICAL();
 }
 

@@ -100,6 +100,8 @@ obj-foo-test_pince += foo/encoders.o
 obj-foo-test_pince += foo/ax12.o
 obj-foo-test_pince += foo/pince.o
 obj-foo-test_pince += foo/test/test_pince.o
+obj-foo-test_pince += foo/control/control_pince.o
+obj-foo-test_pince += foo/adc.o
 bin-foo += test_pince
 
 obj-foo-test_control += kernel/main.o
