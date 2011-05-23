@@ -5,17 +5,17 @@
 #include "kernel/trapeze.h"
 #include <math.h>
 
-void trapeze_apply(struct trapeze* t, float distance)
+void trapeze_apply(struct trapeze* t, float s)
 {
-	// distance qui reste à faire
-	float d = distance - t->distance;
+	// abscisse curviligne qui reste à faire
+	float ds = s - t->s;
 	float a_max = t->a_max;
 	float v_max = t->v_max;
 	float v = t->v;
 
 	// saturation de v_max pour la rampe de décélération
-//	float v_max_stop = sqrt( 2 * fabs(d) * a_max);
-	float v_max_stop = sqrt(a_max*a_max/4 + 2*fabs(d)*a_max) - a_max/2;
+//	float v_max_stop = sqrt( 2 * fabs(ds) * a_max);
+	float v_max_stop = sqrt(a_max*a_max/4 + 2*fabs(ds)*a_max) - a_max/2;
 
 	if(v_max_stop < v_max)
 	{
@@ -39,36 +39,36 @@ void trapeze_apply(struct trapeze* t, float distance)
 		}
 	}
 
-	float distance_filtre;
+	float s_filtre;
 	// saturation à cause de la position (pour ne pas dépasser)
-	if(d > v_max)
+	if(ds > v_max)
 	{
-		distance_filtre = t->distance + v_max;
+		s_filtre = t->s + v_max;
 		v = v_max;
 	}
-	else if( d < - v_max)
+	else if( ds < - v_max)
 	{
-		distance_filtre = t->distance - v_max;
+		s_filtre = t->s - v_max;
 		v = -v_max;
 	}
 	else
 	{
-		distance_filtre = distance;
-		v = d;
+		s_filtre = s;
+		v = ds;
 	}
 
 	t->v = v;
-	t->distance = distance_filtre;
+	t->s = s_filtre;
 }
 
-void trapeze_set(struct trapeze* t, float a_max, float v_max)
+void trapeze_set(struct trapeze* t, float v_max, float a_max)
 {
 	t->a_max = a_max;
 	t->v_max = v_max;
 }
 
-void trapeze_reset(struct trapeze* t)
+void trapeze_reset(struct trapeze* t, float s, float v)
 {
-	t->distance = 0;
-	t->v = 0;
+	t->s = s;
+	t->v = v;
 }

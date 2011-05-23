@@ -11,7 +11,7 @@ int main()
 {
 	struct trapeze trapeze;
 
-	trapeze_set(&trapeze, 1.0f/(HZ*HZ), 2.0f/HZ);
+	trapeze_set(&trapeze, 2.0f/HZ, 1.0f/(HZ*HZ));
 
 	int i = 0;
 	float d = 0;
@@ -30,7 +30,7 @@ int main()
 	for(i = 0; i < HZ*10; i++)
 	{
 		trapeze_apply(&trapeze, -10);
-		d2 = trapeze.distance;
+		d2 = trapeze.s;
 		v2 = (d2 - d) * HZ;
 		a = (v2 - v) * HZ;
 		fprintf(f, "%f\t%f\t%f\t%f\n", ((float)i)/HZ, a, v, d);

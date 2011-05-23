@@ -180,11 +180,11 @@ static void control_compute()
 					control_cons.sa = control_dest.sa;
 					control_v_dist_cons = 0;
 					control_v_rot_cons = 0;
-					trapeze_reset(&control_trapeze);
+					trapeze_reset(&control_trapeze, 0, 0);
 				}
 				else
 				{
-					trapeze_set(&control_trapeze, 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT));
+					trapeze_set(&control_trapeze, 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT));
 					trapeze_apply(&control_trapeze, control_param.ad.angle);
 					control_cons.alpha += control_trapeze.v;
 					control_cons.ca = cos(control_cons.alpha);
@@ -207,12 +207,12 @@ static void control_compute()
 						control_cons = control_dest;
 						control_v_dist_cons = 0;
 						control_v_rot_cons = 0;
-						trapeze_reset(&control_trapeze);
+						trapeze_reset(&control_trapeze, 0, 0);
 					//}
 				}
 				else
 				{
-					trapeze_set(&control_trapeze, 1000.0f*TE*TE, 1000.0f*TE);
+					trapeze_set(&control_trapeze, 1000.0f*TE, 1000.0f*TE*TE);
 					trapeze_apply(&control_trapeze, control_param.ad.distance);
 					control_cons.x += control_trapeze.v * control_cons.ca;
 					control_cons.y += control_trapeze.v * control_cons.sa;
@@ -296,7 +296,7 @@ void control_straight(float dist)
 		control_state = CONTROL_STRAIGHT;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
-	trapeze_reset(&control_trapeze);
+	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
 	control_dest.x += control_dest.ca * dist;
@@ -314,7 +314,7 @@ void control_rotate(float angle)
 		control_state = CONTROL_ROTATE;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
-	trapeze_reset(&control_trapeze);
+	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
 	control_dest.alpha += angle;
@@ -333,7 +333,7 @@ void control_goto(float x, float y)
 		control_state = CONTROL_GOTO;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY);
-	trapeze_reset(&control_trapeze);
+	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
 	control_dest.x = x;

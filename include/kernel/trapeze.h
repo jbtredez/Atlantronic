@@ -10,14 +10,14 @@ struct trapeze
 	float a_max;
 	float v_max;
 
-	float distance;
+	float s;
 	float v;
 };
 
-void trapeze_apply(struct trapeze* t, float distance);
+void trapeze_apply(struct trapeze* t, float s);
 
-void trapeze_set(struct trapeze* t, float a_max, float v_max);
+void trapeze_set(struct trapeze* t, float v_max, float a_max);
 
-void trapeze_reset(struct trapeze* t);
+void trapeze_reset(struct trapeze* t, float s, float v);
 
 #endif
