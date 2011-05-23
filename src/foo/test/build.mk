@@ -99,6 +99,7 @@ obj-foo-test_pince += foo/location/beacon.o
 obj-foo-test_pince += foo/encoders.o
 obj-foo-test_pince += foo/ax12.o
 obj-foo-test_pince += foo/pince.o
+obj-foo-test_pince += foo/test/test_pince.o
 bin-foo += test_pince
 
 obj-foo-test_control += kernel/main.o
@@ -123,7 +124,8 @@ obj-foo-test_control += foo/location/odometry.o
 obj-foo-test_control += foo/location/location.o
 obj-foo-test_control += foo/location/beacon.o
 obj-foo-test_control += foo/encoders.o
-#obj-foo-test_control += kernel/driver/hokuyo.o
+obj-foo-test_control += kernel/driver/hokuyo.o
+obj-foo-test_control += kernel/hokuyo_tools.o
 obj-foo-test_control += foo/ax12.o
 obj-foo-test_control += foo/pince.o
 obj-foo-test_control += foo/test/strategy_test_control.o
