@@ -38,13 +38,15 @@ static void test_pince_task()
 
 	while(1)
 	{
-		control_pince_independant(70, 70);
+		//control_pince_independant(70, 70);
+		control_pince_dual(70, 0);
 		vTaskDelay(ms_to_tick(2000));
 		pince_open();
 		vTaskDelay(ms_to_tick(2000));
 		pince_close();
 		vTaskDelay(ms_to_tick(1000));
-		control_pince_independant(2500, 2500);
+		control_pince_dual(2500, 0);
+		//control_pince_independant(2500, 2500);
 		vTaskDelay(ms_to_tick(2000));
 	}
 

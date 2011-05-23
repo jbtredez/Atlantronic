@@ -30,25 +30,16 @@ static int32_t control_pince_state;
 struct {
 	struct pid pid_ind_height1;
 	struct pid pid_ind_height2;
+	struct trapeze ind_trapeze_right;
+	struct trapeze ind_trapeze_left;
+	float ind_cons1;
+	float ind_cons2;
 	struct pid pid_dual_height;
 	struct pid pid_dual_alpha;
-	union
-	{
-		struct {
-			struct trapeze ind_trapeze_droit;
-			struct trapeze ind_trapeze_gauche;
-			float ind_cons1;
-			float ind_cons2;
-		};
-		struct {
-			float dual_height;
-			float dual_angle;
-			struct trapeze dual_trapeze_height;
-			struct trapeze dual_trapeze_angle;
-			float dual_cons_h;
-			float dual_cons_a;
-		};
-	};
+	struct trapeze dual_trapeze_height;
+	struct trapeze dual_trapeze_angle;
+	float dual_cons_h;
+	float dual_cons_a;
 }control_pince_param;
 
 struct adc_an control_pince_an;
@@ -65,13 +56,13 @@ static int control_pince_module_init()
 
 	pid_init(&control_pince_param.pid_ind_height1, 5, 0, 0, PWM_ARR);
 	pid_init(&control_pince_param.pid_ind_height2, 5, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_height, 1, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_alpha, 1, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_height, 4, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_alpha, 4, 0, 0, PWM_ARR);
 
-	trapeze_set(&control_pince_param.ind_trapeze_droit, 4000.0f*TE, 16000.0f*TE*TE);
-	trapeze_set(&control_pince_param.ind_trapeze_gauche, 4000.0f*TE, 16000.0f*TE*TE);
+	trapeze_set(&control_pince_param.ind_trapeze_right, 4000.0f*TE, 16000.0f*TE*TE);
+	trapeze_set(&control_pince_param.ind_trapeze_left, 4000.0f*TE, 16000.0f*TE*TE);
 	trapeze_set(&control_pince_param.dual_trapeze_height, 4000.0f*TE, 16000.0f*TE*TE);
-	trapeze_set(&control_pince_param.dual_trapeze_angle, 1000.0f*TE*TE, 1000.0f*TE);
+	trapeze_set(&control_pince_param.dual_trapeze_angle, 4000.0f*TE, 16000.0f*TE*TE);
 
 	control_pince_state = CONTROL_PINCE_READY_FREE;
 
@@ -127,13 +118,36 @@ static void control_pince_compute()
 				trapeze_apply(&control_pince_param.dual_trapeze_height, control_pince_param.dual_cons_h);
 				trapeze_apply(&control_pince_param.dual_trapeze_angle, control_pince_param.dual_cons_a);
 
-				float eh = control_pince_param.dual_trapeze_height.s - (control_pince_an.potard_droit + control_pince_an.potard_gauche);
-				float ea = control_pince_param.dual_trapeze_angle.s - 0.5* (control_pince_an.potard_gauche + control_pince_an.potard_droit);
+				float eh = control_pince_param.dual_trapeze_height.s - 0.5f * ((int16_t)control_pince_an.potard_right + (int16_t)control_pince_an.potard_left);
+				float ea = control_pince_param.dual_trapeze_angle.s - 0.5f * ((int16_t)control_pince_an.potard_right - (int16_t)control_pince_an.potard_left);
 
 				float uh = pid_apply(&control_pince_param.pid_dual_height, eh);
 				float ua = pid_apply(&control_pince_param.pid_dual_alpha, ea);
 
-				// TODO : pb / saturation
+				// on prefere l'angle à la hauteur en cas de saturation
+				if( ua > PWM_ARR)
+				{
+					ua = PWM_ARR;
+					uh = 0;
+				}
+				else if( ua < - PWM_ARR)
+				{
+					ua = - PWM_ARR;
+					uh = 0;
+				}
+				else
+				{
+					// la rotation ne prend pas toute la pwm
+					float max = PWM_ARR - fabs(ua);
+					if( uh > max)
+					{
+						uh = max;
+					}
+					else if( uh < -max)
+					{
+						uh = -max;
+					}
+				}
 				u1 = uh + ua;
 				u2 = uh - ua;
 			}
@@ -141,11 +155,11 @@ static void control_pince_compute()
 		case CONTROL_PINCE_INDEPENDANT:
 			{
 				// régulation en position
-				trapeze_apply(&control_pince_param.ind_trapeze_droit, control_pince_param.ind_cons1);
-				trapeze_apply(&control_pince_param.ind_trapeze_gauche, control_pince_param.ind_cons2);
+				trapeze_apply(&control_pince_param.ind_trapeze_right, control_pince_param.ind_cons1);
+				trapeze_apply(&control_pince_param.ind_trapeze_left, control_pince_param.ind_cons2);
 
-				float e1 = control_pince_param.ind_trapeze_droit.s - control_pince_an.potard_droit;
-				float e2 = control_pince_param.ind_trapeze_gauche.s - control_pince_an.potard_gauche;
+				float e1 = control_pince_param.ind_trapeze_right.s - control_pince_an.potard_right;
+				float e2 = control_pince_param.ind_trapeze_left.s - control_pince_an.potard_left;
 
 				u1 = pid_apply(&control_pince_param.pid_ind_height1, e1);
 				u2 = pid_apply(&control_pince_param.pid_ind_height2, e2);
@@ -171,7 +185,6 @@ static void control_pince_compute()
 		u2 = -u2;
 	}
 
-	// TODO saturer autrement
 	if(u1 > PWM_ARR)
 	{
 		u1 = PWM_ARR;
@@ -196,8 +209,8 @@ void control_pince_independant(float h1, float h2)
 		control_pince_state = CONTROL_PINCE_INDEPENDANT;
 	}
 	vTaskClearEvent(EVENT_CONTROL_PINCE_READY);
-	trapeze_reset(&control_pince_param.ind_trapeze_droit, control_pince_an.potard_droit, 0);
-	trapeze_reset(&control_pince_param.ind_trapeze_gauche, control_pince_an.potard_gauche, 0);
+	trapeze_reset(&control_pince_param.ind_trapeze_right, control_pince_an.potard_right, 0);
+	trapeze_reset(&control_pince_param.ind_trapeze_left, control_pince_an.potard_left, 0);
 	control_pince_param.ind_cons1 = h1;
 	control_pince_param.ind_cons2 = h2;
 	portEXIT_CRITICAL();
@@ -211,8 +224,8 @@ void control_pince_dual(float h, float alpha)
 		control_pince_state = CONTROL_PINCE_DUAL;
 	}
 	vTaskClearEvent(EVENT_CONTROL_PINCE_READY);
-	trapeze_reset(&control_pince_param.dual_trapeze_angle, 0.5f*(control_pince_an.potard_gauche - control_pince_an.potard_droit), 0);
-	trapeze_reset(&control_pince_param.dual_trapeze_height, 0.5f*(control_pince_an.potard_droit + control_pince_an.potard_gauche), 0);
+	trapeze_reset(&control_pince_param.dual_trapeze_height, 0.5f * ((int16_t)control_pince_an.potard_right + (int16_t)control_pince_an.potard_left), 0);
+	trapeze_reset(&control_pince_param.dual_trapeze_angle, 0.5f * ((int16_t)control_pince_an.potard_right - (int16_t)control_pince_an.potard_left), 0);
 	control_pince_param.dual_cons_h = h;
 	control_pince_param.dual_cons_a = alpha;
 	portEXIT_CRITICAL();
