@@ -13,9 +13,16 @@ static int gpio_module_init(void)
 	color = COLOR_BLUE;
 	gpio_go = 0;
 
-	// LED warning
+	// cpateur contact bordure droit et gauche, LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+	// PB0 entrée input flotante
+	// PB1 entrée input flotante
+	GPIOB->CRL = (GPIOB->CRL & ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0 |
+	                             GPIO_CRL_MODE1 | GPIO_CRL_CNF1
+		         ) ) | GPIO_CRL_MODE0_1 |
+		     GPIO_CRL_MODE1_1;
+
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
 
@@ -47,13 +54,14 @@ static int gpio_module_init(void)
 
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
-	// PD8 => it sur front montant
-	// PD9 => it sur front montant
-	// PD10 => it sur front montant
+	// PB0, PB1, PD8, PD9, PD10 => it sur front montant
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+	AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI0_PB | AFIO_EXTICR1_EXTI1_PB;
 	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
-	EXTI->IMR |= EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
-	EXTI->RTSR |= EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
+	EXTI->IMR |= EXTI_IMR_MR0 | EXTI_IMR_MR1 | EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
+	EXTI->RTSR |= EXTI_RTSR_TR0 | EXTI_RTSR_TR1 | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
+	NVIC_EnableIRQ(EXTI0_IRQn);
+	NVIC_EnableIRQ(EXTI1_IRQn);
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -64,7 +72,23 @@ static int gpio_module_init(void)
 
 module_init(gpio_module_init, INIT_GPIO);
 
-void isr_exit9_5(void)
+void isr_exti0(void)
+{
+	if( EXTI->PR & EXTI_PR_PR0)
+	{
+		EXTI->PR |= EXTI_PR_PR0;
+	}
+}
+
+void isr_exti1(void)
+{
+	if( EXTI->PR & EXTI_PR_PR1)
+	{
+		EXTI->PR |= EXTI_PR_PR1;
+	}
+}
+
+void isr_exti9_5(void)
 {
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
@@ -93,7 +117,7 @@ void isr_exit9_5(void)
 	}
 }
 
-void isr_exit15_10(void)
+void isr_exti15_10(void)
 {
 	if( EXTI->PR & EXTI_PR_PR10)
 	{

@@ -31,8 +31,10 @@ void isr_dma1_channel3(void) __attribute__((weak, alias("isr_unexpected") )); //
 void isr_dma2_channel3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2, canal 3
 void isr_dma2_channel5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2, canal 5
 void isr_adc(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption adc
-void isr_exit9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 5 à 9
-void isr_exit15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exit 10 à 15
+void isr_exti0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 0
+void isr_exti1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 1
+void isr_exti9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 5 à 9
+void isr_exti15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 10 à 15
 void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, tx
 void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, rx0
 
@@ -74,8 +76,8 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
+	isr_exti0,
+	isr_exti1,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
@@ -91,7 +93,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_can1_rx0,
 	isr_unexpected,
 	isr_unexpected,
-	isr_exit9_5,
+	isr_exti9_5,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
@@ -108,7 +110,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_usart3,
-	isr_exit15_10,
+	isr_exti15_10,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
