@@ -12,10 +12,10 @@
 #define PARAM_RIGHT_MOT_WHEEL_RADIUS          50.0f
 #define PARAM_LEFT_MOT_WHEEL_RADIUS           50.0f
 
-#define PARAM_RIGHT_ODO_WHEEL_WAY                -1
+#define PARAM_RIGHT_ODO_WHEEL_WAY                 1
 #define PARAM_LEFT_ODO_WHEEL_WAY                  1
-#define PARAM_RIGHT_MOT_WHEEL_WAY                -1
-#define PARAM_LEFT_MOT_WHEEL_WAY                 -1
+#define PARAM_RIGHT_MOT_WHEEL_WAY                 1
+#define PARAM_LEFT_MOT_WHEEL_WAY                  1
 
 #define PARAM_VOIE_ODO                       296.0f
 #define PARAM_VOIE_MOT                       120.0f
