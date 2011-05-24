@@ -48,6 +48,7 @@
 #define INIT_STRATEGY                 "20"
 #define INIT_TEST                     "30"
 #define INIT_TEST_PINCE               "30"
+#define INIT_TEST_DEPLACEMENT         "30"
 #define INIT_TEST_TASK1               "31"
 #define INIT_TEST_TASK2               "32"
 
