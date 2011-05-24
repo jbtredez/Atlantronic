@@ -16,6 +16,7 @@
 #include "kernel/trapeze.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/event.h"
+#include "foo/adc.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       150
@@ -47,6 +48,7 @@ static struct vect_pos control_cons;
 static float control_v_dist_cons;
 static float control_v_rot_cons;
 static struct trapeze control_trapeze;
+struct adc_an control_an;
 
 // TODO
 // tests vite fait Tresgor :
@@ -149,6 +151,8 @@ static void control_compute()
 	location_update();
 	pos = location_get_position();
 
+	adc_get(&control_an);
+
 // TODO mutex pour laisser les IT
 	portENTER_CRITICAL();
 
@@ -156,6 +160,13 @@ static void control_compute()
 	{
 		control_state = CONTROL_END;
 		goto end_pwm_critical;
+	}
+
+	// TODO regler
+	if( control_an.i1 > 800 || control_an.i2 > 800)
+	{
+		control_state = CONTROL_READY_FREE;
+		vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 	}
 
 	// calcul du prochain point
@@ -308,7 +319,7 @@ void control_straight(float dist)
 	{
 		control_state = CONTROL_STRAIGHT;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -326,7 +337,7 @@ void control_rotate(float angle)
 	{
 		control_state = CONTROL_ROTATE;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -345,7 +356,7 @@ void control_goto(float x, float y)
 	{
 		control_state = CONTROL_GOTO;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 

@@ -75,6 +75,7 @@ obj-foo-test_deplacement += foo/location/location.o
 obj-foo-test_deplacement += foo/location/beacon.o
 obj-foo-test_deplacement += foo/encoders.o
 obj-foo-test_deplacement += foo/test/test_deplacement.o
+obj-foo-test_deplacement += foo/adc.o
 bin-foo += test_deplacement
 
 obj-foo-test_pince += kernel/main.o

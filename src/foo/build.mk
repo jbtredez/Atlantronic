@@ -22,5 +22,6 @@ obj-foo-homologation += foo/location/beacon.o
 obj-foo-homologation += foo/encoders.o
 obj-foo-homologation += foo/ax12.o
 obj-foo-homologation += foo/pince.o
+obj-foo-homologation += foo/adc.o
 bin-foo += homologation
 

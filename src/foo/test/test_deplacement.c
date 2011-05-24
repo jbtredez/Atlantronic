@@ -37,19 +37,17 @@ static void test_deplacement_task()
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	control_straight(100);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-/*	control_rotate(-1.57);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(1550);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_rotate(1.57);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(550);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_rotate(1.57);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(1550);*/
+	while(1)
+	{
+		control_straight(100);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+		control_rotate(1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+		control_straight(-1.57);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+		control_rotate(-100);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	}
 
 	vTaskDelete(NULL);
 }
