@@ -57,9 +57,9 @@ static struct trapeze control_trapeze;
 // kx = 0.02
 // ky = 0.0002
 // kalpha = 0.002
-static float control_kx = 0.02;
-static float control_ky = 0.0002;
-static float control_kalpha = 0.002;
+static float control_kx = 1;
+static float control_ky = 0;
+static float control_kalpha = 200;
 
 union
 {
@@ -101,7 +101,7 @@ static int control_module_init()
 	// kp = 40
 	// ki = 120
 	// kd = 0
-	pid_init(&control_pid_av, 40, 120, 0, PWM_ARR);
+	pid_init(&control_pid_av, 40, 0, 0, PWM_ARR);
 
 	// tests vite fait Tresgor :
 	// kp = 40
@@ -111,7 +111,7 @@ static int control_module_init()
 	// kp = 1000000
 	// ki = 50000
 	// kd = 0
-	pid_init(&control_pid_rot, 1000000, 50000, 0, PWM_ARR);
+	pid_init(&control_pid_rot, 40, 0, 0, PWM_ARR);
 	/////
 
 	control_state = CONTROL_READY_FREE;
@@ -256,7 +256,31 @@ static void control_compute()
 	float u_av = pid_apply(&control_pid_av, v_d_c - v_d);
 	float u_rot = pid_apply(&control_pid_rot, v_r_c - v_r);
 
-	// TODO : pb de saturation
+	// on prefere l'angle à l'avance en cas de saturation
+	if( u_rot > PWM_ARR)
+	{
+		u_rot = PWM_ARR;
+		u_av = 0;
+	}
+	else if( u_rot < - PWM_ARR)
+	{
+		u_rot = - PWM_ARR;
+		u_av = 0;
+	}
+	else
+	{
+		// la rotation ne prend pas toute la pwm
+		float max = PWM_ARR - fabs(u_rot);
+		if( u_av > max)
+		{
+			u_av = max;
+		}
+		else if( u_av < -max)
+		{
+			u_av = -max;
+		}
+	}
+
 	u1 = u_av + u_rot;
 	u2 = u_av - u_rot;
 
@@ -269,17 +293,6 @@ static void control_compute()
 	{
 		sens2 = -1;
 		u2 = -u2;
-	}
-
-	// TODO saturer autrement
-	if(u1 > PWM_ARR)
-	{
-		u1 = PWM_ARR;
-	}
-
-	if(u2 > PWM_ARR)
-	{
-		u2 = PWM_ARR;
 	}
 
 end_pwm_critical:
