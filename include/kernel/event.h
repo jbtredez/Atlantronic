@@ -16,5 +16,7 @@
 #define EVENT_CAN_TX_END                 0x100
 #define EVENT_ADC_READY                  0x200
 #define EVENT_CONTROL_PINCE_READY        0x400
+#define EVENT_CONTROL_COLSISION          0x800
+#define EVENT_CONTROL_PINCE_COLISION    0x1000
 
 #endif
