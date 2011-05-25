@@ -18,6 +18,9 @@
 #define LED_5                  0x20
 #define LED_WARNING           0x200
 
+#define CONTACT_RIGHT          0x01
+#define CONTACT_LEFT           0x02
+
 static inline uint32_t getcolor()
 {
 	extern volatile uint32_t color;
@@ -25,5 +28,10 @@ static inline uint32_t getcolor()
 }
 
 void setLed(uint32_t mask);
+
+static inline uint8_t get_contact()
+{
+	return GPIOB->IDR & (CONTACT_RIGHT | CONTACT_LEFT);
+}
 
 #endif

@@ -56,14 +56,11 @@ static int gpio_module_init(void)
 
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
-	// PB0, PB1, PD8, PD9, PD10 => it sur front montant
+	// PD8, PD9, PD10 => it sur front montant
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-	AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI0_PB | AFIO_EXTICR1_EXTI1_PB;
 	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
-	EXTI->IMR |= EXTI_IMR_MR0 | EXTI_IMR_MR1 | EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
-	EXTI->RTSR |= EXTI_RTSR_TR0 | EXTI_RTSR_TR1 | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
-	NVIC_EnableIRQ(EXTI0_IRQn);
-	NVIC_EnableIRQ(EXTI1_IRQn);
+	EXTI->IMR |= EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
+	EXTI->RTSR |= EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -73,24 +70,6 @@ static int gpio_module_init(void)
 }
 
 module_init(gpio_module_init, INIT_GPIO);
-
-void isr_exti0(void)
-{
-	if( EXTI->PR & EXTI_PR_PR0)
-	{
-		// TODO
-		EXTI->PR |= EXTI_PR_PR0;
-	}
-}
-
-void isr_exti1(void)
-{
-	if( EXTI->PR & EXTI_PR_PR1)
-	{
-		// TODO
-		EXTI->PR |= EXTI_PR_PR1;
-	}
-}
 
 void isr_exti9_5(void)
 {
