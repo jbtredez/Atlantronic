@@ -18,10 +18,12 @@ static int gpio_module_init(void)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
 	// PB0 entrée input flotante
 	// PB1 entrée input flotante
-	GPIOB->CRL = (GPIOB->CRL & ~(GPIO_CRL_MODE0 | GPIO_CRL_CNF0 |
-	                             GPIO_CRL_MODE1 | GPIO_CRL_CNF1
-		         ) ) | GPIO_CRL_MODE0_1 |
-		     GPIO_CRL_MODE1_1;
+	GPIOB->CRL = ( GPIOB->CRL & ~(
+	                GPIO_CRL_MODE0 | GPIO_CRL_CNF0 |
+	                GPIO_CRL_MODE1 | GPIO_CRL_CNF1
+		         ) ) |
+		            GPIO_CRL_CNF0_0 |
+		            GPIO_CRL_CNF1_0;
 
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
@@ -76,6 +78,7 @@ void isr_exti0(void)
 {
 	if( EXTI->PR & EXTI_PR_PR0)
 	{
+		// TODO
 		EXTI->PR |= EXTI_PR_PR0;
 	}
 }
@@ -84,6 +87,7 @@ void isr_exti1(void)
 {
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
+		// TODO
 		EXTI->PR |= EXTI_PR_PR1;
 	}
 }
