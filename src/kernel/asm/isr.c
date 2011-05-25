@@ -271,7 +271,8 @@ struct stack_t
 	uint32_t psr;
 };
 
-void halt_faulty(struct stack_t *faulty_stack) {
+void halt_faulty(struct stack_t *faulty_stack)
+{
 	(void)faulty_stack;
 	// Inspect faulty_stack->pc to locate the offending instruction.
 

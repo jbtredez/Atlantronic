@@ -16,7 +16,8 @@
 #include "kernel/trapeze.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/event.h"
-#include "foo/adc.h"
+#include "adc.h"
+#include "gpio.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       150
@@ -29,6 +30,9 @@
 static void control_task(void *);
 static float sinc( float x );
 static void control_compute();
+static void control_compute_goto();
+static void control_colision_detection();
+
 
 struct control_param_ad
 {
@@ -48,7 +52,9 @@ static struct vect_pos control_cons;
 static float control_v_dist_cons;
 static float control_v_rot_cons;
 static struct trapeze control_trapeze;
-struct adc_an control_an;
+static struct adc_an control_an;
+static uint8_t control_contact;
+static struct vect_pos control_pos;
 
 // TODO
 // tests vite fait Tresgor :
@@ -140,8 +146,6 @@ static void control_task(void* arg)
 
 static void control_compute()
 {
-	struct vect_pos pos;
-
 	float u1 = 0;
 	float u2 = 0;
 
@@ -149,7 +153,7 @@ static void control_compute()
 	int sens2 = 1;
 
 	location_update();
-	pos = location_get_position();
+	control_pos = location_get_position();
 
 	adc_get(&control_an);
 
@@ -162,12 +166,8 @@ static void control_compute()
 		goto end_pwm_critical;
 	}
 
-	// TODO regler
-	if( control_an.i1 > 800 || control_an.i2 > 800)
-	{
-		control_state = CONTROL_READY_FREE;
-		vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
-	}
+	// detection de collisions
+	control_colision_detection();
 
 	// calcul du prochain point
 	switch(control_state)
@@ -180,64 +180,11 @@ static void control_compute()
 		case CONTROL_STRAIGHT:
 		case CONTROL_ROTATE:
 		case CONTROL_GOTO:
-			if(control_param.ad.angle)
-			{
-				// TODO marge en dur
-				if(fabs(control_dest.alpha - pos.alpha) < 0.05f)
-				{
-					control_param.ad.angle = 0;
-					control_cons.alpha = control_dest.alpha;
-					control_cons.ca = control_dest.ca;
-					control_cons.sa = control_dest.sa;
-					control_v_dist_cons = 0;
-					control_v_rot_cons = 0;
-					trapeze_reset(&control_trapeze, 0, 0);
-				}
-				else
-				{
-					trapeze_set(&control_trapeze, 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT));
-					trapeze_apply(&control_trapeze, control_param.ad.angle);
-					control_cons.alpha += control_trapeze.v;
-					control_cons.ca = cos(control_cons.alpha);
-					control_cons.sa = sin(control_cons.alpha);
-					control_v_dist_cons = 0;
-					control_v_rot_cons = control_trapeze.v;
-				}
-			}
-			else if(control_param.ad.distance)
-			{
-				// TODO marges en dur
-				float ex = pos.ca  * (control_dest.x - pos.x) + pos.sa * (control_dest.y - pos.y);
-				//float ey = -pos.sa * (control_dest.x - pos.x) + pos.ca * (control_dest.y - pos.y);
-
-				if( fabsf(ex) < 2.0f)
-				{
-					//if(fabsf(ey) < 10.0f)
-					//{
-						control_param.ad.distance = 0;
-						control_cons = control_dest;
-						control_v_dist_cons = 0;
-						control_v_rot_cons = 0;
-						trapeze_reset(&control_trapeze, 0, 0);
-					//}
-				}
-				else
-				{
-					trapeze_set(&control_trapeze, 1000.0f*TE, 1000.0f*TE*TE);
-					trapeze_apply(&control_trapeze, control_param.ad.distance);
-					control_cons.x += control_trapeze.v * control_cons.ca;
-					control_cons.y += control_trapeze.v * control_cons.sa;
-					control_v_dist_cons = control_trapeze.v;
-					control_v_rot_cons = 0;
-				}
-			}
-			else
-			{
-				control_v_dist_cons = 0;
-				control_v_rot_cons = 0;
-				control_state = CONTROL_READY_ASSER;
-				vTaskSetEvent(EVENT_CONTROL_READY);
-			}
+			control_compute_goto();
+			break;
+		case CONTROL_STRAIGHT_TO_WALL:
+			// TODO
+			goto end_pwm_critical;
 			break;
 		case CONTROL_ARC:
 			// TODO
@@ -253,9 +200,9 @@ static void control_compute()
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
-	float ex = pos.ca  * (control_cons.x - pos.x) + pos.sa * (control_cons.y - pos.y);
-	float ey = -pos.sa * (control_cons.x - pos.x) + pos.ca * (control_cons.y - pos.y);
-	float ealpha = control_cons.alpha - pos.alpha;
+	float ex = control_pos.ca  * (control_cons.x - control_pos.x) + control_pos.sa * (control_cons.y - control_pos.y);
+	float ey = -control_pos.sa * (control_cons.x - control_pos.x) + control_pos.ca * (control_cons.y - control_pos.y);
+	float ealpha = control_cons.alpha - control_pos.alpha;
 
 	float v_d_c = control_v_dist_cons * cos(ealpha) + control_kx * ex;
 	float v_r_c = control_v_rot_cons + control_ky * control_v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
@@ -310,6 +257,96 @@ end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
 	portEXIT_CRITICAL();
+}
+
+static void control_compute_goto()
+{
+	// on a eu une collision. Ce n'est pas prevu sur ce type de trajectoire
+	// => on va tout couper.
+	if( control_contact )
+	{
+		control_state = CONTROL_READY_FREE;
+		vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+		return;
+	}
+
+	if(control_param.ad.angle)
+	{
+		// TODO marge en dur
+		if(fabs(control_dest.alpha - control_pos.alpha) < 0.05f)
+		{
+			control_param.ad.angle = 0;
+			control_cons.alpha = control_dest.alpha;
+			control_cons.ca = control_dest.ca;
+			control_cons.sa = control_dest.sa;
+			control_v_dist_cons = 0;
+			control_v_rot_cons = 0;
+			trapeze_reset(&control_trapeze, 0, 0);
+		}
+		else
+		{
+			trapeze_set(&control_trapeze, 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT));
+			trapeze_apply(&control_trapeze, control_param.ad.angle);
+			control_cons.alpha += control_trapeze.v;
+			control_cons.ca = cos(control_cons.alpha);
+			control_cons.sa = sin(control_cons.alpha);
+			control_v_dist_cons = 0;
+			control_v_rot_cons = control_trapeze.v;
+		}
+	}
+	else if(control_param.ad.distance)
+	{
+		// TODO marges en dur
+		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
+		//float ey = -control_pos.sa * (control_dest.x - control_pos.x) + control_pos.ca * (control_dest.y - control_pos.y);
+
+		if( fabsf(ex) < 2.0f)
+		{
+			//if(fabsf(ey) < 10.0f)
+			//{
+				control_param.ad.distance = 0;
+				control_cons = control_dest;
+				control_v_dist_cons = 0;
+				control_v_rot_cons = 0;
+				trapeze_reset(&control_trapeze, 0, 0);
+			//}
+		}
+		else
+		{
+			trapeze_set(&control_trapeze, 1000.0f*TE, 1000.0f*TE*TE);
+			trapeze_apply(&control_trapeze, control_param.ad.distance);
+			control_cons.x += control_trapeze.v * control_cons.ca;
+			control_cons.y += control_trapeze.v * control_cons.sa;
+			control_v_dist_cons = control_trapeze.v;
+			control_v_rot_cons = 0;
+		}
+	}
+	else
+	{
+		control_v_dist_cons = 0;
+		control_v_rot_cons = 0;
+		control_state = CONTROL_READY_ASSER;
+		vTaskSetEvent(EVENT_CONTROL_READY);
+	}
+}
+
+//! le but est de mettre a jour control_contact
+//! on detecte une colision sur le coté droit ou sur le coté gauche
+static void control_colision_detection()
+{
+	control_contact = get_contact();
+
+	// TODO régler seuil
+	if( control_an.i_right > 2000 )
+	{
+		control_contact |= CONTACT_RIGHT;
+	}
+
+	// TODO régler seuil
+	if( control_an.i_left > 2000 )
+	{
+		control_contact |= CONTACT_LEFT;
+	}
 }
 
 void control_straight(float dist)
