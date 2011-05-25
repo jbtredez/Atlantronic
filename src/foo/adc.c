@@ -10,7 +10,7 @@
 #include "adc.h"
 #include <string.h>
 
-#define ADC_STACK_SIZE       50
+#define ADC_STACK_SIZE       75
 
 static void adc_task(void* arg);
 
