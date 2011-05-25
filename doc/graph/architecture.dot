@@ -44,10 +44,9 @@ digraph robot
 	strategy -> control
 	strategy -> pince
 	avoidance -> control
-	control -> "colision detection"
+	control -> adc
+	control -> gpio
 	control -> location
-	"colision detection" -> adc
-	"colision detection" -> gpio
 	location -> odometry
 	location -> beacon
 	pince -> ax12
