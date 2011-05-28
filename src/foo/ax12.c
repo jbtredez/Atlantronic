@@ -80,7 +80,7 @@ static void ax12_task(void* arg)
 	(void) arg;
 
 	struct ax12_request req;
-	int8_t res;
+	uint32_t res;
 
 	while(1)
 	{

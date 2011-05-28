@@ -50,7 +50,7 @@ obj-foo-test_can += kernel/heap_3.o
 obj-foo-test_can += kernel/syscalls.o
 obj-foo-test_can += kernel/rcc.o
 obj-foo-test_can += kernel/driver/can.o
-obj-foo-test_can += kernel/can_us.o
+obj-foo-test_can += foo/can_us.o
 obj-foo-test_can += foo/gpio.o
 bin-foo += test_can
 

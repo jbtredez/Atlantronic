@@ -10,6 +10,7 @@ obj-bar-us += kernel/syscalls.o
 obj-bar-us += kernel/rcc.o
 obj-bar-us += kernel/driver/can.o
 #obj-bar-us += kernel/end.o
+obj-bar-us += bar/can_us.o
 obj-bar-us += bar/gpio.o
 bin-bar += us
 

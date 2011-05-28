@@ -24,6 +24,7 @@
 #define ERR_INIT_HOKUYO         0x20e
 #define ERR_INIT_CAN            0x20f
 #define ERR_INIT_CONTROL_PINCE  0x210
+#define ERR_INIT_US		0x211
 
 #define ERR_USART3_READ_SR_FE           0x220
 #define ERR_USART3_READ_SR_NE           0x221
@@ -47,5 +48,8 @@
 #define ERR_HOKUYO_CHECKSUM             0x22f
 #define ERR_HOKUYO_BAUD_RATE            0x230
 #define ERR_HOKUYO_LASER_MALFUNCTION    0x231
+
+#define ERR_US_UNKNOWN_US		0x233
+
 
 #endif

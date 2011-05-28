@@ -4,32 +4,35 @@
 
 //! interface : us.h
 
-#include "kernel/us.h"
-#include "kernel/driver/can.h"
 #include "kernel/module.h"
-#include "kernel/can_id.h"
+///include all files for can third party
+#include "kernel/driver/can.h"
+#include "kernel/can/can_id.h"
+#include "kernel/can/can_us.h"
+
 #include "kernel/portmacro.h"
 #include <string.h>
 
-uint32_t can_us_state[US_MAX];
+uint16_t can_us_state[US_MAX];
 
 void can_us_callback(struct can_msg *msg);
 
 int can_us_module_init()
 {
-	can_register(CAN_US_ID, CAN_STANDARD_FORMAT, can_us_callback);
+	can_register(CAN_US_EMERGENCY_ID, CAN_STANDARD_FORMAT, can_us_callback);
 
 	return 0;
 }
 
 module_init(can_us_module_init, INIT_CAN_US);
 
+//emergency function management
 void can_us_callback(struct can_msg *msg)
 {
 	if(msg->data[0] < US_MAX && msg->size == 5)
 	{
 		portENTER_CRITICAL();
-		memcpy(&can_us_state, msg->data + 1, 4);
+		memcpy(&can_us_state, msg->data + 1, 2);
 		portEXIT_CRITICAL();
 	}
 	else

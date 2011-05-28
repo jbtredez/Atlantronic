@@ -6,6 +6,7 @@
 //! @author Atlantronic
 
 #include "kernel/cpu/cpu.h"
+#include "kernel/can/can_us.h"
 
 #define COLOR_RED                 0
 #define COLOR_BLUE                1
@@ -19,5 +20,11 @@
 #define LED_WARNING           0x200
 
 void setLed(uint32_t mask);
+
+static inline uint16_t get_US(enum us_id us_id)
+{
+      //TODO
+	return us_id;
+}
 
 #endif
