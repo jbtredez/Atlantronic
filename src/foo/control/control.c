@@ -55,19 +55,15 @@ static struct trapeze control_trapeze;
 static struct adc_an control_an;
 static uint8_t control_contact;
 static struct vect_pos control_pos;
+static portTickType control_timer;
 
-// TODO
-// tests vite fait Tresgor :
-// kx = 1
-// ky = 0
-// kalpha = 200
-// Simulation :
-// kx = 0.02
-// ky = 0.0002
-// kalpha = 0.002
-static float control_kx = 1;
+// coupe 2011 - coefs samedi - Angers
+//static float control_kx = 0.01f;
+//static float control_ky = 0;
+//static float control_kalpha = 0.015f;
+static float control_kx = 0.01f;
 static float control_ky = 0;
-static float control_kalpha = 200;
+static float control_kalpha = 0.015f;
 
 union
 {
@@ -100,29 +96,17 @@ static int control_module_init()
 		return ERR_INIT_CONTROL;
 	}
 
-	// TODO
-	// tests vite fait Tresgor :
-	// kp = 40
-	// ki = 0
-	// kd = 0
-	// Simulation :
-	// kp = 40
-	// ki = 120
-	// kd = 0
-	pid_init(&control_pid_av, 40, 0, 0, PWM_ARR);
+	// coupe 2011 - coefs samedi - Angers
+	// 	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
+	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
 
-	// tests vite fait Tresgor :
-	// kp = 40
-	// ki = 0
-	// kd = 0
-	// Simulation :
-	// kp = 1000000
-	// ki = 50000
-	// kd = 0
-	pid_init(&control_pid_rot, 40, 0, 0, PWM_ARR);
-	/////
+	// coupe 2011 - coefs samedi - Angers
+	// 	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
+	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
+
 
 	control_state = CONTROL_READY_FREE;
+	control_timer = 0;
 
 	return 0;
 }
@@ -197,6 +181,22 @@ static void control_compute()
 			// erreur de prog ou corruption mem
 			goto end_pwm_critical;
 			break;
+	}
+
+	// gestion du timeout
+	// condition "on ne demande pas de bouger"
+	if( fabsf(control_v_dist_cons) < 0.01f && fabsf(control_v_rot_cons) < 0.01f)
+	{
+		// on augmente le temps avec consigne nulle
+		control_timer += CONTROL_TICK_PERIOD;
+		if( control_timer > ms_to_tick(1000))
+		{
+			// ca fait une seconde qu'on devrait avoir termine la trajectoire
+			// il y a un probleme
+			control_state = CONTROL_READY_FREE;
+			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
+		}
+		goto end_pwm_critical;
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
@@ -285,7 +285,7 @@ static void control_compute_goto()
 		}
 		else
 		{
-			trapeze_set(&control_trapeze, 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT), 1000.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT));
+			trapeze_set(&control_trapeze, 1000.0f*TE/((float) M_PI*PARAM_VOIE_MOT), 800.0f*TE*TE/((float) M_PI*PARAM_VOIE_MOT));
 			trapeze_apply(&control_trapeze, control_param.ad.angle);
 			control_cons.alpha += control_trapeze.v;
 			control_cons.ca = cos(control_cons.alpha);
@@ -313,7 +313,7 @@ static void control_compute_goto()
 		}
 		else
 		{
-			trapeze_set(&control_trapeze, 1000.0f*TE, 1000.0f*TE*TE);
+			trapeze_set(&control_trapeze, 1000.0f*TE, 250.0f*TE*TE);
 			trapeze_apply(&control_trapeze, control_param.ad.distance);
 			control_cons.x += control_trapeze.v * control_cons.ca;
 			control_cons.y += control_trapeze.v * control_cons.sa;
@@ -364,6 +364,7 @@ void control_straight(float dist)
 	control_dest.y += control_dest.sa * dist;
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
+	control_timer = 0;
 	portEXIT_CRITICAL();
 }
 
@@ -383,6 +384,7 @@ void control_rotate(float angle)
 	control_dest.sa = sin(control_dest.alpha);
 	control_param.ad.angle = angle;
 	control_param.ad.distance = 0;
+	control_timer = 0;
 	portEXIT_CRITICAL();
 }
 
@@ -407,6 +409,7 @@ void control_goto(float x, float y)
 
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy);
+	control_timer = 0;
 	portEXIT_CRITICAL();
 }
 
