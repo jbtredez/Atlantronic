@@ -6,9 +6,9 @@
 
 void pid_init(struct pid *pid, float kp, float ki, float kd, float max)
 {
-	pid->kp = kp;
-	pid->ki = ki;
-	pid->kd = kd;
+	pid->kp = kp * max;
+	pid->ki = ki * max;
+	pid->kd = kd * max;
 
 	pid->integral = 0;
 	pid->derivate = 0;
@@ -23,6 +23,7 @@ float pid_apply(struct pid *pid, float in)
 	pid->derivate = in - pid->derivate;
 	pid->integral += in;
 
+	// saturation de l'integrale
 	if(pid->max_integral)
 	{
 		if(pid->integral > pid->max_integral)
@@ -35,8 +36,10 @@ float pid_apply(struct pid *pid, float in)
 		}
 	}
 
+	// calcul du PID
 	out = pid->kp * in + pid->ki * pid->integral + pid->kd * pid->derivate;
 
+	// saturation de la sortie
 	if(pid->max_out)
 	{
 		if(out > pid->max_out)
