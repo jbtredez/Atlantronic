@@ -18,6 +18,7 @@ const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
+#define HOKUYO_SPEED        750000
 
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
 
@@ -38,8 +39,8 @@ uint32_t hokuyo_init()
 	{
 		// pas de réponse à 19200, le hokuyo est peut être resté configuré
 		// => on tente à la vitesse d'utilisation
-	
-		usart_set_frequency(USART3_FULL_DUPLEX, 750000);
+		usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
+
 		err = hokuyo_scip2();
 	}
 
@@ -56,7 +57,7 @@ uint32_t hokuyo_init()
 		goto end;
 	}
 
-	usart_set_frequency(USART3_FULL_DUPLEX, 750000);
+	usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
 
 	err = hokuyo_laser_on();
 
@@ -139,7 +140,7 @@ static uint32_t hokuyo_scip2()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(50), 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -173,7 +174,7 @@ static uint32_t hokuyo_set_speed()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(50), 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -216,7 +217,7 @@ static uint32_t hokuyo_laser_on()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(50), 3);
+	err = hokuyo_write_cmd((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -230,7 +231,7 @@ static uint32_t hokuyo_laser_on()
 		goto end;
 	}
 
-	if( hokuyo_read_dma_buffer[3] != 0)
+	if( hokuyo_read_dma_buffer[3] != '0')
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
 		goto end;
