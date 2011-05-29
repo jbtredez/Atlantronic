@@ -22,6 +22,8 @@ enum control_state
 
 void control_straight(float dist);
 
+void control_straight_to_wall(float dist);
+
 void control_rotate(float angle);
 
 void control_goto(float x, float y);
