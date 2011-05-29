@@ -1308,6 +1308,7 @@ void vTaskSwitchContext( void )
 	while(xDelayedTaskList.uxNumberOfItems)
 	{
 		pxTCB = xDelayedTaskList.xListEnd.pxNext->pvOwner;
+		// TODO au cas ou, bug a investiger (hard fault vu une fois)
 		if( pxTCB == NULL )
 		{
 			break;
@@ -2023,6 +2024,13 @@ void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
 		do
 		{
 			pxTcb = pxListItem->pvOwner;
+			
+			// TODO au cas ou, bug a investiger (hard fault vu une fois)
+			if( pxTcb == NULL )
+			{
+				break;
+			}
+
 			pxTcb->event |= mask;
 			pxListItem = (xListItem*) pxListItem->pxNext;
 		}while( pxListItem != (xListItem*) &pxTaskList->xListEnd);
