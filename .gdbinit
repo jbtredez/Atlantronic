@@ -10,6 +10,13 @@ define prog
 	monitor reset init
 end
 
+#define define hookpost-stop
+#	set TIM1->CCR1 = 0
+#	set TIM1->CCR2 = 0
+#	set TIM1->CCR3 = 0
+#	set TIM1->CCR4 = 0
+#end
+
 define ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
 	set $match_time = 0
@@ -100,4 +107,21 @@ define pTcb
 	end
 
 	printf " %8i |\n", $stack_min_free
+end
+
+define plot_hokuyo
+	set logging file log/log_target_hokuyo
+	set logging redirect on
+	set logging on
+
+	set $i = 0
+	while $i <= 682
+		printf "%f\t%f\t%f\n", hokuyo_distance[$i], hokuyo_x[$i], -hokuyo_y[$i]
+		set $i++
+	end
+
+	shell ./scripts/plot_hokuyo
+
+	set logging redirect off
+	set logging off
 end
