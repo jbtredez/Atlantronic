@@ -256,3 +256,14 @@ void setLed(uint32_t mask)
 	GPIOE->ODR = (GPIOE->ODR & ~((uint32_t)0x3F)) | (mask & 0x3F);
 	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
 }
+
+uint16_t get_US(enum us_id us_id)
+{
+	uint16_t dist = 0;
+	if(us_id < US_MAX)
+	{
+		dist = (330000LL*72000000LL)/(gpio_us_start_time[us_id] - gpio_us_stop_time[us_id]);
+	}
+
+	return dist;
+}

@@ -21,10 +21,6 @@
 
 void setLed(uint32_t mask);
 
-static inline uint16_t get_US(enum us_id us_id)
-{
-      //TODO
-	return us_id;
-}
+uint16_t get_US(enum us_id us_id);
 
 #endif
