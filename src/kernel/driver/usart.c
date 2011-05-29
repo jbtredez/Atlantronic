@@ -29,7 +29,7 @@ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 	}
 #endif
@@ -43,7 +43,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 	}
 #endif
@@ -111,7 +111,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			break;
 #ifdef DEBUG
 		default:
-			setLed(ERR_USART_UNKNOWN_DEVICE);
+			error_raise(ERR_USART_UNKNOWN_DEVICE);
 			return;
 			break;
 #endif
@@ -141,19 +141,19 @@ void isr_usart3(void)
 	if( USART3->SR & USART_SR_FE)
 	{
 		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_FE;
-		setLed(ERR_USART3_READ_SR_FE);
+		error_raise(ERR_USART3_READ_SR_FE);
 	}
 
 	if( USART3->SR & USART_SR_ORE)
 	{
 		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_ORE;
-		setLed(ERR_USART3_READ_SR_ORE);
+		error_raise(ERR_USART3_READ_SR_ORE);
 	}
 
 	if( USART3->SR & USART_SR_NE)
 	{
 		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_NE;
-		setLed(ERR_USART3_READ_SR_NE);
+		error_raise(ERR_USART3_READ_SR_NE);
 	}
 
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
@@ -168,19 +168,19 @@ void isr_uart4(void)
 	if( UART4->SR & USART_SR_FE)
 	{
 		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_FE;
-		setLed(ERR_UART4_READ_SR_FE);
+		error_raise(ERR_UART4_READ_SR_FE);
 	}
 
 	if( UART4->SR & USART_SR_ORE)
 	{
 		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_ORE;
-		setLed(ERR_UART4_READ_SR_ORE);
+		error_raise(ERR_UART4_READ_SR_ORE);
 	}
 
 	if( UART4->SR & USART_SR_NE)
 	{
 		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_NE;
-		setLed(ERR_UART4_READ_SR_NE);
+		error_raise(ERR_UART4_READ_SR_NE);
 	}
 
 	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
@@ -232,7 +232,7 @@ void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 	}
 #endif
@@ -245,7 +245,7 @@ void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 #endif
 
@@ -263,7 +263,7 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
 	{
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return ERR_USART_UNKNOWN_DEVICE;
 	}
 #endif
@@ -290,7 +290,7 @@ void usart_set_write_dma_buffer(enum usart_id id, unsigned char* buf)
 	if(id >= USART_MAX_DEVICE)
 	{
 		res = ERR_USART_UNKNOWN_DEVICE;
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 	}
 #endif
@@ -304,7 +304,7 @@ void usart_send_dma_buffer(enum usart_id id, uint16_t size)
 	if(id >= USART_MAX_DEVICE)
 	{
 		res = ERR_USART_UNKNOWN_DEVICE;
-		setLed(ERR_USART_UNKNOWN_DEVICE);
+		error_raise(ERR_USART_UNKNOWN_DEVICE);
 		return;
 	}
 #endif

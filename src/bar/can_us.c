@@ -48,7 +48,7 @@ static void us_task(void* arg)
 			do
 			{
 			      if(req >= US_MAX) 
-				  setLed(ERR_US_UNKNOWN_US);
+				  error_raise(ERR_US_UNKNOWN_US);
 			      else
 			      {
 				res = us_send(CAN_US_RESPONSE_ID, req);
@@ -95,7 +95,7 @@ void can_us_callback(struct can_msg *msg)
 	}
 	else
 	{
-		 setLed(ERR_US_UNKNOWN_US);
+		 error_raise(ERR_US_UNKNOWN_US);
 		// erreur TODO log
 		// on fait rien, attente du prochain message CAN
 	}
@@ -111,7 +111,7 @@ uint16_t us_get_state(enum us_id us_id)
 		res = can_us_sample_value[us_id];
 		portEXIT_CRITICAL();
 	}
-	else 	setLed(ERR_US_UNKNOWN_US);
+	else 	error_raise(ERR_US_UNKNOWN_US);
 			    
 	return res;
 }

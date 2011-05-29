@@ -45,7 +45,7 @@ uint32_t hokuyo_init()
 
 	if(err)
 	{
-		setLed(ERR_HOKUYO_DISCONNECTED);
+		error_raise(ERR_HOKUYO_DISCONNECTED);
 		goto end;
 	}
 

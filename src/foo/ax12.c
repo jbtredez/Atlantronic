@@ -8,6 +8,7 @@
 #include "kernel/task.h"
 #include "kernel/queue.h"
 #include "kernel/event.h"
+#include "kernel/error.h"
 
 #define AX12_INSTRUCTION_READ_COMPLETE    0x00
 #define AX12_INSTRUCTION_PING             0x01
@@ -134,7 +135,7 @@ uint32_t ax12_send(struct ax12_request *req)
 	if( res )
 	{
 		// TODO code erreur
-		//setLed(res);
+		//error_raise(res);
 		goto end;
 	}
 
@@ -145,7 +146,7 @@ uint32_t ax12_send(struct ax12_request *req)
 		{
 			// erreur, on n'a pas lus ce qui a été envoyé
 			res = ERR_AX12_SEND_CHECK;
-			setLed(ERR_AX12_SEND_CHECK);
+			error_raise(ERR_AX12_SEND_CHECK);
 			goto end;
 		}
 	}

@@ -51,5 +51,6 @@
 
 #define ERR_US_UNKNOWN_US		0x233
 
+void error_raise(uint16_t error_number);
 
 #endif

@@ -255,7 +255,7 @@ void isr_context_switch( void )
 
 static void isr_nmi(void)
 {
-	setLed(ERR_NMI);
+	error_raise(ERR_NMI);
 	isr_cpu_down_safety();
 }
 
@@ -276,7 +276,7 @@ void halt_faulty(struct stack_t *faulty_stack)
 	(void)faulty_stack;
 	// Inspect faulty_stack->pc to locate the offending instruction.
 
-	setLed(ERR_HARD_FAULT);
+	error_raise(ERR_HARD_FAULT);
 	isr_pwm_reset();
 
 	while( 1 )
@@ -302,31 +302,31 @@ static void isr_hard_fault(void)
 
 static void isr_mpu_fault(void)
 {
-	setLed(ERR_MPU_FAULT);
+	error_raise(ERR_MPU_FAULT);
 	isr_cpu_down_safety();
 }
 
 static void isr_bus_fault(void)
 {
-	setLed(ERR_BUS_FAULT);
+	error_raise(ERR_BUS_FAULT);
 	isr_cpu_down_safety();
 }
 
 static void isr_usage_fault(void)
 {
-	setLed(ERR_USAGE_FAULT);
+	error_raise(ERR_USAGE_FAULT);
 	isr_cpu_down_safety();
 }
 
 static void isr_debug_monitor(void)
 {
-	setLed(ERR_DEBUG_MONITOR);
+	error_raise(ERR_DEBUG_MONITOR);
 	isr_cpu_down_safety();
 }
 
 static void isr_unexpected(void)
 {
-	setLed(ERR_UNEXPECTED_ISR);
+	error_raise(ERR_UNEXPECTED_ISR);
 	isr_cpu_down_safety();
 }
 

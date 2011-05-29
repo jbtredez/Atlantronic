@@ -215,7 +215,7 @@ void isr_can1_rx0(void)
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
-			setLed(ERR_CAN_READ_QUEUE_FULL);
+			error_raise(ERR_CAN_READ_QUEUE_FULL);
 		}
 
 		if( xHigherPriorityTaskWoken )
@@ -263,7 +263,7 @@ uint32_t can_set_filter(unsigned int id, unsigned char format)
 	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
 	if (can_filter_id > 27)
 	{
-		setLed(ERR_CAN_FILTER_LIST_FULL);
+		error_raise(ERR_CAN_FILTER_LIST_FULL);
 		res = ERR_CAN_FILTER_LIST_FULL;
 		goto end;
 	}

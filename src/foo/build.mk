@@ -11,6 +11,7 @@ obj-foo-homologation += kernel/rcc.o
 obj-foo-homologation += kernel/driver/can.o
 obj-foo-homologation += kernel/driver/usart.o
 obj-foo-homologation += kernel/end.o
+obj-foo-homologation += kernel/error.o
 obj-foo-homologation += foo/gpio.o
 obj-foo-homologation += kernel/trapeze.o
 obj-foo-homologation += foo/control/control.o
