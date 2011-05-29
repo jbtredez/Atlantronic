@@ -99,7 +99,7 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 		if(*distance > 19)
 		{
 			*x = *distance * cos(alpha);
-			*y = *distance * sin(alpha);
+			*y = - *distance * sin(alpha);
 		}
 		else
 		{

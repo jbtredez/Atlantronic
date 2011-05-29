@@ -1,0 +1,11 @@
+#!/usr/bin/gnuplot
+
+set term x11
+set mouse
+set xlabel "y"
+set nokey
+plot "log/log_target_hokuyo" using 3:2 t "hokuyo"
+
+# la pause sert à laisser gnuplot lancé (pour zoomer par exemple)
+pause -1
+

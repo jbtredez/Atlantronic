@@ -5,14 +5,21 @@
 #include "kernel/systick.h"
 #include "kernel/event.h"
 #include "kernel/driver/hokuyo.h"
+#include "kernel/hokuyo_tools.h"
 #include "gpio.h"
 #include "location/location.h"
+#include "kernel/rcc.h"
 
 //! @todo réglage au pif
 #define TEST_HOKUYO_STACK_SIZE       100
+#define HOKUYO_NUM_POINTS            682
 
 static void test_hokuyo_task();
 int test_hokuyo_module_init();
+
+static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
+static float hokuyo_x[682]; //!< x des points 44 à 725
+static float hokuyo_y[682]; //!< y des points 44 à 725
 
 int test_hokuyo_module_init()
 {
@@ -33,11 +40,31 @@ static void test_hokuyo_task()
 {
 //	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	hokuyo_init();
+	uint32_t err;
+
+	do
+	{
+		err = hokuyo_init();
+		if( err)
+		{
+			error_raise(err);
+		}
+	} while(err);
 
 	while(1)
 	{
+		err = hokuyo_scan();
+		if( err)
+		{
+			error_raise(err);
+//			continue;
+		}
 
+		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
+		
+		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
+
+		vTaskDelay(ms_to_tick(1000));
 	}
 
 	vTaskDelete(NULL);
