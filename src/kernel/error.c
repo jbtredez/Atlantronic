@@ -11,6 +11,7 @@
 static uint16_t error_array[NB_ERROR];
 static volatile uint8_t error_index = 0;
 
+// TODO : voir / reentrance
 void error_raise(uint16_t error_number)
 {
     error_array[ error_index ] = error_number;
