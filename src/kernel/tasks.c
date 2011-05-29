@@ -2070,7 +2070,13 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 		do
 		{
 			pxTcb = pxListItem->pvOwner;
-			
+
+			// TODO au cas ou, bug a investiger (hard fault vu une fois)
+			if( pxTcb == NULL )
+			{
+				break;
+			}
+
 			pxTcb->event |= mask;
 			if( pxTcb->event & pxTcb->eventMask )
 			{
