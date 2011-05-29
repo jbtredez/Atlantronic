@@ -3,6 +3,7 @@
 //! @author Atlantronic
 
 #include "kernel/hokuyo_tools.h"
+#include "kernel/robot_parameters.h"
 
 uint16_t hokuyo_tools_decode16(const unsigned char* data)
 {
@@ -90,8 +91,8 @@ end:
 
 void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y)
 {
-	float alpha = -(135 / 180.0f - 44 / 512.0f) * M_PI;
-	const float pas = M_PI / 512.0f;
+	float alpha = -(135 / 180.0f - 44 / 512.0f) * PI;
+	const float pas = PI / 512.0f;
 
 	for( ; size--; )
 	{
