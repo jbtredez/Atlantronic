@@ -6,11 +6,11 @@
 #include "kernel/systick.h"
 #include "kernel/can/can_us.h" // TODO : revoir ce fichier (pas que pour le can)
 
-#define GPIO_US1     0x01  // PC1
-#define GPIO_US2     0x02  // PC3
-#define GPIO_US3     0x04  // PC5
-#define GPIO_US4     0x08  // PA5
-#define GPIO_US5     0x10  // PB1
+#define GPIO_US0     0x01  // PC1
+#define GPIO_US1     0x02  // PC3
+#define GPIO_US2     0x04  // PA5
+#define GPIO_US3     0x08  // PC5
+#define GPIO_US4     0x10  // PB1
 
 static uint8_t gpio_us;
 static portTickType gpio_us_start_time[US_MAX];
@@ -123,13 +123,13 @@ void isr_exti1(void)
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
 		EXTI->PR |= EXTI_PR_PR1;
-		if( gpio_us & GPIO_US1 )
+		if( gpio_us & GPIO_US0 )
 		{
 			if( (GPIOC->IDR & GPIO_IDR_IDR1) == 0 )
 			{
 				// front descendant sur PC1
-				gpio_us &= ~GPIO_US1;
-				gpio_us_stop_time[US_1] = systick_get_time_from_isr();
+				gpio_us &= ~GPIO_US0;
+				gpio_us_stop_time[US_0] = systick_get_time_from_isr();
 			}
 		}
 		else
@@ -137,17 +137,17 @@ void isr_exti1(void)
 			if( GPIOC->IDR & GPIO_IDR_IDR1 )
 			{
 				// front montant sur PC1
-				gpio_us |= GPIO_US1;
-				gpio_us_start_time[US_1] = systick_get_time_from_isr();
+				gpio_us |= GPIO_US0;
+				gpio_us_start_time[US_0] = systick_get_time_from_isr();
 			}
 		}
-		if( gpio_us & GPIO_US5 )
+		if( gpio_us & GPIO_US4 )
 		{
 			if( (GPIOB->IDR & GPIO_IDR_IDR1) == 0 )
 			{
 				// front descendant sur PB1
-				gpio_us &= ~GPIO_US5;
-				gpio_us_stop_time[US_5] = systick_get_time_from_isr();
+				gpio_us &= ~GPIO_US4;
+				gpio_us_stop_time[US_4] = systick_get_time_from_isr();
 			}
 		}
 		else
@@ -155,8 +155,8 @@ void isr_exti1(void)
 			if( GPIOB->IDR & GPIO_IDR_IDR1 )
 			{
 				// front montant sur PB1
-				gpio_us |= GPIO_US5;
-				gpio_us_start_time[US_5] = systick_get_time_from_isr();
+				gpio_us |= GPIO_US4;
+				gpio_us_start_time[US_4] = systick_get_time_from_isr();
 			}
 		}
 	}
@@ -167,13 +167,13 @@ void isr_exti3(void)
 	if( EXTI->PR & EXTI_PR_PR3)
 	{
 		EXTI->PR |= EXTI_PR_PR3;
-		if( gpio_us & GPIO_US2 )
+		if( gpio_us & GPIO_US1 )
 		{
 			if( (GPIOC->IDR & GPIO_IDR_IDR3) == 0 )
 			{
 				// front descendant sur PC3
-				gpio_us &= ~GPIO_US2;
-				gpio_us_stop_time[US_2] = systick_get_time_from_isr();
+				gpio_us &= ~GPIO_US1;
+				gpio_us_stop_time[US_1] = systick_get_time_from_isr();
 			}
 		}
 		else
@@ -181,8 +181,8 @@ void isr_exti3(void)
 			if( GPIOC->IDR & GPIO_IDR_IDR3 )
 			{
 				// front montant sur PC3
-				gpio_us |= GPIO_US2;
-				gpio_us_start_time[US_2] = systick_get_time_from_isr();
+				gpio_us |= GPIO_US1;
+				gpio_us_start_time[US_1] = systick_get_time_from_isr();
 			}
 		}
 	}
@@ -211,13 +211,13 @@ void isr_exit9_5(void)
 				gpio_us_start_time[US_3] = systick_get_time_from_isr();
 			}
 		}
-		if( gpio_us & GPIO_US4 )
+		if( gpio_us & GPIO_US2 )
 		{
 			if( (GPIOA->IDR & GPIO_IDR_IDR5) == 0 )
 			{
 				// front descendant sur PA5
-				gpio_us &= ~GPIO_US4;
-				gpio_us_stop_time[US_4] = systick_get_time_from_isr();
+				gpio_us &= ~GPIO_US2;
+				gpio_us_stop_time[US_2] = systick_get_time_from_isr();
 			}
 		}
 		else
@@ -225,8 +225,8 @@ void isr_exit9_5(void)
 			if( GPIOC->IDR & GPIO_IDR_IDR5 )
 			{
 				// front montant sur PA5
-				gpio_us |= GPIO_US4;
-				gpio_us_start_time[US_4] = systick_get_time_from_isr();
+				gpio_us |= GPIO_US2;
+				gpio_us_start_time[US_2] = systick_get_time_from_isr();
 			}
 		}
 	}

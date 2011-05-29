@@ -9,11 +9,11 @@
 //! TODO : trouver un nom selon la position
 enum us_id
 {
-	US_1 = 0,
+	US_0 = 0,
+	US_1,
 	US_2,
 	US_3,
 	US_4,
-	US_5,
 	US_MAX
 };
 
