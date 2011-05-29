@@ -125,7 +125,7 @@ void isr_exti1(void)
 		EXTI->PR |= EXTI_PR_PR1;
 		if( gpio_us & GPIO_US1 )
 		{
-			if( GPIOC->IDR & GPIO_IDR_IDR1 == 0 )
+			if( (GPIOC->IDR & GPIO_IDR_IDR1) == 0 )
 			{
 				// front descendant sur PC1
 				gpio_us &= ~GPIO_US1;
@@ -143,7 +143,7 @@ void isr_exti1(void)
 		}
 		if( gpio_us & GPIO_US5 )
 		{
-			if( GPIOB->IDR & GPIO_IDR_IDR1 == 0 )
+			if( (GPIOB->IDR & GPIO_IDR_IDR1) == 0 )
 			{
 				// front descendant sur PB1
 				gpio_us &= ~GPIO_US5;
@@ -169,7 +169,7 @@ void isr_exti3(void)
 		EXTI->PR |= EXTI_PR_PR3;
 		if( gpio_us & GPIO_US2 )
 		{
-			if( GPIOC->IDR & GPIO_IDR_IDR3 == 0 )
+			if( (GPIOC->IDR & GPIO_IDR_IDR3) == 0 )
 			{
 				// front descendant sur PC3
 				gpio_us &= ~GPIO_US2;
@@ -195,7 +195,7 @@ void isr_exit9_5(void)
 		EXTI->PR |= EXTI_PR_PR5;
 		if( gpio_us & GPIO_US3 )
 		{
-			if( GPIOC->IDR & GPIO_IDR_IDR5 == 0 )
+			if( (GPIOC->IDR & GPIO_IDR_IDR5) == 0 )
 			{
 				// front descendant sur PC5
 				gpio_us &= ~GPIO_US3;
@@ -213,7 +213,7 @@ void isr_exit9_5(void)
 		}
 		if( gpio_us & GPIO_US4 )
 		{
-			if( GPIOA->IDR & GPIO_IDR_IDR5 == 0 )
+			if( (GPIOA->IDR & GPIO_IDR_IDR5) == 0 )
 			{
 				// front descendant sur PA5
 				gpio_us &= ~GPIO_US4;
