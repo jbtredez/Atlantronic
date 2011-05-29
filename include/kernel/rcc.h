@@ -19,5 +19,6 @@
 #define RCC_PCLK2        72000000LL
 
 #define ms_to_tick(a)    (a*RCC_SYSCLK/1000)
+#define us_to_tick(a)    (a*RCC_SYSCLK/1000000)
 
 #endif
