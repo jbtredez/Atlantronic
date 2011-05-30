@@ -35,19 +35,20 @@ static void test_pince_task()
 
 	pince_configure();
 	pince_open();
+	vTaskDelay(ms_to_tick(1000));
 
 	while(1)
 	{
 		//control_pince_independant(70, 70);
 		control_pince_dual(70, 0);
-		vTaskDelay(ms_to_tick(2000));
-		pince_open();
-		vTaskDelay(ms_to_tick(2000));
+		vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, ms_to_tick(3000));
 		pince_close();
-		vTaskDelay(ms_to_tick(1000));
-		control_pince_dual(2500, 0);
+		vTaskDelay(ms_to_tick(200));
 		//control_pince_independant(2500, 2500);
-		vTaskDelay(ms_to_tick(2000));
+		control_pince_dual(3000, 0);
+		vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, ms_to_tick(3000));
+		pince_open();
+		vTaskDelay(ms_to_tick(400));
 	}
 
 	vTaskDelete(NULL);
