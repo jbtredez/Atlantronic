@@ -4,14 +4,14 @@
 
 #include "kernel/hokuyo_tools.h"
 #include "kernel/robot_parameters.h"
-
+#include "kernel/systick.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 
 #define GAP 90 //150
-#define THETA 0.35
+#define THETA 0.35f
 #define SEUIL_HAUT 110 //pion
 #define SEUIL_BAS 70 
 #define COTE 350
@@ -22,7 +22,7 @@
 #define HOKU_RANGE_MAX 500 //donnée peu faible après
 #define HOKU_DECALAGE_START 200 //offset en y vis à vis du bord de table
 #define HOKU_SEUIL_PION 210 //distance max pour que l on considère que c est un pion
-
+#define HOKU_SEUIL_PION_CARRE HOKU_SEUIL_PION*HOKU_SEUIL_PION
 
 
 typedef struct {
@@ -137,8 +137,8 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 	{
 		if(*distance > 19)
 		{
-			*x = *distance * cos(alpha);
-			*y = - *distance * sin(alpha);
+			*x = *distance * (float)cos(alpha);
+			*y = - *distance * (float)sin(alpha);
 		}
 		else
 		{
@@ -161,26 +161,77 @@ void hoku_init_tab(uint16_t* distance, unsigned int size, float* x, float* y)
 	{	     
              hoku_scan_table[i].distance = distance[i];
              hoku_scan_table[i].x = x[i];
-             hoku_scan_table[i].y = y[i];    
-
+             hoku_scan_table[i].y = y[i]; 
 	}
 }
 
 void hoku_init_pion(void)
 {
   int i;
+  
   for (i=0; i<NB_PION; i++)
     hoku_pion_table[i].objet = VIDE;
-  //TODO ajouter les pions fixes
+
+  hoku_pion_table[0].x=1225;
+  hoku_pion_table[0].y=-525;
+  hoku_pion_table[0].objet=PION;
+  hoku_pion_table[0].timestamp=0;
+  
+  hoku_pion_table[1].x=1225;
+  hoku_pion_table[1].y=-175;
+  hoku_pion_table[1].objet=PION;
+  hoku_pion_table[1].timestamp=0;  
+  
+  hoku_pion_table[2].x=1225;
+  hoku_pion_table[2].y=175;
+  hoku_pion_table[2].objet=PION;
+  hoku_pion_table[2].timestamp=0;
+    
+  hoku_pion_table[3].x=1225;
+  hoku_pion_table[3].y=525;
+  hoku_pion_table[3].objet=PION;
+  hoku_pion_table[3].timestamp=0;
+  
+  hoku_pion_table[4].x=1225;
+  hoku_pion_table[4].y=875;
+  hoku_pion_table[4].objet=PION;
+  hoku_pion_table[4].timestamp=0;
+  
+  hoku_pion_table[5].x=-1225;
+  hoku_pion_table[5].y=-525;
+  hoku_pion_table[5].objet=PION;
+  hoku_pion_table[5].timestamp=0;
+  
+  hoku_pion_table[6].x=-1225;
+  hoku_pion_table[6].y=-175;
+  hoku_pion_table[6].objet=PION;
+  hoku_pion_table[6].timestamp=0;
+  
+  hoku_pion_table[7].x=-1225;
+  hoku_pion_table[7].y=175;
+  hoku_pion_table[7].objet=PION;
+  hoku_pion_table[7].timestamp=0;
+  
+  hoku_pion_table[8].x=-1225;
+  hoku_pion_table[8].y=525;
+  hoku_pion_table[8].objet=PION;
+  hoku_pion_table[8].timestamp=0;
+  
+  hoku_pion_table[9].x=-1225;
+  hoku_pion_table[9].y=875;
+  hoku_pion_table[9].objet=PION;
+  hoku_pion_table[9].timestamp=0;
+  
 }
 
-void hoku_get_pion(uint16_t index, unsigned char *objet, float* x, float* y)
+void hoku_get_pion(uint16_t index, unsigned char *objet, float* x, float* y, int64_t *timestamp)
 {
   if( index<NB_PION)
   {	
     *objet = hoku_pion_table[index].objet;
-    *x = hoku_scan_table[index].x;
-    *y = hoku_scan_table[index].y;    
+    *x = hoku_pion_table[index].x;
+    *y = hoku_pion_table[index].y;   
+    *timestamp = hoku_pion_table[index].timestamp;
   }
   
 }
@@ -193,8 +244,6 @@ int hoku_update_pion(char objet, int x, int y)
     int Xa, Ya;
     int Xb = x;
     int Yb = y;
-    //TODO
-    int tmp;
 
     
     while( (i<NB_PION) && (hoku_pion_table[i].objet != VIDE) )
@@ -204,9 +253,8 @@ int hoku_update_pion(char objet, int x, int y)
       Ya = hoku_pion_table[i].y;
       
       distance =  ((Xb - Xa)*(Xb - Xa)) + ((Yb - Ya)*(Yb - Ya));
-      tmp = HOKU_SEUIL_PION * HOKU_SEUIL_PION;
 
-      if( distance < (HOKU_SEUIL_PION * HOKU_SEUIL_PION) )
+      if( distance < HOKU_SEUIL_PION_CARRE )
       {
 
 	found = 1;
@@ -223,7 +271,7 @@ int hoku_update_pion(char objet, int x, int y)
       hoku_pion_table[i].y = y;
       
     }
-    //TODO ajouter timestamp 
+    hoku_pion_table[i].timestamp = systick_get_match_time();
     return 1;
     
 }
@@ -248,14 +296,14 @@ unsigned char check_shape(int start, int end)
 	
 	int D1 = hoku_scan_table[start].distance;
 	//int D2 = hoku_scan_table[end].distance;
-	double adjacent = 0.0;
+	float adjacent = 0.0;
 	//milieu du point
 	//int milieu = (end + start)/2;
 	
-	double angle_deg = THETA*((end-start)/2);
-	double angle_rad = M_PI * ( angle_deg / 180); 
+	float angle_deg = THETA*((end-start)/2);
+	float angle_rad = PI * ( angle_deg / 180); 
 	
-	adjacent = sin( angle_rad ) * D1;	
+	adjacent = (float)sin( angle_rad ) * D1;	
 
 	if( (adjacent < SEUIL_HAUT) && (adjacent > SEUIL_BAS) )
 	{
@@ -323,10 +371,14 @@ void hoku_parse_tab(void)
  * renvoie 1 si chemin degager, 0 sinon
  * 
  */
-int hoku_check_path()
+uint8_t hoku_check_path()
 {
-  int point1, point2, point3, point4; //carré de COTE sur COTE 
-  int res = 0;
+  int point1 = 334 ;
+  int point2 = 347;
+  int point3 = 355;
+  int point4 = 326; 
+  //carré de COTE sur COTE 
+  uint8_t res = 0;
     //on commence en haut a gauche puis sens horaire
   //
   //	1 	2
@@ -336,15 +388,19 @@ int hoku_check_path()
   //	|	|
   //	_________	
   //	4	3
-
-  double result1, result2;
-  double limite1, limite2;
-  double oppose = COTE / 2;
-  double adjacent1 = 70; //pt3 et pt4
-  double adjacent2 = adjacent1 + COTE; //pt1 et pt2
-  double angle_rad;
-  result1 = atan (oppose/adjacent1) * 180 / M_PI;  //pt3 et pt4
-  result2 = atan (oppose/adjacent2) * 180 / M_PI; //pt1 et pt2
+  
+  int limite1 = 265;
+  int limite2 = 577;
+  /*
+  float result1, result2;
+  float limite1, limite2;
+  float oppose = COTE / 2;
+  float adjacent1 = 200; //70; //pt3 et pt4
+  float adjacent2 = adjacent1 + COTE; //pt1 et pt2
+  float angle_rad;
+  //TODO atan2
+  result1 = (float)atan (oppose/adjacent1) * 180 / PI;  //pt3 et pt4
+  result2 = (float)atan (oppose/adjacent2) * 180 / PI; //pt1 et pt2
   
   point1 = (NB_POINT/2) - (result2 * THETA);
   point2 = (NB_POINT/2) + (result2 * THETA);
@@ -352,15 +408,17 @@ int hoku_check_path()
   point4 = (NB_POINT/2) - (result1 * THETA);
 
   //pt1 et pt2
-  angle_rad = M_PI * ( result2 / 180); 
-  limite2 = oppose / sin(angle_rad);
+  angle_rad = PI * ( result2 / 180); 
+  limite2 = oppose / (float)sin(angle_rad);
 
   //pt3 et pt4
-  angle_rad = M_PI * ( result1 / 180); 
-  limite1 = oppose / sin(angle_rad);
+  angle_rad = PI * ( result1 / 180); 
+  limite1 = oppose / (float)sin(angle_rad);*/
 
-  if( (hoku_scan_table[point1].distance > limite2) && ( hoku_scan_table[point2].distance > limite2)
-	&& (hoku_scan_table[point4].distance > limite1) && (hoku_scan_table[point3].distance > limite1) )
+  if( ( (hoku_scan_table[point1].distance > limite2) || (hoku_scan_table[point1].distance == 0) ) && 
+      ( (hoku_scan_table[point2].distance > limite2) || (hoku_scan_table[point2].distance == 0) ) &&
+      ( (hoku_scan_table[point3].distance > limite1) || (hoku_scan_table[point3].distance == 0) ) && 
+      ( (hoku_scan_table[point4].distance > limite1) || (hoku_scan_table[point4].distance == 0) ) )
   {
 	res = 1;
 	// chemin degage!!!!!

@@ -15,6 +15,12 @@ static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725 du hok
 static float hokuyo_x[682]; //!< x des points 44 à 725
 static float hokuyo_y[682]; //!< y des points 44 à 725
 
+//TODO
+int64_t systick_get_match_time()
+{
+  return 0;
+}
+
 void usart_open()
 {
 	fd = open(usart_name, O_RDWR | O_NOCTTY);
