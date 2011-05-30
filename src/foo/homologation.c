@@ -48,37 +48,52 @@ static void test_deplacement_task()
 
 	pince_configure();
 	pince_close();
-	control_pince_independant(1000, 1000);
 
-while(1)
-{
-	vTaskDelay(ms_to_tick(10000));
-} ;
-	// todo demenager : procedure recalage
+	control_pince_independant(1500, 1500);
+
+	// TODO demenager : procedure recalage
 	control_straight_to_wall(-200);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(120);
+	control_straight(200 + PARAM_NP_X);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_rotate(-PI/2.0f);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight_to_wall(-800);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(110);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 
-	while(1) ;
+//	vTaskDelay(ms_to_tick(5000));
 
-	while(1)
+	control_goto(-875, -850);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	pince_open();
+	control_pince_dual(70, 0);
+//	control_goto(-700, -350);
+	control_goto_near(-700, -350, 160);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	pince_close();
+	vTaskDelay(ms_to_tick(400));
+
+	control_pince_dual(3000, 0);
+	vTaskDelay(ms_to_tick(1000));
+
+	control_goto_near(-350, -700, 160);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	pince_open();
+	vTaskDelay(ms_to_tick(300));
+	control_pince_dual(70, 0);
+	vTaskDelay(ms_to_tick(1000));
+//	vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, portMAX_DELAY);
+	pince_close();
+	vTaskDelay(ms_to_tick(400));
+	control_pince_dual(3000, 0);
+
+	while(1) 
 	{
-		control_straight(700);
-		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(2000));
-		/*control_rotate(1.57);
-		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		control_rotate(-1.57);
-		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);*/
-		control_straight(-700);
-		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(2000));
+		pince_close();
+		vTaskDelay(ms_to_tick(1000));
 	}
 
 	vTaskDelete(NULL);
