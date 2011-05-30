@@ -130,7 +130,11 @@ void isr_dma1_channel1(void)
 	if( DMA1->ISR | DMA_ISR_TCIF1)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF1;
-		vTaskSetEventFromISR(EVENT_ADC_READY);
+		// on change les pointeurs
+		struct adc_an* tmp = adc_dma;
+		adc_dma = adc_current;
+		adc_current = tmp;
+//		vTaskSetEventFromISR(EVENT_ADC_READY);
 	}
 }
 
@@ -142,16 +146,9 @@ static void adc_task(void* arg)
 
 	while(1)
 	{
-		vTaskClearEvent(EVENT_ADC_READY);
+//		vTaskClearEvent(EVENT_ADC_READY);
 		scan_AN();
-		vTaskWaitEvent(EVENT_ADC_READY, ms_to_tick(5));
-
-		// on change les pointeurs
-		portENTER_CRITICAL();
-		struct adc_an* tmp = adc_dma;
-		adc_dma = adc_current;
-		adc_current = tmp;
-		portEXIT_CRITICAL();
+//		vTaskWaitEvent(EVENT_ADC_READY, ms_to_tick(5));
 
 		// TODO val + bateries
 		//if(adc_dma.vBatAru == 0)
@@ -159,7 +156,7 @@ static void adc_task(void* arg)
 		//	setLed(ERR_ARU);
 		//}
 
-		wake_time += ms_to_tick(10);
+		wake_time += ms_to_tick(5);
 		vTaskDelayUntil(wake_time);
 	}
 }
