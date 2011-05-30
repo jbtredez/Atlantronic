@@ -88,7 +88,6 @@ PRIVILEGED_DATA tskTCB * volatile pxCurrentTCB = NULL;
 PRIVILEGED_DATA static xList pxReadyTasksLists[ configMAX_PRIORITIES ];	/*< Prioritised ready tasks. */
 PRIVILEGED_DATA static xList xDelayedTaskList;							/*< Delayed tasks. */
 PRIVILEGED_DATA static xList xPendingReadyList;							/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready queue when the scheduler is resumed. */
-PRIVILEGED_DATA static xList xEventList;                                //!< Taches en attente d'un évènement
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
@@ -1308,11 +1307,6 @@ void vTaskSwitchContext( void )
 	while(xDelayedTaskList.uxNumberOfItems)
 	{
 		pxTCB = xDelayedTaskList.xListEnd.pxNext->pvOwner;
-		// TODO au cas ou, bug a investiger (hard fault vu une fois)
-		if( pxTCB == NULL )
-		{
-			break;
-		}
 
 		if( systick_reconfigure(pxTCB->xGenericListItem.xItemValue) == 0)
 		{
@@ -1671,7 +1665,6 @@ unsigned portBASE_TYPE uxPriority;
 
 	vListInitialise( &xDelayedTaskList );
 	vListInitialise( &xPendingReadyList );
-	vListInitialise( &xEventList);
 
 	#if ( INCLUDE_vTaskDelete == 1 )
 	{
@@ -1991,32 +1984,52 @@ void vTaskExitCritical( void )
 //! @todo description
 uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout)
 {
-	// atomique
-	pxCurrentTCB->eventMask = mask;
+	portTickType xTimeToWake;
 
 	portENTER_CRITICAL();
+	pxCurrentTCB->eventMask = mask;
 	if(! (pxCurrentTCB->event & mask) )
 	{
-		vTaskPlaceOnEventList(&xEventList, timeout);
-		
-		portEXIT_CRITICAL();
+		// We must remove ourselves from the ready list before adding ourselves
+		// to the blocked list as the same list item is used for both lists.  We have
+		// exclusive access to the ready lists as the scheduler is locked.
+		vListRemove( ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
+
+		if( timeout == portMAX_DELAY )
+		{
+			// Add ourselves to the suspended task list instead of a delayed task
+			// list to ensure we are not woken by a timing event.  We will block
+			// indefinitely.
+			vListInsertEnd( ( xList * ) &xSuspendedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
+		}
+		else
+		{
+			// Calculate the time at which the task should be woken if the event does
+			// not occur.  This may overflow but this doesn't matter.
+			xTimeToWake = xTickCount + timeout;
+
+			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
+
+			vListInsert( ( xList * ) &xDelayedTaskList, ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) );
+		}
 
 		portYIELD_WITHIN_API();
 	}
-	else
-	{
-		portEXIT_CRITICAL();
-	}
+
+	portEXIT_CRITICAL();
 
 	// lecture de event atomique
 	return pxCurrentTCB->event;
 }
 
 //! @todo description
-void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
+unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wake)
 {
 	tskTCB *pxTcb;
+
 	xListItem *pxListItem;
+	xListItem *next;
+	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
 	if( pxTaskList->uxNumberOfItems )
 	{
@@ -2024,17 +2037,32 @@ void xTaskUpdateEvent(xList* pxTaskList, uint32_t mask)
 		do
 		{
 			pxTcb = pxListItem->pvOwner;
-			
-			// TODO au cas ou, bug a investiger (hard fault vu une fois)
-			if( pxTcb == NULL )
-			{
-				break;
-			}
+			next = (xListItem*) pxListItem->pxNext;
 
 			pxTcb->event |= mask;
-			pxListItem = (xListItem*) pxListItem->pxNext;
+			if( wake && pxTcb->event & pxTcb->eventMask)
+			{
+				if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
+				{
+					xHigherPriorityTaskWoken = ( pxTcb->uxPriority >= pxCurrentTCB->uxPriority );
+					vListRemove( &( pxTcb->xGenericListItem ) );
+					prvAddTaskToReadyQueue( pxTcb );
+				}
+				else
+				{
+					// We cannot access the delayed or ready lists, so will hold this
+					// task pending until the scheduler is resumed.
+					vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxTcb->xEventListItem ) );
+				}
+
+				pxTcb->eventMask = 0;
+			}
+
+			pxListItem = next;
 		}while( pxListItem != (xListItem*) &pxTaskList->xListEnd);
 	}
+
+	return xHigherPriorityTaskWoken;
 }
 
 //! Le but est de mettre à jour les variables event de toutes les taches
@@ -2059,61 +2087,15 @@ void vTaskSetEvent(uint32_t mask)
 //! cf vTaskSetEvent mais depuis une interruption
 unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 {
-	tskTCB *pxTcb;
-	xListItem *pxListItem;
-
 	unsigned portBASE_TYPE i;
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
 	for(i = 0; i < configMAX_PRIORITIES; i++)
-		xTaskUpdateEvent(&pxReadyTasksLists[i], mask);
+		xTaskUpdateEvent(&pxReadyTasksLists[i], mask, 0);
 
-	xTaskUpdateEvent(&xDelayedTaskList, mask);
-	xTaskUpdateEvent(&xPendingReadyList, mask);
-	xTaskUpdateEvent(&xSuspendedTaskList, mask);
-
-	if( xEventList.uxNumberOfItems )
-	{
-		pxListItem = (xListItem *) xEventList.xListEnd.pxNext;
-		do
-		{
-			pxTcb = pxListItem->pvOwner;
-
-			// TODO au cas ou, bug a investiger (hard fault vu une fois)
-			if( pxTcb == NULL )
-			{
-				break;
-			}
-
-			pxTcb->event |= mask;
-			if( pxTcb->event & pxTcb->eventMask )
-			{
-				traceTASK_RESUME( pxTcb );
-
-				vListRemove( &( pxTcb->xEventListItem ) );
-
-				if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
-				{
-					vListRemove( &( pxTcb->xGenericListItem ) );
-					prvAddTaskToReadyQueue( pxTcb );
-				}
-				else
-				{
-					// We cannot access the delayed or ready lists, so will hold this
-					// task pending until the scheduler is resumed.
-					vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxTcb->xEventListItem ) );
-				}
-
-				// We may have just resumed a higher priority task
-				if( pxTcb->uxPriority >= pxCurrentTCB->uxPriority )
-				{
-					xHigherPriorityTaskWoken = 1;
-				}
-			}
-			
-			pxListItem = (xListItem*) pxListItem->pxNext;
-		}while( pxListItem != (xListItem*) &xEventList.xListEnd);
-	}
+	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xDelayedTaskList, mask, 1);
+	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xPendingReadyList, mask, 0);
+	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xSuspendedTaskList, mask, 1);
 
 	return xHigherPriorityTaskWoken;
 }

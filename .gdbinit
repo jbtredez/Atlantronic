@@ -10,13 +10,6 @@ define prog
 	monitor reset init
 end
 
-#define define hookpost-stop
-#	set TIM1->CCR1 = 0
-#	set TIM1->CCR2 = 0
-#	set TIM1->CCR3 = 0
-#	set TIM1->CCR4 = 0
-#end
-
 define ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
 	set $match_time = 0
@@ -96,15 +89,16 @@ define ptasks
 		set $n--
 	end
 	set $i--
+
 end
 
 define pTcb
 	printf " %8s | %10x | %10x | %10x | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	set $stack_min_free = 0
-	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
-		set $stack_min_free++
-	end
+#	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
+#		set $stack_min_free++
+#	end
 
 	printf " %8i |\n", $stack_min_free
 end
