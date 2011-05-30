@@ -54,10 +54,10 @@ static int control_pince_module_init()
 		return ERR_INIT_CONTROL_PINCE;
 	}
 
-	pid_init(&control_pince_param.pid_ind_height1, 5, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_ind_height2, 5, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_height, 4, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_alpha, 4, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height1, 0.005, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height2, 0.005, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_height, 0.001, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_alpha, 0.0005, 0, 0, PWM_ARR);
 
 	trapeze_set(&control_pince_param.ind_trapeze_right, 4000.0f*TE, 16000.0f*TE*TE);
 	trapeze_set(&control_pince_param.ind_trapeze_left, 4000.0f*TE, 16000.0f*TE*TE);
@@ -104,13 +104,13 @@ static void control_pince_compute()
 		goto end_pwm_critical;
 	}
 
-	if( control_pince_an.i3 > 500 || control_pince_an.i4 > 500)
+/*	if( control_pince_an.i3 > 500 || control_pince_an.i4 > 500)
 	{
 		control_pince_state = CONTROL_PINCE_READY_FREE;
 		vTaskSetEvent(EVENT_CONTROL_PINCE_COLISION | EVENT_CONTROL_PINCE_READY);
 		goto end_pwm_critical;
 	}
-
+*/
 	// calcul du prochain point
 	switch(control_pince_state)
 	{
