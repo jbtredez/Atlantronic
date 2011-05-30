@@ -50,7 +50,9 @@ static void test_hokuyo_task()
 			error_raise(err);
 		}
 	} while(err);
-
+	
+	hoku_init_pion();
+	
 	while(1)
 	{
 		err = hokuyo_scan();
@@ -64,6 +66,9 @@ static void test_hokuyo_task()
 		
 		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
 
+		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
+		hoku_parse_tab();
+		
 		vTaskDelay(ms_to_tick(1000));
 	}
 
