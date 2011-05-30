@@ -5,6 +5,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <math.h>
 #include "kernel/hokuyo_tools.h"
 
@@ -61,60 +62,15 @@ void usart_set500k()
 //	tcflush(fd, TCIOFLUSH);
 }
 
-
 int main(int argc, char** argv)
 {
 	unsigned char buffer[10240];
 
-	if(argc < 2)
+	if(argc < 3)
 	{
-		printf("indiquer le peripherique\n");
+		printf("indiquer le peripherique puis le nombre de captures\n");
 		return -1;
 	}
-
-	usart_name = argv[1];
-
-	usart_open();
-
-	// TODO : tests, temps pour voir, a modifier
-	write(fd, "SCIP2.0\nSS500000\n", 8+9);
-	usleep(50000);
-	usart_set500k();
-	write(fd, "SCIP2.0\nSS500000\n", 8+9);
-	write(fd, "BM\n", 3);
-
-	usleep(150000);
-	unsigned int size = read(fd, buffer, 10240);
-	write(fd, "GS0044072500\n", 13);//44 à 725
-	usleep(150000);
-
-	unsigned int i = 0;
-	size = read(fd, buffer, 10240);
-
-	close(fd);
-
-	if( size != 1432 )
-	{
-		printf("erreur de lecture, size == %i\n", size);
-		return 0;
-	}
-
-	hokuyo_tools_decode_buffer(buffer, 1432, hokuyo_distance, 682);
-	hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
-	
-	FILE* f = fopen("log/test_hokuyo.txt", "w");
-	if(f == NULL)
-	{
-		perror("fopen");
-		return 0;
-	}
-	
-	for(i=0; i< 682; i++)
-	{
-		fprintf(f, "%i\t%f\t%f\n", hokuyo_distance[i], hokuyo_x[i], hokuyo_y[i]);
-	}
-
-	fclose(f);
 
 	FILE* p = popen("gnuplot --persist", "w");
 	if(p == NULL)
@@ -126,13 +82,108 @@ int main(int argc, char** argv)
 	fprintf(p, "set term x11\n");
 	fprintf(p, "set mouse\n");
 	fprintf(p, "set xlabel \"y\"\n");
-	fprintf(p, "plot \"log/test_hokuyo.txt\" using 3:2 t \"hokuyo\" with lines, \"log/test_hokuyo.txt\" using 3:2 t \"hokuyo\"\n");
-	fflush(p);
+	fprintf(p, "set xrange [-3000:3000]\n");
+	fprintf(p, "set yrange [0:4100]\n");
+
+	usart_name = argv[1];
+	int nb_cap = atoi(argv[2]);
+
+	printf("usart_open\n");
+	usart_open();
+#if 0
+	usart_set500k();
+	while(1)
+	{
+		int size = read(fd, buffer, 1);
+		if(size == 1)
+		{
+			printf("%c", buffer[0]);
+			fflush(stdout);
+		}
+		else
+		{
+			usleep(10000);
+		}
+	}
+#endif
+#if 0
+	while(1)
+	{
+		write(fd, "SCIP2.0\n", 8);
+		usleep(10000);
+		int size = read(fd, buffer, 1);
+		if(size == 1)
+		{
+			printf("%c", buffer[0]);
+			fflush(stdout);
+		}
+		else
+		{
+			usleep(10000);
+		}
+	}
+#endif
+	printf("usart_write\n");
+	// TODO : tests, temps pour voir, a modifier
+	write(fd, "SCIP2.0\nSS500000\n", 8+9);
+	usleep(50000);
+	printf("usart_set500k\n");
+	usart_set500k();
+	printf("usart_write\n");
+	write(fd, "SCIP2.0\nSS500000\n", 8+9);
+	printf("usart_write\n");
+	write(fd, "BM\n", 3);
+
+	usleep(150000);
+	printf("usart_read\n");
+	unsigned int size = read(fd, buffer, 10240);
+	printf("usart_write\n");
+
+	while(nb_cap--)
+	{
+		write(fd, "GS0044072500\n", 13);//44 à 725
+		usleep(150000);
+
+		unsigned int i = 0;
+		size = read(fd, buffer, 10240);
+
+		if( size != 1432 )
+		{
+			printf("erreur de lecture, size == %i\n", size);
+			usleep(100000);
+			continue;
+		}
+
+		hokuyo_tools_decode_buffer(buffer, 1432, hokuyo_distance, 682);
+		hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
+
+		FILE* f = fopen("log/test_hokuyo.txt", "w");
+		if(f == NULL)
+		{
+			perror("fopen");
+			return 0;
+		}
+
+		for(i=0; i< 682; i++)
+		{
+			fprintf(f, "%i\t%f\t%f\n", hokuyo_distance[i], hokuyo_x[i], hokuyo_y[i]);
+		}
+
+		fclose(f);
+
+		fprintf(p, "plot \"log/test_hokuyo.txt\" using 3:2 t \"hokuyo\"\n");
+		fflush(p);
+
+		usleep(100000);
+	}
+
+	close(fd);
 
 	// on ne ferme pas le programme tout de suite pour permettre de zoomer par exemple
 	getchar();
 
 	fclose(p);
+
 
 	return 0;
 }
