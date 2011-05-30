@@ -104,6 +104,7 @@ uint32_t ax12_send(struct ax12_request *req)
 	uint8_t write_size = 6 + req->argc;
 	uint8_t read_size = write_size;
 	uint8_t i;
+	uint8_t* ax12_buffer;
 
 	ax12_write_dma_buffer[0] = 0xFF;
 	ax12_write_dma_buffer[1] = 0xFF;
@@ -150,46 +151,51 @@ uint32_t ax12_send(struct ax12_request *req)
 			goto end;
 		}
 	}
-#if 0
+
+	ax12_buffer = ax12_read_dma_buffer + write_size;
 	// pas de broadcast (et status des ax12 à 2) => réponse attendue
 	if(req->id != 0xFE)
 	{
-		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req.id || ax12_buffer[3] != size - 4)
+
+		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req->id || ax12_buffer[3] != read_size - write_size - 4)
 		{
 			// erreur protocole
 			res = -1;
 			goto end;
 		}
 
-		if( ax12_buffer[size-1] != ax12_checksum(ax12_buffer, size))
+		if( ax12_buffer[read_size - write_size - 1] != ax12_checksum(ax12_buffer, read_size - write_size))
 		{
 			// erreur checksum
 			res = -1;
 			goto end;
 		}
-		else
+
+		// traitement du message reçu
+		if(ax12_buffer[4])
 		{
-			// traitement du message reçu
-			if(ax12_buffer[4])
-			{
-				// TODO erreur ax12
-			}
-			if(size == 7)
-			{
-				req.rep->arg[0] = ax12_buffer[5];
-				req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-				vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
-			}
-			else if(size == 8)
-			{
-				req.rep->arg[0] = ax12_buffer[5];
-				req.rep->arg[1] = ax12_buffer[6];
-				req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-				vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
-			}
+			// erreur ax12
+			res = -1;
+			goto end;
 		}
-	}
+
+#if 0
+		if(size == 7)
+		{
+			req.rep->arg[0] = ax12_buffer[5];
+			req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+		}
+		else if(size == 8)
+		{
+			req.rep->arg[0] = ax12_buffer[5];
+			req.rep->arg[1] = ax12_buffer[6];
+			req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+		}
 #endif
+	}
+
 end:
 	return res;
 }
