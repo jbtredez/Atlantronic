@@ -23,7 +23,7 @@ static int gpio_module_init(void)
 	                GPIO_CRL_MODE1 | GPIO_CRL_CNF1
 		         ) ) |
 		            GPIO_CRL_CNF0_0 |
-		            GPIO_CRL_CNF1_0;
+		            GPIO_CRL_CNF1_0 ;
 
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
@@ -54,13 +54,17 @@ static int gpio_module_init(void)
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
 
+	// PE6 : entree input flotante ( bouton go )
+	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE6 & ~GPIO_CRL_CNF6) | GPIO_CRL_CNF6_0;
+
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
 
 	// PD8, PD9, PD10 => it sur front montant
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI6_PE;
 	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
-	EXTI->IMR |= EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
-	EXTI->RTSR |= EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
+	EXTI->IMR |= EXTI_IMR_MR6 | EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
+	EXTI->RTSR |= EXTI_RTSR_TR6 | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -76,6 +80,14 @@ void isr_exti9_5(void)
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
+		gpio_go = 1;
+		setLed(0x23F);
+		systick_start_match();
+		vTaskSetEventFromISR(EVENT_GO);
+	}
+	if( EXTI->PR & EXTI_PR_PR6)
+	{
+		EXTI->PR |= EXTI_PR_PR6;
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
