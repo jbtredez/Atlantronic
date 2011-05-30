@@ -56,14 +56,13 @@ static struct adc_an control_an;
 static uint8_t control_contact;
 static volatile struct vect_pos control_pos;
 static portTickType control_timer;
-
-// coupe 2011 - coefs samedi - Angers
-//static float control_kx = 0.01f;
-//static float control_ky = 0;
-//static float control_kalpha = 0.015f;
-static float control_kx = 0.01f;
-static float control_ky = 0;
-static float control_kalpha = 0.015f;
+static float control_kx;
+static float control_ky;
+static float control_kalpha;
+static float control_aMax_av;
+static float control_vMax_av;
+static float control_aMax_rot;
+static float control_vMax_rot;
 
 union
 {
@@ -104,6 +103,18 @@ static int control_module_init()
 	// 	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
 	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
 
+	// coupe 2011 - coefs samedi - Angers
+	//static float control_kx = 0.01f;
+	//static float control_ky = 0;
+	//static float control_kalpha = 0.015f;
+	control_kx = 0.01f;
+	control_ky = 0;
+	control_kalpha = 0.015f;
+
+	control_aMax_av = 0;
+	control_vMax_av = 0;
+	control_aMax_rot = 0;
+	control_vMax_rot = 0;
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -208,6 +219,7 @@ static void control_compute()
 
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+				goto end_pwm_critical;
 			}
 			control_compute_goto();
 			break;
@@ -223,10 +235,10 @@ static void control_compute()
 			goto end_pwm_critical;
 			break;
 	}
-
+/*
 	// gestion du timeout
-	// condition "on ne demande pas de bouger"
-/*	if( fabsf(control_v_dist_cons) < 0.01f && fabsf(control_v_rot_cons) < 0.01f)
+	// condition "on ne demande pas de bouger" (donc zero pur)
+	if( control_v_dist_cons == 0 && control_v_rot_cons == 0)
 	{
 		// on augmente le temps avec consigne nulle
 		control_timer += CONTROL_TICK_PERIOD;
@@ -327,7 +339,7 @@ static void control_compute_goto()
 		}
 		else
 		{
-			trapeze_set(&control_trapeze, 1000.0f*TE/((float) PI*PARAM_VOIE_MOT), 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT));
+			trapeze_set(&control_trapeze, control_vMax_rot, control_aMax_rot);
 			trapeze_apply(&control_trapeze, control_param.ad.angle);
 			control_cons.alpha += control_trapeze.v;
 			control_cons.ca = cos(control_cons.alpha);
@@ -355,7 +367,7 @@ static void control_compute_goto()
 		}
 		else
 		{
-			trapeze_set(&control_trapeze, 1000.0f*TE, 250.0f*TE*TE);
+			trapeze_set(&control_trapeze, control_vMax_av, control_aMax_av);
 			trapeze_apply(&control_trapeze, control_param.ad.distance);
 			control_cons.x += control_trapeze.v * control_cons.ca;
 			control_cons.y += control_trapeze.v * control_cons.sa;
@@ -384,7 +396,20 @@ static void control_colision_detection()
 	{
 		control_contact = 0;
 	}
-
+/*
+	if( control_contact == CONTACT_LEFT)
+	{
+		setLed(0x07);
+	}
+	else if( control_contact == CONTACT_RIGHT)
+	{
+		setLed(0x38);
+	}
+	else if( control_contact == (CONTACT_LEFT | CONTACT_RIGHT))
+	{
+		setLed(0x38 | 0x07);
+	}
+*/
 	// TODO régler seuil
 	if( control_an.i_right > 2000 )
 	{
@@ -414,6 +439,12 @@ void control_straight(float dist)
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
 	control_timer = 0;
+	control_aMax_av = 250.0f*TE*TE;
+	control_vMax_av = 1000.0f*TE;
+	control_aMax_rot = 0;
+	control_vMax_rot = 0;
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
 }
 
@@ -434,6 +465,12 @@ void control_rotate(float angle)
 	control_param.ad.angle = angle;
 	control_param.ad.distance = 0;
 	control_timer = 0;
+	control_aMax_av = 0;
+	control_vMax_av = 0;
+	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
 }
 
@@ -459,6 +496,12 @@ void control_goto(float x, float y)
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy);
 	control_timer = 0;
+	control_aMax_av = 250.0f*TE*TE;
+	control_vMax_av = 1000.0f*TE;
+	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
 }
 
@@ -478,6 +521,12 @@ void control_straight_to_wall(float dist)
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
 	control_timer = 0;
+	control_aMax_av = 100.0f*TE*TE;
+	control_vMax_av = 250.0f*TE;
+	control_aMax_rot = 0;
+	control_vMax_rot = 0;
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
 }
 

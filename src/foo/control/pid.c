@@ -54,3 +54,9 @@ float pid_apply(struct pid *pid, float in)
 
 	return out;
 }
+
+void pid_reset(struct pid *pid)
+{
+	pid->integral = 0;
+	pid->derivate = 0;
+}

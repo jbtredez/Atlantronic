@@ -23,4 +23,6 @@ void pid_init(struct pid *pid, float kp, float ki, float kd, float max);
 
 float pid_apply(struct pid *pid, float in);
 
+void pid_reset(struct pid *pid);
+
 #endif
