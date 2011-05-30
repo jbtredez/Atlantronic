@@ -33,6 +33,6 @@
 #define PARAM_ROT_MOD_GAIN                 (float) (1.0f / (PARAM_VOIE_MOT * PARAM_MOT_RED))
 
 
-#define PARAM_NP_X                          -92.0f
+#define PARAM_NP_X                          -95.0f
 
 #endif

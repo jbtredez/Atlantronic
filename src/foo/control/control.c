@@ -211,6 +211,11 @@ static void control_compute()
 				control_cons.alpha = control_pos.alpha;
 				control_cons.ca = control_pos.ca;
 				control_cons.sa = control_pos.sa;
+				sens1 = -1;
+				sens2 = -1;
+				u1 = -PWM_ARR;
+				u2 = -PWM_ARR;
+				goto end_pwm_critical;
 			}
 			else if( control_contact == (CONTACT_RIGHT | CONTACT_LEFT) )
 			{
@@ -495,6 +500,37 @@ void control_goto(float x, float y)
 
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy);
+	control_timer = 0;
+	control_aMax_av = 250.0f*TE*TE;
+	control_vMax_av = 1000.0f*TE;
+	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
+	portEXIT_CRITICAL();
+}
+
+void control_goto_near(float x, float y, float dist)
+{
+	portENTER_CRITICAL();
+	if(control_state != CONTROL_END)
+	{
+		control_state = CONTROL_GOTO;
+	}
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	trapeze_reset(&control_trapeze, 0, 0);
+	control_cons = location_get_position();
+
+	float dx = x - control_cons.x;
+	float dy = y - control_cons.y;
+	control_dest.alpha = atan2(dy, dx);
+	control_dest.ca = cos(control_dest.alpha);
+	control_dest.sa = sin(control_dest.alpha);
+	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
+	control_param.ad.distance = sqrt(dx*dx+dy*dy) - dist;
+	control_dest.x = control_cons.x + control_param.ad.distance * control_dest.ca;
+	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
+
 	control_timer = 0;
 	control_aMax_av = 250.0f*TE*TE;
 	control_vMax_av = 1000.0f*TE;

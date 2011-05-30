@@ -28,6 +28,8 @@ void control_rotate(float angle);
 
 void control_goto(float x, float y);
 
+void control_goto_near(float x, float y, float dist);
+
 void control_free();
 
 int32_t control_get_state();
