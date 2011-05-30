@@ -66,7 +66,9 @@ static void test_hokuyo_task()
 		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
 
 		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
-		hoku_parse_tab();
+		//hoku_parse_tab();
+		parse_before_match_tab();
+		
 		res = hoku_check_path();
 		if(res)
 		 setLed(0x55);

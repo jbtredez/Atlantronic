@@ -26,5 +26,6 @@ void hoku_init_tab(uint16_t* distance, unsigned int size, float* x, float* y);
 void hoku_parse_tab(void);
 void hoku_init_pion(void);
 void hoku_get_pion(uint16_t index, unsigned char *objet, float* x, float* y, int64_t *timestamp);
+void parse_before_match_tab();
 
 #endif

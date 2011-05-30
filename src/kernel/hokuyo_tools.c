@@ -222,6 +222,11 @@ void hoku_init_pion(void)
   hoku_pion_table[9].objet=PION;
   hoku_pion_table[9].timestamp=0;
   
+  hoku_pion_table[10].x=0;
+  hoku_pion_table[10].y=0;
+  hoku_pion_table[10].objet=PION;
+  hoku_pion_table[10].timestamp=0;
+  
 }
 
 void hoku_get_pion(uint16_t index, unsigned char *objet, float* x, float* y, int64_t *timestamp)
@@ -353,6 +358,7 @@ void hoku_parse_tab(void)
 			  if(check_shape(start, end)==PION)
 			  {
 			    int milieu = (end + start)/2;
+			    //TODO coordonnée de la table
 			    hoku_update_pion(PION, 
 					     hoku_scan_table[milieu].x, 
 					     hoku_scan_table[milieu].y);
