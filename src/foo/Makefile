@@ -15,7 +15,7 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-mno-thumb-interwork
-#CFLAGS+=-O1
+#CFLAGS+=-O2
 CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-g3
 
@@ -29,7 +29,7 @@ LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
 #LDFLAGS+=-lnosys
-LDFLAGS+=-lg 
+LDFLAGS+=-lg
 LDFLAGS+=-g3
 
 DEF+=__$(ARCH)__

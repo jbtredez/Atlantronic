@@ -8,7 +8,7 @@ obj-foo-homologation += kernel/systick.o
 obj-foo-homologation += kernel/heap_3.o
 obj-foo-homologation += kernel/syscalls.o
 obj-foo-homologation += kernel/rcc.o
-obj-foo-homologation += kernel/driver/can.o
+#obj-foo-homologation += kernel/driver/can.o
 obj-foo-homologation += kernel/driver/usart.o
 obj-foo-homologation += kernel/end.o
 obj-foo-homologation += kernel/error.o
@@ -23,6 +23,8 @@ obj-foo-homologation += foo/location/beacon.o
 obj-foo-homologation += foo/encoders.o
 obj-foo-homologation += foo/ax12.o
 obj-foo-homologation += foo/pince.o
+obj-foo-homologation += foo/control/control_pince.o
 obj-foo-homologation += foo/adc.o
+obj-foo-homologation += foo/homologation.o
 bin-foo += homologation
 
