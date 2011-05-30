@@ -104,13 +104,13 @@ static void control_pince_compute()
 		goto end_pwm_critical;
 	}
 
-/*	if( control_pince_an.i3 > 500 || control_pince_an.i4 > 500)
+	if( control_pince_an.i3 > 600 || control_pince_an.i4 > 600)
 	{
 		control_pince_state = CONTROL_PINCE_READY_FREE;
 		vTaskSetEvent(EVENT_CONTROL_PINCE_COLISION | EVENT_CONTROL_PINCE_READY);
 		goto end_pwm_critical;
 	}
-*/
+
 	// calcul du prochain point
 	switch(control_pince_state)
 	{
@@ -220,6 +220,8 @@ void control_pince_independant(float h1, float h2)
 	trapeze_reset(&control_pince_param.ind_trapeze_left, control_pince_an.potard_left, 0);
 	control_pince_param.ind_cons1 = h1;
 	control_pince_param.ind_cons2 = h2;
+	pid_reset(&control_pince_param.pid_ind_height1);
+	pid_reset(&control_pince_param.pid_ind_height2);
 	portEXIT_CRITICAL();
 }
 
@@ -235,6 +237,8 @@ void control_pince_dual(float h, float alpha)
 	trapeze_reset(&control_pince_param.dual_trapeze_angle, 0.5f * ((int16_t)control_pince_an.potard_right - (int16_t)control_pince_an.potard_left), 0);
 	control_pince_param.dual_cons_h = h;
 	control_pince_param.dual_cons_a = alpha;
+	pid_reset(&control_pince_param.pid_dual_height);
+	pid_reset(&control_pince_param.pid_dual_alpha);
 	portEXIT_CRITICAL();
 }
 
