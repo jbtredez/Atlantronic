@@ -27,6 +27,12 @@ static inline uint32_t getcolor()
 	return color;
 }
 
+static inline uint8_t getGo()
+{
+	extern volatile uint8_t gpio_go;
+	return gpio_go;
+}
+
 void setLed(uint32_t mask);
 
 static inline uint8_t get_contact()
