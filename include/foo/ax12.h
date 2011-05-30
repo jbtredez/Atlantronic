@@ -13,6 +13,7 @@ void ax12_reset(uint8_t id);
 
 #define AX12_ID                   0x03
 #define AX12_TORQUE_LIMIT_EEPROM  0x0e
+#define AX12_ALARM_SHUTDOWN       0x12
 #define AX12_TORQUE_ENABLE        0x18
 #define AX12_LED                  0x19
 #define AX12_GOAL_POSITION        0x1e
@@ -32,5 +33,7 @@ void ax12_set_id(uint8_t old_id, uint8_t id);
 void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
 void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
 void ax12_set_torque_enable(uint8_t id, uint8_t enable);
+
+void ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
 
 #endif

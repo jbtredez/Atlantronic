@@ -10,11 +10,13 @@ void pince_configure()
 	ax12_set_moving_speed(PINCE_AX12_RIGHT, 0x3ff);
 	ax12_set_moving_speed(PINCE_AX12_LEFT, 0x3ff);
 
-	ax12_set_torque_limit(PINCE_AX12_RIGHT, 0x3ff);
-	ax12_set_torque_limit(PINCE_AX12_LEFT, 0x3ff);
+	ax12_set_torque_limit(PINCE_AX12_RIGHT, 0x1ff);
+	ax12_set_torque_limit(PINCE_AX12_LEFT, 0x1ff);
 
 	ax12_set_torque_enable(PINCE_AX12_RIGHT, 1);
 	ax12_set_torque_enable(PINCE_AX12_LEFT, 1);
+	ax12_write8(PINCE_AX12_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
+	ax12_write8(PINCE_AX12_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
 }
 
 void pince_open()
