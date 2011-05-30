@@ -83,7 +83,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
-		vTaskSetEventFromISR(EVENT_GO);
+//		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR6)
 	{
@@ -91,7 +91,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
-		vTaskSetEventFromISR(EVENT_GO);
+//		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{

@@ -6,6 +6,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/event.h"
+#include "kernel/rcc.h"
 
 #define END_STACK_SIZE           50
 const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;
@@ -31,7 +32,12 @@ static void end_task(void *arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	while(getGo())
+	{
+		vTaskDelay(ms_to_tick(50));
+	}
+
 	vTaskDelay(DUREE_MATCH_TICK);
 	vTaskSetEvent(EVENT_END);
 
