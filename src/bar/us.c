@@ -29,9 +29,6 @@ module_init(us_module_init, INIT_TEST_PINCE);
 
 static void us_task()
 {
-	toto = 0;
-	tata = 0;
-
 	while(1)
 	{
 		gpio_send_us(GPIO_US0 | GPIO_US1 | GPIO_US2 | GPIO_US3 | GPIO_US4);
