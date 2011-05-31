@@ -47,39 +47,19 @@ static void homologation_task()
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-//	vTaskDelay(ms_to_tick(5000));
-	vTaskWaitEvent(EVENT_HOKUYO_READY, ms_to_tick(1000));
-
-	control_goto(-875, -850);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	pince_open();
 	control_pince_dual(70, 0);
-//	control_goto(-700, -350);
-	control_goto_near(-700, -350, 160);
+	control_goto(0, -700);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-
+	control_goto_near(0, 0, 160);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	pince_close();
-	vTaskDelay(ms_to_tick(400));
-
-	control_pince_dual(3000, 0);
-	vTaskDelay(ms_to_tick(1000));
-
-	control_goto_near(-350, -700, 160);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	pince_open();
 	vTaskDelay(ms_to_tick(300));
-	control_pince_dual(70, 0);
-	vTaskDelay(ms_to_tick(1000));
-//	vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, portMAX_DELAY);
-	pince_close();
-	vTaskDelay(ms_to_tick(400));
-	control_pince_dual(3000, 0);
-
-	while(1) 
-	{
-		pince_close();
-		vTaskDelay(ms_to_tick(1000));
-	}
+	control_pince_dual(1500, 0);
+	vTaskDelay(ms_to_tick(300));
+	control_goto_near(175, -175, 160);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	pince_open();
 
 	vTaskDelete(NULL);
 }
