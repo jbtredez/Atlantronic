@@ -11,17 +11,17 @@
 #include "kernel/robot_parameters.h"
 #include "pince.h"
 #include "control/control_pince.h"
+#include "recalage.h"
 
-//! @todo réglage au pif
-#define TEST_DEPLACEMENT_STACK_SIZE       100
+#define HOMOLOGATION_STACK_SIZE       100
 
-static void test_deplacement_task();
-int test_deplacement_module_init();
+static void homologation_task();
+int homologation_module_init();
 
-int test_deplacement_module_init()
+int homologation_module_init()
 {
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(test_deplacement_task, "t_depl", TEST_DEPLACEMENT_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
+	portBASE_TYPE err = xTaskCreate(homologation_task, "homol", HOMOLOGATION_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
 
 	if(err != pdPASS)
 	{
@@ -31,38 +31,9 @@ int test_deplacement_module_init()
 	return 0;
 }
 
-module_init(test_deplacement_module_init, INIT_TEST_DEPLACEMENT);
+module_init(homologation_module_init, INIT_STRATEGY);
 
-void recalage()
-{
-	if(getcolor() == COLOR_BLUE)
-	{
-		location_set_position(-880.0f, -880.0f, PI/2.0f);
-	}
-	else
-	{
-		location_set_position(880.0f, -880.0f, PI/2.0f);
-	}
-
-	pince_configure();
-	pince_close();
-
-	control_pince_independant(1500, 1500);
-
-	// TODO demenager : procedure recalage
-	control_straight_to_wall(-200);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(200 + PARAM_NP_X);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_rotate(-PI/2.0f);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight_to_wall(-800);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(110);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-}
-
-static void test_deplacement_task()
+static void homologation_task()
 {
 	while(getGo() == 0)
 	{

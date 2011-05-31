@@ -28,6 +28,7 @@ obj-foo-homologation += foo/adc.o
 obj-foo-homologation += foo/homologation.o
 obj-foo-homologation += kernel/driver/hokuyo.o
 obj-foo-homologation += kernel/hokuyo_tools.o
+obj-foo-homologation += foo/recalage.o
 obj-foo-homologation += foo/detection.o
 bin-foo += homologation
 
