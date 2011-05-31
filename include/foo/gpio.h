@@ -33,6 +33,18 @@ static inline uint8_t getGo()
 	return gpio_go;
 }
 
+static inline uint8_t getRecalage()
+{
+	extern volatile uint8_t gpio_recaler;
+	return gpio_recaler;
+}
+
+static inline void resetRecalage()
+{
+	extern volatile uint8_t gpio_recaler;
+	gpio_recaler = 0;
+}
+
 void setLed(uint32_t mask);
 
 static inline uint8_t get_contact()

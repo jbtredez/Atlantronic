@@ -7,11 +7,13 @@
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;
+volatile uint8_t gpio_recaler;
 
 static int gpio_module_init(void)
 {
 	color = COLOR_BLUE;
 	gpio_go = 0;
+	gpio_recaler = 0;
 
 	// cpateur contact bordure droit et gauche, LED warning
 	// activation GPIOB
@@ -117,7 +119,7 @@ void isr_exti15_10(void)
 	if( EXTI->PR & EXTI_PR_PR10)
 	{
 		EXTI->PR |= EXTI_PR_PR10;
-		// TODO action btn3
+		gpio_recaler = 1;
 	}
 }
 

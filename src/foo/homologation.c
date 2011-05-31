@@ -33,10 +33,8 @@ int test_deplacement_module_init()
 
 module_init(test_deplacement_module_init, INIT_TEST_DEPLACEMENT);
 
-static void test_deplacement_task()
+void recalage()
 {
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-
 	if(getcolor() == COLOR_BLUE)
 	{
 		location_set_position(-880.0f, -880.0f, PI/2.0f);
@@ -62,8 +60,24 @@ static void test_deplacement_task()
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(110);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+}
+
+static void test_deplacement_task()
+{
+	while(getGo() == 0)
+	{
+		if( getRecalage() )
+		{
+			recalage();
+			resetRecalage();
+		}
+		vTaskDelay(ms_to_tick(50));
+	}
+
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 //	vTaskDelay(ms_to_tick(5000));
+	vTaskWaitEvent(EVENT_HOKUYO_READY, ms_to_tick(1000));
 
 	control_goto(-875, -850);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
