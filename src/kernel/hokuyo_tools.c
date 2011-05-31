@@ -25,18 +25,18 @@
 #define HOKU_SEUIL_PION_CARRE HOKU_SEUIL_PION*HOKU_SEUIL_PION
 
 
-typedef struct {
- int16_t x, y; 
- int64_t timestamp;
- char objet;
-
+typedef struct
+{
+	int16_t x, y; 
+	int64_t timestamp;
+	char objet;
 } hoku_pion_t;
 
-typedef struct {
-  uint16_t distance;
-  float x;
-  float y;
-
+typedef struct
+{
+	uint16_t distance;
+	float x;
+	float y;
 } hoku_scan_t;
 
 hoku_scan_t hoku_scan_table[NB_POINT];
@@ -450,11 +450,8 @@ void guess_startup_conf(int start, int end)
     
     hoku_update_pion(PION, x, y);
     if( (pionX != 3) && (pionY != 3)) //symetrie seulement pour les autres
-      hoku_update_pion(PION, (x*-1), y);
-
-    
+      hoku_update_pion(PION, (x*-1), y);    
 }
-
 
 void parse_before_match_tab()
 {

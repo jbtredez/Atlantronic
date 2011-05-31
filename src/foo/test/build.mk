@@ -81,6 +81,12 @@ obj-foo-test_deplacement += foo/location/beacon.o
 obj-foo-test_deplacement += foo/encoders.o
 obj-foo-test_deplacement += foo/test/test_deplacement.o
 obj-foo-test_deplacement += foo/adc.o
+
+obj-foo-test_deplacement += foo/pince.o
+obj-foo-test_deplacement += foo/control/control_pince.o
+obj-foo-test_deplacement += foo/ax12.o
+obj-foo-test_deplacement += kernel/driver/usart.o
+
 bin-foo += test_deplacement
 
 obj-foo-test_pince += kernel/main.o
@@ -133,7 +139,7 @@ obj-foo-test_hokuyo += foo/encoders.o
 obj-foo-test_hokuyo += kernel/driver/hokuyo.o
 obj-foo-test_hokuyo += kernel/hokuyo_tools.o
 obj-foo-test_hokuyo += kernel/vect_pos.o
-obj-foo-test_hokuyo += foo/test/test_hokuyo.o
+obj-foo-test_hokuyo += foo/detection.o
 bin-foo += test_hokuyo
 
 obj-foo-test_control += kernel/main.o
