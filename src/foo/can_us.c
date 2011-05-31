@@ -2,8 +2,6 @@
 //! @brief CAN - US
 //! @author Atlantronic
 
-//! interface : us.h
-
 #include "kernel/module.h"
 ///include all files for can third party
 #include "kernel/driver/can.h"
@@ -19,7 +17,7 @@ void can_us_callback(struct can_msg *msg);
 
 int can_us_module_init()
 {
-	can_register(CAN_US_EMERGENCY_ID, CAN_STANDARD_FORMAT, can_us_callback);
+	can_register(CAN_US, CAN_STANDARD_FORMAT, can_us_callback);
 
 	return 0;
 }
@@ -32,7 +30,7 @@ void can_us_callback(struct can_msg *msg)
 	if(msg->data[0] < US_MAX && msg->size == 5)
 	{
 		portENTER_CRITICAL();
-		memcpy(&can_us_state, msg->data + 1, 2);
+		memcpy(&can_us_state[msg->data[0]], msg->data + 1, 2);
 		portEXIT_CRITICAL();
 	}
 	else
@@ -55,3 +53,4 @@ uint32_t us_get_state(enum us_id id)
 
 	return res;
 }
+

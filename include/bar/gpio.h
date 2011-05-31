@@ -27,7 +27,7 @@
 
 void setLed(uint32_t mask);
 
-uint16_t gpio_get_us(enum us_id us_id);
+void gpio_get_us(uint16_t* us_distance, uint8_t size);
 
 void gpio_send_us(uint8_t us_mask);
 

@@ -5,8 +5,9 @@
 //! @brief Can - message id
 //! @author Atlantronic
 
-#define CAN_US_RESPONSE_ID       0x10
-#define CAN_US_EMERGENCY_ID     0x11
+#define CAN_US                    0x10
+#define CAN_COULEUR               0x11
+#define CAN_POSITION              0x12
 
 #endif
 

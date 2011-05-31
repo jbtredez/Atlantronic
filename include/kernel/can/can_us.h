@@ -6,14 +6,13 @@
 //! @author Atlantronic
 
 
-//! TODO : trouver un nom selon la position
 enum us_id
 {
-	US_0 = 0,
-	US_1,
-	US_2,
-	US_3,
-	US_4,
+	US_RIGHT = 0,   // US0
+	US_FRONT,       // US1
+	US_BACK,        // US2
+	US_LEFT,        // US4
+	US_NA,          // US3
 	US_MAX
 };
 

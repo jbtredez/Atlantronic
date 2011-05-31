@@ -24,7 +24,7 @@
 #define ERR_INIT_HOKUYO         0x20e
 #define ERR_INIT_CAN            0x20f
 #define ERR_INIT_CONTROL_PINCE  0x210
-#define ERR_INIT_US		0x211
+#define ERR_INIT_CAN_US         0x211
 
 #define ERR_USART3_READ_SR_FE           0x220
 #define ERR_USART3_READ_SR_NE           0x221

@@ -139,6 +139,7 @@ static void can_write_task(void *arg)
 	{
 		if(xQueueReceive(can_write_queue, &req, portMAX_DELAY))
 		{
+			vTaskClearEvent(EVENT_CAN_TX_END);
 			can_write_mailbox(&req);
 			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
 		}
