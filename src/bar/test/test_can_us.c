@@ -39,8 +39,11 @@ static void test_can_task()
 	
 	while(1)
 	{
-	   for(i=0; i<
-	    us_send(CAN_US_RESPONSE_ID, req);
+	   for(i=0; i<US_MAX; i++)
+	   {
+	      us_send(CAN_US_EMERGENCY_ID, i);
+	      vTaskDelay(ms_to_tick(1000));
+	   }
 	    
 	}
 
