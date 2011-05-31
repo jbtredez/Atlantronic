@@ -59,7 +59,7 @@ static void us_task(void* arg)
 		}
 		
 		for(i=0; i<US_MAX; i++)
-		  can_us_sample_value[i] = get_US(i);
+		  can_us_sample_value[i] = gpio_get_us(i);
 		
 	}
 }
@@ -76,7 +76,7 @@ int can_us_module_init()
 	}
 	
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(us_task, "can_us", US_STACK_SIZE, NULL, PRIORITY_TASK_US, &xHandle);
+	portBASE_TYPE err = xTaskCreate(us_task, "can_us", US_STACK_SIZE, NULL, PRIORITY_TASK_CAN_US, &xHandle);
 
 	if(err != pdPASS)
 	{

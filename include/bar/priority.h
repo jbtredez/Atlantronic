@@ -9,8 +9,9 @@
 
 #define PRIORITY_TASK_LOG             1
 #define PRIORITY_TASK_HOKUYO          2
-#define PRIORITY_TASK_US	      3
+#define PRIORITY_TASK_CAN_US          3
 #define PRIORITY_TASK_CAN             4
+#define PRIORITY_TASK_TEST_US         4
 #define PRIORITY_TASK_END             5
 
 // priority : 0 ... configMAX_PRIORITIES-1

@@ -8,11 +8,12 @@ obj-bar-us += kernel/systick.o
 obj-bar-us += kernel/heap_3.o
 obj-bar-us += kernel/syscalls.o
 obj-bar-us += kernel/rcc.o
-obj-bar-us += kernel/driver/can.o
+#obj-bar-us += kernel/driver/can.o
 obj-bar-us += kernel/error.o
 #obj-bar-us += kernel/end.o
-obj-bar-us += bar/can_us.o
+#obj-bar-us += bar/can_us.o
 obj-bar-us += bar/gpio.o
+obj-bar-us += bar/us.o
 bin-bar += us
 
 obj-bar-us_hokuyo += kernel/main.o

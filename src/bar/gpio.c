@@ -5,16 +5,14 @@
 #include "kernel/event.h"
 #include "kernel/systick.h"
 #include "kernel/can/can_us.h" // TODO : revoir ce fichier (pas que pour le can)
+#include "kernel/rcc.h"
 
-#define GPIO_US0     0x01  // PC1
-#define GPIO_US1     0x02  // PC3
-#define GPIO_US2     0x04  // PA5
-#define GPIO_US3     0x08  // PC5
-#define GPIO_US4     0x10  // PB1
+#define HALF_SOUND_SPEED        180000LL
 
 static uint8_t gpio_us;
 static portTickType gpio_us_start_time[US_MAX];
 static portTickType gpio_us_stop_time[US_MAX];
+static uint16_t gpio_us_distance[US_MAX];
 
 static int gpio_module_init(void)
 {
@@ -28,7 +26,7 @@ static int gpio_module_init(void)
 	                GPIO_CRL_MODE5 | GPIO_CRL_CNF5
 		         ) ) |
 					GPIO_CRL_CNF4_0 | GPIO_CRL_MODE4_1 |     // PA4 sortie collecteur ouvert (US)
-					GPIO_CRL_CNF5_0 | GPIO_CRL_MODE5_1 ;     // PA5 entrée input flotante (sur IT) (US)
+					GPIO_CRL_CNF5_0                    ;     // PA5 entrée input flotante (sur IT) (US)
 
 	// LED warning
 	// activation GPIOB
@@ -38,7 +36,7 @@ static int gpio_module_init(void)
 	                GPIO_CRL_MODE1 | GPIO_CRL_CNF1
 		         ) ) |
 					GPIO_CRL_CNF0_0 | GPIO_CRL_MODE0_1 |     // PB0 sortie collecteur ouvert (US)
-					GPIO_CRL_CNF1_0 | GPIO_CRL_MODE1_1 ;     // PB1 entrée input flotante (sur IT) (US)
+					GPIO_CRL_CNF1_0                   ;     // PB1 entrée input flotante (sur IT) (US)
 
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
@@ -55,11 +53,11 @@ static int gpio_module_init(void)
 	                GPIO_CRL_MODE5 | GPIO_CRL_CNF5
 		         ) ) |
 		            GPIO_CRL_CNF0_0 | GPIO_CRL_MODE0_1 |     // PC0 sortie collecteur ouvert (US)
-		            GPIO_CRL_CNF1_0 | GPIO_CRL_MODE1_1 |     // PC1 entrée input flotante (sur IT) (US)
+		            GPIO_CRL_CNF1_0                    |     // PC1 entrée input flotante (sur IT) (US)
 		            GPIO_CRL_CNF2_0 | GPIO_CRL_MODE2_1 |     // PC2 sortie collecteur ouvert (US)
-					GPIO_CRL_CNF3_0 | GPIO_CRL_MODE3_1 |     // PC3 entrée input flotante (sur IT) (US)
+					GPIO_CRL_CNF3_0                    |     // PC3 entrée input flotante (sur IT) (US)
 					GPIO_CRL_CNF4_0 | GPIO_CRL_MODE4_1 |     // PC4 sortie collecteur ouvert (US)
-					GPIO_CRL_CNF5_0 | GPIO_CRL_MODE5_1 ;     // PC5 entrée input flotante (sur IT) (US)
+					GPIO_CRL_CNF5_0                    ;     // PC5 entrée input flotante (sur IT) (US)
 
 	// Boutons 1, 2 et 3
 	// activation GPIOD
@@ -100,11 +98,12 @@ static int gpio_module_init(void)
 	// PD9 => it sur front montant
 	// PD10 => it sur front montant
 	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-	AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI1_PB | AFIO_EXTICR1_EXTI1_PC | AFIO_EXTICR1_EXTI3_PC;
-	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI5_PA | AFIO_EXTICR2_EXTI5_PC;
+	// TODO Attention, on ne peut pas activer toutes lesl ignes en même temps
+	AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI1_PB /*| AFIO_EXTICR1_EXTI1_PC*/ | AFIO_EXTICR1_EXTI3_PC;
+	AFIO->EXTICR[1] |= AFIO_EXTICR2_EXTI5_PA /*| AFIO_EXTICR2_EXTI5_PC*/;
 	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
 	EXTI->IMR  |= EXTI_IMR_MR1  | EXTI_IMR_MR3  | EXTI_IMR_MR5  | EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
-	EXTI->RTSR |= EXTI_IMR_MR1  | EXTI_IMR_MR3  | EXTI_IMR_MR5  | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
+	EXTI->RTSR |= EXTI_RTSR_TR1 | EXTI_RTSR_TR3 | EXTI_RTSR_TR5 | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
 	EXTI->FTSR |= EXTI_FTSR_TR1 | EXTI_FTSR_TR3 | EXTI_FTSR_TR5;
 	NVIC_EnableIRQ(EXTI1_IRQn);
 	NVIC_EnableIRQ(EXTI3_IRQn);
@@ -130,6 +129,7 @@ void isr_exti1(void)
 				// front descendant sur PC1
 				gpio_us &= ~GPIO_US0;
 				gpio_us_stop_time[US_0] = systick_get_time_from_isr();
+				gpio_us_distance[US_0] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_0] - gpio_us_start_time[US_0]))/72000000LL;
 			}
 		}
 		else
@@ -148,6 +148,7 @@ void isr_exti1(void)
 				// front descendant sur PB1
 				gpio_us &= ~GPIO_US4;
 				gpio_us_stop_time[US_4] = systick_get_time_from_isr();
+				gpio_us_distance[US_4] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_4] - gpio_us_start_time[US_4]))/72000000LL;
 			}
 		}
 		else
@@ -174,6 +175,7 @@ void isr_exti3(void)
 				// front descendant sur PC3
 				gpio_us &= ~GPIO_US1;
 				gpio_us_stop_time[US_1] = systick_get_time_from_isr();
+				gpio_us_distance[US_1] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_1] - gpio_us_start_time[US_1]))/72000000LL;
 			}
 		}
 		else
@@ -188,7 +190,7 @@ void isr_exti3(void)
 	}
 }
 
-void isr_exit9_5(void)
+void isr_exti9_5(void)
 {
 	if( EXTI->PR & EXTI_PR_PR5)
 	{
@@ -200,6 +202,7 @@ void isr_exit9_5(void)
 				// front descendant sur PC5
 				gpio_us &= ~GPIO_US3;
 				gpio_us_stop_time[US_3] = systick_get_time_from_isr();
+				gpio_us_distance[US_3] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_3] - gpio_us_start_time[US_3]))/72000000LL;
 			}
 		}
 		else
@@ -211,6 +214,7 @@ void isr_exit9_5(void)
 				gpio_us_start_time[US_3] = systick_get_time_from_isr();
 			}
 		}
+
 		if( gpio_us & GPIO_US2 )
 		{
 			if( (GPIOA->IDR & GPIO_IDR_IDR5) == 0 )
@@ -218,11 +222,12 @@ void isr_exit9_5(void)
 				// front descendant sur PA5
 				gpio_us &= ~GPIO_US2;
 				gpio_us_stop_time[US_2] = systick_get_time_from_isr();
+				gpio_us_distance[US_2] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_2] - gpio_us_start_time[US_2]))/72000000LL;
 			}
 		}
 		else
 		{
-			if( GPIOC->IDR & GPIO_IDR_IDR5 )
+			if( GPIOA->IDR & GPIO_IDR_IDR5 )
 			{
 				// front montant sur PA5
 				gpio_us |= GPIO_US2;
@@ -242,7 +247,7 @@ void isr_exit9_5(void)
 	}
 }
 
-void isr_exit15_10(void)
+void isr_exti15_10(void)
 {
 	if( EXTI->PR & EXTI_PR_PR10)
 	{
@@ -257,13 +262,68 @@ void setLed(uint32_t mask)
 	GPIOB->ODR = (GPIOB->ODR & ~((uint32_t)LED_WARNING)) | (mask & LED_WARNING);
 }
 
-uint16_t get_US(enum us_id us_id)
+uint16_t gpio_get_us(enum us_id us_id)
 {
 	uint16_t dist = 0;
 	if(us_id < US_MAX)
 	{
-		dist = (330000LL*72000000LL)/(gpio_us_start_time[us_id] - gpio_us_stop_time[us_id]);
+		dist = gpio_us_distance[US_1];
 	}
 
 	return dist;
+}
+
+void gpio_send_us(uint8_t us_mask)
+{
+	if( us_mask & GPIO_US0)
+	{
+		GPIOC->ODR &= ~GPIO_ODR_ODR0;
+	}
+
+	if( us_mask & GPIO_US1)
+	{
+		GPIOC->ODR &= ~GPIO_ODR_ODR2;
+	}
+	
+	if( us_mask & GPIO_US2)
+	{
+		GPIOA->ODR &= ~GPIO_ODR_ODR4;
+	}
+
+	if( us_mask & GPIO_US3)
+	{
+		GPIOC->ODR &= ~GPIO_ODR_ODR4;
+	}
+
+	if( us_mask & GPIO_US4)
+	{
+		GPIOB->ODR &= ~GPIO_ODR_ODR0;
+	}
+
+	vTaskDelay(us_to_tick(10));
+
+	if( us_mask & GPIO_US0)
+	{
+		GPIOC->ODR |= GPIO_ODR_ODR0;
+	}
+
+	if( us_mask & GPIO_US1)
+	{
+		GPIOC->ODR |= GPIO_ODR_ODR2;
+	}
+	
+	if( us_mask & GPIO_US2)
+	{
+		GPIOA->ODR |= GPIO_ODR_ODR4;
+	}
+
+	if( us_mask & GPIO_US3)
+	{
+		GPIOC->ODR |= GPIO_ODR_ODR4;
+	}
+
+	if( us_mask & GPIO_US4)
+	{
+		GPIOB->ODR |= GPIO_ODR_ODR0;
+	}
 }
