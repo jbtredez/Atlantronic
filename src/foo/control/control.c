@@ -240,23 +240,23 @@ static void control_compute()
 			goto end_pwm_critical;
 			break;
 	}
-/*
+
 	// gestion du timeout
 	// condition "on ne demande pas de bouger" (donc zero pur)
 	if( control_v_dist_cons == 0 && control_v_rot_cons == 0)
 	{
 		// on augmente le temps avec consigne nulle
 		control_timer += CONTROL_TICK_PERIOD;
-		if( control_timer > ms_to_tick(1000))
+		if( control_timer > ms_to_tick(5000))
 		{
-			// ca fait une seconde qu'on devrait avoir termine la trajectoire
+			// ca fait 5 seconde qu'on devrait avoir terminé la trajectoire
 			// il y a un probleme
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
 		}
 		goto end_pwm_critical;
 	}
-*/
+
 	// calcul de l'erreur de position dans le repère du robot
 	float ex = control_pos.ca  * (control_cons.x - control_pos.x) + control_pos.sa * (control_cons.y - control_pos.y);
 	float ey = -control_pos.sa * (control_cons.x - control_pos.x) + control_pos.ca * (control_cons.y - control_pos.y);
