@@ -11,6 +11,7 @@
 #define HALF_SOUND_SPEED        180000LL
 
 static uint8_t gpio_us;
+static uint8_t gpio_us_triggered;
 static portTickType gpio_us_start_time[US_MAX];
 static portTickType gpio_us_stop_time[US_MAX];
 static uint16_t gpio_us_distance[US_MAX];
@@ -18,6 +19,7 @@ static uint16_t gpio_us_distance[US_MAX];
 static int gpio_module_init(void)
 {
 	gpio_us = 0;
+	gpio_us_triggered = 0;
 	gpio_us_distance[US_RIGHT] = 0;
 	gpio_us_distance[US_FRONT] = 0;
 	gpio_us_distance[US_BACK] = 0;
@@ -131,7 +133,7 @@ void isr_exti1(void)
 		if( GPIOC->IDR & GPIO_IDR_IDR1 )
 		{
 			// PC1 niveau haut
-			if( (gpio_us & GPIO_US0) == 0 )
+			if( (gpio_us & GPIO_US0) == 0 && (gpio_us_triggered & GPIO_US0))
 			{
 				// PC1 etait au niveau bas (front montant)
 				gpio_us_start_time[US_RIGHT] = systick_get_time_from_isr();
@@ -141,9 +143,10 @@ void isr_exti1(void)
 		else
 		{
 			// PC1 niveau bas
-			if( gpio_us & GPIO_US0 )
+			if( gpio_us & GPIO_US0 && (gpio_us_triggered & GPIO_US0))
 			{
 				// front descendant sur PC1
+				gpio_us_triggered &= ~GPIO_US0;
 				gpio_us_stop_time[US_RIGHT] = systick_get_time_from_isr();
 				gpio_us_distance[US_RIGHT] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_RIGHT] - gpio_us_start_time[US_RIGHT]))/72000000LL;			
 			}
@@ -152,7 +155,7 @@ void isr_exti1(void)
 
 		if( GPIOB->IDR & GPIO_IDR_IDR1 )
 		{
-			if( (gpio_us & GPIO_US4) == 0 )
+			if( (gpio_us & GPIO_US4) == 0 && (gpio_us_triggered & GPIO_US4))
 			{
 				// front montant sur PB1
 				gpio_us_start_time[US_LEFT] = systick_get_time_from_isr();
@@ -161,9 +164,10 @@ void isr_exti1(void)
 		}
 		else
 		{
-			if( gpio_us & GPIO_US4 )
+			if( gpio_us & GPIO_US4 && (gpio_us_triggered & GPIO_US4))
 			{
 				// front descendant sur PB1
+				gpio_us_triggered &= ~GPIO_US4;
 				gpio_us_stop_time[US_LEFT] = systick_get_time_from_isr();
 				gpio_us_distance[US_LEFT] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_LEFT] - gpio_us_start_time[US_LEFT]))/72000000LL;
 			}
@@ -180,7 +184,7 @@ void isr_exti3(void)
 
 		if( GPIOC->IDR & GPIO_IDR_IDR3 )
 		{
-			if( (gpio_us & GPIO_US1) == 0 )
+			if( (gpio_us & GPIO_US1) == 0 && (gpio_us_triggered & GPIO_US1))
 			{
 				// front montant sur PC3
 				gpio_us_start_time[US_FRONT] = systick_get_time_from_isr();
@@ -189,9 +193,10 @@ void isr_exti3(void)
 		}
 		else
 		{
-			if( gpio_us & GPIO_US1 )
+			if( gpio_us & GPIO_US1 && (gpio_us_triggered & GPIO_US1))
 			{
 				// front descendant sur PC3
+				gpio_us_triggered &= ~GPIO_US1;
 				gpio_us_stop_time[US_FRONT] = systick_get_time_from_isr();
 				gpio_us_distance[US_FRONT] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_FRONT] - gpio_us_start_time[US_FRONT]))/72000000LL;
 
@@ -208,7 +213,7 @@ void isr_exti9_5(void)
 		EXTI->PR |= EXTI_PR_PR5;
 		if( GPIOC->IDR & GPIO_IDR_IDR5 )
 		{
-			if( (gpio_us & GPIO_US3) == 0 )
+			if( (gpio_us & GPIO_US3) == 0 && (gpio_us_triggered & GPIO_US3))
 			{
 				// front montant sur PC5
 				gpio_us_start_time[US_NA] = systick_get_time_from_isr();
@@ -217,9 +222,10 @@ void isr_exti9_5(void)
 		}
 		else
 		{
-			if( gpio_us & GPIO_US3 )
+			if( gpio_us & GPIO_US3 && (gpio_us_triggered & GPIO_US3))
 			{
 				// front descendant sur PC5
+				gpio_us_triggered &= ~GPIO_US3;
 				gpio_us_stop_time[US_NA] = systick_get_time_from_isr();
 				gpio_us_distance[US_NA] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_NA] - gpio_us_start_time[US_NA]))/72000000LL;
 			}
@@ -228,7 +234,7 @@ void isr_exti9_5(void)
 
 		if( GPIOA->IDR & GPIO_IDR_IDR5 )
 		{
-			if( (gpio_us & GPIO_US2) == 0 )
+			if( (gpio_us & GPIO_US2) == 0 && (gpio_us_triggered & GPIO_US2))
 			{
 				// front montant sur PA5
 				gpio_us_start_time[US_BACK] = systick_get_time_from_isr();
@@ -237,9 +243,10 @@ void isr_exti9_5(void)
 		}
 		else
 		{
-			if( gpio_us & GPIO_US2 )
+			if( gpio_us & GPIO_US2 && (gpio_us_triggered & GPIO_US2))
 			{
 				// front descendant sur PA5
+				gpio_us_triggered &= ~GPIO_US2;
 				gpio_us_stop_time[US_BACK] = systick_get_time_from_isr();
 				gpio_us_distance[US_BACK] = (HALF_SOUND_SPEED*(gpio_us_stop_time[US_BACK] - gpio_us_start_time[US_BACK]))/72000000LL;
 			}
@@ -291,30 +298,35 @@ void gpio_send_us(uint8_t us_mask)
 	{
 		GPIOC->ODR |= GPIO_ODR_ODR0;
 		gpio_us_distance[US_RIGHT] = 0;
+		gpio_us_triggered |= GPIO_US0;
 	}
 
 	if( us_mask & GPIO_US1)
 	{
 		GPIOC->ODR |= GPIO_ODR_ODR2;
 		gpio_us_distance[US_FRONT] = 0;
+		gpio_us_triggered |= GPIO_US1;
 	}
 	
 	if( us_mask & GPIO_US2)
 	{
 		GPIOA->ODR |= GPIO_ODR_ODR4;
 		gpio_us_distance[US_BACK] = 0;
+		gpio_us_triggered |= GPIO_US2;
 	}
 
 	if( us_mask & GPIO_US3)
 	{
 		GPIOC->ODR |= GPIO_ODR_ODR4;
 		gpio_us_distance[US_NA] = 0;
+		gpio_us_triggered |= GPIO_US3;
 	}
 
 	if( us_mask & GPIO_US4)
 	{
 		GPIOB->ODR |= GPIO_ODR_ODR0;
 		gpio_us_distance[US_LEFT] = 0;
+		gpio_us_triggered |= GPIO_US4;
 	}
 
 	int i = 36;

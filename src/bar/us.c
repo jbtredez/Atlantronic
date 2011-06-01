@@ -11,6 +11,8 @@
 
 //! @todo réglage au pif
 #define US_STACK_SIZE       100
+#define US_TIMEOUT                  200 
+#define US_DELAY_AFTER_TIMEOUT      100
 
 static void us_task_right();
 static void us_task_back();
@@ -77,7 +79,7 @@ static void us_task_right()
 			timeout += 1;
 			gpio_get_us(us_state, sizeof(us_state));
 		}
-		while( us_state[US_RIGHT] == 0 && timeout < 400);
+		while( us_state[US_RIGHT] == 0 && timeout < US_TIMEOUT);
 
 		if( us_state[US_RIGHT] < 350 && us_state[US_RIGHT] > 0)
 		{
@@ -92,6 +94,11 @@ static void us_task_right()
 
 		memcpy(can_us_msg[US_RIGHT].data + 1, &us_state[US_RIGHT], 2);
 		can_write(&can_us_msg[US_RIGHT], portMAX_DELAY);
+
+		if( us_state[US_RIGHT] > 10000 )
+		{
+			vTaskDelay(ms_to_tick(US_DELAY_AFTER_TIMEOUT));
+		}
 	}
 
 	vTaskDelete(NULL);
@@ -115,7 +122,7 @@ static void us_task_front()
 			timeout += 1;
 			gpio_get_us(us_state, sizeof(us_state));
 		}
-		while( us_state[US_FRONT] == 0 && timeout < 400);
+		while( us_state[US_FRONT] == 0 && timeout < US_TIMEOUT);
 
 		if( us_state[US_FRONT] < 350 && us_state[US_FRONT] > 0)
 		{
@@ -130,6 +137,11 @@ static void us_task_front()
 
 		memcpy(can_us_msg[US_FRONT].data + 1, &us_state[US_FRONT], 2);
 		can_write(&can_us_msg[US_FRONT], portMAX_DELAY);
+
+		if( us_state[US_FRONT] > 10000 )
+		{
+			vTaskDelay(ms_to_tick(US_DELAY_AFTER_TIMEOUT));
+		}
 	}
 
 	vTaskDelete(NULL);
@@ -153,7 +165,7 @@ static void us_task_back()
 			timeout += 1;
 			gpio_get_us(us_state, sizeof(us_state));
 		}
-		while( us_state[US_BACK] == 0 && timeout < 1000);
+		while( us_state[US_BACK] == 0 && timeout < US_TIMEOUT);
 
 		if( us_state[US_BACK] < 350 && us_state[US_BACK] > 0)
 		{
@@ -168,77 +180,13 @@ static void us_task_back()
 
 		memcpy(can_us_msg[US_BACK].data + 1, &us_state[US_BACK], 2);
 		can_write(&can_us_msg[US_BACK], portMAX_DELAY);
+
+		if( us_state[US_BACK] > 10000 )
+		{
+			vTaskDelay(ms_to_tick(US_DELAY_AFTER_TIMEOUT));
+		}
 	}
 
 	vTaskDelete(NULL);
 }
 
-#if 0
-static void us_task_right()
-{
-	int timeout;
-
-	while(1)
-	{
-		timeout = 0;
-		// tempo pour ne pas aller trop vite / us
-		vTaskDelay(ms_to_tick(100));
-
-		gpio_send_us( GPIO_US0 );
-
-		do
-		{
-			vTaskDelay(ms_to_tick(1));
-			timeout += 1;
-			gpio_get_us(us_state, sizeof(us_state));
-		}
-		while( us_state[US_RIGHT] == 0 && timeout < 200);
-
-		gpio_send_us( GPIO_US1 );
-
-		do
-		{
-			vTaskDelay(ms_to_tick(1));
-			timeout += 1;
-			gpio_get_us(us_state, sizeof(us_state));
-		}
-		while( us_state[US_FRONT] == 0 && timeout < 200);
-
-		gpio_send_us( GPIO_US2 );
-
-		do
-		{
-			vTaskDelay(ms_to_tick(1));
-			timeout += 1;
-			gpio_get_us(us_state, sizeof(us_state));
-		}
-		while( us_state[US_BACK] == 0 && timeout < 200);
-
-		uint8_t mask = 0;
-
-		if( us_state[US_RIGHT] < 200 && us_state[US_RIGHT] > 0)
-		{
-			mask |= 0x02;
-		}
-		if( us_state[US_FRONT] < 200 && us_state[US_FRONT] > 0)
-		{
-			mask |= 0x04;
-		}
-
-		if( us_state[US_BACK] < 200 && us_state[US_BACK])
-		{
-			mask |= 0x08;
-		}
-		
-		setLed(mask);
-
-		memcpy(can_us_msg.data    , &us_state[US_RIGHT], 2);
-		memcpy(can_us_msg.data + 2, &us_state[US_FRONT], 2);
-		memcpy(can_us_msg.data + 4, &us_state[US_BACK] , 2);
-		memcpy(can_us_msg.data + 6, &us_state[US_LEFT] , 2);
-		//can_write(&can_us_msg, portMAX_DELAY);
-	}
-
-	vTaskDelete(NULL);
-}
-#endif
