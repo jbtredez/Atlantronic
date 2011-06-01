@@ -18,6 +18,7 @@
 #include "adc.h"
 #include "gpio.h"
 #include <math.h>
+#include "kernel/us.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       200
@@ -63,6 +64,7 @@ static float control_aMax_av;
 static float control_vMax_av;
 static float control_aMax_rot;
 static float control_vMax_rot;
+static int control_use_us;
 
 union
 {
@@ -87,6 +89,7 @@ static float sinc( float x )
 
 static int control_module_init()
 {
+	control_use_us = 1;
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
@@ -175,6 +178,16 @@ static void control_compute()
 
 	// detection de collisions
 	control_colision_detection();
+
+	// arrêt sur us si demande des us
+	if( control_use_us )
+	{
+		if( vTaskGetEvent() & EVENT_US_COLLISION )
+		{
+			control_state = CONTROL_READY_FREE;
+			goto end_pwm_critical;
+		}
+	}
 
 	// calcul du prochain point
 	switch(control_state)
@@ -331,6 +344,12 @@ static void control_compute_goto()
 {
 	if(control_param.ad.angle)
 	{
+		// pas d'us sur la rotation
+		if( control_use_us )
+		{
+			us_set_activated(0);
+		}
+
 		// TODO marge en dur
 		if(fabs(control_dest.alpha - control_pos.alpha) < 0.02f)
 		{
@@ -355,6 +374,18 @@ static void control_compute_goto()
 	}
 	else if(control_param.ad.distance)
 	{
+		if( control_use_us )
+		{
+			if( control_param.ad.distance > 0)
+			{
+				us_set_activated(US_FRONT_MASK);
+			}
+			else
+			{
+				us_set_activated(US_BACK_MASK);
+			}
+		}
+
 		// TODO marges en dur
 		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
 		//float ey = -control_pos.sa * (control_dest.x - control_pos.x) + control_pos.ca * (control_dest.y - control_pos.y);
@@ -435,7 +466,7 @@ void control_straight(float dist)
 	{
 		control_state = CONTROL_STRAIGHT;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -460,7 +491,7 @@ void control_rotate(float angle)
 	{
 		control_state = CONTROL_ROTATE;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -486,7 +517,7 @@ void control_goto(float x, float y)
 	{
 		control_state = CONTROL_GOTO;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
@@ -495,11 +526,19 @@ void control_goto(float x, float y)
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
 	control_dest.alpha = atan2f(dy, dx);
-	control_dest.ca = cos(control_dest.alpha);
-	control_dest.sa = sin(control_dest.alpha);
 
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy);
+/*	if( control_param.ad.angle > PI )
+	{
+		control_param.ad.angle -= PI;
+		control_dest.alpha -= PI;
+		control_param.ad.distance = -control_param.ad.distance;
+	}
+*/
+	control_dest.ca = cos(control_dest.alpha);
+	control_dest.sa = sin(control_dest.alpha);
+
 	control_timer = 0;
 	control_aMax_av = 250.0f*TE*TE;
 	control_vMax_av = 1000.0f*TE;
@@ -517,17 +556,23 @@ void control_goto_near(float x, float y, float dist)
 	{
 		control_state = CONTROL_GOTO;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
 	control_dest.alpha = atan2f(dy, dx);
-	control_dest.ca = cos(control_dest.alpha);
-	control_dest.sa = sin(control_dest.alpha);
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy) - dist;
+/*	if( control_param.ad.angle > PI )
+	{
+		control_param.ad.angle -= PI;
+		control_dest.alpha = fmod( control_dest.alpha - PI, 2*PI);
+		control_param.ad.distance = -control_param.ad.distance;
+	}*/
+	control_dest.ca = cos(control_dest.alpha);
+	control_dest.sa = sin(control_dest.alpha);
 	control_dest.x = control_cons.x + control_param.ad.distance * control_dest.ca;
 	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
 
@@ -548,7 +593,7 @@ void control_straight_to_wall(float dist)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
