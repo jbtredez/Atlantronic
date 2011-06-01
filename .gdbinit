@@ -71,7 +71,7 @@ define ptasks
 	set $list_next = xDelayedTaskList.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf "  D   | %10.2f |", ($list_next->xItemValue - systick_time)/((double)72000)
+		printf "  D   | %10.2f |", ((double)$list_next->xItemValue - (double)systick_time)/((double)72000)
 		pTcb ((tskTCB*)$list_next->pvOwner)
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -96,9 +96,9 @@ define pTcb
 	printf " %8s | %10x | %10x | %10x | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	set $stack_min_free = 0
-#	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
-#		set $stack_min_free++
-#	end
+	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
+		set $stack_min_free++
+	end
 
 	printf " %8i |\n", $stack_min_free
 end
