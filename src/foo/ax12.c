@@ -20,7 +20,7 @@
 #define AX12_INSTRUCTION_SYNC_WRITE       0x83
 
 #define AX12_QUEUE_SIZE             10
-#define AX12_STACK_SIZE             64
+#define AX12_STACK_SIZE            100
 #define AX12_ARG_MAX                 3
 #define AX12_READ_TIMEOUT       720000
 #define AX12_INTER_FRAME_TIME      720
