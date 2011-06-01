@@ -31,7 +31,7 @@
 #define configQUEUE_REGISTRY_SIZE		0
 #define configMAX_CO_ROUTINE_PRIORITIES ( 2 )
 #define configKERNEL_INTERRUPT_PRIORITY			240
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY	191
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY	15//191 // TODO patch, bug a voir
 #define configGENERATE_RUN_TIME_STATS		1
 
 #define INCLUDE_vTaskPrioritySet        	1
