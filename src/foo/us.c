@@ -48,10 +48,10 @@ static void us_task()
 
 	while(1)
 	{
-		/*if( us_state[US_FRONT] < 350 )
+		if( us_state[US_FRONT] < 350 )
 		{
 			vTaskSetEvent(EVENT_US_COLLISION);
-		}*/
+		}
 
 		wake_time += ms_to_tick(5);
 		vTaskDelayUntil(wake_time);

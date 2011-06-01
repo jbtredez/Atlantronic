@@ -35,6 +35,7 @@ module_init(homologation_module_init, INIT_STRATEGY);
 
 static void homologation_task()
 {
+	uint32_t event;
 	while(getGo() == 0)
 	{
 		if( getRecalage() )
@@ -49,16 +50,36 @@ static void homologation_task()
 
 	pince_open();
 	control_pince_dual(70, 0);
-	control_goto(0, -700);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_goto_near(0, 0, 160);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	do
+	{
+		control_free();
+		vTaskClearEvent(EVENT_US_COLLISION);
+		control_goto(0, -700);
+		event = vTaskWaitEvent(EVENT_CONTROL_READY | EVENT_US_COLLISION, portMAX_DELAY);
+	}while(event & EVENT_US_COLLISION);
+
+	do
+	{
+		control_free();
+		vTaskClearEvent(EVENT_US_COLLISION);
+		control_goto_near(0, 0, 160);
+		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	}while(event & EVENT_US_COLLISION);
+
 	pince_close();
 	vTaskDelay(ms_to_tick(300));
 	control_pince_dual(1500, 0);
 	vTaskDelay(ms_to_tick(300));
-	control_goto_near(175, -175, 160);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	do
+	{
+		control_free();
+		vTaskClearEvent(EVENT_US_COLLISION);
+		control_goto_near(175, -175, 160);
+		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	}while(event & EVENT_US_COLLISION);
+
 	pince_open();
 
 	vTaskDelete(NULL);

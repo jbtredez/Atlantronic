@@ -494,7 +494,7 @@ void control_goto(float x, float y)
 	control_dest.y = y;
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
-	control_dest.alpha = atan2(dy, dx);
+	control_dest.alpha = atan2f(dy, dx);
 	control_dest.ca = cos(control_dest.alpha);
 	control_dest.sa = sin(control_dest.alpha);
 
@@ -523,7 +523,7 @@ void control_goto_near(float x, float y, float dist)
 
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
-	control_dest.alpha = atan2(dy, dx);
+	control_dest.alpha = atan2f(dy, dx);
 	control_dest.ca = cos(control_dest.alpha);
 	control_dest.sa = sin(control_dest.alpha);
 	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
