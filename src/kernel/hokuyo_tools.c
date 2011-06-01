@@ -353,10 +353,9 @@ float hoku_getAngleBetweenRobotAndPion(int Xrobot, int Yrobot, int Xpawn, int Yp
 }
 
 //TODO a tester
-uint8_t hoku_isPionStillThere(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
+void hoku_updatePawnIfVisible(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
 {
   float angle = hoku_getAngleBetweenRobotAndPion(Xrobot, Yrobot, Xpawn, Ypawn);
-  uint8_t res=0;
   
   if( fabsf (angle) < (PI/4) )
   {
@@ -369,16 +368,39 @@ uint8_t hoku_isPionStillThere(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
       uint16_t theroricalDistance =  ((Xrobot - Xpawn)*(Xrobot - Xpawn)) 
 				      + ((Yrobot - Ypawn)*(Yrobot - Ypawn));
 
-      if(abs(scanDistance - theroricalDistance) > 5 )
-	res = 1; //CONFIRMED PAWNNNNNNNNNNNNNN!!!!!
-   
+
+      if(abs( (scanDistance * scanDistance) - theroricalDistance) < 5 )
+      {
+	hoku_pion_table[milieuPion].timestamp = systick_get_match_time();
+	//CONFIRMED PAWNNNNNNNNNNNNNN!!!!!
+      }
+      else 
+      {
+	///si on a un autre pion en vision, on considère qu il n y a plus rien 
+	 if( (theroricalDistance - (scanDistance * scanDistance)) < -225 )
+	   hoku_pion_table[milieuPion].objet = VIDE;
+      }
       
   }
   
-  return res;
       
 }
   
+/// on verifie si il y a bien un pion dans l angle de vue actuelle
+void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot)
+{
+  uint8_t i=0;
+  for(i=0; i<NB_PION; i++)
+  {
+    if(hoku_pion_table[i].objet!=VIDE)
+    {
+      hoku_updatePawnIfVisible(pPosRobot->x, 
+			       pPosRobot->y, 
+			       hoku_pion_table[i].x,
+			       hoku_pion_table[i].y);
+    }
+  }
+}  
   
 //TODO a tester
 void hoku_parse_tab(struct vect_pos *pPosRobot)

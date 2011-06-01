@@ -37,6 +37,7 @@ module_init(homologation_module_init, INIT_STRATEGY);
 
 static void homologation_task()
 {
+#if 0
 	while(getGo() == 0)
 	{
 		if( getRecalage() )
@@ -46,9 +47,10 @@ static void homologation_task()
 		}
 		vTaskDelay(ms_to_tick(50));
 	}
-
+#endif
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
+#if 0
 	 //go go on sort de notre grotte
 	pince_open();
 	control_pince_dual(70, 0);
@@ -59,7 +61,9 @@ static void homologation_task()
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	
 	//control_rotate();
-	
+#endif 	
+	while(1) 
+	  vTaskDelay(ms_to_tick(1000));
 	
 // 	pince_close();
 // 	vTaskDelay(ms_to_tick(300));

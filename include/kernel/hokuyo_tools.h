@@ -32,4 +32,6 @@ uint8_t hoku_check_path();
 uint8_t hoku_isPionThere(float x, float y, struct vect_pos *pPosRobot);
 uint8_t check_shape(int start, int end);
 
+void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot);
+
 #endif

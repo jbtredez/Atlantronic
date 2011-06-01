@@ -93,8 +93,11 @@ static void detection_task()
 
 		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 		
+		//vérifie les anciens points
+		hoku_pion_table_verify_pawn(&pos_robot);
+		//rajoute les nouveaux points (voir peut etre certains effacés)
 		hoku_parse_tab(&pos_robot);
-		
+		//sleep 
 		vTaskDelay(ms_to_tick(100));
 	}
 
