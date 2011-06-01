@@ -11,6 +11,14 @@ define prog
 end
 
 define ptasks
+	_ptasks 0
+end
+
+define ptasks_stack
+	_ptasks 1
+end
+
+define _ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
 	set $match_time = 0
 
@@ -34,8 +42,14 @@ define ptasks
 	echo \033[0m
 
 	echo \033[01;34m
-	printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack (32 bit) |\n"
-	printf "      |            |          |            |            |            |    %%   | current  |   min    |\n"
+	if $arg0
+		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack (32 bit) |\n"
+		printf "      |            |          |            |            |            |    %%   | current  |   min    |\n"
+	else
+		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack|\n"
+		printf "      |            |          |            |            |            |    %%   | current  |\n"
+	end
+
 	echo \033[0m
 	set $nb_pri = sizeof pxReadyTasksLists / sizeof pxReadyTasksLists[0]
 	set $i = $nb_pri - 1
@@ -47,7 +61,7 @@ define ptasks
 
 		while $list_next != $list_end && $n > 0
 			printf "  P%i  |          0 |", $i
-			pTcb ((tskTCB*)$list_next->pvOwner)
+			pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 			set $list_next = $list_next.pxNext
 			set $n--
 		end
@@ -60,7 +74,7 @@ define ptasks
 
 	while $list_next != $list_end && $n > 0
 		printf "  PR  |          0 |"
-		pTcb ((tskTCB*)$list_next->pvOwner)
+		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
@@ -72,7 +86,7 @@ define ptasks
 
 	while $list_next != $list_end && $n > 0
 		printf "  D   | %10.2f |", ((double)$list_next->xItemValue - (double)systick_time)/((double)72000)
-		pTcb ((tskTCB*)$list_next->pvOwner)
+		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
@@ -84,7 +98,7 @@ define ptasks
 
 	while $list_next != $list_end && $n > 0
 		printf "  S   |        inf |"
-		pTcb ((tskTCB*)$list_next->pvOwner)
+		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
 	end
@@ -95,12 +109,15 @@ end
 define pTcb
 	printf " %8s | %10x | %10x | %10x | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
 
-	set $stack_min_free = 0
-	while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
-		set $stack_min_free++
+	if $arg1
+		set $stack_min_free = 0
+		while $arg0->pxStack[$stack_min_free] == 0xa5a5a5a5
+			set $stack_min_free++
+		end
+		printf " %8i |\n", $stack_min_free
+	else
+		printf "\n"
 	end
-
-	printf " %8i |\n", $stack_min_free
 end
 
 define plot_hokuyo
