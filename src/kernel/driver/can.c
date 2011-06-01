@@ -18,8 +18,8 @@ static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
 
 // TODO reglé au pif
-#define CAN_READ_STACK_SIZE            64
-#define CAN_WRITE_STACK_SIZE           64
+#define CAN_READ_STACK_SIZE            150
+#define CAN_WRITE_STACK_SIZE           150
 
 #define CAN_WRITE_QUEUE_SIZE     20
 #define CAN_READ_QUEUE_SIZE      20
@@ -35,11 +35,13 @@ struct can_map
 
 static uint8_t can_map_max;
 static struct can_map can_map[CAN_MAP_SIZE];
+static volatile int can_tx_end;
 
 static int can_module_init(void)
 {
 	can_filter_id = 0;
 	can_map_max = 0;
+	can_tx_end = 0;
 
 	// CAN_RX : PD0
 	// CAN_TX : PD1
@@ -139,9 +141,15 @@ static void can_write_task(void *arg)
 	{
 		if(xQueueReceive(can_write_queue, &req, portMAX_DELAY))
 		{
-			vTaskClearEvent(EVENT_CAN_TX_END);
+//			vTaskClearEvent(EVENT_CAN_TX_END);
+			can_tx_end = 0;
 			can_write_mailbox(&req);
-			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
+			
+			do
+			{
+				vTaskDelay(ms_to_tick(1));
+			}while(can_tx_end);
+//			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
 		}
 	}
 }
@@ -164,6 +172,7 @@ static void can_read_task(void *arg)
 					can_map[i].callback(&msg);
 				}
 			}
+//			vTaskDelay(ms_to_tick(100));
 		}
 	}
 }
@@ -175,7 +184,7 @@ void isr_can1_tx(void)
 	{
 		CAN1->TSR |= CAN_TSR_RQCP0;
 		CAN1->IER &= ~CAN_IER_TMEIE;
-		vTaskSetEventFromISR(EVENT_CAN_TX_END);
+//		vTaskSetEventFromISR(EVENT_CAN_TX_END);
 	}
 }
 
