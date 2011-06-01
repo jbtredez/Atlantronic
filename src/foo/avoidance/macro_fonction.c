@@ -923,11 +923,12 @@ int coutNonRecursif(int dc, int dl, int ac, int al, int *pathc, int *pathl)
 }
 
 //table
-void init_table(void)
+void avoidance_init_table(void)
 {
   int i;
   for(i=0;i<NB_CASE;i++) table[i]=0;
-  table[9-1]=PION;
+  //TODO
+  /*table[9-1]=PION;
   table[17-1]=PION;
   table[25-1]=PION;
   table[33-1]=PION;
@@ -937,7 +938,7 @@ void init_table(void)
   table[32-1]=PION;
   table[40-1]=PION;
   table[48-1]=PION;
-
+*/
 }
 
 

@@ -39,6 +39,7 @@ module_init(detection_module_init, INIT_DETECTION);
 static void detection_task()
 {
 	uint32_t err;
+	struct vect_pos pos_robot;
 
 	do
 	{
@@ -51,7 +52,7 @@ static void detection_task()
 
 	hoku_init_pion();
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	//vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	int i = 2;
 	for( ; i-- ;)
@@ -78,7 +79,23 @@ static void detection_task()
 
 	while(1)
 	{
-		vTaskDelay(ms_to_tick(1000));
+		pos_robot = location_get_position();
+				err = hokuyo_scan();
+		if( err)
+		{
+			// TODO : checksum qui marche pas
+//			error_raise(err);
+		}
+
+		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
+
+		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
+
+		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
+		
+		hoku_parse_tab(&pos_robot);
+		
+		vTaskDelay(ms_to_tick(100));
 	}
 
 	vTaskDelete(NULL);

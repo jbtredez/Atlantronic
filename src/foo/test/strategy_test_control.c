@@ -55,7 +55,7 @@ static void strategy_test_control_task()
 //	pince_open();
 
 	//init table + robots	
-	init_table();
+	avoidance_init_table();
 
 	//get robot color
 // 	startCase = CASE_BLEU;

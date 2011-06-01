@@ -32,4 +32,5 @@ obj-bar-us_hokuyo += kernel/hokuyo_tools.o
 #obj-bar-us_hokuyo += kernel/end.o
 obj-bar-us_hokuyo += kernel/error.o
 obj-bar-us_hokuyo += bar/gpio.o
+obj-bar-us_hokuyo += kernel/vect_pos.o
 bin-bar += us_hokuyo

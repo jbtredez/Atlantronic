@@ -5,6 +5,7 @@
 #include "kernel/hokuyo_tools.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/systick.h"
+#include "kernel/vect_pos.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -296,7 +297,7 @@ void hoku_print_pion()
 #endif 
 
 
-unsigned char check_shape(int start, int end)
+uint8_t check_shape(int start, int end)
 {
 	
 	int D1 = hoku_scan_table[start].distance;
@@ -313,13 +314,74 @@ unsigned char check_shape(int start, int end)
 	if( (adjacent < SEUIL_HAUT) && (adjacent > SEUIL_BAS) )
 	{
 		//PION DETECTED 
-		return PION ;//TODO 
-		//hoku_scan_table[milieu].x, hoku_scan_table[milieu].y
+		return PION ;
 	}
 	return AUTRE;
 }
 
-void hoku_parse_tab(void)
+
+//TODO à tester
+/*uint8_t hoku_pion_isAlreadyKnown(int Xa, int Ya)
+{
+  uint8_t found = 0;
+  uint8_t i=0;
+  
+  while( (i<NB_PION) && (hoku_pion_table[i].objet != VIDE) )
+  {
+  
+      Xa = hoku_pion_table[i].x;
+      Ya = hoku_pion_table[i].y;
+      
+      uint16_t distance =  ((Xb - Xa)*(Xb - Xa)) + ((Yb - Ya)*(Yb - Ya));
+
+      if( distance < HOKU_SEUIL_PION_CARRE )
+      {
+
+	found = 1;
+	break; 
+      }
+  }
+  return found;
+}*/
+
+
+float hoku_getAngleBetweenRobotAndPion(int Xrobot, int Yrobot, int Xpawn, int Ypawn)
+{
+  
+    return atan2f( (Ypawn - Yrobot), (Xpawn - Xrobot) );
+  
+}
+
+//TODO a tester
+uint8_t hoku_isPionStillThere(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
+{
+  float angle = hoku_getAngleBetweenRobotAndPion(Xrobot, Yrobot, Xpawn, Ypawn);
+  uint8_t res=0;
+  
+  if( fabsf (angle) < (PI/4) )
+  {
+      float hokuyo_scan_pt_rad=0.00614192111437f;
+      int nbPoint = angle / hokuyo_scan_pt_rad;
+      int milieuPion = 341 + nbPoint;
+      
+      uint16_t scanDistance = hoku_scan_table[milieuPion].distance;
+      
+      uint16_t theroricalDistance =  ((Xrobot - Xpawn)*(Xrobot - Xpawn)) 
+				      + ((Yrobot - Ypawn)*(Yrobot - Ypawn));
+
+      if(abs(scanDistance - theroricalDistance) > 5 )
+	res = 1; //CONFIRMED PAWNNNNNNNNNNNNNN!!!!!
+   
+      
+  }
+  
+  return res;
+      
+}
+  
+  
+//TODO a tester
+void hoku_parse_tab(struct vect_pos *pPosRobot)
 {
 
 	int i=0;
@@ -358,10 +420,18 @@ void hoku_parse_tab(void)
 			  if(check_shape(start, end)==PION)
 			  {
 			    int milieu = (end + start)/2;
-			    //TODO coordonnée de la table
+			    struct vect_pos pos_in, pos_out;
+			    
+			    pos_in.x = hoku_scan_table[milieu].x;
+			    pos_in.y = hoku_scan_table[milieu].y;
+			    pos_in.alpha = 0;
+			    //offset du hokuyo +60
+			    pPosRobot->x += 60;
+			    pos_robot_to_table(pPosRobot, &pos_in, &pos_out);
+			    
 			    hoku_update_pion(PION, 
-					     hoku_scan_table[milieu].x, 
-					     hoku_scan_table[milieu].y);
+					     pos_out.x, 
+					     pos_out.y);
 			  }
 			}
 			start = second;
