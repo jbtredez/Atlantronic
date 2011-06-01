@@ -20,5 +20,6 @@
 #define EVENT_CONTROL_PINCE_COLISION    0x1000
 #define EVENT_CONTROL_TIMEOUT           0x2000
 #define EVENT_HOKUYO_READY              0x4000
+#define EVENT_US_COLLISION              0x8000
 
 #endif

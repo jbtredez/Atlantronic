@@ -26,10 +26,10 @@ obj-foo-homologation += foo/pince.o
 obj-foo-homologation += foo/control/control_pince.o
 obj-foo-homologation += foo/adc.o
 obj-foo-homologation += foo/homologation.o
-obj-foo-homologation += kernel/driver/hokuyo.o
-obj-foo-homologation += kernel/hokuyo_tools.o
+#obj-foo-homologation += kernel/driver/hokuyo.o
+#obj-foo-homologation += kernel/hokuyo_tools.o
 obj-foo-homologation += foo/recalage.o
-obj-foo-homologation += foo/detection.o
-obj-foo-homologation += foo/can_us.o
+#obj-foo-homologation += foo/detection.o
+obj-foo-homologation += foo/us.o
 bin-foo += homologation
 
