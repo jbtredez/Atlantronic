@@ -8,7 +8,7 @@
 #include "kernel/event.h"
 #include "kernel/rcc.h"
 
-#define END_STACK_SIZE           50
+#define END_STACK_SIZE           100
 const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;
 
 static void end_task(void *arg);
