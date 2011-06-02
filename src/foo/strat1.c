@@ -46,6 +46,16 @@ void goto_with_avoidance(float x, float y, float delta)
 	}while(event & EVENT_CONTROL_COLSISION);
 }
 
+void straight_with_avoidance(float dx)
+{
+	uint32_t event;
+	do
+	{
+		control_straight(dx);
+		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+	}while(event & EVENT_CONTROL_COLSISION);
+}
+
 static void strat_task()
 {
 	int sens = 1;
@@ -83,12 +93,28 @@ static void strat_task()
 		control_pince_dual(PINCE_POS_HI, 0);
 		vTaskDelay(ms_to_tick(300));
 		goto_with_avoidance(- sens * 700, -700, 0);
+		goto_with_avoidance(- sens * 700, -750, 0);
+		if(getcolor() == COLOR_BLUE)
+		{
+			us_start_scan(US_LEFT_MASK);
+		}
+		else
+		{
+			us_start_scan(US_RIGHT_MASK);
+		}
 	}
 	else
 	{
 		goto_with_avoidance(- sens * 700, -700, 0);
 		goto_with_avoidance(- sens * 700, -750, 0);
-		us_start_scan(US_LEFT_MASK);
+		if(getcolor() == COLOR_BLUE)
+		{
+			us_start_scan(US_LEFT_MASK);
+		}
+		else
+		{
+			us_start_scan(US_RIGHT_MASK);
+		}
 		vTaskDelay(ms_to_tick(400));
 		float dist = get_distance();
 		if( dist > 0)
@@ -116,6 +142,51 @@ static void strat_task()
 
 	goto_with_avoidance(- sens * 700, 350, 160);
 	goto_with_avoidance(- sens * 875, 830, 160);
+
+	straight_with_avoidance(-300);
+
+	goto_with_avoidance(- sens * 525, 525, 160);
+	pince_open();
+
+	straight_with_avoidance(-250);
+	int pos_tour = us_get_scan_result();
+
+	control_pince_dual(PINCE_POS_LOW, 0);
+
+	control_rotate(sens * 3*PI/2.0f);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	switch(pos_tour)
+	{
+		case 0:
+			goto_with_avoidance(- sens * 700, -350, 0);
+			goto_with_avoidance(- sens * 1330, -350, 160);
+			break;
+		case 1:
+			goto_with_avoidance(- sens * 700, -80, 0);
+			goto_with_avoidance(- sens * 1330, -80, 0);
+			break;
+		case 2:
+			goto_with_avoidance(- sens * 700, 200, 0);
+			goto_with_avoidance(- sens * 1330, 200, 0);
+			break;
+		case 3:
+			goto_with_avoidance(- sens * 700, 480, 0);
+			goto_with_avoidance(- sens * 1330, 480, 0);
+			break;
+	}
+
+	pince_close();
+	vTaskDelay(ms_to_tick(400));
+	control_pince_dual(PINCE_POS_HI, 0);
+	straight_with_avoidance(-250);
+
+	control_rotate(-sens*PI/2.0f);
+	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	goto_with_avoidance(- sens * 525, 525, 160);
+
+	pince_open();
 
 	vTaskDelete(NULL);
 }

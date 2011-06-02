@@ -82,10 +82,10 @@ static void us_task(void* arg)
 				{
 					scan[3]++;
 				}
-				if( pos.y < 760 + US_LARGEUR_CASE && pos.y > 760 - US_LARGEUR_CASE)
+				/*if( pos.y < 760 + US_LARGEUR_CASE && pos.y > 760 - US_LARGEUR_CASE)
 				{
 					scan[4]++;
-				}
+				}*/
 			}
 		}
 
@@ -166,4 +166,27 @@ void us_start_scan(uint8_t us_mask)
 		us_set_active( US_LEFT_MASK  | US_FRONT_MASK | US_BACK_MASK);	
 	}
 	us_scan = us_mask;
+}
+
+int us_get_scan_result()
+{
+	// max parmis les 4 premieres
+	int max1 = 0;
+	
+	if( scan[1] > scan[max1])
+	{
+		max1 = 1;
+	}
+	
+	if( scan[2] > scan[max1])
+	{
+		max1 = 2;
+	}
+	
+	if( scan[3] > scan[max1])
+	{
+		max1 = 3;
+	}
+	
+	return max1;
 }

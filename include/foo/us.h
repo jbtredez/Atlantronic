@@ -11,4 +11,6 @@ uint8_t us_check_collision();
 
 void us_start_scan(uint8_t us_mask);
 
+int us_get_scan_result();
+
 #endif
