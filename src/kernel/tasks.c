@@ -2038,7 +2038,12 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 		{
 			pxTcb = pxListItem->pvOwner;
 			next = (xListItem*) pxListItem->pxNext;
-
+			// TODO patch moche pourri
+			if((unsigned long) pxTcb < 0x20000000)
+			{
+				goto end;
+			}
+			
 			pxTcb->event |= mask;
 			if( wake && pxTcb->event & pxTcb->eventMask)
 			{
@@ -2062,6 +2067,7 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 		}while( pxListItem != (xListItem*) &pxTaskList->xListEnd);
 	}
 
+end:
 	return xHigherPriorityTaskWoken;
 }
 
