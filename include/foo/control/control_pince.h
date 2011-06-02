@@ -7,6 +7,11 @@
 
 #include <stdint.h>
 
+
+#define PINCE_POS_LOW      150
+#define PINCE_POS_MED     2000
+#define PINCE_POS_HI      3300
+
 enum control_pince_state
 {
 	CONTROL_PINCE_READY_ASSER,
