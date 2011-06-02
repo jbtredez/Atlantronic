@@ -89,17 +89,40 @@ static void detection_task()
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
-		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
+//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
 
-		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
-		
+//		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
+
 		//vérifie les anciens points
-		hoku_pion_table_verify_pawn(&pos_robot);
+//		hoku_pion_table_verify_pawn(&pos_robot);
 		//rajoute les nouveaux points (voir peut etre certains effacés)
-		hoku_parse_tab(&pos_robot);
-		//sleep 
+//		hoku_parse_tab(&pos_robot);
+
 		vTaskDelay(ms_to_tick(100));
 	}
 
 	vTaskDelete(NULL);
+}
+
+float get_distance()
+{
+	float dist = 0;
+	int taille = 5;
+	int i = 341 - taille;
+	int n  = 0;
+	for( ; i < 341 + taille ; i++)
+	{
+		if( hokuyo_distance[i] > 20 )
+		{
+			n++;
+			dist += hokuyo_distance[i];
+		}
+	}
+
+	if( n)
+	{
+		dist /= n;
+	}
+
+	return dist;
 }

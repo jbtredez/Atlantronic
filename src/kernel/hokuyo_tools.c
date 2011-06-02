@@ -307,7 +307,6 @@ uint16_t distance_forward_shape()
       return hoku_scan_table[i].distance;
   }
   return 0;  
-    
 }
 
 uint8_t check_shape(int start, int end)
@@ -613,4 +612,17 @@ void parse_before_match_tab()
 		i++;
 		
 	}
+}
+
+int is_pawn_front_start()
+{
+	int i = 0;
+	for( ; i < NB_PION ; i++)
+	{
+		if( hoku_pion_table[i].objet != VIDE && hoku_pion_table[i].x == -700 && hoku_pion_table[i].y == -700)
+		{
+			return 1;
+		}
+	}
+	return 0;
 }

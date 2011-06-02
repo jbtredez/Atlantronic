@@ -78,7 +78,7 @@ static void us_activate_callback(struct can_msg *msg)
 static void us_task_side()
 {
 	int timeout;
-
+	can_us_msg[US_LEFT].data[0] = US_LEFT;
 	can_us_msg[US_RIGHT].data[0] = US_RIGHT;
 
 	while(1)

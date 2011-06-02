@@ -37,4 +37,8 @@ uint8_t check_shape(int start, int end);
 
 void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot);
 
+uint16_t distance_forward_shape();
+
+int is_pawn_front_start();
+
 #endif
