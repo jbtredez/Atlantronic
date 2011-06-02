@@ -21,6 +21,7 @@ static int us_module_init();
 static uint16_t us_state[US_MAX];
 static struct can_msg can_us_msg[US_MAX];
 volatile uint8_t us_activated;
+static void us_activate_callback(struct can_msg *msg);
 
 static int us_module_init()
 {
@@ -57,12 +58,22 @@ static int us_module_init()
 		can_us_msg[i].id = CAN_US;
 	}
 
+	can_register(CAN_US_ACTIVATE, CAN_STANDARD_FORMAT, us_activate_callback);
+
 	return 0;
 }
 
 module_init(us_module_init, INIT_TEST_PINCE);
 
 volatile uint8_t mask = 0;
+
+static void us_activate_callback(struct can_msg *msg)
+{
+	if( msg->size == 1)
+	{
+		us_activated = msg->data[0];
+	}
+}
 
 static void us_task_side()
 {

@@ -80,3 +80,15 @@ uint32_t us_get_state(enum us_id id)
 
 	return res;
 }
+
+void us_set_active(uint8_t us_acive_mask)
+{
+	struct can_msg msg;
+	msg.type = CAN_DATA_FRAME;
+	msg.format = CAN_STANDARD_FORMAT;
+	msg.data[0] = us_acive_mask;
+	msg.size = 1;
+	msg.id = CAN_US_ACTIVATE;
+	
+	can_write(&msg, portMAX_DELAY);
+}
