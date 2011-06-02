@@ -516,41 +516,25 @@ void control_rotate(float angle)
 
 void control_goto(float x, float y)
 {
-	portENTER_CRITICAL();
-	if(control_state != CONTROL_END)
+	control_goto_near(x, y, 0);
+}
+
+float trouverRotation(float debut, float fin)
+{
+	float alpha = fin - debut;
+	alpha = fmodf(alpha, 2*PI); // Retour dans [-2*PI;2*PI]
+	
+	// Retour dans [-PI;PI] si neccessaire
+	if (alpha > PI)
 	{
-		control_state = CONTROL_GOTO;
+		alpha -= 2*PI;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
-	control_cons = location_get_position();
-
-	control_dest.x = x;
-	control_dest.y = y;
-	float dx = x - control_cons.x;
-	float dy = y - control_cons.y;
-	control_dest.alpha = atan2f(dy, dx);
-
-	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
-	control_param.ad.distance = sqrt(dx*dx+dy*dy);
-/*	if( control_param.ad.angle > PI )
+	else if (alpha < -PI)
 	{
-		control_param.ad.angle -= PI;
-		control_dest.alpha -= PI;
-		control_param.ad.distance = -control_param.ad.distance;
+		alpha += 2*PI;
 	}
-*/
-	control_dest.ca = cos(control_dest.alpha);
-	control_dest.sa = sin(control_dest.alpha);
-
-	control_timer = 0;
-	control_aMax_av = 250.0f*TE*TE;
-	control_vMax_av = 1000.0f*TE;
-	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
-	pid_reset(&control_pid_av);
-	pid_reset(&control_pid_rot);
-	portEXIT_CRITICAL();
+	
+	return alpha;
 }
 
 void control_goto_near(float x, float y, float dist)
@@ -564,17 +548,26 @@ void control_goto_near(float x, float y, float dist)
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
+
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
-	control_dest.alpha = atan2f(dy, dx);
-	control_param.ad.angle = control_dest.alpha - control_cons.alpha;
 	control_param.ad.distance = sqrt(dx*dx+dy*dy) - dist;
-/*	if( control_param.ad.angle > PI )
+	float a = atan2f(dy, dx);
+
+	float theta1av = trouverRotation(control_cons.alpha, a);
+	float theta1re = trouverRotation(control_cons.alpha, a + PI);
+
+	if ( fabsf(theta1av) > fabsf(theta1re))
 	{
-		control_param.ad.angle -= PI;
-		control_dest.alpha = fmod( control_dest.alpha - PI, 2*PI);
-		control_param.ad.distance = -control_param.ad.distance;
-	}*/
+		control_param.ad.angle = theta1re;
+		control_param.ad.distance *= -1;
+	}
+	else
+	{
+		control_param.ad.angle = theta1av;
+	}
+
+	control_dest.alpha = control_cons.alpha + control_param.ad.angle;
 	control_dest.ca = cos(control_dest.alpha);
 	control_dest.sa = sin(control_dest.alpha);
 	control_dest.x = control_cons.x + control_param.ad.distance * control_dest.ca;
