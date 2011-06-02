@@ -90,7 +90,7 @@ static float sinc( float x )
 
 static int control_module_init()
 {
-	control_use_us = 1;
+	control_use_us = US_FRONT_MASK | US_BACK_MASK;
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
@@ -455,7 +455,7 @@ static void control_colision_detection()
 	// arrêt sur us si demande des us
 	if( control_use_us )
 	{
-		control_us = us_check_collision();
+		control_us = us_check_collision() & control_use_us;
 	}
 	else
 	{
@@ -511,6 +511,14 @@ void control_rotate(float angle)
 	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
+	portEXIT_CRITICAL();
+}
+
+void control_rotate_to(float alpha)
+{
+	portENTER_CRITICAL();
+	control_cons = location_get_position();
+	control_rotate(alpha - control_cons.alpha);
 	portEXIT_CRITICAL();
 }
 
@@ -627,7 +635,7 @@ void control_free()
 	portEXIT_CRITICAL();
 }
 
-void control_set_use_us(int use_us)
+void control_set_use_us(uint8_t use_us_mask)
 {
-	control_use_us = use_us;
+	control_use_us = use_us_mask;
 }

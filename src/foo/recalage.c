@@ -10,6 +10,7 @@
 #include "kernel/robot_parameters.h"
 #include "pince.h"
 #include "control/control_pince.h"
+#include "kernel/us_def.h"
 
 void recalage()
 {
@@ -49,5 +50,5 @@ void recalage()
 	control_straight(110);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 
-	control_set_use_us(1);
+	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
 }

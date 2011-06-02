@@ -148,34 +148,71 @@ static void strat_task()
 	goto_with_avoidance(- sens * 525, 525, 160);
 	pince_open();
 
-	straight_with_avoidance(-250);
+	straight_with_avoidance(-200);
 	int pos_tour = us_get_scan_result();
 
 	control_pince_dual(PINCE_POS_LOW, 0);
 
-	control_rotate(sens * 3*PI/2.0f);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+//	control_rotate(sens * PI);
+	//vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 
 	switch(pos_tour)
 	{
 		case 0:
 			goto_with_avoidance(- sens * 700, -350, 0);
-			goto_with_avoidance(- sens * 1330, -350, 160);
+			if(getcolor() == COLOR_BLUE)
+			{
+				control_rotate_to(PI);
+			}
+			else
+			{
+				control_rotate_to(0);
+			}
+			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+			goto_with_avoidance(- sens * 1340, -350, 160);
 			break;
 		case 1:
 			goto_with_avoidance(- sens * 700, -80, 0);
-			goto_with_avoidance(- sens * 1330, -80, 0);
+			if(getcolor() == COLOR_BLUE)
+			{
+				control_rotate_to(PI);
+			}
+			else
+			{
+				control_rotate_to(0);
+			}
+			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+			goto_with_avoidance(- sens * 1340, -80, 0);
 			break;
 		case 2:
 			goto_with_avoidance(- sens * 700, 200, 0);
-			goto_with_avoidance(- sens * 1330, 200, 0);
+			if(getcolor() == COLOR_BLUE)
+			{
+				control_rotate_to(PI);
+			}
+			else
+			{
+				control_rotate_to(0);
+			}
+			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+			goto_with_avoidance(- sens * 1340, 200, 0);
 			break;
 		case 3:
-			goto_with_avoidance(- sens * 700, 480, 0);
-			goto_with_avoidance(- sens * 1330, 480, 0);
+			goto_with_avoidance(- sens * 875, 480, 0);
+			if(getcolor() == COLOR_BLUE)
+			{
+				control_rotate_to(PI);
+			}
+			else
+			{
+				control_rotate_to(0);
+			}
+			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+			goto_with_avoidance(- sens * 1340, 480, 0);
 			break;
 	}
 
+	control_set_use_us(US_BACK_MASK);
 	pince_close();
 	vTaskDelay(ms_to_tick(400));
 	control_pince_dual(PINCE_POS_HI, 0);
@@ -187,6 +224,7 @@ static void strat_task()
 	goto_with_avoidance(- sens * 525, 525, 160);
 
 	pince_open();
+	control_set_use_us(US_FRONT_MASK);
 
 	vTaskDelete(NULL);
 }

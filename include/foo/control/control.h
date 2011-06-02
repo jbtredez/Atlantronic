@@ -26,13 +26,15 @@ void control_straight_to_wall(float dist);
 
 void control_rotate(float angle);
 
+void control_rotate_to(float alpha);
+
 void control_goto(float x, float y);
 
 void control_goto_near(float x, float y, float dist);
 
 void control_free();
 
-void control_set_use_us(int use_us);
+void control_set_use_us(uint8_t use_us_mask);
 
 int32_t control_get_state();
 
