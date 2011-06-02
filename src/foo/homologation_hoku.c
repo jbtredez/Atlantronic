@@ -37,6 +37,7 @@ module_init(homologation_module_init, INIT_STRATEGY);
 
 static void homologation_task()
 {
+
 #if 0
 	while(getGo() == 0)
 	{
@@ -49,6 +50,9 @@ static void homologation_task()
 	}
 #endif
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	//on attend le pre-scan du départ de l hokuyo
+	vTaskWaitEvent(EVENT_GO, EVENT_HOKUYO_READY);
+	
 
 #if 0
 	 //go go on sort de notre grotte

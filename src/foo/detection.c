@@ -52,7 +52,7 @@ static void detection_task()
 
 	hoku_init_pion();
 
-	//vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	int i = 2;
 	for( ; i-- ;)
@@ -80,7 +80,7 @@ static void detection_task()
 	while(1)
 	{
 		pos_robot = location_get_position();
-				err = hokuyo_scan();
+		err = hokuyo_scan();
 		if( err)
 		{
 			// TODO : checksum qui marche pas

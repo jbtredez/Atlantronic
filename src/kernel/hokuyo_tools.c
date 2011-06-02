@@ -296,6 +296,19 @@ void hoku_print_pion()
 }
 #endif 
 
+uint16_t distance_forward_shape()
+{
+  uint16_t milieuPion = NB_POINT / 2;
+  uint16_t i;
+  
+  for(i=milieuPion; i<5; i++)
+  {
+    if(hoku_scan_table[i].distance > 20) 
+      return hoku_scan_table[i].distance;
+  }
+  return 0;  
+    
+}
 
 uint8_t check_shape(int start, int end)
 {
