@@ -20,15 +20,20 @@
 
 #define US_STACK_SIZE            100
 #define US_SEUIL_FIGURE          550
-#define US_SCAN_OFFSET           160
 #define US_LARGEUR_CASE          80
+#define US_LONGEUR_CASE          400
+
+#define US_RIGHT_X (160)
+#define US_RIGHT_Y (-160)
+#define US_LEFT_X (160)
+#define US_LEFT_Y (160)
 
 static int us_module_init();
 static void us_callback(struct can_msg *msg);
 static uint16_t us_state[US_MAX];
 static void us_task(void* arg);
 static uint32_t scan[5];
-static volatile int us_scan = 0;
+static volatile int32_t us_scan = 0;
 static int us_module_init()
 {
 	can_register(CAN_US, CAN_STANDARD_FORMAT, us_callback);
@@ -48,6 +53,30 @@ static int us_module_init()
 
 module_init(us_module_init, INIT_CAN_US);
 
+
+static vect_pos US_get_spotted_point(int32_t us_source, vect_pos robot_pos)
+{
+	uint16_t us_distance;
+	vect_pos point;
+
+	if(us_source & US_LEFT_MASK )
+	{
+		distance = us_state[US_LEFT];
+		/* Calcul de la position du point visé par les capteurs dans le repère du terrain */
+		point.x = robot_pos.x + US_LEFT_X * robot_pos.ca - (us_distance + US_LEFT_Y) * robot_pos.sa;
+		point.y = robot_pos.y + US_LEFT_X * robot_pos.sa + (us_distance + US_LEFT_Y) * robot_pos.ca;
+	}
+	else //if(us_scan & US_RIGHT_MASK)
+	{
+		distance = us_state[US_RIGHT];
+		/* Calcul de la position du point visé par les capteurs dans le repère du terrain */
+		point.x = robot_pos.x + US_RIGHT_X * robot_pos.ca - (US_RIGHT_Y-us_distance ) * robot_pos.sa;
+		point.y = robot_pos.y + US_RIGHT_X * robot_pos.sa + (US_RIGHT_Y-us_distance ) * robot_pos.ca;
+	}
+	return point;
+}
+
+
 static void us_task(void* arg)
 {
 	(void) arg;
@@ -56,33 +85,29 @@ static void us_task(void* arg)
 		if( us_scan & US_LEFT_MASK || us_scan & US_RIGHT_MASK)
 		{
 			struct vect_pos pos = location_get_position();
-			uint16_t val = us_state[US_LEFT];
-			if( us_scan & US_RIGHT_MASK)
-			{
-				val = us_state[US_RIGHT];
-			}
+			vect_pos target = US_get_spotted_point(us_scan, pos);
 
-			pos.y += US_SCAN_OFFSET;
-			if( val < US_SEUIL_FIGURE)
+			/* on vérifie que le x est dans une zone verte */
+			if(   ((target.x > (-1500)) && (target.x < (-1500 + US_LONGEUR_CASE)))
+			   || ((target.x > (-1500)) && (target.x < (1500 - US_LONGEUR_CASE))))
 			{
-
-				if( pos.y < -360 + US_LARGEUR_CASE && pos.y > -360 - US_LARGEUR_CASE)
+				if( target.y < -360 + US_LARGEUR_CASE && target.y > -360 - US_LARGEUR_CASE)
 				{
 					scan[0]++;
 				}
-				if( pos.y < -80 + US_LARGEUR_CASE && pos.y > -80 - US_LARGEUR_CASE)
+				if( target.y < -80 + US_LARGEUR_CASE && target.y > -80 - US_LARGEUR_CASE)
 				{
 					scan[1]++;
 				}
-				if( pos.y < 200 + US_LARGEUR_CASE && pos.y > 200 - US_LARGEUR_CASE)
+				if( target.y < 200 + US_LARGEUR_CASE && target.y > 200 - US_LARGEUR_CASE)
 				{
 					scan[2]++;
 				}
-				if( pos.y < 480 + US_LARGEUR_CASE && pos.y > 480 - US_LARGEUR_CASE)
+				if( target.y < 480 + US_LARGEUR_CASE && target.y > 480 - US_LARGEUR_CASE)
 				{
 					scan[3]++;
 				}
-				/*if( pos.y < 760 + US_LARGEUR_CASE && pos.y > 760 - US_LARGEUR_CASE)
+				/*if( target.y < 760 + US_LARGEUR_CASE && target.y > 760 - US_LARGEUR_CASE)
 				{
 					scan[4]++;
 				}*/
