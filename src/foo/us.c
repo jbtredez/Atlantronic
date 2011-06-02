@@ -13,31 +13,19 @@
 #include "kernel/rcc.h"
 #include "kernel/driver/can.h"
 #include "kernel/can/can_id.h"
-#include "kernel/us.h"
+#include "us.h"
 
 #include "kernel/portmacro.h"
 #include <string.h>
 
 #define US_STACK_SIZE            100
 
-static void us_task();
 static int us_module_init();
 static void us_callback(struct can_msg *msg);
 static uint16_t us_state[US_MAX];
-volatile uint8_t us_activated;
 
 static int us_module_init()
 {
-	us_activated = 0;
-
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(us_task, "us", US_STACK_SIZE, NULL, PRIORITY_TASK_DETECTION, &xHandle);
-
-	if(err != pdPASS)
-	{
-		return ERR_INIT_TEST;
-	}
-
 	can_register(CAN_US, CAN_STANDARD_FORMAT, us_callback);
 
 	return 0;
@@ -45,27 +33,23 @@ static int us_module_init()
 
 module_init(us_module_init, INIT_CAN_US);
 
-static void us_task()
+uint8_t us_check_collision()
 {
-	portTickType wake_time = systick_get_time();
+	uint8_t res = 0;
 
-	while(1)
+	portENTER_CRITICAL();
+	if( us_state[US_FRONT] < 350 )
 	{
-		if( (us_activated & US_FRONT_MASK) && us_state[US_FRONT] < 350 )
-		{
-			vTaskSetEvent(EVENT_US_COLLISION);
-		}
-
-		if( (us_activated & US_BACK_MASK) && us_state[US_BACK] < 200 )
-		{
-			vTaskSetEvent(EVENT_US_COLLISION);
-		}
-
-		wake_time += ms_to_tick(5);
-		vTaskDelayUntil(wake_time);
+		res |= US_FRONT_MASK;
 	}
 
-	vTaskDelete(NULL);
+	if( us_state[US_BACK] < 200 )
+	{
+		res |= US_BACK_MASK;
+	}
+	portEXIT_CRITICAL();
+
+	return res;
 }
 
 static void us_callback(struct can_msg *msg)
@@ -95,9 +79,4 @@ uint32_t us_get_state(enum us_id id)
 	}
 
 	return res;
-}
-
-void us_set_activated(uint8_t active_us_mask)
-{
-	us_activated = active_us_mask;
 }

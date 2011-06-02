@@ -16,6 +16,8 @@ void recalage()
 	pince_configure();
 	pince_close();
 
+	control_set_use_us(0);
+
 	control_pince_independant(1500, 1500);
 
 	if(getcolor() == COLOR_BLUE)
@@ -31,10 +33,21 @@ void recalage()
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(200 + PARAM_NP_X);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_rotate(-PI/2.0f);
+
+	if(getcolor() == COLOR_BLUE)
+	{
+		control_rotate(-PI/2.0f);
+	}
+	else
+	{
+		control_rotate(PI/2.0f);
+	}
+
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight_to_wall(-800);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(110);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+
+	control_set_use_us(1);
 }

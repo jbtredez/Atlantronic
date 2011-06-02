@@ -24,7 +24,7 @@ volatile uint8_t us_activated;
 
 static int us_module_init()
 {
-	us_activated = US_FRONT_MASK | US_BACK_MASK | US_RIGHT_MASK;
+	us_activated = US_FRONT_MASK | US_BACK_MASK | US_RIGHT_MASK | US_LEFT_MASK;
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(us_task_side, "us_side", US_STACK_SIZE, NULL, PRIORITY_TASK_TEST_US, &xHandle);

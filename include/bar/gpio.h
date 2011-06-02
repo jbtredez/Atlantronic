@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include "kernel/cpu/cpu.h"
-#include "kernel/us.h"
+#include "kernel/us_def.h"
 
 #define COLOR_RED                 0
 #define COLOR_BLUE                1

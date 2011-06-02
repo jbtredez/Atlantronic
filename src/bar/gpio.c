@@ -4,7 +4,6 @@
 #include "kernel/task.h"
 #include "kernel/event.h"
 #include "kernel/systick.h"
-#include "kernel/us.h"
 #include "kernel/rcc.h"
 #include <string.h>
 

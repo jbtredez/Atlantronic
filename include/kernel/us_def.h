@@ -1,8 +1,8 @@
-#ifndef US_H
-#define US_H
+#ifndef US_DEF_H
+#define US_DEF_H
 
-//! @file us.h
-//! @brief us.h
+//! @file us_def.h
+//! @brief us_def.h
 //! @author Atlantronic
 
 #include <stdint.h>
@@ -22,7 +22,5 @@ enum us_id
 	US_NA,          // US3
 	US_MAX
 };
-
-void us_set_activated(uint8_t active_us_mask);
 
 #endif

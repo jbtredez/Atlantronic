@@ -32,6 +32,8 @@ void control_goto_near(float x, float y, float dist);
 
 void control_free();
 
+void control_set_use_us(int use_us);
+
 int32_t control_get_state();
 
 #endif

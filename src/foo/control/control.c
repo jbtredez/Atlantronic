@@ -18,7 +18,7 @@
 #include "adc.h"
 #include "gpio.h"
 #include <math.h>
-#include "kernel/us.h"
+#include "us.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       200
@@ -55,6 +55,7 @@ static float control_v_rot_cons;
 static struct trapeze control_trapeze;
 static struct adc_an control_an;
 static uint8_t control_contact;
+static uint8_t control_us;
 static volatile struct vect_pos control_pos;
 static portTickType control_timer;
 static float control_kx;
@@ -179,16 +180,6 @@ static void control_compute()
 	// detection de collisions
 	control_colision_detection();
 
-	// arrêt sur us si demande des us
-	if( control_use_us )
-	{
-		if( vTaskGetEvent() & EVENT_US_COLLISION )
-		{
-			control_state = CONTROL_READY_FREE;
-			goto end_pwm_critical;
-		}
-	}
-
 	// calcul du prochain point
 	switch(control_state)
 	{
@@ -202,7 +193,7 @@ static void control_compute()
 		case CONTROL_GOTO:
 			// on a eu une collision. Ce n'est pas prevu sur ce type de trajectoire
 			// => on va tout couper.
-			if( control_contact )
+			if( control_contact)
 			{
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
@@ -344,12 +335,6 @@ static void control_compute_goto()
 {
 	if(control_param.ad.angle)
 	{
-		// pas d'us sur la rotation
-		if( control_use_us )
-		{
-			us_set_activated(0);
-		}
-
 		// TODO marge en dur
 		if(fabs(control_dest.alpha - control_pos.alpha) < 0.02f)
 		{
@@ -374,15 +359,24 @@ static void control_compute_goto()
 	}
 	else if(control_param.ad.distance)
 	{
-		if( control_use_us )
+		if( control_param.ad.distance > 0)
 		{
-			if( control_param.ad.distance > 0)
+			if( control_us & US_FRONT_MASK)
 			{
-				us_set_activated(US_FRONT_MASK);
+				control_v_dist_cons = 0;
+				control_v_rot_cons = 0;
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
-			else
+		}
+		else
+		{
+			if( control_us & US_BACK_MASK)
 			{
-				us_set_activated(US_BACK_MASK);
+				control_v_dist_cons = 0;
+				control_v_rot_cons = 0;
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
 		}
 
@@ -457,6 +451,16 @@ static void control_colision_detection()
 	{
 		control_contact |= CONTACT_LEFT;
 	}
+	
+	// arrêt sur us si demande des us
+	if( control_use_us )
+	{
+		control_us = us_check_collision();
+	}
+	else
+	{
+		control_us = 0;
+	}
 }
 
 void control_straight(float dist)
@@ -466,7 +470,7 @@ void control_straight(float dist)
 	{
 		control_state = CONTROL_STRAIGHT;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -491,7 +495,7 @@ void control_rotate(float angle)
 	{
 		control_state = CONTROL_ROTATE;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -517,7 +521,7 @@ void control_goto(float x, float y)
 	{
 		control_state = CONTROL_GOTO;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
@@ -556,7 +560,7 @@ void control_goto_near(float x, float y, float dist)
 	{
 		control_state = CONTROL_GOTO;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 
@@ -593,7 +597,7 @@ void control_straight_to_wall(float dist)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT | EVENT_US_COLLISION);
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
@@ -628,4 +632,9 @@ void control_free()
 		vTaskSetEvent(EVENT_CONTROL_READY);
 	}
 	portEXIT_CRITICAL();
+}
+
+void control_set_use_us(int use_us)
+{
+	control_use_us = use_us;
 }
