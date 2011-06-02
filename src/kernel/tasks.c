@@ -2073,15 +2073,19 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 void vTaskSetEvent(uint32_t mask)
 {
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	unsigned portBASE_TYPE xAlreadyYielded = 0;
 
+// TODO patch a voir ...
 	portENTER_CRITICAL();
+	vTaskSuspendAll();
 	xHigherPriorityTaskWoken = vTaskSetEventFromISR(mask);
-	portEXIT_CRITICAL();
+	xAlreadyYielded = xTaskResumeAll();
 
-	if( xHigherPriorityTaskWoken )
+	if( !xAlreadyYielded && xHigherPriorityTaskWoken)
 	{
 		portYIELD_WITHIN_API();
 	}
+	portEXIT_CRITICAL();
 }
 
 //! cf vTaskSetEvent mais depuis une interruption
