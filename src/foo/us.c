@@ -54,21 +54,21 @@ static int us_module_init()
 module_init(us_module_init, INIT_CAN_US);
 
 
-static vect_pos US_get_spotted_point(int32_t us_source, vect_pos robot_pos)
+static struct vect_pos US_get_spotted_point(int32_t us_source, struct vect_pos robot_pos)
 {
 	uint16_t us_distance;
-	vect_pos point;
+	struct vect_pos point;
 
 	if(us_source & US_LEFT_MASK )
 	{
-		distance = us_state[US_LEFT];
+		us_distance = us_state[US_LEFT];
 		/* Calcul de la position du point visé par les capteurs dans le repère du terrain */
 		point.x = robot_pos.x + US_LEFT_X * robot_pos.ca - (us_distance + US_LEFT_Y) * robot_pos.sa;
 		point.y = robot_pos.y + US_LEFT_X * robot_pos.sa + (us_distance + US_LEFT_Y) * robot_pos.ca;
 	}
 	else //if(us_scan & US_RIGHT_MASK)
 	{
-		distance = us_state[US_RIGHT];
+		us_distance = us_state[US_RIGHT];
 		/* Calcul de la position du point visé par les capteurs dans le repère du terrain */
 		point.x = robot_pos.x + US_RIGHT_X * robot_pos.ca - (US_RIGHT_Y-us_distance ) * robot_pos.sa;
 		point.y = robot_pos.y + US_RIGHT_X * robot_pos.sa + (US_RIGHT_Y-us_distance ) * robot_pos.ca;
@@ -85,11 +85,11 @@ static void us_task(void* arg)
 		if( us_scan & US_LEFT_MASK || us_scan & US_RIGHT_MASK)
 		{
 			struct vect_pos pos = location_get_position();
-			vect_pos target = US_get_spotted_point(us_scan, pos);
+			struct vect_pos target = US_get_spotted_point(us_scan, pos);
 
 			/* on vérifie que le x est dans une zone verte */
-			if(   ((target.x > (-1500)) && (target.x < (-1500 + US_LONGEUR_CASE)))
-			   || ((target.x > (-1500)) && (target.x < (1500 - US_LONGEUR_CASE))))
+			if(   ((target.x > (-1400)) && (target.x < (-1400 + US_LONGEUR_CASE)))
+			   || ((target.x < (1400)) && (target.x > (1400 - US_LONGEUR_CASE))))
 			{
 				if( target.y < -360 + US_LARGEUR_CASE && target.y > -360 - US_LARGEUR_CASE)
 				{
@@ -198,17 +198,17 @@ int us_get_scan_result()
 	// max parmis les 4 premieres
 	int max1 = 0;
 	
-	if( scan[1] > scan[max1])
+	if( scan[1] >= scan[max1])
 	{
 		max1 = 1;
 	}
 	
-	if( scan[2] > scan[max1])
+	if( scan[2] >= scan[max1])
 	{
 		max1 = 2;
 	}
 	
-	if( scan[3] > scan[max1])
+	if( scan[3] >= scan[max1])
 	{
 		max1 = 3;
 	}
