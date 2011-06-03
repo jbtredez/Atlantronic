@@ -251,9 +251,9 @@ static void control_compute()
 	{
 		// on augmente le temps avec consigne nulle
 		control_timer += CONTROL_TICK_PERIOD;
-		if( control_timer > ms_to_tick(5000))
+		if( control_timer > ms_to_tick(2000))
 		{
-			// ca fait 5 seconde qu'on devrait avoir terminé la trajectoire
+			// ca fait 2 seconde qu'on devrait avoir terminé la trajectoire
 			// il y a un probleme
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
@@ -522,11 +522,6 @@ void control_rotate_to(float alpha)
 	portEXIT_CRITICAL();
 }
 
-void control_goto(float x, float y)
-{
-	control_goto_near(x, y, 0);
-}
-
 float trouverRotation(float debut, float fin)
 {
 	float alpha = fin - debut;
@@ -545,7 +540,7 @@ float trouverRotation(float debut, float fin)
 	return alpha;
 }
 
-void control_goto_near(float x, float y, float dist)
+void control_goto_near(float x, float y, float dist, enum control_way sens)
 {
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
@@ -562,17 +557,29 @@ void control_goto_near(float x, float y, float dist)
 	control_param.ad.distance = sqrt(dx*dx+dy*dy) - dist;
 	float a = atan2f(dy, dx);
 
-	float theta1av = trouverRotation(control_cons.alpha, a);
-	float theta1re = trouverRotation(control_cons.alpha, a + PI);
-
-	if ( fabsf(theta1av) > fabsf(theta1re))
+	if(sens == CONTROL_FORWARD)
 	{
-		control_param.ad.angle = theta1re;
+		control_param.ad.angle = trouverRotation(control_cons.alpha, a);
+	}
+	else if(sens == CONTROL_BACKWARD)
+	{
+		control_param.ad.angle = trouverRotation(control_cons.alpha, a + PI);
 		control_param.ad.distance *= -1;
 	}
 	else
 	{
-		control_param.ad.angle = theta1av;
+		float theta1av = trouverRotation(control_cons.alpha, a);
+		float theta1re = trouverRotation(control_cons.alpha, a + PI);
+
+		if ( fabsf(theta1av) > fabsf(theta1re))
+		{
+			control_param.ad.angle = theta1re;
+			control_param.ad.distance *= -1;
+		}
+		else
+		{
+			control_param.ad.angle = theta1av;
+		}
 	}
 
 	control_dest.alpha = control_cons.alpha + control_param.ad.angle;

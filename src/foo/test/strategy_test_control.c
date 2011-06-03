@@ -30,7 +30,7 @@ int strategy_test_control_module_init()
 }
 
 module_init(strategy_test_control_module_init, INIT_STRATEGY);
-
+#include "kernel/driver/hokuyo.h"
 static void strategy_test_control_task()
 {
 	int prbCase = 0;
@@ -42,8 +42,10 @@ static void strategy_test_control_task()
 		location_set_position(-1410.0f, -850.0f, 0.0f);
 	}
 
-//	pince_configure();
-#if 0
+//hokuyo_init();
+
+	pince_configure();
+#if 1
 	while(1)
 	{
 		pince_open();
@@ -52,7 +54,10 @@ static void strategy_test_control_task()
 		vTaskDelay(72000000);
 	}
 #endif
-//	pince_open();
+	pince_open();
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+
+	vTaskSuspend(NULL);
 
 	//init table + robots	
 	avoidance_init_table();

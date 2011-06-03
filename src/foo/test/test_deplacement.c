@@ -9,6 +9,8 @@
 #include "kernel/rcc.h"
 #include <math.h>
 #include "kernel/robot_parameters.h"
+#include "pince.h"
+#include "foo/control/control_pince.h"
 
 //! @todo réglage au pif
 #define TEST_DEPLACEMENT_STACK_SIZE       100
@@ -44,7 +46,11 @@ static void test_deplacement_task()
 		location_set_position(880.0f, -880.0f, PI/2.0f);
 	}
 
-	// TODO regler la vitesse
+	pince_configure();
+	pince_close();
+	control_pince_dual(1000, 0);
+
+	// todo demenager : procedure recalage
 	control_straight_to_wall(-200);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(120);

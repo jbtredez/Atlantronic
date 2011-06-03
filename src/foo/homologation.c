@@ -60,13 +60,13 @@ static void homologation_task()
 
 	do
 	{
-		control_goto(0, -700);
+		control_goto_near(0, -700, 0, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 
 	do
 	{
-		control_goto_near(0, 0, 160);
+		control_goto_near(0, 0, 160, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 
@@ -77,7 +77,7 @@ static void homologation_task()
 
 	do
 	{
-		control_goto_near(sens*525, 175, 160);
+		control_goto_near(sens*525, 175, 160, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 
@@ -87,19 +87,19 @@ static void homologation_task()
 	control_pince_dual(70, 0);
 	do
 	{
-		control_goto_near(sens*525, 175, 350);
+		control_goto_near(sens*525, 175, 350, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 
 	do
 	{
-		control_goto(-sens*525, 175);
+		control_goto_near(-sens*525, 175, 0, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 	
 	do
 	{
-		control_goto_near(-sens*1300, 200, 160);
+		control_goto_near(-sens*1300, 200, 160, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 
@@ -111,7 +111,7 @@ static void homologation_task()
 
 	do
 	{
-		control_goto_near(-sens*875, 175, 160);
+		control_goto_near(-sens*875, 175, 160, CONTROL_ANY_WAY);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 

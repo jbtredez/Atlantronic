@@ -107,7 +107,7 @@ static void detection_task()
 float get_distance()
 {
 	float dist = 0;
-	int taille = 5;
+	int taille = 3;
 	int i = 341 - taille;
 	int n  = 0;
 	for( ; i < 341 + taille ; i++)

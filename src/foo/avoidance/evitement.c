@@ -16,7 +16,7 @@ unsigned char deplaceRobot(int x, int y, int *prbx, int *prby)
     
 /*    if(test>=1) 
     {*/ 
-      control_goto(x, y);
+      control_goto_near(x, y, 0, CONTROL_ANY_WAY);
       vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
       //TODO j suis ou la???
       *prbx=0;*prby=0;

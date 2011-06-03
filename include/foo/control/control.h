@@ -20,6 +20,13 @@ enum control_state
 	CONTROL_END,                  //!< end : halted forever
 };
 
+enum control_way
+{
+	CONTROL_ANY_WAY,
+	CONTROL_FORWARD,
+	CONTROL_BACKWARD
+};
+
 void control_straight(float dist);
 
 void control_straight_to_wall(float dist);
@@ -28,9 +35,7 @@ void control_rotate(float angle);
 
 void control_rotate_to(float alpha);
 
-void control_goto(float x, float y);
-
-void control_goto_near(float x, float y, float dist);
+void control_goto_near(float x, float y, float dist, enum control_way sens);
 
 void control_free();
 

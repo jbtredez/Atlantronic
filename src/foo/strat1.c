@@ -36,12 +36,12 @@ int strat_module_init()
 module_init(strat_module_init, INIT_STRATEGY);
 float get_distance();
 
-void goto_with_avoidance(float x, float y, float delta)
+void goto_with_avoidance(float x, float y, float delta, enum control_way dir)
 {
 	uint32_t event;
 	do
 	{
-		control_goto_near(x, y, delta);
+		control_goto_near(x, y, delta, dir);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}while(event & EVENT_CONTROL_COLSISION);
 }
@@ -83,17 +83,17 @@ static void strat_task()
 	vTaskWaitEvent(EVENT_HOKUYO_READY, portMAX_DELAY);
 
 	// on avance sur la sortie de la case depart
-	goto_with_avoidance(- sens * 1100, -850, 0);
+	goto_with_avoidance(- sens * 1100, -850, 0, CONTROL_FORWARD);
 
 	// si on a detecté un pion au lancement, on va le prendre
 	if( is_pawn_front_start() )
 	{
-		goto_with_avoidance(- sens * 700, -700, 140);	
+		goto_with_avoidance(- sens * 700, -700, 140, CONTROL_FORWARD);	
 		pince_close();
 		control_pince_dual(PINCE_POS_HI, 0);
 		vTaskDelay(ms_to_tick(300));
-		goto_with_avoidance(- sens * 700, -700, 0);
-		goto_with_avoidance(- sens * 700, -750, 0);
+		goto_with_avoidance(- sens * 700, -700, 0, CONTROL_FORWARD);
+		goto_with_avoidance(- sens * 700, -750, 0, CONTROL_FORWARD);
 		if(getcolor() == COLOR_BLUE)
 		{
 			us_start_scan(US_LEFT_MASK);
@@ -105,8 +105,10 @@ static void strat_task()
 	}
 	else
 	{
-		goto_with_avoidance(- sens * 700, -700, 0);
-		goto_with_avoidance(- sens * 700, -750, 0);
+		// pas de pion sur la première instersection,
+		goto_with_avoidance(- sens * 700, -700, 0, CONTROL_FORWARD);
+		control_rotate_to(PI/2);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 		if(getcolor() == COLOR_BLUE)
 		{
 			us_start_scan(US_LEFT_MASK);
@@ -115,41 +117,54 @@ static void strat_task()
 		{
 			us_start_scan(US_RIGHT_MASK);
 		}
+		
+		//Attente scan Hokuyo
 		vTaskDelay(ms_to_tick(400));
 		float dist = get_distance();
+		float pos_pawn = 0.0f;
 		if( dist > 0)
 		{
 			dist += 60;
-			float pos_pawn = -750 + dist + 100;
-			if( fabsf(pos_pawn) < fabsf(pos_pawn + 350) )
+			pos_pawn = -700 + dist + 100;
+			if( fabsf(pos_pawn + 350) < fabsf(pos_pawn) )
 			{
-				goto_with_avoidance(- sens * 700, 0, 160);
+				goto_with_avoidance(- sens * 700, -350, 160, CONTROL_ANY_WAY);
+			}
+			else if (fabsf(pos_pawn) < fabsf(pos_pawn - 350))
+			{
+				goto_with_avoidance(- sens * 700, 0, 160, CONTROL_ANY_WAY);
 			}
 			else
 			{
-				goto_with_avoidance(- sens * 700, -350, 160);
+				goto_with_avoidance(- sens * 700, 350, 160, CONTROL_ANY_WAY);
 			}
 		}
 		else
 		{
-			goto_with_avoidance(- sens * 700, 0, 160);
+			goto_with_avoidance(- sens * 700, 350, 160, CONTROL_ANY_WAY);
 		}
 		pince_close();
 		control_pince_dual(PINCE_POS_HI, 0);
 		vTaskDelay(ms_to_tick(300));
 	}
 
+	// tout droit vers la derniere instersection ligne 1
+	goto_with_avoidance(- sens * 700, 700, 160, CONTROL_ANY_WAY);
+	
+	// on arrete le scan des pions
+	int pos_tour = us_get_scan_result();
+	
+	// placement du 2ème palet en zone securisé
+	goto_with_avoidance(- sens * 875, 830, 160, CONTROL_ANY_WAY);
 
-	goto_with_avoidance(- sens * 700, 350, 160);
-	goto_with_avoidance(- sens * 875, 830, 160);
-
+	// on recule
 	straight_with_avoidance(-300);
 
-	goto_with_avoidance(- sens * 525, 525, 160);
+	// placement en case 35/38
+	goto_with_avoidance(- sens * 525, 525, 160, CONTROL_ANY_WAY);
 	pince_open();
-
+	// recul
 	straight_with_avoidance(-200);
-	int pos_tour = us_get_scan_result();
 
 	control_pince_dual(PINCE_POS_LOW, 0);
 
@@ -159,7 +174,7 @@ static void strat_task()
 	switch(pos_tour)
 	{
 		case 0:
-			goto_with_avoidance(- sens * 700, -350, 0);
+			goto_with_avoidance(- sens * 700, -350, 0, CONTROL_ANY_WAY);
 			if(getcolor() == COLOR_BLUE)
 			{
 				control_rotate_to(PI);
@@ -169,10 +184,10 @@ static void strat_task()
 				control_rotate_to(0);
 			}
 			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-			goto_with_avoidance(- sens * 1340, -350, 160);
+			goto_with_avoidance(- sens * 1400, -350, 160, CONTROL_ANY_WAY);
 			break;
 		case 1:
-			goto_with_avoidance(- sens * 700, -80, 0);
+			goto_with_avoidance(- sens * 700, -80, 0, CONTROL_ANY_WAY);
 			if(getcolor() == COLOR_BLUE)
 			{
 				control_rotate_to(PI);
@@ -182,10 +197,10 @@ static void strat_task()
 				control_rotate_to(0);
 			}
 			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-			goto_with_avoidance(- sens * 1340, -80, 0);
+			goto_with_avoidance(- sens * 1400, -80, 0, CONTROL_ANY_WAY);
 			break;
 		case 2:
-			goto_with_avoidance(- sens * 700, 200, 0);
+			goto_with_avoidance(- sens * 700, 200, 0, CONTROL_ANY_WAY);
 			if(getcolor() == COLOR_BLUE)
 			{
 				control_rotate_to(PI);
@@ -195,10 +210,10 @@ static void strat_task()
 				control_rotate_to(0);
 			}
 			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-			goto_with_avoidance(- sens * 1340, 200, 0);
+			goto_with_avoidance(- sens * 1400, 200, 0, CONTROL_ANY_WAY);
 			break;
 		case 3:
-			goto_with_avoidance(- sens * 875, 480, 0);
+			goto_with_avoidance(- sens * 875, 480, 0, CONTROL_ANY_WAY);
 			if(getcolor() == COLOR_BLUE)
 			{
 				control_rotate_to(PI);
@@ -208,7 +223,7 @@ static void strat_task()
 				control_rotate_to(0);
 			}
 			vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-			goto_with_avoidance(- sens * 1340, 480, 0);
+			goto_with_avoidance(- sens * 1400, 480, 0, CONTROL_ANY_WAY);
 			break;
 	}
 
@@ -221,7 +236,7 @@ static void strat_task()
 	control_rotate(-sens*PI/2.0f);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 
-	goto_with_avoidance(- sens * 525, 525, 160);
+	goto_with_avoidance(- sens * 525, 525, 160, CONTROL_ANY_WAY);
 
 	pince_open();
 	control_set_use_us(US_FRONT_MASK);
