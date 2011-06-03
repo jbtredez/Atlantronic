@@ -54,6 +54,8 @@ static void detection_task()
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
+	vTaskDelay(ms_to_tick(1000));
+
 	int i = 2;
 	for( ; i-- ;)
 	{
@@ -70,8 +72,7 @@ static void detection_task()
 
 		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 		//hoku_parse_tab();
-		parse_before_match_tab();
-		
+		parse_before_match_tab();		
 		vTaskDelay(ms_to_tick(100));
 	}
 

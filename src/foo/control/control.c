@@ -187,6 +187,8 @@ static void control_compute()
 			goto end_pwm_critical;
 			break;
 		case CONTROL_READY_ASSER:
+			control_param.ad.angle = 0;
+			control_param.ad.distance = 0;
 			break;
 		case CONTROL_STRAIGHT:
 		case CONTROL_ROTATE:
@@ -247,7 +249,8 @@ static void control_compute()
 
 	// gestion du timeout
 	// condition "on ne demande pas de bouger" (donc zero pur)
-	if( control_v_dist_cons == 0 && control_v_rot_cons == 0)
+//	if( (control_param.ad.angle && control_v_rot_cons == 0) || (control_param.ad.distance && control_v_dist_cons == 0) )
+	if( control_v_rot_cons == 0 && control_v_dist_cons == 0 )
 	{
 		// on augmente le temps avec consigne nulle
 		control_timer += CONTROL_TICK_PERIOD;
@@ -259,6 +262,10 @@ static void control_compute()
 			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
 		}
 		goto end_pwm_critical;
+	}
+	else
+	{
+		control_timer = 0;
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
@@ -479,7 +486,7 @@ void control_straight(float dist)
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
 	control_timer = 0;
-	control_aMax_av = 250.0f*TE*TE;
+	control_aMax_av = 500.0f*TE*TE;
 	control_vMax_av = 1000.0f*TE;
 	control_aMax_rot = 0;
 	control_vMax_rot = 0;
@@ -508,7 +515,7 @@ void control_rotate(float angle)
 	control_aMax_av = 0;
 	control_vMax_av = 0;
 	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
@@ -589,10 +596,10 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
 
 	control_timer = 0;
-	control_aMax_av = 250.0f*TE*TE;
-	control_vMax_av = 1000.0f*TE;
+	control_aMax_av = 350.0f*TE*TE;
+	control_vMax_av = 1300.0f*TE;
 	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();

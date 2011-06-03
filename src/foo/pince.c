@@ -1,5 +1,6 @@
 #include "pince.h"
 #include "ax12.h"
+#include "kernel/module.h"
 
 #define PINCE_AX12_RIGHT      1
 #define PINCE_AX12_LEFT       2
@@ -23,6 +24,8 @@ void pince_open()
 {
 	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
+	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
+	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
 }
 
 void pince_close()
@@ -30,3 +33,10 @@ void pince_close()
 	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x295);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x160);
 }
+
+static void pince_module_exit()
+{
+	pince_open();
+}
+
+module_exit(pince_module_exit, EXIT_AX12);

@@ -13,12 +13,16 @@
 #define US_STACK_SIZE       100
 #define US_TIMEOUT                  200 
 #define US_DELAY_AFTER_TIMEOUT      100
+#define FILTER_GAIN                 0.2f
 
 static void us_task_side();
 static void us_task_back();
 static void us_task_front();
 static int us_module_init();
+
 static uint16_t us_state[US_MAX];
+static uint16_t us_filter_state[US_MAX];
+
 static struct can_msg can_us_msg[US_MAX];
 volatile uint8_t us_activated;
 static void us_activate_callback(struct can_msg *msg);
@@ -83,7 +87,7 @@ static void us_task_side()
 
 	while(1)
 	{
-		vTaskDelay(ms_to_tick(50));
+		vTaskDelay(ms_to_tick(100));
 		if( us_activated & US_RIGHT_MASK )
 		{
 			gpio_activate_right_us();
@@ -98,7 +102,9 @@ static void us_task_side()
 			}
 			while( us_state[US_RIGHT] == 0 && timeout < US_TIMEOUT);
 
-			if( us_state[US_RIGHT] < 350 && us_state[US_RIGHT] > 0)
+			us_filter_state[US_RIGHT] = us_filter_state[US_RIGHT] * FILTER_GAIN + (1-FILTER_GAIN)*us_state[US_RIGHT];
+
+			if( us_filter_state[US_RIGHT] < 350 && us_filter_state[US_RIGHT] > 0)
 			{
 				mask |= 0x02;
 			}
@@ -109,7 +115,7 @@ static void us_task_side()
 		
 			setLed(mask);
 
-			memcpy(can_us_msg[US_RIGHT].data + 1, &us_state[US_RIGHT], 2);
+			memcpy(can_us_msg[US_RIGHT].data + 1, &us_filter_state[US_RIGHT], 2);
 			can_write(&can_us_msg[US_RIGHT], portMAX_DELAY);
 
 			if( us_state[US_RIGHT] > 10000 )
@@ -131,7 +137,9 @@ static void us_task_side()
 			}
 			while( us_state[US_LEFT] == 0 && timeout < US_TIMEOUT);
 
-			if( us_state[US_LEFT] < 350 && us_state[US_LEFT] > 0)
+			us_filter_state[US_LEFT] = us_filter_state[US_LEFT] * FILTER_GAIN + (1-FILTER_GAIN)*us_state[US_LEFT];
+
+			if( us_filter_state[US_LEFT] < 350 && us_filter_state[US_LEFT] > 0)
 			{
 				mask |= 0x10;
 			}
@@ -142,7 +150,7 @@ static void us_task_side()
 		
 			setLed(mask);
 
-			memcpy(can_us_msg[US_LEFT].data + 1, &us_state[US_LEFT], 2);
+			memcpy(can_us_msg[US_LEFT].data + 1, &us_filter_state[US_LEFT], 2);
 			can_write(&can_us_msg[US_LEFT], portMAX_DELAY);
 
 			if( us_state[US_LEFT] > 10000 )
@@ -163,7 +171,7 @@ static void us_task_front()
 
 	while(1)
 	{
-		vTaskDelay(ms_to_tick(50));
+		vTaskDelay(ms_to_tick(100));
 		if( us_activated & US_FRONT_MASK )
 		{
 			timeout = 0;
@@ -177,7 +185,9 @@ static void us_task_front()
 			}
 			while( us_state[US_FRONT] == 0 && timeout < US_TIMEOUT);
 
-			if( us_state[US_FRONT] < 350 && us_state[US_FRONT] > 0)
+			us_filter_state[US_FRONT] = us_filter_state[US_FRONT] * FILTER_GAIN + (1-FILTER_GAIN)*us_state[US_FRONT];
+
+			if( us_filter_state[US_FRONT] < 350 && us_filter_state[US_FRONT] > 0)
 			{
 				mask |= 0x04;
 			}
@@ -188,7 +198,7 @@ static void us_task_front()
 		
 			setLed(mask);
 
-			memcpy(can_us_msg[US_FRONT].data + 1, &us_state[US_FRONT], 2);
+			memcpy(can_us_msg[US_FRONT].data + 1, &us_filter_state[US_FRONT], 2);
 			can_write(&can_us_msg[US_FRONT], portMAX_DELAY);
 
 			if( us_state[US_FRONT] > 10000 )
@@ -209,7 +219,7 @@ static void us_task_back()
 
 	while(1)
 	{
-		vTaskDelay(ms_to_tick(50));
+		vTaskDelay(ms_to_tick(100));
 		if( us_activated & US_BACK_MASK )
 		{
 			timeout = 0;
@@ -224,7 +234,9 @@ static void us_task_back()
 			}
 			while( us_state[US_BACK] == 0 && timeout < US_TIMEOUT);
 
-			if( us_state[US_BACK] < 350 && us_state[US_BACK] > 0)
+			us_filter_state[US_BACK] = us_filter_state[US_BACK] * FILTER_GAIN + (1-FILTER_GAIN)*us_state[US_BACK];
+
+			if( us_filter_state[US_BACK] < 350 && us_filter_state[US_BACK] > 0)
 			{
 				mask |= 0x08;
 			}
@@ -235,7 +247,7 @@ static void us_task_back()
 		
 			setLed(mask);
 
-			memcpy(can_us_msg[US_BACK].data + 1, &us_state[US_BACK], 2);
+			memcpy(can_us_msg[US_BACK].data + 1, &us_filter_state[US_BACK], 2);
 			can_write(&can_us_msg[US_BACK], portMAX_DELAY);
 
 			if( us_state[US_BACK] > 10000 )
