@@ -525,7 +525,8 @@ void control_rotate_to(float alpha)
 {
 	portENTER_CRITICAL();
 	control_cons = location_get_position();
-	control_rotate(alpha - control_cons.alpha);
+	float da = fmodf(alpha - control_cons.alpha, 2*PI);
+	control_rotate(da);
 	portEXIT_CRITICAL();
 }
 
@@ -598,8 +599,8 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	control_timer = 0;
 	control_aMax_av = 350.0f*TE*TE;
 	control_vMax_av = 1300.0f*TE;
-	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	control_aMax_rot = 1000.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 2000.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();

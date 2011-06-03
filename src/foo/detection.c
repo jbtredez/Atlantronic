@@ -54,7 +54,7 @@ static void detection_task()
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	vTaskDelay(ms_to_tick(1000));
+	vTaskDelay(ms_to_tick(500));
 
 	int i = 2;
 	for( ; i-- ;)
