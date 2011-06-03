@@ -8,5 +8,6 @@
 void pince_configure();
 void pince_open();
 void pince_close();
+int pince_full();
 
 #endif

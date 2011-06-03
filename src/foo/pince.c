@@ -5,6 +5,8 @@
 #define PINCE_AX12_RIGHT      1
 #define PINCE_AX12_LEFT       2
 
+#define AX12_RIGHT_EMPTY_THRESHOLD   0x200
+
 void pince_configure()
 {
 	// TODO ping des pinces // verif de la com
@@ -32,6 +34,12 @@ void pince_close()
 {
 	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x295);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x160);
+}
+
+int pince_full()
+{
+	uint16_t ax12_pos = ax12_get_position(PINCE_AX12_RIGHT);
+	return ax12_pos < AX12_RIGHT_EMPTY_THRESHOLD;
 }
 
 static void pince_module_exit()

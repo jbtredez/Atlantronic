@@ -158,15 +158,15 @@ uint32_t ax12_send(struct ax12_request *req)
 	// pas de broadcast (et status des ax12 à 2) => réponse attendue
 	if(req->id != 0xFE)
 	{
-
-		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req->id || ax12_buffer[3] != read_size - write_size - 4)
+		int size = read_size - write_size;
+		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req->id || ax12_buffer[3] != size - 4)
 		{
 			// erreur protocole
 			res = -1;
 			goto end;
 		}
 
-		if( ax12_buffer[read_size - write_size - 1] != ax12_checksum(ax12_buffer, read_size - write_size))
+		if( ax12_buffer[size - 1] != ax12_checksum(ax12_buffer, size))
 		{
 			// erreur checksum
 			res = -1;
@@ -181,21 +181,19 @@ uint32_t ax12_send(struct ax12_request *req)
 			goto end;
 		}
 
-#if 0
 		if(size == 7)
 		{
-			req.rep->arg[0] = ax12_buffer[5];
-			req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+			req->rep->arg[0] = ax12_buffer[5];
+			req->rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
 			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
 		}
 		else if(size == 8)
 		{
-			req.rep->arg[0] = ax12_buffer[5];
-			req.rep->arg[1] = ax12_buffer[6];
-			req.rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
+			req->rep->arg[0] = ax12_buffer[5];
+			req->rep->arg[1] = ax12_buffer[6];
+			req->rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
 			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
 		}
-#endif
 	}
 
 end:
@@ -368,4 +366,9 @@ void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
 void ax12_set_torque_enable(uint8_t id, uint8_t enable)
 {
 	ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
+}
+
+uint16_t ax12_get_position(uint8_t id)
+{
+	return ax12_read16(id, AX12_PRESENT_POSITION);
 }

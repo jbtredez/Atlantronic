@@ -19,6 +19,7 @@ void ax12_reset(uint8_t id);
 #define AX12_GOAL_POSITION        0x1e
 #define AX12_MOVING_SPEED         0x20
 #define AX12_TORQUE_LIMIT         0x22
+#define AX12_PRESENT_POSITION     0x24
 
 // masques
 #define AX12_MAX_MOVING_SPEED    0x3ff
@@ -33,6 +34,8 @@ void ax12_set_id(uint8_t old_id, uint8_t id);
 void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
 void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
 void ax12_set_torque_enable(uint8_t id, uint8_t enable);
+
+uint16_t ax12_get_position(uint8_t id);
 
 void ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
 
