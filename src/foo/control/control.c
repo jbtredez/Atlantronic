@@ -447,7 +447,7 @@ static void control_colision_detection()
 		setLed(0x38 | 0x07);
 	}
 */
-	// TODO régler seuil
+/*	// TODO régler seuil
 	if( control_an.i_right > 2000 )
 	{
 		control_contact |= CONTACT_RIGHT;
@@ -458,7 +458,7 @@ static void control_colision_detection()
 	{
 		control_contact |= CONTACT_LEFT;
 	}
-	
+*/
 	// arrêt sur us si demande des us
 	if( control_use_us )
 	{
@@ -514,7 +514,7 @@ void control_rotate(float angle)
 	control_timer = 0;
 	control_aMax_av = 0;
 	control_vMax_av = 0;
-	control_aMax_rot = 800.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
 	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -599,8 +599,8 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	control_timer = 0;
 	control_aMax_av = 350.0f*TE*TE;
 	control_vMax_av = 1300.0f*TE;
-	control_aMax_rot = 1000.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 2000.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();

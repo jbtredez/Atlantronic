@@ -15,7 +15,7 @@
 #include "kernel/hokuyo_tools.h"
 #include "us.h"
 
-#define STRAT_STACK_SIZE       200
+#define STRAT_STACK_SIZE       300
 
 static void strat_task();
 int strat_module_init();
@@ -40,15 +40,50 @@ float get_distance();
 void goto_with_avoidance(float x, float y, float delta, int dir)
 {
 	uint32_t event;
+	portTickType start = systick_get_time();
+	portTickType tempo_colision;
+	portTickType stop;
+
 	do
 	{
 		control_goto_near(x, y, delta, dir);
 		event = vTaskWaitEvent(EVENT_CONTROL_READY, ms_to_tick(8000));
-	}while( (event & EVENT_CONTROL_COLSISION) && (event & EVENT_CONTROL_READY) );
-	if( ! (event & EVENT_CONTROL_READY) )
+		stop = systick_get_time();
+		tempo_colision = stop - start;
+	}while( (event & EVENT_CONTROL_COLSISION) && (event & EVENT_CONTROL_READY) && tempo_colision > ms_to_tick(1000));
+
+	// tentative de debloquage
+	if( (! (event & EVENT_CONTROL_READY)) || (event & EVENT_CONTROL_COLSISION))
 	{
-		// timeout de bloquage
-		control_straight(-100);
+		control_free();
+		vTaskDelay(ms_to_tick(500));
+		// bloquage
+		control_straight(-300);
+		vTaskWaitEvent(EVENT_CONTROL_READY, ms_to_tick(2000));
+	}
+	if( (! (event & EVENT_CONTROL_READY)) || (event & EVENT_CONTROL_COLSISION))
+	{
+		// bloquage
+		control_free();
+		vTaskDelay(ms_to_tick(500));
+		control_rotate(PI/2.0f);
+		control_straight(300);
+		vTaskWaitEvent(EVENT_CONTROL_READY, ms_to_tick(3000));
+	}
+	if( (! (event & EVENT_CONTROL_READY)) || (event & EVENT_CONTROL_COLSISION) )
+	{
+		// bloquage
+		control_free();
+		vTaskDelay(ms_to_tick(500));
+		control_rotate(PI);
+		control_straight(300);
+		vTaskWaitEvent(EVENT_CONTROL_READY, ms_to_tick(3000));
+	}
+	if( (! (event & EVENT_CONTROL_READY)) || (event & EVENT_CONTROL_COLSISION))
+	{
+		control_free();
+		vTaskDelay(ms_to_tick(500));
+		control_goto_near(x, y, delta, dir);
 		vTaskWaitEvent(EVENT_CONTROL_READY, ms_to_tick(8000));
 	}
 }
@@ -103,7 +138,7 @@ void action_first_pawn(int sens)
 			{
 				goto_with_avoidance(- sens * 700, -350, 160, CONTROL_FORWARD);
 				pince_close();
-				goto_with_avoidance(- sens * 175, 175, 160, CONTROL_FORWARD);
+				goto_with_avoidance(- sens * 175, 130, 160, CONTROL_FORWARD);
 				pince_open();
 				goto_with_avoidance(- sens * 700, -350, 0, CONTROL_BACKWARD);
 			}
@@ -111,7 +146,7 @@ void action_first_pawn(int sens)
 			{
 				goto_with_avoidance(- sens * 700, 0, 160, CONTROL_FORWARD);
 				pince_close();
-				goto_with_avoidance(- sens * 175, 175, 160, CONTROL_FORWARD);
+				goto_with_avoidance(- sens * 175, 130, 160, CONTROL_FORWARD);
 				pince_open();
 				goto_with_avoidance(- sens * 700, 0, 0, CONTROL_BACKWARD);
 			}
@@ -119,7 +154,7 @@ void action_first_pawn(int sens)
 			{
 				goto_with_avoidance(- sens * 700, 350, 160, CONTROL_FORWARD);
 				pince_close();
-				goto_with_avoidance(- sens * 175, 175, 160, CONTROL_FORWARD);
+				goto_with_avoidance(- sens * 175, 130, 160, CONTROL_FORWARD);
 				pince_open();
 				goto_with_avoidance(- sens * 700, 0, 0, CONTROL_BACKWARD);
 			}
@@ -128,7 +163,7 @@ void action_first_pawn(int sens)
 		{
 			goto_with_avoidance(- sens * 700, 350, 160, CONTROL_FORWARD);
 			pince_close();
-			goto_with_avoidance(- sens * 175, 175, 160, CONTROL_FORWARD);
+			goto_with_avoidance(- sens * 175, 130, 160, CONTROL_FORWARD);
 			pince_open();
 			goto_with_avoidance(- sens * 700, 0, 0, CONTROL_BACKWARD);
 		}
@@ -140,7 +175,7 @@ void action_first_pawn(int sens)
 	straight_with_avoidance(-400);
 
 	// placement sur le point noir cote bordure
-	goto_with_avoidance(- sens * 150, 525, 0, CONTROL_FORWARD);
+	goto_with_avoidance(- sens * 150, 475, 0, CONTROL_FORWARD);
 	goto_with_avoidance(- sens * 150, 875, 160, CONTROL_FORWARD);
 
 	pince_open();
@@ -152,7 +187,7 @@ void action_first_pawn(int sens)
 	vTaskDelay(ms_to_tick(300));
 	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
 	goto_with_avoidance(- sens * 875, 480, 0, CONTROL_BACKWARD);
-	goto_with_avoidance(- sens * 875, -525, 100, CONTROL_FORWARD);
+	goto_with_avoidance(- sens * 875, -525, 110, CONTROL_FORWARD);
 	pince_open();
 
 	// prise pion ds zone verte, case 0
@@ -177,7 +212,7 @@ void action_first_pawn(int sens)
 	straight_with_avoidance(-100);
 	goto_with_avoidance(- sens * 875, 175, 0, CONTROL_BACKWARD);
 
-	goto_with_avoidance(- sens * 525, 175, 0, CONTROL_BACKWARD);
+	goto_with_avoidance(- sens * 680, 175, 0, CONTROL_BACKWARD);
 
 	goto_with_avoidance(- sens * 875, 175, 160, CONTROL_FORWARD);
 	pince_open();
@@ -188,6 +223,7 @@ void action_first_pawn(int sens)
 	goto_with_avoidance( sens * 125, 175, 0, CONTROL_BACKWARD);
 
 	// on va piquer un pion sur le point noir coté bordure
+	control_set_use_us(US_BACK_MASK);
 	goto_with_avoidance( sens * 175, 525, 0, CONTROL_FORWARD);
 	pince_close();
 	vTaskDelay(ms_to_tick(300));
@@ -195,13 +231,19 @@ void action_first_pawn(int sens)
 	{
 		pince_open();
 		vTaskDelay(ms_to_tick(200));
-		goto_with_avoidance( sens * 175, 875, 160, CONTROL_FORWARD);
+		goto_with_avoidance( sens * 175, 875, 60, CONTROL_FORWARD);
 		pince_close();
-		straight_with_avoidance(-300);
+		straight_with_avoidance(-100);
+		goto_with_avoidance( sens * 175, 525, -160, CONTROL_BACKWARD);
 	}
-	goto_with_avoidance( sens * 175, 525, -160, CONTROL_BACKWARD);
+	else
+	{
+		straight_with_avoidance(-150);
+	}
 	pince_open();
-	goto_with_avoidance( sens * 175, -525, -160, CONTROL_BACKWARD);
+	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
+	goto_with_avoidance( sens * 175, 175, 0, CONTROL_BACKWARD);
+	goto_with_avoidance( sens * 175, -875, 160, CONTROL_FORWARD);
 }
 
 static void strat_task()
