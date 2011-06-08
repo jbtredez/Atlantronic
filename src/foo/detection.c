@@ -18,8 +18,8 @@ static void detection_task();
 int detection_module_init();
 
 static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
-static float hokuyo_x[682]; //!< x des points 44 à 725
-static float hokuyo_y[682]; //!< y des points 44 à 725
+static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
+static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 
 int detection_module_init()
 {
@@ -68,11 +68,10 @@ static void detection_task()
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
-		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
-		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 		//hoku_parse_tab();
-		parse_before_match_tab();		
+//		parse_before_match_tab();		
 		vTaskDelay(ms_to_tick(100));
 	}
 
@@ -91,8 +90,6 @@ static void detection_task()
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
 //		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
-
-//		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 
 		//vérifie les anciens points
 //		hoku_pion_table_verify_pawn(&pos_robot);

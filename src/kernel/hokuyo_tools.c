@@ -40,7 +40,6 @@ typedef struct
 	float y;
 } hoku_scan_t;
 
-hoku_scan_t hoku_scan_table[NB_POINT];
 //TODO probleme de taille
 hoku_pion_t hoku_pion_table[NB_PION];
 
@@ -118,6 +117,7 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 		buffer+=2;
 	}
 
+	// TODO checksum
 	// traitement du reste
 	for(  ; num_last_data-- ; buffer += 2)
 	{
@@ -151,17 +151,6 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 		x++;
 		y++;
 		alpha += pas;
-	}
-}
-
-void hoku_init_tab(uint16_t* distance, unsigned int size, float* x, float* y)
-{
-	unsigned int i;
-	for(i=0;i<size;i++)
-	{	     
-             hoku_scan_table[i].distance = distance[i];
-             hoku_scan_table[i].x = x[i];
-             hoku_scan_table[i].y = y[i]; 
 	}
 }
 
@@ -295,32 +284,30 @@ void hoku_print_pion()
 }
 #endif 
 
-uint16_t distance_forward_shape()
+uint16_t distance_forward_shape(float* distances, unsigned int size)
 {
-  uint16_t milieuPion = NB_POINT / 2;
-  uint16_t i;
-  
-  for(i=milieuPion; i<5; i++)
-  {
-    if(hoku_scan_table[i].distance > 20) 
-      return hoku_scan_table[i].distance;
-  }
-  return 0;  
+	uint16_t milieuPion = size / 2;
+	uint16_t i;
+
+	for(i=milieuPion; i<5; i++)
+	{
+		if(distances[i] > 20) 
+		{
+			return distances[i];
+		}
+	}
+	return 0;  
 }
 
-uint8_t check_shape(int start, int end)
+uint8_t check_shape(float* distances, unsigned int start, unsigned int end)
 {
-	
-	int D1 = hoku_scan_table[start].distance;
-	//int D2 = hoku_scan_table[end].distance;
+	int D1 = distances[start];
 	float adjacent = 0.0;
-	//milieu du point
-	//int milieu = (end + start)/2;
 	
-	float angle_deg = THETA*((end-start)/2);
-	float angle_rad = PI * ( angle_deg / 180); 
+	float angle_deg = THETA*( (end - start) / 2.0f);
+	float angle_rad = PI * ( angle_deg / 180.0f); 
 	
-	adjacent = (float)sin( angle_rad ) * D1;	
+	adjacent = (float) sin( angle_rad ) * D1;	
 
 	if( (adjacent < SEUIL_HAUT) && (adjacent > SEUIL_BAS) )
 	{
@@ -358,11 +345,10 @@ uint8_t check_shape(int start, int end)
 
 float hoku_getAngleBetweenRobotAndPion(int Xrobot, int Yrobot, int Xpawn, int Ypawn)
 {
-  
-    return atan2f( (Ypawn - Yrobot), (Xpawn - Xrobot) );
-  
+	return atan2f( (Ypawn - Yrobot), (Xpawn - Xrobot) );  
 }
 
+#if 0
 //TODO a tester
 void hoku_updatePawnIfVisible(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
 {
@@ -392,11 +378,9 @@ void hoku_updatePawnIfVisible(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
 	   hoku_pion_table[milieuPion].objet = VIDE;
       }
       
-  }
-  
-      
+  }      
 }
-  
+
 /// on verifie si il y a bien un pion dans l angle de vue actuelle
 void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot)
 {
@@ -412,63 +396,75 @@ void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot)
     }
   }
 }  
+#endif
   
 //TODO a tester
-void hoku_parse_tab(struct vect_pos *pPosRobot)
+void hoku_parse_tab(float* distances, unsigned int size, struct vect_pos *pPosRobot)
 {
-
-	int i=0;
-	int first=0, second=0;
-	int start, end;
+	unsigned int i=0;
+	unsigned int first=0, second=0;
+	unsigned int start, end;
 	int found=0;
 	int diff=0;
 
-	while( (i<NB_POINT) && ((hoku_scan_table[i].distance == 0) || 
-		((hoku_scan_table[i].x == 0) && (hoku_scan_table[i].y == 0)))) 
+	while( i<size && distances[i] < 20 )
+	{ 
 		i++;
-	if (i>=NB_POINT) return;
+	}
+
+	if (i >= size)
+	{
+		return;
+	}
+
 	first = i;
 	i++;
-	while(i<NB_POINT)
+	while(i<size)
 	{
-		while( (i<NB_POINT) && (hoku_scan_table[i].distance == 0) )
+		while( i<size && distances[i] < 20 )
+		{ 
 			i++;
-		if (i>=NB_POINT) break;
+		}
+
+		if (i >= size)
+		{
+			break;
+		}
+
 		second = i;
 	
-		diff = hoku_scan_table[first].distance - hoku_scan_table[second].distance;
+		diff = distances[first] - distances[second];
 
 		if( diff > GAP ) /*&& (found == 0) )*/
 		{
-
 			found = 1;
 			start = second;
 		}
 		else if( (diff < (GAP*(-1)) ) && (found == 1) )
 		{
-			if( (i - start)>ECHANTILLIONNAGE_MIN) //filtre min 5 points pour eviter les merdes
+			if( (i - start) > ECHANTILLIONNAGE_MIN) //filtre min 5 points pour eviter les merdes
 			{
-			  end = first;
-			  //on verifie la forme
-			  if(check_shape(start, end)==PION)
-			  {
-			    int milieu = (end + start)/2;
-			    struct vect_pos pos_in, pos_out;
-			    
-			    pos_in.x = hoku_scan_table[milieu].x;
-			    pos_in.y = hoku_scan_table[milieu].y;
-			    pos_in.alpha = 0;
-			    //offset du hokuyo +60
-			    pPosRobot->x += 60;
-			    pos_robot_to_table(pPosRobot, &pos_in, &pos_out);
-			    
-			    hoku_update_pion(PION, 
-					     pos_out.x, 
-					     pos_out.y);
-			  }
+				end = first;
+#if 0
+				//on verifie la forme
+				if(check_shape(distances, start, end) == PION)
+				{
+					int milieu = (end + start)/2;
+					struct vect_pos pos_in, pos_out;
+
+					pos_in.x = hoku_scan_table[milieu].x;
+					pos_in.y = hoku_scan_table[milieu].y;
+					pos_in.alpha = 0;
+					//offset du hokuyo +60
+					pPosRobot->x += 60;
+					pos_robot_to_table(pPosRobot, &pos_in, &pos_out);
+
+					hoku_update_pion(PION, pos_out.x, pos_out.y);
+				}
+#endif
 			}
 			start = second;
-			
+
 			found = 0; 
 		}
 		first = second;
@@ -477,29 +473,29 @@ void hoku_parse_tab(struct vect_pos *pPosRobot)
 }
 
 /**
- * renvoie 1 si chemin degager, 0 sinon
+ * renvoie 1 si chemin degage, 0 sinon
  * 
  */
-uint8_t hoku_check_path()
+uint8_t hoku_check_path(float *distances)
 {
-  int point1 = 334 ;
-  int point2 = 347;
-  int point3 = 355;
-  int point4 = 326; 
-  //carré de COTE sur COTE 
-  uint8_t res = 0;
-    //on commence en haut a gauche puis sens horaire
-  //
-  //	1 	2
-  // 	_________
-  //	|	|
-  //	|	|
-  //	|	|
-  //	_________	
-  //	4	3
-  
-  int limite1 = 265;
-  int limite2 = 577;
+	int point1 = 334 ;
+	int point2 = 347;
+	int point3 = 355;
+	int point4 = 326; 
+	//carré de COTE sur COTE 
+	uint8_t res = 0;
+	//on commence en haut a gauche puis sens horaire
+	//
+	//	1 	2
+	// 	_________
+	//	|	|
+	//	|	|
+	//	|	|
+	//	_________	
+	//	4	3
+
+	int limite1 = 265;
+	int limite2 = 577;
   /*
   float result1, result2;
   float limite1, limite2;
@@ -524,38 +520,43 @@ uint8_t hoku_check_path()
   angle_rad = PI * ( result1 / 180); 
   limite1 = oppose / (float)sin(angle_rad);*/
 
-  if( ( (hoku_scan_table[point1].distance > limite2) || (hoku_scan_table[point1].distance == 0) ) && 
-      ( (hoku_scan_table[point2].distance > limite2) || (hoku_scan_table[point2].distance == 0) ) &&
-      ( (hoku_scan_table[point3].distance > limite1) || (hoku_scan_table[point3].distance == 0) ) && 
-      ( (hoku_scan_table[point4].distance > limite1) || (hoku_scan_table[point4].distance == 0) ) )
-  {
-	res = 1;
-	// chemin degage!!!!!
-  }	
-  return res;
+	if( ( (distances[point1] > limite2) || (distances[point1] == 0) ) && 
+	  ( (distances[point2] > limite2) || (distances[point2] == 0) ) &&
+	  ( (distances[point3] > limite1) || (distances[point3] == 0) ) && 
+	  ( (distances[point4] > limite1) || (distances[point4] == 0) ) )
+	{
+		res = 1;
+		// chemin degage!!!!!
+	}	
+	return res;
 }
 
-
+#if 0
 /**
  * algo de depart
- * à eviter en mathc
+ * à eviter en match
  * 
  */
 void guess_startup_conf(int start, int end)
 {
-    int x, y;
-    int middle = ((end - start)/2) + start;
-    int pionX = hoku_scan_table[middle].x/350;
-    int pionY = ((abs(hoku_scan_table[middle].y)+HOKU_DECALAGE_START)/350) + 1;
-    
-    x = -1050 + (pionX * 350);
-    y = -1050 + (pionY * 350);
-    
-    hoku_update_pion(PION, x, y);
-    if( (pionX != 3) && (pionY != 3)) //symetrie seulement pour les autres
-      hoku_update_pion(PION, (x*-1), y);    
-}
+	int x, y;
+	int middle = ((end - start)/2) + start;
+	int pionX = hoku_scan_table[middle].x/350;
+	int pionY = ((abs(hoku_scan_table[middle].y)+HOKU_DECALAGE_START)/350) + 1;
 
+	x = -1050 + (pionX * 350);
+	y = -1050 + (pionY * 350);
+
+	hoku_update_pion(PION, x, y);
+	if( (pionX != 3) && (pionY != 3))
+	{
+		//symetrie seulement pour les autres
+		hoku_update_pion(PION, (x*-1), y);
+	}
+}
+#endif
+
+#if 0
 void parse_before_match_tab()
 {
 
@@ -612,6 +613,7 @@ void parse_before_match_tab()
 		
 	}
 }
+#endif
 
 int is_pawn_front_start()
 {

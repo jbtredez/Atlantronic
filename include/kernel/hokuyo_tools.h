@@ -23,8 +23,7 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 
 void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y, int standup);
 
-void hoku_init_tab(uint16_t* distance, unsigned int size, float* x, float* y);
-void hoku_parse_tab(struct vect_pos *pPosRobot);
+void hoku_parse_tab(float* distances, unsigned int size, struct vect_pos *pPosRobot);
 void hoku_init_pion(void);
 void hoku_get_pion(uint16_t index, unsigned char *objet, float* x, float* y, int64_t *timestamp);
 
@@ -33,11 +32,11 @@ void parse_before_match_tab();
 uint8_t hoku_check_path();
 
 uint8_t hoku_isPionThere(float x, float y, struct vect_pos *pPosRobot);
-uint8_t check_shape(int start, int end);
+uint8_t check_shape(float* distances, unsigned int start, unsigned int end);
 
 void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot);
 
-uint16_t distance_forward_shape();
+uint16_t distance_forward_shape(float* distances, unsigned int size);
 
 int is_pawn_front_start();
 
