@@ -129,7 +129,7 @@ end:
 	return res;
 }
 
-void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y)
+void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y, int standup)
 {
 	float alpha = -(135 / 180.0f - 44 / 512.0f) * PI;
 	const float pas = PI / 512.0f;
@@ -139,7 +139,7 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 		if(*distance > 19)
 		{
 			*x = *distance * (float)cos(alpha);
-			*y = - *distance * (float)sin(alpha);
+			*y = standup * *distance * (float)sin(alpha);
 		}
 		else
 		{
@@ -154,7 +154,6 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 	}
 }
 
-///////// the chupa touch
 void hoku_init_tab(uint16_t* distance, unsigned int size, float* x, float* y)
 {
 	unsigned int i;

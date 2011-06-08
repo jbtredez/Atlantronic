@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 		}
 
 		hokuyo_tools_decode_buffer(buffer, 1432, hokuyo_distance, 682);
-		hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
+		hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y, -1);
 
 		FILE* f = fopen("log/test_hokuyo.txt", "w");
 		if(f == NULL)

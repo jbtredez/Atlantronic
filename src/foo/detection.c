@@ -68,7 +68,7 @@ static void detection_task()
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
-		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
+		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 		//hoku_parse_tab();
@@ -90,7 +90,7 @@ static void detection_task()
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
-//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y);
+//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 //		hoku_init_tab(hokuyo_distance, 682, hokuyo_x, hokuyo_y);
 
