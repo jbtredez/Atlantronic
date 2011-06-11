@@ -24,3 +24,15 @@ void pos_table_to_robot(struct vect_pos *pos_robot, struct vect_pos *pos_in, str
 	pos_out->ca = cos(pos_out->alpha);
 	pos_out->sa = sin(pos_out->alpha);
 }
+
+float norm2_square(struct vect_pos *pos)
+{
+	return pos->x * pos->x + pos->y * pos->y;
+}
+
+float distance_square(struct vect_pos *pos1, struct vect_pos *pos2)
+{
+	float dx = pos2->x - pos1->x;
+	float dy = pos2->y - pos1->y;
+	return dx * dx + dy * dy;
+}
