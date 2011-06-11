@@ -13,13 +13,20 @@
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         100
 #define HOKUYO_NUM_POINTS            682
+#define HOKUYO_NUM_OBJECT            100
+#define HOKUYO_NUM_PAWN               50
 
 static void detection_task();
 int detection_module_init();
 
 static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
-static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
-static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
+//static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
+//static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
+static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
+static int hokuyo_num_obj;
+
+static struct vect_pos detection_pawn[HOKUYO_NUM_PAWN];
+static int detection_num_pawn;
 
 int detection_module_init()
 {
@@ -39,7 +46,9 @@ module_init(detection_module_init, INIT_DETECTION);
 static void detection_task()
 {
 	uint32_t err;
+	int i;
 	struct vect_pos pos_robot;
+	struct vect_pos pos_pawn;
 
 	do
 	{
@@ -50,12 +59,12 @@ static void detection_task()
 		}
 	} while(err);
 
-	hoku_init_pion();
+//	hoku_init_pion();
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	vTaskDelay(ms_to_tick(500));
-
+//	vTaskDelay(ms_to_tick(500));
+#if 0
 	int i = 2;
 	for( ; i-- ;)
 	{
@@ -76,7 +85,7 @@ static void detection_task()
 	}
 
 	vTaskSetEvent(EVENT_HOKUYO_READY);
-
+#endif
 	while(1)
 	{
 		pos_robot = location_get_position();
@@ -89,17 +98,64 @@ static void detection_task()
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
-//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+		hokuyo_num_obj = hokuyo_find_objects(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
-		//vérifie les anciens points
-//		hoku_pion_table_verify_pawn(&pos_robot);
-		//rajoute les nouveaux points (voir peut etre certains effacés)
-//		hoku_parse_tab(&pos_robot);
+		portENTER_CRITICAL();
+		for(i = 0, detection_num_pawn = 0; i < hokuyo_num_obj && detection_num_pawn < HOKUYO_NUM_PAWN ; i++)
+		{
+			if( hokuyo_object_is_pawn(hokuyo_distance, &hokuyo_object[i], &pos_pawn) )
+			{
+				// changement de repere hokuyo -> robot
+				pos_pawn.x += 60;
+				// changement de repere robot -> table
+				pos_robot_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
+				detection_num_pawn++;
+			}
+		}
+		portEXIT_CRITICAL();
+
+//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 		vTaskDelay(ms_to_tick(100));
 	}
 
 	vTaskDelete(NULL);
+}
+
+int detection_get_close_pawn(struct vect_pos *best_pawn)
+{
+	int res = 0;
+	int i = 0;
+	float best_dist2;
+	float dist2;
+	struct vect_pos pos_robot = location_get_position();
+
+
+	portENTER_CRITICAL();
+	if(detection_num_pawn == 0)
+	{
+		res = -1;
+		goto end_critical;
+	}
+
+	best_dist2 = distance_square(&pos_robot, &detection_pawn[0]);
+	*best_pawn = detection_pawn[0];
+
+	i = 1;
+	for( ; i < detection_num_pawn ; i++)
+	{
+		dist2 = distance_square(&pos_robot, &detection_pawn[i]);
+		if( dist2 < best_dist2)
+		{
+			best_dist2 = dist2;
+			*best_pawn = detection_pawn[i];
+		}
+	}
+
+end_critical:
+	portEXIT_CRITICAL();
+
+	return res;
 }
 
 float get_distance()

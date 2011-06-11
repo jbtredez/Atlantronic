@@ -25,6 +25,8 @@
 #define HOKU_SEUIL_PION 210 //distance max pour que l on considère que c est un pion
 #define HOKU_SEUIL_PION_CARRE HOKU_SEUIL_PION*HOKU_SEUIL_PION
 
+#define HOKUYO_START_ANGLE               (-(135 / 180.0f - 44 / 512.0f) * PI)
+#define HOKUYO_DTHETA         	         (PI / 512.0f)
 
 typedef struct
 {
@@ -32,13 +34,6 @@ typedef struct
 	int64_t timestamp;
 	char objet;
 } hoku_pion_t;
-
-typedef struct
-{
-	uint16_t distance;
-	float x;
-	float y;
-} hoku_scan_t;
 
 //TODO probleme de taille
 hoku_pion_t hoku_pion_table[NB_PION];
@@ -131,15 +126,14 @@ end:
 
 void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y, int standup)
 {
-	float alpha = -(135 / 180.0f - 44 / 512.0f) * PI;
-	const float pas = PI / 512.0f;
+	float alpha = HOKUYO_START_ANGLE;
 
 	for( ; size--; )
 	{
 		if(*distance > 19)
 		{
-			*x = *distance * (float)cos(alpha);
-			*y = standup * *distance * (float)sin(alpha);
+			*x = *distance * cosf(alpha);
+			*y = standup * *distance * sinf(alpha);
 		}
 		else
 		{
@@ -150,7 +144,7 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 		distance++;
 		x++;
 		y++;
-		alpha += pas;
+		alpha += HOKUYO_DTHETA;
 	}
 }
 
@@ -284,7 +278,7 @@ void hoku_print_pion()
 }
 #endif 
 
-uint16_t distance_forward_shape(float* distances, unsigned int size)
+uint16_t distance_forward_shape(uint16_t* distances, unsigned int size)
 {
 	uint16_t milieuPion = size / 2;
 	uint16_t i;
@@ -299,7 +293,7 @@ uint16_t distance_forward_shape(float* distances, unsigned int size)
 	return 0;  
 }
 
-uint8_t check_shape(float* distances, unsigned int start, unsigned int end)
+uint8_t check_shape(uint16_t* distances, unsigned int start, unsigned int end)
 {
 	int D1 = distances[start];
 	float adjacent = 0.0;
@@ -397,79 +391,97 @@ void hoku_pion_table_verify_pawn(struct vect_pos *pPosRobot)
   }
 }  
 #endif
-  
-//TODO a tester
-void hoku_parse_tab(float* distances, unsigned int size, struct vect_pos *pPosRobot)
+
+int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct vect_pos *pawn_pos)
 {
-	unsigned int i=0;
-	unsigned int first=0, second=0;
-	unsigned int start, end;
-	int found=0;
-	int diff=0;
+	int res = 0;
 
-	while( i<size && distances[i] < 20 )
-	{ 
-		i++;
+	unsigned int delta = obj->stop - obj->start;
+	float tanAlpha = tanf(HOKUYO_DTHETA * delta / 2.0f);
+
+	float r1 = distance[obj->start] * tanAlpha;
+	float r2 = distance[obj->stop] * tanAlpha;
+
+	// le rayon vu est forcement plus petit a cause de la resolution du capteur
+	if(70.0f < r1 && r1 < 105.0f && 70.0f < r2 && r2 < 105.0f )
+	{
+		unsigned int med = obj->start + delta/2;
+		// distance du point du milieu + rayon du pion
+		float dist = distance[med] + 100.0f;
+		pawn_pos->alpha = HOKUYO_START_ANGLE + HOKUYO_DTHETA * med;
+		pawn_pos->ca = cosf(pawn_pos->alpha);
+		pawn_pos->sa = sinf(pawn_pos->alpha);
+		pawn_pos->x = dist * pawn_pos->ca;
+		pawn_pos->y = - dist * pawn_pos->sa;
+		res = 1;
 	}
 
-	if (i >= size)
-	{
-		return;
-	}
+	return res;
+}
 
-	first = i;
-	i++;
-	while(i<size)
+int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_object* obj, unsigned int obj_size)
+{
+	int res = 0;
+	unsigned int i = 0;
+	unsigned int object_start = 0;
+	unsigned int object_end = 0;
+	int gap = 0;
+	int object_start_distance;
+	int dist;
+
+	while(i < size)
 	{
-		while( i<size && distances[i] < 20 )
+		// on passe les points erronés
+		while( i<size && distance[i] < 20 )
 		{ 
 			i++;
 		}
 
 		if (i >= size)
 		{
-			break;
+			goto end;
 		}
 
-		second = i;
-	
-		diff = distances[first] - distances[second];
-
-		if( diff > GAP ) /*&& (found == 0) )*/
-		{
-			found = 1;
-			start = second;
-		}
-		else if( (diff < (GAP*(-1)) ) && (found == 1) )
-		{
-			if( (i - start) > ECHANTILLIONNAGE_MIN) //filtre min 5 points pour eviter les merdes
-			{
-				end = first;
-#if 0
-				//on verifie la forme
-				if(check_shape(distances, start, end) == PION)
-				{
-					int milieu = (end + start)/2;
-					struct vect_pos pos_in, pos_out;
-
-					pos_in.x = hoku_scan_table[milieu].x;
-					pos_in.y = hoku_scan_table[milieu].y;
-					pos_in.alpha = 0;
-					//offset du hokuyo +60
-					pPosRobot->x += 60;
-					pos_robot_to_table(pPosRobot, &pos_in, &pos_out);
-
-					hoku_update_pion(PION, pos_out.x, pos_out.y);
-				}
-#endif
-			}
-			start = second;
-
-			found = 0; 
-		}
-		first = second;
+		// debut de l'objet
+		object_start = i;
+		object_start_distance = distance[object_start];
+		gap = 0;
 		i++;
+		while(i < size && abs(gap) < GAP)
+		{
+			dist = distance[i];
+			if( dist < 20 )
+			{
+				gap = GAP;
+			}
+			else
+			{
+				gap = dist - object_start_distance;
+			}
+			i++;
+		}
+		i--;
+
+		// fin de l'objet
+		object_end = i - 1;
+
+		// on filtre les objets avec une vue angulaire faible
+		if(object_end - object_start > 5)
+		{
+			if(obj_size == 0)
+			{
+				goto end;
+			}
+			obj_size--;
+			obj->start = object_start;
+			obj->stop = object_end;
+			obj++;
+			res++;
+		}
 	}
+
+end:
+	return res;
 }
 
 /**
