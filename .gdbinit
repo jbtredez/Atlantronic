@@ -121,6 +121,7 @@ define pTcb
 end
 
 define plot_hokuyo
+	shell rm log/log_target_hokuyo
 	set logging file log/log_target_hokuyo
 	set logging redirect on
 	set logging on
