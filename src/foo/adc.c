@@ -104,6 +104,7 @@ int adc_module_init()
 	ADC1->CR2 |= ADC_CR2_ADON;
 //	ADC2->CR2 |= ADC_CR2_ADON;
 
+	NVIC_SetPriority(DMA1_Channel1_IRQn, PRIORITY_IRQ_DMA1_CHANNEL1);
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
 	xTaskHandle xHandle;

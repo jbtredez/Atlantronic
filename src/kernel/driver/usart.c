@@ -13,17 +13,15 @@ struct usart_device
 	USART_TypeDef* const usart;
 	DMA_Channel_TypeDef * const dma_read;
 	DMA_Channel_TypeDef * const dma_write;
-	volatile int dma_read_ev;
-	volatile int error_ev;
-//	const uint32_t dma_read_event;
-//	const uint32_t error_event;
+	const uint32_t dma_read_event;
+	const uint32_t error_event;
 	uint32_t last_error;
 };
 
 struct usart_device usart_device[USART_MAX_DEVICE] =
 {
-	{ USART3, DMA1_Channel3, DMA1_Channel2, /*EVENT_DMA1_3_TC*/0, /*EVENT_USART3_ERROR*/0, 0 },
-	{ UART4,  DMA2_Channel3, DMA2_Channel5, /*EVENT_DMA2_3_TC*/0, /*EVENT_UART4_ERROR*/0,  0 }
+	{ USART3, DMA1_Channel3, DMA1_Channel2, EVENT_DMA1_3_TC, EVENT_USART3_ERROR, 0 },
+	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_DMA2_3_TC, EVENT_UART4_ERROR,  0 }
 };
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency)
@@ -78,6 +76,9 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			// DMA en reception
 			USART3->CR3 = USART_CR3_EIE | USART_CR3_DMAT | USART_CR3_DMAR;
 
+			NVIC_SetPriority(USART3_IRQn, PRIORITY_IRQ_USART3);
+			NVIC_SetPriority(DMA1_Channel2_IRQn, PRIORITY_IRQ_DMA1_CHANNEL2);
+			NVIC_SetPriority(DMA1_Channel3_IRQn, PRIORITY_IRQ_DMA1_CHANNEL3);
 			NVIC_EnableIRQ(USART3_IRQn);
 			NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 			NVIC_EnableIRQ(DMA1_Channel3_IRQn);
@@ -107,6 +108,9 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			// DMA en reception
 			UART4->CR3 = USART_CR3_EIE | USART_CR3_HDSEL | USART_CR3_DMAT | USART_CR3_DMAR;
 
+			NVIC_SetPriority(UART4_IRQn, PRIORITY_IRQ_UART4);
+			NVIC_SetPriority(DMA2_Channel3_IRQn, PRIORITY_IRQ_DMA2_CHANNEL3);
+			NVIC_SetPriority(DMA2_Channel5_IRQn, PRIORITY_IRQ_DMA2_CHANNEL5);
 			NVIC_EnableIRQ(UART4_IRQn);
 			NVIC_EnableIRQ(DMA2_Channel3_IRQn);
 			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
@@ -161,8 +165,7 @@ void isr_usart3(void)
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	USART3->DR;
-usart_device[USART3_FULL_DUPLEX].error_ev = 1;
-//	vTaskSetEventFromISR(EVENT_USART3_ERROR);
+	vTaskSetEventFromISR(EVENT_USART3_ERROR);
 }
 
 void isr_uart4(void)
@@ -189,8 +192,7 @@ void isr_uart4(void)
 	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	UART4->DR;
-	usart_device[UART4_HALF_DUPLEX].error_ev = 1;
-//	vTaskSetEventFromISR(EVENT_UART4_ERROR);
+	vTaskSetEventFromISR(EVENT_UART4_ERROR);
 }
 
 void isr_dma1_channel2(void)
@@ -208,7 +210,6 @@ void isr_dma1_channel3(void)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF3;
 		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
-		usart_device[USART3_FULL_DUPLEX].dma_read_ev = 1;
 		vTaskSetEventFromISR(EVENT_DMA1_3_TC);
 	}
 }
@@ -228,8 +229,7 @@ void isr_dma2_channel3(void)
 	{
 		DMA2->IFCR |= DMA_IFCR_CTCIF3;
 		DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
-		usart_device[UART4_HALF_DUPLEX].dma_read_ev = 1;
-//		vTaskSetEventFromISR(EVENT_DMA2_3_TC);	
+		vTaskSetEventFromISR(EVENT_DMA2_3_TC);	
 	}
 }
 
@@ -255,9 +255,7 @@ void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 		return;
 #endif
 
-	usart_device[id].dma_read_ev = 0;
-	usart_device[id].error_ev = 0;
-//	vTaskClearEvent(usart_device[id].dma_read_event | usart_device[id].error_event);
+	vTaskClearEvent(usart_device[id].dma_read_event | usart_device[id].error_event);
 	usart_device[id].dma_read->CNDTR = size;
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR |= DMA_CCR1_EN;
@@ -266,7 +264,7 @@ void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 {
 	uint32_t res = 0;
-//	uint32_t ev;
+	uint32_t ev;
 
 #ifdef DEBUG
 	if(id >= USART_MAX_DEVICE)
@@ -276,23 +274,21 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 	}
 #endif
 
-//	vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
+	vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
 	unsigned int timer = 0;
 	do{
 		timer += ms_to_tick(1);
 		vTaskDelay(ms_to_tick(1));
-//		ev = vTaskGetEvent();
-	}while(usart_device[id].dma_read_ev == 0 && usart_device[id].error_ev == 0 && timer < timeout);
+		ev = vTaskGetEvent();
+	}while(timer < timeout);
 
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR &= ~DMA_CCR1_EN;
-//	if(ev & usart_device[id].error_event)
-	if(usart_device[id].error_ev)
+	if(ev & usart_device[id].error_event)
 	{
 		res = usart_device[id].last_error;
 	}
-//	else if(! (ev & usart_device[id].dma_read_event))
-	else if( ! usart_device[id].dma_read_ev )
+	else if(! (ev & usart_device[id].dma_read_event))
 	{
 		res = ERR_USART_TIMEOUT;
 	}

@@ -110,6 +110,7 @@ PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxTopReadyPriority 		= ts
 PRIVILEGED_DATA static volatile signed portBASE_TYPE xSchedulerRunning 			= pdFALSE;
 PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxSchedulerSuspended	 	= ( unsigned portBASE_TYPE ) pdFALSE;
 PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxMissedTicks 			= ( unsigned portBASE_TYPE ) 0;
+PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxMissedEvents 			= ( unsigned portBASE_TYPE ) 0;
 PRIVILEGED_DATA static volatile portBASE_TYPE xMissedYield 						= ( portBASE_TYPE ) pdFALSE;
 PRIVILEGED_DATA static unsigned portBASE_TYPE uxTaskNumber 						= ( unsigned portBASE_TYPE ) 0;
 
@@ -288,6 +289,7 @@ static tskTCB *prvAllocateTCBAndStack( unsigned short usStackDepth, portSTACK_TY
 
 #endif
 
+unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wake);
 
 /*lint +e956 */
 
@@ -970,6 +972,20 @@ signed portBASE_TYPE xAlreadyYielded = pdFALSE;
 					{
 						xYieldRequired = pdTRUE;
 					}
+				}
+
+				if( uxMissedEvents )
+				{
+					int i;
+					for(i = 0; i < configMAX_PRIORITIES; i++)
+					{
+						xTaskUpdateEvent(&pxReadyTasksLists[i], uxMissedEvents, 0);
+					}
+					
+					xYieldRequired |= xTaskUpdateEvent(&xDelayedTaskList, uxMissedEvents, 1);
+					xYieldRequired |= xTaskUpdateEvent(&xSuspendedTaskList, uxMissedEvents, 1);
+
+					uxMissedEvents = 0;
 				}
 
 				/* If any ticks occurred while the scheduler was suspended then
@@ -2041,24 +2057,18 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 			// TODO patch moche pourri
 			if((unsigned long) pxTcb < 0x20000000)
 			{
-				goto end;
+				goto end; // mettre un breakpoint pour le debug
 			}
 			
 			pxTcb->event |= mask;
 			if( wake && pxTcb->event & pxTcb->eventMask)
 			{
-				if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
+				if( pxTcb->uxPriority >= pxCurrentTCB->uxPriority )
 				{
-					xHigherPriorityTaskWoken = ( pxTcb->uxPriority >= pxCurrentTCB->uxPriority );
-					vListRemove( &( pxTcb->xGenericListItem ) );
-					prvAddTaskToReadyQueue( pxTcb );
+					xHigherPriorityTaskWoken |= 1;
 				}
-				else
-				{
-					// We cannot access the delayed or ready lists, so will hold this
-					// task pending until the scheduler is resumed.
-					vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxTcb->xEventListItem ) );
-				}
+				vListRemove( &( pxTcb->xGenericListItem ) );
+				prvAddTaskToReadyQueue( pxTcb );
 
 				pxTcb->eventMask = 0;
 			}
@@ -2081,8 +2091,6 @@ void vTaskSetEvent(uint32_t mask)
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	unsigned portBASE_TYPE xAlreadyYielded = 0;
 
-// TODO patch a voir ...
-	portENTER_CRITICAL();
 	vTaskSuspendAll();
 	xHigherPriorityTaskWoken = vTaskSetEventFromISR(mask);
 	xAlreadyYielded = xTaskResumeAll();
@@ -2091,7 +2099,6 @@ void vTaskSetEvent(uint32_t mask)
 	{
 		portYIELD_WITHIN_API();
 	}
-	portEXIT_CRITICAL();
 }
 
 //! cf vTaskSetEvent mais depuis une interruption
@@ -2100,12 +2107,20 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	unsigned portBASE_TYPE i;
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	for(i = 0; i < configMAX_PRIORITIES; i++)
-		xTaskUpdateEvent(&pxReadyTasksLists[i], mask, 0);
+	if( uxSchedulerSuspended == 0)
+	{
+		for(i = 0; i < configMAX_PRIORITIES; i++)
+		{
+			xTaskUpdateEvent(&pxReadyTasksLists[i], mask, 0);
+		}
 
-	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xDelayedTaskList, mask, 1);
-	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xPendingReadyList, mask, 0);
-	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xSuspendedTaskList, mask, 1);
+		xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xDelayedTaskList, mask, 1);
+		xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xSuspendedTaskList, mask, 1);
+	}
+	else
+	{
+		uxMissedEvents |= mask;
+	}
 
 	return xHigherPriorityTaskWoken;
 }

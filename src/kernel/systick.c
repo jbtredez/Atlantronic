@@ -8,10 +8,8 @@
 #include "kernel/portmacro.h"
 
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
-#define portNVIC_SYSPRI2			( ( volatile unsigned long *) 0xe000ed20 )
 #define portNVIC_PENDSVSET			0x10000000
-#define portNVIC_PENDSV_PRI			( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 16 )
-#define portNVIC_SYSTICK_PRI		( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 24 )
+
 
 // --> 1 cycle pour le rechargement du systick (on a compté systick_last_load_used + 1)
 // --> SYSTICK_REPROGRAM_TIME-1 cycles (tests) entre la lecture du SysTick->VAL  (systick_time -= SysTick->VAL) et le rearmement du timer
@@ -29,11 +27,8 @@ static int systick_module_init()
 {
 	systick_time_start_match = 0;
 
-	// Make PendSV, CallSV and SysTick the same priroity as the kernel
-	*(portNVIC_SYSPRI2) |= portNVIC_PENDSV_PRI;
-	*(portNVIC_SYSPRI2) |= portNVIC_SYSTICK_PRI;
-//	NVIC_SetPriority(PendSV_IRQn, (1<<__NVIC_PRIO_BITS) - 1);
-//	NVIC_SetPriority(SysTick_IRQn-1, (1<<__NVIC_PRIO_BITS) - 1);
+	NVIC_SetPriority(PendSV_IRQn, PRIORITY_IRQ_PENDSV);
+	NVIC_SetPriority(SysTick_IRQn, PRIORITY_IRQ_SYSTICK);
 
 	systick_time = 0;
 	SysTick->VAL = 0x00;

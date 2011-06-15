@@ -6,21 +6,9 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 
-/* For backward compatibility, ensure configKERNEL_INTERRUPT_PRIORITY is
-defined.  The value should also ensure backward compatibility.
-FreeRTOS.org versions prior to V4.4.0 did not include this definition. */
-#ifndef configKERNEL_INTERRUPT_PRIORITY
-	#define configKERNEL_INTERRUPT_PRIORITY 255
-#endif
-
 /* Constants required to manipulate the NVIC. */
-#define portNVIC_SYSTICK_CTRL		( ( volatile unsigned long *) 0xe000e010 )
-#define portNVIC_SYSTICK_LOAD		( ( volatile unsigned long *) 0xe000e014 )
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
-#define portNVIC_SYSPRI2			( ( volatile unsigned long *) 0xe000ed20 )
 #define portNVIC_PENDSVSET			0x10000000
-#define portNVIC_PENDSV_PRI			( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 16 )
-#define portNVIC_SYSTICK_PRI		( ( ( unsigned long ) configKERNEL_INTERRUPT_PRIORITY ) << 24 )
 
 /* Constants required to set up the initial stack. */
 // EPSR.T = 1 : mode thumb

@@ -67,6 +67,9 @@ static int gpio_module_init(void)
 	AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI8_PD | AFIO_EXTICR3_EXTI9_PD | AFIO_EXTICR3_EXTI10_PD;
 	EXTI->IMR |= EXTI_IMR_MR6 | EXTI_IMR_MR8 | EXTI_IMR_MR9 | EXTI_IMR_MR10;
 	EXTI->RTSR |= EXTI_RTSR_TR6 | EXTI_RTSR_TR8 | EXTI_RTSR_TR9 | EXTI_RTSR_TR10;
+
+	NVIC_SetPriority(EXTI9_5_IRQn, PRIORITY_IRQ_EXTI9_5);
+	NVIC_SetPriority(EXTI15_10_IRQn, PRIORITY_IRQ_EXTI15_10);
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
@@ -85,7 +88,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
-//		vTaskSetEventFromISR(EVENT_GO);
+		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR6)
 	{
@@ -93,7 +96,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
-//		vTaskSetEventFromISR(EVENT_GO);
+		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{
