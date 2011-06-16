@@ -20,8 +20,8 @@ static void detection_task();
 int detection_module_init();
 
 static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
-//static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
-//static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
+static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
+static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 static int hokuyo_num_obj;
 
@@ -114,7 +114,7 @@ static void detection_task()
 		}
 		portEXIT_CRITICAL();
 
-//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 		vTaskDelay(ms_to_tick(100));
 	}
