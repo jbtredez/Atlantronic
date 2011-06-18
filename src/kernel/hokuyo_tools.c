@@ -12,22 +12,23 @@
 #include <math.h>
 
 #define GAP 90 //150
-#define THETA 0.35f
-#define SEUIL_HAUT 110 //pion
-#define SEUIL_BAS 70 
-#define COTE 350
-#define ECHANTILLIONNAGE_MIN 5
-#define ROBOT_Y_MAX 1600
-#define ROBOT_X_MAX 2600
-#define HOKU_RANGE_MIN 180 //donnée peu faible avant
-#define HOKU_RANGE_MAX 500 //donnée peu faible après
-#define HOKU_DECALAGE_START 200 //offset en y vis à vis du bord de table
-#define HOKU_SEUIL_PION 210 //distance max pour que l on considère que c est un pion
-#define HOKU_SEUIL_PION_CARRE HOKU_SEUIL_PION*HOKU_SEUIL_PION
+//#define THETA 0.35f
+//#define SEUIL_HAUT 110 //pion
+//#define SEUIL_BAS 70 
+//#define COTE 350
+//#define ECHANTILLIONNAGE_MIN 5
+//#define ROBOT_Y_MAX 1600
+//#define ROBOT_X_MAX 2600
+//#define HOKU_RANGE_MIN 180 //donnée peu faible avant
+//#define HOKU_RANGE_MAX 500 //donnée peu faible après
+//#define HOKU_DECALAGE_START 200 //offset en y vis à vis du bord de table
+//#define HOKU_SEUIL_PION 210 //distance max pour que l on considère que c est un pion
+//#define HOKU_SEUIL_PION_CARRE HOKU_SEUIL_PION*HOKU_SEUIL_PION
 
 #define HOKUYO_START_ANGLE               (-(135 / 180.0f - 44 / 512.0f) * PI)
 #define HOKUYO_DTHETA         	         (PI / 512.0f)
 
+#if 0
 typedef struct
 {
 	int16_t x, y; 
@@ -37,7 +38,7 @@ typedef struct
 
 //TODO probleme de taille
 hoku_pion_t hoku_pion_table[NB_PION];
-
+#endif
 
 uint16_t hokuyo_tools_decode16(const unsigned char* data)
 {
@@ -148,6 +149,7 @@ void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y
 	}
 }
 
+#if 0
 void hoku_init_pion(void)
 {
   int i;
@@ -263,54 +265,7 @@ int hoku_update_pion(char objet, int x, int y)
     return 1;
     
 }
-
-#if 0
-void hoku_print_pion()
-{
-  int i;
-  for (i=0; i<NB_PION; i++)
-    if( hoku_pion_table[i].objet != VIDE) printf("%c en (%d,%d) soit ligne=%d et croisement=%d\n", 
-	hoku_pion_table[i].objet, 
-	hoku_pion_table[i].x,
-	hoku_pion_table[i].y,
-	hoku_pion_table[i].ligne,
-	hoku_pion_table[i].croisement);
-}
-#endif 
-
-uint16_t distance_forward_shape(uint16_t* distances, unsigned int size)
-{
-	uint16_t milieuPion = size / 2;
-	uint16_t i;
-
-	for(i=milieuPion; i<5; i++)
-	{
-		if(distances[i] > 20) 
-		{
-			return distances[i];
-		}
-	}
-	return 0;  
-}
-
-uint8_t check_shape(uint16_t* distances, unsigned int start, unsigned int end)
-{
-	int D1 = distances[start];
-	float adjacent = 0.0;
-	
-	float angle_deg = THETA*( (end - start) / 2.0f);
-	float angle_rad = PI * ( angle_deg / 180.0f); 
-	
-	adjacent = (float) sin( angle_rad ) * D1;	
-
-	if( (adjacent < SEUIL_HAUT) && (adjacent > SEUIL_BAS) )
-	{
-		//PION DETECTED 
-		return PION ;
-	}
-	return AUTRE;
-}
-
+#endif
 
 //TODO à tester
 /*uint8_t hoku_pion_isAlreadyKnown(int Xa, int Ya)
@@ -336,12 +291,12 @@ uint8_t check_shape(uint16_t* distances, unsigned int start, unsigned int end)
   return found;
 }*/
 
-
+#if 0
 float hoku_getAngleBetweenRobotAndPion(int Xrobot, int Yrobot, int Xpawn, int Ypawn)
 {
 	return atan2f( (Ypawn - Yrobot), (Xpawn - Xrobot) );  
 }
-
+#endif
 #if 0
 //TODO a tester
 void hoku_updatePawnIfVisible(int Xrobot, int Yrobot, int Xpawn, float Ypawn )
@@ -483,7 +438,7 @@ int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_obj
 end:
 	return res;
 }
-
+#if 0
 /**
  * renvoie 1 si chemin degage, 0 sinon
  * 
@@ -542,7 +497,7 @@ uint8_t hoku_check_path(float *distances)
 	}	
 	return res;
 }
-
+#endif
 #if 0
 /**
  * algo de depart
@@ -626,16 +581,3 @@ void parse_before_match_tab()
 	}
 }
 #endif
-
-int is_pawn_front_start()
-{
-	int i = 0;
-	for( ; i < NB_PION ; i++)
-	{
-		if( hoku_pion_table[i].objet != VIDE && hoku_pion_table[i].x == -700 && hoku_pion_table[i].y == -700)
-		{
-			return 1;
-		}
-	}
-	return 0;
-}

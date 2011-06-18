@@ -36,10 +36,7 @@ module_init(test_hokuyo_module_init, INIT_TEST_DEPLACEMENT);
 
 static void test_hokuyo_task()
 {
-//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-
 	uint32_t err;
-	uint8_t res = 0;
 
 	do
 	{
@@ -49,8 +46,6 @@ static void test_hokuyo_task()
 			error_raise(err);
 		}
 	} while(err);
-	
-	hoku_init_pion();
 	
 	while(1)
 	{
@@ -65,14 +60,6 @@ static void test_hokuyo_task()
 		
 		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, 1);
 
-		//hoku_parse_tab();
-//		parse_before_match_tab();
-		
-		res = hoku_check_path();
-		if(res)
-		 setLed(0x55);
-		else 
-		  setLed(0x00);
 		vTaskDelay(ms_to_tick(1000));
 	}
 

@@ -9,6 +9,7 @@
 #include "gpio.h"
 #include "location/location.h"
 #include "kernel/rcc.h"
+#include <math.h>
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         100
@@ -20,8 +21,8 @@ static void detection_task();
 int detection_module_init();
 
 static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
-static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
-static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
+//static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
+//static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 static int hokuyo_num_obj;
 
@@ -59,33 +60,6 @@ static void detection_task()
 		}
 	} while(err);
 
-//	hoku_init_pion();
-
-//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-
-//	vTaskDelay(ms_to_tick(500));
-#if 0
-	int i = 2;
-	for( ; i-- ;)
-	{
-		err = hokuyo_scan();
-		if( err)
-		{
-			// TODO : checksum qui marche pas
-//			error_raise(err);
-		}
-
-		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
-
-//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
-
-		//hoku_parse_tab();
-//		parse_before_match_tab();		
-		vTaskDelay(ms_to_tick(100));
-	}
-
-	vTaskSetEvent(EVENT_HOKUYO_READY);
-#endif
 	while(1)
 	{
 		pos_robot = location_get_position();
@@ -114,7 +88,7 @@ static void detection_task()
 		}
 		portEXIT_CRITICAL();
 
-		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 		vTaskDelay(ms_to_tick(100));
 	}
@@ -158,6 +132,30 @@ end_critical:
 	return res;
 }
 
+
+int is_pawn_front_start()
+{
+	int i = 0;
+	int res = 0;
+
+	portENTER_CRITICAL();
+	for( ; i < detection_num_pawn ; i++)
+	{
+		if( (fabsf(detection_pawn[i].x + 700) < 100.0f && fabsf(detection_pawn[i].x + 700) < 100.0f) ||
+		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].x - 700) < 100.0f) )
+		{
+			res = 1;
+			goto end_critical;
+		}
+	}
+
+end_critical:
+	portEXIT_CRITICAL();
+
+	return res;
+}
+
+// TODO virer / hokuyo_tool
 float get_distance()
 {
 	float dist = 0;
