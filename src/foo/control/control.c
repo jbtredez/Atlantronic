@@ -145,13 +145,24 @@ static void control_task(void* arg)
 
 static void control_recalage()
 {
-	if( control_pos.y + PARAM_NP_X + 1050.0f < 200.0f && fabsf(control_pos.alpha - PI/2.0f) < PI/8.0f)
+	// on met alpha dans [0 ; 2*PI]
+	float alpha = fmodf(control_pos.alpha, 2*PI);
+	if(alpha < 0)
+	{
+		alpha += 2*PI;
+	}
+
+	if( control_pos.y + PARAM_NP_X + 1050.0f < 200.0f && fabsf(alpha - PI/2.0f) < PI/8.0f)
 	{
 		location_set_position(control_pos.x, -1050.0f - PARAM_NP_X, PI/2.0f);
 	}
-	else if( (fabsf(control_pos.alpha) < PI/8.0f) && (control_pos.x + PARAM_NP_X + 1500.0f < 200.0f) )
+	else if( (alpha < PI/8.0f) && (control_pos.x + PARAM_NP_X + 1500.0f < 200.0f) )
 	{
 		location_set_position(-1500.0f - PARAM_NP_X, control_pos.y, 0);
+	}
+	else if( (fabsf(alpha - PI) < PI/8.0f) && (control_pos.x - PARAM_NP_X - 1500.0f > -200.0f) )
+	{
+		location_set_position(1500.0f + PARAM_NP_X, control_pos.y, PI);
 	}
 }
 
