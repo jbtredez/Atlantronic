@@ -40,6 +40,7 @@ void isr_exti9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< int
 void isr_exti15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 10 à 15
 void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, tx
 void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption can1, rx0
+void isr_otg_fs(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
 
 static int32_t check_card_number(); //!< fonction de vérification du numéro de carte. Retourne 0 si c'est ok
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
@@ -140,7 +141,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected
+	isr_otg_fs
 //  (void*)0xF108F85F // RAM boot.
 };
 
