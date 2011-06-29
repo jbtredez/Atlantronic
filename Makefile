@@ -86,6 +86,9 @@ all:
 
 .PHONY: all
 
+modules:
+	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules
+
 $(foreach var,$(bin-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var)) )))
 $(foreach var,$(bin-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var):.o=.d))))
 

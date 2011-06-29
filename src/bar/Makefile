@@ -33,6 +33,7 @@ LDFLAGS+=-lg
 LDFLAGS+=-g3
 
 DEF+=__$(ARCH)__
+DEF+=STM32F10X_CL
 
 ifeq ($(DEBUG),1)
 

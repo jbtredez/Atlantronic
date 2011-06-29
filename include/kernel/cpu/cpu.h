@@ -1,7 +1,9 @@
 #ifndef CPU_H
 #define CPU_H
 
+#ifndef STM32F10X_CL
 #define STM32F10X_CL
+#endif
 #include "kernel/cpu/stm32f10x.h"
 
 #ifndef LINUX
