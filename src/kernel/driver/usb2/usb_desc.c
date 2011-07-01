@@ -75,32 +75,32 @@ const uint8_t usb_config_descriptor[] =
 };
 
 /* USB String Descriptors */
-const uint8_t Virtual_Com_Port_StringLangID[VIRTUAL_COM_PORT_SIZ_STRING_LANGID] =
-  {
-    VIRTUAL_COM_PORT_SIZ_STRING_LANGID,
-    USB_STRING_DESCRIPTOR_TYPE,
-    0x0c,
-    0x04 // LangID = 0x040c: Fr
-  };
+const uint8_t usb_string_langID[USB_STRING_LANG_ID_SIZE] =
+{
+	USB_STRING_LANG_ID_SIZE,
+	USB_STRING_DESCRIPTOR_TYPE,
+	0x0c,
+	0x04 // LangID = 0x040c: Fr
+};
 
-const uint8_t Virtual_Com_Port_StringVendor[STRING_VENDOR_SIZE] =
-  {
-    STRING_VENDOR_SIZE,     /* Size of Vendor string */
-    USB_STRING_DESCRIPTOR_TYPE,             /* bDescriptorType*/
-    'A', 0, 't', 0, 'l', 0, 'a', 0, 'n', 0, 't', 0, 'r', 0, 'o', 0,
-    'n', 0, 'i', 0, 'c', 0
-  };
+const uint8_t usb_string_vendor[USB_STRING_VENDOR_SIZE] =
+{
+	USB_STRING_VENDOR_SIZE,       // Size of Vendor string
+	USB_STRING_DESCRIPTOR_TYPE,   // bDescriptorType
+	'A', 0, 't', 0, 'l', 0, 'a', 0, 'n', 0, 't', 0, 'r', 0, 'o', 0,
+	'n', 0, 'i', 0, 'c', 0
+};
 
-const uint8_t Virtual_Com_Port_StringProduct[STRING_PRODUCT_SIZE] =
-  {
-    STRING_PRODUCT_SIZE,          // bLength
-    USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
-    'B', 0, 'a', 0, 'r', 0
-  };
+const uint8_t usb_string_product[USB_STRING_PRODUCT_SIZE] =
+{
+	USB_STRING_PRODUCT_SIZE,           // bLength
+	USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
+	'B', 0, 'a', 0, 'r', 0
+};
 
-uint8_t Virtual_Com_Port_StringSerial[VIRTUAL_COM_PORT_SIZ_STRING_SERIAL] =
-  {
-    VIRTUAL_COM_PORT_SIZ_STRING_SERIAL,           /* bLength */
-    USB_STRING_DESCRIPTOR_TYPE,                   /* bDescriptorType */
-    'S', 0, 'T', 0, 'M', 0, '3', 0, '2', 0, '1', 0, '0', 0
-  };
+uint8_t usb_string_serial[USB_STRING_SERIAL_SIZE] =
+{
+	USB_STRING_SERIAL_SIZE,            // bLength
+	USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
+	'S', 0, 'T', 0, 'M', 0, '3', 0, '2', 0, '1', 0, '0', 0
+};

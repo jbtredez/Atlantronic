@@ -63,10 +63,10 @@ ONE_DESCRIPTOR Config_Descriptor =
 
 ONE_DESCRIPTOR String_Descriptor[4] =
   {
-    {(uint8_t*)Virtual_Com_Port_StringLangID, VIRTUAL_COM_PORT_SIZ_STRING_LANGID},
-    {(uint8_t*)Virtual_Com_Port_StringVendor, STRING_VENDOR_SIZE},
-    {(uint8_t*)Virtual_Com_Port_StringProduct, STRING_PRODUCT_SIZE},
-    {(uint8_t*)Virtual_Com_Port_StringSerial, VIRTUAL_COM_PORT_SIZ_STRING_SERIAL}
+    {(uint8_t*)usb_string_langID, USB_STRING_LANG_ID_SIZE},
+    {(uint8_t*)usb_string_vendor, USB_STRING_VENDOR_SIZE},
+    {(uint8_t*)usb_string_product, USB_STRING_PRODUCT_SIZE},
+    {(uint8_t*)usb_string_serial, USB_STRING_SERIAL_SIZE}
   };
 
 /* Extern variables ----------------------------------------------------------*/

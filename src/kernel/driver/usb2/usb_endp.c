@@ -7,12 +7,12 @@
 /* Interval between sending IN packets in frame number (1 frame = 1ms) */
 #define VCOMPORT_IN_FRAME_INTERVAL             5
 
-void EP1_OUT_Callback(void)
+void EP1_IN_Callback(void)
 {
 
 }
 
-void EP2_OUT_Callback(void)
+void EP2_IN_Callback(void)
 {
 
 }
