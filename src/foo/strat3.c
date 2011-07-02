@@ -101,7 +101,7 @@ void straight_with_avoidance(float dx)
 
 void action_first_pawn(int sens)
 {
-	vTaskWaitEvent(EVENT_HOKUYO_READY, portMAX_DELAY);
+	int first_pawn = 0;
 
 	// on avance sur la sortie de la case depart
 	goto_with_avoidance(- sens * 1100, -850, 0, CONTROL_FORWARD);
@@ -111,16 +111,18 @@ void action_first_pawn(int sens)
 	{
 		goto_with_avoidance(- sens * 700, -700, 140, CONTROL_FORWARD);	
 		pince_close();
-		vTaskDelay(ms_to_tick(100));
+		vTaskDelay(ms_to_tick(150));
 		if( pince_full() )
 		{
+			first_pawn = 1;
 			goto_with_avoidance(- sens * 575, -875, 160, CONTROL_FORWARD);
 			pince_open();
 			straight_with_avoidance(-200);
 			goto_with_avoidance(- sens * 700, -350, 0, CONTROL_FORWARD);
 		}
 	}
-	else
+
+	if( first_pawn == 0)
 	{
 		goto_with_avoidance(- sens * 700, -700, 0, CONTROL_FORWARD);
 		control_rotate_to(PI/2);

@@ -80,8 +80,6 @@ static void strat_task()
 	pince_open();
 	control_pince_dual(PINCE_POS_LOW, 0);
 
-	vTaskWaitEvent(EVENT_HOKUYO_READY, portMAX_DELAY);
-
 	// on avance sur la sortie de la case depart
 	goto_with_avoidance(- sens * 1100, -850, 0, CONTROL_FORWARD);
 

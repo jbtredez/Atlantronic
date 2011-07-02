@@ -65,8 +65,6 @@ void straight_with_avoidance(float dx)
 
 void action_ligne1(int sens)
 {
-	vTaskWaitEvent(EVENT_HOKUYO_READY, portMAX_DELAY);
-
 	// on avance sur la sortie de la case depart
 	goto_with_avoidance(- sens * 1100, -850, 0, CONTROL_FORWARD);
 

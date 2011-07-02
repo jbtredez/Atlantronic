@@ -141,8 +141,8 @@ int is_pawn_front_start()
 	portENTER_CRITICAL();
 	for( ; i < detection_num_pawn ; i++)
 	{
-		if( (fabsf(detection_pawn[i].x + 700) < 100.0f && fabsf(detection_pawn[i].x + 700) < 100.0f) ||
-		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].x - 700) < 100.0f) )
+		if( (fabsf(detection_pawn[i].x + 700) < 100.0f && fabsf(detection_pawn[i].y + 700) < 100.0f) ||
+		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].y - 700) < 100.0f) )
 		{
 			res = 1;
 			goto end_critical;
