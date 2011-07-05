@@ -39,42 +39,29 @@ static void test_deplacement_task()
 
 	if(getcolor() == COLOR_BLUE)
 	{
-		location_set_position(-880.0f, -880.0f, PI/2.0f);
+		location_set_position(-700.0f, -700.0f, 0);
 	}
 	else
 	{
-		location_set_position(880.0f, -880.0f, PI/2.0f);
+		location_set_position(700.0f, -700.0f, PI);
 	}
 
-	pince_configure();
-	pince_close();
-	control_pince_dual(1000, 0);
+	//pince_configure();
+	//pince_close();
+	//control_pince_dual(1000, 0);
 
-	// todo demenager : procedure recalage
-	control_straight_to_wall(-200);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(120);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_rotate(-PI/2.0f);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight_to_wall(-800);
-	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-	control_straight(110);
-
-	while(1) ;
+	control_set_use_us(0);
 
 	while(1)
 	{
-		control_straight(700);
+		control_goto_near(-700.0f, -700.0f, 0,CONTROL_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(2000));
-		/*control_rotate(1.57);
+		control_goto_near(-700.0f, 350.0f, 0,CONTROL_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		control_rotate(-1.57);
-		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);*/
-		control_straight(-700);
+		control_goto_near(700.0f, 350.0f, 0,CONTROL_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(2000));
+		control_goto_near(700.0f, -700.0f, 0,CONTROL_ANY_WAY);
+		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}
 
 	vTaskDelete(NULL);
