@@ -177,8 +177,8 @@ void action_first_pawn(int sens)
 	straight_with_avoidance(-400);
 
 	// placement sur le point noir cote bordure
-	goto_with_avoidance(- sens * 150, 475, 0, CONTROL_FORWARD);
-	goto_with_avoidance(- sens * 150, 875, 160, CONTROL_FORWARD);
+	goto_with_avoidance(- sens * 130, 475, 0, CONTROL_FORWARD);
+	goto_with_avoidance(- sens * 130, 875, 160, CONTROL_FORWARD);
 
 	pince_open();
 	// prise pion ds zone verte, case 3
@@ -187,8 +187,9 @@ void action_first_pawn(int sens)
 	goto_with_avoidance(- sens * 1380, 480, 160, CONTROL_FORWARD);
 	pince_close();
 	vTaskDelay(ms_to_tick(300));
-	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
+	straight_with_avoidance(-100);
 	goto_with_avoidance(- sens * 875, 480, 0, CONTROL_BACKWARD);
+	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
 	goto_with_avoidance(- sens * 875, -525, 110, CONTROL_FORWARD);
 	pince_open();
 
@@ -210,8 +211,8 @@ void action_first_pawn(int sens)
 	goto_with_avoidance(- sens * 1380, -80, 160, CONTROL_FORWARD);
 	pince_close();
 	vTaskDelay(ms_to_tick(300));
-	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
 	straight_with_avoidance(-100);
+	control_set_use_us(US_FRONT_MASK | US_BACK_MASK);
 	goto_with_avoidance(- sens * 875, 175, 0, CONTROL_BACKWARD);
 
 	goto_with_avoidance(- sens * 680, 175, 0, CONTROL_BACKWARD);
