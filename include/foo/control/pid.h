@@ -14,7 +14,7 @@ struct pid
 	float kd;              //!< derivate gain (/ te)
 
 	float integral;        //!< previous integral
-	float derivate;        //!< previous derivate
+	float previous_in;     //!< previous input (for derivative)
 	float max_integral;    //!< saturate integral
 	float max_out;         //!< saturate output
 };

@@ -11,16 +11,18 @@ void pid_init(struct pid *pid, float kp, float ki, float kd, float max)
 	pid->kd = kd * max;
 
 	pid->integral = 0;
-	pid->derivate = 0;
+	pid->previous_in = 0;
 	pid->max_integral = 0;
 	pid->max_out = max;
 }
 
 float pid_apply(struct pid *pid, float in)
 {
+	float derivate;
 	float out;
 
-	pid->derivate = in - pid->derivate;
+	derivate = in - pid->previous_in;
+	pid->previous_in = in;
 	pid->integral += in;
 
 	// saturation de l'integrale
@@ -37,7 +39,7 @@ float pid_apply(struct pid *pid, float in)
 	}
 
 	// calcul du PID
-	out = pid->kp * in + pid->ki * pid->integral + pid->kd * pid->derivate;
+	out = pid->kp * in + pid->ki * pid->integral + pid->kd * derivate;
 
 	// saturation de la sortie
 	if(pid->max_out)
@@ -58,5 +60,5 @@ float pid_apply(struct pid *pid, float in)
 void pid_reset(struct pid *pid)
 {
 	pid->integral = 0;
-	pid->derivate = 0;
+	pid->previous_in = 0;
 }
