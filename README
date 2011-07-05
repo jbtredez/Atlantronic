@@ -1,18 +1,34 @@
 Programmes du robot d'Atlantronic pour la compétition EUROBOT.
 Site : http://www.atlantronic.fr/
 
-Requirements:
+Requirements :
+"arm-elf" toolchaine (thumb2, cortex m3) :
+	- binutils-2.20.1
+	- gcc-4.5.2
+	- gdb-7.2
+	- newlib-1.19
+
 doc : 
 	- doxygen >= 1.6.3
 		- graphviz >= 2.26.3
 
-simu:
+simu :
 	- irrlicht 1.7.1
 	- newton 2.29
 
-tests:
-	gnuplot / kst
+tests :
+	- gnuplot / kst
 
-jtag:
+jtag :
 	- openocd 0.4.0
 	- libftdi 0.18
+
+
+Arch :
+src/kernel : Code générique ou commun aux cartes
+src/foo : Code de la carte Foo.
+src/bar : Code de la carte bar
+src/linux : Code utilitaire pour linux
+	- src/linux/modules : module usb pour les cartes foo et bar
+	- src/linux/simulation : simulation
+	- src/linu/test : tests unitaires réalisables sous linux
