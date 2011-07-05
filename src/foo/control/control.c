@@ -24,9 +24,11 @@
 #define CONTROL_STACK_SIZE       200
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
-#define CONTROL_TICK_PERIOD        5*72000
+#define CONTROL_TICK_PERIOD        ms_to_tick(5)
 
 #define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)72000000)
+
+#define CONTROL_POS_REACHED_TOLERANCE_X        2.0f
 
 static void control_task(void *);
 static float sinc( float x );
@@ -100,11 +102,14 @@ static int control_module_init()
 	}
 
 	// coupe 2011 - coefs samedi - Angers
-	// 	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
-	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
+	// pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
+	// pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
 
-	// coupe 2011 - coefs samedi - Angers
-	// 	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
+	// test
+	//pid_init(&control_pid_av, 0.7f, 0.01f, 0.0f, PWM_ARR);
+	//pid_init(&control_pid_rot, 312.0f, 16.0f, 0.0f, PWM_ARR);
+
+	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
 	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
 
 	// coupe 2011 - coefs samedi - Angers
@@ -112,7 +117,7 @@ static int control_module_init()
 	//static float control_ky = 0;
 	//static float control_kalpha = 0.015f;
 	control_kx = 0.01f;
-	control_ky = 0;
+	control_ky = 0.0f;
 	control_kalpha = 0.015f;
 
 	control_aMax_av = 0;
@@ -402,7 +407,7 @@ static void control_compute_goto()
 		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
 		//float ey = -control_pos.sa * (control_dest.x - control_pos.x) + control_pos.ca * (control_dest.y - control_pos.y);
 
-		if( fabsf(ex) < 2.0f)
+		if( fabsf(ex) < CONTROL_POS_REACHED_TOLERANCE_X)
 		{
 			//if(fabsf(ey) < 10.0f)
 			//{
