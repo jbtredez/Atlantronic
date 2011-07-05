@@ -20,7 +20,7 @@
 #ifdef STM32F10X_CL
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f10x.h"
+#include "kernel/cpu/cpu.h"
 #include "usb_type.h"
 
 /* Exported types ------------------------------------------------------------*/

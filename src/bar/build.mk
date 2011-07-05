@@ -27,6 +27,7 @@ obj-bar-us2 += kernel/syscalls.o
 obj-bar-us2 += kernel/rcc.o
 #obj-bar-us2 += kernel/driver/can.o
 obj-bar-us2 += kernel/error.o
+obj-bar-us2 += kernel/utf8.o
 obj-bar-us2 += kernel/driver/usb2/usb.o
 obj-bar-us2 += kernel/driver/usb2/usb_init.o
 obj-bar-us2 += kernel/driver/usb2/usb_prop.o

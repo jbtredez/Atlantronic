@@ -17,7 +17,7 @@
 
 #ifdef STM32F10X_CL
 
-#include "stm32f10x.h"
+#include "kernel/cpu/cpu.h"
 #include "usb_type.h"
 
 #if defined ( __CC_ARM   )

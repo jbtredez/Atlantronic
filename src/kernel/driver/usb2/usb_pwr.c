@@ -14,11 +14,7 @@
 *******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#ifdef STM32L1XX_MD
- #include "stm32l1xx.h"
-#else
- #include "stm32f10x.h"
-#endif /* STM32L1XX_MD */
+#include "kernel/cpu/cpu.h"
  
 #include "usb_lib.h"
 #include "usb_conf.h"

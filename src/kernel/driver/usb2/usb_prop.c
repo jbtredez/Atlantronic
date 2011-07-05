@@ -3,6 +3,11 @@
 #include "usb_prop.h"
 #include "usb_desc.h"
 #include "usb_pwr.h"
+#include "kernel/serial_number.h"
+#include "kernel/utf8.h"
+
+static void usb_prop_init(void);
+static uint8_t *usb_prop_get_string_descriptor(uint16_t);
 
 uint8_t Request = 0;
 
@@ -21,20 +26,20 @@ DEVICE Device_Table =
   };
 
 DEVICE_PROP Device_Property =
-  {
-    Virtual_Com_Port_init,
-    Virtual_Com_Port_Reset,
-    Virtual_Com_Port_Status_In,
-    Virtual_Com_Port_Status_Out,
-    Virtual_Com_Port_Data_Setup,
-    Virtual_Com_Port_NoData_Setup,
-    Virtual_Com_Port_Get_Interface_Setting,
-    Virtual_Com_Port_GetDeviceDescriptor,
-    Virtual_Com_Port_GetConfigDescriptor,
-    Virtual_Com_Port_GetStringDescriptor,
-    0,
-    0x40 /*MAX PACKET SIZE*/
-  };
+{
+	usb_prop_init,
+	Virtual_Com_Port_Reset,
+	Virtual_Com_Port_Status_In,
+	Virtual_Com_Port_Status_Out,
+	Virtual_Com_Port_Data_Setup,
+	Virtual_Com_Port_NoData_Setup,
+	Virtual_Com_Port_Get_Interface_Setting,
+	Virtual_Com_Port_GetDeviceDescriptor,
+	Virtual_Com_Port_GetConfigDescriptor,
+	usb_prop_get_string_descriptor,
+	0,
+	0x40 /*MAX PACKET SIZE*/
+};
 
 USER_STANDARD_REQUESTS User_Standard_Requests =
   {
@@ -69,36 +74,21 @@ ONE_DESCRIPTOR String_Descriptor[4] =
     {(uint8_t*)usb_string_serial, USB_STRING_SERIAL_SIZE}
   };
 
-/* Extern variables ----------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Extern function prototypes ------------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-/*******************************************************************************
-* Function Name  : Virtual_Com_Port_init.
-* Description    : Virtual COM Port Mouse init routine.
-* Input          : None.
-* Output         : None.
-* Return         : None.
-*******************************************************************************/
-void Virtual_Com_Port_init(void)
+static void usb_prop_init(void)
 {
+	uint_to_hex_utf8(SERIAL_NUMBER_2, &usb_string_serial[2] , 8);
+	uint_to_hex_utf8(SERIAL_NUMBER_1, &usb_string_serial[18], 8);
+	uint_to_hex_utf8(SERIAL_NUMBER_0, &usb_string_serial[34], 8);
 
-  /* Update the serial number string descriptor with the data from the unique
-  ID*/
-  Get_SerialNum();
+	pInformation->Current_Configuration = 0;
 
-  pInformation->Current_Configuration = 0;
+	/* Connect the device */
+	PowerOn();
 
-  /* Connect the device */
-  PowerOn();
+	/* Perform basic device initialization operations */
+	USB_SIL_Init();
 
-  /* Perform basic device initialization operations */
-  USB_SIL_Init();
-
-  /* configure the USART to the default settings */
-//  USART_Config_Default();
-
-  bDeviceState = UNCONNECTED;
+	bDeviceState = UNCONNECTED;
 }
 
 /*******************************************************************************
@@ -279,24 +269,18 @@ uint8_t *Virtual_Com_Port_GetConfigDescriptor(uint16_t Length)
   return Standard_GetDescriptorData(Length, &Config_Descriptor);
 }
 
-/*******************************************************************************
-* Function Name  : Virtual_Com_Port_GetStringDescriptor
-* Description    : Gets the string descriptors according to the needed index
-* Input          : Length.
-* Output         : None.
-* Return         : The address of the string descriptors.
-*******************************************************************************/
-uint8_t *Virtual_Com_Port_GetStringDescriptor(uint16_t Length)
+//!< Gets the string descriptors according to the needed index
+uint8_t *usb_prop_get_string_descriptor(uint16_t Length)
 {
-  uint8_t wValue0 = pInformation->USBwValue0;
-  if (wValue0 > 4)
-  {
-    return NULL;
-  }
-  else
-  {
-    return Standard_GetDescriptorData(Length, &String_Descriptor[wValue0]);
-  }
+	uint8_t wValue0 = pInformation->USBwValue0;
+	if (wValue0 > 4)
+	{
+		return NULL;
+	}
+	else
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[wValue0]);
+	}
 }
 
 /*******************************************************************************
