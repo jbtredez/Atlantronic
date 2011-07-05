@@ -142,7 +142,7 @@ int is_pawn_front_start()
 	for( ; i < detection_num_pawn ; i++)
 	{
 		if( (fabsf(detection_pawn[i].x + 700) < 100.0f && fabsf(detection_pawn[i].y + 700) < 100.0f) ||
-		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].y - 700) < 100.0f) )
+		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].y + 700) < 100.0f) )
 		{
 			res = 1;
 			goto end_critical;
