@@ -1,1 +1,1 @@
-obj-m += atlantronic_usb_driver.o
+obj-m += atlantronic_usb_log.o
