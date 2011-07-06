@@ -1,5 +1,5 @@
-#ifndef __USB_DESC_H
-#define __USB_DESC_H
+#ifndef USB_DESC_H
+#define USB_DESC_H
 
 #define USB_DEVICE_DESCRIPTOR_TYPE              0x01
 #define USB_CONFIGURATION_DESCRIPTOR_TYPE       0x02
@@ -26,5 +26,5 @@ extern const uint8_t usb_string_vendor[USB_STRING_VENDOR_SIZE];
 extern const uint8_t usb_string_product[USB_STRING_PRODUCT_SIZE];
 extern uint8_t usb_string_serial[USB_STRING_SERIAL_SIZE];
 
-#endif /* __USB_DESC_H */
+#endif
 

@@ -1,4 +1,4 @@
-#ifndef __USB_PROP_H
-#define __USB_PROP_H
+#ifndef USB_PROP_H
+#define USB_PROP_H
 
 #endif

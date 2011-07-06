@@ -5,7 +5,14 @@
 #include "usb_desc.h"
 #include "usb_istr.h"
 
-__IO uint8_t PrevXferComplete = 1;
+
+#include "usb_lib.h"
+#include "usb_desc.h"
+#include "usb_mem.h"
+#include "usb_istr.h"
+#include "usb_pwr.h"
+
+volatile unsigned int int_rdy = 1;
 
 static int usb_module_init(void)
 {
@@ -17,6 +24,22 @@ static int usb_module_init(void)
 
 	USB_Init();
 
+	// TODO test
+/*
+	while(1)
+	{
+		if( bDeviceState == CONFIGURED && int_rdy )
+		{ 
+			uint8_t buffer[2];
+			buffer[0] = 0x07;
+			buffer[1] = 0x08;
+
+			int_rdy = 0;
+			// Write the descriptor through the endpoint
+			USB_SIL_Write(EP1_IN, buffer, 2);
+		}
+	}
+*/
 	return 0;
 }
 

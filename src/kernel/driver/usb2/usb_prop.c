@@ -82,10 +82,10 @@ static void usb_prop_init(void)
 
 	pInformation->Current_Configuration = 0;
 
-	/* Connect the device */
+	// Connect the device
 	PowerOn();
 
-	/* Perform basic device initialization operations */
+	// Perform basic device initialization operations
 	USB_SIL_Init();
 
 	bDeviceState = UNCONNECTED;
@@ -93,22 +93,22 @@ static void usb_prop_init(void)
 
 static void usb_prop_reset(void)
 {
-	/* Set Virtual_Com_Port DEVICE as not configured */
+	// Set device as not configured
 	pInformation->Current_Configuration = 0;
 
-	/* Current Feature initialization */
+	// Current Feature initialization
 	pInformation->Current_Feature = usb_config_descriptor[7];
 
-	/* Set Virtual_Com_Port DEVICE with the default Interface*/
+	// Set the default Interface
 	pInformation->Current_Interface = 0;
 
 	/* EP0 is already configured by USB_SIL_Init() function */
 
-	// Init EP1 OUT as Interrupt endpoint
-	OTG_DEV_EP_Init(EP1_OUT, OTG_DEV_EP_TYPE_INT, 0x40);
+	// Init EP1 IN as Interrupt endpoint
+	OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_INT, 0x40);
 
-	// Init EP1 OUT as Bulk endpoint
-	OTG_DEV_EP_Init(EP2_OUT, OTG_DEV_EP_TYPE_BULK, 0x40);
+	// Init EP1 IN as Bulk endpoint
+	OTG_DEV_EP_Init(EP2_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
 
 	bDeviceState = ATTACHED;
 }
