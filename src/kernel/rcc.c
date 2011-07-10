@@ -117,3 +117,12 @@ static int rcc_module_init()
 
 module_init(rcc_module_init, INIT_RCC);
 
+void wait_active(uint32_t tick)
+{
+	tick >>= 1;
+	for( ; tick-- ; )
+	{
+		nop();
+	}
+}
+
