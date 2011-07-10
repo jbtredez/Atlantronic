@@ -158,6 +158,7 @@ static int atlantronic_log_open(struct inode *inode, struct file *file)
 	debug(1, "atlantronic_log_open");
 
 	subminor = iminor(inode);
+
 	// récupération de l'interface liée au périphérique
 	interface = usb_find_interface(&atlantronic_log_driver, subminor);
 	if(!interface)
@@ -216,9 +217,12 @@ static int atlantronic_log_release(struct inode *inode, struct file *file)
 
 	mutex_lock(&dev->io_mutex);
 
-	if (!--dev->open_count && dev->interface)
+	if(dev->interface)
 	{
-		usb_autopm_put_interface(dev->interface);
+		if (!--dev->open_count && dev->interface)
+		{
+			usb_autopm_put_interface(dev->interface);
+		}
 	}
 	mutex_unlock(&dev->io_mutex);
 
@@ -490,6 +494,10 @@ static void atlantronic_log_disconnect(struct usb_interface *interface)
     info("Atlantronic_log_disconnect");
 
 	dev = usb_get_intfdata(interface);
+
+	mutex_lock(&dev->io_mutex);
+	dev->interface = NULL;
+	mutex_unlock(&dev->io_mutex);
 
 	usb_deregister_dev(interface, &dev->class);
 
