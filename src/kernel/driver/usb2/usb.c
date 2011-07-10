@@ -1,4 +1,5 @@
 #include "kernel/module.h"
+#include "priority.h"
 #include "usb_core.h"
 #include "usb_init.h"
 
@@ -13,8 +14,9 @@ static int usb_module_init(void)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	RCC->AHBENR |= RCC_AHBENR_OTGFSEN; // USB OTG FS clock enable
 
-	// TODO priorite
+	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
+
 
 	USB_Init();
 
