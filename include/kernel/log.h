@@ -1,9 +1,9 @@
+#ifndef LOG_H
+#define LOG_H
+
 //! @file log.h
 //! @brief Log task
 //! @author Atlantronic
-
-#ifndef LOG_H
-#define LOG_H
 
 #include "kernel/systick.h"
 #include "kernel/portmacro.h"
@@ -11,33 +11,13 @@
 #include <errno.h>
 #include <string.h>
 
-# ifndef DCOULEUR
-# define DCOULEUR	1 //!< erreur affichées en rouge par défaut.
-# endif
-
-# if DCOULEUR
-#    define LOG_COULEUR(i, arg...) "\033[01;3"#i"m" arg "\033[00m" //!< macro permettant de choisir la couleur i du terminal
-# else
-#    define LOG_COULEUR(i, arg...) (arg)
-# endif
-
-# define LOG_ROUGE(arg ...)			LOG_COULEUR(1, arg) //!<couleur du message rouge
-# define LOG_VERT(arg ...)			LOG_COULEUR(2, arg) //!<couleur du message vert
-# define LOG_JAUNE(arg ...)			LOG_COULEUR(3, arg) //!<couleur du message jaune
-# define LOG_BLEU(arg ...)			LOG_COULEUR(4, arg) //!<couleur du message bleu
-
 // niveau de log à compiler
-// < 0 : compiler les log de ce type comme log d'erreur (sur stderr) en rouge (si DCOULEUR)
-#define _info_             1
-#define _erreur_          -1
+#define _erreur_           1
+#define _info_             2
 
-// TODO revoir le système de log, ca le fait pas pour la cible arm (mémoire)
+
+// taille max d'un log (espace qui doit être dispo sur la stack) : taille de la terminaison usb
 #define LOG_SIZE         64
-
-#define LOG_QUEUE_SIZE   10
-
-int log_add(const char* msg, ...);
-portBASE_TYPE log_add_from_isr(const char* msg, ...);
 
 #if 0
 
