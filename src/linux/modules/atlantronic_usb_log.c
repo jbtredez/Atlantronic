@@ -132,6 +132,10 @@ static void atlantronic_log_delete(struct kref *kref)
 		if( dev->in_urb[i] )
 		{
 			usb_kill_urb(dev->in_urb[i]);
+			if(dev->in_urb[i]->transfer_buffer)
+			{
+				kfree(dev->in_urb[i]->transfer_buffer);
+			}
 			usb_free_urb(dev->in_urb[i]);
 		}
 	}
@@ -416,8 +420,15 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 			goto error;
 		}
 
+		dev->in_urb[i]->transfer_buffer = kmalloc(le16_to_cpu(endpoint->wMaxPacketSize), GFP_KERNEL);
+		if( ! dev->in_urb[i]->transfer_buffer )
+		{
+			err("Put of memory");
+			goto error;
+		}
+
 		pipe = usb_rcvbulkpipe(dev->udev, endpoint->bEndpointAddress);
-		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->log_buffer, le16_to_cpu(endpoint->wMaxPacketSize), atlantronic_log_urb_callback, dev);
+		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->in_urb[i]->transfer_buffer, le16_to_cpu(endpoint->wMaxPacketSize), atlantronic_log_urb_callback, dev);
 	}
 
 	// sauvegarde du pointeur dans l'interface
