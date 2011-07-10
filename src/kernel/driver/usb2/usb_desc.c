@@ -50,10 +50,10 @@ const uint8_t usb_config_descriptor[] =
 	0x07,                           // bLength: Endpoint Descriptor size
 	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
 	0x81,                           // bEndpointAddress: IN1
-	0x03,                           // bmAttributes: terminaison de type interruption
+	0x02,                           // bmAttributes: terminaison de type bloc
 	0x40,                           // wMaxPacketSize: 64 octets max
 	0x00,
-	0x01,                           // bInterval: toutes les 1 trames (toutes les ms à 12Mb)
+	0x00,                           // bInterval: ignorée pour les terminaisons de type bloc
 // Interface descriptor 1
 	0x09,                           // bLength: Endpoint Descriptor size
 	USB_INTERFACE_DESCRIPTOR_TYPE,  // bDescriptorType: Interface
