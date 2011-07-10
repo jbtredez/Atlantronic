@@ -19,6 +19,7 @@
 
 #include "kernel/cpu/cpu.h"
 #include "usb_type.h"
+#include "kernel/rcc.h"
 
 #if defined ( __CC_ARM   )
   #define __packed        __packed                     /*!< packing keyword for ARM Compiler */
@@ -152,16 +153,12 @@ USB_OTG_EP , *PUSB_OTG_EP;
   USB_OTG_WRITE_REG32(reg, (((USB_OTG_READ_REG32(reg)) & ~clear_mask) | set_mask ) )
 
 
-#define uDELAY(usec)  USB_OTG_BSP_uDelay(usec)
-#define mDELAY(msec)  USB_OTG_BSP_uDelay(1000 * msec)
+#define uDELAY(usec)  wait_active(us_to_tick(usec))
+#define mDELAY(msec)  wait_active(ms_to_tick(msec))
 
 #define _OTGD_FS_GATE_PHYCLK     *(__IO uint32_t*)(0x50000E00) = 0x03
 #define _OTGD_FS_UNGATE_PHYCLK   *(__IO uint32_t*)(0x50000E00) = 0x00
 
-/*******************************************************************************
-                   USB OTG INTERNAL TIME BASE
-*******************************************************************************/
-void USB_OTG_BSP_uDelay (const uint32_t usec);
 /********************************************************************************
                      EXPORTED FUNCTIONS FROM THE OTGD_FS_CAL LAYER
 ********************************************************************************/

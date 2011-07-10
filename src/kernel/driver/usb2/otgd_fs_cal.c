@@ -336,7 +336,7 @@ USB_OTG_Status OTGD_FS_SetDeviceMode(void)
 
   USB_OTG_WRITE_REG32(&USB_OTG_FS_regs.GREGS->GUSBCFG, usbcfg.d32);
 
-  mDELAY(50);
+//  mDELAY(50);
 
   return status;
 }
