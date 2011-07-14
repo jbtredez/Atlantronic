@@ -1,8 +1,11 @@
-#include "usb_lib.h"
-#include "usb_conf.h"
-#include "usb_prop.h"
-#include "usb_desc.h"
-#include "usb_pwr.h"
+//! @file usb_prop.c
+//! @brief USB property
+//! @author Atlantronic
+
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_conf.h"
+#include "kernel/driver/usb/usb_desc.h"
+#include "kernel/driver/usb/usb_pwr.h"
 #include "kernel/serial_number.h"
 #include "kernel/utf8.h"
 

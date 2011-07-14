@@ -1,6 +1,10 @@
 #ifndef USB_DESC_H
 #define USB_DESC_H
 
+//! @file usb_desc.h
+//! @brief USB descriptors
+//! @author Atlantronic
+
 #define USB_DEVICE_DESCRIPTOR_TYPE              0x01
 #define USB_CONFIGURATION_DESCRIPTOR_TYPE       0x02
 #define USB_STRING_DESCRIPTOR_TYPE              0x03

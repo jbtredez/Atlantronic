@@ -11,23 +11,31 @@
 #include <stdarg.h>
 #include "kernel/event.h"
 #include "kernel/rcc.h"
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_pwr.h"
 
 #define LOG_BUFER_SIZE     4096
 
 //! @todo réglage au pif
-#define LOG_STACK_SIZE       64
+#define LOG_STACK_SIZE      64
+#define LOG_TEST_STACK_SIZE      180
 
 static unsigned char log_buffer[LOG_BUFER_SIZE];
 static int log_buffer_begin;
 static int log_buffer_end;
+static unsigned int log_write_size;
 
 void log_task(void *);
 void test_task(void *); // TODO tests
+volatile unsigned int int_rdy; // TODO tests
+char buffer_test[68] = "test640\n";
 
 static int log_module_init()
 {
 	log_buffer_begin = 0;
 	log_buffer_end = 0;
+	log_write_size = 0;
+	int_rdy = 1;
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(log_task, "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
@@ -38,7 +46,7 @@ static int log_module_init()
 	}
 
 	// TODO tests
-	err = xTaskCreate(test_task, "test", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
+	err = xTaskCreate(test_task, "test", LOG_TEST_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
 
 	return 0;
 }
@@ -63,6 +71,7 @@ void log_add(char* msg, int size)
 	portEXIT_CRITICAL();
 }
 
+// attention, coute tres cher en stack
 void log_format_and_add(const char* msg, ...)
 {
 	char buffer[LOG_SIZE];
@@ -76,15 +85,10 @@ void log_format_and_add(const char* msg, ...)
 }
 
 // TODO tests
-volatile unsigned int int_rdy = 1;
-volatile unsigned int log_write_size = 0;
-#include "../src/kernel/driver/usb2/usb_lib.h"
-#include "../src/kernel/driver/usb2/usb_pwr.h"
-
 void EP1_IN_Callback(void)
 {
-	log_buffer_begin = (log_buffer_begin + log_write_size) % LOG_BUFER_SIZE;
 	int_rdy = 1;
+	log_buffer_begin = (log_buffer_begin + log_write_size) % LOG_BUFER_SIZE;
 	vTaskSetEventFromISR(EVENT_LOG);
 }
 
@@ -106,9 +110,11 @@ void log_task(void * arg)
 				{
 					size += LOG_BUFER_SIZE;
 				}
+
 				int_rdy = 0;
 				log_write_size = size;
 				USB_SIL_Write(EP1_IN, log_buffer + log_buffer_begin, size);
+				nop();
 			}
 			portEXIT_CRITICAL();
 		}
@@ -116,8 +122,6 @@ void log_task(void * arg)
 }
 
 // TODO tests
-char buffer[9] = "test640\n";
-
 void test_task(void * arg)
 {
 	(void) arg;
@@ -125,9 +129,9 @@ void test_task(void * arg)
 
 	while(1)
 	{
-		log_format_and_add("test %i\n", i);
-		log_add(buffer, sizeof(buffer));
+		//log_format_and_add("test %i\n", i);
+		log_add(buffer_test, sizeof(buffer_test));
 		i++;
-		vTaskDelay(ms_to_tick(2000));
+		vTaskDelay(ms_to_tick(500));
 	}
 }

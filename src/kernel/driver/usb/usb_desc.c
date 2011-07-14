@@ -1,5 +1,9 @@
-#include "usb_lib.h"
-#include "usb_desc.h"
+//! @file usb_desc.c
+//! @brief USB descriptors
+//! @author Atlantronic
+
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_desc.h"
 
 // USB Standard Device Descriptor
 const uint8_t usb_device_descriptor[] =

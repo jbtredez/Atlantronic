@@ -16,10 +16,10 @@
 #ifdef STM32F10X_CL
 
 /* Includes ------------------------------------------------------------------*/
-#include "otgd_fs_dev.h"
-#include "usb_regs.h"
-#include "otgd_fs_cal.h"
-#include "otgd_fs_pcd.h"
+#include "kernel/driver/usb/otgd_fs_dev.h"
+#include "kernel/driver/usb/usb_regs.h"
+#include "kernel/driver/usb/otgd_fs_cal.h"
+#include "kernel/driver/usb/otgd_fs_pcd.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -322,6 +322,8 @@ uint16_t GetRxStallStatus(uint8_t bEpNum)
 *******************************************************************************/
 void SetEPTxCount(uint8_t bEpNum, uint16_t wCount)
 {
+	(void) bEpNum;
+	(void) wCount;
 }
 
 /*******************************************************************************
@@ -334,6 +336,8 @@ void SetEPTxCount(uint8_t bEpNum, uint16_t wCount)
 *******************************************************************************/
 void SetEPRxCount(uint8_t bEpNum, uint16_t wCount)
 { 
+	(void) bEpNum;
+	(void) wCount;
 }
 
 /*******************************************************************************

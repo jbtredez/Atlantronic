@@ -14,10 +14,9 @@
 *******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
-#include "usb_lib.h"
-#include "usb_prop.h"
-#include "usb_pwr.h"
-#include "usb_istr.h"
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_pwr.h"
+#include "kernel/driver/usb/usb_istr.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

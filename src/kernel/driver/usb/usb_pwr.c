@@ -16,9 +16,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "kernel/cpu/cpu.h"
  
-#include "usb_lib.h"
-#include "usb_conf.h"
-#include "usb_pwr.h"
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_conf.h"
+#include "kernel/driver/usb/usb_pwr.h"
 void Enter_LowPowerMode(void);
 void Leave_LowPowerMode(void);
 

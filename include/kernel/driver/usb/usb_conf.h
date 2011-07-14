@@ -1,6 +1,10 @@
 #ifndef __USB_CONF_H
 #define __USB_CONF_H
 
+//! @file usb_conf.c
+//! @brief USB configuration
+//! @author Atlantronic
+
 /*-------------------------------------------------------------*/
 /* EP_NUM */
 /* defines how many endpoints are used by the device */
@@ -80,7 +84,7 @@
 /* Comment the define to enable the selected interrupt subroutine and replace it
    by user code */
 #define  INTR_MODEMISMATCH_Callback      NOP_Process
-/* #define  INTR_SOFINTR_Callback           NOP_Process */
+#define  INTR_SOFINTR_Callback           NOP_Process
 #define  INTR_RXSTSQLVL_Callback         NOP_Process
 #define  INTR_NPTXFEMPTY_Callback        NOP_Process
 #define  INTR_NPTXFEMPTY_Callback        NOP_Process
