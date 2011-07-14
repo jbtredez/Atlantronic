@@ -1,33 +1,28 @@
+//! @file error.c
+//! @brief Error codes
+//! @author Atlantronic
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "gpio.h"
 
 #include "kernel/module.h"
-#include "kernel/FreeRTOS.h"
 #include "kernel/error.h"
 
-#define NB_ERROR 10
+#define ERROR_MAX              10
 
-static uint16_t error_array[NB_ERROR];
+static uint16_t error_array[ERROR_MAX];
 static volatile uint8_t error_index = 0;
 
 // TODO : voir / reentrance
 void error_raise(uint16_t error_number)
 {
-    error_array[ error_index ] = error_number;
-    setLed (error_number);
-    
-    error_index++;
-    if(error_index>=NB_ERROR)
-      error_index = 0;
-}
+	error_array[ error_index ] = error_number;
+	setLed (error_number);
 
-#if 0 
-//for test only
-void main()
-{
-  int i=0;
-  for(i=0;i<34;i++)
-    error_raise(0x330);
+	error_index++;
+	if(error_index >= ERROR_MAX)
+	{
+		error_index = 0;
+	}
 }
-#endif

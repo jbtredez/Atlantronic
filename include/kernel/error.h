@@ -1,6 +1,10 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+//! @file error.h
+//! @brief Error codes
+//! @author Atlantronic
+
 #include "gpio.h"
 
 
