@@ -21,6 +21,8 @@
 
 #define ms_to_tick(a)    (a*RCC_SYSCLK/1000)
 #define us_to_tick(a)    (a*RCC_SYSCLK/1000000)
+#define tick_to_ms(a)    (a/(RCC_SYSCLK/1000))
+#define tick_to_us(a)    (a/(RCC_SYSCLK/1000000))
 
 void wait_active(uint32_t tick);
 
