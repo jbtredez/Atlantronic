@@ -14,10 +14,10 @@
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_pwr.h"
 
-#define LOG_BUFER_SIZE     4096
+#define LOG_BUFER_SIZE          4096
 
 //! @todo réglage au pif
-#define LOG_STACK_SIZE      64
+#define LOG_STACK_SIZE            64
 #define LOG_TEST_STACK_SIZE      250
 
 static unsigned char log_buffer[LOG_BUFER_SIZE];
@@ -26,15 +26,16 @@ static int log_buffer_end;
 static unsigned int log_write_size;
 
 void log_task(void *);
+static volatile unsigned int log_endpoint_ready;
+
 void test_task(void *); // TODO tests
-volatile unsigned int int_rdy; // TODO tests
 
 static int log_module_init()
 {
 	log_buffer_begin = 0;
 	log_buffer_end = 0;
 	log_write_size = 0;
-	int_rdy = 1;
+	log_endpoint_ready = 1;
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(log_task, "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
@@ -83,10 +84,9 @@ void log_format_and_add(const char* msg, ...)
 	log_add(buffer, size);
 }
 
-// TODO tests
 void EP1_IN_Callback(void)
 {
-	int_rdy = 1;
+	log_endpoint_ready = 1;
 	log_buffer_begin = (log_buffer_begin + log_write_size) % LOG_BUFER_SIZE;
 	vTaskSetEventFromISR(EVENT_LOG);
 }
@@ -99,8 +99,14 @@ void log_task(void * arg)
 	while(1)
 	{
 		vTaskWaitEvent(EVENT_LOG, portMAX_DELAY);
-		vTaskClearEvent(EVENT_LOG); // TODO voir / ev bDeviceState == CONFIGURED
-		if( int_rdy && bDeviceState == CONFIGURED)
+		vTaskClearEvent(EVENT_LOG);
+
+		while( bDeviceState != CONFIGURED )
+		{
+			vTaskDelay( ms_to_tick(100) );
+		}
+
+		if( log_endpoint_ready )
 		{
 			portENTER_CRITICAL();
 			if(log_buffer_begin != log_buffer_end)
@@ -112,7 +118,7 @@ void log_task(void * arg)
 					size = LOG_BUFER_SIZE - log_buffer_begin;
 				}
 
-				int_rdy = 0;
+				log_endpoint_ready = 0;
 				log_write_size = size;
 				USB_SIL_Write(EP1_IN, log_buffer + log_buffer_begin, size);
 			}
@@ -131,7 +137,10 @@ void test_task(void * arg)
 
 	while(1)
 	{
-		log_error("test bug %i", i);
+		log_info("test log_info %i", i);
+		log_error("test log_error %i", i);
+		log_debug(0, "test log_debug_0 %i", i);
+		log_debug(1, "test log_debug_1 %i", i);
 		i++;
 		wake += ms_to_tick(500);
 		vTaskDelayUntil(wake);
