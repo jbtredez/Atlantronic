@@ -22,7 +22,7 @@ MODULE_DESCRIPTION("Module USB pour communiquer avec les cartes électroniques d
 MODULE_SUPPORTED_DEVICE("Cartes usb du robot (Foo, Bar)"); //!< appareils supportés (visible par modinfo)
 MODULE_LICENSE("GPL");		//!< licence "GPL"
 
-#define DEBUG_USB                        3
+#define DEBUG_USB                        0
 
 // valeurs de l'id du périphérique
 #define ATLANTRONIC_ID              0x1818   //!< id du vendeur
