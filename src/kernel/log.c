@@ -18,7 +18,7 @@
 
 //! @todo réglage au pif
 #define LOG_STACK_SIZE      64
-#define LOG_TEST_STACK_SIZE      180
+#define LOG_TEST_STACK_SIZE      250
 
 static unsigned char log_buffer[LOG_BUFER_SIZE];
 static int log_buffer_begin;
@@ -28,7 +28,6 @@ static unsigned int log_write_size;
 void log_task(void *);
 void test_task(void *); // TODO tests
 volatile unsigned int int_rdy; // TODO tests
-char buffer_test[68] = "test640\n";
 
 static int log_module_init()
 {
@@ -100,6 +99,7 @@ void log_task(void * arg)
 	while(1)
 	{
 		vTaskWaitEvent(EVENT_LOG, portMAX_DELAY);
+		vTaskClearEvent(EVENT_LOG); // TODO voir / ev bDeviceState == CONFIGURED
 		if( int_rdy && bDeviceState == CONFIGURED)
 		{
 			portENTER_CRITICAL();
@@ -108,13 +108,13 @@ void log_task(void * arg)
 				int size = log_buffer_end - log_buffer_begin;
 				if(size < 0)
 				{
-					size += LOG_BUFER_SIZE;
+					// on envoi juste la fin du buffer sur ce cycle
+					size = LOG_BUFER_SIZE - log_buffer_begin;
 				}
 
 				int_rdy = 0;
 				log_write_size = size;
 				USB_SIL_Write(EP1_IN, log_buffer + log_buffer_begin, size);
-				nop();
 			}
 			portEXIT_CRITICAL();
 		}
@@ -127,11 +127,13 @@ void test_task(void * arg)
 	(void) arg;
 	int i = 0;
 
+	portTickType wake = 0;//systick_get_time();
+
 	while(1)
 	{
-		//log_format_and_add("test %i\n", i);
-		log_add(buffer_test, sizeof(buffer_test));
+		log_error("test bug %i", i);
 		i++;
-		vTaskDelay(ms_to_tick(500));
+		wake += ms_to_tick(500);
+		vTaskDelayUntil(wake);
 	}
 }
