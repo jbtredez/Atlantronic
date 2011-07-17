@@ -99,7 +99,13 @@ const uint8_t usb_string_product[USB_STRING_PRODUCT_SIZE] =
 {
 	USB_STRING_PRODUCT_SIZE,           // bLength
 	USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
+#if defined( __foo__ )
+	'F', 0, 'o', 0, 'o', 0
+#elif defined( __bar__ )
 	'B', 0, 'a', 0, 'r', 0
+#else
+#error unknown card
+#endif
 };
 
 uint8_t usb_string_serial[USB_STRING_SERIAL_SIZE] =
