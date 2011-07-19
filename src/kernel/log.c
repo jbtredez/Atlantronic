@@ -18,7 +18,6 @@
 
 //! @todo réglage au pif
 #define LOG_STACK_SIZE            64
-#define LOG_TEST_STACK_SIZE      250
 
 static unsigned char log_buffer[LOG_BUFER_SIZE];
 static int log_buffer_begin;
@@ -27,8 +26,6 @@ static unsigned int log_write_size;
 
 void log_task(void *);
 static volatile unsigned int log_endpoint_ready;
-
-void test_task(void *); // TODO tests
 
 static int log_module_init()
 {
@@ -44,9 +41,6 @@ static int log_module_init()
 	{
 		return ERR_INIT_LOG;
 	}
-
-	// TODO tests
-	err = xTaskCreate(test_task, "test", LOG_TEST_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
 
 	return 0;
 }
@@ -124,25 +118,5 @@ void log_task(void * arg)
 			}
 			portEXIT_CRITICAL();
 		}
-	}
-}
-
-// TODO tests
-void test_task(void * arg)
-{
-	(void) arg;
-	int i = 0;
-
-	portTickType wake = 0;//systick_get_time();
-
-	while(1)
-	{
-		log_info("test log_info %i", i);
-		log_error("test log_error %i", i);
-		log_debug(0, "test log_debug_0 %i", i);
-		log_debug(1, "test log_debug_1 %i", i);
-		i++;
-		wake += ms_to_tick(500);
-		vTaskDelayUntil(wake);
 	}
 }
