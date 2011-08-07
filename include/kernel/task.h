@@ -479,7 +479,7 @@ void vTaskDelay( portTickType xTicksToDelay ) PRIVILEGED_FUNCTION;
  const portTickType xFrequency = 10;
 
 	 // Initialise the xLastWakeTime variable with the current time.
-	 xWakeTime = xTaskGetTickCount ();
+	 xWakeTime = systick_get_time ();
 	 for( ;; )
 	 {
 		 // Wait for the next cycle.
@@ -913,16 +913,6 @@ signed portBASE_TYPE xTaskIsTaskSuspended( xTaskHandle xTask ) PRIVILEGED_FUNCTI
  * TASK UTILITIES
  *----------------------------------------------------------*/
 
-/**
- * task. h
- * <PRE>volatile portTickType xTaskGetTickCount( void );</PRE>
- *
- * @return The count of ticks since vTaskStartScheduler was called.
- *
- * \page xTaskGetTickCount xTaskGetTickCount
- * \ingroup TaskUtils
- */
-portTickType xTaskGetTickCount( void ) PRIVILEGED_FUNCTION;
 
 /**
  * task. h

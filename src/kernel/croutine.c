@@ -51,9 +51,9 @@
     licensing and training services.
 */
 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "croutine.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/croutine.h"
 
 /*
  * Some kernel aware debuggers require data to be viewed to be global, rather
@@ -244,7 +244,7 @@ static void prvCheckDelayedList( void )
 {
 corCRCB *pxCRCB;
 
-	xPassedTicks = xTaskGetTickCount() - xLastTickCount;
+	xPassedTicks = systick_get_time() - xLastTickCount;
 	while( xPassedTicks )
 	{
 		xCoRoutineTickCount++;
