@@ -54,10 +54,10 @@ static int control_pince_module_init()
 		return ERR_INIT_CONTROL_PINCE;
 	}
 
-	pid_init(&control_pince_param.pid_ind_height1, 0.005, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_ind_height2, 0.005, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_height, 0.001, 0, 0, PWM_ARR);
-	pid_init(&control_pince_param.pid_dual_alpha, 0.0005, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height1, 0.005f, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_ind_height2, 0.005f, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_height, 0.001f, 0, 0, PWM_ARR);
+	pid_init(&control_pince_param.pid_dual_alpha, 0.0005f, 0, 0, PWM_ARR);
 
 	trapeze_set(&control_pince_param.ind_trapeze_right, 4000.0f*TE, 16000.0f*TE*TE);
 	trapeze_set(&control_pince_param.ind_trapeze_left, 4000.0f*TE, 16000.0f*TE*TE);

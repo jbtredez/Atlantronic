@@ -80,9 +80,9 @@ static struct pid control_pid_rot;
 
 static float sinc( float x )
 {
-	if( fabsf(x) < 0.01 )
+	if( fabsf(x) < 0.01f )
 	{
-		return 1.0;
+		return 1.0f;
 	}
 	else
 	{

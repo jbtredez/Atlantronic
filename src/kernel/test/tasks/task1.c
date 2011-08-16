@@ -37,7 +37,7 @@ static void task1_task(void* arg)
 	while(1)
 	{
 		int64_t i;
-		static volatile float x = 0.3587;
+		static volatile float x = 0.3587f;
 		for(i = 0; i < 10000LL; i++)
 		{
 			x++;
