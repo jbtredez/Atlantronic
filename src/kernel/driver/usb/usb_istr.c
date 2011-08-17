@@ -1,34 +1,93 @@
-/******************** (C) COPYRIGHT 2011 STMicroelectronics ********************
-* File Name          : usb_istr.c
-* Author             : MCD Application Team
-* Version            : V3.3.0
-* Date               : 21-March-2011
-* Description        : ISTR events interrupt service routines
-********************************************************************************
-* THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
-* WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
-* AS A RESULT, STMICROELECTRONICS SHALL NOT BE HELD LIABLE FOR ANY DIRECT,
-* INDIRECT OR CONSEQUENTIAL DAMAGES WITH RESPECT TO ANY CLAIMS ARISING FROM THE
-* CONTENT OF SUCH FIRMWARE AND/OR THE USE MADE BY CUSTOMERS OF THE CODING
-* INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
-*******************************************************************************/
-
-/* Includes ------------------------------------------------------------------*/
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_pwr.h"
 #include "kernel/driver/usb/usb_istr.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+void nop_function(void);
+
+void EP1_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP2_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP3_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP4_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP5_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP6_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP7_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
+
+void EP1_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP2_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP3_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP4_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP5_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP6_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void EP7_OUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+
+#ifndef STM32F10X_CL
+
+#ifdef CTR_CALLBACK
+void CTR_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef DOVR_CALLBACK
+void DOVR_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef ERR_CALLBACK
+void ERR_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef WKUP_CALLBACK
+void WKUP_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef SUSP_CALLBACK
+void SUSP_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef RESET_CALLBACK
+void RESET_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef SOF_CALLBACK
+void SOF_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#ifdef ESOF_CALLBACK
+void ESOF_Callback(void) __attribute__((weak, alias("nop_function") ));
+#endif
+
+#else /* STM32F10X_CL */
+
+void INTR_MODEMISMATCH_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_SOFINTR_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_RXSTSQLVL_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_NPTXFEMPTY_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_GINNAKEFF_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_GOUTNAKEFF_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_ERLYSUSPEND_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_USBSUSPEND_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_USBRESET_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_ENUMDONE_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_ISOOUTDROP_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_EOPFRAME_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_EPMISMATCH_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_INEPINTR_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_OUTEPINTR_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_INCOMPLISOIN_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_INCOMPLISOOUT_Callback(void) __attribute__((weak, alias("nop_function") ));
+void INTR_WKUPINTR_Callback(void) __attribute__((weak, alias("nop_function") ));
+
+/* Isochronous data update */
+void INTR_RXSTSQLVL_ISODU_Callback(void) __attribute__((weak, alias("nop_function") ));
+
+#endif
+
+void nop_function(void)
+{
+
+}
+
 __IO uint16_t wIstr;  /* ISTR register last read value */
 __IO uint8_t bIntPackSOF = 0;  /* SOFs received between 2 consecutive packets */
 
-/* Extern variables ----------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private functions ---------------------------------------------------------*/
-/* function pointers to non-control endpoints service routines */
 void (*pEpInt_IN[7])(void) =
   {
     EP1_IN_Callback,

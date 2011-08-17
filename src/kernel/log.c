@@ -65,7 +65,7 @@ void log_add(char* msg, int size)
 	portEXIT_CRITICAL();
 }
 
-// attention, coute tres cher en stack
+//! attention, coute tres cher en stack
 void log_format_and_add(const char* msg, ...)
 {
 	char buffer[LOG_SIZE];

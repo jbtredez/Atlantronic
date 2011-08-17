@@ -80,32 +80,6 @@
 //#define INTR_INCOMPLISOOUT
 #define INTR_WKUPINTR            /* Mandatory */
 
-/* OTGD-FS-DEVICE IP interrupts subroutines */
-/* Comment the define to enable the selected interrupt subroutine and replace it
-   by user code */
-#define  INTR_MODEMISMATCH_Callback      NOP_Process
-#define  INTR_SOFINTR_Callback           NOP_Process
-#define  INTR_RXSTSQLVL_Callback         NOP_Process
-#define  INTR_NPTXFEMPTY_Callback        NOP_Process
-#define  INTR_NPTXFEMPTY_Callback        NOP_Process
-#define  INTR_GINNAKEFF_Callback         NOP_Process
-#define  INTR_GOUTNAKEFF_Callback        NOP_Process
-#define  INTR_ERLYSUSPEND_Callback       NOP_Process
-#define  INTR_USBSUSPEND_Callback        NOP_Process
-#define  INTR_USBRESET_Callback          NOP_Process
-#define  INTR_ENUMDONE_Callback          NOP_Process
-#define  INTR_ISOOUTDROP_Callback        NOP_Process
-#define  INTR_EOPFRAME_Callback          NOP_Process
-#define  INTR_EPMISMATCH_Callback        NOP_Process
-#define  INTR_INEPINTR_Callback          NOP_Process
-#define  INTR_OUTEPINTR_Callback         NOP_Process
-#define  INTR_INCOMPLISOIN_Callback      NOP_Process
-#define  INTR_INCOMPLISOOUT_Callback     NOP_Process
-#define  INTR_WKUPINTR_Callback          NOP_Process
-
-/* Isochronous data update */
-#define  INTR_RXSTSQLVL_ISODU_Callback   NOP_Process  
-
 /* Isochronous transfer parameters */
 /* Size of a single Isochronous buffer (size of a single transfer) */
 #define ISOC_BUFFER_SZE                  1
@@ -113,24 +87,5 @@
 #define NUM_SUB_BUFFERS                  2
 
 #endif /* STM32F10X_CL */
-
-
-/* CTR service routines */
-/* associated to defined endpoints */
-//#define  EP1_IN_Callback   NOP_Process
-//#define  EP2_IN_Callback   NOP_Process
-#define  EP3_IN_Callback   NOP_Process
-#define  EP4_IN_Callback   NOP_Process
-#define  EP5_IN_Callback   NOP_Process
-#define  EP6_IN_Callback   NOP_Process
-#define  EP7_IN_Callback   NOP_Process
-
-#define  EP1_OUT_Callback   NOP_Process
-#define  EP2_OUT_Callback   NOP_Process
-#define  EP3_OUT_Callback   NOP_Process
-#define  EP4_OUT_Callback   NOP_Process
-#define  EP5_OUT_Callback   NOP_Process
-#define  EP6_OUT_Callback   NOP_Process
-#define  EP7_OUT_Callback   NOP_Process
 
 #endif /* __USB_CONF_H */

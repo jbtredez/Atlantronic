@@ -55,7 +55,6 @@ obj-bar-test_log += kernel/driver/usb/usb_desc.o
 obj-bar-test_log += kernel/driver/usb/usb_core.o
 obj-bar-test_log += kernel/driver/usb/usb_pwr.o
 obj-bar-test_log += kernel/driver/usb/usb_istr.o
-obj-bar-test_log += kernel/driver/usb/usb_endp.o
 obj-bar-test_log += kernel/driver/usb/usb_sil.o
 obj-bar-test_log += kernel/driver/usb/otgd_fs_dev.o
 obj-bar-test_log += kernel/driver/usb/otgd_fs_cal.o
