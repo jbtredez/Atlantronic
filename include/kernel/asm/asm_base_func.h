@@ -16,6 +16,11 @@
 #define dmb()                         __asm volatile ("dmb")
 #define clrex()                       __asm volatile ("clrex")
 
+static inline void nop_function(void)
+{
+
+}
+
 static inline uint32_t get_BASEPRI(void)
 {
 	uint32_t result = 0;

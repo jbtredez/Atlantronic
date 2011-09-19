@@ -1,8 +1,7 @@
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_pwr.h"
 #include "kernel/driver/usb/usb_istr.h"
-
-void nop_function(void);
+#include "kernel/asm/asm_base_func.h"
 
 void EP1_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
 void EP2_IN_Callback(void) __attribute__((weak, alias("nop_function") ));
@@ -79,11 +78,6 @@ void INTR_WKUPINTR_Callback(void) __attribute__((weak, alias("nop_function") ));
 void INTR_RXSTSQLVL_ISODU_Callback(void) __attribute__((weak, alias("nop_function") ));
 
 #endif
-
-void nop_function(void)
-{
-
-}
 
 __IO uint16_t wIstr;  /* ISTR register last read value */
 __IO uint8_t bIntPackSOF = 0;  /* SOFs received between 2 consecutive packets */
