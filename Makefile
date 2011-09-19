@@ -24,6 +24,7 @@ doc := doc
 INCLUDES:=-I. -Iinclude
 
 DEBUG ?= 1
+VERBOSE ?= 0
 
 ifeq ($(MAKECMDGOALS),foo)
 ARCH=foo
@@ -35,6 +36,10 @@ endif
 
 ifeq ($(MAKECMDGOALS),linux)
 ARCH=linux
+endif
+
+ifeq ($(VERBOSE),0)
+V:=@
 endif
 
 -include src/$(ARCH)/Makefile
@@ -60,16 +65,16 @@ $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $@
 	@mkdir -p `dirname $@`
-	@$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(V)$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo [CXX] $@
 	@mkdir -p `dirname $@`
-	@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(V)@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@
-	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
+	$(V)@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 # cibles
 # cible par defaut :
@@ -99,14 +104,14 @@ endif
 $(bin)/$(ARCH)/%:
 	@echo [LD] $@
 	@mkdir -p `dirname $@`
-	@$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
-	@$(OBJCOPY) --only-keep-debug $@ $@.debug
-	@$(OBJCOPY) --add-gnu-debuglink $@.debug $@
-	@$(STRIP) $@
+	$(V)$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
+	$(V)$(OBJCOPY) --only-keep-debug $@ $@.debug
+	$(V)$(OBJCOPY) --add-gnu-debuglink $@.debug $@
+	$(V)$(STRIP) $@
 
 %.png: %.dot
 	@echo [DOT] $@
-	@$(DOT) $< -Tpng -o $@
+	$(V)$(DOT) $< -Tpng -o $@
 
 dot: $(BIN_DOC)
 
