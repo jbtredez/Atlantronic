@@ -40,14 +40,6 @@ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 
 void usart_open( enum usart_id id, uint32_t frequency)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-	}
-#endif
-
 	switch(id)
 	{
 		case USART3_FULL_DUPLEX:
@@ -115,12 +107,10 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA2_Channel3_IRQn);
 			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 			break;
-#ifdef DEBUG
 		default:
 			error_raise(ERR_USART_UNKNOWN_DEVICE);
 			return;
 			break;
-#endif
 	}
 
 	// taille mémoire d'une donnée : 8 bits

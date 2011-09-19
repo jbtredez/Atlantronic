@@ -15,6 +15,11 @@ CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-mno-thumb-interwork
+
+CFLAGS+=-Wswitch-default
+CFLAGS+=-Wswitch-enum
+CFLAGS+=-Wunsuffixed-float-constants
+
 #CFLAGS+=-O2
 CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-g3

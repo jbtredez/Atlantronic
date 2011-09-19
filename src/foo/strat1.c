@@ -171,6 +171,7 @@ static void strat_task()
 
 	switch(pos_tour)
 	{
+		default:
 		case 0:
 			goto_with_avoidance(- sens * 700, -350, 0, CONTROL_ANY_WAY);
 			if(getcolor() == COLOR_BLUE)

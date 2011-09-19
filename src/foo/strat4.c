@@ -214,6 +214,7 @@ void action_build_tower(int sens)
 	
 	switch(pos_tour)
 	{
+		default:
 		case 0:
 			goto_with_avoidance(- sens * 700, -350, 0, CONTROL_ANY_WAY);
 			goto_with_avoidance(- sens * 1400, -350, 160, CONTROL_FORWARD);
