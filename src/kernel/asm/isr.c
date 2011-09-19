@@ -56,7 +56,7 @@ __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
 {
 	// processeur - cortex-m3
-	(void (*)(void))(&_stack_top),          // Stack pointer initial principal
+	(void (*)(void))(&_stack_top),          // Initialisation du pointer de la stack principale
 	isr_reset, 
 	isr_nmi,
 	isr_hard_fault,
@@ -70,7 +70,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_svc,
 	isr_debug_monitor,
 	0,                                      // Reserved
-	isr_context_switch,                     // The PendSV handler => context_switch
+	isr_context_switch,
 	isr_systick,
 
 	// périphériques
@@ -201,9 +201,9 @@ void isr_reset(void)
 	__main();
 }
 
-// doc utile : 0xfffffff1 : retour handler mode
-//             0xfffffffd : retour thread mode, et utilisation de process stack
-//             0xfffffff9 : retour thread mode, et utilisation de main stack
+//! doc utile : 0xfffffff1 : retour handler mode
+//!             0xfffffffd : retour thread mode, et utilisation de process stack
+//!             0xfffffff9 : retour thread mode, et utilisation de main stack
 void isr_svc( void )
 {
 	__asm volatile
@@ -225,8 +225,6 @@ void isr_svc( void )
 
 void isr_context_switch( void )
 {
-	/* This is a naked function. */
-
 	__asm volatile
 	(
 		"   mrs r0, psp                         \n"
