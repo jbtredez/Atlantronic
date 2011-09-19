@@ -6,6 +6,7 @@ MTUNE:=cortex-m3
 LDSCRIPT:=scripts/ld/arm-elf.ld
 
 DEF+=__ARM_CM3__=1
+DEF+=STM32F10X_CL
 
 CFLAGS:=-mcpu=$(MCPU)
 CFLAGS+=-msoft-float
@@ -14,6 +15,9 @@ CFLAGS+=-mthumb
 CFLAGS+=-x c
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
+CFLAGS+=-Wswitch-default
+CFLAGS+=-Wswitch-enum
+CFLAGS+=-Wunsuffixed-float-constants
 CFLAGS+=-mno-thumb-interwork
 #CFLAGS+=-O1
 CFLAGS+=-fomit-frame-pointer
@@ -33,7 +37,6 @@ LDFLAGS+=-lg
 LDFLAGS+=-g3
 
 DEF+=__$(ARCH)__
-DEF+=STM32F10X_CL
 
 ifeq ($(DEBUG),1)
 
