@@ -6,7 +6,9 @@
 #include "kernel/task.h"
 #include "kernel/module.h"
 #include "kernel/queue.h"
+#define NO_WEAK_LOG
 #include "kernel/log.h"
+#undef NO_WEAK_LOG
 #include "priority.h"
 #include <stdarg.h>
 #include "kernel/event.h"
@@ -34,7 +36,7 @@ static int log_module_init()
 	log_write_size = 0;
 	log_endpoint_ready = 1;
 
-	log_format_and_add("Création de la tache de log\n");
+	log_info("Création de la tache de log");
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(log_task, "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
@@ -51,6 +53,11 @@ module_init(log_module_init, INIT_LOG);
 
 void log_add(char* msg, int size)
 {
+	if(size < 0)
+	{
+		return;
+	}
+
 	portENTER_CRITICAL();
 	for( ; size--; )
 	{
