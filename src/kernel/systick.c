@@ -6,6 +6,7 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOSConfig.h"
 #include "kernel/portmacro.h"
+#include "kernel/log.h"
 
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_PENDSVSET			0x10000000
@@ -25,6 +26,8 @@ extern void vTaskIncrementTick( void );
 
 static int systick_module_init()
 {
+	log_info("Lancement de l'ordonanceur");
+
 	systick_time_start_match = 0;
 
 	NVIC_SetPriority(PendSV_IRQn, PRIORITY_IRQ_PENDSV);
