@@ -22,15 +22,17 @@
 // init gpio pour afficher les erreurs sur les led
 #define INIT_GPIO                     "01"
 
+// init des log (buffer circulaire)
+#define INIT_LOG                      "02"
+
 // init de la communication
-#define INIT_USART                    "02"
 #define INIT_USB                      "03"
-#define INIT_CAN                      "04"
+#define INIT_USART                    "04"
+#define INIT_CAN                      "05"
 
 // init adc
-#define INIT_ADC                      "04"
+#define INIT_ADC                      "06"
 
-#define INIT_LOG                      "05"
 #define INIT_MODEL                    "06"
 #define INIT_ENCODERS                 "07"
 #define INIT_CURRENT                  "08"
