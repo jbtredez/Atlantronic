@@ -34,6 +34,8 @@ static int log_module_init()
 	log_write_size = 0;
 	log_endpoint_ready = 1;
 
+	log_format_and_add("Création de la tache de log\n");
+
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(log_task, "log", LOG_STACK_SIZE, NULL, PRIORITY_TASK_LOG, &xHandle);
 
@@ -92,9 +94,6 @@ void log_task(void * arg)
 
 	while(1)
 	{
-		vTaskWaitEvent(EVENT_LOG, portMAX_DELAY);
-		vTaskClearEvent(EVENT_LOG);
-
 		while( bDeviceState != CONFIGURED )
 		{
 			vTaskDelay( ms_to_tick(100) );
@@ -118,5 +117,8 @@ void log_task(void * arg)
 			}
 			portEXIT_CRITICAL();
 		}
+
+		vTaskWaitEvent(EVENT_LOG, portMAX_DELAY);
+		vTaskClearEvent(EVENT_LOG);
 	}
 }
