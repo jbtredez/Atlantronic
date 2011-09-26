@@ -107,10 +107,10 @@ static void usb_prop_reset(void)
 
 	/* EP0 is already configured by USB_SIL_Init() function */
 
-	// Init EP1 IN as Interrupt endpoint
-	OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_INT, 0x40);
-
 	// Init EP1 IN as Bulk endpoint
+	OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
+
+	// Init EP2 IN as Bulk endpoint
 	OTG_DEV_EP_Init(EP2_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
 
 	bDeviceState = ATTACHED;
