@@ -56,7 +56,7 @@
 #define RX_FIFO_SIZE                          128
 #define TX0_FIFO_SIZE                          64
 #define TX1_FIFO_SIZE                          64
-#define TX2_FIFO_SIZE                          16
+#define TX2_FIFO_SIZE                          64
 #define TX3_FIFO_SIZE                          16
 
 /* OTGD-FS-DEVICE IP interrupts Enable definitions */
