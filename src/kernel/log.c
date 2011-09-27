@@ -118,11 +118,6 @@ void log_task(void * arg)
 					size = LOG_BUFER_SIZE - log_buffer_begin;
 				}
 
-				if(size > 0x40)
-				{
-					size = 0x40;
-				}
-
 				log_endpoint_ready = 0;
 				log_write_size = size;
 				USB_SIL_Write(EP1_IN, log_buffer + log_buffer_begin, size);
