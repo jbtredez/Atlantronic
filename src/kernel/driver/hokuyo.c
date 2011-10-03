@@ -7,6 +7,8 @@
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
+#include "kernel/driver/usb/usb_lib.h"
+#include "kernel/driver/usb/usb_pwr.h"
 
 //!< taille de la réponse maxi avec hokuyo_scan_all :
 //!< 682 points => 1364 data
@@ -20,7 +22,10 @@ const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 #define HOKUYO_SPEED        750000
 
+
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
+static uint16_t hokuyo_read_dma_buffer_size;
+static volatile unsigned int hokuyo_endpoint_ready;
 
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
@@ -32,6 +37,8 @@ uint32_t hokuyo_init()
 
 	usart_open(USART3_FULL_DUPLEX, 19200);
 
+	hokuyo_endpoint_ready = 1;
+	hokuyo_read_dma_buffer_size = 0;
 	usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
 
 	err = hokuyo_scip2();
@@ -63,6 +70,11 @@ uint32_t hokuyo_init()
 
 end:
 	return err;
+}
+
+void EP2_IN_Callback(void)
+{
+	hokuyo_endpoint_ready = 1;
 }
 
 //! Vérifie que la commande envoyée est bien renvoyée par le hokuyo
@@ -108,6 +120,9 @@ static uint32_t hokuyo_write_cmd(unsigned char* buf, uint32_t write_size, uint32
 	{
 		goto end;
 	}
+
+	// TODO voir / bug  timeout ou lecture partielle
+	hokuyo_read_dma_buffer_size = read_size;
 
 	err = hokuyo_check_cmd(buf, write_size);
 
@@ -276,7 +291,7 @@ uint32_t hokuyo_scan()
 	if( hokuyo_read_dma_buffer[3] != 0)
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;	
+		goto end;
 	}
 
 	switch(hokuyo_read_dma_buffer[4])
@@ -295,6 +310,15 @@ uint32_t hokuyo_scan()
 
 end:
 	return err;	
+}
+
+void hokuyo_usb_send()
+{
+	if( hokuyo_endpoint_ready && bDeviceState == CONFIGURED)
+	{
+		hokuyo_endpoint_ready = 0;
+		USB_SIL_Write(EP2_IN, hokuyo_read_dma_buffer, hokuyo_read_dma_buffer_size);
+	}
 }
 
 uint32_t hokuyo_decode_distance(uint16_t* distance, int size)

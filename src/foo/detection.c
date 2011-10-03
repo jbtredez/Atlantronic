@@ -10,9 +10,10 @@
 #include "location/location.h"
 #include "kernel/rcc.h"
 #include <math.h>
+#include "kernel/log.h"
 
 //! @todo réglage au pif
-#define DETECTION_STACK_SIZE         100
+#define DETECTION_STACK_SIZE         400
 #define HOKUYO_NUM_POINTS            682
 #define HOKUYO_NUM_OBJECT            100
 #define HOKUYO_NUM_PAWN               50
@@ -63,15 +64,21 @@ static void detection_task()
 	while(1)
 	{
 		pos_robot = location_get_position();
+//log_info("scan");
+
 		err = hokuyo_scan();
+//log_info("scan_end");
 		if( err)
 		{
 			// TODO : checksum qui marche pas
-//			error_raise(err);
+			error_raise(err);
 		}
+
+		hokuyo_usb_send();
 
 		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
 
+#if 1
 		hokuyo_num_obj = hokuyo_find_objects(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 		portENTER_CRITICAL();
@@ -89,7 +96,7 @@ static void detection_task()
 		portEXIT_CRITICAL();
 
 //		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
-
+#endif
 		vTaskDelay(ms_to_tick(100));
 	}
 
