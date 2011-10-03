@@ -1,5 +1,5 @@
-//! @file atlantronic_usb_driver.c
-//! @brief Code du driver USB des cartes Atlantronic
+//! @file atlantronic_usb_log.c
+//! @brief Code du driver USB, interface log des cartes Atlantronic
 //! @author Atlantronic
 
 #include <linux/init.h>
@@ -246,7 +246,7 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 		goto error;
 	}
 
-	do
+	while( n_cpy == 0 && count > 0)
 	{
 		if( wait_event_interruptible(dev->wait, dev->log_buffer_begin != dev->log_buffer_end))
 		{
@@ -297,7 +297,7 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 		}
 
 		mutex_unlock(&dev->io_mutex);
-	}while( n_cpy == 0);
+	}
 
 	return n_cpy;
 
@@ -383,7 +383,7 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 	iface_desc = interface->cur_altsetting;
 
 	dev->interface_subclass = iface_desc->desc.bInterfaceSubClass;
-	if( dev->interface_subclass != ATLANTRONIC_LOG_SUBCLASS)
+	if( dev->interface_subclass != ATLANTRONIC_LOG_SUBCLASS && dev->interface_subclass != ATLANTRONIC_HOKUYO_SUBCLASS)
 	{
 		rep = -ENODEV;
 		goto error;
@@ -593,7 +593,7 @@ static int __init atlantronic_log_init(void)
 {
 	int rep = 0;
 
-    info("Atlantronic : init");
+	info("Atlantronic_log : init");
 
 	// enregistrement du pilote
 	rep = usb_register(&atlantronic_log_driver);
@@ -607,7 +607,7 @@ static int __init atlantronic_log_init(void)
 
 static void __exit atlantronic_log_exit(void)
 {
-    info("Atlantronic : exit");
+	info("Atlantronic_log : exit");
 	usb_deregister(&atlantronic_log_driver);
 }
 
