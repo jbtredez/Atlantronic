@@ -248,10 +248,17 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 
 	while( n_cpy == 0 && count > 0)
 	{
-		if( wait_event_interruptible(dev->wait, dev->log_buffer_begin != dev->log_buffer_end))
+		if( wait_event_interruptible(dev->wait, dev->log_buffer_begin != dev->log_buffer_end || dev->thread_stop_req))
 		{
 			debug(2, "interruption par un signal");
 			rep = -ERESTARTSYS;
+			goto error;
+		}
+
+		if( dev->thread_stop_req )
+		{
+			// usb deconnecte, on retourne 0 (fin du fichier)
+			rep = 0;
 			goto error;
 		}
 
@@ -508,6 +515,9 @@ static void atlantronic_log_disconnect(struct usb_interface *interface)
 	{
 		wake_up_process(dev->log_task);
 	}
+
+	// debloquage du read
+	wake_up_interruptible(&dev->wait);
 
 	kref_put(&dev->kref, atlantronic_log_delete);
 }
