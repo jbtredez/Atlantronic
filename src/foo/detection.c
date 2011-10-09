@@ -20,6 +20,7 @@
 
 static void detection_task();
 int detection_module_init();
+uint32_t detection_compute();
 
 static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
 //static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
@@ -48,59 +49,88 @@ module_init(detection_module_init, INIT_DETECTION);
 static void detection_task()
 {
 	uint32_t err;
-	int i;
-	struct vect_pos pos_robot;
-	struct vect_pos pos_pawn;
+	portTickType wake_time;
+	portTickType current_time;
 
 	do
 	{
+		log_info("Initialisation du hokuyo");
 		err = hokuyo_init();
 		if( err)
 		{
 			error_raise(err);
+			log_error("hokuyo_init : error = %#.8x", (unsigned int)err);
+			vTaskDelay(ms_to_tick(100));
 		}
 	} while(err);
 
+	log_info("Lancement des scan hokuyo");
+
+	// on doit avoir au moins 100ms entre 2 demandes de scan
+	wake_time = systick_get_time();
+
 	while(1)
 	{
-		pos_robot = location_get_position();
-//log_info("scan");
-
-		err = hokuyo_scan();
-//log_info("scan_end");
+		err = detection_compute();
 		if( err)
 		{
-			// TODO : checksum qui marche pas
 			error_raise(err);
 		}
 
-		hokuyo_usb_send();
-
-		hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
-
-#if 1
-		hokuyo_num_obj = hokuyo_find_objects(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
-
-		portENTER_CRITICAL();
-		for(i = 0, detection_num_pawn = 0; i < hokuyo_num_obj && detection_num_pawn < HOKUYO_NUM_PAWN ; i++)
+		wake_time += ms_to_tick(150);
+		current_time = systick_get_time();
+		if( wake_time < current_time)
 		{
-			if( hokuyo_object_is_pawn(hokuyo_distance, &hokuyo_object[i], &pos_pawn) )
-			{
-				// changement de repere hokuyo -> robot
-				pos_pawn.x += 60;
-				// changement de repere robot -> table
-				pos_robot_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
-				detection_num_pawn++;
-			}
+			// on ne tiens pas le temps de cycle. Pb de com avec le hokuyo ou calcul trop long
+			log_error("Tache detection retardee - delta = %d us", (unsigned int)tick_to_us(current_time - wake_time));
+			wake_time = current_time + ms_to_tick(110);
 		}
-		portEXIT_CRITICAL();
 
-//		hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
-#endif
-		vTaskDelay(ms_to_tick(100));
+		vTaskDelayUntil(wake_time);
 	}
 
 	vTaskDelete(NULL);
+}
+
+uint32_t detection_compute()
+{
+	int i;
+	struct vect_pos pos_robot;
+	struct vect_pos pos_pawn;
+	uint32_t err = 0;
+
+	pos_robot = location_get_position();
+
+	err = hokuyo_scan();
+	if(err)
+	{
+		log_error("hokuyo_scan : err = %#.8x", (unsigned int)err);
+		goto end;
+	}
+
+	hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
+
+#if 1
+	hokuyo_num_obj = hokuyo_find_objects(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
+
+	portENTER_CRITICAL();
+	for(i = 0, detection_num_pawn = 0; i < hokuyo_num_obj && detection_num_pawn < HOKUYO_NUM_PAWN ; i++)
+	{
+		if( hokuyo_object_is_pawn(hokuyo_distance, &hokuyo_object[i], &pos_pawn) )
+		{
+			// changement de repere hokuyo -> robot
+			pos_pawn.x += 60;
+			// changement de repere robot -> table
+			pos_robot_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
+			detection_num_pawn++;
+		}
+	}
+	portEXIT_CRITICAL();
+
+//	hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+#endif
+end:
+	return err;
 }
 
 int detection_get_close_pawn(struct vect_pos *best_pawn)
