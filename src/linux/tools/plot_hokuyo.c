@@ -17,6 +17,56 @@ static unsigned char buffer[10240];
 static int buffer_end = 0;
 static int buffer_begin = 0;
 static int buffer_size = 0;
+static struct vect_pos pos_robot = {0, 0, 0, 1, 0};
+
+#define MAX_TABLE_PTS   88
+float table_pts[MAX_TABLE_PTS] =
+{
+	-1500,  1050,
+	 1500,  1050,
+	 1500, -1050,
+	 1100, -1050,
+	 1100,  -650,
+	 1500,  -650,
+	 1500, -1050,
+	-1500, -1050,
+	-1100, -1050,
+	-1100,  -650,
+	-1500,  -650,
+	-1500, -1050,
+	-1500,  1050,
+	-1100,  1050,
+	-1100, -1050,
+	-1050, -1050,
+	-1050,  1050,
+	-1050,   700,
+	 -700,   700,
+	 1050,   700,
+	 -700,   700,
+	 -700, -1050,
+	 -350, -1050,
+	 -350,   700,
+	    0,   700,
+	    0, -1050,
+	  350, -1050,
+	  350,   700,
+	  700,   700,
+	  700, -1050,
+	 1100, -1050,
+	 1100,  1050,
+	 1050,  1050,
+	 1050, -1050,
+	 1050,  -700,
+	-1050,  -700,
+	-1050,  -350,
+	 1050,  -350,
+	 1050,     0,
+	-1050,     0,
+	-1050,   350,
+	 1050,   350,
+	 1050,   700,
+	-1050,   700,
+};
 
 enum
 {
@@ -136,13 +186,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	FILE* plot_xy = popen("gnuplot", "w");
-	if(plot_xy == NULL)
-	{
-		perror("popen");
-		return 0;
-	}
-
+	// affichage des données brutes
 	FILE* plot_d = popen("gnuplot", "w");
 	if(plot_d == NULL)
 	{
@@ -150,17 +194,45 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	fprintf(plot_d, "set term x11 noraise\n");
+	fprintf(plot_d, "set mouse\n");
+	fprintf(plot_d, "set title \"Distances selon l'indice\"\n");
+	fprintf(plot_d, "set xlabel \"indice\"\n");
+	fprintf(plot_d, "set ylabel \"distance\"\n");
+	fprintf(plot_d, "set xrange [0:682]\n");
+	fprintf(plot_d, "set yrange [0:4100]\n");
+
+	// affichage dans le repere hokuyo
+	FILE* plot_xy = popen("gnuplot", "w");
+	if(plot_xy == NULL)
+	{
+		perror("popen");
+		return 0;
+	}
+
 	fprintf(plot_xy, "set term x11 noraise\n");
 	fprintf(plot_xy, "set mouse\n");
+	fprintf(plot_xy, "set title \"Points dans le repere hokuyo\"\n");
 	fprintf(plot_xy, "set xlabel \"y\"\n");
+	fprintf(plot_xy, "set ylabel \"x\"\n");
 	fprintf(plot_xy, "set xrange [-3000:3000]\n");
 	fprintf(plot_xy, "set yrange [0:4100]\n");
 
-	fprintf(plot_d, "set term x11 noraise\n");
-	fprintf(plot_d, "set mouse\n");
-	fprintf(plot_d, "set xlabel \"y\"\n");
-	fprintf(plot_d, "set xrange [0:682]\n");
-	fprintf(plot_d, "set yrange [0:4100]\n");
+	// affichage dans le repere table
+	FILE* plot_table = popen("gnuplot", "w");
+	if(plot_table == NULL)
+	{
+		perror("popen");
+		return 0;
+	}
+
+	fprintf(plot_table, "set term x11 noraise\n");
+	fprintf(plot_table, "set mouse\n");
+	fprintf(plot_table, "set title \"Points dans le repere table\"\n");
+	fprintf(plot_table, "set xlabel \"x\"\n");
+	fprintf(plot_table, "set ylabel \"y\"\n");
+	fprintf(plot_table, "set xrange [-1800:1800]\n");
+	fprintf(plot_table, "set yrange [-1200:1200]\n");
 
 	fd = open(argv[1], O_RDONLY);
 	if(fd <= 0)
@@ -184,6 +256,14 @@ int main(int argc, char** argv)
 				break;
 		}
 
+		fprintf(plot_d, "plot \"-\"\n");
+		for(i=0; i < 682; i++)
+		{
+			fprintf(plot_d, "%i %i\n",i, hokuyo_distance[i]);
+		}
+		fprintf(plot_d, "e\n");
+		fflush(plot_d);
+
 		fprintf(plot_xy, "plot \"-\"\n");
 		for(i=0; i < 682; i++)
 		{
@@ -192,16 +272,30 @@ int main(int argc, char** argv)
 		fprintf(plot_xy, "e\n");
 		fflush(plot_xy);
 
-		fprintf(plot_d, "plot \"-\"\n");
+		fprintf(plot_table, "plot \"-\" using 1:2 with lines lc rgbcolor \"black\", \"-\"\n");
+		for(i=0; i < MAX_TABLE_PTS; i+=2)
+		{
+			fprintf(plot_table, "%f %f\n", table_pts[i], table_pts[i+1]);
+		}
+		fprintf(plot_table, "e\n");
+
+		struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
+		struct vect_pos pos_table = {0, 0, 0, 1, 0};
+
 		for(i=0; i < 682; i++)
 		{
-			fprintf(plot_d, "%i %i\n",i, hokuyo_distance[i]);
+			// TODO recup position du robot
+			pos_hokuyo.x = hokuyo_x[i];
+			pos_hokuyo.y = hokuyo_y[i];
+			pos_hokuyo_to_table(&pos_robot, &pos_hokuyo, &pos_table);
+			fprintf(plot_table, "%f %f\n", pos_table.x, pos_table.y);
 		}
-		fprintf(plot_d, "e\n");
-		fflush(plot_d);
+		fprintf(plot_table, "e\n");
+		fflush(plot_table);
 	}
 
 	close(fd);
+	fclose(plot_table);
 	fclose(plot_xy);
 	fclose(plot_d);
 
