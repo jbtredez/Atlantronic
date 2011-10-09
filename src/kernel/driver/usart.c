@@ -264,13 +264,7 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 	}
 #endif
 
-	vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
-	unsigned int timer = 0;
-	do{
-		timer += ms_to_tick(1);
-		vTaskDelay(ms_to_tick(1));
-		ev = vTaskGetEvent();
-	}while(timer < timeout);
+	ev = vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
 
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR &= ~DMA_CCR1_EN;
