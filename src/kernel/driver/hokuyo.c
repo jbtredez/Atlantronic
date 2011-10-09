@@ -281,20 +281,20 @@ uint32_t hokuyo_scan()
 		goto end;
 	}
 
-	err = hokuyo_check_sum(3, 5);
+	err = hokuyo_check_sum(13, 15);
 
 	if(err)
 	{
 		goto end;
 	}
 	
-	if( hokuyo_read_dma_buffer[3] != 0)
+	if( hokuyo_read_dma_buffer[13] != '0')
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
 		goto end;
 	}
 
-	switch(hokuyo_read_dma_buffer[4])
+	switch(hokuyo_read_dma_buffer[14])
 	{
 		case '0':
 		case '2':
