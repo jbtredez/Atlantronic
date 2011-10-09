@@ -30,6 +30,7 @@ static volatile unsigned int hokuyo_endpoint_ready;
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
+static void hokuyo_usb_send();
 
 uint32_t hokuyo_init()
 {
@@ -106,12 +107,12 @@ static uint32_t hokuyo_write_cmd(unsigned char* buf, uint32_t write_size, uint32
 	uint32_t i = 0;
 
 	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, buf);
+	hokuyo_read_dma_buffer_size = 0;
 
 	do
 	{
 		usart_set_read_dma_size(USART3_FULL_DUPLEX, read_size);
 		usart_send_dma_buffer(USART3_FULL_DUPLEX, write_size);
-
 		err = usart_wait_read(USART3_FULL_DUPLEX, timeout);
 		i++;
 	}while(err && i < max_try);
@@ -121,7 +122,6 @@ static uint32_t hokuyo_write_cmd(unsigned char* buf, uint32_t write_size, uint32
 		goto end;
 	}
 
-	// TODO voir / bug  timeout ou lecture partielle
 	hokuyo_read_dma_buffer_size = read_size;
 
 	err = hokuyo_check_cmd(buf, write_size);
@@ -308,11 +308,13 @@ uint32_t hokuyo_scan()
 			goto end;
 	}
 
+	hokuyo_usb_send();
+
 end:
 	return err;	
 }
 
-void hokuyo_usb_send()
+static void hokuyo_usb_send()
 {
 	if( hokuyo_endpoint_ready && bDeviceState == CONFIGURED)
 	{
