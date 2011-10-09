@@ -150,13 +150,13 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	fprintf(plot_xy, "set term x11\n");
+	fprintf(plot_xy, "set term x11 noraise\n");
 	fprintf(plot_xy, "set mouse\n");
 	fprintf(plot_xy, "set xlabel \"y\"\n");
 	fprintf(plot_xy, "set xrange [-3000:3000]\n");
 	fprintf(plot_xy, "set yrange [0:4100]\n");
 
-	fprintf(plot_d, "set term x11\n");
+	fprintf(plot_d, "set term x11 noraise\n");
 	fprintf(plot_d, "set mouse\n");
 	fprintf(plot_d, "set xlabel \"y\"\n");
 	fprintf(plot_d, "set xrange [0:682]\n");
