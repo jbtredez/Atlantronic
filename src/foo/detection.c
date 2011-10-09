@@ -118,10 +118,8 @@ uint32_t detection_compute()
 	{
 		if( hokuyo_object_is_pawn(hokuyo_distance, &hokuyo_object[i], &pos_pawn) )
 		{
-			// changement de repere hokuyo -> robot
-			pos_pawn.x += 60;
-			// changement de repere robot -> table
-			pos_robot_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
+			// changement de repere hokuyo -> table
+			pos_hokuyo_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
 			detection_num_pawn++;
 		}
 	}
