@@ -145,6 +145,8 @@ static unsigned int atlantronic_get_min_interface_id(struct atlantronic_interfac
 		}
 	}
 
+	max++;
+
 	if(max < 0)
 	{
 		max = 0;
@@ -393,7 +395,6 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	int len;
 	int pipe;
 	int i;
-	unsigned int interface_id;
 
     info("atlantronic_probe");
 
@@ -435,25 +436,25 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	switch( dev->interface_subclass )
 	{
 		case ATLANTRONIC_LOG_SUBCLASS:
-			interface_id = atlantronic_get_min_interface_id(&atlantronic_log_interface_list);
-			info("log interface detected : %d", interface_id);
+			dev->interface_id.id = atlantronic_get_min_interface_id(&atlantronic_log_interface_list);
+			info("log interface detected : %d", dev->interface_id.id);
 			list_add(&dev->interface_id.list, &atlantronic_log_interface_list.list);
 			dev->class.fops = &atlantronic_fops;
-			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_log%d", interface_id);
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_log%d", dev->interface_id.id);
 			break;
 		case ATLANTRONIC_HOKUYO_SUBCLASS:
-			interface_id = atlantronic_get_min_interface_id(&atlantronic_hokuyo_interface_list);
-			info("hokuyo interface detected : %d", interface_id);
+			dev->interface_id.id = atlantronic_get_min_interface_id(&atlantronic_hokuyo_interface_list);
+			info("hokuyo interface detected : %d", dev->interface_id.id);
 			list_add(&dev->interface_id.list, &atlantronic_hokuyo_interface_list.list);
 			dev->class.fops = &atlantronic_fops;
-			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_hokuyo%d", interface_id);
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_hokuyo%d", dev->interface_id.id);
 			break;
 		case ATLANTRONIC_DATA_SUBCLASS:
-			interface_id = atlantronic_get_min_interface_id(&atlantronic_data_interface_list);
-			info("data interface detected : %d", interface_id);
+			dev->interface_id.id = atlantronic_get_min_interface_id(&atlantronic_data_interface_list);
+			info("data interface detected : %d", dev->interface_id.id);
 			list_add(&dev->interface_id.list, &atlantronic_data_interface_list.list);
 			dev->class.fops = &atlantronic_fops;
-			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_data%d", interface_id);
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_data%d", dev->interface_id.id);
 			break;
 		default:
 			rep = -ENODEV;
