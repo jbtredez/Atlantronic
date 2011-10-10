@@ -1,5 +1,5 @@
-//! @file atlantronic_usb_log.c
-//! @brief Code du driver USB, interface log des cartes Atlantronic
+//! @file atlantronic_usb.c
+//! @brief Code du driver USB, interface des cartes Atlantronic
 //! @author Atlantronic
 
 #include <linux/init.h>
@@ -31,11 +31,12 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 
 #define ATLANTRONIC_LOG_SUBCLASS      0x00   //!< interface de log
 #define ATLANTRONIC_HOKUYO_SUBCLASS   0x01   //!< interface hokuyo
+#define ATLANTRONIC_DATA_SUBCLASS     0x02   //!< interface data
 
 #define ATLANTRONIC_MAX_PRODUCT_NAME_SIZE       0x10
 #define ATLANTRONIC_MAX_INTERFACE_NAME_SIZE     0x10
 
-#define ATLANTRONIC_LOG_BUFFER_SIZE             8192
+#define ATLANTRONIC_BUFFER_SIZE                 8192
 
 #define ATLANTRONIC_MAX_IN_URB                    10
 
@@ -50,47 +51,60 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 }while(0)	//!< macro de debug formatée
 
 // prototype des fonctions utilisées
-static int atlantronic_log_release(struct inode *inode, struct file *file);
-static int atlantronic_log_open(struct inode *inode, struct file *file);
-static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t count, loff_t *ppos);
+static int atlantronic_release(struct inode *inode, struct file *file);
+static int atlantronic_open(struct inode *inode, struct file *file);
+static ssize_t atlantronic_read(struct file *file, char *buffer, size_t count, loff_t *ppos);
 
-static void atlantronic_log_urb_callback(struct urb *urb);
+static void atlantronic_urb_callback(struct urb *urb);
 
-static int atlantronic_log_probe(struct usb_interface *interface, const struct usb_device_id *id);
-static void atlantronic_log_disconnect(struct usb_interface *interface);
+static int atlantronic_probe(struct usb_interface *interface, const struct usb_device_id *id);
+static void atlantronic_disconnect(struct usb_interface *interface);
 
-static int __init atlantronic_log_init(void); //!< fonction d'initialisation du module (appelée à l'insertion du module dans le noyau)
-static void __exit atlantronic_log_exit(void); //!< fonction de fermeture appelée lors du retrait du module du noyau
-static void atlantronic_log_delete(struct kref *kref);
+static int __init atlantronic_init(void); //!< fonction d'initialisation du module (appelée à l'insertion du module dans le noyau)
+static void __exit atlantronic_exit(void); //!< fonction de fermeture appelée lors du retrait du module du noyau
+static void atlantronic_delete(struct kref *kref);
 
-static int atlantronic_log_task(void* arg);
+static int atlantronic_task(void* arg);
 
 //! @brief table des id des périphériques gérés par le pilote
-static struct usb_device_id atlantronic_log_device_id [] =
+static struct usb_device_id atlantronic_device_id [] =
 {
 	{ USB_DEVICE(ATLANTRONIC_ID, ATLANTRONIC_FOO_ID) },
 	{ USB_DEVICE(ATLANTRONIC_ID, ATLANTRONIC_BAR_ID) },
 	{ }
 };
 
-MODULE_DEVICE_TABLE(usb, atlantronic_log_device_id); //!< ajout de la table des périphériques gérés par le module
+MODULE_DEVICE_TABLE(usb, atlantronic_device_id); //!< ajout de la table des périphériques gérés par le module
 
-static struct usb_driver atlantronic_log_driver =
+
+struct atlantronic_interface
+{
+	struct list_head list;
+	int id;
+};
+
+// TODO lock sur les listes
+static struct atlantronic_interface atlantronic_log_interface_list;
+static struct atlantronic_interface atlantronic_hokuyo_interface_list;
+static struct atlantronic_interface atlantronic_data_interface_list;
+
+static struct usb_driver atlantronic_driver =
 {
     .name = "Atlantronic",
-    .id_table = atlantronic_log_device_id,
-    .probe = atlantronic_log_probe,
-    .disconnect = atlantronic_log_disconnect,
+    .id_table = atlantronic_device_id,
+    .probe = atlantronic_probe,
+    .disconnect = atlantronic_disconnect,
 	.supports_autosuspend = 1,
 };//!< choix des fonctions à appeler lors de la connexion ou de la déconnexion d'un périphérique usb
 
-struct atlantronic_log_data
+struct atlantronic_data
 {
 	struct usb_device*		  udev;                //!< udev
 	struct usb_interface*	  interface;           //!< interface
 	unsigned char             interface_subclass;  //!< type d'interface
+	struct atlantronic_interface interface_id;     //!< id de l'interface
 	struct usb_class_driver   class;               //!< class driver
-	struct task_struct*       log_task;            //!< tache de recuperation des log
+	struct task_struct*       task;                //!< tache de recuperation des donnees
 	struct completion         in_completion;       //!< completion
 	volatile char             thread_stop_req;     //!< request thread to stop
 	spinlock_t                err_lock;            //!< lock sur error
@@ -98,32 +112,54 @@ struct atlantronic_log_data
 	int                       open_count;          //!< nombre d'ouvertures
 	struct mutex              io_mutex;            //!< mutex i/o
 	wait_queue_head_t         wait;                //!< liste de processus en attente dans le read
-	struct urb*   in_urb[ATLANTRONIC_MAX_IN_URB];            //!< urb
-	unsigned char log_buffer[ATLANTRONIC_LOG_BUFFER_SIZE];   //!< log buffer
-	int          log_buffer_begin; //!< indice de fin des log dans le buffer
-	int          log_buffer_end;   //!< indice de fin des log dans le buffer
-	struct kref  kref;             //!< compteur de references
+	struct urb*   in_urb[ATLANTRONIC_MAX_IN_URB];    //!< urb
+	unsigned char buffer[ATLANTRONIC_BUFFER_SIZE];   //!< buffer circulaire
+	int           buffer_begin;     //!< indice de debut du buffer circulaire
+	int           buffer_end;       //!< indice de fin du buffer circulaire
+	struct kref   kref;             //!< compteur de references
 };
 
-static const struct file_operations atlantronic_log_fops =
+static const struct file_operations atlantronic_fops =
 {
 	.owner =	THIS_MODULE,
-	.read =		atlantronic_log_read,
+	.read =		atlantronic_read,
 	.write =    NULL,
-	.open =		atlantronic_log_open,
-	.release =	atlantronic_log_release,
+	.open =		atlantronic_open,
+	.release =	atlantronic_release,
 	.flush =	NULL,
 	.llseek =	NULL,
 };
 
-static void atlantronic_log_delete(struct kref *kref)
+static unsigned int atlantronic_get_min_interface_id(struct atlantronic_interface* id_list)
 {
-	struct atlantronic_log_data* dev;
+	struct list_head *pos, *q;
+	struct atlantronic_interface* tmp;
+	int max = -1;
+
+	list_for_each_safe(pos, q, &id_list->list)
+	{
+		tmp = list_entry(pos, struct atlantronic_interface, list);
+		if(tmp->id > max)
+		{
+			max = tmp->id;
+		}
+	}
+
+	if(max < 0)
+	{
+		max = 0;
+	}
+	return max;
+}
+
+static void atlantronic_delete(struct kref *kref)
+{
+	struct atlantronic_data* dev;
 	int i;
 
-	debug(1, "atlantronic_log_delete");
+	debug(1, "atlantronic_delete");
 
-	dev = container_of(kref, struct atlantronic_log_data, kref);
+	dev = container_of(kref, struct atlantronic_data, kref);
 
 	usb_put_dev(dev->udev);
 
@@ -145,22 +181,24 @@ static void atlantronic_log_delete(struct kref *kref)
 		kfree(dev->class.name);
 	}
 
+	list_del(&dev->interface_id.list);
+
 	kfree(dev);
 }
 
-static int atlantronic_log_open(struct inode *inode, struct file *file)
+static int atlantronic_open(struct inode *inode, struct file *file)
 {
-	struct atlantronic_log_data* dev;
+	struct atlantronic_data* dev;
 	struct usb_interface* interface;
 	int subminor;
 	int rep = 0;
 
-	debug(1, "atlantronic_log_open");
+	debug(1, "atlantronic_open");
 
 	subminor = iminor(inode);
 
 	// récupération de l'interface liée au périphérique
-	interface = usb_find_interface(&atlantronic_log_driver, subminor);
+	interface = usb_find_interface(&atlantronic_driver, subminor);
 	if(!interface)
 	{
 		err("usb_find_interface error subminor=%d", subminor);
@@ -199,16 +237,16 @@ static int atlantronic_log_open(struct inode *inode, struct file *file)
 error_unlock:
 	dev->open_count--;
 	mutex_unlock(&dev->io_mutex);
-	kref_put(&dev->kref, atlantronic_log_delete);
+	kref_put(&dev->kref, atlantronic_delete);
 error:
 	return rep;
 }
 
-static int atlantronic_log_release(struct inode *inode, struct file *file)
+static int atlantronic_release(struct inode *inode, struct file *file)
 {
-	struct atlantronic_log_data* dev = file->private_data;
+	struct atlantronic_data* dev = file->private_data;
 
-	debug(1, "atlantronic_log_release");
+	debug(1, "atlantronic_release");
 
 	if(dev == NULL)
 	{
@@ -226,19 +264,19 @@ static int atlantronic_log_release(struct inode *inode, struct file *file)
 	}
 	mutex_unlock(&dev->io_mutex);
 
-	kref_put(&dev->kref, atlantronic_log_delete);
+	kref_put(&dev->kref, atlantronic_delete);
 
 	return 0;
 }
 
-static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t count, loff_t *ppos)
+static ssize_t atlantronic_read(struct file *file, char *buffer, size_t count, loff_t *ppos)
 {
-	struct atlantronic_log_data* dev = file->private_data;
+	struct atlantronic_data* dev = file->private_data;
 	int size = 0;
 	int rep;
 	int n_cpy = 0;
 
-	debug(1, "atlantronic_log_read");
+	debug(1, "atlantronic_read");
 
 	if(dev == NULL)
 	{
@@ -248,7 +286,7 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 
 	while( n_cpy == 0 && count > 0)
 	{
-		if( wait_event_interruptible(dev->wait, dev->log_buffer_begin != dev->log_buffer_end || dev->thread_stop_req))
+		if( wait_event_interruptible(dev->wait, dev->buffer_begin != dev->buffer_end || dev->thread_stop_req))
 		{
 			debug(2, "interruption par un signal");
 			rep = -ERESTARTSYS;
@@ -264,16 +302,16 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 
 		mutex_lock(&dev->io_mutex);
 
-		size = dev->log_buffer_end - dev->log_buffer_begin;
+		size = dev->buffer_end - dev->buffer_begin;
 		if(size < 0)
 		{
-			size = ATLANTRONIC_LOG_BUFFER_SIZE - dev->log_buffer_begin;
+			size = ATLANTRONIC_BUFFER_SIZE - dev->buffer_begin;
 			if(size > count)
 			{
 				size = count;
 			}
 
-			if( copy_to_user(buffer, dev->log_buffer + dev->log_buffer_begin, size) )
+			if( copy_to_user(buffer, dev->buffer + dev->buffer_begin, size) )
 			{
 				err("copy_to_user failed (size = %d)", size);
 				rep = -EFAULT;
@@ -281,10 +319,10 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 			}
 
 			n_cpy = size;
-			dev->log_buffer_begin = (dev->log_buffer_begin + size) % ATLANTRONIC_LOG_BUFFER_SIZE;
+			dev->buffer_begin = (dev->buffer_begin + size) % ATLANTRONIC_BUFFER_SIZE;
 		}
 
-		size = dev->log_buffer_end - dev->log_buffer_begin;
+		size = dev->buffer_end - dev->buffer_begin;
 		if(size > 0)
 		{
 			if(size > count - n_cpy)
@@ -292,7 +330,7 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 				size = count - n_cpy;
 			}
 
-			if( copy_to_user(buffer + n_cpy, dev->log_buffer + dev->log_buffer_begin, size) )
+			if( copy_to_user(buffer + n_cpy, dev->buffer + dev->buffer_begin, size) )
 			{
 				err("copy_to_user failed (size = %d)", size);
 				rep = -EFAULT;
@@ -300,7 +338,7 @@ static ssize_t atlantronic_log_read(struct file *file, char *buffer, size_t coun
 			}
 
 			n_cpy += size;
-			dev->log_buffer_begin = (dev->log_buffer_begin + size) % ATLANTRONIC_LOG_BUFFER_SIZE;
+			dev->buffer_begin = (dev->buffer_begin + size) % ATLANTRONIC_BUFFER_SIZE;
 		}
 
 		mutex_unlock(&dev->io_mutex);
@@ -314,9 +352,9 @@ error:
 	return rep;
 }
 
-static void atlantronic_log_urb_callback(struct urb *urb)
+static void atlantronic_urb_callback(struct urb *urb)
 {
-	struct atlantronic_log_data* dev = urb->context;
+	struct atlantronic_data* dev = urb->context;
 
 	spin_lock(&dev->err_lock);
 	switch(urb->status)
@@ -346,17 +384,18 @@ static void atlantronic_log_urb_callback(struct urb *urb)
 //!
 //! la fonction s'occupe de vérifier que l'on a connecté le bon périphérique (vérifie la présence des endpoints)
 //! La fonction s'occupe allocation des ressources nécessaires pour la gestion du périphérique
-static int atlantronic_log_probe(struct usb_interface *interface, const struct usb_device_id *id)
+static int atlantronic_probe(struct usb_interface *interface, const struct usb_device_id *id)
 {
 	int rep = -ENOMEM;
-	struct atlantronic_log_data* dev;
+	struct atlantronic_data* dev;
 	struct usb_host_interface *iface_desc;
 	struct usb_endpoint_descriptor *endpoint;
 	int len;
 	int pipe;
 	int i;
+	unsigned int interface_id;
 
-    info("atlantronic_log_probe");
+    info("atlantronic_probe");
 
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if( ! dev )
@@ -379,6 +418,9 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 		goto error;
 	}
 
+	INIT_LIST_HEAD(&dev->interface_id.list);
+	dev->interface_id.id = -1;
+
 	len = strlen(dev->udev->product);
 	if( len > ATLANTRONIC_MAX_PRODUCT_NAME_SIZE )
 	{
@@ -390,15 +432,41 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 	iface_desc = interface->cur_altsetting;
 
 	dev->interface_subclass = iface_desc->desc.bInterfaceSubClass;
-	if( dev->interface_subclass != ATLANTRONIC_LOG_SUBCLASS && dev->interface_subclass != ATLANTRONIC_HOKUYO_SUBCLASS)
+	switch( dev->interface_subclass )
 	{
-		rep = -ENODEV;
-		goto error;
+		case ATLANTRONIC_LOG_SUBCLASS:
+			interface_id = atlantronic_get_min_interface_id(&atlantronic_log_interface_list);
+			info("log interface detected : %d", interface_id);
+			list_add(&dev->interface_id.list, &atlantronic_log_interface_list.list);
+			dev->class.fops = &atlantronic_fops;
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_log%d", interface_id);
+			break;
+		case ATLANTRONIC_HOKUYO_SUBCLASS:
+			interface_id = atlantronic_get_min_interface_id(&atlantronic_hokuyo_interface_list);
+			info("hokuyo interface detected : %d", interface_id);
+			list_add(&dev->interface_id.list, &atlantronic_hokuyo_interface_list.list);
+			dev->class.fops = &atlantronic_fops;
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_hokuyo%d", interface_id);
+			break;
+		case ATLANTRONIC_DATA_SUBCLASS:
+			interface_id = atlantronic_get_min_interface_id(&atlantronic_data_interface_list);
+			info("data interface detected : %d", interface_id);
+			list_add(&dev->interface_id.list, &atlantronic_data_interface_list.list);
+			dev->class.fops = &atlantronic_fops;
+			snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "_data%d", interface_id);
+			break;
+		default:
+			rep = -ENODEV;
+			goto error;
+			break;
 	}
+
+	dev->class.name[ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1] = 0;
+	dev->class.name[0] = tolower(dev->class.name[0]);
 
 	if( iface_desc->desc.bNumEndpoints != 1)
 	{
-		err("unknown log interface: subclass=%i NumEndpoints=%i", dev->interface_subclass, iface_desc->desc.bNumEndpoints);
+		err("unknown interface: subclass=%i NumEndpoints=%i", dev->interface_subclass, iface_desc->desc.bNumEndpoints);
 		rep = -ENODEV;
 		goto error;	
 	}
@@ -411,14 +479,8 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 		goto error;		
 	}
 
-	info("log interface detected");
-	dev->class.fops = &atlantronic_log_fops;
-	strcpy(dev->class.name + len, "_log%d");
-
-	dev->class.name[0] = tolower(dev->class.name[0]);
-
-	dev->log_buffer_begin = 0;
-	dev->log_buffer_end = 0;
+	dev->buffer_begin = 0;
+	dev->buffer_end = 0;
 
 	// allocation des urb
 	for(i = 0; i < ATLANTRONIC_MAX_IN_URB; i++)
@@ -439,7 +501,7 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 		}
 
 		pipe = usb_rcvbulkpipe(dev->udev, endpoint->bEndpointAddress);
-		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->in_urb[i]->transfer_buffer, le16_to_cpu(endpoint->wMaxPacketSize), atlantronic_log_urb_callback, dev);
+		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->in_urb[i]->transfer_buffer, le16_to_cpu(endpoint->wMaxPacketSize), atlantronic_urb_callback, dev);
 	}
 
 	// sauvegarde du pointeur dans l'interface
@@ -456,11 +518,11 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 	}
 
 	dev->thread_stop_req = 0;
-	dev->log_task = kthread_run(atlantronic_log_task, dev, "atlantronic_log%d", interface->minor);
+	dev->task = kthread_run(atlantronic_task, dev, "atlantronic%d", interface->minor);
 
-	if( IS_ERR(dev->log_task) )
+	if( IS_ERR(dev->task) )
 	{
-		dev->log_task = NULL;
+		dev->task = NULL;
 		goto error_deregister;	
 	}
 
@@ -474,7 +536,7 @@ static int atlantronic_log_probe(struct usb_interface *interface, const struct u
 		}
 	}
 
-	info("interface attached to log%d", interface->minor);
+	info("interface attached to %s", dev->class.name);
 
 	return 0;
 
@@ -487,18 +549,18 @@ error_intfdata:
 error:
 	if( dev )
 	{
-		kref_put(&dev->kref, atlantronic_log_delete);
+		kref_put(&dev->kref, atlantronic_delete);
 	}
 
 	return rep;
 }
 
 //! @param interface interface usb qui a été déconnectée et qui est gérée par ce module (ie: fonction robot_probe qui a retourné 0)
-static void atlantronic_log_disconnect(struct usb_interface *interface)
+static void atlantronic_disconnect(struct usb_interface *interface)
 {
-	struct atlantronic_log_data* dev;
+	struct atlantronic_data* dev;
 
-    info("Atlantronic_log_disconnect");
+    info("atlantronic_disconnect");
 
 	dev = usb_get_intfdata(interface);
 
@@ -511,20 +573,20 @@ static void atlantronic_log_disconnect(struct usb_interface *interface)
 	dev->thread_stop_req = 1;
 
 	complete(&dev->in_completion);
-	if( dev->log_task)
+	if( dev->task)
 	{
-		wake_up_process(dev->log_task);
+		wake_up_process(dev->task);
 	}
 
 	// debloquage du read
 	wake_up_interruptible(&dev->wait);
 
-	kref_put(&dev->kref, atlantronic_log_delete);
+	kref_put(&dev->kref, atlantronic_delete);
 }
 
-static int atlantronic_log_task(void* arg)
+static int atlantronic_task(void* arg)
 {
-	struct atlantronic_log_data* dev = arg;
+	struct atlantronic_data* dev = arg;
 	struct urb* urb;
 	int urb_id = 0;
 	int rep;
@@ -573,12 +635,12 @@ static int atlantronic_log_task(void* arg)
 		mutex_lock(&dev->io_mutex);
 		for(i = 0; i< len; i++)
 		{
-			dev->log_buffer[dev->log_buffer_end] = ((__u8*)urb->transfer_buffer)[i];
-			dev->log_buffer_end = (dev->log_buffer_end + 1) % ATLANTRONIC_LOG_BUFFER_SIZE;
-			if( dev->log_buffer_end == dev->log_buffer_begin )
+			dev->buffer[dev->buffer_end] = ((__u8*)urb->transfer_buffer)[i];
+			dev->buffer_end = (dev->buffer_end + 1) % ATLANTRONIC_BUFFER_SIZE;
+			if( dev->buffer_end == dev->buffer_begin )
 			{
 				// buffer circulaire plein
-				dev->log_buffer_begin = (dev->log_buffer_begin + 1) % ATLANTRONIC_LOG_BUFFER_SIZE;
+				dev->buffer_begin = (dev->buffer_begin + 1) % ATLANTRONIC_BUFFER_SIZE;
 			}
 		}
 		mutex_unlock(&dev->io_mutex);
@@ -595,18 +657,27 @@ static int atlantronic_log_task(void* arg)
 
 exit:
 	debug(1, "stop log thread");
-	kref_put(&dev->kref, atlantronic_log_delete);
+	kref_put(&dev->kref, atlantronic_delete);
 	return 0;
 }
 
-static int __init atlantronic_log_init(void)
+static int __init atlantronic_init(void)
 {
 	int rep = 0;
 
 	info("Atlantronic_log : init");
 
+	INIT_LIST_HEAD(&atlantronic_log_interface_list.list);
+	atlantronic_log_interface_list.id = -1;
+
+	INIT_LIST_HEAD(&atlantronic_hokuyo_interface_list.list);
+	atlantronic_hokuyo_interface_list.id = -1;
+
+	INIT_LIST_HEAD(&atlantronic_data_interface_list.list);
+	atlantronic_data_interface_list.id = -1;
+
 	// enregistrement du pilote
-	rep = usb_register(&atlantronic_log_driver);
+	rep = usb_register(&atlantronic_driver);
 	if(rep)
 	{
 		err("usb_register(): error %d", rep);
@@ -615,13 +686,13 @@ static int __init atlantronic_log_init(void)
     return rep;
 }
 
-static void __exit atlantronic_log_exit(void)
+static void __exit atlantronic_exit(void)
 {
 	info("Atlantronic_log : exit");
-	usb_deregister(&atlantronic_log_driver);
+	usb_deregister(&atlantronic_driver);
 }
 
 // points d'entrées dans le noyau
-module_init( atlantronic_log_init );
-module_exit( atlantronic_log_exit );
+module_init( atlantronic_init );
+module_exit( atlantronic_exit );
 
