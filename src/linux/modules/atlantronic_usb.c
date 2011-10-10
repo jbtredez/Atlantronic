@@ -468,7 +468,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	{
 		err("unknown interface: subclass=%i NumEndpoints=%i", dev->interface_subclass, iface_desc->desc.bNumEndpoints);
 		rep = -ENODEV;
-		goto error;	
+		goto error;
 	}
 
 	endpoint = &iface_desc->endpoint[0].desc;
@@ -476,7 +476,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	{
 		err("wrong endpoint: subclass=%i endPointAddr=%i", dev->interface_subclass, endpoint->bEndpointAddress);
 		rep = -ENODEV;
-		goto error;		
+		goto error;
 	}
 
 	dev->buffer_begin = 0;
@@ -514,7 +514,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	{
 		// on n'a pas pu enregistrer le matériel
 		err("usb_register_dev failed");
-		goto error_intfdata;	
+		goto error_intfdata;
 	}
 
 	dev->thread_stop_req = 0;
@@ -523,7 +523,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	if( IS_ERR(dev->task) )
 	{
 		dev->task = NULL;
-		goto error_deregister;	
+		goto error_deregister;
 	}
 
 	for(i = 0; i<ATLANTRONIC_MAX_IN_URB ; i++)
@@ -695,4 +695,3 @@ static void __exit atlantronic_exit(void)
 // points d'entrées dans le noyau
 module_init( atlantronic_init );
 module_exit( atlantronic_exit );
-

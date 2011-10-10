@@ -1,1 +1,1 @@
-obj-m += atlantronic_usb_log.o
+obj-m += atlantronic_usb.o
