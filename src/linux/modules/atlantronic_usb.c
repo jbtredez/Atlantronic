@@ -359,6 +359,9 @@ static void atlantronic_urb_callback(struct urb *urb)
 	struct atlantronic_data* dev = urb->context;
 
 	spin_lock(&dev->err_lock);
+	dev->error = urb->status;
+	spin_unlock(&dev->err_lock);
+
 	switch(urb->status)
 	{
 		case 0:
@@ -370,13 +373,11 @@ static void atlantronic_urb_callback(struct urb *urb)
 		case -ENOENT:
 		case -ESHUTDOWN:
 			err("arrêt urb: %d", urb->status);
-			dev->error = urb->status;
 			break;
 		default:
 			err("status urb non nul: %d", urb->status);
 			break;
 	}
-	spin_unlock(&dev->err_lock);
 
 	complete(&dev->in_completion);
 }
