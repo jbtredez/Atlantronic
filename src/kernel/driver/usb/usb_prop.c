@@ -24,8 +24,8 @@ static uint8_t *usb_prop_get_config_descriptor(uint16_t Length);
 
 DEVICE Device_Table =
 {
-	EP_NUM,
-	1
+	EP_NUM, // nb endpoints
+	1 // nb conf
 };
 
 DEVICE_PROP Device_Property =
@@ -112,6 +112,9 @@ static void usb_prop_reset(void)
 
 	// Init EP2 IN as Bulk endpoint
 	OTG_DEV_EP_Init(EP2_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
+
+	// Init EP3 IN as Bulk endpoint
+	OTG_DEV_EP_Init(EP3_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
 
 	bDeviceState = ATTACHED;
 }
