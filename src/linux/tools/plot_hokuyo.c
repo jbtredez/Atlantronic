@@ -272,7 +272,7 @@ int main(int argc, char** argv)
 		fprintf(plot_xy, "e\n");
 		fflush(plot_xy);
 
-		fprintf(plot_table, "plot \"-\" using 1:2 with lines lc rgbcolor \"black\", \"-\"\n");
+		fprintf(plot_table, "plot \"-\" with lines lc rgbcolor \"black\", \"-\"\n");
 		for(i=0; i < MAX_TABLE_PTS; i+=2)
 		{
 			fprintf(plot_table, "%f %f\n", table_pts[i], table_pts[i+1]);
