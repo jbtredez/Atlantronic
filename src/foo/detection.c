@@ -101,7 +101,7 @@ uint32_t detection_compute()
 
 	pos_robot = location_get_position();
 
-	err = hokuyo_scan();
+	err = hokuyo_scan(pos_robot.x, pos_robot.y, pos_robot.alpha);
 	if(err)
 	{
 		log_error("hokuyo_scan : err = %#.8x", (unsigned int)err);

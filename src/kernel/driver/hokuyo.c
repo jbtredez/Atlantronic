@@ -9,6 +9,7 @@
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_pwr.h"
+#include <string.h>
 
 //!< taille de la réponse maxi avec hokuyo_scan_all :
 //!< 682 points => 1364 data
@@ -22,8 +23,8 @@ const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 #define HOKUYO_SPEED        750000
 
-
-static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
+// FIXME patch pour envoyer la position sur l'ep2 (à deplacer sur l'ep3)
+static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE+4*sizeof(float)];
 static uint16_t hokuyo_read_dma_buffer_size;
 static volatile unsigned int hokuyo_endpoint_ready;
 
@@ -270,7 +271,7 @@ end:
 	return err;
 }
 
-uint32_t hokuyo_scan()
+uint32_t hokuyo_scan(float x, float y, float alpha)
 {
 	uint32_t err = 0;
 
@@ -307,6 +308,12 @@ uint32_t hokuyo_scan()
 			err = ERR_HOKUYO_UNKNOWN_STATUS;
 			goto end;
 	}
+
+	// FIXME patch pour envoi de la position par usb sur l'ep2
+	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size, &x, sizeof(float));
+	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + sizeof(float), &y, sizeof(float));
+	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + 2*sizeof(float), &alpha, sizeof(float));
+	hokuyo_read_dma_buffer_size += 3*sizeof(float);
 
 	hokuyo_usb_send();
 
