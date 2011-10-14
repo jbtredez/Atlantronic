@@ -150,7 +150,7 @@ int process_gs_cmd()
 	int res = 0;
 	int i;
 
-	while( buffer_size < 1432)
+	while( buffer_size < 1432+12)
 	{
 		int err = read_buffer();
 		if(err)
@@ -160,8 +160,8 @@ int process_gs_cmd()
 		}
 	}
 
-	unsigned char hoku_buf[1432];
-	for(i=0; i<1432; i++)
+	unsigned char hoku_buf[1432+12];
+	for(i=0; i<1432+12; i++)
 	{
 		hoku_buf[i] = buffer[buffer_begin];
 //		printf("%c", hoku_buf[i]);
@@ -171,6 +171,11 @@ int process_gs_cmd()
 
 	hokuyo_tools_decode_buffer(hoku_buf, 1432, hokuyo_distance, 682);
 	hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y, -1);
+
+	// FIXME patch envoi de position sur ep2
+	memcpy(&pos_robot.x, hoku_buf + 1432, 4);
+	memcpy(&pos_robot.y, hoku_buf + 1436, 4);
+	memcpy(&pos_robot.alpha, hoku_buf + 1440, 4);
 
 end:
 	return res;
