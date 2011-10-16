@@ -176,6 +176,8 @@ int process_gs_cmd()
 	memcpy(&pos_robot.x, hoku_buf + 1432, 4);
 	memcpy(&pos_robot.y, hoku_buf + 1436, 4);
 	memcpy(&pos_robot.alpha, hoku_buf + 1440, 4);
+	pos_robot.sa = sin(pos_robot.alpha);
+	pos_robot.ca = cos(pos_robot.alpha);
 
 end:
 	return res;
