@@ -49,7 +49,7 @@ static void test_hokuyo_task()
 	
 	while(1)
 	{
-		err = hokuyo_scan();
+		err = hokuyo_scan(0,0,0);
 		if( err)
 		{
 			error_raise(err);
