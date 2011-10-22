@@ -7,7 +7,7 @@
 //!
 //! idle task priority : 0
 
-#define PRIORITY_TASK_LOG             1
+#define PRIORITY_TASK_USB             1
 #define PRIORITY_TASK_STRATEGY        2
 #define PRIORITY_TASK_DETECTION       3
 #define PRIORITY_TASK_AX12            4

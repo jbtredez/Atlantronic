@@ -19,6 +19,6 @@
 #define EVENT_CONTROL_COLSISION          0x800
 #define EVENT_CONTROL_PINCE_COLISION    0x1000
 #define EVENT_CONTROL_TIMEOUT           0x2000
-#define EVENT_LOG                       0x4000
+#define EVENT_USB                       0x4000
 
 #endif

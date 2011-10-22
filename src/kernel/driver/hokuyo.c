@@ -7,8 +7,7 @@
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/usb_pwr.h"
+#include "kernel/driver/usb.h"
 #include <string.h>
 
 //!< taille de la réponse maxi avec hokuyo_scan_all :
@@ -23,15 +22,13 @@ const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 #define HOKUYO_SPEED        750000
 
-// FIXME patch pour envoyer la position sur l'ep2 (à deplacer sur l'ep3)
+// FIXME patch pour envoyer la position avec les data hokuyo
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE+4*sizeof(float)];
 static uint16_t hokuyo_read_dma_buffer_size;
-static volatile unsigned int hokuyo_endpoint_ready;
 
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
-static void hokuyo_usb_send();
 
 uint32_t hokuyo_init()
 {
@@ -39,7 +36,6 @@ uint32_t hokuyo_init()
 
 	usart_open(USART3_FULL_DUPLEX, 19200);
 
-	hokuyo_endpoint_ready = 1;
 	hokuyo_read_dma_buffer_size = 0;
 	usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
 
@@ -72,11 +68,6 @@ uint32_t hokuyo_init()
 
 end:
 	return err;
-}
-
-void EP2_IN_Callback(void)
-{
-	hokuyo_endpoint_ready = 1;
 }
 
 //! Vérifie que la commande envoyée est bien renvoyée par le hokuyo
@@ -309,25 +300,16 @@ uint32_t hokuyo_scan(float x, float y, float alpha)
 			goto end;
 	}
 
-	// FIXME patch pour envoi de la position par usb sur l'ep2
+	// FIXME patch pour envoi de la position avec les data hokuyo
 	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size, &x, sizeof(float));
 	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + sizeof(float), &y, sizeof(float));
 	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + 2*sizeof(float), &alpha, sizeof(float));
 	hokuyo_read_dma_buffer_size += 3*sizeof(float);
 
-	hokuyo_usb_send();
+	usb_add(USB_HOKUYO, hokuyo_read_dma_buffer, hokuyo_read_dma_buffer_size);
 
 end:
 	return err;	
-}
-
-static void hokuyo_usb_send()
-{
-	if( hokuyo_endpoint_ready && bDeviceState == CONFIGURED)
-	{
-		hokuyo_endpoint_ready = 0;
-		USB_SIL_Write(EP2_IN, hokuyo_read_dma_buffer, hokuyo_read_dma_buffer_size);
-	}
 }
 
 uint32_t hokuyo_decode_distance(uint16_t* distance, int size)

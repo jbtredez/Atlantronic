@@ -41,7 +41,7 @@ const uint8_t usb_config_descriptor[] =
 	USB_CONFIGURATION_DESCRIPTOR_TYPE,   // bDescriptorType: Configuration
 	USB_CONFIG_DESCRIPTOR_SIZE,          // wTotalLength : no of returned bytes
 	0x00,
-	0x03,                                // bNumInterfaces: 3 interfaces
+	0x01,                                // bNumInterfaces: 1 interfaces
 	0x01,                                // bConfigurationValue: Configuration value
 	0x00,                                // iConfiguration: Index of string descriptor describing the configuration (pas de description)
 	0xC0,                                // bmAttributes: 0xC0 = auto-alimenté
@@ -53,49 +53,13 @@ const uint8_t usb_config_descriptor[] =
 	0x00,                           // bAlternateSetting: Alternate setting
 	0x01,                           // bNumEndpoints: 1 terminaison utilisée
 	0xff,                           // bInterfaceClass: specifique constructeur (driver perso)
-	USB_LOG_SUBCLASS,               // bInterfaceSubClass
+	USB_DATA_SUBCLASS,              // bInterfaceSubClass
 	0x00,                           // bInterfaceProtocol
 	0x00,                           // iInterface: 0 => pas de description
 // Endpoint Descriptor (IN1)
 	0x07,                           // bLength: Endpoint Descriptor size
 	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
 	0x81,                           // bEndpointAddress: IN1
-	0x02,                           // bmAttributes: terminaison de type bloc
-	0x40,                           // wMaxPacketSize: 64 octets max
-	0x00,
-	0x00,                           // bInterval: ignorée pour les terminaisons de type bloc
-// Interface descriptor 1
-	0x09,                           // bLength: Endpoint Descriptor size
-	USB_INTERFACE_DESCRIPTOR_TYPE,  // bDescriptorType: Interface
-	0x01,                           // bInterfaceNumber: Number of Interface (interface 1)
-	0x00,                           // bAlternateSetting: Alternate setting
-	0x01,                           // bNumEndpoints: 1 terminaison utilisée
-	0xff,                           // bInterfaceClass: specifique constructeur (driver perso)
-	USB_HOKUYO_SUBCLASS,            // bInterfaceSubClass
-	0x00,                           // bInterfaceProtocol
-	0x00,                           // iInterface: 0 => pas de description
-// Endpoint Descriptor (IN2)
-	0x07,                           // bLength: Endpoint Descriptor size
-	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
-	0x82,                           // bEndpointAddress: IN2
-	0x02,                           // bmAttributes: terminaison de type bloc
-	0x40,                           // wMaxPacketSize: 64 octets max
-	0x00,
-	0x00,                           // bInterval: ignorée pour les terminaisons de type bloc
-// Interface descriptor 2
-	0x09,                           // bLength: Endpoint Descriptor size
-	USB_INTERFACE_DESCRIPTOR_TYPE,  // bDescriptorType: Interface
-	0x02,                           // bInterfaceNumber: Number of Interface (interface 2)
-	0x00,                           // bAlternateSetting: Alternate setting
-	0x01,                           // bNumEndpoints: 1 terminaison utilisée
-	0xff,                           // bInterfaceClass: specifique constructeur (driver perso)
-	USB_DATA_SUBCLASS,              // bInterfaceSubClass
-	0x00,                           // bInterfaceProtocol
-	0x00,                           // iInterface: 0 => pas de description
-// Endpoint Descriptor (IN3)
-	0x07,                           // bLength: Endpoint Descriptor size
-	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
-	0x83,                           // bEndpointAddress: IN3
 	0x02,                           // bmAttributes: terminaison de type bloc
 	0x40,                           // wMaxPacketSize: 64 octets max
 	0x00,

@@ -11,12 +11,10 @@
 #define USB_INTERFACE_DESCRIPTOR_TYPE           0x04
 #define USB_ENDPOINT_DESCRIPTOR_TYPE            0x05
 
-#define USB_LOG_SUBCLASS                        0x00
-#define USB_HOKUYO_SUBCLASS                     0x01
-#define USB_DATA_SUBCLASS                       0x02
+#define USB_DATA_SUBCLASS                       0x00
 
 #define USB_DEVICE_DESCRIPTOR_SIZE              0x12
-#define USB_CONFIG_DESCRIPTOR_SIZE                57
+#define USB_CONFIG_DESCRIPTOR_SIZE                25
 #define USB_STRING_LANG_ID_SIZE                    4
 #define USB_STRING_VENDOR_SIZE                    24
 #define USB_STRING_PRODUCT_SIZE                    8

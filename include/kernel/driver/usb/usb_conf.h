@@ -9,7 +9,7 @@
 /* EP_NUM */
 /* defines how many endpoints are used by the device */
 /*-------------------------------------------------------------*/
-#define EP_NUM                           3
+#define EP_NUM                           2
 
 #ifdef STM32F10X_CL
 /*******************************************************************************
@@ -55,9 +55,9 @@
 
 #define RX_FIFO_SIZE                          128
 #define TX0_FIFO_SIZE                          64
-#define TX1_FIFO_SIZE                          64
-#define TX2_FIFO_SIZE                          64
-#define TX3_FIFO_SIZE                          64
+#define TX1_FIFO_SIZE                         128
+#define TX2_FIFO_SIZE                           0
+#define TX3_FIFO_SIZE                           0
 
 /* OTGD-FS-DEVICE IP interrupts Enable definitions */
 /* Uncomment the define to enable the selected interrupt */

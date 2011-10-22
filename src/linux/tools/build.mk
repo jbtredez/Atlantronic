@@ -1,6 +1,5 @@
-obj-linux-plot_hokuyo += linux/tools/plot_hokuyo.o
-obj-linux-plot_hokuyo += kernel/hokuyo_tools.o
-obj-linux-plot_hokuyo += kernel/vect_pos.o
-lib-linux-plot_hokuyo += -lm
-
-bin-linux += plot_hokuyo
+obj-linux-usb_interface += linux/tools/usb_interface.o
+obj-linux-usb_interface += kernel/hokuyo_tools.o
+obj-linux-usb_interface += kernel/vect_pos.o
+lib-linux-usb_interface += -lm
+bin-linux += usb_interface
