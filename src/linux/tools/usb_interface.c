@@ -9,6 +9,7 @@
 #include <math.h>
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/usb.h"
+#include <errno.h>
 
 int fd = -1;
 static unsigned char buffer[10000];
@@ -89,7 +90,15 @@ int read_buffer(int min_buffer_size)
 		}
 
 		int size = read(fd, buffer + buffer_end, max);
-		if(size <= 0)
+		if(size == 0)
+		{
+			printf("close usb\n");
+			close(fd);
+			fd = -1;
+			return -1;
+		}
+
+		if(size < 0)
 		{
 			perror("sync - read");
 			return -1;
@@ -126,14 +135,18 @@ end:
 
 void open_usb(const char* file)
 {
+	int last_error = 0;
 	buffer_end = 0;
 	buffer_begin = 0;
 	buffer_size = 0;
 
-	if(fd)
+	if(fd > 0)
 	{
-		close(fd);
-		usleep(100000);
+		printf("close usb (=> reopen)\n");
+		if( close(fd) )
+		{
+			perror("close");
+		}
 	}
 
 	while(1)
@@ -141,10 +154,15 @@ void open_usb(const char* file)
 		fd = open(file, O_RDONLY);
 		if(fd <= 0)
 		{
-			perror("fopen");
+			if( last_error != errno )
+			{
+				perror("open");
+				last_error = errno;
+			}
 		}
 		else
 		{
+			printf("open usb\n");
 			return;
 		}
 		usleep(1000000);
@@ -222,8 +240,6 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	open_usb(argv[1]);
-
 	// affichage des données brutes
 	FILE* plot_d = open_gnuplot("Distances selon l'indice", "indice", "distance", 0, 682, 0, 4100);
 	if(plot_d == NULL)
@@ -244,6 +260,9 @@ int main(int argc, char** argv)
 	{
 		return 0;
 	}
+
+	// fait apres les pipes pour eviter un pb sur le close(fd)
+	open_usb(argv[1]);
 
 	while(1)
 	{
@@ -340,10 +359,25 @@ int main(int argc, char** argv)
 		fflush(plot_table);
 	}
 
-	close(fd);
-	fclose(plot_table);
-	fclose(plot_xy);
-	fclose(plot_d);
+	if(fd > 0)
+	{
+		close(fd);
+	}
+
+	if( plot_table != NULL )
+	{
+		fclose(plot_table);
+	}
+
+	if( plot_xy != NULL )
+	{
+		fclose(plot_xy);
+	}
+
+	if( plot_d != NULL )
+	{
+		fclose(plot_d);
+	}
 
 	return 0;
 }
