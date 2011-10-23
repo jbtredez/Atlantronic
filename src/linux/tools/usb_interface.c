@@ -209,25 +209,121 @@ int process_hokuyo(char* msg, uint16_t size)
 
 FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, int xmin, int xmax, int ymin, int ymax)
 {
-	FILE* fd = popen("gnuplot", "w");
-	if(fd == NULL)
+	FILE* gnuplot_fd = NULL;
+	pid_t pID;
+
+	int outfd[2];
+	// int infd[2];
+
+	pipe(outfd);
+	// pipe(infd);
+
+	pID = vfork();
+
+	if( pID < 0)
 	{
-		perror("popen");
+		perror("vfork");
 		goto end;
 	}
 
-	fprintf(fd, "set term x11 noraise\n");
-	fprintf(fd, "set mouse\n");
-	fprintf(fd, "set title \"%s\"\n", title);
-	fprintf(fd, "set xlabel \"%s\"\n", xlabel);
-	fprintf(fd, "set ylabel \"%s\"\n", ylabel);
-	fprintf(fd, "set xrange [%d:%d]\n", xmin, xmax);
-	fprintf(fd, "set yrange [%d:%d]\n", ymin, ymax);
+	if( pID == 0)
+	{
+//		close(STDOUT_FILENO);
+		close(STDIN_FILENO);
+
+		dup2(outfd[0], STDIN_FILENO);
+//		dup2(infd[1], STDOUT_FILENO);
+
+		close(outfd[0]);
+		close(outfd[1]);
+//		close(infd[0]);
+//		close(infd[1]);
+
+		// au cas ou on a déjà ouvert l'usb : on ne le donne pas a gnuplot
+		if(fd > 0)
+		{
+			close(fd);
+		}
+		char* arg[2];
+
+		arg[0] = (char*) "/usr/bin/gnuplot";
+		arg[1] = NULL;
+
+		execv(arg[0], arg);
+		perror("execv");
+		exit(-1);
+	}
+
+	close(outfd[0]);
+//	close(infd[1]);
+
+	gnuplot_fd = fdopen(outfd[1], "w");
+
+	if( gnuplot_fd == NULL)
+	{
+		goto end;
+	}
+
+	fprintf(gnuplot_fd, "set term x11 noraise\n");
+	fprintf(gnuplot_fd, "set mouse\n");
+	fprintf(gnuplot_fd, "set title \"%s\"\n", title);
+	fprintf(gnuplot_fd, "set xlabel \"%s\"\n", xlabel);
+	fprintf(gnuplot_fd, "set ylabel \"%s\"\n", ylabel);
+	fprintf(gnuplot_fd, "set xrange [%d:%d]\n", xmin, xmax);
+	fprintf(gnuplot_fd, "set yrange [%d:%d]\n", ymin, ymax);
 
 end:
-	return fd;
+	return gnuplot_fd;
 }
 
+void plot_hokuyo_distance(FILE* gnuplot_fd)
+{
+	int i;
+	fprintf(gnuplot_fd, "plot \"-\"\n");
+	for(i=0; i < 682; i++)
+	{
+		fprintf(gnuplot_fd, "%i %i\n",i, hokuyo_distance[i]);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	fflush(gnuplot_fd);
+}
+
+void plot_hokuyo_xy(FILE* gnuplot_fd)
+{
+	int i;
+	fprintf(gnuplot_fd, "plot \"-\"\n");
+	for(i=0; i < 682; i++)
+	{
+		fprintf(gnuplot_fd, "%f %f\n", hokuyo_y[i], hokuyo_x[i]);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	fflush(gnuplot_fd);
+}
+
+void plot_table(FILE* gnuplot_fd)
+{
+	int i;
+	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"black\", \"-\"\n");
+	for(i=0; i < MAX_TABLE_PTS; i+=2)
+	{
+		fprintf(gnuplot_fd, "%f %f\n", table_pts[i], table_pts[i+1]);
+	}
+	fprintf(gnuplot_fd, "e\n");
+
+	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
+	struct vect_pos pos_table = {0, 0, 0, 1, 0};
+
+	for(i=0; i < 682; i++)
+	{
+		// TODO recup position du robot
+		pos_hokuyo.x = hokuyo_x[i];
+		pos_hokuyo.y = hokuyo_y[i];
+		pos_hokuyo_to_table(&pos_robot, &pos_hokuyo, &pos_table);
+		fprintf(gnuplot_fd, "%f %f\n", pos_table.x, pos_table.y);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	fflush(gnuplot_fd);
+}
 int main(int argc, char** argv)
 {
 	int res;
@@ -241,33 +337,38 @@ int main(int argc, char** argv)
 	}
 
 	// affichage des données brutes
-	FILE* plot_d = open_gnuplot("Distances selon l'indice", "indice", "distance", 0, 682, 0, 4100);
-	if(plot_d == NULL)
+	FILE* plot_d_fd = open_gnuplot("Distances selon l'indice", "indice", "distance", 0, 682, 0, 4100);
+	if(plot_d_fd == NULL)
 	{
 		return 0;
 	}
 
 	// affichage dans le repere hokuyo
-	FILE* plot_xy = open_gnuplot("Points dans le repere hokuyo", "y", "x", -3000, 3000, 0, 4100);
-	if(plot_xy == NULL)
+	FILE* plot_xy_fd = open_gnuplot("Points dans le repere hokuyo", "y", "x", -3000, 3000, 0, 4100);
+	if(plot_xy_fd == NULL)
 	{
 		return 0;
 	}
 
 	// affichage dans le repere table
-	FILE* plot_table = open_gnuplot("Points dans le repere table", "x", "y", -1800, 1800, -1200, 1200);
-	if(plot_table == NULL)
+	FILE* plot_table_fd = open_gnuplot("Points dans le repere table", "x", "y", -1800, 1800, -1200, 1200);
+	if(plot_table_fd == NULL)
 	{
 		return 0;
 	}
 
-	// fait apres les pipes pour eviter un pb sur le close(fd)
+	// affichage des graph
+	plot_hokuyo_distance(plot_d_fd);
+	plot_hokuyo_xy(plot_xy_fd);
+	plot_table(plot_table_fd);
+
 	open_usb(argv[1]);
 
 	while(1)
 	{
 		uint16_t type;
 		uint16_t size;
+
 		// lecture entete
 		res = read_header(&type, &size);
 		if( res )
@@ -321,42 +422,9 @@ int main(int argc, char** argv)
 			buffer_begin = (buffer_begin + size) % sizeof(buffer);
 		}
 
-		fprintf(plot_d, "plot \"-\"\n");
-		for(i=0; i < 682; i++)
-		{
-			fprintf(plot_d, "%i %i\n",i, hokuyo_distance[i]);
-		}
-		fprintf(plot_d, "e\n");
-		fflush(plot_d);
-
-		fprintf(plot_xy, "plot \"-\"\n");
-		for(i=0; i < 682; i++)
-		{
-			fprintf(plot_xy, "%f %f\n", hokuyo_y[i], hokuyo_x[i]);
-		}
-		fprintf(plot_xy, "e\n");
-		fflush(plot_xy);
-
-		fprintf(plot_table, "plot \"-\" with lines lc rgbcolor \"black\", \"-\"\n");
-		for(i=0; i < MAX_TABLE_PTS; i+=2)
-		{
-			fprintf(plot_table, "%f %f\n", table_pts[i], table_pts[i+1]);
-		}
-		fprintf(plot_table, "e\n");
-
-		struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
-		struct vect_pos pos_table = {0, 0, 0, 1, 0};
-
-		for(i=0; i < 682; i++)
-		{
-			// TODO recup position du robot
-			pos_hokuyo.x = hokuyo_x[i];
-			pos_hokuyo.y = hokuyo_y[i];
-			pos_hokuyo_to_table(&pos_robot, &pos_hokuyo, &pos_table);
-			fprintf(plot_table, "%f %f\n", pos_table.x, pos_table.y);
-		}
-		fprintf(plot_table, "e\n");
-		fflush(plot_table);
+		plot_hokuyo_distance(plot_d_fd);
+		plot_hokuyo_xy(plot_xy_fd);
+		plot_table(plot_table_fd);
 	}
 
 	if(fd > 0)
@@ -364,19 +432,19 @@ int main(int argc, char** argv)
 		close(fd);
 	}
 
-	if( plot_table != NULL )
+	if( plot_table_fd != NULL )
 	{
-		fclose(plot_table);
+		fclose(plot_table_fd);
 	}
 
-	if( plot_xy != NULL )
+	if( plot_xy_fd != NULL )
 	{
-		fclose(plot_xy);
+		fclose(plot_xy_fd);
 	}
 
-	if( plot_d != NULL )
+	if( plot_d_fd != NULL )
 	{
-		fclose(plot_d);
+		fclose(plot_d_fd);
 	}
 
 	return 0;
