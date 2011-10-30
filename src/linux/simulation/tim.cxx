@@ -98,7 +98,7 @@ void Tim::memory_write(uint64_t offset, uint32_t val)
 			DMAR = val;
 			break;
 		default:
-			meslog(_erreur_, "ecriture non supportée offset %#lx, val %#x", offset, val);
+			meslog(_erreur_, "ecriture non supportée offset %#"PRIx64", val %#"PRIx32, offset, val);
 			break;
 	}
 }
@@ -170,7 +170,7 @@ uint32_t Tim::memory_read(uint64_t offset)
 			rep = DMAR;
 			break;
 		default:
-			meslog(_erreur_, "lecture non supportée offset %#lx", offset);
+			meslog(_erreur_, "lecture non supportée offset %#"PRIx64, offset);
 			break;
 	}
 

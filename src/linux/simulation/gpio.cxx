@@ -30,7 +30,7 @@ void Gpio::memory_write(uint64_t offset, uint32_t val)
 			CRH = val;
 			break;
 		case offsetof(GPIO_TypeDef, IDR):
-			meslog(_erreur_, "GPIO - IDR : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "GPIO - IDR : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(GPIO_TypeDef, ODR):
 			ODR = val & 0xFFFF;
@@ -45,7 +45,7 @@ void Gpio::memory_write(uint64_t offset, uint32_t val)
 			LCKR = val & 0x1FFFF;
 			break;
 		default:
-			meslog(_erreur_, "ecriture non supportée offset %#lx, val %#x", offset, val);
+			meslog(_erreur_, "ecriture non supportée offset %#"PRIx64", val %#"PRIx32, offset, val);
 			break;
 	}
 }
@@ -78,7 +78,7 @@ uint32_t Gpio::memory_read(uint64_t offset)
 			rep = LCKR;
 			break;
 		default:
-			meslog(_erreur_, "lecture non supportée offset %#lx", offset);
+			meslog(_erreur_, "lecture non supportée offset %#"PRIx64, offset);
 			break;
 	}
 

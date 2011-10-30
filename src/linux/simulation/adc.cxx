@@ -37,7 +37,7 @@ void Adc::memory_write(uint64_t offset, uint32_t val)
 	switch(offset)
 	{
 		case offsetof(ADC_TypeDef, SR):
-			meslog(_erreur_, "ADC - SR : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - SR : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(ADC_TypeDef, CR1):
 			CR1 = val & 0xCFFFFF;
@@ -82,22 +82,22 @@ void Adc::memory_write(uint64_t offset, uint32_t val)
 			JSQR = val & 0x3FFFFF;
 			break;
 		case offsetof(ADC_TypeDef, JDR1):
-			meslog(_erreur_, "ADC - JDR1 : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - JDR1 : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(ADC_TypeDef, JDR2):
-			meslog(_erreur_, "ADC - JDR2 : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - JDR2 : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(ADC_TypeDef, JDR3):
-			meslog(_erreur_, "ADC - JDR3 : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - JDR3 : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(ADC_TypeDef, JDR4):
-			meslog(_erreur_, "ADC - JDR4 : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - JDR4 : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		case offsetof(ADC_TypeDef, DR):
-			meslog(_erreur_, "ADC - DR : en lecture seule, impossible d'écrire %#x", val);
+			meslog(_erreur_, "ADC - DR : en lecture seule, impossible d'écrire %#"PRIx32, val);
 			break;
 		default:
-			meslog(_erreur_, "ecriture non supportée offset %#lx, val %#x", offset, val);
+			meslog(_erreur_, "ecriture non supportée offset %#"PRIx64", val %#"PRIx32, offset, val);
 			break;
 	}
 }
@@ -169,7 +169,7 @@ uint32_t Adc::memory_read(uint64_t offset)
 			rep = DR;
 			break;
 		default:
-			meslog(_erreur_, "lecture non supportée offset %#lx", offset);
+			meslog(_erreur_, "lecture non supportée offset %#"PRIx64, offset);
 			break;
 	}
 

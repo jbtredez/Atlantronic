@@ -150,7 +150,7 @@ void Rcc::memory_write(uint64_t offset, uint32_t val)
 			CFGR2 = val; // TODO
 			break;
 		default:
-			meslog(_erreur_, "ecriture non supportée offset %#lx, val %#x", offset, val);
+			meslog(_erreur_, "ecriture non supportée offset %#"PRIx64", val %#"PRIx32, offset, val);
 			break;
 	}
 }
@@ -198,7 +198,7 @@ uint32_t Rcc::memory_read(uint64_t offset)
 			rep = CFGR2; // TODO
 			break;
 		default:
-			meslog(_erreur_, "lecture non supportée offset %#lx", offset);
+			meslog(_erreur_, "lecture non supportée offset %#"PRIx64, offset);
 			break;
 	}
 

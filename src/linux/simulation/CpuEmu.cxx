@@ -31,7 +31,7 @@ void CpuEmu::connect_io(uint64_t base, uint64_t range, CpuIoInterface* interface
 
 	if(base < PERIPH_BASE)
 	{
-		meslog(_erreur_, "base < PERIPH_BASE = %#lx", (uint64_t) PERIPH_BASE);
+		meslog(_erreur_, "base < PERIPH_BASE = %#"PRIx64, (uint64_t) PERIPH_BASE);
 		return;	
 	}
 
@@ -67,7 +67,7 @@ void CpuEmu::memory_write(uint64_t offset, uint32_t val)
 		}
 	}
 
-	meslog(_erreur_, "ecriture non supporté - offset %#lx, val %#x", offset, val);
+	meslog(_erreur_, "ecriture non supporté - offset %#"PRIx64", val %"PRIx32, offset, val);
 }
 
 uint32_t CpuEmu::memory_read(uint64_t offset)
@@ -80,7 +80,7 @@ uint32_t CpuEmu::memory_read(uint64_t offset)
 		}
 	}
 
-	meslog(_erreur_, "lecture non supporté - offset %#lx", offset);
+	meslog(_erreur_, "lecture non supporté - offset %#"PRIx64, offset);
 
 	return 0;
 }
@@ -203,7 +203,7 @@ void* CpuEmu::lecture()
 		}
 		else
 		{
-			printf("erreur protocole ( n = %d != %lu)\n", n, sizeof(io));
+			printf("erreur protocole ( n = %d != %zd)\n", n, sizeof(io));
 			return NULL;
 		}
 	}

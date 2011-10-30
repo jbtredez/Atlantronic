@@ -8,6 +8,8 @@
 #include "log.h"
 #include <stdint.h>
 #include "kernel/cpu/cpu.h"
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 class CpuIoInterface
 {
