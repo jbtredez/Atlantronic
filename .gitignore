@@ -25,4 +25,5 @@ Module.markers
 *.mcs
 *.mcw
 
-
+*.anjuta
+TODO.tasks
