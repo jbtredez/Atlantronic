@@ -4,8 +4,8 @@ Site : http://www.atlantronic.fr/
 Requirements :
 "arm-elf" toolchaine (thumb2, cortex m3) :
 	- binutils-2.20.1
-	- gcc-4.5.2
-	- gdb-7.2
+	- gcc-4.5.3
+	- gdb-7.3.1
 	- newlib-1.19
 
 doc : 
@@ -20,8 +20,8 @@ tests :
 	- gnuplot / kst
 
 jtag :
-	- openocd 0.4.0
-	- libftdi 0.18
+	- openocd 0.5.0
+	- libftdi 0.19
 
 
 Arch :
