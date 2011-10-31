@@ -101,6 +101,12 @@ clean_modules:
 
 .PHONY: clean_modules
 
+qemu:
+	@cd qemu && ./configure --target-list=arm-softmmu
+	@+make -C qemu
+
+.PHONY: qemu
+
 $(foreach var,$(bin-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var)) )))
 $(foreach var,$(bin-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var):.o=.d))))
 
