@@ -36,7 +36,7 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 #define ATLANTRONIC_MAX_PRODUCT_NAME_SIZE       0x10
 #define ATLANTRONIC_MAX_INTERFACE_NAME_SIZE     0x10
 
-#define ATLANTRONIC_BUFFER_SIZE                 8192
+#define ATLANTRONIC_BUFFER_SIZE              1024000
 
 #define ATLANTRONIC_MAX_IN_URB                    10
 
