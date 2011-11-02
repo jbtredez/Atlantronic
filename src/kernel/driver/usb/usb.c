@@ -6,6 +6,7 @@
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_istr.h"
 #include "kernel/driver/usb/usb_pwr.h"
+#include "kernel/driver/usb.h"
 
 #define USB_BUFER_SIZE          4096
 
@@ -62,9 +63,15 @@ void usb_write_byte(unsigned char byte)
 	}
 }
 
-void usb_add(uint16_t type, unsigned char* msg, uint16_t size)
+void usb_add(uint16_t type, void* msg, uint16_t size)
 {
 	if(size == 0)
+	{
+		return;
+	}
+
+	// on se reserve le buffer circulaire que pour les log s'il n'y a personne sur l'usb
+	if( type != USB_LOG && bDeviceState != CONFIGURED )
 	{
 		return;
 	}
@@ -78,7 +85,7 @@ void usb_add(uint16_t type, unsigned char* msg, uint16_t size)
 
 	for( ; size--; )
 	{
-		usb_write_byte(*msg);
+		usb_write_byte(*((unsigned char*)msg));
 		msg++;
 	}
 	vTaskSetEvent(EVENT_USB);
