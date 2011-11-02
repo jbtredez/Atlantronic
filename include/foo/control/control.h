@@ -27,6 +27,22 @@ enum control_way
 	CONTROL_BACKWARD
 };
 
+struct control_usb_data
+{
+	int32_t control_state;
+	float control_dest_x;
+	float control_dest_y;
+	float control_dest_alpha;
+	float control_cons_x;
+	float control_cons_y;
+	float control_cons_alpha;
+	float control_pos_x;
+	float control_pos_y;
+	float control_pos_alpha;
+	float control_v_dist_cons;
+	float control_v_rot_cons;
+};
+
 void control_straight(float dist);
 
 void control_straight_to_wall(float dist);

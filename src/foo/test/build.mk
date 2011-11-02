@@ -86,11 +86,23 @@ obj-foo-test_deplacement += foo/encoders.o
 obj-foo-test_deplacement += foo/test/test_deplacement.o
 obj-foo-test_deplacement += foo/adc.o
 obj-foo-test_deplacement += foo/us.o
-
 obj-foo-test_deplacement += foo/pince.o
 obj-foo-test_deplacement += foo/control/control_pince.o
 obj-foo-test_deplacement += foo/ax12.o
 obj-foo-test_deplacement += kernel/driver/usart.o
+obj-foo-test_deplacement += kernel/utf8.o
+obj-foo-test_deplacement += kernel/driver/usb/usb.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_init.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_prop.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_desc.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_core.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_pwr.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_istr.o
+obj-foo-test_deplacement += kernel/driver/usb/usb_sil.o
+obj-foo-test_deplacement += kernel/driver/usb/otgd_fs_dev.o
+obj-foo-test_deplacement += kernel/driver/usb/otgd_fs_cal.o
+obj-foo-test_deplacement += kernel/driver/usb/otgd_fs_int.o
+obj-foo-test_deplacement += kernel/driver/usb/otgd_fs_pcd.o
 
 bin-foo += test_deplacement
 
@@ -123,6 +135,19 @@ obj-foo-test_pince += foo/test/test_pince.o
 obj-foo-test_pince += foo/control/control_pince.o
 obj-foo-test_pince += foo/adc.o
 obj-foo-test_pince += foo/us.o
+obj-foo-test_pince += kernel/utf8.o
+obj-foo-test_pince += kernel/driver/usb/usb.o
+obj-foo-test_pince += kernel/driver/usb/usb_init.o
+obj-foo-test_pince += kernel/driver/usb/usb_prop.o
+obj-foo-test_pince += kernel/driver/usb/usb_desc.o
+obj-foo-test_pince += kernel/driver/usb/usb_core.o
+obj-foo-test_pince += kernel/driver/usb/usb_pwr.o
+obj-foo-test_pince += kernel/driver/usb/usb_istr.o
+obj-foo-test_pince += kernel/driver/usb/usb_sil.o
+obj-foo-test_pince += kernel/driver/usb/otgd_fs_dev.o
+obj-foo-test_pince += kernel/driver/usb/otgd_fs_cal.o
+obj-foo-test_pince += kernel/driver/usb/otgd_fs_int.o
+obj-foo-test_pince += kernel/driver/usb/otgd_fs_pcd.o
 bin-foo += test_pince
 
 obj-foo-test_hokuyo += kernel/main.o
@@ -195,5 +220,19 @@ obj-foo-test_control += foo/avoidance/macro_fonction.o
 obj-foo-test_control += foo/avoidance/evitement.o
 obj-foo-test_control += foo/adc.o
 obj-foo-test_control += foo/us.o
+obj-foo-test_control += kernel/utf8.o
+obj-foo-test_control += kernel/driver/usb/usb.o
+obj-foo-test_control += kernel/driver/usb/usb_init.o
+obj-foo-test_control += kernel/driver/usb/usb_prop.o
+obj-foo-test_control += kernel/driver/usb/usb_desc.o
+obj-foo-test_control += kernel/driver/usb/usb_core.o
+obj-foo-test_control += kernel/driver/usb/usb_pwr.o
+obj-foo-test_control += kernel/driver/usb/usb_istr.o
+obj-foo-test_control += kernel/driver/usb/usb_sil.o
+obj-foo-test_control += kernel/driver/usb/otgd_fs_dev.o
+obj-foo-test_control += kernel/driver/usb/otgd_fs_cal.o
+obj-foo-test_control += kernel/driver/usb/otgd_fs_int.o
+obj-foo-test_control += kernel/driver/usb/otgd_fs_pcd.o
+
 bin-foo += test_control
 

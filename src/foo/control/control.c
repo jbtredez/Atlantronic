@@ -15,13 +15,14 @@
 #include "kernel/trapeze.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/event.h"
+#include "kernel/driver/usb.h"
 #include "adc.h"
 #include "gpio.h"
 #include <math.h>
 #include "us.h"
 
 //! @todo réglage au pif
-#define CONTROL_STACK_SIZE       200
+#define CONTROL_STACK_SIZE       600
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
@@ -48,6 +49,8 @@ struct control_param_arc
 	float r;
 	float angle;
 };
+
+static struct control_usb_data control_usb_data;
 
 static int32_t control_state;
 static struct vect_pos control_dest;
@@ -352,6 +355,21 @@ end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
 	portEXIT_CRITICAL();
+
+	control_usb_data.control_state = control_state;
+	control_usb_data.control_dest_x = control_dest.x;
+	control_usb_data.control_dest_y = control_dest.y;
+	control_usb_data.control_dest_alpha = control_dest.alpha;
+	control_usb_data.control_cons_x = control_cons.x;
+	control_usb_data.control_cons_y = control_cons.y;
+	control_usb_data.control_cons_alpha = control_cons.alpha;
+	control_usb_data.control_pos_x = control_pos.x;
+	control_usb_data.control_pos_y = control_pos.y;
+	control_usb_data.control_pos_alpha = control_pos.alpha;
+	control_usb_data.control_v_dist_cons = control_v_dist_cons;
+	control_usb_data.control_v_rot_cons = control_v_rot_cons;
+
+	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }
 
 static void control_compute_goto()
