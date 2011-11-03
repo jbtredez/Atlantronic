@@ -30,7 +30,7 @@ define _ptasks
 	set $malloc_pool = (unsigned int)heap_end_for_debug - (unsigned int)&end
 	set $ram_size = (unsigned int)&_ram_top - (unsigned int)&__data_start__
 	printf "static alloc : %i\nmalloc pool : %i\nmain stack + non utilisée : %i\n", $static_alloc, $malloc_pool, $ram_size - $static_alloc - $malloc_pool
-	printf "uptime %f\tmatch_time %f\n", systick_time/72000000.0f, $match_time
+	printf "uptime %f (%u)   match_time %f\n", systick_time/72000000.0f, systick_time, $match_time
 
 	echo \033[01;32m
 	printf "  R   "
@@ -43,11 +43,11 @@ define _ptasks
 
 	echo \033[01;34m
 	if $arg0
-		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack (32 bit) |\n"
-		printf "      |            |          |            |            |            |    %%   | current  |   min    |\n"
+		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |  last wake |  time used |   cpu  | free stack (32 bit) |\n"
+		printf "      |            |          |            |            |            |            |            |    %%   | current  |   min    |\n"
 	else
-		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |   cpu  | free stack|\n"
-		printf "      |            |          |            |            |            |    %%   | current  |\n"
+		printf " etat | delai (ms) |    nom   |     ev     |    mask    |  ev & mask |  last wake |  time used |   cpu  | free stack|\n"
+		printf "      |            |          |            |            |            |            |            |    %%   | current  |\n"
 	end
 
 	echo \033[0m
@@ -107,7 +107,7 @@ define _ptasks
 end
 
 define pTcb
-	printf " %8s | %10x | %10x | %10x | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
+	printf " %8s | %10x | %10x | %10x | %10u | %10u | %6.3f | %8i |", $arg0->pcTaskName, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->last_start_tick_count, $arg0->cpu_time_used, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	if $arg1
 		set $stack_min_free = 0
