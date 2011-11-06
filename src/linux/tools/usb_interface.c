@@ -9,10 +9,14 @@
 #include <math.h>
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/usb.h"
+#include "foo/control/control.h"
 #include <errno.h>
+#include <time.h>
+
+#define CONTROL_USB_DATA_MAX          120000 //!< 10 mn de données avec l'asservissement à 200Hz
 
 int fd = -1;
-static unsigned char buffer[10000];
+static unsigned char buffer[65536];
 static int buffer_end = 0;
 static int buffer_begin = 0;
 static int buffer_size = 0;
@@ -20,6 +24,12 @@ static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725 du hok
 static float hokuyo_x[682]; //!< x des points 44 à 725
 static float hokuyo_y[682]; //!< y des points 44 à 725
 static struct vect_pos pos_robot = {0, 0, 0, 1, 0};
+static struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
+static int control_usb_data_count = 0;
+FILE* plot_d_fd = NULL;
+FILE* plot_xy_fd = NULL;
+FILE* plot_table_fd = NULL;
+FILE* plot_speed_fd = NULL;
 
 #define MAX_TABLE_PTS   88
 float table_pts[MAX_TABLE_PTS] =
@@ -192,6 +202,7 @@ int process_hokuyo(char* msg, uint16_t size)
 	if(size != 1444)
 	{
 		res = -1;
+		goto end;
 	}
 
 	hokuyo_tools_decode_buffer((unsigned char*)msg, 1432, hokuyo_distance, 682);
@@ -204,6 +215,24 @@ int process_hokuyo(char* msg, uint16_t size)
 	pos_robot.sa = sin(pos_robot.alpha);
 	pos_robot.ca = cos(pos_robot.alpha);
 
+end:
+	return res;
+}
+
+int process_control(char* msg, uint16_t size)
+{
+	int res = 0;
+
+	if(size != sizeof(struct control_usb_data) )
+	{
+		res = -1;
+		goto end;
+	}
+
+	memcpy(control_usb_data + control_usb_data_count, msg, size);
+	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
+
+end:
 	return res;
 }
 
@@ -230,6 +259,7 @@ FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, in
 	{
 //		close(STDOUT_FILENO);
 		close(STDIN_FILENO);
+		close(STDERR_FILENO);
 
 		dup2(outfd[0], STDIN_FILENO);
 //		dup2(infd[1], STDOUT_FILENO);
@@ -303,7 +333,7 @@ void plot_hokuyo_xy(FILE* gnuplot_fd)
 void plot_table(FILE* gnuplot_fd)
 {
 	int i;
-	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"black\", \"-\"\n");
+	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"black\", \"-\", \"-\" with lines lc rgbcolor \"blue\"\n");
 	for(i=0; i < MAX_TABLE_PTS; i+=2)
 	{
 		fprintf(gnuplot_fd, "%f %f\n", table_pts[i], table_pts[i+1]);
@@ -322,13 +352,55 @@ void plot_table(FILE* gnuplot_fd)
 		fprintf(gnuplot_fd, "%f %f\n", pos_table.x, pos_table.y);
 	}
 	fprintf(gnuplot_fd, "e\n");
+
+	for(i=0; i<control_usb_data_count; i++)
+	{
+		if(control_usb_data[i].control_state != CONTROL_READY_ASSER && control_usb_data[i].control_state != CONTROL_READY_FREE)
+		{
+			fprintf(gnuplot_fd, "%f %f\n", control_usb_data[i].control_cons_x, control_usb_data[i].control_cons_y);
+		}
+	}
+
+	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
 }
+
+void plot_speed(FILE* gnuplot_fd)
+{
+	int i;
+	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"blue\", \"-\" with lines lc rgbcolor \"red\"\n");
+	for(i=0; i < control_usb_data_count; i++)
+	{
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_cons*1000);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	for(i=1; i < control_usb_data_count; i++)
+	{
+		float dx = control_usb_data[i].control_pos_x - control_usb_data[i-1].control_pos_x;
+		float dy = control_usb_data[i].control_pos_x - control_usb_data[i-1].control_pos_x;
+		float ds = sqrt(dx*dx+dy*dy);
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, ds*200);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	fflush(gnuplot_fd);
+}
+
+void replot()
+{
+	plot_hokuyo_distance(plot_d_fd);
+	plot_hokuyo_xy(plot_xy_fd);
+	plot_table(plot_table_fd);
+	plot_speed(plot_speed_fd);
+}
+
 int main(int argc, char** argv)
 {
 	int res;
 	int i;
 	int j;
+	uint64_t frame_count[3] = {0, 0, 0};
+	struct timespec last_plot_time;
+	struct timespec current_time;
 
 	if(argc < 2)
 	{
@@ -337,32 +409,39 @@ int main(int argc, char** argv)
 	}
 
 	// affichage des données brutes
-	FILE* plot_d_fd = open_gnuplot("Distances selon l'indice", "indice", "distance", 0, 682, 0, 4100);
+	plot_d_fd = open_gnuplot("Distances selon l'indice", "indice", "distance", 0, 682, 0, 4100);
 	if(plot_d_fd == NULL)
 	{
 		return 0;
 	}
 
 	// affichage dans le repere hokuyo
-	FILE* plot_xy_fd = open_gnuplot("Points dans le repere hokuyo", "y", "x", -3000, 3000, 0, 4100);
+	plot_xy_fd = open_gnuplot("Points dans le repere hokuyo", "y", "x", -3000, 3000, 0, 4100);
 	if(plot_xy_fd == NULL)
 	{
 		return 0;
 	}
 
 	// affichage dans le repere table
-	FILE* plot_table_fd = open_gnuplot("Points dans le repere table", "x", "y", -1800, 1800, -1200, 1200);
+	plot_table_fd = open_gnuplot("Points dans le repere table", "x", "y", -1800, 1800, -1200, 1200);
 	if(plot_table_fd == NULL)
 	{
 		return 0;
 	}
 
+	// affichage de la consigne et de la mesure de vitesse
+	plot_speed_fd = open_gnuplot("Suivit en vitesse", "t", "v", 0, 90000, -2000, 2000);
+	if(plot_speed_fd == NULL)
+	{
+		return 0;
+	}
+
 	// affichage des graph
-	plot_hokuyo_distance(plot_d_fd);
-	plot_hokuyo_xy(plot_xy_fd);
-	plot_table(plot_table_fd);
+	replot();
 
 	open_usb(argv[1]);
+
+	clock_gettime(CLOCK_MONOTONIC, &last_plot_time);
 
 	while(1)
 	{
@@ -400,9 +479,24 @@ int main(int argc, char** argv)
 		{
 			case USB_LOG:
 				res = process_log(msg, size);
+				if( res == 0)
+				{
+					frame_count[0]++;
+				}
 				break;
 			case USB_HOKUYO:
 				res = process_hokuyo(msg, size);
+				if( res == 0)
+				{
+					frame_count[1]++;
+				}
+				break;
+			case USB_CONTROL:
+				res = process_control(msg, size);
+				if( res == 0)
+				{
+					frame_count[2]++;
+				}
 				break;
 			default:
 				res = -1;
@@ -411,7 +505,7 @@ int main(int argc, char** argv)
 
 		if( res )
 		{
-			printf("wrong format, type : %i, size = %i, buffer_size = %i\n", type, size, buffer_size);
+			printf("wrong format, type : %i, size = %i, buffer_begin = %i buffer_size = %i - skip %#.2x (%c)\n", type, size, buffer_begin, buffer_size, buffer[buffer_begin], buffer[buffer_begin]);
 			buffer_begin = (buffer_begin + 1) % sizeof(buffer);
 			buffer_size--;
 		}
@@ -422,9 +516,15 @@ int main(int argc, char** argv)
 			buffer_begin = (buffer_begin + size) % sizeof(buffer);
 		}
 
-		plot_hokuyo_distance(plot_d_fd);
-		plot_hokuyo_xy(plot_xy_fd);
-		plot_table(plot_table_fd);
+		clock_gettime(CLOCK_MONOTONIC, &current_time);
+		double dt = current_time.tv_sec - last_plot_time.tv_sec + (current_time.tv_nsec - last_plot_time.tv_nsec) * 0.000000001;
+		if( dt > 0.5 )
+		{
+			printf("frame %li %li %li\r", frame_count[0], frame_count[1], frame_count[2]);
+			fflush(stdout);
+			replot();
+			clock_gettime(CLOCK_MONOTONIC, &last_plot_time);
+		}
 	}
 
 	if(fd > 0)
