@@ -22,6 +22,7 @@
 
 // attention, les priorités sont codées sur 4 bits (les bits de poids fort).
 // La fonction setpriority s'occupe de mettre la priorité comme il faut.
+// La priorite 15 est reservee pour l'os
 #define PRIORITY_IRQ_SYSCALL          8
 #define PRIORITY_IRQ_EXTI1           10
 #define PRIORITY_IRQ_EXTI3           10
@@ -36,7 +37,7 @@
 #define PRIORITY_IRQ_UART4           12
 #define PRIORITY_IRQ_DMA2_CHANNEL3   12
 #define PRIORITY_IRQ_DMA2_CHANNEL5   12
-#define PRIORITY_IRQ_USB             15
+#define PRIORITY_IRQ_USB             14
 #define PRIORITY_IRQ_KERNEL          15
 #define PRIORITY_IRQ_PENDSV          PRIORITY_IRQ_KERNEL
 #define PRIORITY_IRQ_SYSTICK         PRIORITY_IRQ_KERNEL
