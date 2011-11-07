@@ -850,6 +850,7 @@ tskTCB * pxNewTCB;
 
 		pxTCB = ( tskTCB * ) pxTaskToResume;
 
+		portSET_INTERRUPT_MASK();
 		if( xTaskIsTaskSuspended( pxTCB ) == pdTRUE )
 		{
 			traceTASK_RESUME_FROM_ISR( pxTCB );
@@ -868,6 +869,7 @@ tskTCB * pxNewTCB;
 				vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxTCB->xEventListItem ) );
 			}
 		}
+		portCLEAR_INTERRUPT_MASK();
 
 		return xYieldRequired;
 	}
@@ -2054,12 +2056,7 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 		{
 			pxTcb = pxListItem->pvOwner;
 			next = (xListItem*) pxListItem->pxNext;
-			// TODO patch moche pourri
-			if((unsigned long) pxTcb < 0x20000000)
-			{
-				goto end; // mettre un breakpoint pour le debug
-			}
-			
+
 			pxTcb->event |= mask;
 			if( wake && pxTcb->event & pxTcb->eventMask)
 			{
@@ -2077,7 +2074,6 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 		}while( pxListItem != (xListItem*) &pxTaskList->xListEnd);
 	}
 
-end:
 	return xHigherPriorityTaskWoken;
 }
 
@@ -2090,9 +2086,16 @@ void vTaskSetEvent(uint32_t mask)
 {
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	unsigned portBASE_TYPE xAlreadyYielded = 0;
+	int i;
 
 	vTaskSuspendAll();
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(mask);
+	for(i = 0; i < configMAX_PRIORITIES; i++)
+	{
+		xTaskUpdateEvent(&pxReadyTasksLists[i], mask, 0);
+	}
+
+	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xDelayedTaskList, mask, 1);
+	xHigherPriorityTaskWoken |= xTaskUpdateEvent(&xSuspendedTaskList, mask, 1);
 	xAlreadyYielded = xTaskResumeAll();
 
 	if( !xAlreadyYielded && xHigherPriorityTaskWoken)
@@ -2107,6 +2110,7 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	unsigned portBASE_TYPE i;
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
+	portSET_INTERRUPT_MASK();
 	if( uxSchedulerSuspended == 0)
 	{
 		for(i = 0; i < configMAX_PRIORITIES; i++)
@@ -2121,6 +2125,7 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	{
 		uxMissedEvents |= mask;
 	}
+	portCLEAR_INTERRUPT_MASK();
 
 	return xHigherPriorityTaskWoken;
 }
