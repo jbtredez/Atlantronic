@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <time.h>
 
-#define CONTROL_USB_DATA_MAX          120000 //!< 10 mn de données avec l'asservissement à 200Hz
+#define CONTROL_USB_DATA_MAX        18000 //!< 90s de données avec l'asservissement à 200Hz
 
 int fd = -1;
 static unsigned char buffer[65536];
@@ -294,7 +294,7 @@ FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, in
 		goto end;
 	}
 
-	fprintf(gnuplot_fd, "set term x11 noraise\n");
+	fprintf(gnuplot_fd, "set term x11 noraise title \"%s\"\n", title);
 	fprintf(gnuplot_fd, "set mouse\n");
 	fprintf(gnuplot_fd, "set title \"%s\"\n", title);
 	fprintf(gnuplot_fd, "set xlabel \"%s\"\n", xlabel);
@@ -333,7 +333,7 @@ void plot_hokuyo_xy(FILE* gnuplot_fd)
 void plot_table(FILE* gnuplot_fd)
 {
 	int i;
-	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"black\", \"-\", \"-\" with lines lc rgbcolor \"blue\"\n");
+	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"black\", \"-\" lc rgbcolor \"red\", \"-\" with lines lc rgbcolor \"blue\", \"-\" lc rgbcolor \"green\"\n");
 	for(i=0; i < MAX_TABLE_PTS; i+=2)
 	{
 		fprintf(gnuplot_fd, "%f %f\n", table_pts[i], table_pts[i+1]);
@@ -353,12 +353,19 @@ void plot_table(FILE* gnuplot_fd)
 	}
 	fprintf(gnuplot_fd, "e\n");
 
-	for(i=0; i<control_usb_data_count; i++)
+	int max = control_usb_data_count % CONTROL_USB_DATA_MAX;
+	for(i=0; i< max; i++)
 	{
 		if(control_usb_data[i].control_state != CONTROL_READY_ASSER && control_usb_data[i].control_state != CONTROL_READY_FREE)
 		{
 			fprintf(gnuplot_fd, "%f %f\n", control_usb_data[i].control_cons_x, control_usb_data[i].control_cons_y);
 		}
+	}
+
+	fprintf(gnuplot_fd, "e\n");
+	for(i=0; i < max; i++)
+	{
+		fprintf(gnuplot_fd, "%f %f\n", control_usb_data[i].control_pos_x, control_usb_data[i].control_pos_y);
 	}
 
 	fprintf(gnuplot_fd, "e\n");
