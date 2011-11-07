@@ -49,6 +49,8 @@ static int systick_module_init()
 
 module_init(systick_module_init, INIT_SYSTICK);
 
+//! fonction qui ne doit être utilisée que par l'interruption de l'ordonanceur
+//! qui désactive les autres IT touchant au systick
 int systick_reconfigure(uint64_t tick)
 {
 	int32_t val = SysTick->VAL;
@@ -76,6 +78,9 @@ int systick_reconfigure(uint64_t tick)
 	return 0;
 }
 
+//! interruption systick, on declenche l'IT de changement de contexte
+//! on desactive les IT avant de toucher au systick pour ne pas entrer
+//! en concurence avec l'IT de changement de contexte
 void isr_systick( void )
 {
 	*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
@@ -102,8 +107,10 @@ int64_t systick_get_time()
 	return t;
 }
 
+//! on desactive les IT pouvant toucher au systick pour eviter les concurrences d'accés
 int64_t systick_get_time_from_isr()
 {
+	portSET_INTERRUPT_MASK();
 	uint32_t val = SysTick->VAL;
 	if( SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
@@ -111,6 +118,7 @@ int64_t systick_get_time_from_isr()
 		systick_last_load_used = SYSTICK_MAXCOUNT;
 		val = SysTick->VAL;
 	}
+	portCLEAR_INTERRUPT_MASK();
 
 	return systick_time + systick_last_load_used - val;
 }
