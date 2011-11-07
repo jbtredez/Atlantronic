@@ -506,6 +506,7 @@ static void control_colision_detection()
 
 void control_straight(float dist)
 {
+	log_info("param %.2f", dist);
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
 	{
@@ -531,6 +532,7 @@ void control_straight(float dist)
 
 void control_rotate(float angle)
 {
+	log_info("param %f", angle);
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
 	{
@@ -557,6 +559,7 @@ void control_rotate(float angle)
 
 void control_rotate_to(float alpha)
 {
+	log_info("param %f", alpha);
 	portENTER_CRITICAL();
 	control_cons = location_get_position();
 	float da = fmodf(alpha - control_cons.alpha, 2*PI);
@@ -584,6 +587,7 @@ float trouverRotation(float debut, float fin)
 
 void control_goto_near(float x, float y, float dist, enum control_way sens)
 {
+	log_info("param %.2f %.2f %.2f %d", x, y, dist, sens);
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
 	{
@@ -642,6 +646,7 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 
 void control_straight_to_wall(float dist)
 {
+	log_info("param %.2f", dist);
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
 	{
