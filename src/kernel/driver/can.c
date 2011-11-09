@@ -223,6 +223,7 @@ void isr_can1_rx0(void)
 		msg._data.low = CAN1->sFIFOMailBox[0].RDLR;
 		msg._data.high = CAN1->sFIFOMailBox[0].RDHR;
 
+		// attention, la fonction desactive les IT puis les reactive
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
