@@ -51,7 +51,7 @@ module_init(systick_module_init, INIT_SYSTICK);
 
 //! fonction qui ne doit être utilisée que par l'interruption de l'ordonanceur
 //! qui désactive les autres IT touchant au systick
-int systick_reconfigure(uint64_t tick)
+int systick_reconfigure_from_isr(uint64_t tick)
 {
 	int32_t val = SysTick->VAL;
 	if( SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
@@ -107,10 +107,8 @@ int64_t systick_get_time()
 	return t;
 }
 
-//! on desactive les IT pouvant toucher au systick pour eviter les concurrences d'accés
 int64_t systick_get_time_from_isr()
 {
-	portSET_INTERRUPT_MASK();
 	uint32_t val = SysTick->VAL;
 	if( SysTick->CTRL & SysTick_CTRL_COUNTFLAG)
 	{
@@ -118,7 +116,6 @@ int64_t systick_get_time_from_isr()
 		systick_last_load_used = SYSTICK_MAXCOUNT;
 		val = SysTick->VAL;
 	}
-	portCLEAR_INTERRUPT_MASK();
 
 	return systick_time + systick_last_load_used - val;
 }
@@ -133,13 +130,10 @@ int64_t systick_get_match_time()
 	return t;
 }
 
-void systick_start_match()
+void systick_start_match_from_isr()
 {
-	portENTER_CRITICAL();
 	if( systick_time_start_match == 0)
 	{
-		systick_time_start_match = systick_get_time();
+		systick_time_start_match = systick_get_time_from_isr();
 	}
-	portEXIT_CRITICAL();
 }
-

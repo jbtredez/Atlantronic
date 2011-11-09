@@ -8,14 +8,13 @@
 #include "cpu/cpu.h"
 #include <stdint.h>
 
-// doit être dans une interruption
-int systick_reconfigure(uint64_t tick) __attribute__(( __warn_unused_result__ ));
+int systick_reconfigure_from_isr(uint64_t tick) __attribute__(( __warn_unused_result__ ));
 
 int64_t systick_get_time();
 int64_t systick_get_time_from_isr();
 
 int64_t systick_get_match_time();
 
-void systick_start_match();
+void systick_start_match_from_isr();
 
 #endif

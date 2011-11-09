@@ -131,6 +131,8 @@ module_init(gpio_module_init, INIT_GPIO);
 
 void isr_exti1(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
 		EXTI->PR |= EXTI_PR_PR1;
@@ -178,10 +180,14 @@ void isr_exti1(void)
 			gpio_us &= ~US_LEFT_MASK;
 		}
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_exti3(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR3)
 	{
 		EXTI->PR |= EXTI_PR_PR3;
@@ -208,10 +214,14 @@ void isr_exti3(void)
 			gpio_us &= ~US_FRONT_MASK;
 		}
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_exti9_5(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR5)
 	{
 		EXTI->PR |= EXTI_PR_PR5;
@@ -268,15 +278,21 @@ void isr_exti9_5(void)
 		EXTI->PR |= EXTI_PR_PR9;
 		// TODO action btn2
 	}
+
+	portSET_INTERRUPT_MASK();
 }
 
 void isr_exti15_10(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR10)
 	{
 		EXTI->PR |= EXTI_PR_PR10;
 		// TODO action btn3
 	}
+
+	portSET_INTERRUPT_MASK();
 }
 
 void setLed(uint32_t mask)

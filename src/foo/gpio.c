@@ -82,12 +82,14 @@ module_init(gpio_module_init, INIT_GPIO);
 
 void isr_exti9_5(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
 		gpio_go = 1;
 		setLed(0x23F);
-		systick_start_match();
+		systick_start_match_from_isr();
 		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR6)
@@ -95,7 +97,7 @@ void isr_exti9_5(void)
 		EXTI->PR |= EXTI_PR_PR6;
 		gpio_go = 1;
 		setLed(0x23F);
-		systick_start_match();
+		systick_start_match_from_isr();
 		vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
@@ -115,15 +117,21 @@ void isr_exti9_5(void)
 			}
 		}
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_exti15_10(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( EXTI->PR & EXTI_PR_PR10)
 	{
 		EXTI->PR |= EXTI_PR_PR10;
 		gpio_recaler = 1;
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void setLed(uint32_t mask)

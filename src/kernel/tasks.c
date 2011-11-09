@@ -1326,7 +1326,7 @@ void vTaskSwitchContext( void )
 	{
 		pxTCB = xDelayedTaskList.xListEnd.pxNext->pvOwner;
 
-		if( systick_reconfigure(pxTCB->xGenericListItem.xItemValue) == 0)
+		if( systick_reconfigure_from_isr(pxTCB->xGenericListItem.xItemValue) == 0)
 		{
 			break;
 		}
