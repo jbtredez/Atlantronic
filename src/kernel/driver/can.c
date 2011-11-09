@@ -176,6 +176,8 @@ static void can_read_task(void *arg)
 
 void isr_can1_tx(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	// fin de transmission sur la boite 0
 	if(CAN1->TSR & CAN_TSR_RQCP0)
 	{
@@ -183,6 +185,8 @@ void isr_can1_tx(void)
 		CAN1->IER &= ~CAN_IER_TMEIE;
 		vTaskSetEventFromISR(EVENT_CAN_TX_END);
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_can1_rx0(void)

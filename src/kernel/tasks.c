@@ -2110,7 +2110,6 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	unsigned portBASE_TYPE i;
 	unsigned portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
 	if( uxSchedulerSuspended == 0)
 	{
 		for(i = 0; i < configMAX_PRIORITIES; i++)
@@ -2125,7 +2124,6 @@ unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask)
 	{
 		uxMissedEvents |= mask;
 	}
-	portCLEAR_INTERRUPT_MASK();
 
 	return xHigherPriorityTaskWoken;
 }

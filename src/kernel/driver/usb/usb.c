@@ -157,7 +157,11 @@ void isr_otg_fs(void)
 
 void EP1_IN_Callback(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	usb_endpoint_ready = 1;
 	usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
 	vTaskSetEventFromISR(EVENT_USB);
+
+	portCLEAR_INTERRUPT_MASK();
 }

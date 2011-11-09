@@ -133,6 +133,8 @@ void usart_open( enum usart_id id, uint32_t frequency)
 
 void isr_usart3(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	// affichage de l'erreur
 	if( USART3->SR & USART_SR_FE)
 	{
@@ -156,10 +158,14 @@ void isr_usart3(void)
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	USART3->DR;
 	vTaskSetEventFromISR(EVENT_USART3_ERROR);
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_uart4(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	// affichage de l'erreur
 	if( UART4->SR & USART_SR_FE)
 	{
@@ -183,6 +189,8 @@ void isr_uart4(void)
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	UART4->DR;
 	vTaskSetEventFromISR(EVENT_UART4_ERROR);
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_dma1_channel2(void)
@@ -196,12 +204,16 @@ void isr_dma1_channel2(void)
 
 void isr_dma1_channel3(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( DMA1->ISR | DMA_ISR_TCIF3)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF3;
 		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
 		vTaskSetEventFromISR(EVENT_DMA1_3_TC);
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_dma2_channel5(void)
@@ -215,12 +227,16 @@ void isr_dma2_channel5(void)
 
 void isr_dma2_channel3(void)
 {
+	portSET_INTERRUPT_MASK();
+
 	if( DMA2->ISR | DMA_ISR_TCIF3)
 	{
 		DMA2->IFCR |= DMA_IFCR_CTCIF3;
 		DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
 		vTaskSetEventFromISR(EVENT_DMA2_3_TC);	
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
@@ -310,4 +326,3 @@ void usart_send_dma_buffer(enum usart_id id, uint16_t size)
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_write->CCR |= DMA_CCR2_EN;
 }
-

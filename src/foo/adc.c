@@ -128,6 +128,8 @@ static inline void scan_AN()
 
 void isr_dma1_channel1(void)
 {
+//	portSET_INTERRUPT_MASK();
+
 	if( DMA1->ISR | DMA_ISR_TCIF1)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF1;
@@ -137,6 +139,8 @@ void isr_dma1_channel1(void)
 		adc_current = tmp;
 //		vTaskSetEventFromISR(EVENT_ADC_READY);
 	}
+
+//	portCLEAR_INTERRUPT_MASK();
 }
 
 static void adc_task(void* arg)
