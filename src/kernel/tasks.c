@@ -850,7 +850,6 @@ tskTCB * pxNewTCB;
 
 		pxTCB = ( tskTCB * ) pxTaskToResume;
 
-		portSET_INTERRUPT_MASK();
 		if( xTaskIsTaskSuspended( pxTCB ) == pdTRUE )
 		{
 			traceTASK_RESUME_FROM_ISR( pxTCB );
@@ -869,7 +868,6 @@ tskTCB * pxNewTCB;
 				vListInsertEnd( ( xList * ) &( xPendingReadyList ), &( pxTCB->xEventListItem ) );
 			}
 		}
-		portCLEAR_INTERRUPT_MASK();
 
 		return xYieldRequired;
 	}
