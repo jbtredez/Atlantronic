@@ -51,7 +51,7 @@ const uint8_t usb_config_descriptor[] =
 	USB_INTERFACE_DESCRIPTOR_TYPE,  // bDescriptorType: Interface
 	0x00,                           // bInterfaceNumber: Number of Interface (interface 0)
 	0x00,                           // bAlternateSetting: Alternate setting
-	0x01,                           // bNumEndpoints: 1 terminaison utilisée
+	0x02,                           // bNumEndpoints: 2 terminaisons utilisées
 	0xff,                           // bInterfaceClass: specifique constructeur (driver perso)
 	USB_DATA_SUBCLASS,              // bInterfaceSubClass
 	0x00,                           // bInterfaceProtocol
@@ -60,6 +60,14 @@ const uint8_t usb_config_descriptor[] =
 	0x07,                           // bLength: Endpoint Descriptor size
 	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
 	0x81,                           // bEndpointAddress: IN1
+	0x02,                           // bmAttributes: terminaison de type bloc
+	0x40,                           // wMaxPacketSize: 64 octets max
+	0x00,
+	0x00,                           // bInterval: ignorée pour les terminaisons de type bloc
+// Endpoint Descriptor (OUT2)
+	0x07,                           // bLength: Endpoint Descriptor size
+	USB_ENDPOINT_DESCRIPTOR_TYPE,   // bDescriptorType: Endpoint
+	0x02,                           // bEndpointAddress: OUT2
 	0x02,                           // bmAttributes: terminaison de type bloc
 	0x40,                           // wMaxPacketSize: 64 octets max
 	0x00,
