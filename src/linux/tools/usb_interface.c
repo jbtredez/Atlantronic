@@ -7,25 +7,24 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
+#include <errno.h>
+#include <time.h>
+#include "linux/tools/com.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/control.h"
-#include <errno.h>
-#include <time.h>
+
 
 #define CONTROL_USB_DATA_MAX        18000 //!< 90s de données avec l'asservissement à 200Hz
 
-int fd = -1;
-static unsigned char buffer[65536];
-static int buffer_end = 0;
-static int buffer_begin = 0;
-static int buffer_size = 0;
 static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725 du hokuyo
 static float hokuyo_x[682]; //!< x des points 44 à 725
 static float hokuyo_y[682]; //!< y des points 44 à 725
 static struct vect_pos pos_robot = {0, 0, 0, 1, 0};
 static struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 static int control_usb_data_count = 0;
+static struct com foo;
+
 FILE* plot_d_fd = NULL;
 FILE* plot_xy_fd = NULL;
 FILE* plot_table_fd = NULL;
@@ -79,105 +78,6 @@ float table_pts[MAX_TABLE_PTS] =
 	 1050,   700,
 	-1050,   700,
 };
-
-int read_buffer(int min_buffer_size)
-{
-	if( min_buffer_size > (int) sizeof(buffer) )
-	{
-		printf("error : buffer trop petit : %i > %i\n", min_buffer_size, (int) sizeof(buffer));
-		return -1;
-	}
-
-	while( buffer_size < min_buffer_size )
-	{
-		int max1 = sizeof(buffer) - buffer_size;
-		int max2 = sizeof(buffer) - buffer_end;
-		int max = max1;
-
-		if( max2 < max1)
-		{
-			max = max2;
-		}
-
-		int size = read(fd, buffer + buffer_end, max);
-		if(size == 0)
-		{
-			printf("close usb\n");
-			close(fd);
-			fd = -1;
-			return -1;
-		}
-
-		if(size < 0)
-		{
-			perror("sync - read");
-			return -1;
-		}
-
-		buffer_end = (buffer_end + size) % sizeof(buffer);
-		buffer_size += size;
-	}
-
-	return 0;
-}
-
-int read_header(uint16_t* type, uint16_t* size)
-{
-	int res = 0;
-
-	int err = read_buffer(4);
-	if(err)
-	{
-		res = err;
-		goto end;
-	}
-
-	unsigned char a = buffer[buffer_begin];
-	unsigned char b = buffer[(buffer_begin + 1) % sizeof(buffer)];
-	unsigned char c = buffer[(buffer_begin + 2) % sizeof(buffer)];
-	unsigned char d = buffer[(buffer_begin + 3) % sizeof(buffer)];
-	*type = ( a << 8 ) + b;
-	*size = ( c << 8 ) + d;
-
-end:
-	return res;
-}
-
-void open_usb(const char* file)
-{
-	int last_error = 0;
-	buffer_end = 0;
-	buffer_begin = 0;
-	buffer_size = 0;
-
-	if(fd > 0)
-	{
-		printf("close usb (=> reopen)\n");
-		if( close(fd) )
-		{
-			perror("close");
-		}
-	}
-
-	while(1)
-	{
-		fd = open(file, O_RDONLY);
-		if(fd <= 0)
-		{
-			if( last_error != errno )
-			{
-				perror("open");
-				last_error = errno;
-			}
-		}
-		else
-		{
-			printf("open usb\n");
-			return;
-		}
-		usleep(1000000);
-	}
-}
 
 int process_log(char* msg, uint16_t size)
 {
@@ -244,7 +144,13 @@ FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, in
 	int outfd[2];
 	// int infd[2];
 
-	pipe(outfd);
+	int res = pipe(outfd);
+	if(res)
+	{
+		perror("pipe");
+		goto end;
+	}
+
 	// pipe(infd);
 
 	pID = vfork();
@@ -270,9 +176,9 @@ FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, in
 //		close(infd[1]);
 
 		// au cas ou on a déjà ouvert l'usb : on ne le donne pas a gnuplot
-		if(fd > 0)
+		if(foo.fd > 0)
 		{
-			close(fd);
+			close(foo.fd);
 		}
 		char* arg[2];
 
@@ -403,8 +309,6 @@ void replot()
 int main(int argc, char** argv)
 {
 	int res;
-	int i;
-	int j;
 	uint64_t frame_count[3] = {0, 0, 0};
 	struct timespec last_plot_time;
 	struct timespec current_time;
@@ -446,7 +350,7 @@ int main(int argc, char** argv)
 	// affichage des graph
 	replot();
 
-	open_usb(argv[1]);
+	com_open(&foo, argv[1]);
 
 	clock_gettime(CLOCK_MONOTONIC, &last_plot_time);
 
@@ -456,30 +360,24 @@ int main(int argc, char** argv)
 		uint16_t size;
 
 		// lecture entete
-		res = read_header(&type, &size);
+		res = com_read_header(&foo, &type, &size);
 		if( res )
 		{
-			open_usb(argv[1]);
+			com_open(&foo, argv[1]);
 			continue;
 		}
 
 		// lecture du message
-		res = read_buffer( size + 4);
+		res = com_read(&foo, size + 4);
 		if( res )
 		{
-			open_usb(argv[1]);
+			com_open(&foo, argv[1]);
 			continue;
 		}
 
 		// copie du message (vers un buffer non circulaire)
 		char msg[size+1];
-		i = (buffer_begin + 4) % sizeof(buffer);
-		for(j = 0; j < size ; j++)
-		{
-			msg[j] = buffer[i];
-			i = (i + 1) % sizeof(buffer);
-		}
-		msg[size] = 0;
+		com_copy_msg(&foo, msg, size+1);
 
 		// traitement du message
 		switch( type )
@@ -512,32 +410,27 @@ int main(int argc, char** argv)
 
 		if( res )
 		{
-			printf("wrong format, type : %i, size = %i, buffer_begin = %i buffer_size = %i - skip %#.2x (%c)\n", type, size, buffer_begin, buffer_size, buffer[buffer_begin], buffer[buffer_begin]);
-			buffer_begin = (buffer_begin + 1) % sizeof(buffer);
-			buffer_size--;
+//			printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, foo.buffer[foo.buffer_begin], foo.buffer[foo.buffer_begin]);
+			com_skip(&foo, 1);
 		}
 		else
 		{
 			size += 4;
-			buffer_size -= size;
-			buffer_begin = (buffer_begin + size) % sizeof(buffer);
+			com_skip(&foo, size);
 		}
 
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
 		double dt = current_time.tv_sec - last_plot_time.tv_sec + (current_time.tv_nsec - last_plot_time.tv_nsec) * 0.000000001;
 		if( dt > 0.5 )
 		{
-			printf("frame %li %li %li\r", frame_count[0], frame_count[1], frame_count[2]);
-			fflush(stdout);
+//			printf("frame %li %li %li\r", frame_count[0], frame_count[1], frame_count[2]);
+//			fflush(stdout);
 			replot();
 			clock_gettime(CLOCK_MONOTONIC, &last_plot_time);
 		}
 	}
 
-	if(fd > 0)
-	{
-		close(fd);
-	}
+	com_close(&foo);
 
 	if( plot_table_fd != NULL )
 	{
