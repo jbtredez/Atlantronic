@@ -7,26 +7,38 @@
 #include "kernel/driver/usb/usb_istr.h"
 #include "kernel/driver/usb/usb_pwr.h"
 #include "kernel/driver/usb.h"
+#include "kernel/log.h"
 
 #define USB_BUFER_SIZE          4096
 
 //! @todo réglage au pif
-#define USB_STACK_SIZE            64
+#define USB_STACK_SIZE           300
 
 static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
 static unsigned int usb_write_size;
+static unsigned char usb_rx_buffer[64];
+static unsigned int usb_read_size;
+static void (*usb_cmd[USB_CMD_NUM])(void*);
 
 void usb_task(void *);
 static volatile unsigned int usb_endpoint_ready;
 
 static int usb_module_init(void)
 {
+	int i;
+
 	usb_buffer_begin = 0;
 	usb_buffer_end = 0;
 	usb_write_size = 0;
 	usb_endpoint_ready = 1;
+	usb_read_size = 0;
+
+	for(i = 0; i < USB_CMD_NUM; i++)
+	{
+		usb_cmd[i] = NULL;
+	}
 
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	RCC->AHBENR |= RCC_AHBENR_OTGFSEN; // USB OTG FS clock enable
@@ -92,7 +104,15 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 	portEXIT_CRITICAL();
 }
 
-//! Log task
+void usb_add_cmd(int id, void (*cmd)(void*))
+{
+	if( id < USB_CMD_NUM )
+	{
+		usb_cmd[id] = cmd;
+	}
+}
+
+//! Usb task
 void usb_task(void * arg)
 {
 	(void) arg;
@@ -102,6 +122,30 @@ void usb_task(void * arg)
 		while( bDeviceState != CONFIGURED )
 		{
 			vTaskDelay( ms_to_tick(100) );
+		}
+
+		if( usb_read_size )
+		{
+			int id = usb_rx_buffer[0];
+			if( id < USB_CMD_NUM )
+			{
+				if( usb_cmd[id] )
+				{
+					usb_cmd[id](usb_rx_buffer+1);
+				}
+				else
+				{
+//					usb_add(USB_LOG, "usb_error : command not found\n", 30);
+					log_error("command %d not found", id);
+				}
+			}
+			else
+			{
+//				usb_add(USB_LOG, "usb_error : command not found\n", 30);
+				log_error("command %d not found", id);
+			}
+
+			usb_read_size = 0;
 		}
 
 		if( usb_endpoint_ready )
@@ -164,4 +208,13 @@ void EP1_IN_Callback(void)
 	vTaskSetEventFromISR(EVENT_USB);
 
 	portCLEAR_INTERRUPT_MASK();
+}
+
+void EP2_OUT_Callback(void)
+{
+	// pas de commande en cours de traitement
+	if( usb_read_size == 0)
+	{
+		usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
+	}
 }
