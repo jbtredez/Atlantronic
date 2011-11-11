@@ -23,7 +23,7 @@ doc := doc
 
 INCLUDES:=-I. -Iinclude
 
-DEBUG ?= 1
+DEBUG ?= 0
 VERBOSE ?= 0
 
 ifeq ($(MAKECMDGOALS),foo)

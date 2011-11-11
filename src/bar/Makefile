@@ -19,7 +19,6 @@ CFLAGS+=-Wswitch-default
 CFLAGS+=-Wswitch-enum
 CFLAGS+=-Wunsuffixed-float-constants
 CFLAGS+=-mno-thumb-interwork
-#CFLAGS+=-O1
 CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-g3
 
@@ -42,8 +41,8 @@ ifeq ($(DEBUG),1)
 
 else
 DEF+= NDEBUG
-#CFLAGS+=-O3
-#LDFLAGS+=-O3
+CFLAGS+=-O2
+LDFLAGS+=-O2
 endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
