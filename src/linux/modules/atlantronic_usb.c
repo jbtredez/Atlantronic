@@ -37,6 +37,8 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 #define ATLANTRONIC_BUFFER_SIZE              1024000
 
 #define ATLANTRONIC_MAX_IN_URB                    10
+#define ATLANTRONIC_MAX_OUT_URB                   10
+#define ATLANTRONIC_MAX_WRITE_SIZE                64
 
 #undef err
 #define err(format, arg...) printk(KERN_ERR KBUILD_MODNAME ":%s:%d: " format "\n" , __FUNCTION__, __LINE__, ## arg)	//!< macro d'erreur formatée
@@ -52,8 +54,10 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 static int atlantronic_release(struct inode *inode, struct file *file);
 static int atlantronic_open(struct inode *inode, struct file *file);
 static ssize_t atlantronic_read(struct file *file, char *buffer, size_t count, loff_t *ppos);
+static ssize_t atlantronic_write(struct file *file, const char *user_buffer, size_t count, loff_t *ppos);
 
-static void atlantronic_urb_callback(struct urb *urb);
+static void atlantronic_urb_in_callback(struct urb *urb);
+static void atlantronic_urb_out_callback(struct urb *urb);
 
 static int atlantronic_probe(struct usb_interface *interface, const struct usb_device_id *id);
 static void atlantronic_disconnect(struct usb_interface *interface);
@@ -96,8 +100,11 @@ struct atlantronic_data
 	int                       error;               //!< erreur urb
 	int                       open_count;          //!< nombre d'ouvertures
 	struct mutex              io_mutex;            //!< mutex i/o
+	struct semaphore          write_limit_sem;     //!< semaphore de limitation du nombre d'urb en cours d'envoi
 	wait_queue_head_t         wait;                //!< liste de processus en attente dans le read
-	struct urb*   in_urb[ATLANTRONIC_MAX_IN_URB];    //!< urb
+	unsigned char             out_ep_addr;         //!< adresse de l'endpoint OUT2
+	struct usb_anchor         urb_submitted;       //!< permet d'annuler les urb en cours d'envoi si necessaire
+	struct urb*   in_urb[ATLANTRONIC_MAX_IN_URB];    //!< urb endpoint IN1
 	unsigned char buffer[ATLANTRONIC_BUFFER_SIZE];   //!< buffer circulaire
 	int           buffer_begin;     //!< indice de debut du buffer circulaire
 	int           buffer_end;       //!< indice de fin du buffer circulaire
@@ -108,7 +115,7 @@ static const struct file_operations atlantronic_fops =
 {
 	.owner =	THIS_MODULE,
 	.read =		atlantronic_read,
-	.write =    NULL,
+	.write =    atlantronic_write,
 	.open =		atlantronic_open,
 	.release =	atlantronic_release,
 	.flush =	NULL,
@@ -230,6 +237,133 @@ static int atlantronic_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
+static ssize_t atlantronic_write(struct file *file, const char *user_buffer, size_t count, loff_t *ppos)
+{
+	int rep = 0;
+	struct atlantronic_data* dev = file->private_data;
+	struct urb *urb = NULL;
+	char* buf = NULL;
+	size_t writesize = min(count, (size_t)ATLANTRONIC_MAX_WRITE_SIZE);
+
+	debug(1, "atlantronic_write");
+
+	if(dev == NULL)
+	{
+		rep = -ENODEV;
+		goto end;
+	}
+
+	if( count == 0)
+	{
+		goto end;
+	}
+
+	// limitation du nombre d'urb en cours d'envoi
+	if (!(file->f_flags & O_NONBLOCK))
+	{
+		if (down_interruptible(&dev->write_limit_sem))
+		{
+			rep = -ERESTARTSYS;
+			goto end;
+		}
+	}
+	else
+	{
+		if (down_trylock(&dev->write_limit_sem))
+		{
+			rep = -EAGAIN;
+			goto end;
+		}
+	}
+
+	urb = usb_alloc_urb(0, GFP_KERNEL);
+	if (!urb)
+	{
+		rep = -ENOMEM;
+		goto error_up_sem;
+	}
+
+	buf = usb_alloc_coherent(dev->udev, writesize, GFP_KERNEL, &urb->transfer_dma);
+
+	if (!buf)
+	{
+		rep = -ENOMEM;
+		goto error_free_urb;
+	}
+
+	if (copy_from_user(buf, user_buffer, writesize))
+	{
+		rep = -EFAULT;
+		goto error_free_buf;
+	}
+
+	mutex_lock(&dev->io_mutex);
+	if (!dev->interface)
+	{
+		mutex_unlock(&dev->io_mutex);
+		rep = -ENODEV;
+		goto error_free_buf;
+	}
+
+	usb_fill_bulk_urb(urb, dev->udev, usb_sndbulkpipe(dev->udev, dev->out_ep_addr), buf, writesize, atlantronic_urb_out_callback, dev);
+	urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
+	usb_anchor_urb(urb, &dev->urb_submitted);
+
+	rep = usb_submit_urb(urb, GFP_KERNEL);
+	mutex_unlock(&dev->io_mutex);
+
+	if(rep)
+	{
+		err("failed submitting write urb, error %d", rep);
+		goto error_unanchor;
+	}
+
+	// on libere notre ref. Sera libere plus tard par usbcore quand il en aura termine avec l'urb
+	usb_free_urb(urb);
+
+	return writesize;
+
+error_unanchor:
+	usb_unanchor_urb(urb);
+error_free_buf:
+	usb_free_coherent(dev->udev, writesize, buf, urb->transfer_dma);
+error_free_urb:
+	usb_free_urb(urb);
+error_up_sem:
+	up(&dev->write_limit_sem);
+end:
+	return rep;
+}
+
+void atlantronic_urb_out_callback(struct urb *urb)
+{
+	struct atlantronic_data* dev = urb->context;
+
+//	spin_lock(&dev->err_lock);
+//	dev->error = urb->status;
+//	spin_unlock(&dev->err_lock);
+
+	switch(urb->status)
+	{
+		case 0:
+			break;
+		case -ETIMEDOUT:
+			err("time out urb");
+			break;
+		case -ECONNRESET:
+		case -ENOENT:
+		case -ESHUTDOWN:
+			err("arrêt urb: %d", urb->status);
+			break;
+		default:
+			err("status urb non nul: %d - taille = %d", urb->status, urb->actual_length);
+			break;
+	}
+
+	usb_free_coherent(urb->dev, urb->transfer_buffer_length, urb->transfer_buffer, urb->transfer_dma);
+	up(&dev->write_limit_sem);
+}
+
 static ssize_t atlantronic_read(struct file *file, char *buffer, size_t count, loff_t *ppos)
 {
 	struct atlantronic_data* dev = file->private_data;
@@ -313,7 +447,7 @@ error:
 	return rep;
 }
 
-static void atlantronic_urb_callback(struct urb *urb)
+static void atlantronic_urb_in_callback(struct urb *urb)
 {
 	struct atlantronic_data* dev = urb->context;
 
@@ -367,6 +501,8 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	}
 
 	kref_init(&dev->kref);
+	sema_init(&dev->write_limit_sem, ATLANTRONIC_MAX_OUT_URB);
+	init_usb_anchor(&dev->urb_submitted);
 	dev->udev = usb_get_dev(interface_to_usbdev(interface));
 	dev->interface = interface;
 	init_completion(&dev->in_completion);
@@ -426,6 +562,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 		goto error;
 	}
 
+	dev->out_ep_addr = endpointOut->bEndpointAddress;
 	dev->buffer_begin = 0;
 	dev->buffer_end = 0;
 
@@ -448,7 +585,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 		}
 
 		pipe = usb_rcvbulkpipe(dev->udev, endpointIn->bEndpointAddress);
-		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->in_urb[i]->transfer_buffer, le16_to_cpu(endpointIn->wMaxPacketSize), atlantronic_urb_callback, dev);
+		usb_fill_bulk_urb(dev->in_urb[i], dev->udev, pipe, dev->in_urb[i]->transfer_buffer, le16_to_cpu(endpointIn->wMaxPacketSize), atlantronic_urb_in_callback, dev);
 	}
 
 	// sauvegarde du pointeur dans l'interface
@@ -514,6 +651,8 @@ static void atlantronic_disconnect(struct usb_interface *interface)
 	mutex_lock(&dev->io_mutex);
 	dev->interface = NULL;
 	mutex_unlock(&dev->io_mutex);
+
+	usb_kill_anchored_urbs(&dev->urb_submitted);
 
 	usb_deregister_dev(interface, &dev->class);
 
