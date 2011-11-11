@@ -110,6 +110,9 @@ static void usb_prop_reset(void)
 	// Init EP1 IN as Bulk endpoint
 	OTG_DEV_EP_Init(EP1_IN, OTG_DEV_EP_TYPE_BULK, 0x40);
 
+	// Init EP2 OUT as Bulk endpoint
+	OTG_DEV_EP_Init(EP2_OUT, OTG_DEV_EP_TYPE_BULK, 0x40);
+
 	bDeviceState = ATTACHED;
 }
 
