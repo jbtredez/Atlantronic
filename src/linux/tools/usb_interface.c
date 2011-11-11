@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <time.h>
 #include "linux/tools/com.h"
+#include "linux/tools/cli.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/control.h"
@@ -79,6 +80,50 @@ float table_pts[MAX_TABLE_PTS] =
 	-1050,   700,
 };
 
+int cmd_help();
+int cmd_quit();
+int cmd_goto_near();
+COMMAND usb_commands[] = {
+  { "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
+  { "help", cmd_help, "Display this text" },
+  { "?", cmd_help, "Synonym for `help'" },
+  { "q", cmd_quit, "Quit" },
+  { "quit", cmd_quit, "Quit" },
+  { (char *)NULL, (Function *)NULL, (char *)NULL }
+};
+
+int cmd_help()
+{
+	printf("Aide\n");
+	return CMD_SUCESS;
+}
+
+int cmd_quit()
+{
+	printf("Quit\n");
+	exit(0); // TODO
+	return CMD_QUIT;
+}
+
+int cmd_goto_near(char* arg)
+{
+	struct control_cmd_goto_near_arg cmd_arg;
+	int count = sscanf(arg, "%f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.dist, &cmd_arg.way);
+
+	if(count != 4)
+	{
+		printf("cmd_goto_near x y dist way\n");
+		return 0;
+	}
+
+	char buffer[64];
+	buffer[0] = 0;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+	com_write(&foo, buffer, 1+sizeof(cmd_arg));
+
+	return 0;
+}
+
 int process_log(char* msg, uint16_t size)
 {
 	int res = 0;
@@ -89,7 +134,7 @@ int process_log(char* msg, uint16_t size)
 		goto end;
 	}
 
-	printf("%s", msg);
+	printf("\r%s", msg);
 
 end:
 	return res;
@@ -349,6 +394,8 @@ int main(int argc, char** argv)
 
 	// affichage des graph
 	replot();
+
+	cli_init(usb_commands);
 
 	com_open(&foo, argv[1]);
 

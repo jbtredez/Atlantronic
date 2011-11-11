@@ -23,5 +23,6 @@ int com_read(struct com* com, int min_buffer_size);
 int com_read_header(struct com* com, uint16_t* type, uint16_t* size);
 void com_copy_msg(struct com* com, char* msg, int size);
 void com_skip(struct com* com, int count);
+int com_write(struct com* com, const char* buf, int size);
 
 #endif

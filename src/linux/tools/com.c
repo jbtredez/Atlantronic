@@ -35,7 +35,7 @@ void com_open(struct com* com, const char* file)
 
 	while(1)
 	{
-		com->fd = open(file, O_RDONLY);
+		com->fd = open(file, O_RDWR);
 		if(com->fd <= 0)
 		{
 			if( last_error != errno )
@@ -137,4 +137,14 @@ void com_skip(struct com* com, int count)
 {
 	com->buffer_size -= count;
 	com->buffer_begin = (com->buffer_begin + count) % sizeof(com->buffer);
+}
+
+int com_write(struct com* com, const char* buf, int size)
+{
+	if(com->fd == -1)
+	{
+		return -1;
+	}
+
+	return write(com->fd, buf, size);
 }
