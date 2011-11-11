@@ -43,6 +43,14 @@ struct control_usb_data
 	float control_v_rot_cons;
 };
 
+struct control_cmd_goto_near_arg
+{
+	float x;
+	float y;
+	float dist;
+	uint32_t way;
+};
+
 void control_straight(float dist);
 
 void control_straight_to_wall(float dist);

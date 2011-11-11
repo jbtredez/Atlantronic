@@ -37,6 +37,8 @@ static void control_compute();
 static void control_compute_goto();
 static void control_colision_detection();
 
+// interface usb
+static void control_cmd_goto_near(void* arg);
 
 struct control_param_ad
 {
@@ -81,18 +83,6 @@ union
 static struct pid control_pid_av;
 static struct pid control_pid_rot;
 
-static float sinc( float x )
-{
-	if( fabsf(x) < 0.01f )
-	{
-		return 1.0f;
-	}
-	else
-	{
-		return (sin(x)/x);
-	}
-}
-
 static int control_module_init()
 {
 	control_use_us = US_FRONT_MASK | US_BACK_MASK;
@@ -131,6 +121,8 @@ static int control_module_init()
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
 
+	usb_add_cmd(USB_CMD_GOTO_NEAR, &control_cmd_goto_near);
+
 	return 0;
 }
 
@@ -148,6 +140,18 @@ static void control_task(void* arg)
 
 		wake_time += CONTROL_TICK_PERIOD;
 		vTaskDelayUntil(wake_time);
+	}
+}
+
+static float sinc( float x )
+{
+	if( fabsf(x) < 0.01f )
+	{
+		return 1.0f;
+	}
+	else
+	{
+		return (sin(x)/x);
 	}
 }
 
@@ -583,6 +587,13 @@ float trouverRotation(float debut, float fin)
 	}
 	
 	return alpha;
+}
+
+void control_cmd_goto_near(void* arg)
+{
+	struct control_cmd_goto_near_arg cmd_arg;
+	memcpy(&cmd_arg, arg, sizeof(cmd_arg));
+	control_goto_near(cmd_arg.x, cmd_arg.y, cmd_arg.dist, cmd_arg.way);
 }
 
 void control_goto_near(float x, float y, float dist, enum control_way sens)
