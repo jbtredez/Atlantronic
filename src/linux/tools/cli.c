@@ -150,7 +150,7 @@ int execute_line (char* line)
 	return ((*(command->func)) (word));
 }
 
-int cli_init(COMMAND* cmd)
+int cli_init(COMMAND* cmd, const char* prompt)
 {
 	pthread_t tid;
 
@@ -161,7 +161,7 @@ int cli_init(COMMAND* cmd)
 
 	cli_commands = cmd;
 
-	return pthread_create(&tid, NULL, cli_task, NULL);
+	return pthread_create(&tid, NULL, cli_task, (void*)prompt);
 }
 
 void* cli_task(void* arg)
@@ -174,7 +174,7 @@ void* cli_task(void* arg)
 	// activation auto-complete
 	rl_bind_key('\t',rl_complete);
 
-	while((buf = readline("(foo) ")) != NULL)
+	while((buf = readline(arg)) != NULL)
 	{
 		stripwhite(buf);
 

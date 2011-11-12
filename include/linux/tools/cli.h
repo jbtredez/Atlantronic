@@ -18,6 +18,6 @@ typedef struct
 	char *doc;			/* Documentation for this function.  */
 } COMMAND;
 
-int cli_init(COMMAND* cmd);
+int cli_init(COMMAND* cmd, const char* prompt);
 
 #endif

@@ -25,6 +25,7 @@ static struct vect_pos pos_robot = {0, 0, 0, 1, 0};
 static struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 static int control_usb_data_count = 0;
 static struct com foo;
+const char* prompt ="(foo) ";
 
 FILE* plot_d_fd = NULL;
 FILE* plot_xy_fd = NULL;
@@ -134,8 +135,8 @@ int process_log(char* msg, uint16_t size)
 		goto end;
 	}
 
-	printf("\r%s", msg);
-
+	printf("\r%s%s%s", msg, prompt, rl_line_buffer);
+	fflush(stdout);
 end:
 	return res;
 }
@@ -395,7 +396,7 @@ int main(int argc, char** argv)
 	// affichage des graph
 	replot();
 
-	cli_init(usb_commands);
+	cli_init(usb_commands, prompt);
 
 	com_open(&foo, argv[1]);
 
