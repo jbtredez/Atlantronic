@@ -591,9 +591,8 @@ float trouverRotation(float debut, float fin)
 
 void control_cmd_goto_near(void* arg)
 {
-	struct control_cmd_goto_near_arg cmd_arg;
-	memcpy(&cmd_arg, arg, sizeof(cmd_arg));
-	control_goto_near(cmd_arg.x, cmd_arg.y, cmd_arg.dist, cmd_arg.way);
+	struct control_cmd_goto_near_arg* cmd_arg = (struct control_cmd_goto_near_arg*) arg;
+	control_goto_near(cmd_arg->x, cmd_arg->y, cmd_arg->dist, cmd_arg->way);
 }
 
 void control_goto_near(float x, float y, float dist, enum control_way sens)
