@@ -39,6 +39,13 @@ static void control_colision_detection();
 
 // interface usb
 static void control_cmd_goto_near(void* arg);
+static void control_cmd_straight(void* arg);
+static void control_cmd_straight_to_wall(void* arg);
+static void control_cmd_rotate(void* arg);
+static void control_cmd_rotate_to(void* arg);
+static void control_cmd_free(void* arg);
+static void control_cmd_param(void* arg);
+static void control_cmd_print_param(void* arg);
 
 struct control_param_ad
 {
@@ -122,6 +129,13 @@ static int control_module_init()
 	control_timer = 0;
 
 	usb_add_cmd(USB_CMD_GOTO_NEAR, &control_cmd_goto_near);
+	usb_add_cmd(USB_CMD_STRAIGHT, &control_cmd_straight);
+	usb_add_cmd(USB_CMD_STRAIGHT_TO_WALL, &control_cmd_straight_to_wall);
+	usb_add_cmd(USB_CMD_ROTATE, &control_cmd_rotate);
+	usb_add_cmd(USB_CMD_ROTATE_TO, &control_cmd_rotate_to);
+	usb_add_cmd(USB_CMD_FREE, &control_cmd_free);
+	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
+	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
 
 	return 0;
 }
@@ -141,6 +155,27 @@ static void control_task(void* arg)
 		wake_time += CONTROL_TICK_PERIOD;
 		vTaskDelayUntil(wake_time);
 	}
+}
+
+void control_cmd_param(void* arg)
+{
+	struct control_cmd_param_arg* cmd_arg = (struct control_cmd_param_arg*) arg;
+
+	pid_init(&control_pid_av, cmd_arg->kp_av, cmd_arg->ki_av, cmd_arg->kd_av, PWM_ARR);
+	pid_init(&control_pid_rot, cmd_arg->kp_rot, cmd_arg->ki_rot, cmd_arg->kd_rot, PWM_ARR);
+
+	control_kx = cmd_arg->kx;
+	control_ky = cmd_arg->ky;
+	control_kalpha = cmd_arg->kalpha;
+}
+
+void control_cmd_print_param(void* arg)
+{
+	(void) arg;
+
+	log_info("av: %f %f %f", control_pid_av.kp/PWM_ARR, control_pid_av.ki/PWM_ARR, control_pid_av.kd/PWM_ARR);
+	log_info("rot: %f %f %f", control_pid_rot.kp/PWM_ARR, control_pid_rot.ki/PWM_ARR, control_pid_rot.kd/PWM_ARR);
+	log_info("rot: %f %f %f", control_kx, control_ky, control_kalpha);
 }
 
 static float sinc( float x )
@@ -508,6 +543,12 @@ static void control_colision_detection()
 	}
 }
 
+void control_cmd_straight(void* arg)
+{
+	struct control_cmd_straight_arg* cmd_arg = (struct control_cmd_straight_arg*) arg;
+	control_straight(cmd_arg->dist);
+}
+
 void control_straight(float dist)
 {
 	log_info("param %.2f", dist);
@@ -532,6 +573,12 @@ void control_straight(float dist)
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
+}
+
+void control_cmd_rotate(void* arg)
+{
+	struct control_cmd_rotate_arg* cmd_arg = (struct control_cmd_rotate_arg*) arg;
+	control_rotate(cmd_arg->angle);
 }
 
 void control_rotate(float angle)
@@ -559,6 +606,12 @@ void control_rotate(float angle)
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	portEXIT_CRITICAL();
+}
+
+void control_cmd_rotate_to(void* arg)
+{
+	struct control_cmd_rotate_to_arg* cmd_arg = (struct control_cmd_rotate_to_arg*) arg;
+	control_rotate_to(cmd_arg->angle);
 }
 
 void control_rotate_to(float alpha)
@@ -654,6 +707,12 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	portEXIT_CRITICAL();
 }
 
+void control_cmd_straight_to_wall(void* arg)
+{
+	struct control_cmd_straight_to_wall_arg* cmd_arg = (struct control_cmd_straight_to_wall_arg*) arg;
+	control_straight_to_wall(cmd_arg->dist);
+}
+
 void control_straight_to_wall(float dist)
 {
 	log_info("param %.2f", dist);
@@ -688,8 +747,15 @@ int32_t control_get_state()
 	return tmp;
 }
 
+void control_cmd_free(void* arg)
+{
+	(void) arg;
+	control_free();
+}
+
 void control_free()
 {
+	log_info("free wheel");
 	portENTER_CRITICAL();
 	if(control_state != CONTROL_END)
 	{

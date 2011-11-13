@@ -10,8 +10,8 @@
 
 enum control_state
 {
-	CONTROL_READY_ASSER,          //!< no trajectory ongoing
-	CONTROL_READY_FREE,
+	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
+	CONTROL_READY_FREE,           //!< no trajectory ongoing, control off
 	CONTROL_ROTATE,               //!< rotate
 	CONTROL_STRAIGHT,             //!< go straight
 	CONTROL_STRAIGHT_TO_WALL,     //!< on recule dans un mur pour recaler. On va tout droit au debut puis on desactive l'asservissement en rotation dés qu'un coté touche le mur
@@ -43,12 +43,45 @@ struct control_usb_data
 	float control_v_rot_cons;
 };
 
+struct control_cmd_straight_arg
+{
+	float dist;
+};
+
+struct control_cmd_straight_to_wall_arg
+{
+	float dist;
+};
+
+struct control_cmd_rotate_arg
+{
+	float angle;
+};
+
+struct control_cmd_rotate_to_arg
+{
+	float angle;
+};
+
 struct control_cmd_goto_near_arg
 {
 	float x;
 	float y;
 	float dist;
 	uint32_t way;
+};
+
+struct control_cmd_param_arg
+{
+	float kp_av;
+	float ki_av;
+	float kd_av;
+	float kp_rot;
+	float ki_rot;
+	float kd_rot;
+	float kx;
+	float ky;
+	float kalpha;
 };
 
 void control_straight(float dist);

@@ -104,12 +104,9 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 	portEXIT_CRITICAL();
 }
 
-void usb_add_cmd(int id, void (*cmd)(void*))
+void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
 {
-	if( id < USB_CMD_NUM )
-	{
-		usb_cmd[id] = cmd;
-	}
+	usb_cmd[id] = cmd;
 }
 
 //! Usb task
@@ -135,13 +132,11 @@ void usb_task(void * arg)
 				}
 				else
 				{
-//					usb_add(USB_LOG, "usb_error : command not found\n", 30);
 					log_error("command %d not found", id);
 				}
 			}
 			else
 			{
-//				usb_add(USB_LOG, "usb_error : command not found\n", 30);
 				log_error("command %d not found", id);
 			}
 
