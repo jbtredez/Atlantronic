@@ -82,7 +82,7 @@ static void detection_task()
 		if( wake_time < current_time)
 		{
 			// on ne tiens pas le temps de cycle. Pb de com avec le hokuyo ou calcul trop long
-			log_error("Tache detection retardee - delta = %d us", (unsigned int)tick_to_us(current_time - wake_time));
+			log_error("Tache detection retardee %llu %llu - delta = %llu us", current_time, wake_time, tick_to_us(current_time - wake_time));
 			wake_time = current_time + ms_to_tick(110);
 		}
 
