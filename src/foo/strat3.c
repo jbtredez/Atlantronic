@@ -24,7 +24,7 @@ int pos_tour;
 int strat_module_init()
 {
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(strat_task, "homol", STRAT_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
+	portBASE_TYPE err = xTaskCreate(strat_task, "strat3", STRAT_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
 
 	if(err != pdPASS)
 	{
