@@ -22,7 +22,7 @@
 #include "us.h"
 
 //! @todo réglage au pif
-#define CONTROL_STACK_SIZE       600
+#define CONTROL_STACK_SIZE       300
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
