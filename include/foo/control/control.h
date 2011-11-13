@@ -41,6 +41,8 @@ struct control_usb_data
 	float control_pos_alpha;
 	float control_v_dist_cons;
 	float control_v_rot_cons;
+	float control_v_dist_mes;
+	float control_v_rot_mes;
 };
 
 struct control_cmd_straight_arg

@@ -407,6 +407,8 @@ end_pwm_critical:
 	control_usb_data.control_pos_alpha = control_pos.alpha;
 	control_usb_data.control_v_dist_cons = control_v_dist_cons;
 	control_usb_data.control_v_rot_cons = control_v_rot_cons;
+	control_usb_data.control_v_dist_mes = v_d;
+	control_usb_data.control_v_rot_mes = v_r;
 
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }

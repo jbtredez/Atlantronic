@@ -455,18 +455,15 @@ void plot_table(FILE* gnuplot_fd)
 void plot_speed(FILE* gnuplot_fd)
 {
 	int i;
-	fprintf(gnuplot_fd, "plot \"-\" with lines lc rgbcolor \"blue\", \"-\" with lines lc rgbcolor \"red\"\n");
+	fprintf(gnuplot_fd, "plot \"-\" title \"consigne de vitesse\" with lines lc rgbcolor \"blue\", \"-\" title \"mesure de vitesse\" with lines lc rgbcolor \"red\"\n");
 	for(i=0; i < control_usb_data_count; i++)
 	{
-		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_cons*1000);
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_cons*200);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	for(i=1; i < control_usb_data_count; i++)
 	{
-		float dx = control_usb_data[i].control_pos_x - control_usb_data[i-1].control_pos_x;
-		float dy = control_usb_data[i].control_pos_x - control_usb_data[i-1].control_pos_x;
-		float ds = sqrt(dx*dx+dy*dy);
-		fprintf(gnuplot_fd, "%d %f\n", 5*i, ds*200);
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_mes*200);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
