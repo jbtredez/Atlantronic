@@ -7,7 +7,6 @@
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
-#include "kernel/driver/usb.h"
 #include <string.h>
 
 //!< taille de la réponse maxi avec hokuyo_scan_all :
@@ -22,8 +21,7 @@ const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 #define HOKUYO_SPEED        750000
 
-// FIXME patch pour envoyer la position avec les data hokuyo
-static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE+4*sizeof(float)];
+static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
 static uint16_t hokuyo_read_dma_buffer_size;
 
 static uint32_t hokuyo_scip2();
@@ -91,9 +89,30 @@ end:
 	return res;
 }
 
-//! Envoi une commande et vérifie si le hokuyo fait bien un echo de la commande
+static uint32_t hokuyo_check_sum(uint32_t start, uint32_t end)
+{
+	uint8_t sum = 0;
+	uint32_t err = 0;
+
+	for(; start < end; start++)
+	{
+		sum += hokuyo_read_dma_buffer[start];
+	}
+
+	sum &= 0x3F;
+	sum += 0x30;
+
+	if(sum != hokuyo_read_dma_buffer[end])
+	{
+		err = ERR_HOKUYO_CHECKSUM;
+	}
+
+	return err;
+}
+
+//! Envoi une commande, attend la reponse du hokuyo, vérifie si le hokuyo fait bien un echo de la commande et le checksum du status
 //! @return 0 si ok
-static uint32_t hokuyo_write_cmd(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout, uint32_t max_try)
+static uint32_t hokuyo_transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout, uint32_t max_try)
 {
 	uint32_t err = 0;
 	uint32_t i = 0;
@@ -118,28 +137,14 @@ static uint32_t hokuyo_write_cmd(unsigned char* buf, uint32_t write_size, uint32
 
 	err = hokuyo_check_cmd(buf, write_size);
 
+	if(err)
+	{
+		goto end;
+	}
+
+	err = hokuyo_check_sum(write_size, write_size+2);
+
 end:
-	return err;
-}
-
-static uint32_t hokuyo_check_sum(uint32_t start, uint32_t end)
-{
-	uint8_t sum = 0;
-	uint32_t err = 0;
-
-	for(; start < end; start++)
-	{
-		sum += hokuyo_read_dma_buffer[start];
-	}
-
-	sum &= 0x3F;
-	sum += 0x30;
-
-	if(sum != hokuyo_read_dma_buffer[end])
-	{
-		err = ERR_HOKUYO_CHECKSUM;
-	}
-
 	return err;
 }
 
@@ -147,14 +152,7 @@ static uint32_t hokuyo_scip2()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100), 3);
-
-	if(err)
-	{
-		goto end;
-	}
-
-	err = hokuyo_check_sum(8, 10);
+	err = hokuyo_transaction((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -181,14 +179,7 @@ static uint32_t hokuyo_set_speed()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100), 3);
-
-	if(err)
-	{
-		goto end;
-	}
-
-	err = hokuyo_check_sum(9, 11);
+	err = hokuyo_transaction((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -224,14 +215,7 @@ static uint32_t hokuyo_laser_on()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100), 3);
-
-	if(err)
-	{
-		goto end;
-	}
-
-	err = hokuyo_check_sum(3, 5);
+	err = hokuyo_transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100), 3);
 
 	if(err)
 	{
@@ -262,11 +246,26 @@ end:
 	return err;
 }
 
-uint32_t hokuyo_scan(float x, float y, float alpha)
+void hokuyo_start_scan()
 {
-	uint32_t err = 0;
+	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, (unsigned char*)hokuyo_scan_all);
+	hokuyo_read_dma_buffer_size = 0;
+	usart_set_read_dma_size(USART3_FULL_DUPLEX, HOKUYO_SCAN_BUFFER_SIZE);
+	usart_send_dma_buffer(USART3_FULL_DUPLEX, 13);
+}
 
-	err = hokuyo_write_cmd((unsigned char*) hokuyo_scan_all, 13, HOKUYO_SCAN_BUFFER_SIZE, ms_to_tick(150), 3);
+uint32_t hokuto_wait_decode_scan(uint16_t* distance, int size)
+{
+	uint32_t err = usart_wait_read(USART3_FULL_DUPLEX, ms_to_tick(150));
+
+	if(err)
+	{
+		goto end;
+	}
+
+	hokuyo_read_dma_buffer_size = HOKUYO_SCAN_BUFFER_SIZE;
+
+	err = hokuyo_check_cmd((unsigned char*)hokuyo_scan_all, 13);
 
 	if(err)
 	{
@@ -300,19 +299,8 @@ uint32_t hokuyo_scan(float x, float y, float alpha)
 			goto end;
 	}
 
-	// FIXME patch pour envoi de la position avec les data hokuyo
-	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size, &x, sizeof(float));
-	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + sizeof(float), &y, sizeof(float));
-	memcpy(hokuyo_read_dma_buffer + hokuyo_read_dma_buffer_size + 2*sizeof(float), &alpha, sizeof(float));
-	hokuyo_read_dma_buffer_size += 3*sizeof(float);
-
-	usb_add(USB_HOKUYO, hokuyo_read_dma_buffer, hokuyo_read_dma_buffer_size);
+	err = hokuyo_tools_decode_buffer(hokuyo_read_dma_buffer, HOKUYO_SCAN_BUFFER_SIZE, distance, size);
 
 end:
-	return err;	
-}
-
-uint32_t hokuyo_decode_distance(uint16_t* distance, int size)
-{
-	return hokuyo_tools_decode_buffer(hokuyo_read_dma_buffer, HOKUYO_SCAN_BUFFER_SIZE, distance, size);
+	return err;
 }

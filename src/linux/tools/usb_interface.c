@@ -12,16 +12,16 @@
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 #include "kernel/hokuyo_tools.h"
+#include "kernel/driver/hokuyo.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/control.h"
 
 
 #define CONTROL_USB_DATA_MAX        18000 //!< 90s de données avec l'asservissement à 200Hz
 
-static uint16_t hokuyo_distance[682]; //!< distances des angles 44 à 725 du hokuyo
+static struct hokuyo_scan hokuyo_scan;
 static float hokuyo_x[682]; //!< x des points 44 à 725
 static float hokuyo_y[682]; //!< y des points 44 à 725
-static struct vect_pos pos_robot = {0, 0, 0, 1, 0};
 static struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 static int control_usb_data_count = 0;
 static struct com foo;
@@ -273,21 +273,15 @@ int process_hokuyo(char* msg, uint16_t size)
 {
 	int res = 0;
 
-	if(size != 1444)
+	if(size != sizeof(hokuyo_scan))
 	{
 		res = -1;
 		goto end;
 	}
 
-	hokuyo_tools_decode_buffer((unsigned char*)msg, 1432, hokuyo_distance, 682);
-	hokuyo_compute_xy(hokuyo_distance, 682, hokuyo_x, hokuyo_y, -1);
+	memcpy(&hokuyo_scan, msg, sizeof(hokuyo_scan));
 
-	// FIXME patch envoi de position avec les data hokuyo
-	memcpy(&pos_robot.x, msg + 1432, 4);
-	memcpy(&pos_robot.y, msg + 1436, 4);
-	memcpy(&pos_robot.alpha, msg + 1440, 4);
-	pos_robot.sa = sin(pos_robot.alpha);
-	pos_robot.ca = cos(pos_robot.alpha);
+	hokuyo_compute_xy(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
 
 end:
 	return res;
@@ -392,7 +386,7 @@ void plot_hokuyo_distance(FILE* gnuplot_fd)
 	fprintf(gnuplot_fd, "plot \"-\"\n");
 	for(i=0; i < 682; i++)
 	{
-		fprintf(gnuplot_fd, "%i %i\n",i, hokuyo_distance[i]);
+		fprintf(gnuplot_fd, "%i %i\n",i, hokuyo_scan.distance[i]);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
@@ -428,7 +422,7 @@ void plot_table(FILE* gnuplot_fd)
 		// TODO recup position du robot
 		pos_hokuyo.x = hokuyo_x[i];
 		pos_hokuyo.y = hokuyo_y[i];
-		pos_hokuyo_to_table(&pos_robot, &pos_hokuyo, &pos_table);
+		pos_hokuyo_to_table(&hokuyo_scan.pos, &pos_hokuyo, &pos_table);
 		fprintf(gnuplot_fd, "%f %f\n", pos_table.x, pos_table.y);
 	}
 	fprintf(gnuplot_fd, "e\n");

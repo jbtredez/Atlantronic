@@ -11,25 +11,22 @@
 #include "kernel/rcc.h"
 #include <math.h>
 #include "kernel/log.h"
+#include "kernel/driver/usb.h"
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
-#define HOKUYO_NUM_POINTS            682
 #define HOKUYO_NUM_OBJECT            100
 #define HOKUYO_NUM_PAWN               50
 
 static void detection_task();
 int detection_module_init();
-uint32_t detection_compute();
+void detection_compute();
 
-static uint16_t hokuyo_distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
+static struct hokuyo_scan hokuyo_scan;
 //static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
 //static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 static int hokuyo_num_obj;
-
-static struct vect_pos detection_pawn[HOKUYO_NUM_PAWN];
-static int detection_num_pawn;
 
 int detection_module_init()
 {
@@ -49,7 +46,7 @@ module_init(detection_module_init, INIT_DETECTION);
 static void detection_task()
 {
 	uint32_t err;
-	portTickType wake_time;
+	portTickType last_scan_time;
 	portTickType current_time;
 
 	do
@@ -66,150 +63,51 @@ static void detection_task()
 
 	log_info("Lancement des scan hokuyo");
 
-	// on doit avoir au moins 100ms entre 2 demandes de scan
-	wake_time = systick_get_time();
+	hokuyo_scan.pos = location_get_position();
+	hokuyo_start_scan();
+	last_scan_time = systick_get_time();
 
 	while(1)
 	{
-		err = detection_compute();
-		if( err)
+		// on attend la fin du nouveau scan
+		err = hokuto_wait_decode_scan(hokuyo_scan.distance, HOKUYO_NUM_POINTS);
+		if(err)
 		{
 			error_raise(err);
+			log_error("scan : err = %#.8x", (unsigned int)err);
 		}
 
-		wake_time += ms_to_tick(150);
+		// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan
+		// pendant que le nouveau arrive. Si on depasse les 110ms (10% d'erreur), on met un log
 		current_time = systick_get_time();
-		if( wake_time < current_time)
+		if( current_time - last_scan_time > ms_to_tick(110))
 		{
-			// on ne tiens pas le temps de cycle. Pb de com avec le hokuyo ou calcul trop long
-			log_error("Tache detection retardee %llu %llu - delta = %llu us", current_time, wake_time, tick_to_us(current_time - wake_time));
-			wake_time = current_time + ms_to_tick(110);
+			log_error("slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
 		}
+		last_scan_time = current_time;
 
-		vTaskDelayUntil(wake_time);
+		// on lance le prochain scan avant de faire les calculs sur le scan actuel
+		hokuyo_scan.pos = location_get_position();
+		hokuyo_start_scan();
+
+		// si le dernier scan n'a pas echoue on fait les calculs
+		if( ! err)
+		{
+			detection_compute();
+
+			// on envoi les donnees par usb pour le debug
+			usb_add(USB_HOKUYO, &hokuyo_scan, sizeof(hokuyo_scan));
+		}
 	}
 
 	vTaskDelete(NULL);
 }
 
-uint32_t detection_compute()
+void detection_compute()
 {
 	int i;
-	struct vect_pos pos_robot;
-	struct vect_pos pos_pawn;
-	uint32_t err = 0;
 
-	pos_robot = location_get_position();
-
-	err = hokuyo_scan(pos_robot.x, pos_robot.y, pos_robot.alpha);
-	if(err)
-	{
-		log_error("hokuyo_scan : err = %#.8x", (unsigned int)err);
-		goto end;
-	}
-
-	hokuyo_decode_distance(hokuyo_distance, HOKUYO_NUM_POINTS);
-
-#if 1
-	hokuyo_num_obj = hokuyo_find_objects(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
-
-	portENTER_CRITICAL();
-	for(i = 0, detection_num_pawn = 0; i < hokuyo_num_obj && detection_num_pawn < HOKUYO_NUM_PAWN ; i++)
-	{
-		if( hokuyo_object_is_pawn(hokuyo_distance, &hokuyo_object[i], &pos_pawn) )
-		{
-			// changement de repere hokuyo -> table
-			pos_hokuyo_to_table(&pos_robot, &pos_pawn, &detection_pawn[detection_num_pawn]);
-			detection_num_pawn++;
-		}
-	}
-	portEXIT_CRITICAL();
+	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 //	hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
-#endif
-end:
-	return err;
-}
-
-int detection_get_close_pawn(struct vect_pos *best_pawn)
-{
-	int res = 0;
-	int i = 0;
-	float best_dist2;
-	float dist2;
-	struct vect_pos pos_robot = location_get_position();
-
-
-	portENTER_CRITICAL();
-	if(detection_num_pawn == 0)
-	{
-		res = -1;
-		goto end_critical;
-	}
-
-	best_dist2 = distance_square(&pos_robot, &detection_pawn[0]);
-	*best_pawn = detection_pawn[0];
-
-	i = 1;
-	for( ; i < detection_num_pawn ; i++)
-	{
-		dist2 = distance_square(&pos_robot, &detection_pawn[i]);
-		if( dist2 < best_dist2)
-		{
-			best_dist2 = dist2;
-			*best_pawn = detection_pawn[i];
-		}
-	}
-
-end_critical:
-	portEXIT_CRITICAL();
-
-	return res;
-}
-
-
-int is_pawn_front_start()
-{
-	int i = 0;
-	int res = 0;
-
-	portENTER_CRITICAL();
-	for( ; i < detection_num_pawn ; i++)
-	{
-		if( (fabsf(detection_pawn[i].x + 700) < 100.0f && fabsf(detection_pawn[i].y + 700) < 100.0f) ||
-		   ( fabsf(detection_pawn[i].x - 700) < 100.0f && fabsf(detection_pawn[i].y + 700) < 100.0f) )
-		{
-			res = 1;
-			goto end_critical;
-		}
-	}
-
-end_critical:
-	portEXIT_CRITICAL();
-
-	return res;
-}
-
-// TODO virer / hokuyo_tool
-float get_distance()
-{
-	float dist = 0;
-	int taille = 3;
-	int i = 341 - taille;
-	int n  = 0;
-	for( ; i < 341 + taille ; i++)
-	{
-		if( hokuyo_distance[i] > 20 )
-		{
-			n++;
-			dist += hokuyo_distance[i];
-		}
-	}
-
-	if( n)
-	{
-		dist /= n;
-	}
-
-	return dist;
 }
