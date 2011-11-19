@@ -111,6 +111,7 @@ int execute_line (char* line)
 	int i;
 	COMMAND *command;
 	char *word;
+	char sav = 0;
 
 	/* Isolate the command word. */
 	i = 0;
@@ -128,10 +129,17 @@ int execute_line (char* line)
 
 	if (line[i])
 	{
-		line[i++] = '\0';
+		sav = line[i];
+		line[i] = '\0';
 	}
 
 	command = find_command (word);
+
+	if(sav)
+	{
+		line[i] = sav;
+		i++;
+	}
 
 	if (!command)
 	{
