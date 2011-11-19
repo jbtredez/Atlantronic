@@ -6,6 +6,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/systick.h"
 #include "kernel/vect_pos.h"
+#include "kernel/error_codes.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,8 +62,7 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 
 	if( buffer_size < 23)
 	{
-		// TODO ERR code
-		res = -1;
+		res = ERR_HOKUYO_SCAN_SIZE;
 		goto end;
 	}
 
@@ -75,8 +75,7 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 
 	if( distance_size < 32 * num_pack + num_last_data)
 	{
-		// TODO ERR code
-		res = -2;
+		res = ERR_HOKUYO_DISTANCE_BUFFER;
 		goto end;
 	}
 
@@ -99,8 +98,6 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 
 		if( sum != *buffer)
 		{
-			// erreur checksum
-			// TODO led
 			// par sécurité, on met le code d'erreur 10
 			distance -= 32;
 			for( j = 32 ; j-- ; )
@@ -108,7 +105,7 @@ int hokuyo_tools_decode_buffer(const unsigned char* buffer, unsigned int buffer_
 				*distance = 10;
 				distance++;
 			}
-			res = -1;
+			res = ERR_HOKUYO_CHECKSUM;
 		}
 		buffer+=2;
 	}
