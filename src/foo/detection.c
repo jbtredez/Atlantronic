@@ -105,8 +105,6 @@ static void detection_task()
 
 void detection_compute()
 {
-	int i;
-
 	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 //	hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
