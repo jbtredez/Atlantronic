@@ -10,8 +10,6 @@
 #include "kernel/log.h"
 
 #define USB_BUFER_SIZE          4096
-
-//! @todo réglage au pif
 #define USB_STACK_SIZE           300
 
 static unsigned char usb_buffer[USB_BUFER_SIZE];
