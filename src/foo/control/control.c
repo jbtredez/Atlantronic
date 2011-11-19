@@ -4,6 +4,7 @@
 
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "control/control.h"
 #include "priority.h"
@@ -60,7 +61,7 @@ struct control_param_arc
 };
 
 static struct control_usb_data control_usb_data;
-
+static xSemaphoreHandle control_mutex;
 static int32_t control_state;
 static struct vect_pos control_dest;
 static struct vect_pos control_cons;
@@ -97,6 +98,13 @@ static int control_module_init()
 	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
 	if(err != pdPASS)
+	{
+		return ERR_INIT_CONTROL;
+	}
+
+	control_mutex = xSemaphoreCreateMutex();
+
+	if(control_mutex == NULL)
 	{
 		return ERR_INIT_CONTROL;
 	}
@@ -226,8 +234,7 @@ static void control_compute()
 
 	adc_get(&control_an);
 
-// TODO mutex pour laisser les IT
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
 	if(vTaskGetEvent() & EVENT_END)
 	{
@@ -242,6 +249,8 @@ static void control_compute()
 	switch(control_state)
 	{
 		case CONTROL_READY_FREE:
+			control_v_dist_cons = 0;
+			control_v_rot_cons = 0;
 			goto end_pwm_critical;
 			break;
 		case CONTROL_READY_ASSER:
@@ -393,7 +402,7 @@ static void control_compute()
 end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 
 	control_usb_data.control_state = control_state;
 	control_usb_data.control_dest_x = control_dest.x;
@@ -554,7 +563,7 @@ void control_cmd_straight(void* arg)
 void control_straight(float dist)
 {
 	log_info("param %.2f", dist);
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT;
@@ -574,7 +583,7 @@ void control_straight(float dist)
 	control_vMax_rot = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 void control_cmd_rotate(void* arg)
@@ -586,7 +595,7 @@ void control_cmd_rotate(void* arg)
 void control_rotate(float angle)
 {
 	log_info("param %f", angle);
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_ROTATE;
@@ -607,7 +616,7 @@ void control_rotate(float angle)
 	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 void control_cmd_rotate_to(void* arg)
@@ -619,11 +628,11 @@ void control_cmd_rotate_to(void* arg)
 void control_rotate_to(float alpha)
 {
 	log_info("param %f", alpha);
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	control_cons = location_get_position();
 	float da = fmodf(alpha - control_cons.alpha, 2*PI);
 	control_rotate(da);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 float trouverRotation(float debut, float fin)
@@ -653,7 +662,7 @@ void control_cmd_goto_near(void* arg)
 void control_goto_near(float x, float y, float dist, enum control_way sens)
 {
 	log_info("param %.2f %.2f %.2f %d", x, y, dist, sens);
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_GOTO;
@@ -706,7 +715,7 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 void control_cmd_straight_to_wall(void* arg)
@@ -718,7 +727,7 @@ void control_cmd_straight_to_wall(void* arg)
 void control_straight_to_wall(float dist)
 {
 	log_info("param %.2f", dist);
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
@@ -738,14 +747,14 @@ void control_straight_to_wall(float dist)
 	control_vMax_rot = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 int32_t control_get_state()
 {
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	int32_t tmp = control_state;
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 	return tmp;
 }
 
@@ -758,13 +767,13 @@ void control_cmd_free(void* arg)
 void control_free()
 {
 	log_info("free wheel");
-	portENTER_CRITICAL();
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_READY_FREE;
 		vTaskSetEvent(EVENT_CONTROL_READY);
 	}
-	portEXIT_CRITICAL();
+	xSemaphoreGive(control_mutex);
 }
 
 void control_set_use_us(uint8_t use_us_mask)
