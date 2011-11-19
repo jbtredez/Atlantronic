@@ -66,8 +66,8 @@ void odometry_update()
 	odometry_pos.x += dx;
 	odometry_pos.y += dy;
 	odometry_pos.alpha += da;
-	odometry_pos.ca = cos(odometry_pos.alpha);
-	odometry_pos.sa = sin(odometry_pos.alpha);
+	odometry_pos.ca = cosf(odometry_pos.alpha);
+	odometry_pos.sa = sinf(odometry_pos.alpha);
 	portEXIT_CRITICAL();
 }
 

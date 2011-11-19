@@ -14,8 +14,8 @@ void trapeze_apply(struct trapeze* t, float s)
 	float v = t->v;
 
 	// saturation de v_max pour la rampe de décélération
-//	float v_max_stop = sqrt( 2 * fabs(ds) * a_max);
-	float v_max_stop = sqrt(a_max*a_max/4 + 2*fabs(ds)*a_max) - a_max/2;
+//	float v_max_stop = sqrtf( 2 * fabs(ds) * a_max);
+	float v_max_stop = sqrtf(a_max*a_max/4 + 2*fabs(ds)*a_max) - a_max/2;
 
 	if(v_max_stop < v_max)
 	{

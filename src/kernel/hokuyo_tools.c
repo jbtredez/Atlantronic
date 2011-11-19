@@ -470,9 +470,9 @@ uint8_t hoku_check_path(float *distances)
   float adjacent1 = 200; //70; //pt3 et pt4
   float adjacent2 = adjacent1 + COTE; //pt1 et pt2
   float angle_rad;
-  //TODO atan2
-  result1 = (float)atan (oppose/adjacent1) * 180 / PI;  //pt3 et pt4
-  result2 = (float)atan (oppose/adjacent2) * 180 / PI; //pt1 et pt2
+  //TODO atan2f
+  result1 = atanf (oppose/adjacent1) * 180 / PI;  //pt3 et pt4
+  result2 = atanf (oppose/adjacent2) * 180 / PI; //pt1 et pt2
   
   point1 = (NB_POINT/2) - (result2 * THETA);
   point2 = (NB_POINT/2) + (result2 * THETA);
@@ -481,11 +481,11 @@ uint8_t hoku_check_path(float *distances)
 
   //pt1 et pt2
   angle_rad = PI * ( result2 / 180); 
-  limite2 = oppose / (float)sin(angle_rad);
+  limite2 = oppose / (float)sinf(angle_rad);
 
   //pt3 et pt4
   angle_rad = PI * ( result1 / 180); 
-  limite1 = oppose / (float)sin(angle_rad);*/
+  limite1 = oppose / (float)sinf(angle_rad);*/
 
 	if( ( (distances[point1] > limite2) || (distances[point1] == 0) ) && 
 	  ( (distances[point2] > limite2) || (distances[point2] == 0) ) &&

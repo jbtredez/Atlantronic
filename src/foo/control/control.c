@@ -186,7 +186,7 @@ static float sinc( float x )
 	}
 	else
 	{
-		return (sin(x)/x);
+		return (sinf(x)/x);
 	}
 }
 
@@ -331,7 +331,7 @@ static void control_compute()
 	float ey = -control_pos.sa * (control_cons.x - control_pos.x) + control_pos.ca * (control_cons.y - control_pos.y);
 	float ealpha = control_cons.alpha - control_pos.alpha;
 
-	float v_d_c = control_v_dist_cons * cos(ealpha) + control_kx * ex;
+	float v_d_c = control_v_dist_cons * cosf(ealpha) + control_kx * ex;
 	float v_r_c = control_v_rot_cons + control_ky * control_v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
 
 	float v_d = location_get_speed_curv_abs();
@@ -433,8 +433,8 @@ static void control_compute_goto()
 			trapeze_set(&control_trapeze, control_vMax_rot, control_aMax_rot);
 			trapeze_apply(&control_trapeze, control_param.ad.angle);
 			control_cons.alpha += control_trapeze.v;
-			control_cons.ca = cos(control_cons.alpha);
-			control_cons.sa = sin(control_cons.alpha);
+			control_cons.ca = cosf(control_cons.alpha);
+			control_cons.sa = sinf(control_cons.alpha);
 			control_v_dist_cons = 0;
 			control_v_rot_cons = control_trapeze.v;
 		}
@@ -596,8 +596,8 @@ void control_rotate(float angle)
 	control_cons = location_get_position();
 	control_dest = control_cons;
 	control_dest.alpha += angle;
-	control_dest.ca = cos(control_dest.alpha);
-	control_dest.sa = sin(control_dest.alpha);
+	control_dest.ca = cosf(control_dest.alpha);
+	control_dest.sa = sinf(control_dest.alpha);
 	control_param.ad.angle = angle;
 	control_param.ad.distance = 0;
 	control_timer = 0;
@@ -665,7 +665,7 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 
 	float dx = x - control_cons.x;
 	float dy = y - control_cons.y;
-	control_param.ad.distance = sqrt(dx*dx+dy*dy) - dist;
+	control_param.ad.distance = sqrtf(dx*dx+dy*dy) - dist;
 	float a = atan2f(dy, dx);
 
 	if(sens == CONTROL_FORWARD)
@@ -694,8 +694,8 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	}
 
 	control_dest.alpha = control_cons.alpha + control_param.ad.angle;
-	control_dest.ca = cos(control_dest.alpha);
-	control_dest.sa = sin(control_dest.alpha);
+	control_dest.ca = cosf(control_dest.alpha);
+	control_dest.sa = sinf(control_dest.alpha);
 	control_dest.x = control_cons.x + control_param.ad.distance * control_dest.ca;
 	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
 

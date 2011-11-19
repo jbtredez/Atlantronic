@@ -51,8 +51,8 @@ void location_set_position(float x, float y, float alpha)
 	location_pos.x = x;
 	location_pos.y = y;
 	location_pos.alpha = alpha;
-	location_pos.ca = cos(alpha);
-	location_pos.sa = sin(alpha);
+	location_pos.ca = cosf(alpha);
+	location_pos.sa = sinf(alpha);
 	odometry_set_position(location_pos);
 	portEXIT_CRITICAL();
 }
