@@ -65,12 +65,12 @@ $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo [CC] $@
 	@mkdir -p `dirname $@`
-	$(V)$(CC) $(CFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(V)$(CC) $(CFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo [CXX] $@
 	@mkdir -p `dirname $@`
-	$(V)@$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(V)@$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@
