@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <time.h>
 #include "linux/tools/com.h"
-#include "linux/tools/cli.h"
+#include "linux/tools/cmd.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/usb.h"
@@ -24,7 +24,7 @@ static float hokuyo_x[682]; //!< x des points 44 à 725
 static float hokuyo_y[682]; //!< y des points 44 à 725
 static struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 static int control_usb_data_count = 0;
-static struct com foo;
+struct com foo;
 const char* prompt ="(foo) ";
 
 FILE* plot_d_fd = NULL;
@@ -80,178 +80,6 @@ float table_pts[MAX_TABLE_PTS] =
 	 1050,   700,
 	-1050,   700,
 };
-
-int cmd_help();
-int cmd_quit();
-int cmd_goto_near(void* arg);
-int cmd_straight(void* arg);
-int cmd_straight_to_wall(void* arg);
-int cmd_rotate(void* arg);
-int cmd_rotate_to(void* arg);
-int cmd_free();
-int cmd_control_param(void*);
-int cmd_control_print_param();
-
-COMMAND usb_commands[] = {
-	{ "control_param", cmd_control_param, "comtrol_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha)" },
-	{ "control_print_param", cmd_control_print_param, "cmd_control_print_param()"},
-	{ "free", cmd_free, "free()" },
-	{ "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
-	{ "help", cmd_help, "Display this text" },
-	{ "q", cmd_quit, "Quit" },
-	{ "quit", cmd_quit, "Quit" },
-	{ "rotate", cmd_rotate, "rotate(angle)" },
-	{ "rotate_to", cmd_rotate_to, "rotate_to(angle)" },
-	{ "straight", cmd_straight, "straight(dist)" },
-	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall(dist)" },
-	{ "?", cmd_help, "Synonym for `help'" },
-	{ (char *)NULL, (Function *)NULL, (char *)NULL }
-};
-
-int cmd_help()
-{
-	printf("Aide\n");
-	return CMD_SUCESS;
-}
-
-int cmd_quit()
-{
-	printf("Quit\n");
-	exit(0); // TODO
-	return CMD_QUIT;
-}
-
-int cmd_control_param(void* arg)
-{
-	struct control_cmd_param_arg cmd_arg;
-	int count = sscanf(arg, "%f %f %f %f %f %f %f %f %f", &cmd_arg.kp_av, &cmd_arg.ki_av, &cmd_arg.kd_av, &cmd_arg.kp_rot, &cmd_arg.ki_rot, &cmd_arg.kd_rot, &cmd_arg.kx, &cmd_arg.ky, &cmd_arg.kalpha);
-
-	if(count != 9)
-	{
-		printf("cmd_goto_near kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
-		return CMD_SUCESS;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_PARAM;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_control_print_param()
-{
-	char buffer[1];
-	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_straight(void* arg)
-{
-	struct control_cmd_straight_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.dist);
-
-	if(count != 1)
-	{
-		printf("cmd_straight dist\n");
-		return 0;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_STRAIGHT;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_straight_to_wall(void* arg)
-{
-	struct control_cmd_straight_to_wall_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.dist);
-
-	if(count != 1)
-	{
-		printf("cmd_straight_to_wall dist\n");
-		return CMD_SUCESS;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_STRAIGHT_TO_WALL;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_rotate(void* arg)
-{
-	struct control_cmd_rotate_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.angle);
-
-	if(count != 1)
-	{
-		printf("cmd_rotate dist\n");
-		return 0;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ROTATE;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_rotate_to(void* arg)
-{
-	struct control_cmd_rotate_to_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.angle);
-
-	if(count != 1)
-	{
-		printf("cmd_rotate_to dist\n");
-		return CMD_SUCESS;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ROTATE_TO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_free()
-{
-	char buffer[1];
-	buffer[0] = USB_CMD_FREE;
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
-
-int cmd_goto_near(void* arg)
-{
-	struct control_cmd_goto_near_arg cmd_arg;
-	int count = sscanf(arg, "%f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.dist, &cmd_arg.way);
-
-	if(count != 4)
-	{
-		printf("cmd_goto_near x y dist way\n");
-		return CMD_SUCESS;
-	}
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_GOTO_NEAR;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	com_write(&foo, buffer, sizeof(buffer));
-
-	return CMD_SUCESS;
-}
 
 int process_log(char* msg, uint16_t size)
 {
@@ -449,7 +277,7 @@ void plot_table(FILE* gnuplot_fd)
 void plot_speed(FILE* gnuplot_fd)
 {
 	int i;
-	fprintf(gnuplot_fd, "plot \"-\" title \"consigne de vitesse\" with lines lc rgbcolor \"blue\", \"-\" title \"mesure de vitesse\" with lines lc rgbcolor \"red\"\n");
+	fprintf(gnuplot_fd, "plot \"-\" title \"consigne de vitesse\" with lines lc rgbcolor \"blue\", \"-\" title \"mesure de vitesse\" with lines lc rgbcolor \"red\", \"-\" title \"intensite droite\" with lines lc rgbcolor \"green\", \"-\" title \"intensite gauche\" with lines lc rgbcolor \"orange\"\n");
 	for(i=0; i < control_usb_data_count; i++)
 	{
 		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_cons*200);
@@ -458,6 +286,16 @@ void plot_speed(FILE* gnuplot_fd)
 	for(i=1; i < control_usb_data_count; i++)
 	{
 		fprintf(gnuplot_fd, "%d %f\n", 5*i, control_usb_data[i].control_v_dist_mes*200);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	for(i=1; i < control_usb_data_count; i++)
+	{
+		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)control_usb_data[i].control_i_right);
+	}
+	fprintf(gnuplot_fd, "e\n");
+	for(i=1; i < control_usb_data_count; i++)
+	{
+		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)control_usb_data[i].control_i_left);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
@@ -515,8 +353,7 @@ int main(int argc, char** argv)
 	// affichage des graph
 	replot();
 
-	cli_init(usb_commands, prompt);
-
+	cmd_init(&foo, prompt);
 	com_open(&foo, argv[1]);
 
 	clock_gettime(CLOCK_MONOTONIC, &last_plot_time);

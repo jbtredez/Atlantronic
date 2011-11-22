@@ -9,7 +9,7 @@
 
 void* cli_task(void* arg);
 
-COMMAND *cli_commands = NULL;
+static COMMAND *cli_commands = NULL;
 
 char * stripwhite(char * string)
 {
