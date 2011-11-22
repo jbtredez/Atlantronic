@@ -264,6 +264,7 @@ static void control_compute()
 			// => on va tout couper.
 			if( control_contact)
 			{
+				log_info("collision : goto => free");
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
@@ -278,20 +279,22 @@ static void control_compute()
 			{
 				// obstacle sur un des deux cotés
 				// il faut laisser tourner le robot et desactiver l'asservissement en rotation
-				control_dest.alpha = control_pos.alpha;
-				control_dest.ca = control_pos.ca;
-				control_dest.sa = control_pos.sa;
-				control_cons.alpha = control_pos.alpha;
-				control_cons.ca = control_pos.ca;
-				control_cons.sa = control_pos.sa;
-				sens1 = -1;
-				sens2 = -1;
 				u1 = -PWM_ARR;
 				u2 = -PWM_ARR;
+				if(control_contact & CONTACT_RIGHT)
+				{
+					u1 = 0;
+				}
+
+				if(control_contact & CONTACT_LEFT)
+				{
+					u2 = 0;
+				}
 				goto end_pwm_critical;
 			}
 			else if( control_contact == (CONTACT_RIGHT | CONTACT_LEFT) )
 			{
+				log_info("double contact");
 				// obstacle des deux cotés
 				control_recalage();
 
@@ -378,6 +381,7 @@ static void control_compute()
 	u1 = u_av + u_rot;
 	u2 = u_av - u_rot;
 
+end_pwm_critical:
 	if(u1 < 0)
 	{
 		sens1 = -1;
@@ -389,21 +393,8 @@ static void control_compute()
 		u2 = -u2;
 	}
 
-	if(control_contact & CONTACT_RIGHT)
-	{
-		u1 = 0;
-	}
-
-	if(control_contact & CONTACT_LEFT)
-	{
-		u1 = 0;
-	}
-
-end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
-	xSemaphoreGive(control_mutex);
-
 	control_usb_data.control_state = control_state;
 	control_usb_data.control_dest_x = control_dest.x;
 	control_usb_data.control_dest_y = control_dest.y;
@@ -418,6 +409,9 @@ end_pwm_critical:
 	control_usb_data.control_v_rot_cons = control_v_rot_cons;
 	control_usb_data.control_v_dist_mes = v_d;
 	control_usb_data.control_v_rot_mes = v_r;
+	control_usb_data.control_i_right = control_an.i_right;
+	control_usb_data.control_i_left = control_an.i_left;
+	xSemaphoreGive(control_mutex);
 
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }
@@ -517,20 +511,7 @@ static void control_colision_detection()
 	{
 		control_contact = 0;
 	}
-/*
-	if( control_contact == CONTACT_LEFT)
-	{
-		setLed(0x07);
-	}
-	else if( control_contact == CONTACT_RIGHT)
-	{
-		setLed(0x38);
-	}
-	else if( control_contact == (CONTACT_LEFT | CONTACT_RIGHT))
-	{
-		setLed(0x38 | 0x07);
-	}
-*/
+
 /*	// TODO régler seuil
 	if( control_an.i_right > 2000 )
 	{
