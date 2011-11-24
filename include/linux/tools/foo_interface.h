@@ -1,6 +1,7 @@
 #ifndef FOO_INTERFACE_H
 #define FOO_INTERFACE_H
 
+#include <pthread.h>
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "foo/control/control.h"
@@ -9,7 +10,8 @@
 
 struct foo_interface
 {
-	struct com* com;
+	struct com* com; //!< communication
+	pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 
 	// données brutes
 	struct hokuyo_scan hokuyo_scan;

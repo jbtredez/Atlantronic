@@ -114,9 +114,19 @@ static int foo_interface_process_hokuyo(struct foo_interface* data, char* msg, u
 		goto end;
 	}
 
+	res = pthread_mutex_lock(&data->mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
 	memcpy(&data->hokuyo_scan, msg, size);
 
 	hokuyo_compute_xy(data->hokuyo_scan.distance, HOKUYO_NUM_POINTS, data->hokuyo_x, data->hokuyo_y, -1);
+
+	pthread_mutex_unlock(&data->mutex);
 
 end:
 	return res;
@@ -132,8 +142,18 @@ static int foo_interface_process_control(struct foo_interface* data, char* msg, 
 		goto end;
 	}
 
+	res = pthread_mutex_lock(&data->mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
 	memcpy(data->control_usb_data + data->control_usb_data_count, msg, size);
 	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
+
+	pthread_mutex_unlock(&data->mutex);
 
 end:
 	return res;

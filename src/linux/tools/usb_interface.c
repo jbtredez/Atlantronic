@@ -293,8 +293,12 @@ int main(int argc, char** argv)
 
 	while(1)
 	{
-		// TODO : voir la synchro
-		replot();
+		int res = pthread_mutex_lock(&usb_data.mutex);
+		if(res == 0)
+		{
+			replot();
+			pthread_mutex_unlock(&usb_data.mutex);
+		}
 		usleep(500000);
 	}
 
