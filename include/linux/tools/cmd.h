@@ -3,6 +3,6 @@
 
 #include "linux/tools/cli.h"
 
-int cmd_init(struct com* coom, const char* prompt);
+int cmd_init(struct com* com);
 
 #endif

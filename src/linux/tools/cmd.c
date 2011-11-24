@@ -36,10 +36,10 @@ COMMAND usb_commands[] = {
 	{ (char *)NULL, (Function *)NULL, (char *)NULL }
 };
 
-int cmd_init(struct com* com, const char* prompt)
+int cmd_init(struct com* com)
 {
 	cmd_com = com;
-	return cli_init(usb_commands, prompt);
+	return cli_init(usb_commands);
 }
 
 int cmd_help()

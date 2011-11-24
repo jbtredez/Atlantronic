@@ -1,15 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <readline/history.h>
-#include "foo/control/control.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <stdarg.h>
+
+#include "foo/control/control.h"
 #include "linux/tools/cli.h"
 
 void* cli_task(void* arg);
 
 static COMMAND *cli_commands = NULL;
+char cli_prompt[] = "foo $ ";
+int cli_last_error = 0;
 
 char * stripwhite(char * string)
 {
@@ -158,7 +162,7 @@ int execute_line (char* line)
 	return ((*(command->func)) (word));
 }
 
-int cli_init(COMMAND* cmd, const char* prompt)
+int cli_init(COMMAND* cmd)
 {
 	pthread_t tid;
 
@@ -169,7 +173,7 @@ int cli_init(COMMAND* cmd, const char* prompt)
 
 	cli_commands = cmd;
 
-	return pthread_create(&tid, NULL, cli_task, (void*)prompt);
+	return pthread_create(&tid, NULL, cli_task, NULL);
 }
 
 void* cli_task(void* arg)
@@ -182,7 +186,7 @@ void* cli_task(void* arg)
 	// activation auto-complete
 	rl_bind_key('\t',rl_complete);
 
-	while((buf = readline(arg)) != NULL)
+	while((buf = readline(cli_prompt)) != NULL)
 	{
 		stripwhite(buf);
 
@@ -210,4 +214,14 @@ end_free:
 	free(buf);
 
 	return 0;
+}
+
+void cli_log(char* msg, ...)
+{
+	va_list ap;
+	va_start(ap, msg);
+
+	vprintf(msg, ap);
+	fflush(stdout);
+	va_end(ap);
 }

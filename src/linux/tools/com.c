@@ -1,64 +1,98 @@
+#include <string.h>
 #include "linux/tools/com.h"
+#include "linux/tools/cli.h"
 
-void com_init(struct com* com)
+void com_init(struct com* com, const char* file)
 {
 	com->fd = -1;
+	com->file = malloc(strlen (file) + 1);
+	strcpy(com->file, file);
 	com->buffer_end = 0;
 	com->buffer_begin = 0;
 	com->buffer_size = 0;
 }
 
-void com_close(struct com* com)
+int com_close(struct com* com)
 {
+	int res = 0;
+
+	if(com->fd == -1)
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = close(com->fd);
+	if(res)
+	{
+		log_error_errno("close");
+		if(errno == EBADF)
+		{
+			com->fd = -1;
+		}
+		goto end;
+	}
+
+	com->fd = -1;
+	log_info("close usb");
+
+end:
+	return res;
+}
+
+int com_open(struct com* com)
+{
+	int res = com_close(com);
+
 	if(com->fd != -1)
 	{
-		close(com->fd);
-		com->fd = -1;
+		goto end;
 	}
-}
 
-void com_open(struct com* com, const char* file)
-{
-	int last_error = 0;
 	com->buffer_end = 0;
 	com->buffer_begin = 0;
 	com->buffer_size = 0;
+	com->fd = open(com->file, O_RDWR);
 
-	if(com->fd > 0)
+	if(com->fd <= 0)
 	{
-		printf("close usb (=> reopen)\n");
-		if( close(com->fd) )
-		{
-			perror("close");
-		}
+		res = -1;
+		com->fd = -1;
+		log_error_errno("open");
+		goto end;
 	}
 
-	while(1)
+	log_info("open usb");
+
+end:
+	return res;
+}
+
+void com_open_block(struct com* com)
+{
+	struct timespec req;
+	struct timespec rem;
+
+	while( com_open(com) )
 	{
-		com->fd = open(file, O_RDWR);
-		if(com->fd <= 0)
+		req.tv_sec = 1;
+		req.tv_nsec = 0;
+		while( nanosleep(&req, &rem) )
 		{
-			if( last_error != errno )
-			{
-				perror("open");
-				last_error = errno;
-			}
+			req = rem;
 		}
-		else
-		{
-			printf("open usb\n");
-			return;
-		}
-		usleep(1000000);
 	}
 }
 
 int com_read(struct com* com, int min_buffer_size)
 {
+	int res = 0;
+
 	if( min_buffer_size > (int) sizeof(com->buffer) )
 	{
-		printf("error : buffer trop petit : %i > %i\n", min_buffer_size, (int) sizeof(com->buffer));
-		return -1;
+		res = -1;
+		log_error("error : buffer trop petit : %i > %i", min_buffer_size, (int) sizeof(com->buffer));
+		goto end;
 	}
 
 	while( com->buffer_size < min_buffer_size )
@@ -75,23 +109,24 @@ int com_read(struct com* com, int min_buffer_size)
 		int size = read(com->fd, com->buffer + com->buffer_end, max);
 		if(size == 0)
 		{
-			printf("close usb\n");
-			close(com->fd);
-			com->fd = -1;
-			return -1;
+			com_close(com);
+			res = -1;
+			goto end;
 		}
 
 		if(size < 0)
 		{
-			perror("sync - read");
-			return -1;
+			log_error_errno("sync - read");
+			res = -1;
+			goto end;
 		}
 
 		com->buffer_end = (com->buffer_end + size) % sizeof(com->buffer);
 		com->buffer_size += size;
 	}
 
-	return 0;
+end:
+	return res;
 }
 
 int com_read_header(struct com* com, uint16_t* type, uint16_t* size)
@@ -141,10 +176,11 @@ void com_skip(struct com* com, int count)
 
 int com_write(struct com* com, const char* buf, int size)
 {
-	if(com->fd == -1)
+	int fd = com->fd;
+	if(fd == -1)
 	{
 		return -1;
 	}
 
-	return write(com->fd, buf, size);
+	return write(fd, buf, size);
 }
