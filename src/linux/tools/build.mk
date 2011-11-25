@@ -9,6 +9,12 @@ lib-linux-usb_interface += -lm -lreadline
 bin-linux += usb_interface
 
 obj-linux-glplot += linux/tools/glplot.o
+obj-linux-glplot += linux/tools/com.o
+obj-linux-glplot += kernel/hokuyo_tools.o
+obj-linux-glplot += kernel/vect_pos.o
+obj-linux-glplot += linux/tools/cli.o
+obj-linux-glplot += linux/tools/cmd.o
+obj-linux-glplot += linux/tools/foo_interface.o
 cflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
-lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0)
+lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0) -lreadline
 bin-linux += glplot

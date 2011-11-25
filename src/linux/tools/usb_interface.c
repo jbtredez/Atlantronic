@@ -12,7 +12,6 @@
 #include "linux/tools/com.h"
 #include "linux/tools/cmd.h"
 #include "linux/tools/foo_interface.h"
-#include "kernel/driver/usb.h"
 
 static struct foo_interface foo;
 
@@ -180,7 +179,6 @@ void plot_table(FILE* gnuplot_fd)
 
 	for(i=0; i < 682; i++)
 	{
-		// TODO recup position du robot
 		pos_hokuyo.x = foo.hokuyo_x[i];
 		pos_hokuyo.y = foo.hokuyo_y[i];
 		pos_hokuyo_to_table(&foo.hokuyo_scan.pos, &pos_hokuyo, &pos_table);
@@ -281,7 +279,7 @@ int main(int argc, char** argv)
 	// affichage des graph
 	replot();
 
-	foo_interface_init(&foo, argv[1]);
+	foo_interface_init(&foo, argv[1], NULL, NULL);
 	cmd_init(&foo.com);
 
 	while(1)

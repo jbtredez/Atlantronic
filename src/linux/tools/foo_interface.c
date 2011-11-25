@@ -11,14 +11,23 @@ static int foo_interface_process_control(struct foo_interface* data, char* msg, 
 static int foo_interface_process_hokuyo(struct foo_interface* data, char* msg, uint16_t size);
 static int foo_interface_process_log(struct foo_interface* data, char* msg, uint16_t size);
 
-int foo_interface_init(struct foo_interface* data, const char* file)
+int foo_interface_init(struct foo_interface* data, const char* file, void (*callback)(void*), void* callback_arg)
 {
 	pthread_t tid;
 
+	data->callback = callback;
+	data->callback_arg = callback_arg;
 	com_init(&data->com, file);
 	data->control_usb_data_count = 0;
 
 	return pthread_create(&tid, NULL, foo_interface_task, data);
+}
+
+void foo_interface_destroy(struct foo_interface* data)
+{
+	com_close(&data->com);
+	rl_free_line_state();
+	rl_cleanup_after_signal();
 }
 
 static void* foo_interface_task(void* arg)
@@ -79,6 +88,10 @@ static void* foo_interface_task(void* arg)
 		{
 			size += 4;
 			com_skip(&foo->com, size);
+			if(foo->callback)
+			{
+				foo->callback(foo->callback_arg);
+			}
 		}
 	}
 
