@@ -14,8 +14,7 @@
 #include "linux/tools/foo_interface.h"
 #include "kernel/driver/usb.h"
 
-static struct foo_interface usb_data;
-struct com foo;
+static struct foo_interface foo;
 
 FILE* plot_d_fd = NULL;
 FILE* plot_xy_fd = NULL;
@@ -110,11 +109,6 @@ FILE* open_gnuplot(const char* title, const char* xlabel, const char* ylabel, in
 //		close(infd[0]);
 //		close(infd[1]);
 
-		// au cas ou on a déjà ouvert l'usb : on ne le donne pas a gnuplot
-		if(foo.fd > 0)
-		{
-			close(foo.fd);
-		}
 		char* arg[2];
 
 		arg[0] = (char*) "/usr/bin/gnuplot";
@@ -153,7 +147,7 @@ void plot_hokuyo_distance(FILE* gnuplot_fd)
 	fprintf(gnuplot_fd, "plot \"-\"\n");
 	for(i=0; i < 682; i++)
 	{
-		fprintf(gnuplot_fd, "%i %i\n",i, usb_data.hokuyo_scan.distance[i]);
+		fprintf(gnuplot_fd, "%i %i\n",i, foo.hokuyo_scan.distance[i]);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
@@ -165,7 +159,7 @@ void plot_hokuyo_xy(FILE* gnuplot_fd)
 	fprintf(gnuplot_fd, "plot \"-\"\n");
 	for(i=0; i < 682; i++)
 	{
-		fprintf(gnuplot_fd, "%f %f\n", usb_data.hokuyo_y[i], usb_data.hokuyo_x[i]);
+		fprintf(gnuplot_fd, "%f %f\n", foo.hokuyo_y[i], foo.hokuyo_x[i]);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
@@ -187,26 +181,26 @@ void plot_table(FILE* gnuplot_fd)
 	for(i=0; i < 682; i++)
 	{
 		// TODO recup position du robot
-		pos_hokuyo.x = usb_data.hokuyo_x[i];
-		pos_hokuyo.y = usb_data.hokuyo_y[i];
-		pos_hokuyo_to_table(&usb_data.hokuyo_scan.pos, &pos_hokuyo, &pos_table);
+		pos_hokuyo.x = foo.hokuyo_x[i];
+		pos_hokuyo.y = foo.hokuyo_y[i];
+		pos_hokuyo_to_table(&foo.hokuyo_scan.pos, &pos_hokuyo, &pos_table);
 		fprintf(gnuplot_fd, "%f %f\n", pos_table.x, pos_table.y);
 	}
 	fprintf(gnuplot_fd, "e\n");
 
-	int max = usb_data.control_usb_data_count % CONTROL_USB_DATA_MAX;
+	int max = foo.control_usb_data_count % CONTROL_USB_DATA_MAX;
 	for(i=0; i< max; i++)
 	{
-		if(usb_data.control_usb_data[i].control_state != CONTROL_READY_ASSER && usb_data.control_usb_data[i].control_state != CONTROL_READY_FREE)
+		if(foo.control_usb_data[i].control_state != CONTROL_READY_ASSER && foo.control_usb_data[i].control_state != CONTROL_READY_FREE)
 		{
-			fprintf(gnuplot_fd, "%f %f\n", usb_data.control_usb_data[i].control_cons_x, usb_data.control_usb_data[i].control_cons_y);
+			fprintf(gnuplot_fd, "%f %f\n", foo.control_usb_data[i].control_cons_x, foo.control_usb_data[i].control_cons_y);
 		}
 	}
 
 	fprintf(gnuplot_fd, "e\n");
 	for(i=0; i < max; i++)
 	{
-		fprintf(gnuplot_fd, "%f %f\n", usb_data.control_usb_data[i].control_pos_x, usb_data.control_usb_data[i].control_pos_y);
+		fprintf(gnuplot_fd, "%f %f\n", foo.control_usb_data[i].control_pos_x, foo.control_usb_data[i].control_pos_y);
 	}
 
 	fprintf(gnuplot_fd, "e\n");
@@ -217,24 +211,24 @@ void plot_speed(FILE* gnuplot_fd)
 {
 	int i;
 	fprintf(gnuplot_fd, "plot \"-\" title \"consigne de vitesse\" with lines lc rgbcolor \"blue\", \"-\" title \"mesure de vitesse\" with lines lc rgbcolor \"red\", \"-\" title \"intensite droite\" with lines lc rgbcolor \"green\", \"-\" title \"intensite gauche\" with lines lc rgbcolor \"orange\"\n");
-	for(i=0; i < usb_data.control_usb_data_count; i++)
+	for(i=0; i < foo.control_usb_data_count; i++)
 	{
-		fprintf(gnuplot_fd, "%d %f\n", 5*i, usb_data.control_usb_data[i].control_v_dist_cons*200);
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, foo.control_usb_data[i].control_v_dist_cons*200);
 	}
 	fprintf(gnuplot_fd, "e\n");
-	for(i=1; i < usb_data.control_usb_data_count; i++)
+	for(i=1; i < foo.control_usb_data_count; i++)
 	{
-		fprintf(gnuplot_fd, "%d %f\n", 5*i, usb_data.control_usb_data[i].control_v_dist_mes*200);
+		fprintf(gnuplot_fd, "%d %f\n", 5*i, foo.control_usb_data[i].control_v_dist_mes*200);
 	}
 	fprintf(gnuplot_fd, "e\n");
-	for(i=1; i < usb_data.control_usb_data_count; i++)
+	for(i=1; i < foo.control_usb_data_count; i++)
 	{
-		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)usb_data.control_usb_data[i].control_i_right);
+		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)foo.control_usb_data[i].control_i_right);
 	}
 	fprintf(gnuplot_fd, "e\n");
-	for(i=1; i < usb_data.control_usb_data_count; i++)
+	for(i=1; i < foo.control_usb_data_count; i++)
 	{
-		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)usb_data.control_usb_data[i].control_i_left);
+		fprintf(gnuplot_fd, "%d %u\n", 5*i, (unsigned int)foo.control_usb_data[i].control_i_left);
 	}
 	fprintf(gnuplot_fd, "e\n");
 	fflush(gnuplot_fd);
@@ -287,22 +281,21 @@ int main(int argc, char** argv)
 	// affichage des graph
 	replot();
 
-	foo_interface_init(&usb_data, &foo);
-	cmd_init(&foo);
-	com_init(&foo, argv[1]);
+	foo_interface_init(&foo, argv[1]);
+	cmd_init(&foo.com);
 
 	while(1)
 	{
-		int res = pthread_mutex_lock(&usb_data.mutex);
+		int res = pthread_mutex_lock(&foo.mutex);
 		if(res == 0)
 		{
 			replot();
-			pthread_mutex_unlock(&usb_data.mutex);
+			pthread_mutex_unlock(&foo.mutex);
 		}
 		usleep(500000);
 	}
 
-	com_close(&foo);
+	com_close(&foo.com);
 
 	if( plot_table_fd != NULL )
 	{

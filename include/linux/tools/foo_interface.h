@@ -10,7 +10,7 @@
 
 struct foo_interface
 {
-	struct com* com; //!< communication
+	struct com com; //!< communication
 	pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 
 	// données brutes
@@ -23,7 +23,7 @@ struct foo_interface
 	float hokuyo_y[682]; //!< y des points 44 à 725
 };
 
-int foo_interface_init(struct foo_interface* data, struct com* com);
+int foo_interface_init(struct foo_interface* data, const char* file);
 
 #endif
 
