@@ -21,6 +21,8 @@ static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
 static struct foo_interface foo;
+static float bordure_pixel_x = 0;
+static float bordure_pixel_y = 0;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
@@ -185,6 +187,9 @@ static void init(GtkWidget* widget, gpointer arg)
 		}
 	}
 
+	bordure_pixel_x = 10 * font_width;
+	bordure_pixel_y = font_height*3;
+
 	gdk_gl_drawable_gl_end(gldrawable);
 }
 
@@ -276,9 +281,6 @@ void plot_table()
 	float zx2 = zoom_x2 * (graph_xmax - graph_xmin) + graph_xmin;
 	float zy2 = graph_ymax - zoom_y2 * (graph_ymax - graph_ymin);
 
-	float bordure_pixel_x = 10 * font_width;
-	float bordure_pixel_y = font_height*3;
-
 	float ratio_x = (zx2 - zx1) / (screen_width - 2 * bordure_pixel_x);
 	float ratio_y = (zy2 - zy1) / (screen_height - 2 * bordure_pixel_y);
 
@@ -309,48 +311,30 @@ void plot_table()
 
 	// axe x
 	float dx = quantize(zx2 - zx1);
-	int precision = log10(dx);
-	if(dx > 1)
-	{
-		precision = 0;
-	}
-	else
-	{
-		precision = ceil(-log10(dx));
-	}
 	float x;
 	for(x = 0; x <= zx2; x+=dx)
 	{
 		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%.*f", precision, x);
+		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
 	}
 	for(x = -dx; x >= zx1; x-=dx)
 	{
 		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%.*f", precision, x);
+		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
 	}
 
 	// axe y
 	float dy = quantize(zy2 - zy1);
-	precision = log10(dy);
-	if(dy > 1)
-	{
-		precision = 0;
-	}
-	else
-	{
-		precision = ceil(-log10(dy));
-	}
 	float y;
 	for(y = 0; y <= zy2; y+=dy)
 	{
 		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%.*f", precision, y);
+		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
 	for(y = -dy; y >= zy1; y-=dy)
 	{
 		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%.*f", precision, y);
+		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
 
 	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
@@ -401,7 +385,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, 1, 1, 0, 0, 1);
+	glOrtho(0, screen_width, screen_height, 0, 0, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -476,8 +460,8 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1)
 	{
-		mouse_x1 = event->x/screen_width;
-		mouse_y1 = event->y/screen_height;
+		mouse_x1 = event->x;
+		mouse_y1 = event->y;
 		mouse_x2 = mouse_x1;
 		mouse_y2 = mouse_y1;
 	}
@@ -497,10 +481,10 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			mouse_x1 = mouse_x1*(zoom_x2-zoom_x1) + zoom_x1;
-			mouse_x2 = mouse_x2*(zoom_x2-zoom_x1) + zoom_x1;
-			mouse_y1 = mouse_y1*(zoom_y1-zoom_y2) + zoom_y2;
-			mouse_y2 = mouse_y2*(zoom_y1-zoom_y2) + zoom_y2;
+			mouse_x1 = (mouse_x1 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x) * (zoom_x2 - zoom_x1) + zoom_x1;
+			mouse_x2 = (mouse_x2 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x) * (zoom_x2 - zoom_x1) + zoom_x1;
+			mouse_y1 = (mouse_y1 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y) * (zoom_y1 - zoom_y2) + zoom_y2;
+			mouse_y2 = (mouse_y2 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y) * (zoom_y1 - zoom_y2) + zoom_y2;
 			if( mouse_x1 < mouse_x2)
 			{
 				zoom_x1 = mouse_x1;
@@ -536,8 +520,8 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 {
 	if(event->state & GDK_BUTTON1_MASK)
 	{
-		mouse_x2 = event->x/screen_width;
-		mouse_y2 = event->y/screen_height;
+		mouse_x2 = event->x;
+		mouse_y2 = event->y;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 	}
 }
