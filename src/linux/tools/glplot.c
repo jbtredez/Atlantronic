@@ -7,6 +7,7 @@
 #include <X11/Intrinsic.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "linux/tools/foo_interface.h"
 #include "linux/tools/cmd.h"
@@ -37,10 +38,10 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event);
 static void mounse_release(GtkWidget* widget, GdkEventButton* event);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
-static void glPrintf(float x, float y, GLuint base, char* s, ...);
+static void glPrintf(float x, float y, GLuint base, char* s, ...) __attribute__(( format(printf, 4, 5) ));
 static void draw_plus(float x, float y, float rx, float ry);
-static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...);
-static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...);
+static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glprint(float x, float y, GLuint base, char* buffer, int size);
 void read_callback();
 
@@ -224,6 +225,45 @@ static void draw_plus(float x, float y, float rx, float ry)
 	glEnd();
 }
 
+float quantize(float range)
+{
+	float power = pow(10, floor(log10(range)));
+	float xnorm = range / power;
+	float posns = 20 / xnorm;
+	float tics;
+
+	if (posns > 40)
+	{
+		tics = 0.05;
+	}
+	else if (posns > 20)
+	{
+		tics = 0.1;
+	}
+	else if (posns > 10)
+	{
+		tics = 0.2;
+	}
+	else if (posns > 4)
+	{
+		tics = 0.5;
+	}
+	else if (posns > 2)
+	{
+		tics = 1;
+	}
+	else if (posns > 0.5)
+	{
+		tics = 2;
+	}
+	else
+	{
+		tics = ceil(xnorm);
+	}
+
+	return tics * power;
+}
+
 void plot_table()
 {
 	float graph_xmin = -1500;
@@ -267,40 +307,50 @@ void plot_table()
 	glVertex2f(zx1, zy1);
 	glEnd();
 
-	draw_plus(zx1, zy1, font_width*ratio_x, font_width*ratio_y);
-	glPrintf_xcenter_yhigh2(zx1, zy1, ratio_x, ratio_y, font_base, "%i", (int)zx1);
-	glPrintf_xright2_ycenter(zx1, zy1, ratio_x, ratio_y, font_base, "%i", (int)zy1);
-
-	draw_plus(zx1, zy2, font_width*ratio_x, font_width*ratio_y);
-	glPrintf_xright2_ycenter(zx1, zy2, ratio_x, ratio_y, font_base, "%i", (int)zy2);
-
-	draw_plus(zx2, zy1, font_width*ratio_x, font_width*ratio_y);
-	glPrintf_xcenter_yhigh2(zx2, zy1, ratio_x, ratio_y, font_base, "%i", (int)zx2);
-
 	// axe x
-	int x;
-	for(x = 0; x <= graph_xmax; x+=500)
+	float dx = quantize(zx2 - zx1);
+	int precision = log10(dx);
+	if(dx > 1)
 	{
-		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, graph_ymin, ratio_x, ratio_y, font_base, "%i", x);
+		precision = 0;
 	}
-	for(x = -500; x >= graph_xmin; x-=500)
+	else
+	{
+		precision = ceil(-log10(dx));
+	}
+	float x;
+	for(x = 0; x <= zx2; x+=dx)
 	{
 		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, graph_ymin, ratio_x, ratio_y, font_base, "%i", x);
+		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%.*f", precision, x);
+	}
+	for(x = -dx; x >= zx1; x-=dx)
+	{
+		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%.*f", precision, x);
 	}
 
 	// axe y
-	int y;
-	for(y = 0; y <= graph_ymax; y+=500)
+	float dy = quantize(zy2 - zy1);
+	precision = log10(dy);
+	if(dy > 1)
 	{
-		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(graph_xmin, y, ratio_x, ratio_y, font_base, "%i", y);
+		precision = 0;
 	}
-	for(y = -500; y >= graph_ymin; y-=500)
+	else
+	{
+		precision = ceil(-log10(dy));
+	}
+	float y;
+	for(y = 0; y <= zy2; y+=dy)
 	{
 		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(graph_xmin, y, ratio_x, ratio_y, font_base, "%i", y);
+		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%.*f", precision, y);
+	}
+	for(y = -dy; y >= zy1; y-=dy)
+	{
+		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%.*f", precision, y);
 	}
 
 	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
@@ -444,31 +494,34 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1)
-	{	
-		mouse_x1 = mouse_x1*(zoom_x2-zoom_x1) + zoom_x1;
-		mouse_x2 = mouse_x2*(zoom_x2-zoom_x1) + zoom_x1;
-		mouse_y1 = mouse_y1*(zoom_y1-zoom_y2) + zoom_y2;
-		mouse_y2 = mouse_y2*(zoom_y1-zoom_y2) + zoom_y2;
-		if( mouse_x1 < mouse_x2)
+	{
+		if( mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			zoom_x1 = mouse_x1;
-			zoom_x2 = mouse_x2;
-		}
-		else
-		{
-			zoom_x1 = mouse_x2;
-			zoom_x2 = mouse_x1;
-		}
+			mouse_x1 = mouse_x1*(zoom_x2-zoom_x1) + zoom_x1;
+			mouse_x2 = mouse_x2*(zoom_x2-zoom_x1) + zoom_x1;
+			mouse_y1 = mouse_y1*(zoom_y1-zoom_y2) + zoom_y2;
+			mouse_y2 = mouse_y2*(zoom_y1-zoom_y2) + zoom_y2;
+			if( mouse_x1 < mouse_x2)
+			{
+				zoom_x1 = mouse_x1;
+				zoom_x2 = mouse_x2;
+			}
+			else
+			{
+				zoom_x1 = mouse_x2;
+				zoom_x2 = mouse_x1;
+			}
 
-		if( mouse_y1 < mouse_y2)
-		{
-			zoom_y1 = mouse_y2;
-			zoom_y2 = mouse_y1;
-		}
-		else
-		{
-			zoom_y1 = mouse_y1;
-			zoom_y2 = mouse_y2;
+			if( mouse_y1 < mouse_y2)
+			{
+				zoom_y1 = mouse_y2;
+				zoom_y2 = mouse_y1;
+			}
+			else
+			{
+				zoom_y1 = mouse_y1;
+				zoom_y2 = mouse_y2;
+			}
 		}
 
 		mouse_x1 = 0;
