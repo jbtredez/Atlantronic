@@ -20,11 +20,22 @@ static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
 static struct foo_interface foo;
+static float mouse_x1 = 0;
+static float mouse_y1 = 0;
+static float mouse_x2 = 0;
+static float mouse_y2 = 0;
+static float zoom_x1 = 0;
+static float zoom_y1 = 1;
+static float zoom_x2 = 1;
+static float zoom_y2 = 0;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
+static void mounse_press(GtkWidget* widget, GdkEventButton* event);
+static void mounse_release(GtkWidget* widget, GdkEventButton* event);
+static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void glPrintf(float x, float y, GLuint base, char* s, ...);
 static void draw_plus(float x, float y, float rx, float ry);
@@ -83,14 +94,15 @@ int main(int argc, char *argv[])
 	gtk_widget_set_size_request(opengl_window, 800, 600);
 	gtk_widget_set_gl_capability(opengl_window, glconfig, NULL, TRUE, GDK_GL_RGBA_TYPE);
 
-	gtk_widget_add_events(opengl_window, GDK_VISIBILITY_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_POINTER_MOTION_MASK);
+	gtk_widget_add_events(opengl_window, GDK_VISIBILITY_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
 
 	g_signal_connect_after(G_OBJECT(opengl_window), "realize", G_CALLBACK(init), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "configure_event", G_CALLBACK(config), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(afficher), NULL);
-/*	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(sourisClic), NULL);
-	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(sourisBouge), NULL);
-	g_signal_connect_swapped(G_OBJECT(opengl_window), "key_press_event", G_CALLBACK(clavierPress), fenetreOpenGL);
+	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mounse_press), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mounse_release), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
+/*	g_signal_connect_swapped(G_OBJECT(opengl_window), "key_press_event", G_CALLBACK(clavierPress), fenetreOpenGL);
 	g_signal_connect_swapped(G_OBJECT(opengl_window), "key_release_event", G_CALLBACK(clavierRelease), fenetreOpenGL);
 */
 
@@ -219,19 +231,24 @@ void plot_table()
 	float graph_ymin = -1050;
 	float graph_ymax =  1050;
 
+	float zx1 = zoom_x1 * (graph_xmax - graph_xmin) + graph_xmin;
+	float zy1 = graph_ymax - zoom_y1 * (graph_ymax - graph_ymin);
+	float zx2 = zoom_x2 * (graph_xmax - graph_xmin) + graph_xmin;
+	float zy2 = graph_ymax - zoom_y2 * (graph_ymax - graph_ymin);
+
 	float bordure_pixel_x = 10 * font_width;
 	float bordure_pixel_y = font_height*3;
 
-	float ratio_x = (graph_xmax - graph_xmin) / (screen_width - 2 * bordure_pixel_x);
-	float ratio_y = (graph_ymax - graph_ymin) / (screen_height - 2 * bordure_pixel_y);
+	float ratio_x = (zx2 - zx1) / (screen_width - 2 * bordure_pixel_x);
+	float ratio_y = (zy2 - zy1) / (screen_height - 2 * bordure_pixel_y);
 
 	float bordure_x = bordure_pixel_x * ratio_x;
 	float bordure_y = bordure_pixel_y * ratio_y;
 
-	float xmin = graph_xmin - bordure_x;
-	float xmax = graph_xmax + bordure_x;
-	float ymin = graph_ymin - bordure_y;
-	float ymax = graph_ymax + bordure_y;
+	float xmin = zx1 - bordure_x;
+	float xmax = zx2 + bordure_x;
+	float ymin = zy1 - bordure_y;
+	float ymax = zy2 + bordure_y;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -243,12 +260,22 @@ void plot_table()
 	glColor3f(0,0,0);
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(graph_xmin, graph_ymin);
-	glVertex2f(graph_xmax, graph_ymin);
-	glVertex2f(graph_xmax, graph_ymax);
-	glVertex2f(graph_xmin, graph_ymax);
-	glVertex2f(graph_xmin, graph_ymin);
+	glVertex2f(zx1, zy1);
+	glVertex2f(zx2, zy1);
+	glVertex2f(zx2, zy2);
+	glVertex2f(zx1, zy2);
+	glVertex2f(zx1, zy1);
 	glEnd();
+
+	draw_plus(zx1, zy1, font_width*ratio_x, font_width*ratio_y);
+	glPrintf_xcenter_yhigh2(zx1, zy1, ratio_x, ratio_y, font_base, "%i", (int)zx1);
+	glPrintf_xright2_ycenter(zx1, zy1, ratio_x, ratio_y, font_base, "%i", (int)zy1);
+
+	draw_plus(zx1, zy2, font_width*ratio_x, font_width*ratio_y);
+	glPrintf_xright2_ycenter(zx1, zy2, ratio_x, ratio_y, font_base, "%i", (int)zy2);
+
+	draw_plus(zx2, zy1, font_width*ratio_x, font_width*ratio_y);
+	glPrintf_xcenter_yhigh2(zx2, zy1, ratio_x, ratio_y, font_base, "%i", (int)zx2);
 
 	// axe x
 	int x;
@@ -322,6 +349,23 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	glClearColor(1,1,1,1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 1, 0, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glColor3f(0,0,0);
+
+	glBegin(GL_LINE_STRIP);
+	glVertex2f(mouse_x1, mouse_y1);
+	glVertex2f(mouse_x2, mouse_y1);
+	glVertex2f(mouse_x2, mouse_y2);
+	glVertex2f(mouse_x1, mouse_y2);
+	glVertex2f(mouse_x1, mouse_y1);
+	glEnd();
+
 	int res = pthread_mutex_lock(&foo.mutex);
 	if(res == 0)
 	{
@@ -376,6 +420,73 @@ static int init_font(GLuint base, char* f)
 	XCloseDisplay(display);
 
 	return 0;
+}
+
+static void mounse_press(GtkWidget* widget, GdkEventButton* event)
+{
+	if(event->button == 1)
+	{
+		mouse_x1 = event->x/screen_width;
+		mouse_y1 = event->y/screen_height;
+		mouse_x2 = mouse_x1;
+		mouse_y2 = mouse_y1;
+	}
+	else
+	{
+		zoom_x1 = 0;
+		zoom_y1 = 1;
+		zoom_x2 = 1;
+		zoom_y2 = 0;
+	}
+	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+}
+
+static void mounse_release(GtkWidget* widget, GdkEventButton* event)
+{
+	if(event->button == 1)
+	{	
+		mouse_x1 = mouse_x1*(zoom_x2-zoom_x1) + zoom_x1;
+		mouse_x2 = mouse_x2*(zoom_x2-zoom_x1) + zoom_x1;
+		mouse_y1 = mouse_y1*(zoom_y1-zoom_y2) + zoom_y2;
+		mouse_y2 = mouse_y2*(zoom_y1-zoom_y2) + zoom_y2;
+		if( mouse_x1 < mouse_x2)
+		{
+			zoom_x1 = mouse_x1;
+			zoom_x2 = mouse_x2;
+		}
+		else
+		{
+			zoom_x1 = mouse_x2;
+			zoom_x2 = mouse_x1;
+		}
+
+		if( mouse_y1 < mouse_y2)
+		{
+			zoom_y1 = mouse_y2;
+			zoom_y2 = mouse_y1;
+		}
+		else
+		{
+			zoom_y1 = mouse_y1;
+			zoom_y2 = mouse_y2;
+		}
+
+		mouse_x1 = 0;
+		mouse_y1 = 0;
+		mouse_x2 = 0;
+		mouse_y2 = 0;
+		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	}
+}
+
+static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
+{
+	if(event->state & GDK_BUTTON1_MASK)
+	{
+		mouse_x2 = event->x/screen_width;
+		mouse_y2 = event->y/screen_height;
+		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	}
 }
 
 static void glprint(float x, float y, GLuint base, char* buffer, int size)
