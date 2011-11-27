@@ -1,12 +1,25 @@
 #include <math.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "linux/tools/graph.h"
 
 static float graph_quantize(float range);
 static void graph_update_data(struct graph* graph);
 
-void graph_init(struct graph* graph, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y)
+void graph_init(struct graph* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y)
 {
+	int i = 0;
+
+	graph->name = malloc(strlen(name)+1);
+	strcpy(graph->name, name);
+
+	for(i = 0; i < MAX_COURBES; i++)
+	{
+		graph->courbes_names[i] = NULL;
+		graph->courbes_activated[i] = 0;
+	}
+
 	graph->xmin = xmin;
 	graph->xmax = xmax;
 	graph->ymin = ymin;
@@ -20,6 +33,42 @@ void graph_init(struct graph* graph, float xmin, float xmax, float ymin, float y
 	// par defaut roi = tout
 	graph_reset_roi(graph);
 	graph_update_data(graph);
+}
+
+void graph_add_courbe(struct graph* graph, int id, const char* name, int activated)
+{
+	if(id >= MAX_COURBES || id < 0)
+	{
+		return;
+	}
+
+	if(graph->courbes_names[id])
+	{
+		free(graph->courbes_names[id]);
+	}
+
+	graph->courbes_activated[id] = activated;
+	graph->courbes_names[id] = malloc(strlen(name)+1);
+	strcpy(graph->courbes_names[id], name);
+}
+
+void graph_destroy(struct graph* graph)
+{
+	int i;
+	if(graph->name)
+	{
+		free(graph->name);
+		graph->name = NULL;
+	}
+
+	for(i = 0; i < MAX_COURBES; i++)
+	{
+		if( graph->courbes_names[i] )
+		{
+			free( graph->courbes_names[i]);
+			graph->courbes_names[i] = NULL;
+		}
+	}
 }
 
 void graph_reset_roi(struct graph* graph)
@@ -92,6 +141,14 @@ void graph_resize_screen(struct graph* graph, int screen_width, int screen_heigh
 {
 	graph->screen_width = screen_width;
 	graph->screen_height = screen_height;
+
+	graph_update_data(graph);
+}
+
+void graph_set_border(struct graph* graph, int bordure_pixel_x, int bordure_pixel_y)
+{
+	graph->bordure_pixel_x = bordure_pixel_x;
+	graph->bordure_pixel_y = bordure_pixel_y;
 
 	graph_update_data(graph);
 }

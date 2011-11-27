@@ -1,8 +1,13 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#define MAX_COURBES        10
+
 struct graph
 {
+	char* name;
+	char* courbes_names[MAX_COURBES];
+	int courbes_activated[MAX_COURBES];
 	float xmin; //!< min sur l'axe x du graphique (sans zoom)
 	float xmax; //!< max sur l'axe x du graphique (sans zoom)
 	float ymin; //!< min sur l'axe y du graphique (sans zoom)
@@ -23,14 +28,20 @@ struct graph
 
 	int screen_width; //!< taille de l'écran en pixel selon l'axe x
 	int screen_height; //!< taille de l'écran en pixel selon l'axe y
-	int bordure_pixel_y;
 	int bordure_pixel_x;
+	int bordure_pixel_y;
 
 	float ratio_x; //!< ratio selon l'axe x en unite par pixel
 	float ratio_y; //!< ratio selon l'axe y en unite par pixel
 };
 
-void graph_init(struct graph* graph, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y);
+void graph_init(struct graph* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y);
+
+void graph_set_border(struct graph* graph, int bordure_pixel_x, int bordure_pixel_y);
+
+void graph_add_courbe(struct graph* graph, int id, const char* name, int activated);
+
+void graph_destroy(struct graph* graph);
 
 void graph_reset_roi(struct graph* graph);
 
