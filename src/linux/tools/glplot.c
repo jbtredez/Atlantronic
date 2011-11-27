@@ -30,6 +30,7 @@ static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
 static float mouse_y2 = 0;
+static int drawing_zoom_selection = 0;
 
 enum
 {
@@ -386,13 +387,16 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 	glColor3f(0,0,0);
 
-	glBegin(GL_LINE_STRIP);
-	glVertex2f(mouse_x1, mouse_y1);
-	glVertex2f(mouse_x2, mouse_y1);
-	glVertex2f(mouse_x2, mouse_y2);
-	glVertex2f(mouse_x1, mouse_y2);
-	glVertex2f(mouse_x1, mouse_y1);
-	glEnd();
+	if( drawing_zoom_selection )
+	{
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(mouse_x1, mouse_y1);
+		glVertex2f(mouse_x2, mouse_y1);
+		glVertex2f(mouse_x2, mouse_y2);
+		glVertex2f(mouse_x1, mouse_y2);
+		glVertex2f(mouse_x1, mouse_y1);
+		glEnd();
+	}
 
 	int res = pthread_mutex_lock(&foo.mutex);
 	if(res == 0)
@@ -454,6 +458,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1)
 	{
+		drawing_zoom_selection = 1;
 		mouse_x1 = event->x;
 		mouse_y1 = event->y;
 		mouse_x2 = mouse_x1;
@@ -470,11 +475,12 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1)
 	{
-		if( mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
+		if( drawing_zoom_selection && mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
 			graph_zoom(&graph[GRAPH_TABLE], mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
 		}
 
+		drawing_zoom_selection = 0;
 		mouse_x1 = 0;
 		mouse_y1 = 0;
 		mouse_x2 = 0;
@@ -499,6 +505,7 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 	switch(event->keyval)
 	{
 		case GDK_Escape:
+			drawing_zoom_selection = 0;
 			break;
 		case GDK_u:
 			graph_reset_roi(&graph[GRAPH_TABLE]);
