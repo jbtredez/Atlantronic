@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 		pause();
 	}
 
-	com_close(&foo.com);
+	foo_interface_destroy(&foo);
 
 	return 0;
 }
