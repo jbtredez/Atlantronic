@@ -12,6 +12,15 @@ void com_init(struct com* com, const char* file)
 	com->buffer_size = 0;
 }
 
+void com_destroy(struct com* com)
+{
+	if(com->file)
+	{
+		free(com->file);
+	}
+	com->file = NULL;
+}
+
 int com_close(struct com* com)
 {
 	int res = 0;

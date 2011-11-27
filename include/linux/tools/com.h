@@ -19,6 +19,7 @@ struct com
 };
 
 void com_init(struct com* com, const char* file);
+void com_destroy(struct com* com);
 int com_close(struct com* com);
 int com_open(struct com* com);
 void com_open_block(struct com* com);

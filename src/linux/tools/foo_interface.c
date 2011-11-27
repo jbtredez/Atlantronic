@@ -26,6 +26,7 @@ int foo_interface_init(struct foo_interface* data, const char* file, void (*call
 void foo_interface_destroy(struct foo_interface* data)
 {
 	com_close(&data->com);
+	com_destroy(&data->com);
 	rl_free_line_state();
 	rl_cleanup_after_signal();
 }
