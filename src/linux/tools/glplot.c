@@ -17,6 +17,19 @@
 // limitation du rafraichissement
 #define MAX_FPS    20
 
+enum
+{
+	GRAPH_TABLE = 0,
+	GRAPH_HOKUYO_HIST,
+	GRAPH_NUM,
+};
+
+char* menu_courbe[GRAPH_NUM] =
+{
+	"Table",
+	"Hokuyo (histograme)"
+};
+
 static GLuint font_base;
 static char font_name[] = "fixed";
 static int font_height = 0;
@@ -31,16 +44,13 @@ static float mouse_y1 = 0;
 static float mouse_x2 = 0;
 static float mouse_y2 = 0;
 static int drawing_zoom_selection = 0;
-
-enum
-{
-	GRAPH_TABLE = 0,
-	GRAPH_NUM,
-};
+static int current_graph = GRAPH_TABLE;
+static GtkWidget* opengl_window;
 
 struct graph graph[GRAPH_NUM];
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
+static void select_graph(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
@@ -103,7 +113,7 @@ int main(int argc, char *argv[])
 	gtk_signal_connect(GTK_OBJECT(main_window), "destroy", GTK_SIGNAL_FUNC(close_gtk), NULL);
 
 	// fenetre opengl
-	GtkWidget* opengl_window = gtk_drawing_area_new();
+	opengl_window = gtk_drawing_area_new();
 	gtk_widget_set_size_request(opengl_window, 800, 600);
 	gtk_widget_set_gl_capability(opengl_window, glconfig, NULL, TRUE, GDK_GL_RGBA_TYPE);
 
@@ -123,15 +133,35 @@ int main(int argc, char *argv[])
 	GtkWidget* menu1 = gtk_menu_new();	// menu "niveau 1"
 	GtkWidget* menuObj;
 
+	// menu Fichier
+	menuObj = gtk_menu_item_new_with_label("Fichier");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+
 	menuObj = gtk_menu_item_new_with_label("Quitter");
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
-	menuObj = gtk_menu_item_new_with_label("Fichier");
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
 
-	// ajout du menu1 que l'on vient de créer dans le menu0
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu0),menuObj);
+	// menu courbe
+	menu1 = gtk_menu_new();	// menu "niveau 1"
+	menuObj = gtk_menu_item_new_with_label("Courbe");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+
+	GSList *group = NULL;
+	long i = 0;
+	for( ; i < GRAPH_NUM; i++)
+	{
+		menuObj = gtk_radio_menu_item_new_with_label(group, menu_courbe[i]);
+		group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menuObj));
+		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(select_graph), (void*)i);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+		if( i == current_graph )
+		{
+			gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), TRUE);
+		}
+	}
 
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
@@ -181,6 +211,18 @@ static void close_gtk(GtkWidget* widget, gpointer arg)
 	gtk_main_quit();
 }
 
+static void select_graph(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+
+	unsigned long id = (unsigned long) arg;
+	if(id < GRAPH_NUM)
+	{
+		current_graph = id;
+	}
+	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+}
+
 static void init(GtkWidget* widget, gpointer arg)
 {
 	(void) arg;
@@ -207,6 +249,7 @@ static void init(GtkWidget* widget, gpointer arg)
 	}
 
 	graph_init(&graph[GRAPH_TABLE], -1500, 1500, -1000, 1000, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
+	graph_init(&graph[GRAPH_HOKUYO_HIST], 0, 682, 0, 4100, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
 
 	gdk_gl_drawable_gl_end(gldrawable);
 }
@@ -227,7 +270,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	screen_width = widget->allocation.width;
 	screen_height = widget->allocation.height;
 
-	graph_resize_screen(&graph[GRAPH_TABLE], screen_width, screen_height);
+	graph_resize_screen(&graph[current_graph], screen_width, screen_height);
 
 	glViewport(0, 0, screen_width, screen_height);
 	glMatrixMode(GL_PROJECTION);
@@ -251,35 +294,24 @@ static void draw_plus(float x, float y, float rx, float ry)
 	glEnd();
 }
 
-void plot_table()
+void plot_axes(struct graph* graph)
 {
-	float roi_xmin = graph[GRAPH_TABLE].roi_xmin;
-	float roi_xmax = graph[GRAPH_TABLE].roi_xmax;
-	float roi_ymin = graph[GRAPH_TABLE].roi_ymin;
-	float roi_ymax = graph[GRAPH_TABLE].roi_ymax;
+	float roi_xmin = graph->roi_xmin;
+	float roi_xmax = graph->roi_xmax;
+	float roi_ymin = graph->roi_ymin;
+	float roi_ymax = graph->roi_ymax;
 
-	float ratio_x = graph[GRAPH_TABLE].ratio_x;
-	float ratio_y = graph[GRAPH_TABLE].ratio_y;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(graph[GRAPH_TABLE].plot_xmin, graph[GRAPH_TABLE].plot_xmax, graph[GRAPH_TABLE].plot_ymin, graph[GRAPH_TABLE].plot_ymax, 0, 1);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glColor3f(0,0,0);
+	float ratio_x = graph->ratio_x;
+	float ratio_y = graph->ratio_y;
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(roi_xmin, roi_ymin);
 	glVertex2f(roi_xmax, roi_ymin);
-	glVertex2f(roi_xmax, roi_ymax);
-	glVertex2f(roi_xmin, roi_ymax);
 	glVertex2f(roi_xmin, roi_ymin);
+	glVertex2f(roi_xmin, roi_ymax);
 	glEnd();
 
 	// axe x
-	float dx = graph[GRAPH_TABLE].tics_dx;
+	float dx = graph->tics_dx;
 	float x;
 	for(x = 0; x <= roi_xmax; x+=dx)
 	{
@@ -293,7 +325,7 @@ void plot_table()
 	}
 
 	// axe y
-	float dy = graph[GRAPH_TABLE].tics_dy;
+	float dy = graph->tics_dy;
 	float y;
 	for(y = 0; y <= roi_ymax; y+=dy)
 	{
@@ -305,6 +337,12 @@ void plot_table()
 		draw_plus(roi_xmin, y, font_width*ratio_x, font_width*ratio_y);
 		glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
+}
+
+void plot_table(struct graph* graph)
+{
+	float ratio_x = graph->ratio_x;
+	float ratio_y = graph->ratio_y;
 
 	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
 	struct vect_pos pos_table = {0, 0, 0, 1, 0};
@@ -359,7 +397,20 @@ void plot_table()
 	glVertex2f(300 + PARAM_NP_X, -150);
 	glVertex2f(PARAM_NP_X, -150);
 	glEnd();
+}
 
+void plot_hokuyo_hist(struct graph* graph)
+{
+	int i;
+
+	float ratio_x = graph->ratio_x;
+	float ratio_y = graph->ratio_y;
+
+	glColor3f(1,0,0);
+	for(i = 0; i < 682; i++)
+	{
+		draw_plus(i, foo.hokuyo_scan.distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+	}
 }
 
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
@@ -401,7 +452,26 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	int res = pthread_mutex_lock(&foo.mutex);
 	if(res == 0)
 	{
-		plot_table();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+
+		glColor3f(0,0,0);
+		plot_axes(&graph[current_graph]);
+
+		switch(current_graph)
+		{
+			default:
+			case GRAPH_TABLE:
+				plot_table(&graph[current_graph]);
+				break;
+			case GRAPH_HOKUYO_HIST:
+				plot_hokuyo_hist(&graph[current_graph]);
+				break;
+		}
 		pthread_mutex_unlock(&foo.mutex);
 	}
 
@@ -466,7 +536,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 	}
 	else
 	{
-		graph_reset_roi(&graph[GRAPH_TABLE]);
+		graph_reset_roi(&graph[current_graph]);
 	}
 	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 }
@@ -477,7 +547,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( drawing_zoom_selection && mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			graph_zoom(&graph[GRAPH_TABLE], mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
+			graph_zoom(&graph[current_graph], mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
 		}
 
 		drawing_zoom_selection = 0;
