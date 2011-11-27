@@ -12,6 +12,9 @@
 #include "linux/tools/foo_interface.h"
 #include "linux/tools/cmd.h"
 
+// limitation du rafraichissement
+#define MAX_FPS    20
+
 static GLuint font_base;
 static char font_name[] = "fixed";
 static int font_height = 0;
@@ -147,12 +150,21 @@ int main(int argc, char *argv[])
 
 void read_callback(GtkWidget* widget)
 {
-	gdk_threads_enter();
-	if(widget->window)
+	static struct timespec last_plot = {0, 0};
+	struct timespec current;
+
+	clock_gettime(CLOCK_MONOTONIC, &current);
+	double delta = (current.tv_sec - last_plot.tv_sec) + (current.tv_nsec - last_plot.tv_nsec) / ((double)1000000000.0f);
+	if(delta >= 1.0f/MAX_FPS)
 	{
-		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		gdk_threads_enter();
+		if(widget->window)
+		{
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
+		gdk_threads_leave();
+		last_plot = current;
 	}
-	gdk_threads_leave();
 }
 
 static void close_gtk(GtkWidget* widget, gpointer arg)
