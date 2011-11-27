@@ -11,6 +11,7 @@
 
 #include "linux/tools/foo_interface.h"
 #include "linux/tools/cmd.h"
+#include "kernel/robot_parameters.h"
 
 // limitation du rafraichissement
 #define MAX_FPS    20
@@ -41,6 +42,8 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
 static void mounse_press(GtkWidget* widget, GdkEventButton* event);
 static void mounse_release(GtkWidget* widget, GdkEventButton* event);
+static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
+static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void glPrintf(float x, float y, GLuint base, char* s, ...) __attribute__(( format(printf, 4, 5) ));
@@ -108,9 +111,9 @@ int main(int argc, char *argv[])
 	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mounse_press), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mounse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
-/*	g_signal_connect_swapped(G_OBJECT(opengl_window), "key_press_event", G_CALLBACK(clavierPress), fenetreOpenGL);
-	g_signal_connect_swapped(G_OBJECT(opengl_window), "key_release_event", G_CALLBACK(clavierRelease), fenetreOpenGL);
-*/
+	g_signal_connect_swapped(G_OBJECT(main_window), "key_press_event", G_CALLBACK(keyboard_press), opengl_window);
+	g_signal_connect_swapped(G_OBJECT(main_window), "key_release_event", G_CALLBACK(keyboard_release), opengl_window);
+
 
 	GtkWidget* menu0 = gtk_menu_bar_new();	// menu "niveau 0" (ie: barre de menu)
 	GtkWidget* menu1 = gtk_menu_new();	// menu "niveau 1"
@@ -326,12 +329,12 @@ void plot_table()
 	float x;
 	for(x = 0; x <= zx2; x+=dx)
 	{
-		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
+		draw_plus(x, zy1, font_width*ratio_x, font_width*ratio_y);
 		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
 	}
 	for(x = -dx; x >= zx1; x-=dx)
 	{
-		draw_plus(x, graph_ymin, font_width*ratio_x, font_width*ratio_y);
+		draw_plus(x, zy1, font_width*ratio_x, font_width*ratio_y);
 		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
 	}
 
@@ -340,12 +343,12 @@ void plot_table()
 	float y;
 	for(y = 0; y <= zy2; y+=dy)
 	{
-		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
+		draw_plus(zx1, y, font_width*ratio_x, font_width*ratio_y);
 		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
 	for(y = -dy; y >= zy1; y-=dy)
 	{
-		draw_plus(graph_xmin, y, font_width*ratio_x, font_width*ratio_y);
+		draw_plus(zx1, y, font_width*ratio_x, font_width*ratio_y);
 		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
 
@@ -377,6 +380,32 @@ void plot_table()
 	{
 		draw_plus(foo.control_usb_data[i].control_pos_x, foo.control_usb_data[i].control_pos_y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 	}
+
+	// affichage du repère robot
+	glColor3f(0,0,0);
+	struct vect_pos pos_robot;
+	pos_robot.x = foo.control_usb_data[max-1].control_pos_x;
+	pos_robot.y = foo.control_usb_data[max-1].control_pos_y;
+	pos_robot.alpha = foo.control_usb_data[max-1].control_pos_alpha;
+	pos_robot.ca = cos(pos_robot.alpha);
+	pos_robot.sa = sin(pos_robot.alpha);
+
+	glRotatef(pos_robot.alpha * 180 / M_PI, 0, 0, 1);
+	glBegin(GL_LINES);
+	glVertex2f(pos_robot.x, pos_robot.y);
+	glVertex2f(pos_robot.x + 5 * font_height, pos_robot.y);
+	glVertex2f(pos_robot.x, pos_robot.y);
+	glVertex2f(pos_robot.x, pos_robot.y + 5 * font_height);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex2f(PARAM_NP_X, -150);
+	glVertex2f(PARAM_NP_X, 150);
+	glVertex2f(300 + PARAM_NP_X, 150);
+	glVertex2f(300 + PARAM_NP_X, -150);
+	glVertex2f(PARAM_NP_X, -150);
+	glEnd();
+
 }
 
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
@@ -536,6 +565,34 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 		mouse_y2 = event->y;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 	}
+}
+
+static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg)
+{
+	(void) arg;
+	switch(event->keyval)
+	{
+		case GDK_Escape:
+			break;
+		case GDK_u:
+			zoom_x1 = 0;
+			zoom_y1 = 1;
+			zoom_x2 = 1;
+			zoom_y2 = 0;
+			break;
+	}
+
+	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+
+	return TRUE;
+}
+
+static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg)
+{
+	(void) widget;
+	(void) event;
+	(void) arg;
+	return TRUE;
 }
 
 static void glprint(float x, float y, GLuint base, char* buffer, int size)
