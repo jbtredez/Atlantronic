@@ -11,6 +11,7 @@
 
 #include "linux/tools/foo_interface.h"
 #include "linux/tools/cmd.h"
+#include "linux/tools/graph.h"
 #include "kernel/robot_parameters.h"
 
 // limitation du rafraichissement
@@ -31,10 +32,14 @@ static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
 static float mouse_y2 = 0;
-static float zoom_x1 = 0;
-static float zoom_y1 = 1;
-static float zoom_x2 = 1;
-static float zoom_y2 = 0;
+
+enum
+{
+	GRAPH_TABLE = 0,
+	GRAPH_NUM,
+};
+
+struct graph graph[GRAPH_NUM];
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
@@ -202,6 +207,8 @@ static void init(GtkWidget* widget, gpointer arg)
 		}
 	}
 
+	graph_init(&graph[GRAPH_TABLE], -1500, 1500, -1000, 1000);
+
 	bordure_pixel_x = 10 * font_width;
 	bordure_pixel_y = font_height*3;
 
@@ -245,71 +252,22 @@ static void draw_plus(float x, float y, float rx, float ry)
 	glEnd();
 }
 
-float quantize(float range)
-{
-	float power = pow(10, floor(log10(range)));
-	float xnorm = range / power;
-	float posns = 20 / xnorm;
-	float tics;
-
-	if (posns > 40)
-	{
-		tics = 0.05;
-	}
-	else if (posns > 20)
-	{
-		tics = 0.1;
-	}
-	else if (posns > 10)
-	{
-		tics = 0.2;
-	}
-	else if (posns > 4)
-	{
-		tics = 0.5;
-	}
-	else if (posns > 2)
-	{
-		tics = 1;
-	}
-	else if (posns > 0.5)
-	{
-		tics = 2;
-	}
-	else
-	{
-		tics = ceil(xnorm);
-	}
-
-	return tics * power;
-}
-
 void plot_table()
 {
-	float graph_xmin = -1500;
-	float graph_xmax =  1500;
-	float graph_ymin = -1050;
-	float graph_ymax =  1050;
+	float roi_xmin = graph[GRAPH_TABLE].roi_xmin;
+	float roi_xmax = graph[GRAPH_TABLE].roi_xmax;
+	float roi_ymin = graph[GRAPH_TABLE].roi_ymin;
+	float roi_ymax = graph[GRAPH_TABLE].roi_ymax;
 
-	float zx1 = zoom_x1 * (graph_xmax - graph_xmin) + graph_xmin;
-	float zy1 = graph_ymax - zoom_y1 * (graph_ymax - graph_ymin);
-	float zx2 = zoom_x2 * (graph_xmax - graph_xmin) + graph_xmin;
-	float zy2 = graph_ymax - zoom_y2 * (graph_ymax - graph_ymin);
-
-	float ratio_x = (zx2 - zx1) / (screen_width - 2 * bordure_pixel_x);
-	float ratio_y = (zy2 - zy1) / (screen_height - 2 * bordure_pixel_y);
+	float ratio_x = (roi_xmax - roi_xmin) / (screen_width - 2 * bordure_pixel_x);
+	float ratio_y = (roi_ymax - roi_ymin) / (screen_height - 2 * bordure_pixel_y);
 
 	float bordure_x = bordure_pixel_x * ratio_x;
 	float bordure_y = bordure_pixel_y * ratio_y;
 
-	float xmin = zx1 - bordure_x;
-	float xmax = zx2 + bordure_x;
-	float ymin = zy1 - bordure_y;
-	float ymax = zy2 + bordure_y;
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(xmin, xmax, ymin, ymax, 0, 1);
+	glOrtho(roi_xmin - bordure_x, roi_xmax + bordure_x, roi_ymin - bordure_y, roi_ymax + bordure_y, 0, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -317,39 +275,39 @@ void plot_table()
 	glColor3f(0,0,0);
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(zx1, zy1);
-	glVertex2f(zx2, zy1);
-	glVertex2f(zx2, zy2);
-	glVertex2f(zx1, zy2);
-	glVertex2f(zx1, zy1);
+	glVertex2f(roi_xmin, roi_ymin);
+	glVertex2f(roi_xmax, roi_ymin);
+	glVertex2f(roi_xmax, roi_ymax);
+	glVertex2f(roi_xmin, roi_ymax);
+	glVertex2f(roi_xmin, roi_ymin);
 	glEnd();
 
 	// axe x
-	float dx = quantize(zx2 - zx1);
+	float dx = graph[GRAPH_TABLE].tics_dx;
 	float x;
-	for(x = 0; x <= zx2; x+=dx)
+	for(x = 0; x <= roi_xmax; x+=dx)
 	{
-		draw_plus(x, zy1, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
+		draw_plus(x, roi_ymin, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, font_base, "%g", x);
 	}
-	for(x = -dx; x >= zx1; x-=dx)
+	for(x = -dx; x >= roi_xmin; x-=dx)
 	{
-		draw_plus(x, zy1, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xcenter_yhigh2(x, zy1, ratio_x, ratio_y, font_base, "%g", x);
+		draw_plus(x, roi_ymin, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, font_base, "%g", x);
 	}
 
 	// axe y
-	float dy = quantize(zy2 - zy1);
+	float dy = graph[GRAPH_TABLE].tics_dy;
 	float y;
-	for(y = 0; y <= zy2; y+=dy)
+	for(y = 0; y <= roi_ymax; y+=dy)
 	{
-		draw_plus(zx1, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
+		draw_plus(roi_xmin, y, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
-	for(y = -dy; y >= zy1; y-=dy)
+	for(y = -dy; y >= roi_ymin; y-=dy)
 	{
-		draw_plus(zx1, y, font_width*ratio_x, font_width*ratio_y);
-		glPrintf_xright2_ycenter(zx1, y, ratio_x, ratio_y, font_base, "%g", y);
+		draw_plus(roi_xmin, y, font_width*ratio_x, font_width*ratio_y);
+		glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, font_base, "%g", y);
 	}
 
 	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
@@ -508,10 +466,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 	}
 	else
 	{
-		zoom_x1 = 0;
-		zoom_y1 = 1;
-		zoom_x2 = 1;
-		zoom_y2 = 0;
+		graph_reset_roi(&graph[GRAPH_TABLE]);
 	}
 	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 }
@@ -522,31 +477,24 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			mouse_x1 = (mouse_x1 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x) * (zoom_x2 - zoom_x1) + zoom_x1;
-			mouse_x2 = (mouse_x2 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x) * (zoom_x2 - zoom_x1) + zoom_x1;
-			mouse_y1 = (mouse_y1 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y) * (zoom_y1 - zoom_y2) + zoom_y2;
-			mouse_y2 = (mouse_y2 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y) * (zoom_y1 - zoom_y2) + zoom_y2;
-			if( mouse_x1 < mouse_x2)
+			if(mouse_x1 > mouse_x2)
 			{
-				zoom_x1 = mouse_x1;
-				zoom_x2 = mouse_x2;
+				float tmp = mouse_x1;
+				mouse_x1 = mouse_x2;
+				mouse_x2 = tmp;
 			}
-			else
+			if(mouse_y1 > mouse_y2)
 			{
-				zoom_x1 = mouse_x2;
-				zoom_x2 = mouse_x1;
+				float tmp = mouse_y1;
+				mouse_y1 = mouse_y2;
+				mouse_y2 = tmp;
 			}
 
-			if( mouse_y1 < mouse_y2)
-			{
-				zoom_y1 = mouse_y2;
-				zoom_y2 = mouse_y1;
-			}
-			else
-			{
-				zoom_y1 = mouse_y1;
-				zoom_y2 = mouse_y2;
-			}
+			float zx1 = (mouse_x1 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
+			float zx2 = (mouse_x2 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
+			float zy1 = (screen_height - mouse_y2 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
+			float zy2 = (screen_height - mouse_y1 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
+			graph_zoom(&graph[GRAPH_TABLE], zx1, zx2, zy1, zy2);
 		}
 
 		mouse_x1 = 0;
@@ -575,10 +523,7 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 		case GDK_Escape:
 			break;
 		case GDK_u:
-			zoom_x1 = 0;
-			zoom_y1 = 1;
-			zoom_x2 = 1;
-			zoom_y2 = 0;
+			graph_reset_roi(&graph[GRAPH_TABLE]);
 			break;
 	}
 
