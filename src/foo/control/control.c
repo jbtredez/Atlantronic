@@ -231,6 +231,8 @@ static void control_compute()
 
 	location_update();
 	control_pos = location_get_position();
+	float v_d = location_get_speed_curv_abs();
+	float v_r = location_get_speed_rot();
 
 	adc_get(&control_an);
 
@@ -345,9 +347,6 @@ static void control_compute()
 
 	float v_d_c = control_v_dist_cons * cosf(ealpha) + control_kx * ex;
 	float v_r_c = control_v_rot_cons + control_ky * control_v_dist_cons * sinc(ealpha) * ey + control_kalpha * ealpha;
-
-	float v_d = location_get_speed_curv_abs();
-	float v_r = location_get_speed_rot();
 
 	// régulation en vitesse
 	float u_av = pid_apply(&control_pid_av, v_d_c - v_d);
