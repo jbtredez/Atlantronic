@@ -36,6 +36,8 @@ void graph_reset_roi(struct graph* graph);
 
 void graph_resize_screen(struct graph* graph, int screen_width, int screen_height);
 
+void graph_resize_axis_x(struct graph* graph, float xmin, float xmax);
+
 void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2);
 
 #endif

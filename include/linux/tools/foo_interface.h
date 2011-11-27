@@ -6,7 +6,7 @@
 #include "kernel/driver/hokuyo.h"
 #include "foo/control/control.h"
 
-#define CONTROL_USB_DATA_MAX        18000 //!< 90s de données avec l'asservissement à 200Hz
+#define CONTROL_USB_DATA_MAX        180000 //!< 900s de données avec l'asservissement à 200Hz
 
 struct foo_interface
 {

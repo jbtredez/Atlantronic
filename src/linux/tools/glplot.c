@@ -21,13 +21,15 @@ enum
 {
 	GRAPH_TABLE = 0,
 	GRAPH_HOKUYO_HIST,
+	GRAPH_SPEED_DIST,
 	GRAPH_NUM,
 };
 
 char* menu_courbe[GRAPH_NUM] =
 {
 	"Table",
-	"Hokuyo (histograme)"
+	"Hokuyo (histograme)",
+	"Vitesses (avance)",
 };
 
 static GLuint font_base;
@@ -250,6 +252,7 @@ static void init(GtkWidget* widget, gpointer arg)
 
 	graph_init(&graph[GRAPH_TABLE], -1500, 1500, -1000, 1000, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
 	graph_init(&graph[GRAPH_HOKUYO_HIST], 0, 682, 0, 4100, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
+	graph_init(&graph[GRAPH_SPEED_DIST], 0, 90000, -1500, 1500, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
 
 	gdk_gl_drawable_gl_end(gldrawable);
 }
@@ -354,7 +357,7 @@ void plot_table(struct graph* graph)
 		pos_hokuyo.x = foo.hokuyo_x[i];
 		pos_hokuyo.y = foo.hokuyo_y[i];
 		pos_hokuyo_to_table(&foo.hokuyo_scan.pos, &pos_hokuyo, &pos_table);
-		draw_plus(pos_table.x, pos_table.y, 0.5*font_width*ratio_x, 0.5*font_width*ratio_y);
+		draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 	}
 
 	glColor3f(0,0,1);
@@ -382,14 +385,17 @@ void plot_table(struct graph* graph)
 	pos_robot.ca = cos(pos_robot.alpha);
 	pos_robot.sa = sin(pos_robot.alpha);
 
+	glPushMatrix();
+	glTranslatef(pos_robot.x, pos_robot.y, 0);
 	glRotatef(pos_robot.alpha * 180 / M_PI, 0, 0, 1);
 	glBegin(GL_LINES);
-	glVertex2f(pos_robot.x, pos_robot.y);
-	glVertex2f(pos_robot.x + 5 * font_height, pos_robot.y);
-	glVertex2f(pos_robot.x, pos_robot.y);
-	glVertex2f(pos_robot.x, pos_robot.y + 5 * font_height);
+	glVertex2f(0, 0);
+	glVertex2f(5 * font_height, 0);
+	glVertex2f(0, 0);
+	glVertex2f(0, 5 * font_height);
 	glEnd();
 
+	glColor3f(1,1,0);
 	glBegin(GL_LINE_STRIP);
 	glVertex2f(PARAM_NP_X, -150);
 	glVertex2f(PARAM_NP_X, 150);
@@ -397,6 +403,7 @@ void plot_table(struct graph* graph)
 	glVertex2f(300 + PARAM_NP_X, -150);
 	glVertex2f(PARAM_NP_X, -150);
 	glEnd();
+	glPopMatrix();
 }
 
 void plot_hokuyo_hist(struct graph* graph)
@@ -410,6 +417,26 @@ void plot_hokuyo_hist(struct graph* graph)
 	for(i = 0; i < 682; i++)
 	{
 		draw_plus(i, foo.hokuyo_scan.distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+	}
+}
+
+void plot_speed_dist(struct graph* graph)
+{
+	int i;
+
+	float ratio_x = graph->ratio_x;
+	float ratio_y = graph->ratio_y;
+
+	glColor3f(0,0,1);
+	for(i=0; i < foo.control_usb_data_count; i++)
+	{
+		draw_plus(5*i, foo.control_usb_data[i].control_v_dist_cons*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+	}
+
+	glColor3f(0,1,0);
+	for(i=1; i < foo.control_usb_data_count; i++)
+	{
+		draw_plus(5*i, foo.control_usb_data[i].control_v_dist_mes*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 	}
 }
 
@@ -452,6 +479,11 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	int res = pthread_mutex_lock(&foo.mutex);
 	if(res == 0)
 	{
+		if(current_graph == GRAPH_SPEED_DIST)
+		{
+			graph_resize_axis_x(&graph[current_graph], 0, foo.control_usb_data_count * 5);
+		}
+
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
@@ -470,6 +502,9 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 				break;
 			case GRAPH_HOKUYO_HIST:
 				plot_hokuyo_hist(&graph[current_graph]);
+				break;
+			case GRAPH_SPEED_DIST:
+				plot_speed_dist(&graph[current_graph]);
 				break;
 		}
 		pthread_mutex_unlock(&foo.mutex);

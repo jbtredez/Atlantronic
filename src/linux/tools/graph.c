@@ -96,6 +96,26 @@ void graph_resize_screen(struct graph* graph, int screen_width, int screen_heigh
 	graph_update_data(graph);
 }
 
+void graph_resize_axis_x(struct graph* graph, float xmin, float xmax)
+{
+	int reset_roi = 0;
+
+	if( graph->xmin == graph->roi_xmin && graph->xmax == graph->roi_xmax )
+	{
+		reset_roi = 1;
+	}
+
+	graph->xmin = xmin;
+	graph->xmax = xmax;
+
+	if(reset_roi)
+	{
+		graph_reset_roi(graph);
+	}
+
+	graph_update_data(graph);
+}
+
 void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2)
 {
 	if(mouse_x1 > mouse_x2)
