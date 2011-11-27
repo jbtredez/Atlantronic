@@ -26,8 +26,6 @@ static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
 static struct foo_interface foo;
-static float bordure_pixel_x = 0;
-static float bordure_pixel_y = 0;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
@@ -207,10 +205,7 @@ static void init(GtkWidget* widget, gpointer arg)
 		}
 	}
 
-	graph_init(&graph[GRAPH_TABLE], -1500, 1500, -1000, 1000);
-
-	bordure_pixel_x = 10 * font_width;
-	bordure_pixel_y = font_height*3;
+	graph_init(&graph[GRAPH_TABLE], -1500, 1500, -1000, 1000, widget->allocation.width, widget->allocation.height, 10 * font_width, font_height*3);
 
 	gdk_gl_drawable_gl_end(gldrawable);
 }
@@ -230,6 +225,9 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 
 	screen_width = widget->allocation.width;
 	screen_height = widget->allocation.height;
+
+	graph_resize_screen(&graph[GRAPH_TABLE], screen_width, screen_height);
+
 	glViewport(0, 0, screen_width, screen_height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -259,15 +257,12 @@ void plot_table()
 	float roi_ymin = graph[GRAPH_TABLE].roi_ymin;
 	float roi_ymax = graph[GRAPH_TABLE].roi_ymax;
 
-	float ratio_x = (roi_xmax - roi_xmin) / (screen_width - 2 * bordure_pixel_x);
-	float ratio_y = (roi_ymax - roi_ymin) / (screen_height - 2 * bordure_pixel_y);
-
-	float bordure_x = bordure_pixel_x * ratio_x;
-	float bordure_y = bordure_pixel_y * ratio_y;
+	float ratio_x = graph[GRAPH_TABLE].ratio_x;
+	float ratio_y = graph[GRAPH_TABLE].ratio_y;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(roi_xmin - bordure_x, roi_xmax + bordure_x, roi_ymin - bordure_y, roi_ymax + bordure_y, 0, 1);
+	glOrtho(graph[GRAPH_TABLE].plot_xmin, graph[GRAPH_TABLE].plot_xmax, graph[GRAPH_TABLE].plot_ymin, graph[GRAPH_TABLE].plot_ymax, 0, 1);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -477,24 +472,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			if(mouse_x1 > mouse_x2)
-			{
-				float tmp = mouse_x1;
-				mouse_x1 = mouse_x2;
-				mouse_x2 = tmp;
-			}
-			if(mouse_y1 > mouse_y2)
-			{
-				float tmp = mouse_y1;
-				mouse_y1 = mouse_y2;
-				mouse_y2 = tmp;
-			}
-
-			float zx1 = (mouse_x1 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
-			float zx2 = (mouse_x2 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
-			float zy1 = (screen_height - mouse_y2 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
-			float zy2 = (screen_height - mouse_y1 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
-			graph_zoom(&graph[GRAPH_TABLE], zx1, zx2, zy1, zy2);
+			graph_zoom(&graph[GRAPH_TABLE], mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
 		}
 
 		mouse_x1 = 0;
