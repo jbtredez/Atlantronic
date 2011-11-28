@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdlib.h>
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 
