@@ -15,7 +15,8 @@
 #include "kernel/robot_parameters.h"
 
 // limitation du rafraichissement
-#define MAX_FPS    20
+// hokuyo => 10fps. On met juste un peu plus
+#define MAX_FPS    11
 
 enum
 {
@@ -79,7 +80,6 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
-static void glPrintf(float x, float y, GLuint base, char* s, ...) __attribute__(( format(printf, 4, 5) ));
 static void draw_plus(float x, float y, float rx, float ry);
 static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
@@ -735,17 +735,6 @@ static void glprint(float x, float y, GLuint base, char* buffer, int size)
 		glCallLists(size, GL_UNSIGNED_BYTE, (GLubyte *)buffer);
 		glPopAttrib();
 	}
-}
-
-static void glPrintf(float x, float y, GLuint base, char* s, ...)
-{
-	va_list arglist;
-	va_start(arglist, s);
-	char buffer[1024];
-	int size = vsnprintf(buffer, sizeof(buffer), s, arglist);
-	va_end(arglist);
-
-	glprint(x, y, base, buffer, size);
 }
 
 static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
