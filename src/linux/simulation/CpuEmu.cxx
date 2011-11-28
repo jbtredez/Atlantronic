@@ -194,7 +194,15 @@ void* CpuEmu::lecture()
 			}
 
 			write_irq();
-			write(fd_to_qemu, &io, sizeof(io));
+			int res = write(fd_to_qemu, &io, sizeof(io));
+			if(res < 0 )
+			{
+				logerror("write");
+			}
+			else if(res != sizeof(io))
+			{
+				meslog(_erreur_, "write too short (%i instead of %zd)", res, sizeof(io));
+			}
 		}
 		else if(n < 0)
 		{
@@ -215,11 +223,20 @@ void CpuEmu::write_irq()
 {
 	struct atlantronic_memory_io io;
 	io.cmd = IRQ;
+	int res;
 
 	while(! irq.empty())
 	{
 		io.val = irq.front();
-		write(fd_to_qemu, &io, sizeof(io));
+		res = write(fd_to_qemu, &io, sizeof(io));
+		if(res < 0 )
+		{
+			logerror("write_irq");
+		}
+		else if(res != sizeof(io))
+		{
+			meslog(_erreur_, "write too short (%i instead of %zd)", res, sizeof(io));
+		}
 		irq.pop_front();
 	}
 }
