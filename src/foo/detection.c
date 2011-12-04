@@ -1,22 +1,21 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
-#include "control/control.h"
 #include "kernel/systick.h"
 #include "kernel/event.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/hokuyo_tools.h"
-#include "gpio.h"
-#include "location/location.h"
 #include "kernel/rcc.h"
-#include <math.h>
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "location/location.h"
+#include "gpio.h"
+
+#include <math.h>
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
 #define HOKUYO_NUM_OBJECT            100
-#define HOKUYO_NUM_PAWN               50
 
 static void detection_task();
 int detection_module_init();
