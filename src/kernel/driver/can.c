@@ -21,8 +21,8 @@ static xQueueHandle can_read_queue;
 #define CAN_READ_STACK_SIZE            150
 #define CAN_WRITE_STACK_SIZE           150
 
-#define CAN_WRITE_QUEUE_SIZE     20
-#define CAN_READ_QUEUE_SIZE      20
+#define CAN_WRITE_QUEUE_SIZE     50
+#define CAN_READ_QUEUE_SIZE      50
 
 #define CAN_MAP_SIZE             20
 
@@ -35,7 +35,6 @@ struct can_map
 
 static uint8_t can_map_max;
 static struct can_map can_map[CAN_MAP_SIZE];
-//static volatile int can_tx_end;
 
 static int can_module_init(void)
 {
@@ -176,6 +175,7 @@ static void can_read_task(void *arg)
 
 void isr_can1_tx(void)
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK();
 
 	// fin de transmission sur la boite 0
@@ -183,7 +183,12 @@ void isr_can1_tx(void)
 	{
 		CAN1->TSR |= CAN_TSR_RQCP0;
 		CAN1->IER &= ~CAN_IER_TMEIE;
-		vTaskSetEventFromISR(EVENT_CAN_TX_END);
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_CAN_TX_END);
+	}
+
+	if( xHigherPriorityTaskWoken )
+	{
+		vPortYieldFromISR();
 	}
 
 	portCLEAR_INTERRUPT_MASK();
