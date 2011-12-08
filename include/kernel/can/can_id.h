@@ -12,5 +12,9 @@
 #define CAN_US_ACTIVATE           0x11
 #define CAN_POSITION              0x12
 
+// data hokuyo (4 uint16_t par message)
+#define CAN_HOKUYO_DATA_RESET     0x13
+#define CAN_HOKUYO_DATA           0x14
+
 #endif
 
