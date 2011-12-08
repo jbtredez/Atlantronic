@@ -29,6 +29,7 @@ obj-bar-us_hokuyo += kernel/driver/can.o
 obj-bar-us_hokuyo += kernel/driver/usart.o
 obj-bar-us_hokuyo += kernel/driver/hokuyo.o
 obj-bar-us_hokuyo += kernel/hokuyo_tools.o
+obj-bar-us_hokuyo += kernel/vect_pos.o
 obj-bar-us_hokuyo += kernel/utf8.o
 obj-bar-us_hokuyo += kernel/driver/usb/usb.o
 obj-bar-us_hokuyo += kernel/driver/usb/usb_init.o
@@ -44,8 +45,8 @@ obj-bar-us_hokuyo += kernel/driver/usb/otgd_fs_int.o
 obj-bar-us_hokuyo += kernel/driver/usb/otgd_fs_pcd.o
 #obj-bar-us_hokuyo += kernel/end.o
 obj-bar-us_hokuyo += kernel/error.o
+obj-bar-us_hokuyo += bar/hokuyo_to_can.o
 obj-bar-us_hokuyo += bar/gpio.o
-obj-bar-us_hokuyo += kernel/vect_pos.o
 bin-bar += us_hokuyo
 
 obj-bar-test_log += kernel/main.o

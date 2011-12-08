@@ -8,8 +8,8 @@
 //! idle task priority : 0
 
 #define PRIORITY_TASK_USB             1
-#define PRIORITY_TASK_HOKUYO          2
-#define PRIORITY_TASK_CAN_US          3
+#define PRIORITY_TASK_CAN_US          2
+#define PRIORITY_TASK_HOKUYO_TO_CAN   3
 #define PRIORITY_TASK_CAN             4
 #define PRIORITY_TASK_TEST_US         4
 #define PRIORITY_TASK_END             5
