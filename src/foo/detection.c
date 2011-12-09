@@ -8,6 +8,9 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/can.h"
+#include "kernel/can/can_id.h"
+#include "kernel/robot_parameters.h"
 #include "location/location.h"
 #include "gpio.h"
 
@@ -16,12 +19,18 @@
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
 #define HOKUYO_NUM_OBJECT            100
+#define HOKUYO_FOO                     0
+#define HOKUYO_BAR                     1
+
 
 static void detection_task();
 int detection_module_init();
 void detection_compute();
+void can_hokuyo_reset(struct can_msg *msg);
+void can_hokuyo_data(struct can_msg *msg);
 
-static struct hokuyo_scan hokuyo_scan;
+static int detection_can_hokuyo_id;
+static struct hokuyo_scan hokuyo_scan[2];
 //static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
 //static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
@@ -36,6 +45,24 @@ int detection_module_init()
 	{
 		return ERR_INIT_TEST;
 	}
+
+	// TODO conf a virer dans kernel/robot_parameters.h
+	hokuyo_scan[HOKUYO_FOO].sens = -1;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.x = 60;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.y = 60;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.alpha = PI/4.0f;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.ca = cosf(hokuyo_scan[HOKUYO_FOO].pos_hokuyo.alpha);
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.sa = sinf(hokuyo_scan[HOKUYO_FOO].pos_hokuyo.alpha);
+	hokuyo_scan[HOKUYO_BAR].sens =  1;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.x = 60;
+	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.y = -60;
+	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha = -PI/4.0f;
+	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.ca = cosf(hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha);
+	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.sa = sinf(hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha);
+
+	detection_can_hokuyo_id = 0;
+	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
+	can_register(CAN_HOKUYO_DATA, CAN_STANDARD_FORMAT, can_hokuyo_data);
 
 	return 0;
 }
@@ -62,14 +89,14 @@ static void detection_task()
 
 	log_info("Lancement des scan hokuyo");
 
-	hokuyo_scan.pos = location_get_position();
+	hokuyo_scan[HOKUYO_FOO].pos_robot = location_get_position();
 	hokuyo_start_scan();
 	last_scan_time = systick_get_time();
 
 	while(1)
 	{
 		// on attend la fin du nouveau scan
-		err = hokuto_wait_decode_scan(hokuyo_scan.distance, HOKUYO_NUM_POINTS);
+		err = hokuto_wait_decode_scan(hokuyo_scan[0].distance, HOKUYO_NUM_POINTS);
 		if(err)
 		{
 			error_raise(err);
@@ -85,8 +112,10 @@ static void detection_task()
 		}
 		last_scan_time = current_time;
 
+		// position mise en fin de scan
+		hokuyo_scan[HOKUYO_FOO].pos_robot = location_get_position();
+
 		// on lance le prochain scan avant de faire les calculs sur le scan actuel
-		hokuyo_scan.pos = location_get_position();
 		hokuyo_start_scan();
 
 		// si le dernier scan n'a pas echoue on fait les calculs
@@ -95,7 +124,7 @@ static void detection_task()
 			detection_compute();
 
 			// on envoi les donnees par usb pour le debug
-			usb_add(USB_HOKUYO, &hokuyo_scan, sizeof(hokuyo_scan));
+			usb_add(USB_HOKUYO_FOO, &hokuyo_scan[HOKUYO_FOO], sizeof(hokuyo_scan[HOKUYO_FOO]));
 		}
 	}
 
@@ -104,7 +133,25 @@ static void detection_task()
 
 void detection_compute()
 {
-	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
+	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan[HOKUYO_FOO].distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 //	hokuyo_compute_xy(hokuyo_distance, HOKUYO_NUM_POINTS, hokuyo_x, hokuyo_y, -1);
+}
+
+void can_hokuyo_reset(struct can_msg *msg)
+{
+//	log_info("reset - id = %d", detection_can_hokuyo_id);
+	detection_can_hokuyo_id = 0;
+	hokuyo_scan[HOKUYO_BAR].pos_robot = location_get_position();
+}
+
+void can_hokuyo_data(struct can_msg *msg)
+{
+	memcpy(((unsigned char*)hokuyo_scan[1].distance) + detection_can_hokuyo_id, msg->data, msg->size);
+	detection_can_hokuyo_id += msg->size;
+	if(detection_can_hokuyo_id == 1364)
+	{
+//		log_info("1364");
+		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan[HOKUYO_BAR], sizeof(hokuyo_scan[HOKUYO_BAR]));
+	}
 }

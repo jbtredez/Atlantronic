@@ -8,7 +8,7 @@
 
 static void* foo_interface_task(void* arg);
 static int foo_interface_process_control(struct foo_interface* data, char* msg, uint16_t size);
-static int foo_interface_process_hokuyo(struct foo_interface* data, char* msg, uint16_t size);
+static int foo_interface_process_hokuyo(struct foo_interface* data, int id, char* msg, uint16_t size);
 static int foo_interface_process_log(struct foo_interface* data, char* msg, uint16_t size);
 
 int foo_interface_init(struct foo_interface* data, const char* file, void (*callback)(void*), void* callback_arg)
@@ -69,8 +69,11 @@ static void* foo_interface_task(void* arg)
 			case USB_LOG:
 				res = foo_interface_process_log(foo, msg, size);
 				break;
-			case USB_HOKUYO:
-				res = foo_interface_process_hokuyo(foo, msg, size);
+			case USB_HOKUYO_FOO:
+				res = foo_interface_process_hokuyo(foo, HOKUYO_FOO, msg, size);
+				break;
+			case USB_HOKUYO_FOO_BAR:
+				res = foo_interface_process_hokuyo(foo, HOKUYO_FOO_BAR, msg, size);
 				break;
 			case USB_CONTROL:
 				res = foo_interface_process_control(foo, msg, size);
@@ -118,7 +121,7 @@ end:
 	return res;
 }
 
-static int foo_interface_process_hokuyo(struct foo_interface* data, char* msg, uint16_t size)
+static int foo_interface_process_hokuyo(struct foo_interface* data, int id, char* msg, uint16_t size)
 {
 	int res = 0;
 
@@ -136,9 +139,9 @@ static int foo_interface_process_hokuyo(struct foo_interface* data, char* msg, u
 		goto end;
 	}
 
-	memcpy(&data->hokuyo_scan, msg, size);
+	memcpy(&data->hokuyo_scan[id], msg, size);
 
-	hokuyo_compute_xy(data->hokuyo_scan.distance, HOKUYO_NUM_POINTS, data->hokuyo_x, data->hokuyo_y, -1);
+	hokuyo_compute_xy(data->hokuyo_scan[id].distance, HOKUYO_NUM_POINTS, data->hokuyo_x + HOKUYO_NUM_POINTS * id, data->hokuyo_y + HOKUYO_NUM_POINTS * id, data->hokuyo_scan[id].sens);
 
 	pthread_mutex_unlock(&data->mutex);
 

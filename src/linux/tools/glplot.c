@@ -29,7 +29,8 @@ enum
 enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
-	SUBGRAPH_TABLE_HOKUYO,
+	SUBGRAPH_TABLE_HOKUYO_FOO,
+	SUBGRAPH_TABLE_HOKUYO_BAR,
 	SUBGRAPH_TABLE_POS_CONS,
 	SUBGRAPH_TABLE_POS_MES,
 	SUBGRAPH_TABLE_NUM,
@@ -37,8 +38,8 @@ enum
 
 enum
 {
-	GRAPH_HOKUYO_HIST_RIGHT = 0,
-	GRAPH_HOKUYO_HIST_LEFT,
+	GRAPH_HOKUYO_HIST_FOO = 0,
+	GRAPH_HOKUYO_HIST_BAR,
 	GRAPH_HOKUYO_HIST_NUM,
 };
 
@@ -109,13 +110,14 @@ int main(int argc, char *argv[])
 
 	graph_init(&graph[GRAPH_TABLE], "Table", -1500, 1500, -1000, 1000, 800, 600, 0, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO, "Hokuyo", 1);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1);
 
 	graph_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo (histograme)", 0, 682, 0, 4100, 800, 600, 0, 0);
-	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_RIGHT, "Hokuyo droit", 1);
-	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_LEFT, "Hokuyo gauche", 1);
+	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1);
+	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 1);
 
 	graph_init(&graph[GRAPH_SPEED_DIST], "Vitesses (avance)", 0, 90000, -1500, 1500, 800, 600, 0, 0);
 	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1);
@@ -424,14 +426,26 @@ void plot_table(struct graph* graph)
 
 	int i;
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
 	{
 		glColor3f(1,0,0);
-		for(i=0; i < 682; i++)
+		for(i=0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			pos_hokuyo.x = foo.hokuyo_x[i];
 			pos_hokuyo.y = foo.hokuyo_y[i];
-			pos_hokuyo_to_table(&foo.hokuyo_scan.pos, &pos_hokuyo, &pos_table);
+			pos_hokuyo_to_table(&foo.hokuyo_scan[HOKUYO_FOO].pos_robot, &foo.hokuyo_scan[HOKUYO_FOO].pos_hokuyo, &pos_hokuyo, &pos_table);
+			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
+	{
+		glColor3f(0.5,0.5,0);
+		for(i=HOKUYO_NUM_POINTS; i < 2*HOKUYO_NUM_POINTS; i++)
+		{
+			pos_hokuyo.x = foo.hokuyo_x[i];
+			pos_hokuyo.y = foo.hokuyo_y[i];
+			pos_hokuyo_to_table(&foo.hokuyo_scan[HOKUYO_FOO_BAR].pos_robot, &foo.hokuyo_scan[HOKUYO_FOO_BAR].pos_hokuyo, &pos_hokuyo, &pos_table);
 			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -499,12 +513,20 @@ void plot_hokuyo_hist(struct graph* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 
-	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_RIGHT] )
+	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_FOO] )
 	{
 		glColor3f(1,0,0);
-		for(i = 0; i < 682; i++)
+		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, foo.hokuyo_scan.distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(i, foo.hokuyo_scan[HOKUYO_FOO].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_BAR] )
+	{
+		glColor3f(0.5,0.5,0);
+		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
+		{
+			draw_plus(i, foo.hokuyo_scan[HOKUYO_FOO_BAR].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 }

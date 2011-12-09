@@ -7,6 +7,8 @@
 #include "foo/control/control.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
+#define HOKUYO_FOO                     0
+#define HOKUYO_FOO_BAR                 1
 
 struct foo_interface
 {
@@ -16,13 +18,13 @@ struct foo_interface
 	void* callback_arg;
 
 	// données brutes
-	struct hokuyo_scan hokuyo_scan;
+	struct hokuyo_scan hokuyo_scan[2];
 	struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 	int control_usb_data_count;
 
 	// calculs
-	float hokuyo_x[682]; //!< x des points 44 à 725
-	float hokuyo_y[682]; //!< y des points 44 à 725
+	float hokuyo_x[HOKUYO_NUM_POINTS*2]; //!< x des points 44 à 725 - hokuyo 0 puis hokuyo 1
+	float hokuyo_y[HOKUYO_NUM_POINTS*2]; //!< y des points 44 à 725 - hokuyo 0 puis hokuyo 1
 };
 
 int foo_interface_init(struct foo_interface* data, const char* file, void (*callback)(void*), void* callback_arg);

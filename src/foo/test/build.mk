@@ -161,6 +161,7 @@ obj-foo-test_hokuyo += kernel/heap_3.o
 obj-foo-test_hokuyo += kernel/syscalls.o
 obj-foo-test_hokuyo += kernel/rcc.o
 obj-foo-test_hokuyo += kernel/driver/usart.o
+obj-foo-test_hokuyo += kernel/driver/can.o
 obj-foo-test_hokuyo += kernel/end.o
 obj-foo-test_hokuyo += kernel/error.o
 obj-foo-test_hokuyo += foo/gpio.o

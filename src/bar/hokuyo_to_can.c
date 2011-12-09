@@ -94,7 +94,7 @@ static void hokuyo_to_can_task()
 			hokuyo_to_can_compute();
 
 			// on envoi les donnees par usb pour le debug
-			usb_add(USB_HOKUYO, &hokuyo_scan, sizeof(hokuyo_scan));
+			usb_add(USB_HOKUYO_BAR, &hokuyo_scan, sizeof(hokuyo_scan));
 		}
 	}
 
