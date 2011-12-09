@@ -52,6 +52,6 @@
 #define ERR_HOKUYO_SCAN_SIZE            0x232
 #define ERR_HOKUYO_DISTANCE_BUFFER      0x233
 
-#define ERR_US_UNKNOWN_US		0x233
+#define ERR_US_UNKNOWN_US		0x234
 
 #endif
