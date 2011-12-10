@@ -31,6 +31,12 @@ void log_format_and_add(const char* msg, ...) __attribute__(( format(printf, 1, 
 		log_format_and_add("%12lu\tError\t%10s:%i\t"msg"\n", (unsigned long int)tick_to_us( systick_get_time() ), __FUNCTION__, __LINE__, ##arg);\
 	}while(0)
 
+#define log_error_func_line(msg, func, line, arg ...) \
+	do \
+	{ \
+		log_format_and_add("%12lu\tError\t%10s:%i\t"msg"\n", (unsigned long int)tick_to_us( systick_get_time() ), func, line, ##arg);\
+	}while(0)
+
 #define log_info(msg, arg ...) \
 	do \
 	{ \
