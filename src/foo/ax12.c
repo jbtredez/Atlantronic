@@ -93,6 +93,11 @@ static void ax12_task(void* arg)
 			do
 			{
 				res = ax12_send(&req);
+				if(res)
+				{
+					error(res, ERROR_ACTIVE);
+				}
+
 				// delai entre 2 messages sur le bus
 				vTaskDelay(AX12_INTER_FRAME_TIME);
 			}while(res && i < AX12_MAX_RETRY);
@@ -137,8 +142,6 @@ uint32_t ax12_send(struct ax12_request *req)
 	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	if( res )
 	{
-		// TODO code erreur
-		//error_raise(res);
 		goto end;
 	}
 
@@ -149,7 +152,6 @@ uint32_t ax12_send(struct ax12_request *req)
 		{
 			// erreur, on n'a pas lus ce qui a été envoyé
 			res = ERR_AX12_SEND_CHECK;
-			error_raise(ERR_AX12_SEND_CHECK);
 			goto end;
 		}
 	}
@@ -162,22 +164,98 @@ uint32_t ax12_send(struct ax12_request *req)
 		if(ax12_buffer[0] != 0xFF || ax12_buffer[1] != 0xFF || ax12_buffer[2] != req->id || ax12_buffer[3] != size - 4)
 		{
 			// erreur protocole
-			res = -1;
+			res = ERR_AX12_PROTO;
 			goto end;
 		}
 
 		if( ax12_buffer[size - 1] != ax12_checksum(ax12_buffer, size))
 		{
 			// erreur checksum
-			res = -1;
+			res = ERR_AX12_CHECKSUM;
 			goto end;
 		}
 
 		// traitement du message reçu
-		if(ax12_buffer[4])
+		// erreur ax12 dans ax12_buffer[4]
+		// erruer de tension
+		if( ax12_buffer[4] &  AX12_INPUT_VOLTAGE_ERROR_MASK )
 		{
-			// erreur ax12
-			res = -1;
+			error(ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE, ERROR_CLEAR);
+		}
+
+		// erreur d'angle
+		if( ax12_buffer[4] & AX12_ANGLE_LIMIT_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_ANGLE_LIMIT, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_ANGLE_LIMIT, ERROR_CLEAR);
+		}
+
+		// erreur de surchauffe
+		if( ax12_buffer[4] & AX12_OVERHEATING_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_OVERHEATING, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_OVERHEATING, ERROR_CLEAR);
+		}
+
+		// erreur valeur en dehors de la plage admissible
+		if( ax12_buffer[4] & AX12_RANGE_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_RANGE, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_RANGE, ERROR_CLEAR);
+		}
+
+		// erreur checksum cote ax12
+		if( ax12_buffer[4] &  AX12_CHECKSUM_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_CHECKSUM, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_CHECKSUM, ERROR_CLEAR);
+		}
+
+		// erreur surcharge
+		if( ax12_buffer[4] & AX12_OVERLOAD_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_OVERLOAD, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_OVERLOAD, ERROR_CLEAR);
+		}
+
+		// erreur d'instruction
+		if( ax12_buffer[4] & AX12_INSTRUCTION_ERROR_MASK )
+		{
+			error(ERR_AX12_INTERNAL_ERROR_INSTRUCTION, ERROR_ACTIVE);
+			res = ERR_AX12_INTERNAL_ERROR;
+		}
+		else
+		{
+			error(ERR_AX12_INTERNAL_ERROR_INSTRUCTION, ERROR_CLEAR);
+		}
+
+		if(res)
+		{
 			goto end;
 		}
 

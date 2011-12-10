@@ -27,6 +27,14 @@ void ax12_reset(uint8_t id);
 #define AX12_MAX_GOAL_POSITION   0x3ff
 #define AX12_MAX_TORQUE_LIMIT    0x3ff
 
+#define AX12_INPUT_VOLTAGE_ERROR_MASK    0x01
+#define AX12_ANGLE_LIMIT_ERROR_MASK      0x02
+#define AX12_OVERHEATING_ERROR_MASK      0x04
+#define AX12_RANGE_ERROR_MASK            0x08
+#define AX12_CHECKSUM_ERROR_MASK         0x10
+#define AX12_OVERLOAD_ERROR_MASK         0x20
+#define AX12_INSTRUCTION_ERROR_MASK      0x40
+
 void ax12_set_led(uint8_t id, uint8_t on);
 void ax12_set_moving_speed(uint8_t id, uint16_t speed);
 void ax12_set_goal_position(uint8_t id, uint16_t goal);
