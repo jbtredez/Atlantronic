@@ -8,11 +8,11 @@
 
 //! pour ne pas confondre avec le main de la libc newlib
 void __main() __attribute__((noreturn));
-void init_panic(uint8_t init) __attribute__((noreturn));
+void init_panic(uint8_t err) __attribute__((noreturn));
 
-void init_panic(uint8_t init)
+void init_panic(uint8_t err)
 {
-	setLed(init);
+	setLed(err);
 
 	while(1)
 	{
@@ -22,9 +22,9 @@ void init_panic(uint8_t init)
 
 void __main()
 {
-	uint8_t error = initModules();
+	uint8_t err = initModules();
 
 	// on n'arrive normalement jamais ici sur la cible
-	init_panic(error);
+	init_panic(err);
 }
 
