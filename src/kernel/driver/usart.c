@@ -6,8 +6,6 @@
 #include "gpio.h"
 #include "kernel/event.h"
 
-#define USART_MAX_DEVICE      2
-
 struct usart_device
 {
 	USART_TypeDef* const usart;
@@ -26,14 +24,6 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-	}
-#endif
-
 	// TODO : pour USART1 : prendre PCLK2
 	usart_device[id].usart->BRR = ((RCC_PCLK1*2) / (frequency) + 1) / 2;
 }
@@ -108,7 +98,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 			break;
 		default:
-			error_raise(ERR_USART_UNKNOWN_DEVICE);
+			error(ERR_USART_UNKNOWN_DEVICE, ERROR_ACTIVE);
 			return;
 			break;
 	}
@@ -138,20 +128,17 @@ void isr_usart3(void)
 	// affichage de l'erreur
 	if( USART3->SR & USART_SR_FE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_FE;
-		error_raise(ERR_USART3_READ_SR_FE);
+		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_FE;
 	}
 
 	if( USART3->SR & USART_SR_ORE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_ORE;
-		error_raise(ERR_USART3_READ_SR_ORE);
+		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_ORE;
 	}
 
 	if( USART3->SR & USART_SR_NE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART3_READ_SR_NE;
-		error_raise(ERR_USART3_READ_SR_NE);
+		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_NE;
 	}
 
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
@@ -169,20 +156,17 @@ void isr_uart4(void)
 	// affichage de l'erreur
 	if( UART4->SR & USART_SR_FE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_FE;
-		error_raise(ERR_UART4_READ_SR_FE);
+		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_FE;
 	}
 
 	if( UART4->SR & USART_SR_ORE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_ORE;
-		error_raise(ERR_UART4_READ_SR_ORE);
+		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_ORE;
 	}
 
 	if( UART4->SR & USART_SR_NE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_UART4_READ_SR_NE;
-		error_raise(ERR_UART4_READ_SR_NE);
+		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_NE;
 	}
 
 	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
@@ -241,26 +225,11 @@ void isr_dma2_channel3(void)
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-	}
-#endif
-
 	usart_device[id].dma_read->CMAR = (uint32_t) buf;
 }
 
 void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-#endif
-
 	vTaskClearEvent(usart_device[id].dma_read_event | usart_device[id].error_event);
 	usart_device[id].dma_read->CNDTR = size;
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
@@ -271,14 +240,6 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 {
 	uint32_t res = 0;
 	uint32_t ev;
-
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return ERR_USART_UNKNOWN_DEVICE;
-	}
-#endif
 
 	ev = vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
 
@@ -298,29 +259,11 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 
 void usart_set_write_dma_buffer(enum usart_id id, unsigned char* buf)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		res = ERR_USART_UNKNOWN_DEVICE;
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-	}
-#endif
-
 	usart_device[id].dma_write->CMAR = (uint32_t) buf;
 }
 
 void usart_send_dma_buffer(enum usart_id id, uint16_t size)
 {
-#ifdef DEBUG
-	if(id >= USART_MAX_DEVICE)
-	{
-		res = ERR_USART_UNKNOWN_DEVICE;
-		error_raise(ERR_USART_UNKNOWN_DEVICE);
-		return;
-	}
-#endif
-
 	usart_device[id].dma_write->CNDTR = size;
 	usart_device[id].usart->SR &= ~USART_SR_TC;
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
