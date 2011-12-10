@@ -40,49 +40,49 @@ static void task1_task(void* arg)
 	{
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_WARNING);
+			setLed(LED_WARNING);
 		}
 
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_0);
+			setLed(LED_0);
 		}
 		
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_1);
+			setLed(LED_1);
 		}
 		
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_2);
+			setLed(LED_2);
 		}
 		
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_3);
+			setLed(LED_3);
 		}
 		
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_4);
+			setLed(LED_4);
 		}
 		
 		vTaskDelay(72000000);
 		
 		if(! (vTaskGetEvent() & EVENT_END))
 		{
-			error_raise(LED_5);
+			setLed(LED_5);
 		}
 		
 		vTaskDelay(72000000);
