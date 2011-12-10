@@ -22,7 +22,6 @@ const char* hokuyo_scan_all = "GS0044072500\n";
 #define HOKUYO_SPEED        750000
 
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
-static uint16_t hokuyo_read_dma_buffer_size;
 
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
@@ -30,15 +29,20 @@ static uint32_t hokuyo_laser_on();
 
 uint32_t hokuyo_init()
 {
-	uint32_t err;
+	uint32_t err = 0;
 
 	usart_open(USART3_FULL_DUPLEX, 19200);
-
-	hokuyo_read_dma_buffer_size = 0;
 	usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
 
+	// on vide tout ce qui traine sur la ligne de reception
+	while(err == 0)
+	{
+		usart_set_read_dma_size(USART3_FULL_DUPLEX, HOKUYO_SCAN_BUFFER_SIZE);
+		err = usart_wait_read(USART3_FULL_DUPLEX, ms_to_tick(100));
+	}
+
 	err = hokuyo_scip2();
-	if(err == ERR_USART_TIMEOUT)
+	if(err == ERR_HOKUYO_DISCONNECTED)
 	{
 		// pas de réponse à 19200, le hokuyo est peut être resté configuré
 		// => on tente à la vitesse d'utilisation
@@ -49,7 +53,6 @@ uint32_t hokuyo_init()
 
 	if(err)
 	{
-		error_raise(ERR_HOKUYO_DISCONNECTED);
 		goto end;
 	}
 
@@ -112,28 +115,38 @@ static uint32_t hokuyo_check_sum(uint32_t start, uint32_t end)
 
 //! Envoi une commande, attend la reponse du hokuyo, vérifie si le hokuyo fait bien un echo de la commande et le checksum du status
 //! @return 0 si ok
-static uint32_t hokuyo_transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout, uint32_t max_try)
+static uint32_t hokuyo_transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout)
 {
 	uint32_t err = 0;
-	uint32_t i = 0;
 
 	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, buf);
-	hokuyo_read_dma_buffer_size = 0;
 
-	do
-	{
-		usart_set_read_dma_size(USART3_FULL_DUPLEX, read_size);
-		usart_send_dma_buffer(USART3_FULL_DUPLEX, write_size);
-		err = usart_wait_read(USART3_FULL_DUPLEX, timeout);
-		i++;
-	}while(err && i < max_try);
+	usart_set_read_dma_size(USART3_FULL_DUPLEX, read_size);
+	usart_send_dma_buffer(USART3_FULL_DUPLEX, write_size);
+	err = usart_wait_read(USART3_FULL_DUPLEX, timeout);
 
 	if(err)
 	{
+		switch(err)
+		{
+			case ERR_USART_TIMEOUT:
+				err = ERR_HOKUYO_DISCONNECTED;
+				break;
+			case ERR_USART_READ_SR_FE:
+				err = ERR_HOKUYO_USART_FE;
+				break;
+			case ERR_USART_READ_SR_NE:
+				err = ERR_HOKUYO_USART_NE;
+				break;
+			case ERR_USART_READ_SR_ORE:
+				err = ERR_HOKUYO_USART_ORE;
+				break;
+			default:
+				err = ERR_HOKUYO_DISCONNECTED;
+				break;
+		}
 		goto end;
 	}
-
-	hokuyo_read_dma_buffer_size = read_size;
 
 	err = hokuyo_check_cmd(buf, write_size);
 
@@ -152,7 +165,7 @@ static uint32_t hokuyo_scip2()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_transaction((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100), 3);
+	err = hokuyo_transaction((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100));
 
 	if(err)
 	{
@@ -179,7 +192,7 @@ static uint32_t hokuyo_set_speed()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_transaction((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100), 3);
+	err = hokuyo_transaction((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100));
 
 	if(err)
 	{
@@ -215,7 +228,7 @@ static uint32_t hokuyo_laser_on()
 {
 	uint32_t err = 0;
 
-	err = hokuyo_transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100), 3);
+	err = hokuyo_transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100));
 
 	if(err)
 	{
@@ -249,7 +262,6 @@ end:
 void hokuyo_start_scan()
 {
 	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, (unsigned char*)hokuyo_scan_all);
-	hokuyo_read_dma_buffer_size = 0;
 	usart_set_read_dma_size(USART3_FULL_DUPLEX, HOKUYO_SCAN_BUFFER_SIZE);
 	usart_send_dma_buffer(USART3_FULL_DUPLEX, 13);
 }
@@ -260,10 +272,26 @@ uint32_t hokuto_wait_decode_scan(uint16_t* distance, int size)
 
 	if(err)
 	{
+		switch(err)
+		{
+			case ERR_USART_TIMEOUT:
+				err = ERR_HOKUYO_DISCONNECTED;
+				break;
+			case ERR_USART_READ_SR_FE:
+				err = ERR_HOKUYO_USART_FE;
+				break;
+			case ERR_USART_READ_SR_NE:
+				err = ERR_HOKUYO_USART_NE;
+				break;
+			case ERR_USART_READ_SR_ORE:
+				err = ERR_HOKUYO_USART_ORE;
+				break;
+			default:
+				err = ERR_HOKUYO_DISCONNECTED;
+				break;
+		}
 		goto end;
 	}
-
-	hokuyo_read_dma_buffer_size = HOKUYO_SCAN_BUFFER_SIZE;
 
 	err = hokuyo_check_cmd((unsigned char*)hokuyo_scan_all, 13);
 

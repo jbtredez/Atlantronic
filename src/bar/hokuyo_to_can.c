@@ -55,8 +55,7 @@ static void hokuyo_to_can_task()
 		err = hokuyo_init();
 		if( err)
 		{
-			error_raise(err);
-			log_error("hokuyo_init : error = %#.8x", (unsigned int)err);
+			error(err, ERROR_ACTIVE);
 			vTaskDelay(ms_to_tick(100));
 		}
 	} while(err);
@@ -72,8 +71,7 @@ static void hokuyo_to_can_task()
 		err = hokuto_wait_decode_scan(hokuyo_scan.distance, HOKUYO_NUM_POINTS);
 		if(err)
 		{
-			error_raise(err);
-			log_error("scan : err = %#.8x", (unsigned int)err);
+			error(err, ERROR_ACTIVE);
 		}
 
 		// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan

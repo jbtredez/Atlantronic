@@ -7,26 +7,31 @@
 //!
 //! idle task priority : 0
 
-#define PRIORITY_TASK_USB             1
-#define PRIORITY_TASK_CAN_US          2
-#define PRIORITY_TASK_HOKUYO_TO_CAN   3
-#define PRIORITY_TASK_CAN             4
-#define PRIORITY_TASK_TEST_US         4
-#define PRIORITY_TASK_END             5
+#define PRIORITY_TASK_ERROR           1
+#define PRIORITY_TASK_USB             2
+#define PRIORITY_TASK_CAN_US          3
+#define PRIORITY_TASK_HOKUYO_TO_CAN   4
+#define PRIORITY_TASK_CAN             5
+#define PRIORITY_TASK_TEST_US         5
+#define PRIORITY_TASK_END             6
 
 // priority : 0 ... configMAX_PRIORITIES-1
-#define configMAX_PRIORITIES		  6
+#define configMAX_PRIORITIES		  7
 
 // attention, les priorités sont codées sur 4 bits (les bits de poids fort).
 // La fonction setpriority s'occupe de mettre la priorité comme il faut.
 // La priorite 15 est reservee pour l'os
+
+// priorites des IT NON bloquees par l'os
+
+// priorites des IT bloquees par l'os
 #define PRIORITY_IRQ_SYSCALL          8
-#define PRIORITY_IRQ_EXTI1           10
-#define PRIORITY_IRQ_EXTI3           10
-#define PRIORITY_IRQ_EXTI9_5         10
-#define PRIORITY_IRQ_EXTI15_10       10
+#define PRIORITY_IRQ_EXTI1            9
+#define PRIORITY_IRQ_EXTI3            9
+#define PRIORITY_IRQ_EXTI9_5          9
+#define PRIORITY_IRQ_EXTI15_10        9
+#define PRIORITY_IRQ_CAN1_RX0        10
 #define PRIORITY_IRQ_CAN1_TX         11
-#define PRIORITY_IRQ_CAN1_RX0        11
 #define PRIORITY_IRQ_USART3          12
 #define PRIORITY_IRQ_DMA1_CHANNEL1   12
 #define PRIORITY_IRQ_DMA1_CHANNEL2   12

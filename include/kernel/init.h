@@ -19,21 +19,18 @@
 // init frequence cpu, bus internes...
 #define INIT_RCC                      "00"
 
-// init gpio pour afficher les erreurs sur les led
+// init gpio, usb et error pour afficher les erreurs sur les led et envoyer des log
 #define INIT_GPIO                     "01"
-
-// init des log (buffer circulaire)
-#define INIT_LOG                      "02"
+#define INIT_USB                      "02"
+#define INIT_ERROR                    "03"
 
 // init de la communication
-#define INIT_USB                      "03"
 #define INIT_USART                    "04"
 #define INIT_CAN                      "05"
 
 // init adc
 #define INIT_ADC                      "06"
 
-#define INIT_MODEL                    "06"
 #define INIT_ENCODERS                 "07"
 #define INIT_CURRENT                  "08"
 #define INIT_PWM                      "09"

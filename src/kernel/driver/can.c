@@ -1,10 +1,15 @@
-#include "kernel/driver/can.h"
-#include "kernel/module.h"
-#include "kernel/rcc.h"
+//! @file can.c
+//! @brief CAN
+//! @author Atlantronic
+
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/queue.h"
 #include "kernel/event.h"
+#include "kernel/driver/can.h"
+#include "kernel/module.h"
+#include "kernel/rcc.h"
+#include "kernel/log.h"
 
 //!< variable déclarée pour le debug (remplissage message, envoi... depuis gdb)
 struct can_msg can_msg_debug;
@@ -40,7 +45,6 @@ static int can_module_init(void)
 {
 	can_filter_id = 0;
 	can_map_max = 0;
-	//can_tx_end = 0;
 
 	// CAN_RX : PD0
 	// CAN_TX : PD1
@@ -74,7 +78,7 @@ static int can_module_init(void)
 	// SJW  =  4 TQ
 	// total bit can (1 + TBS1 + TBS2) = 18 TQ
 	// SP = (1 + TBS1)/total = 72,22 %
-	// vitesse : 500kb => 500000*18*TQ = PCLK = 36Mhz
+	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 36Mhz
 	// => TQ = PCLK / (18 * 1000000) = 2
 	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
 	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((2-1) & CAN_BTR_BRP);
@@ -145,7 +149,7 @@ static void can_write_task(void *arg)
 			vTaskClearEvent(EVENT_CAN_TX_END);
 
 			can_write_mailbox(&req);
-
+// TODO : check error
 			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
 		}
 	}
@@ -181,9 +185,18 @@ void isr_can1_tx(void)
 	// fin de transmission sur la boite 0
 	if(CAN1->TSR & CAN_TSR_RQCP0)
 	{
+		// transmission ok
+		if( CAN1->TSR & CAN_TSR_TXOK0)
+		{
+			CAN1->IER &= ~CAN_IER_TMEIE;
+			xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_CAN_TX_END);
+		}
+		else
+		{
+			// envoi ko TODO err
+			nop();
+		}
 		CAN1->TSR |= CAN_TSR_RQCP0;
-		CAN1->IER &= ~CAN_IER_TMEIE;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_CAN_TX_END);
 	}
 
 	if( xHigherPriorityTaskWoken )
@@ -198,6 +211,11 @@ void isr_can1_rx0(void)
 {
 	struct can_msg msg;
 	portBASE_TYPE xHigherPriorityTaskWoken;
+
+	if( CAN1->RF0R & CAN_RF0R_FOVR0)
+	{
+		error_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, ERROR_ACTIVE);
+	}
 
 	// reception sur la FIFO 0
 	if(CAN1->RF0R & CAN_RF0R_FMP0)
@@ -232,7 +250,7 @@ void isr_can1_rx0(void)
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
-			error_raise(ERR_CAN_READ_QUEUE_FULL);
+			error_from_isr(ERR_CAN_READ_QUEUE_FULL, ERROR_ACTIVE);
 		}
 
 		if( xHigherPriorityTaskWoken )
@@ -280,7 +298,7 @@ uint32_t can_set_filter(unsigned int id, unsigned char format)
 	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
 	if (can_filter_id > 27)
 	{
-		error_raise(ERR_CAN_FILTER_LIST_FULL);
+		error(ERR_CAN_FILTER_LIST_FULL, ERROR_ACTIVE);
 		res = ERR_CAN_FILTER_LIST_FULL;
 		goto end;
 	}
