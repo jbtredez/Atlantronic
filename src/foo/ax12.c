@@ -93,10 +93,14 @@ static void ax12_task(void* arg)
 			do
 			{
 				res = ax12_send(&req);
-				if(res)
-				{
-					error(res, ERROR_ACTIVE);
-				}
+				error_check_update(ERR_AX12_DISCONNECTED, res);
+				error_check_update(ERR_AX12_USART_FE, res);
+				error_check_update(ERR_AX12_USART_NE, res);
+				error_check_update(ERR_AX12_USART_ORE, res);
+				error_check_update(ERR_AX12_SEND_CHECK, res);
+				error_check_update(ERR_AX12_PROTO, res);
+				error_check_update(ERR_AX12_CHECKSUM, res);
+				error_check_update(ERR_AX12_INTERNAL_ERROR, res);
 
 				// delai entre 2 messages sur le bus
 				vTaskDelay(AX12_INTER_FRAME_TIME);
@@ -142,6 +146,24 @@ uint32_t ax12_send(struct ax12_request *req)
 	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	if( res )
 	{
+		switch(res)
+		{
+			case ERR_USART_TIMEOUT:
+				res = ERR_AX12_DISCONNECTED;
+				break;
+			case ERR_USART_READ_SR_FE:
+				res = ERR_AX12_USART_FE;
+				break;
+			case ERR_USART_READ_SR_NE:
+				res = ERR_AX12_USART_NE;
+				break;
+			case ERR_USART_READ_SR_ORE:
+				res = ERR_AX12_USART_ORE;
+				break;
+			default:
+				res = ERR_AX12_DISCONNECTED;
+				break;
+		}
 		goto end;
 	}
 
