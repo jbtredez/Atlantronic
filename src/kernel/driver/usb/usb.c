@@ -1,5 +1,6 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "priority.h"
 #include "kernel/event.h"
@@ -18,6 +19,7 @@ static int usb_buffer_end;
 static unsigned int usb_write_size;
 static unsigned char usb_rx_buffer[64];
 static unsigned int usb_read_size;
+static xSemaphoreHandle usb_mutex;
 static void (*usb_cmd[USB_CMD_NUM])(void*);
 
 void usb_task(void *);
@@ -38,6 +40,13 @@ static int usb_module_init(void)
 		usb_cmd[i] = NULL;
 	}
 
+	usb_mutex = xSemaphoreCreateMutex();
+
+	if(usb_mutex == NULL)
+	{
+		return ERR_INIT_USB;
+	}
+
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	RCC->AHBENR |= RCC_AHBENR_OTGFSEN; // USB OTG FS clock enable
 
@@ -53,7 +62,7 @@ static int usb_module_init(void)
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_LOG;
+		return ERR_INIT_USB;
 	}
 
 	return 0;
@@ -86,7 +95,7 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		return;
 	}
 
-	portENTER_CRITICAL();
+	xSemaphoreTake(usb_mutex, portMAX_DELAY);
 
 	usb_write_byte( type >> 8 );
 	usb_write_byte( type & 0xff );
@@ -99,7 +108,8 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		msg++;
 	}
 	vTaskSetEvent(EVENT_USB);
-	portEXIT_CRITICAL();
+
+	xSemaphoreGive(usb_mutex);
 }
 
 void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
@@ -143,7 +153,7 @@ void usb_task(void * arg)
 
 		if( usb_endpoint_ready )
 		{
-			portENTER_CRITICAL();
+			xSemaphoreTake(usb_mutex, portMAX_DELAY);
 			if(usb_buffer_begin != usb_buffer_end)
 			{
 				int size = usb_buffer_end - usb_buffer_begin;
@@ -157,7 +167,7 @@ void usb_task(void * arg)
 				usb_write_size = size;
 				USB_SIL_Write(EP1_IN, usb_buffer + usb_buffer_begin, size);
 			}
-			portEXIT_CRITICAL();
+			xSemaphoreGive(usb_mutex);
 		}
 
 		vTaskWaitEvent(EVENT_USB, portMAX_DELAY);

@@ -17,7 +17,7 @@
 #define ERR_DEBUG_MONITOR       0x207
 
 #define ERR_SYSTICK             0x208
-#define ERR_INIT_LOG            0x209
+#define ERR_INIT_USB            0x209
 #define ERR_INIT_AX12           0x20a
 #define ERR_INIT_CONTROL        0x20b
 #define ERR_INIT_TEST           0x20c
