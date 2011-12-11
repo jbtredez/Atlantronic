@@ -199,7 +199,7 @@ uint32_t ax12_send(struct ax12_request *req)
 
 		// traitement du message reçu
 		// erreur ax12 dans ax12_buffer[4]
-		// erruer de tension
+		// erreur de tension
 		if( ax12_buffer[4] &  AX12_INPUT_VOLTAGE_ERROR_MASK )
 		{
 			error(ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE, ERROR_ACTIVE);

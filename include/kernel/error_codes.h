@@ -5,8 +5,9 @@
 //! @brief Error codes
 //! @author Atlantronic
 
-// code 0x00 réservé : fin du match
-
+//! @enum fault
+//! defauts
+//! ne pas oublier de mettre a jour la description dans foo_interface
 enum fault
 {
 	// CAN
@@ -51,7 +52,7 @@ enum fault
 };
 
 // codes pour les led (erreur grave, pas de log par usb)
-
+// code 0x00 réservé : fin du match
 #define ERR_NMI                 0x200
 #define ERR_ARU                 0x201      //!< 2 led rouges
 #define ERR_HARD_FAULT          0x202

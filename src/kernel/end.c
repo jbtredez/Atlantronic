@@ -7,6 +7,7 @@
 #include "kernel/task.h"
 #include "kernel/event.h"
 #include "kernel/rcc.h"
+#include "gpio.h"
 
 #define END_STACK_SIZE           100
 const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;
