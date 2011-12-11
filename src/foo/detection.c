@@ -31,8 +31,6 @@ void can_hokuyo_data(struct can_msg *msg);
 
 static int detection_can_hokuyo_id;
 static struct hokuyo_scan hokuyo_scan[2];
-//static float hokuyo_x[HOKUYO_NUM_POINTS]; //!< x des points 44 à 725
-//static float hokuyo_y[HOKUYO_NUM_POINTS]; //!< y des points 44 à 725
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 static int hokuyo_num_obj;
 
@@ -54,8 +52,8 @@ int detection_module_init()
 	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.ca = cosf(hokuyo_scan[HOKUYO_FOO].pos_hokuyo.alpha);
 	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.sa = sinf(hokuyo_scan[HOKUYO_FOO].pos_hokuyo.alpha);
 	hokuyo_scan[HOKUYO_BAR].sens =  1;
-	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.x = 60;
-	hokuyo_scan[HOKUYO_FOO].pos_hokuyo.y = -60;
+	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.x = 60;
+	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.y = -60;
 	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha = -PI/4.0f;
 	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.ca = cosf(hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha);
 	hokuyo_scan[HOKUYO_BAR].pos_hokuyo.sa = sinf(hokuyo_scan[HOKUYO_BAR].pos_hokuyo.alpha);
@@ -125,9 +123,9 @@ static void detection_task()
 			if(err == ERR_HOKUYO_DISCONNECTED)
 			{
 				detection_hokuyo_init();
+				// on gruge, le premier scan est plus long
+				last_scan_time = systick_get_time() + ms_to_tick(100);
 			}
-			// on gruge, le premier scan est plus long
-			last_scan_time = systick_get_time() + ms_to_tick(100);
 		}
 		else
 		{

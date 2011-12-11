@@ -38,10 +38,56 @@ int hokuyo_to_can_module_init()
 	hokuyo_to_can_msg.format = CAN_STANDARD_FORMAT;
 	hokuyo_to_can_msg.type = CAN_DATA_FRAME;
 
+	hokuyo_scan.sens =  1;
+	hokuyo_scan.pos_robot.x = 0;
+	hokuyo_scan.pos_robot.y = 0;
+	hokuyo_scan.pos_robot.alpha = 0;
+	hokuyo_scan.pos_robot.ca = 1;
+	hokuyo_scan.pos_robot.sa = 0;
+	hokuyo_scan.pos_hokuyo.x = 0;
+	hokuyo_scan.pos_hokuyo.y = 0;
+	hokuyo_scan.pos_hokuyo.alpha = 0;
+	hokuyo_scan.pos_hokuyo.ca = 1;
+	hokuyo_scan.pos_hokuyo.sa = 0;
+
 	return 0;
 }
 
 module_init(hokuyo_to_can_module_init, INIT_DETECTION);
+
+void hokuyo_to_can_errors(uint32_t err)
+{
+	error_check_update(ERR_HOKUYO_DISCONNECTED, err);
+	error_check_update(ERR_HOKUYO_USART_FE, err);
+	error_check_update(ERR_HOKUYO_USART_NE, err);
+	error_check_update(ERR_HOKUYO_USART_ORE, err);
+	error_check_update(ERR_HOKUYO_CHECK_CMD, err);
+	error_check_update(ERR_HOKUYO_UNKNOWN_STATUS, err);
+	error_check_update(ERR_HOKUYO_CHECKSUM, err);
+	error_check_update(ERR_HOKUYO_BAUD_RATE, err);
+	error_check_update(ERR_HOKUYO_LASER_MALFUNCTION, err);
+	error_check_update(ERR_HOKUYO_SCAN_SIZE, err);
+	error_check_update(ERR_HOKUYO_DISTANCE_BUFFER, err);
+}
+
+void hokuyo_to_can_hokuyo_init()
+{
+	uint32_t err;
+
+	log_info("Initialisation du hokuyo");
+
+	do
+	{
+		err = hokuyo_init();
+		hokuyo_to_can_errors(err);
+		if( err)
+		{
+			vTaskDelay(ms_to_tick(100));
+		}
+	} while(err);
+
+	log_info("Lancement des scan hokuyo");
+}
 
 static void hokuyo_to_can_task()
 {
@@ -49,21 +95,13 @@ static void hokuyo_to_can_task()
 	portTickType last_scan_time;
 	portTickType current_time;
 
-	do
-	{
-		log_info("Initialisation du hokuyo");
-		err = hokuyo_init();
-		if( err)
-		{
-			error(err, ERROR_ACTIVE);
-			vTaskDelay(ms_to_tick(100));
-		}
-	} while(err);
+	hokuyo_to_can_hokuyo_init();
 
 	log_info("Lancement des scan hokuyo");
 
 	hokuyo_start_scan();
-	last_scan_time = systick_get_time();
+	// on gruge, le premier scan est plus long
+	last_scan_time = systick_get_time() + ms_to_tick(100);
 
 	while(1)
 	{
@@ -72,16 +110,24 @@ static void hokuyo_to_can_task()
 		if(err)
 		{
 			error(err, ERROR_ACTIVE);
+			if(err == ERR_HOKUYO_DISCONNECTED)
+			{
+				hokuyo_to_can_hokuyo_init();
+				// on gruge, le premier scan est plus long
+				last_scan_time = systick_get_time() + ms_to_tick(100);
+			}
 		}
-
-		// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan
-		// pendant que le nouveau arrive. Si on depasse les 110ms (10% d'erreur), on met un log
-		current_time = systick_get_time();
-		if( current_time - last_scan_time > ms_to_tick(110))
+		else
 		{
-			log_error("slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
+			// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan
+			// pendant que le nouveau arrive. Si on depasse les 110ms (10% d'erreur), on met un log
+			current_time = systick_get_time();
+			if( current_time - last_scan_time > ms_to_tick(110) )
+			{
+				log_error("slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
+			}
+			last_scan_time = current_time;
 		}
-		last_scan_time = current_time;
 
 		// on lance le prochain scan avant de faire les calculs sur le scan actuel
 		hokuyo_start_scan();
