@@ -36,21 +36,21 @@ static int us_module_init()
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_CONTROL;
+		return ERR_INIT_CAN_US;
 	}
 
 	err = xTaskCreate(us_task_back, "us_back", US_STACK_SIZE, NULL, PRIORITY_TASK_TEST_US, &xHandle);
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_CONTROL;
+		return ERR_INIT_CAN_US;
 	}
 
 	err = xTaskCreate(us_task_front, "us_front", US_STACK_SIZE, NULL, PRIORITY_TASK_TEST_US, &xHandle);
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_CONTROL;
+		return ERR_INIT_CAN_US;
 	}
 
 	int i = 0;
@@ -67,7 +67,7 @@ static int us_module_init()
 	return 0;
 }
 
-module_init(us_module_init, INIT_TEST_PINCE);
+module_init(us_module_init, INIT_CAN_US);
 
 volatile uint8_t mask = 0;
 
@@ -233,6 +233,7 @@ static void us_task_back()
 				gpio_get_us(us_state, sizeof(us_state));
 			}
 			while( us_state[US_BACK] == 0 && timeout < US_TIMEOUT);
+
 
 			us_filter_state[US_BACK] = us_filter_state[US_BACK] * FILTER_GAIN + (1-FILTER_GAIN)*us_state[US_BACK];
 

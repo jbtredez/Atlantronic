@@ -279,7 +279,7 @@ void isr_exti9_5(void)
 		// TODO action btn2
 	}
 
-	portSET_INTERRUPT_MASK();
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_exti15_10(void)
