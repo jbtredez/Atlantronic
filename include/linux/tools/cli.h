@@ -13,9 +13,9 @@ enum
 
 typedef struct
 {
-	char *name;			/* User printable name of the function. */
-	Function *func;		/* Function to call to do the job. */
-	char *doc;			/* Documentation for this function.  */
+	char *name;			// User printable name of the function
+	Function *func;		// Function to call to do the job
+	char *doc;			// Documentation for this function
 } COMMAND;
 
 int cli_init(COMMAND* cmd);

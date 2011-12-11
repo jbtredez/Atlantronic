@@ -44,7 +44,7 @@ int com_close(struct com* com)
 	}
 
 	com->fd = -1;
-	log_info("close usb");
+	log_info("close %s", com->file);
 
 end:
 	return res;
@@ -72,7 +72,7 @@ int com_open(struct com* com)
 		goto end;
 	}
 
-	log_info("open usb");
+	log_info("open  %s", com->file);
 
 end:
 	return res;

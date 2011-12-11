@@ -1,6 +1,7 @@
 #include <string.h>
 #include <pthread.h>
-#include "linux/tools/foo_interface.h"
+#include <stdlib.h>
+#include "linux/tools/robot_interface.h"
 #include "kernel/hokuyo_tools.h"
 #include "linux/tools/com.h"
 #include "kernel/driver/usb.h"
@@ -48,39 +49,92 @@ const char* err_description[ERR_MAX] =
 	[ERR_HOKUYO_DISTANCE_BUFFER] = "hokuyo_tools_decode_buffer : buffer distance trop petit",
 };
 
-static void* foo_interface_task(void* arg);
-static int foo_interface_process_control(struct foo_interface* data, char* msg, uint16_t size);
-static int foo_interface_process_hokuyo(struct foo_interface* data, int id, char* msg, uint16_t size);
-static int foo_interface_process_log(struct foo_interface* data, char* msg, uint16_t size);
-static int foo_interface_process_err(struct foo_interface* data, char* msg, uint16_t size);
+const char* cartes[COM_MAX] =
+{
+	"foo",
+	"bar"
+};
 
-int foo_interface_init(struct foo_interface* data, const char* file, void (*callback)(void*), void* callback_arg)
+struct robot_interface_arg
+{
+	struct robot_interface* robot;
+	int com_id;
+};
+
+static void* robot_interface_task(void* arg);
+static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
+static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+
+int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg)
 {
 	pthread_t tid;
+	int i;
+	int err = 0;
+	int res = 0;
 
 	data->callback = callback;
 	data->callback_arg = callback_arg;
-	com_init(&data->com, file);
+	if(file_foo)
+	{
+		com_init(&data->com[COM_FOO], file_foo);
+	}
+	else
+	{
+		com_init(&data->com[COM_FOO], "/dev/foo0");
+	}
+
+	if(file_bar)
+	{
+		com_init(&data->com[COM_BAR], file_bar);
+	}
+	else
+	{
+		com_init(&data->com[COM_BAR], "/dev/bar0");
+	}
+
 	data->control_usb_data_count = 0;
 	memset(data->error_status, 0x00, sizeof(data->error_status));
 
-	return pthread_create(&tid, NULL, foo_interface_task, data);
+	for( i = 0; i < COM_MAX ; i++)
+	{
+		struct robot_interface_arg* args = (struct robot_interface_arg*) malloc(sizeof(struct robot_interface_arg));
+		args->robot = data;
+		args->com_id = i;
+		res = pthread_create(&tid, NULL, robot_interface_task, args);
+		if(res)
+		{
+			err = res;
+			log_error_errno("pthread_create");
+		}
+	}
+
+	return err;
 }
 
-void foo_interface_destroy(struct foo_interface* data)
+void robot_interface_destroy(struct robot_interface* data)
 {
-	com_close(&data->com);
-	com_destroy(&data->com);
+	int i;
+	for( i = 0; i < COM_MAX; i++)
+	{
+		com_close(&data->com[i]);
+		com_destroy(&data->com[i]);
+	}
 	rl_free_line_state();
 	rl_cleanup_after_signal();
 }
 
-static void* foo_interface_task(void* arg)
+static void* robot_interface_task(void* arg)
 {
-	struct foo_interface* foo = (struct foo_interface*) arg;
+	struct robot_interface_arg* args = (struct robot_interface_arg*) arg;
+	struct robot_interface* robot = args->robot;
+	struct com* com = &robot->com[args->com_id];
 	int res;
+	unsigned char lost[1024];
+	unsigned int lost_count = 0;
 
-	com_open_block(&foo->com);
+	com_open_block(com);
 
 	while(1)
 	{
@@ -88,45 +142,45 @@ static void* foo_interface_task(void* arg)
 		uint16_t size;
 
 		// lecture entete
-		res = com_read_header(&foo->com, &type, &size);
+		res = com_read_header(com, &type, &size);
 		if( res )
 		{
-			com_open_block(&foo->com);
+			com_open_block(com);
 			continue;
 		}
 
 		// lecture du message
-		res = com_read(&foo->com, size + 4);
+		res = com_read(com, size + 4);
 		if( res )
 		{
-			com_open_block(&foo->com);
+			com_open_block(com);
 			continue;
 		}
 
 		// copie du message (vers un buffer non circulaire)
 		char msg[size+1];
-		com_copy_msg(&foo->com, msg, size+1);
+		com_copy_msg(com, msg, size+1);
 
 		// traitement du message
 		switch( type )
 		{
 			case USB_LOG:
-				res = foo_interface_process_log(foo, msg, size);
+				res = robot_interface_process_log(robot, args->com_id, msg, size);
 				break;
 			case USB_ERR:
-				res = foo_interface_process_err(foo, msg, size);
+				res = robot_interface_process_err(robot, args->com_id, msg, size);
 				break;
 			case USB_HOKUYO_FOO:
-				res = foo_interface_process_hokuyo(foo, HOKUYO_FOO, msg, size);
+				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_FOO, msg, size);
 				break;
 			case USB_HOKUYO_BAR:
-				res = foo_interface_process_hokuyo(foo, HOKUYO_BAR, msg, size);
+				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_BAR, msg, size);
 				break;
 			case USB_HOKUYO_FOO_BAR:
-				res = foo_interface_process_hokuyo(foo, HOKUYO_FOO_BAR, msg, size);
+				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_FOO_BAR, msg, size);
 				break;
 			case USB_CONTROL:
-				res = foo_interface_process_control(foo, msg, size);
+				res = robot_interface_process_control(robot, args->com_id, msg, size);
 				break;
 			default:
 				res = -1;
@@ -135,16 +189,33 @@ static void* foo_interface_task(void* arg)
 
 		if( res )
 		{
-			printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, foo->com.buffer[foo->com.buffer_begin], foo->com.buffer[foo->com.buffer_begin]);
-			com_skip(&foo->com, 1);
+			unsigned char byte = com->buffer[com->buffer_begin];
+			if(lost_count >= sizeof(lost)-2)
+			{
+				lost[lost_count+1] = 0;
+				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				lost_count = 0;
+			}
+
+			lost[lost_count] = byte;
+			lost_count ++;
+			if(byte == 0 || byte == '\n')
+			{
+				lost[lost_count+1] = 0;
+				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				lost_count = 0;
+			}
+
+			//printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, com->buffer[com->buffer_begin], com->buffer[com->buffer_begin]);
+			com_skip(com, 1);
 		}
 		else
 		{
 			size += 4;
-			com_skip(&foo->com, size);
-			if(foo->callback)
+			com_skip(com, size);
+			if(robot->callback)
 			{
-				foo->callback(foo->callback_arg);
+				robot->callback(robot->callback_arg);
 			}
 		}
 	}
@@ -152,7 +223,7 @@ static void* foo_interface_task(void* arg)
 	return NULL;
 }
 
-static int foo_interface_process_log(struct foo_interface* data, char* msg, uint16_t size)
+static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size)
 {
 	int res = 0;
 	(void) data;
@@ -165,13 +236,13 @@ static int foo_interface_process_log(struct foo_interface* data, char* msg, uint
 
 	msg[size-1] = 0;
 
-	log_info("%s", msg);
+	log_info("%4s %s", cartes[com_id], msg);
 
 end:
 	return res;
 }
 
-static int foo_interface_process_err(struct foo_interface* data, char* msg, uint16_t size)
+static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size)
 {
 	int res = 0;
 	int i = 0;
@@ -198,11 +269,11 @@ static int foo_interface_process_err(struct foo_interface* data, char* msg, uint
 		{
 			if( state == 0)
 			{
-				log_info("\033[32m%12lu\tError\t%s (%d), status %d\033[0m", (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[32m%4s %12lu\tError\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
 			}
 			else
 			{
-				log_info("\033[31m%12lu\tError\t%s (%d), status %d\033[0m", (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[31m%4s %12lu\tError\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
 			}
 			data->error_status[i] = err_list[i];
 		}
@@ -214,9 +285,10 @@ end:
 	return res;
 }
 
-static int foo_interface_process_hokuyo(struct foo_interface* data, int id, char* msg, uint16_t size)
+static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size)
 {
 	int res = 0;
+	(void) com_id;
 
 	if(size != sizeof(struct hokuyo_scan))
 	{
@@ -242,9 +314,10 @@ end:
 	return res;
 }
 
-static int foo_interface_process_control(struct foo_interface* data, char* msg, uint16_t size)
+static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size)
 {
 	int res = 0;
+	(void) com_id;
 
 	if(size != sizeof(struct control_usb_data) )
 	{

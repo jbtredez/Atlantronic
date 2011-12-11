@@ -1,5 +1,5 @@
-#ifndef FOO_INTERFACE_H
-#define FOO_INTERFACE_H
+#ifndef ROBOT_INTERFACE_H
+#define ROBOT_INTERFACE_H
 
 #include <pthread.h>
 #include "linux/tools/com.h"
@@ -9,13 +9,25 @@
 #include "foo/control/control.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
-#define HOKUYO_FOO                     0
-#define HOKUYO_FOO_BAR                 1
-#define HOKUYO_BAR                     2
 
-struct foo_interface
+enum
 {
-	struct com com; //!< communication
+	HOKUYO_FOO,
+	HOKUYO_FOO_BAR,
+	HOKUYO_BAR,
+	HOKUYO_MAX,
+};
+
+enum
+{
+	COM_FOO,
+	COM_BAR,
+	COM_MAX
+};
+
+struct robot_interface
+{
+	struct com com[COM_MAX]; //!< communication
 	pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 	void (*callback)(void*);
 	void* callback_arg;
@@ -31,9 +43,8 @@ struct foo_interface
 	float hokuyo_y[HOKUYO_NUM_POINTS*3]; //!< y des points 44 à 725 - hokuyo 0 puis hokuyo 1
 };
 
-int foo_interface_init(struct foo_interface* data, const char* file, void (*callback)(void*), void* callback_arg);
+int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg);
 
-void foo_interface_destroy(struct foo_interface* data);
+void robot_interface_destroy(struct robot_interface* data);
 
 #endif
-

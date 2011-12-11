@@ -4,27 +4,34 @@
 
 #include "linux/tools/com.h"
 #include "linux/tools/cmd.h"
-#include "linux/tools/foo_interface.h"
+#include "linux/tools/robot_interface.h"
 
-static struct foo_interface foo;
+static struct robot_interface robot_interface;
 
 int main(int argc, char** argv)
 {
-	if(argc < 2)
+	const char* file_foo = NULL;
+	const char* file_bar = NULL;
+
+	if( argc > 1)
 	{
-		printf("indiquer le peripherique\n");
-		return -1;
+		file_foo = argv[1];
 	}
 
-	foo_interface_init(&foo, argv[1], NULL, NULL);
-	cmd_init(&foo.com);
+	if(argc > 2)
+	{
+		file_bar = argv[2];
+	}
+
+	robot_interface_init(&robot_interface, file_foo, file_bar, NULL, NULL);
+	cmd_init(&robot_interface.com[0]);
 
 	while(1)
 	{
 		pause();
 	}
 
-	foo_interface_destroy(&foo);
+	robot_interface_destroy(&robot_interface);
 
 	return 0;
 }
