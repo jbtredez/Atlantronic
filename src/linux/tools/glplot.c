@@ -30,6 +30,7 @@ enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
 	SUBGRAPH_TABLE_HOKUYO_FOO,
+	SUBGRAPH_TABLE_HOKUYO_FOO_BAR,
 	SUBGRAPH_TABLE_HOKUYO_BAR,
 	SUBGRAPH_TABLE_POS_CONS,
 	SUBGRAPH_TABLE_POS_MES,
@@ -40,6 +41,7 @@ enum
 {
 	GRAPH_HOKUYO_HIST_FOO = 0,
 	GRAPH_HOKUYO_HIST_BAR,
+	GRAPH_HOKUYO_HIST_FOO_BAR,
 	GRAPH_HOKUYO_HIST_NUM,
 };
 
@@ -83,6 +85,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void draw_plus(float x, float y, float rx, float ry);
 static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glPrintf_xright2_yhigh(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glprint(float x, float y, GLuint base, char* buffer, int size);
 void read_callback();
@@ -116,19 +119,21 @@ int main(int argc, char *argv[])
 	}
 
 	graph_init(&graph[GRAPH_TABLE], "Table", -1500, 1500, -1000, 1000, 800, 600, 0, 0);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1);
-	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_BAR, "Hokuyo bar (via foo)", 1, 0.5, 0.5, 0);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 0, 0.5, 0.5, 0);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
 
 	graph_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo (histograme)", 0, 682, 0, 4100, 800, 600, 0, 0);
-	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1);
-	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 1);
+	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1, 1, 0, 0);
+	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO_BAR, "Hokuyo bar (via foo)", 1, 0, 1, 0);
+	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 0, 0, 0, 1);
 
 	graph_init(&graph[GRAPH_SPEED_DIST], "Vitesses (avance)", 0, 90000, -1500, 1500, 800, 600, 0, 0);
-	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1);
-	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -423,6 +428,21 @@ void plot_axes(struct graph* graph)
 	}
 }
 
+void plot_legende(struct graph* graph)
+{
+	int i = 0;
+	int dy = 0;
+	for(i = 0; i < MAX_COURBES; i++)
+	{
+		if( graph->courbes_activated[i] )
+		{
+			glColor3fv(&graph->color[3*i]);
+			glPrintf_xright2_yhigh(graph->roi_xmax, graph->roi_ymax + dy, graph->ratio_x, graph->ratio_y, font_base, "%s", graph->courbes_names[i]);
+			dy -= 2*font_digit_height * graph->ratio_y;
+		}
+	}
+}
+
 void plot_table(struct graph* graph)
 {
 	float ratio_x = graph->ratio_x;
@@ -435,8 +455,8 @@ void plot_table(struct graph* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
 	{
-		glColor3f(1,0,0);
-		for(i=0; i < HOKUYO_NUM_POINTS; i++)
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
+		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			pos_hokuyo.x = robot_interface.hokuyo_x[i];
 			pos_hokuyo.y = robot_interface.hokuyo_y[i];
@@ -445,10 +465,10 @@ void plot_table(struct graph* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_BAR] )
 	{
-		glColor3f(0.5,0.5,0);
-		for(i=HOKUYO_NUM_POINTS; i < 2*HOKUYO_NUM_POINTS; i++)
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_BAR]);
+		for(i=HOKUYO_FOO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO_BAR+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			pos_hokuyo.x = robot_interface.hokuyo_x[i];
 			pos_hokuyo.y = robot_interface.hokuyo_y[i];
@@ -457,11 +477,23 @@ void plot_table(struct graph* graph)
 		}
 	}
 
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
+		for(i=HOKUYO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_BAR+1)*HOKUYO_NUM_POINTS; i++)
+		{
+			pos_hokuyo.x = robot_interface.hokuyo_x[i];
+			pos_hokuyo.y = robot_interface.hokuyo_y[i];
+			pos_hokuyo_to_table(&robot_interface.hokuyo_scan[HOKUYO_BAR].pos_robot, &robot_interface.hokuyo_scan[HOKUYO_BAR].pos_hokuyo, &pos_hokuyo, &pos_table);
+			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
 	int max = robot_interface.control_usb_data_count % CONTROL_USB_DATA_MAX;
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
 	{
-		glColor3f(0,0,1);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
 		for(i=0; i< max; i++)
 		{
 			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
@@ -473,7 +505,7 @@ void plot_table(struct graph* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_MES] )
 	{
-		glColor3f(0,1,0);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(i=0; i < max; i++)
 		{
 			draw_plus(robot_interface.control_usb_data[i].control_pos_x, robot_interface.control_usb_data[i].control_pos_y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
@@ -483,7 +515,7 @@ void plot_table(struct graph* graph)
 	// affichage du repère robot
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] )
 	{
-		glColor3f(0,0,0);
+		glColor3f(0, 0, 0);
 		struct vect_pos pos_robot;
 		pos_robot.x = robot_interface.control_usb_data[max-1].control_pos_x;
 		pos_robot.y = robot_interface.control_usb_data[max-1].control_pos_y;
@@ -501,7 +533,7 @@ void plot_table(struct graph* graph)
 		glVertex2f(0, 5 * font_height);
 		glEnd();
 
-		glColor3f(1,1,0);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(PARAM_NP_X, -150);
 		glVertex2f(PARAM_NP_X, 150);
@@ -522,18 +554,28 @@ void plot_hokuyo_hist(struct graph* graph)
 
 	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_FOO] )
 	{
-		glColor3f(1,0,0);
+		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_FOO].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_BAR] )
+
+	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_FOO_BAR] )
 	{
-		glColor3f(0.5,0.5,0);
+		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO_BAR]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_BAR] )
+	{
+		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_BAR]);
+		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
+		{
+			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_BAR].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 }
@@ -547,7 +589,7 @@ void plot_speed_dist(struct graph* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_SPEED_DIST_CONS] )
 	{
-		glColor3f(0,0,1);
+		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_CONS]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
@@ -556,7 +598,7 @@ void plot_speed_dist(struct graph* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_SPEED_DIST_MES] )
 	{
-		glColor3f(0,1,0);
+		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_MES]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
@@ -617,6 +659,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 		glColor3f(0,0,0);
 		plot_axes(&graph[current_graph]);
+		plot_legende(&graph[current_graph]);
 
 		switch(current_graph)
 		{
@@ -775,6 +818,17 @@ static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_rat
 	va_end(arglist);
 
 	glprint(x - x_ratio * (size+2) * font_width, y - font_digit_height / 2.0f * y_ratio, base, buffer, size);
+}
+
+static void glPrintf_xright2_yhigh(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
+{
+	va_list arglist;
+	va_start(arglist, s);
+	char buffer[1024];
+	int size = vsnprintf(buffer, sizeof(buffer), s, arglist);
+	va_end(arglist);
+
+	glprint(x - x_ratio * (size+2) * font_width, y - font_digit_height * y_ratio, base, buffer, size);
 }
 
 static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)

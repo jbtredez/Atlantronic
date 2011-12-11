@@ -20,6 +20,8 @@ void graph_init(struct graph* graph, const char* name, float xmin, float xmax, f
 		graph->courbes_activated[i] = 0;
 	}
 
+	memset(graph->color, 0x00, sizeof(graph->color));
+
 	graph->xmin = xmin;
 	graph->xmax = xmax;
 	graph->ymin = ymin;
@@ -35,7 +37,7 @@ void graph_init(struct graph* graph, const char* name, float xmin, float xmax, f
 	graph_update_data(graph);
 }
 
-void graph_add_courbe(struct graph* graph, int id, const char* name, int activated)
+void graph_add_courbe(struct graph* graph, int id, const char* name, int activated, float r, float g, float b)
 {
 	if(id >= MAX_COURBES || id < 0)
 	{
@@ -47,6 +49,9 @@ void graph_add_courbe(struct graph* graph, int id, const char* name, int activat
 		free(graph->courbes_names[id]);
 	}
 
+	graph->color[3*id] = r;
+	graph->color[3*id+1] = g;
+	graph->color[3*id+2] = b;
 	graph->courbes_activated[id] = activated;
 	graph->courbes_names[id] = malloc(strlen(name)+1);
 	strcpy(graph->courbes_names[id], name);

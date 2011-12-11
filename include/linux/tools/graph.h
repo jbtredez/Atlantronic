@@ -8,6 +8,7 @@ struct graph
 	char* name;
 	char* courbes_names[MAX_COURBES];
 	int courbes_activated[MAX_COURBES];
+	float color[3*MAX_COURBES];
 	float xmin; //!< min sur l'axe x du graphique (sans zoom)
 	float xmax; //!< max sur l'axe x du graphique (sans zoom)
 	float ymin; //!< min sur l'axe y du graphique (sans zoom)
@@ -39,7 +40,7 @@ void graph_init(struct graph* graph, const char* name, float xmin, float xmax, f
 
 void graph_set_border(struct graph* graph, int bordure_pixel_x, int bordure_pixel_y);
 
-void graph_add_courbe(struct graph* graph, int id, const char* name, int activated);
+void graph_add_courbe(struct graph* graph, int id, const char* name, int activated, float r, float g, float b);
 
 void graph_destroy(struct graph* graph);
 

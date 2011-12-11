@@ -211,6 +211,13 @@ static void* robot_interface_task(void* arg)
 		}
 		else
 		{
+			if(lost_count)
+			{
+				lost[lost_count+1] = 0;
+				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				lost_count = 0;
+			}
+
 			size += 4;
 			com_skip(com, size);
 			if(robot->callback)
