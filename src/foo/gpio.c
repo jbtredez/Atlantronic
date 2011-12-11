@@ -82,6 +82,8 @@ module_init(gpio_module_init, INIT_GPIO);
 
 void isr_exti9_5(void)
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+
 	portSET_INTERRUPT_MASK();
 
 	if( EXTI->PR & EXTI_PR_PR8)
@@ -90,7 +92,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match_from_isr();
-		vTaskSetEventFromISR(EVENT_GO);
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR6)
 	{
@@ -98,7 +100,7 @@ void isr_exti9_5(void)
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match_from_isr();
-		vTaskSetEventFromISR(EVENT_GO);
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_GO);
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{
@@ -116,6 +118,11 @@ void isr_exti9_5(void)
 				setLed(0x30);
 			}
 		}
+	}
+
+	if( xHigherPriorityTaskWoken )
+	{
+		vPortYieldFromISR();
 	}
 
 	portCLEAR_INTERRUPT_MASK();
