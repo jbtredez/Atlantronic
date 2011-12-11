@@ -5,22 +5,22 @@
 //! @brief Error history
 //! @author Atlantronic
 
-#include "gpio.h"
+#include <stdint.h>
 #include "kernel/error_codes.h"
 
 #define ERROR_CLEAR            0x00
 #define ERROR_ACTIVE           0x01
 
-void _error(enum fault id, unsigned char new_state, const char* func, int line);
+struct error_status
+{
+	unsigned char state;
+	uint64_t time;
+} __attribute__((packed));
 
-long _error_from_isr(enum fault id, unsigned char new_state, const char* func, int line);
+void error(enum fault id, unsigned char new_state);
 
-void _error_check_update(enum fault id, uint32_t err, const char* func, int line);
+long error_from_isr(enum fault id, unsigned char new_state);
 
-#define error_check_update(id, err) _error_check_update(id, err, __FUNCTION__, __LINE__)
-
-#define error(id, new_state) _error(id, new_state, __FUNCTION__, __LINE__)
-
-#define error_from_isr(id, new_state) _error_from_isr(id, new_state, __FUNCTION__, __LINE__)
+void error_check_update(enum fault id, uint32_t err);
 
 #endif

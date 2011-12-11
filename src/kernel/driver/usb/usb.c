@@ -89,8 +89,8 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		return;
 	}
 
-	// on se reserve le buffer circulaire que pour les log s'il n'y a personne sur l'usb
-	if( type != USB_LOG && bDeviceState != CONFIGURED )
+	// on se reserve le buffer circulaire que pour les log et erreurs s'il n'y a personne sur l'usb
+	if( bDeviceState != CONFIGURED && type != USB_LOG && type != USB_ERR )
 	{
 		return;
 	}
@@ -204,11 +204,17 @@ void isr_otg_fs(void)
 
 void EP1_IN_Callback(void)
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK();
 
 	usb_endpoint_ready = 1;
 	usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
-	vTaskSetEventFromISR(EVENT_USB);
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB);
+
+	if( xHigherPriorityTaskWoken )
+	{
+		vPortYieldFromISR();
+	}
 
 	portCLEAR_INTERRUPT_MASK();
 }
