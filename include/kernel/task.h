@@ -1085,7 +1085,7 @@ portBASE_TYPE xTaskCallApplicationTaskHook( xTaskHandle xTask, void *pvParameter
  * for a finite period required removing from a blocked list and placing on
  * a ready list.
  */
-void vTaskIncrementTick( void ) PRIVILEGED_FUNCTION;
+void vTaskIncrementTick( portTickType current_time ) PRIVILEGED_FUNCTION;
 
 /*
  * THIS FUNCTION MUST NOT BE USED FROM APPLICATION CODE.  IT IS AN
@@ -1206,7 +1206,7 @@ uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout);
 void vTaskSetEvent(uint32_t mask);
 
 //! @todo description
-unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask);
+unsigned portBASE_TYPE vTaskSetEventFromISR(uint32_t mask) __attribute__((warn_unused_result));
 //! @todo description
 void vTaskClearEvent();
 //! @todo description

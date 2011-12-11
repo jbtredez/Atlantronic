@@ -42,7 +42,7 @@ typedef struct tskTaskControlBlock
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	char				    pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
 
-	volatile unsigned portBASE_TYPE event;
+	unsigned portBASE_TYPE event;
 	unsigned portBASE_TYPE eventMask;
 
 	#if ( portSTACK_GROWTH > 0 )
@@ -104,7 +104,6 @@ PRIVILEGED_DATA static xList xPendingReadyList;							/*< Tasks that have been r
 
 /* File private variables. --------------------------------*/
 PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxCurrentNumberOfTasks 	= ( unsigned portBASE_TYPE ) 0;
-PRIVILEGED_DATA static volatile portTickType xTickCount 						= ( portTickType ) 0;
 PRIVILEGED_DATA static unsigned portBASE_TYPE uxTopUsedPriority	 				= tskIDLE_PRIORITY;
 PRIVILEGED_DATA static volatile unsigned portBASE_TYPE uxTopReadyPriority 		= tskIDLE_PRIORITY;
 PRIVILEGED_DATA static volatile signed portBASE_TYPE xSchedulerRunning 			= pdFALSE;
@@ -164,7 +163,7 @@ PRIVILEGED_DATA static unsigned portBASE_TYPE uxTaskNumber 						= ( unsigned po
 				if( ( pcTraceBuffer + tskSIZE_OF_EACH_TRACE_LINE ) < pcTraceBufferEnd )				\
 				{																					\
 					uxPreviousTask = pxCurrentTCB->uxTCBNumber;										\
-					*( unsigned long * ) pcTraceBuffer = ( unsigned long ) xTickCount;		\
+					*( unsigned long * ) pcTraceBuffer = ( unsigned long ) systick_get_time_from_isr();		\
 					pcTraceBuffer += sizeof( unsigned long );									\
 					*( unsigned long * ) pcTraceBuffer = ( unsigned long ) uxPreviousTask;	\
 					pcTraceBuffer += sizeof( unsigned long );									\
@@ -517,10 +516,10 @@ tskTCB * pxNewTCB;
 	void vTaskDelayUntil( portTickType wake_time )
 	{
 	portBASE_TYPE xAlreadyYielded;
-
+	portTickType current_time = systick_get_time();
 		vTaskSuspendAll();
 		{
-			if(  wake_time > xTickCount )
+			if(  wake_time > current_time )
 			{
 				traceTASK_DELAY_UNTIL();
 
@@ -558,6 +557,7 @@ tskTCB * pxNewTCB;
 		/* A delay time of zero just forces a reschedule. */
 		if( xTicksToDelay > ( portTickType ) 0 )
 		{
+			xTimeToWake = systick_get_time() + xTicksToDelay;
 			vTaskSuspendAll();
 			{
 				traceTASK_DELAY();
@@ -569,10 +569,6 @@ tskTCB * pxNewTCB;
 
 				This task cannot be in an event list as it is the currently
 				executing task. */
-
-				/* Calculate the time to wake - this may overflow but this is
-				not a problem. */
-				xTimeToWake = xTickCount + xTicksToDelay;
 
 				/* We must remove ourselves from the ready list before adding
 				ourselves to the blocked list as the same list item is used for
@@ -902,7 +898,6 @@ portBASE_TYPE xReturn;
 		portDISABLE_INTERRUPTS();
 
 		xSchedulerRunning = pdTRUE;
-		xTickCount = ( portTickType ) 0;
 
 		/* Setting up the timer tick is hardware specific and thus in the
 		portable interface. */
@@ -991,9 +986,9 @@ signed portBASE_TYPE xAlreadyYielded = pdFALSE;
 				/* If any ticks occurred while the scheduler was suspended then
 				they should be processed now.  This ensures the tick count does not
 				slip, and that any delayed tasks are resumed at the correct time. */
-				if( uxMissedTicks > ( unsigned portBASE_TYPE ) 0 )
+				if( uxMissedTicks )
 				{
-					vTaskIncrementTick();
+					vTaskIncrementTick( systick_get_time());
 
 					/* As we have processed some ticks it is appropriate to yield
 					to ensure the highest priority task that is ready to run is
@@ -1128,17 +1123,13 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
  *----------------------------------------------------------*/
 
 
-void vTaskIncrementTick( void )
+void vTaskIncrementTick( portTickType current_time )
 {
-	extern volatile int64_t systick_time;
-
 	/* Called by the portable layer each time a tick interrupt occurs.
 	Increments the tick then checks to see if the new tick value will cause any
 	tasks to be unblocked. */
 	if( uxSchedulerSuspended == ( unsigned portBASE_TYPE ) pdFALSE )
 	{
-		// pas d'overflow, on est sur 64bits
-		xTickCount = systick_time;
 		uxMissedTicks = 0;
 
 		/* See if this tick has made a timeout expire. */
@@ -1146,7 +1137,7 @@ void vTaskIncrementTick( void )
 
 		while( ( pxTCB = ( tskTCB * ) listGET_OWNER_OF_HEAD_ENTRY( &xDelayedTaskList ) ) != NULL )
 		{
-			if( xTickCount < listGET_LIST_ITEM_VALUE( &( pxTCB->xGenericListItem ) ) )
+			if( current_time < listGET_LIST_ITEM_VALUE( &( pxTCB->xGenericListItem ) ) )
 			{
 				break;
 			}
@@ -1164,7 +1155,7 @@ void vTaskIncrementTick( void )
 		uxMissedTicks = 1;
 	}
 
-	traceTASK_INCREMENT_TICK( xTickCount );
+	traceTASK_INCREMENT_TICK( current_time );
 }
 
 /*-----------------------------------------------------------*/
@@ -1391,7 +1382,7 @@ portTickType xTimeToWake;
 		{
 			/* Calculate the time at which the task should be woken if the event does
 			not occur.  This may overflow but this doesn't matter. */
-			xTimeToWake = xTickCount + xTicksToWait;
+			xTimeToWake = systick_get_time() + xTicksToWait;
 
 			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 
@@ -1402,7 +1393,7 @@ portTickType xTimeToWake;
 	{
 			/* Calculate the time at which the task should be woken if the event does
 			not occur.  This may overflow but this doesn't matter. */
-			xTimeToWake = xTickCount + xTicksToWait;
+			xTimeToWake = systick_get_time() + xTicksToWait;
 
 			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 
@@ -1461,14 +1452,14 @@ portBASE_TYPE xReturn;
 
 void vTaskSetTimeOutState( xTimeOutType * const pxTimeOut )
 {
-	pxTimeOut->xTimeOnEntering = xTickCount;
+	pxTimeOut->xTimeOnEntering = systick_get_time();
 }
 /*-----------------------------------------------------------*/
 
 portBASE_TYPE xTaskCheckForTimeOut( xTimeOutType * const pxTimeOut, portTickType * const pxTicksToWait )
 {
 portBASE_TYPE xReturn;
-
+portTickType current_time;
 	portENTER_CRITICAL();
 	{
 		#if ( INCLUDE_vTaskSuspend == 1 )
@@ -1480,12 +1471,13 @@ portBASE_TYPE xReturn;
 				xReturn = pdFALSE;
 			}
 			else /* We are not blocking indefinitely, perform the checks below. */
+			{
 		#endif
-
-		if( ( ( portTickType ) ( ( portTickType ) xTickCount - ( portTickType ) pxTimeOut->xTimeOnEntering ) ) < ( portTickType ) *pxTicksToWait )
+		current_time = systick_get_time();
+		if( ( ( portTickType ) ( ( portTickType ) current_time - ( portTickType ) pxTimeOut->xTimeOnEntering ) ) < ( portTickType ) *pxTicksToWait )
 		{
 			/* Not a genuine timeout. Adjust parameters for time remaining. */
-			*pxTicksToWait -= ( ( portTickType ) xTickCount - ( portTickType ) pxTimeOut->xTimeOnEntering );
+			*pxTicksToWait -= ( ( portTickType ) current_time - ( portTickType ) pxTimeOut->xTimeOnEntering );
 			vTaskSetTimeOutState( pxTimeOut );
 			xReturn = pdFALSE;
 		}
@@ -1493,6 +1485,9 @@ portBASE_TYPE xReturn;
 		{
 			xReturn = pdTRUE;
 		}
+		#if ( INCLUDE_vTaskSuspend == 1 )
+			}
+		#endif
 	}
 	portEXIT_CRITICAL();
 
@@ -2022,7 +2017,7 @@ uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout)
 		{
 			// Calculate the time at which the task should be woken if the event does
 			// not occur.  This may overflow but this doesn't matter.
-			xTimeToWake = xTickCount + timeout;
+			xTimeToWake = systick_get_time() + timeout;
 
 			listSET_LIST_ITEM_VALUE( &( pxCurrentTCB->xGenericListItem ), xTimeToWake );
 

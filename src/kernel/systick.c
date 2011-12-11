@@ -23,7 +23,7 @@ volatile int64_t systick_time_start_match;
 void isr_systick( void );
 
 extern void vTaskStartScheduler(void);
-extern void vTaskIncrementTick( void );
+extern void vTaskIncrementTick( portTickType time );
 
 static int systick_module_init()
 {
@@ -92,7 +92,7 @@ void isr_systick( void )
 		systick_last_load_used = SYSTICK_MAXCOUNT;
 	}
 
-	vTaskIncrementTick();
+	vTaskIncrementTick(systick_time);
 
 	portCLEAR_INTERRUPT_MASK();
 }
