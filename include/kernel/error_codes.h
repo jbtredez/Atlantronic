@@ -10,6 +10,7 @@
 //! ne pas oublier de mettre a jour la description dans foo_interface
 enum fault
 {
+	ERR_SUCCESS,
 	// CAN
 	ERR_CAN_READ_QUEUE_FULL,
 	ERR_CAN_READ_FIFO_OVERFLOW,
@@ -47,6 +48,9 @@ enum fault
 	ERR_HOKUYO_LASER_MALFUNCTION,
 	ERR_HOKUYO_SCAN_SIZE,
 	ERR_HOKUYO_DISTANCE_BUFFER,
+
+	// math
+	ERR_LINEAR_REG_NULL_DET,
 
 	ERR_MAX,
 };
