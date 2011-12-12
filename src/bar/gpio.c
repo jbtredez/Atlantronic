@@ -1,3 +1,7 @@
+//! @file gpio.c
+//! @brief GPIO
+//! @author Atlantronic
+
 #include "gpio.h"
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
