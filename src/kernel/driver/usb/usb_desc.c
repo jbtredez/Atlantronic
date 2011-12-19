@@ -24,8 +24,15 @@ const uint8_t usb_device_descriptor[] =
 	0x40,   // bMaxPacketSize0
 	0x18,
 	0x18,   // idVendor = 0x1818
+#if defined( __foo__ )
 	0x01,
 	0x00,   // idProduct = 0x0001
+#elif defined( __bar__ )
+	0x02,
+	0x00,   // idProduct = 0x0002
+#else
+#error unknown card
+#endif
 	0x00,
 	0x01,   // bcdDevice = 1.00
 	1,      // Index of string descriptor describing manufacturer
