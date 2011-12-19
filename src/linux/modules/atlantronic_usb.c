@@ -31,8 +31,7 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 
 #define ATLANTRONIC_SUBCLASS          0x00   //!< interface
 
-#define ATLANTRONIC_MAX_PRODUCT_NAME_SIZE       0x10
-#define ATLANTRONIC_MAX_INTERFACE_NAME_SIZE     0x10
+#define ATLANTRONIC_MAX_PRODUCT_NAME_SIZE       0x40
 
 #define ATLANTRONIC_BUFFER_SIZE              1024000
 
@@ -78,6 +77,16 @@ static struct usb_device_id atlantronic_device_id [] =
 
 MODULE_DEVICE_TABLE(usb, atlantronic_device_id); //!< ajout de la table des périphériques gérés par le module
 
+struct atlantronic_id
+{
+	struct list_head list;
+	int id;
+};
+
+// TODO mutex
+static struct atlantronic_id atlantronic_foo_list;
+static struct atlantronic_id atlantronic_bar_list;
+
 static struct usb_driver atlantronic_driver =
 {
     .name = "Atlantronic",
@@ -92,6 +101,7 @@ struct atlantronic_data
 	struct usb_device*		  udev;                //!< udev
 	struct usb_interface*	  interface;           //!< interface
 	unsigned char             interface_subclass;  //!< type d'interface
+	struct atlantronic_id     id;                  //!< id dans la liste foo ou bar
 	struct usb_class_driver   class;               //!< class driver
 	struct task_struct*       task;                //!< tache de recuperation des donnees
 	struct completion         in_completion;       //!< completion
@@ -151,7 +161,33 @@ static void atlantronic_delete(struct kref *kref)
 		kfree(dev->class.name);
 	}
 
+	list_del(&dev->id.list);
+
 	kfree(dev);
+}
+
+static unsigned int atlantronic_get_min_id(struct atlantronic_id* id_list)
+{
+	struct list_head *pos, *q;
+	struct atlantronic_id* tmp;
+	int max = -1;
+
+	list_for_each_safe(pos, q, &id_list->list)
+	{
+		tmp = list_entry(pos, struct atlantronic_id, list);
+		if(tmp->id > max)
+		{
+			max = tmp->id;
+		}
+	}
+
+	max++;
+
+	if(max < 0)
+	{
+		max = 0;
+	}
+	return max;
 }
 
 static int atlantronic_open(struct inode *inode, struct file *file)
@@ -487,7 +523,6 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	struct usb_host_interface *iface_desc;
 	struct usb_endpoint_descriptor *endpointIn;
 	struct usb_endpoint_descriptor *endpointOut;
-	int len;
 	int pipe;
 	int i;
 
@@ -509,20 +544,15 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	mutex_init(&dev->io_mutex);
 	init_waitqueue_head(&dev->wait);
 
-	dev->class.name = kmalloc( ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE, GFP_KERNEL);
+	dev->class.name = kmalloc( ATLANTRONIC_MAX_PRODUCT_NAME_SIZE, GFP_KERNEL);
 	if( ! dev->class.name )
 	{
 		err("Out of memory");
 		goto error;
 	}
 
-	len = strlen(dev->udev->product);
-	if( len > ATLANTRONIC_MAX_PRODUCT_NAME_SIZE )
-	{
-		len = ATLANTRONIC_MAX_PRODUCT_NAME_SIZE;
-	}
-
-	strncpy(dev->class.name, dev->udev->product, len);
+	INIT_LIST_HEAD(&dev->id.list);
+	dev->id.id = -1;
 
 	iface_desc = interface->cur_altsetting;
 
@@ -534,10 +564,29 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	}
 
 	dev->class.fops = &atlantronic_fops;
-	snprintf(dev->class.name + len, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1, "%%d");
 
-	dev->class.name[ATLANTRONIC_MAX_PRODUCT_NAME_SIZE + ATLANTRONIC_MAX_INTERFACE_NAME_SIZE - 1] = 0;
-	dev->class.name[0] = tolower(dev->class.name[0]);
+    info("atlantronic_probe -> choose id");
+	if(id->idProduct == ATLANTRONIC_FOO_ID)
+	{
+		dev->id.id = atlantronic_get_min_id(&atlantronic_foo_list);
+    info("atlantronic_probe -> foo : %d", dev->id.id);
+		list_add(&dev->id.list, &atlantronic_foo_list.list);
+		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "foo%d", dev->id.id);
+	}
+	else if(id->idProduct == ATLANTRONIC_BAR_ID)
+	{
+		dev->id.id = atlantronic_get_min_id(&atlantronic_bar_list);
+    info("atlantronic_probe -> bar : %d", dev->id.id);
+		list_add(&dev->id.list, &atlantronic_bar_list.list);
+		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "bar%d", dev->id.id);
+	}
+	else
+	{
+		rep = -ENODEV;
+		goto error;
+	}
+
+	dev->class.name[ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1] = 0;
 
 	if( iface_desc->desc.bNumEndpoints != 2)
 	{
@@ -759,6 +808,12 @@ static int __init atlantronic_init(void)
 	{
 		err("usb_register(): error %d", rep);
 	}
+
+	INIT_LIST_HEAD(&atlantronic_foo_list.list);
+	atlantronic_foo_list.id = -1;
+
+	INIT_LIST_HEAD(&atlantronic_bar_list.list);
+	atlantronic_bar_list.id = -1;
 
     return rep;
 }
