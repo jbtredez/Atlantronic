@@ -10,6 +10,7 @@
 #define PRIORITY_TASK_ERROR           1
 #define PRIORITY_TASK_USB             2
 #define PRIORITY_TASK_STRATEGY        3
+#define PRIORITY_TASK_HOKUYO          3
 #define PRIORITY_TASK_DETECTION       3
 #define PRIORITY_TASK_AX12            4
 #define PRIORITY_TASK_CAN             5

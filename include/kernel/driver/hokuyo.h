@@ -8,6 +8,11 @@
 #include <stdint.h>
 #include "kernel/vect_pos.h"
 
+#ifndef LINUX
+#include "kernel/FreeRTOS.h"
+#include "kernel/semphr.h"
+#endif
+
 #define HOKUYO_NUM_POINTS            682
 
 struct hokuyo_scan
@@ -18,8 +23,9 @@ struct hokuyo_scan
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
 };
 
-uint32_t hokuyo_init();
-void hokuyo_start_scan();
-uint32_t hokuto_wait_decode_scan(uint16_t* distance, int size);
+#ifndef LINUX
+extern struct hokuyo_scan hokuyo_scan;
+extern xSemaphoreHandle hokuyo_scan_mutex;
+#endif
 
 #endif

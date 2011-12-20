@@ -36,7 +36,7 @@ struct robot_interface
 	struct hokuyo_scan hokuyo_scan[3];
 	struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 	int control_usb_data_count;
-	struct error_status error_status[ERR_MAX];
+	struct error_status error_status[COM_MAX][ERR_MAX];
 
 	// calculs
 	float hokuyo_x[HOKUYO_NUM_POINTS*3]; //!< x des points 44 à 725 - hokuyo 0 puis hokuyo 1

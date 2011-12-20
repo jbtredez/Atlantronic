@@ -36,17 +36,8 @@ const char* err_description[ERR_MAX] =
 	[ERR_AX12_INTERNAL_ERROR_INSTRUCTION] = "ax12 : erreur interne - instruction invalide",
 
 	// HOKUYO
-	[ERR_HOKUYO_DISCONNECTED] = "hokuyo débranché",
-	[ERR_HOKUYO_USART_FE] = "hokuyo : desynchro, bruit ou octet \"break\" sur l'usart",
-	[ERR_HOKUYO_USART_NE] = "hokuyo : bruit sur l'usart",
-	[ERR_HOKUYO_USART_ORE] = "hokuyo : overrun sur l'usart",
-	[ERR_HOKUYO_CHECK_CMD] = "hokuyo : échec de la vérification de la commande",
-	[ERR_HOKUYO_UNKNOWN_STATUS] = "hokuyo : état inconnu",
-	[ERR_HOKUYO_CHECKSUM] = "hokuyo : somme de vérification invalide",
-	[ERR_HOKUYO_BAUD_RATE] = "hokuyo : vitesse invalide",
-	[ERR_HOKUYO_LASER_MALFUNCTION] = "hokuyo : disfonctionnement du laser",
-	[ERR_HOKUYO_SCAN_SIZE] = "hokuyo_tools_decode_buffer : buffer du scan trop petit",
-	[ERR_HOKUYO_DISTANCE_BUFFER] = "hokuyo_tools_decode_buffer : buffer distance trop petit",
+	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo débranché",
+	[FAULT_HOKUYO_DATA_CORRUPTION] = "hokuyo : erreur de transmission",
 };
 
 const char* cartes[COM_MAX] =
@@ -272,7 +263,7 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 	for(i=0; i< ERR_MAX; i++)
 	{
 		unsigned char state = err_list[i].state;
-		if(state != data->error_status[i].state)
+		if(state != data->error_status[com_id][i].state)
 		{
 			if( state == 0)
 			{
@@ -282,7 +273,7 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 			{
 				log_info("\033[31m%4s %12lu\tError\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
 			}
-			data->error_status[i] = err_list[i];
+			data->error_status[com_id][i] = err_list[i];
 		}
 	}
 

@@ -10,6 +10,7 @@
 #define PRIORITY_TASK_ERROR           1
 #define PRIORITY_TASK_USB             2
 #define PRIORITY_TASK_CAN_US          3
+#define PRIORITY_TASK_HOKUYO          4
 #define PRIORITY_TASK_HOKUYO_TO_CAN   4
 #define PRIORITY_TASK_CAN             5
 #define PRIORITY_TASK_TEST_US         5

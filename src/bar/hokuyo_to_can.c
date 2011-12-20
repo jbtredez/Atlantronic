@@ -10,6 +10,7 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "kernel/semphr.h"
 
 #include "gpio.h"
 #include <math.h>
@@ -22,7 +23,6 @@ static void hokuyo_to_can_task();
 int hokuyo_to_can_module_init();
 void hokuyo_to_can_compute();
 
-static struct hokuyo_scan hokuyo_scan;
 static struct can_msg hokuyo_to_can_msg;
 
 int hokuyo_to_can_module_init()
@@ -55,91 +55,17 @@ int hokuyo_to_can_module_init()
 
 module_init(hokuyo_to_can_module_init, INIT_DETECTION);
 
-void hokuyo_to_can_errors(uint32_t err)
-{
-	error_check_update(ERR_HOKUYO_DISCONNECTED, err);
-	error_check_update(ERR_HOKUYO_USART_FE, err);
-	error_check_update(ERR_HOKUYO_USART_NE, err);
-	error_check_update(ERR_HOKUYO_USART_ORE, err);
-	error_check_update(ERR_HOKUYO_CHECK_CMD, err);
-	error_check_update(ERR_HOKUYO_UNKNOWN_STATUS, err);
-	error_check_update(ERR_HOKUYO_CHECKSUM, err);
-	error_check_update(ERR_HOKUYO_BAUD_RATE, err);
-	error_check_update(ERR_HOKUYO_LASER_MALFUNCTION, err);
-	error_check_update(ERR_HOKUYO_SCAN_SIZE, err);
-	error_check_update(ERR_HOKUYO_DISTANCE_BUFFER, err);
-}
-
-void hokuyo_to_can_hokuyo_init()
-{
-	uint32_t err;
-
-	log_info("Initialisation du hokuyo");
-
-	do
-	{
-		err = hokuyo_init();
-		hokuyo_to_can_errors(err);
-		if( err)
-		{
-			vTaskDelay(ms_to_tick(100));
-		}
-	} while(err);
-
-	log_info("Lancement des scan hokuyo");
-}
-
 static void hokuyo_to_can_task()
 {
-	uint32_t err;
-	portTickType last_scan_time;
-	portTickType current_time;
-
-	hokuyo_to_can_hokuyo_init();
-
-	log_info("Lancement des scan hokuyo");
-
-	hokuyo_start_scan();
-	// on gruge, le premier scan est plus long
-	last_scan_time = systick_get_time() + ms_to_tick(100);
-
 	while(1)
 	{
 		// on attend la fin du nouveau scan
-		err = hokuto_wait_decode_scan(hokuyo_scan.distance, HOKUYO_NUM_POINTS);
-		if(err)
-		{
-			error(err, ERROR_ACTIVE);
-			if(err == ERR_HOKUYO_DISCONNECTED)
-			{
-				hokuyo_to_can_hokuyo_init();
-				// on gruge, le premier scan est plus long
-				last_scan_time = systick_get_time() + ms_to_tick(100);
-			}
-		}
-		else
-		{
-			// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan
-			// pendant que le nouveau arrive. Si on depasse les 110ms (10% d'erreur), on met un log
-			current_time = systick_get_time();
-			if( current_time - last_scan_time > ms_to_tick(110) )
-			{
-				log_error("slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
-			}
-			last_scan_time = current_time;
-		}
+		vTaskWaitEvent(EVENT_LOCAL_HOKUYO_UPDATE, portMAX_DELAY);
+		vTaskClearEvent(EVENT_LOCAL_HOKUYO_UPDATE);
 
-		// on lance le prochain scan avant de faire les calculs sur le scan actuel
-		hokuyo_start_scan();
-
-		// si le dernier scan n'a pas echoue on fait les calculs
-		if( ! err)
-		{
-			hokuyo_to_can_compute();
-
-			// on envoi les donnees par usb pour le debug
-			usb_add(USB_HOKUYO_BAR, &hokuyo_scan, sizeof(hokuyo_scan));
-		}
+		xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
+		hokuyo_to_can_compute();
+		xSemaphoreGive(hokuyo_scan_mutex);
 	}
 
 	vTaskDelete(NULL);
