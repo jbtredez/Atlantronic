@@ -11,15 +11,14 @@ struct usart_device
 	USART_TypeDef* const usart;
 	DMA_Channel_TypeDef * const dma_read;
 	DMA_Channel_TypeDef * const dma_write;
-	const uint32_t dma_read_event;
-	const uint32_t error_event;
-	uint32_t last_error;
+	const uint32_t event;
+	uint32_t error;
 };
 
 struct usart_device usart_device[USART_MAX_DEVICE] =
 {
-	{ USART3, DMA1_Channel3, DMA1_Channel2, EVENT_DMA1_3_TC, EVENT_USART3_ERROR, 0 },
-	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_DMA2_3_TC, EVENT_UART4_ERROR,  0 }
+	{ USART3, DMA1_Channel3, DMA1_Channel2, EVENT_USART3_TC, 0 },
+	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_UART4_TC, 0 }
 };
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency)
@@ -129,23 +128,23 @@ void isr_usart3(void)
 	// affichage de l'erreur
 	if( USART3->SR & USART_SR_FE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_FE;
+		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_FE;
 	}
 
 	if( USART3->SR & USART_SR_ORE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_ORE;
+		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_ORE;
 	}
 
 	if( USART3->SR & USART_SR_NE)
 	{
-		usart_device[USART3_FULL_DUPLEX].last_error = ERR_USART_READ_SR_NE;
+		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_NE;
 	}
 
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	USART3->DR;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_ERROR);
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_TC);
 
 	portCLEAR_INTERRUPT_MASK();
 
@@ -164,23 +163,23 @@ void isr_uart4(void)
 	// affichage de l'erreur
 	if( UART4->SR & USART_SR_FE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_FE;
+		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_FE;
 	}
 
 	if( UART4->SR & USART_SR_ORE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_ORE;
+		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_ORE;
 	}
 
 	if( UART4->SR & USART_SR_NE)
 	{
-		usart_device[UART4_HALF_DUPLEX].last_error = ERR_USART_READ_SR_NE;
+		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_NE;
 	}
 
 	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	UART4->DR;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_ERROR);
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_TC);
 
 	portCLEAR_INTERRUPT_MASK();
 
@@ -208,7 +207,7 @@ void isr_dma1_channel3(void)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF3;
 		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_DMA1_3_TC);
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_TC);
 	}
 
 	portCLEAR_INTERRUPT_MASK();
@@ -238,7 +237,7 @@ void isr_dma2_channel3(void)
 	{
 		DMA2->IFCR |= DMA_IFCR_CTCIF3;
 		DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_DMA2_3_TC);
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_TC);
 	}
 
 	portCLEAR_INTERRUPT_MASK();
@@ -256,7 +255,8 @@ void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 
 void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 {
-	vTaskClearEvent(usart_device[id].dma_read_event | usart_device[id].error_event);
+	usart_device[id].error = 0;
+	vTaskClearEvent(usart_device[id].event);
 	usart_device[id].dma_read->CNDTR = size;
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR |= DMA_CCR1_EN;
@@ -267,17 +267,16 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 	uint32_t res = 0;
 	uint32_t ev;
 
-	ev = vTaskWaitEvent(usart_device[id].dma_read_event | usart_device[id].error_event, timeout);
+	ev = vTaskWaitEvent(usart_device[id].event, timeout);
 
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR &= ~DMA_CCR1_EN;
-	if(ev & usart_device[id].error_event)
+
+	res = usart_device[id].error;
+
+	if(! (ev & usart_device[id].event))
 	{
-		res = usart_device[id].last_error;
-	}
-	else if(! (ev & usart_device[id].dma_read_event))
-	{
-		res = ERR_USART_TIMEOUT;
+		res |= ERR_USART_TIMEOUT;
 	}
 
 	return res;

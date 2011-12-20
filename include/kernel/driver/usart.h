@@ -17,13 +17,10 @@ enum usart_id
 	UART4_HALF_DUPLEX
 };
 
-enum usart_err_codes
-{
-	ERR_USART_READ_SR_FE,
-	ERR_USART_READ_SR_NE,
-	ERR_USART_READ_SR_ORE,
-	ERR_USART_TIMEOUT,
-};
+#define ERR_USART_TIMEOUT       0x01
+#define ERR_USART_READ_SR_FE    0x02
+#define ERR_USART_READ_SR_NE    0x04
+#define ERR_USART_READ_SR_ORE   0x08
 
 void usart_open( enum usart_id id, uint32_t frequency);
 
