@@ -565,18 +565,15 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 
 	dev->class.fops = &atlantronic_fops;
 
-    info("atlantronic_probe -> choose id");
 	if(id->idProduct == ATLANTRONIC_FOO_ID)
 	{
 		dev->id.id = atlantronic_get_min_id(&atlantronic_foo_list);
-    info("atlantronic_probe -> foo : %d", dev->id.id);
 		list_add(&dev->id.list, &atlantronic_foo_list.list);
 		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "foo%d", dev->id.id);
 	}
 	else if(id->idProduct == ATLANTRONIC_BAR_ID)
 	{
 		dev->id.id = atlantronic_get_min_id(&atlantronic_bar_list);
-    info("atlantronic_probe -> bar : %d", dev->id.id);
 		list_add(&dev->id.list, &atlantronic_bar_list.list);
 		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "bar%d", dev->id.id);
 	}
@@ -802,18 +799,18 @@ static int __init atlantronic_init(void)
 
 	info("Atlantronic_log : init");
 
+	INIT_LIST_HEAD(&atlantronic_foo_list.list);
+	atlantronic_foo_list.id = -1;
+
+	INIT_LIST_HEAD(&atlantronic_bar_list.list);
+	atlantronic_bar_list.id = -1;
+
 	// enregistrement du pilote
 	rep = usb_register(&atlantronic_driver);
 	if(rep)
 	{
 		err("usb_register(): error %d", rep);
 	}
-
-	INIT_LIST_HEAD(&atlantronic_foo_list.list);
-	atlantronic_foo_list.id = -1;
-
-	INIT_LIST_HEAD(&atlantronic_bar_list.list);
-	atlantronic_bar_list.id = -1;
 
     return rep;
 }
