@@ -40,12 +40,16 @@ static void task1_task(void* arg)
 
 	while(1)
 	{
-		log_info("test log_info %i", i);
-		log_error("test log_error %i", i);
-		log_debug(0, "test log_debug_0 %i", i);
-		log_debug(1, "test log_debug_1 %i", i);
+		log(LOG_INFO, "test log : info");
+		log(LOG_ERROR, "test log : error");
+		log(LOG_DEBUG1, "test log : debug_1");
+		log(LOG_DEBUG2, "test log : debug_2");
+		log_format(LOG_INFO, "test log : info %i", i);
+		log_format(LOG_ERROR, "test log : error %i", i);
+		log_format(LOG_DEBUG1, "test log : debug_1 %i", i);
+		log_format(LOG_DEBUG2, "test log : debug_2 %i", i);
 		i++;
-		wake += ms_to_tick(500);
+		wake += ms_to_tick(1000);
 		vTaskDelayUntil(wake);
 	}
 

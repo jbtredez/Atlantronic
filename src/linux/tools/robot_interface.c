@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "linux/tools/robot_interface.h"
 #include "kernel/hokuyo_tools.h"
+#include "kernel/log_level.h"
 #include "linux/tools/com.h"
 #include "kernel/driver/usb.h"
 #include "kernel/rcc.h"
@@ -38,6 +39,14 @@ const char* err_description[ERR_MAX] =
 	// HOKUYO
 	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo débranché",
 	[FAULT_HOKUYO_DATA_CORRUPTION] = "hokuyo : erreur de transmission",
+};
+
+const char* log_level_description[LOG_MAX] =
+{
+	[LOG_ERROR] = "Error",
+	[LOG_INFO] = "Info",
+	[LOG_DEBUG1] = "Debug1",
+	[LOG_DEBUG2] = "Debug2",
 };
 
 const char* cartes[COM_MAX] =
@@ -232,9 +241,27 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 		goto end;
 	}
 
+	uint64_t current_time;
+	memcpy(&current_time, msg, 8);
+
 	msg[size-1] = 0;
 
-	log_info("%4s %s", cartes[com_id], msg);
+	unsigned char level = msg[8];
+	uint16_t line;
+	memcpy(&line, msg + 9, 2);
+
+	char* log = strchr(msg+11, ':');
+	*log = 0;
+	log++;
+
+	if(level < LOG_MAX)
+	{
+		log_info("%4s %12lu %8s   %20s:%5d    %s", cartes[com_id], (unsigned long) tick_to_us(current_time), log_level_description[level], msg+11, line, log);
+	}
+	else
+	{
+		log_info("%4s %12lu %8s   %20s:%5d    %s", cartes[com_id], (unsigned long) tick_to_us(current_time), "unknown", msg+11, line, log);
+	}
 
 end:
 	return res;
@@ -267,11 +294,11 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 		{
 			if( state == 0)
 			{
-				log_info("\033[32m%4s %12lu\tError\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[32m%4s %12lu    Fault\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
 			}
 			else
 			{
-				log_info("\033[31m%4s %12lu\tError\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[31m%4s %12lu    Fault\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
 			}
 			data->error_status[com_id][i] = err_list[i];
 		}

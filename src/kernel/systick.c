@@ -27,7 +27,7 @@ extern void vTaskIncrementTick( portTickType time );
 
 static int systick_module_init()
 {
-	log_info("Lancement de l'ordonanceur");
+	log(LOG_INFO, "Lancement de l'ordonanceur");
 
 	systick_time_start_match = 0;
 

@@ -181,9 +181,9 @@ void control_cmd_print_param(void* arg)
 {
 	(void) arg;
 
-	log_info("av: %f %f %f", control_pid_av.kp/PWM_ARR, control_pid_av.ki/PWM_ARR, control_pid_av.kd/PWM_ARR);
-	log_info("rot: %f %f %f", control_pid_rot.kp/PWM_ARR, control_pid_rot.ki/PWM_ARR, control_pid_rot.kd/PWM_ARR);
-	log_info("rot: %f %f %f", control_kx, control_ky, control_kalpha);
+	log_format(LOG_INFO, "av: %f %f %f", control_pid_av.kp/PWM_ARR, control_pid_av.ki/PWM_ARR, control_pid_av.kd/PWM_ARR);
+	log_format(LOG_INFO, "rot: %f %f %f", control_pid_rot.kp/PWM_ARR, control_pid_rot.ki/PWM_ARR, control_pid_rot.kd/PWM_ARR);
+	log_format(LOG_INFO, "rot: %f %f %f", control_kx, control_ky, control_kalpha);
 }
 
 static float sinc( float x )
@@ -266,7 +266,7 @@ static void control_compute()
 			// => on va tout couper.
 			if( control_contact)
 			{
-				log_info("collision : goto => free");
+				log(LOG_INFO, "collision : goto => free");
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
@@ -296,7 +296,7 @@ static void control_compute()
 			}
 			else if( control_contact == (CONTACT_RIGHT | CONTACT_LEFT) )
 			{
-				log_info("double contact");
+				log(LOG_INFO, "double contact");
 				// obstacle des deux cotés
 				control_recalage();
 
@@ -542,7 +542,7 @@ void control_cmd_straight(void* arg)
 
 void control_straight(float dist)
 {
-	log_info("param %.2f", dist);
+	log_format(LOG_INFO, "param %.2f", dist);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
@@ -574,7 +574,7 @@ void control_cmd_rotate(void* arg)
 
 void control_rotate(float angle)
 {
-	log_info("param %f", angle);
+	log_format(LOG_INFO, "param %f", angle);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
@@ -607,7 +607,7 @@ void control_cmd_rotate_to(void* arg)
 
 void control_rotate_to(float alpha)
 {
-	log_info("param %f", alpha);
+	log_format(LOG_INFO, "param %f", alpha);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	control_cons = location_get_position();
 	float da = fmodf(alpha - control_cons.alpha, 2*PI);
@@ -641,7 +641,7 @@ void control_cmd_goto_near(void* arg)
 
 void control_goto_near(float x, float y, float dist, enum control_way sens)
 {
-	log_info("param %.2f %.2f %.2f %d", x, y, dist, sens);
+	log_format(LOG_INFO, "param %.2f %.2f %.2f %d", x, y, dist, sens);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
@@ -706,7 +706,7 @@ void control_cmd_straight_to_wall(void* arg)
 
 void control_straight_to_wall(float dist)
 {
-	log_info("param %.2f", dist);
+	log_format(LOG_INFO, "param %.2f", dist);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
@@ -746,7 +746,7 @@ void control_cmd_free(void* arg)
 
 void control_free()
 {
-	log_info("free wheel");
+	log(LOG_INFO, "free wheel");
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{

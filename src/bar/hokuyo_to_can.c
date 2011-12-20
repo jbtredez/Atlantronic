@@ -28,7 +28,7 @@ static struct can_msg hokuyo_to_can_msg;
 int hokuyo_to_can_module_init()
 {
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(hokuyo_to_can_task, "detect", HOKUYO_TO_CAN_STACK_SIZE, NULL, PRIORITY_TASK_HOKUYO_TO_CAN, &xHandle);
+	portBASE_TYPE err = xTaskCreate(hokuyo_to_can_task, "hoku_can", HOKUYO_TO_CAN_STACK_SIZE, NULL, PRIORITY_TASK_HOKUYO_TO_CAN, &xHandle);
 
 	if(err != pdPASS)
 	{
@@ -86,7 +86,7 @@ void hokuyo_to_can_compute()
 	if(res != 0)
 	{
 		// erreur : timeout sur le can, abandon
-		log_error("timeout");
+		log(LOG_ERROR, "timeout");
 		goto end;
 	}
 
@@ -110,7 +110,7 @@ void hokuyo_to_can_compute()
 		if(res != 0)
 		{
 			// erreur : timeout sur le can, abandon
-			log_error("timeout");
+			log(LOG_ERROR, "timeout");
 			goto end;
 		}
 

@@ -98,7 +98,7 @@ uint32_t hokuyo_init()
 {
 	uint32_t err = 0;
 
-	log_info("Initialisation du hokuyo");
+	log(LOG_INFO, "Initialisation du hokuyo");
 
 	do
 	{
@@ -143,7 +143,7 @@ uint32_t hokuyo_init()
 	}
 	while(err);
 
-	log_info("Hokuyo initialisé");
+	log(LOG_INFO, "Hokuyo initialisé");
 
 	return 0;
 }
@@ -181,7 +181,7 @@ static void hokuyo_task()
 			current_time = systick_get_time();
 			if( current_time - last_scan_time > ms_to_tick(110) )
 			{
-				log_error("slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
+				log_format(LOG_ERROR, "slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
 			}
 			last_scan_time = current_time;
 		}

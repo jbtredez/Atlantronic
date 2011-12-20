@@ -55,8 +55,6 @@ static int usb_module_init(void)
 
 	USB_Init();
 
-//	log_info("Création de la tache usb");
-
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(usb_task, "usb", USB_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
 
@@ -140,12 +138,12 @@ void usb_task(void * arg)
 				}
 				else
 				{
-					log_error("command %d not found", id);
+					log_format(LOG_ERROR, "command %d not found", id);
 				}
 			}
 			else
 			{
-				log_error("command %d not found", id);
+				log_format(LOG_ERROR, "command %d not found", id);
 			}
 
 			usb_read_size = 0;
