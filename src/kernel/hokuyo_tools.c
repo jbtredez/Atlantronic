@@ -16,27 +16,43 @@
 #define HOKUYO_START_ANGLE               (-(135 / 180.0f - 44 / 512.0f) * PI)
 #define HOKUYO_DTHETA         	         (PI / 512.0f)
 
-void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y, int standup)
+void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct vect_pos *pos)
 {
-	float alpha = HOKUYO_START_ANGLE;
+	float alpha = HOKUYO_START_ANGLE + scan->sens * scan->pos_hokuyo.alpha;
+	int size = HOKUYO_NUM_POINTS;
+
+	for( ; size--; )
+	{
+		pos->alpha = alpha;
+		pos->ca = cosf(alpha);
+		pos->sa = scan->sens * sinf(alpha);
+		pos++;
+		alpha += HOKUYO_DTHETA;
+	}
+}
+
+void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect_pos *pos)
+{
+	int size = HOKUYO_NUM_POINTS;
+	uint16_t* distance = scan->distance;
+	float dx = scan->pos_hokuyo.x;
+	float dy = scan->pos_hokuyo.y;
 
 	for( ; size--; )
 	{
 		if(*distance > 19)
 		{
-			*x = *distance * cosf(alpha);
-			*y = standup * *distance * sinf(alpha);
+			pos->x = *distance * pos->ca + dx;
+			pos->y = *distance * pos->sa + dy;
 		}
 		else
 		{
-			*x = 0;
-			*y = 0;
+			pos->x = 0;
+			pos->y = 0;
 		}
 
 		distance++;
-		x++;
-		y++;
-		alpha += HOKUYO_DTHETA;
+		pos++;
 	}
 }
 

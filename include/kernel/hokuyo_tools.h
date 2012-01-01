@@ -23,7 +23,8 @@ struct hokuyo_object
 	uint16_t stop;
 };
 
-void hokuyo_compute_xy(uint16_t* distance, unsigned int size, float* x, float* y, int standup);
+void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct vect_pos *pos);
+void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect_pos *pos);
 
 int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_object* obj, unsigned int obj_size);
 

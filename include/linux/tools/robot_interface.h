@@ -39,8 +39,7 @@ struct robot_interface
 	struct error_status error_status[COM_MAX][ERR_MAX];
 
 	// calculs
-	float hokuyo_x[HOKUYO_NUM_POINTS*3]; //!< x des points 44 à 725 - hokuyo 0 puis hokuyo 1
-	float hokuyo_y[HOKUYO_NUM_POINTS*3]; //!< y des points 44 à 725 - hokuyo 0 puis hokuyo 1
+	struct vect_pos hokuyo_pos[HOKUYO_NUM_POINTS*3];
 };
 
 int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg);

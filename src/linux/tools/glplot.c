@@ -448,7 +448,6 @@ void plot_table(struct graph* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 
-	struct vect_pos pos_hokuyo = {0, 0, 0, 1, 0};
 	struct vect_pos pos_table = {0, 0, 0, 1, 0};
 
 	int i;
@@ -458,9 +457,7 @@ void plot_table(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
 		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			pos_hokuyo.x = robot_interface.hokuyo_x[i];
-			pos_hokuyo.y = robot_interface.hokuyo_y[i];
-			pos_hokuyo_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &robot_interface.hokuyo_scan[HOKUYO_FOO].pos_hokuyo, &pos_hokuyo, &pos_table);
+			pos_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &robot_interface.hokuyo_pos[i], &pos_table);
 			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -470,9 +467,7 @@ void plot_table(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_BAR]);
 		for(i=HOKUYO_FOO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO_BAR+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			pos_hokuyo.x = robot_interface.hokuyo_x[i];
-			pos_hokuyo.y = robot_interface.hokuyo_y[i];
-			pos_hokuyo_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].pos_robot, &robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].pos_hokuyo, &pos_hokuyo, &pos_table);
+			pos_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].pos_robot, &robot_interface.hokuyo_pos[i], &pos_table);
 			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -482,9 +477,7 @@ void plot_table(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
 		for(i=HOKUYO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_BAR+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			pos_hokuyo.x = robot_interface.hokuyo_x[i];
-			pos_hokuyo.y = robot_interface.hokuyo_y[i];
-			pos_hokuyo_to_table(&robot_interface.hokuyo_scan[HOKUYO_BAR].pos_robot, &robot_interface.hokuyo_scan[HOKUYO_BAR].pos_hokuyo, &pos_hokuyo, &pos_table);
+			pos_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_BAR].pos_robot, &robot_interface.hokuyo_pos[i], &pos_table);
 			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
