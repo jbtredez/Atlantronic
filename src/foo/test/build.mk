@@ -170,6 +170,7 @@ obj-foo-test_hokuyo += kernel/driver/hokuyo.o
 obj-foo-test_hokuyo += kernel/hokuyo_tools.o
 obj-foo-test_hokuyo += kernel/vect_pos.o
 obj-foo-test_hokuyo += foo/detection.o
+obj-foo-test_hokuyo += kernel/math/regression.o
 obj-foo-test_hokuyo += kernel/utf8.o
 obj-foo-test_hokuyo += kernel/driver/usb/usb.o
 obj-foo-test_hokuyo += kernel/driver/usb/usb_init.o
