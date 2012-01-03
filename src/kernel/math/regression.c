@@ -6,6 +6,7 @@
 #include "kernel/error_codes.h"
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 //!   | a |     | Somme( wi*xi*xi )    Somme( wi*xi )   |^-1      | Somme( wi*xi*yi )  |
 //!   | b |   = | Somme( wi*xi )       Somme( wi )      |      *  | Somme( wi*yi )     |
@@ -48,18 +49,18 @@ end:
 	return err;
 }
 
-int regression_poly(struct vect2f* pt, int size, float seuil, char* type)
+int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 {
 	int err = 0;
 	int a = 0;
 	int b = size-1;
 	int c = 0;
 	int id_max = 0;
-	float dist = 0;
-	float dist_max = -1;
+	int dist = 0;
+	int dist_max = -1;
 	float nab = 0;
-	struct vect2f ab;
-	struct vect2f ac;
+	struct vect2i ab;
+	struct vect2i ac;
 
 	memset(type, 0x00, size);
 
@@ -68,15 +69,15 @@ int regression_poly(struct vect2f* pt, int size, float seuil, char* type)
 		dist_max = -1;
 		type[a] = 1;
 		type[b] = 1;
-		ab.x = pt[b].x - pt[a].x;
-		ab.y = pt[b].y - pt[a].y;
-		nab = norm2(&ab);
+		ab.x = (int)pt[b].x - (int)pt[a].x;
+		ab.y = (int)pt[b].y - (int)pt[a].y;
+		nab = sqrtf(ab.x*ab.x+ab.y*ab.y);
 
 		for(c = a + 1; c<b; c++)
 		{
-			ac.x = pt[c].x - pt[a].x;
-			ac.y = pt[c].y - pt[a].y;
-			dist = fabsf(ab.x * ac.y - ab.y * ac.x);
+			ac.x = (int)pt[c].x - (int)pt[a].x;
+			ac.y = (int)pt[c].y - (int)pt[a].y;
+			dist = abs(ab.x * ac.y - ab.y * ac.x);
 			if(dist > dist_max)
 			{
 				dist_max = dist;
@@ -84,7 +85,7 @@ int regression_poly(struct vect2f* pt, int size, float seuil, char* type)
 			}
 		}
 
-		if(a != b && dist_max / nab > seuil)
+		if(dist_max > seuil * nab && a != b)
 		{
 			// nouveau point
 			type[id_max] = 1;

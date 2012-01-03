@@ -5,10 +5,10 @@
 //! @brief vect_pos
 //! @author Atlantronic
 
-struct vect2f
+struct vect2i
 {
-	float x;
-	float y;
+	int x;
+	int y;
 };
 
 //! @struct vect_pos
@@ -27,8 +27,6 @@ void pos_robot_to_table(struct vect_pos *pos_robot, struct vect_pos *pos_in, str
 void pos_table_to_robot(struct vect_pos *pos_robot, struct vect_pos *pos_in, struct vect_pos *pos_out);
 
 float norm2_square(struct vect_pos *pos);
-
-float norm2(struct vect2f *pos);
 
 float distance_square(struct vect_pos *pos1, struct vect_pos *pos2);
 

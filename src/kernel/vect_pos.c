@@ -30,11 +30,6 @@ float norm2_square(struct vect_pos *pos)
 	return pos->x * pos->x + pos->y * pos->y;
 }
 
-float norm2(struct vect2f *pos)
-{
-	return sqrtf(pos->x * pos->x + pos->y * pos->y);
-}
-
 float distance_square(struct vect_pos *pos1, struct vect_pos *pos2)
 {
 	float dx = pos2->x - pos1->x;

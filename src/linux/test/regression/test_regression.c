@@ -46,7 +46,7 @@ int main()
 	float* x = malloc(sizeof(float) * total_size);
 	float* y = malloc(sizeof(float) * total_size);
 	float* w = malloc(sizeof(float) * total_size);
-	struct vect2f* points = malloc(sizeof(struct vect2f) * total_size);
+	struct vect_pos* points = malloc(sizeof(struct vect_pos) * total_size);
 	float epsilon;
 
 	int id = 0;
