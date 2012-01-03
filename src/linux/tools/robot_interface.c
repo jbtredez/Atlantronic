@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "linux/tools/robot_interface.h"
 #include "kernel/hokuyo_tools.h"
+#include "kernel/math/regression.h"
 #include "kernel/log_level.h"
 #include "linux/tools/com.h"
 #include "kernel/driver/usb.h"
@@ -64,6 +65,7 @@ struct robot_interface_arg
 static void* robot_interface_task(void* arg);
 static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
+static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 
@@ -178,6 +180,9 @@ static void* robot_interface_task(void* arg)
 				break;
 			case USB_HOKUYO_FOO_BAR:
 				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_FOO_BAR, msg, size);
+				break;
+			case USB_HOKUYO_FOO_SEG:
+				res = robot_interface_process_hokuyo_seg(robot, args->com_id, HOKUYO_FOO, msg, size);
 				break;
 			case USB_CONTROL:
 				res = robot_interface_process_control(robot, args->com_id, msg, size);
@@ -333,6 +338,35 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 
 	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
 	hokuyo_compute_xy(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
+	//regression_poly(data->hokuyo_pos, HOKUYO_NUM_POINTS, 10, data->detection_seg);
+
+	pthread_mutex_unlock(&data->mutex);
+
+end:
+	return res;
+}
+
+static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size)
+{
+	int res = 0;
+
+	(void) com_id;
+
+	if(size != HOKUYO_NUM_POINTS)
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&data->mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	memcpy(&data->detection_seg, msg, size);
 
 	pthread_mutex_unlock(&data->mutex);
 

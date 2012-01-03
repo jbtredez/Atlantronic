@@ -462,6 +462,21 @@ void plot_table(struct graph* graph)
 		}
 	}
 
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
+	{
+		glColor3f(0,1,0);
+		glBegin(GL_LINE_STRIP);
+		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
+		{
+			if(robot_interface.detection_seg[i])
+			{
+				pos_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &robot_interface.hokuyo_pos[i], &pos_table);
+				glVertex2f(pos_table.x, pos_table.y);
+			}
+		}
+		glEnd();
+	}
+
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_BAR] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_BAR]);
@@ -772,8 +787,16 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 		case GDK_Escape:
 			drawing_zoom_selection = 0;
 			break;
+		case GDK_KP_Subtract:
+		case GDK_minus:
+			graph_zoomf(&graph[current_graph], 2);
+			break;
+		case GDK_KP_Add:
+		case GDK_plus:
+			graph_zoomf(&graph[current_graph], 0.5);
+			break;
 		case GDK_u:
-			graph_reset_roi(&graph[GRAPH_TABLE]);
+			graph_reset_roi(&graph[current_graph]);
 			break;
 	}
 

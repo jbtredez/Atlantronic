@@ -40,6 +40,7 @@ struct robot_interface
 
 	// calculs
 	struct vect_pos hokuyo_pos[HOKUYO_NUM_POINTS*3];
+	char detection_seg[HOKUYO_NUM_POINTS];
 };
 
 int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg);
