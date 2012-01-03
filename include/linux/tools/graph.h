@@ -52,4 +52,6 @@ void graph_resize_axis_x(struct graph* graph, float xmin, float xmax);
 
 void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2);
 
+void graph_zoomf(struct graph* graph, float zoom);
+
 #endif

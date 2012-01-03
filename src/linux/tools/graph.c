@@ -208,3 +208,19 @@ void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse
 
 	graph_update_data(graph);
 }
+
+void graph_zoomf(struct graph* graph, float zoom)
+{
+	float xrange = graph->roi_xmax - graph->roi_xmin;
+	float yrange = graph->roi_ymax - graph->roi_ymin;
+
+	float xmed = 0.5*(graph->roi_xmax + graph->roi_xmin);
+	float ymed = 0.5*(graph->roi_ymax + graph->roi_ymin);
+
+	graph->roi_xmin = xmed - 0.5 * xrange * zoom;
+	graph->roi_xmax = xmed + 0.5 * xrange * zoom;
+	graph->roi_ymin = ymed - 0.5 * yrange * zoom;
+	graph->roi_ymax = ymed + 0.5 * yrange * zoom;
+
+	graph_update_data(graph);
+}
