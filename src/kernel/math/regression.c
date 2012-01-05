@@ -64,11 +64,29 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 
 	memset(type, 0x00, size);
 
+	while( a < size && (int)pt[a].x == 0 && (int)pt[a].y == 0)
+		a++;
+
+	if(a >= size)
+	{
+		goto end;
+	}
+
+	type[a] = 1;
+
+	while( b > a && (int)pt[b].x == 0 && (int)pt[b].y == 0)
+		b--;
+
+	if( a == b)
+	{
+		goto end;
+	}
+
+	type[b] = 1;
+
 	while(1)
 	{
 		dist_max = -1;
-		type[a] = 1;
-		type[b] = 1;
 		ab.x = (int)pt[b].x - (int)pt[a].x;
 		ab.y = (int)pt[b].y - (int)pt[a].y;
 		nab = sqrtf(ab.x*ab.x+ab.y*ab.y);
@@ -78,14 +96,14 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 			ac.x = (int)pt[c].x - (int)pt[a].x;
 			ac.y = (int)pt[c].y - (int)pt[a].y;
 			dist = abs(ab.x * ac.y - ab.y * ac.x);
-			if(dist > dist_max)
+			if(dist > dist_max && ((int)pt[c].x != 0 || (int)pt[c].y != 0))
 			{
 				dist_max = dist;
 				id_max = c;
 			}
 		}
 
-		if(dist_max > seuil * nab && a != b)
+		if(dist_max > seuil * nab && b - a > 2)
 		{
 			// nouveau point
 			type[id_max] = 1;
