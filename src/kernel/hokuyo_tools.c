@@ -18,16 +18,16 @@
 
 void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct vect_pos *pos)
 {
-	float alpha = HOKUYO_START_ANGLE + scan->sens * scan->pos_hokuyo.alpha;
+	float alpha = scan->sens * HOKUYO_START_ANGLE + scan->pos_hokuyo.alpha;
 	int size = HOKUYO_NUM_POINTS;
 
 	for( ; size--; )
 	{
 		pos->alpha = alpha;
 		pos->ca = cosf(alpha);
-		pos->sa = scan->sens * sinf(alpha);
+		pos->sa = sinf(alpha);
 		pos++;
-		alpha += HOKUYO_DTHETA;
+		alpha += scan->sens * HOKUYO_DTHETA;
 	}
 }
 
@@ -40,7 +40,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect_pos *pos)
 
 	for( ; size--; )
 	{
-		if(*distance > 19)
+		if(*distance > 19 && *distance < 4000)
 		{
 			pos->x = *distance * pos->ca + dx;
 			pos->y = *distance * pos->sa + dy;
