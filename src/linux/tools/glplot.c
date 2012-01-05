@@ -32,6 +32,7 @@ enum
 	SUBGRAPH_TABLE_HOKUYO_FOO,
 	SUBGRAPH_TABLE_HOKUYO_FOO_BAR,
 	SUBGRAPH_TABLE_HOKUYO_BAR,
+	SUBGRAPH_TABLE_HOKUYO_FOO_SEG,
 	SUBGRAPH_TABLE_POS_CONS,
 	SUBGRAPH_TABLE_POS_MES,
 	SUBGRAPH_TABLE_NUM,
@@ -121,6 +122,7 @@ int main(int argc, char *argv[])
 	graph_init(&graph[GRAPH_TABLE], "Table", -1500, 1500, -1000, 1000, 800, 600, 0, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
+	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_BAR, "Hokuyo bar (via foo)", 1, 0.5, 0.5, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 0, 0.5, 0.5, 0);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
@@ -462,13 +464,13 @@ void plot_table(struct graph* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG] )
 	{
-		glColor3f(0,1,0);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_SEG]);
 		glBegin(GL_LINE_STRIP);
 		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			if(robot_interface.detection_seg[i])
+			if(robot_interface.detection_seg[i] == 1)
 			{
 				pos_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &robot_interface.hokuyo_pos[i], &pos_table);
 				glVertex2f(pos_table.x, pos_table.y);

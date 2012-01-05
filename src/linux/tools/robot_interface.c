@@ -338,7 +338,7 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 
 	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
 	hokuyo_compute_xy(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
-	//regression_poly(data->hokuyo_pos, HOKUYO_NUM_POINTS, 10, data->detection_seg);
+	regression_poly(data->hokuyo_pos + HOKUYO_NUM_POINTS * id, HOKUYO_NUM_POINTS, 25, data->detection_seg + HOKUYO_NUM_POINTS * id);
 
 	pthread_mutex_unlock(&data->mutex);
 
