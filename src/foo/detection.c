@@ -35,7 +35,7 @@ static struct hokuyo_scan hokuyo_scan_bar;
 static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 struct vect_pos detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 static int hokuyo_num_obj;
-float detection_reg_ecart = 10;
+float detection_reg_ecart = 25;
 char detection_seg[HOKUYO_NUM_POINTS];
 
 int detection_module_init()
@@ -51,14 +51,14 @@ int detection_module_init()
 	// TODO conf a virer dans kernel/robot_parameters.h
 	hokuyo_scan.sens = -1;
 	hokuyo_scan.pos_hokuyo.x = 60;
-	hokuyo_scan.pos_hokuyo.y = 60;
+	hokuyo_scan.pos_hokuyo.y = 160;
 	hokuyo_scan.pos_hokuyo.alpha = PI/4.0f;
 	hokuyo_scan.pos_hokuyo.ca = cosf(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = sinf(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan_bar.sens =  1;
 	hokuyo_scan_bar.pos_hokuyo.x = 60;
-	hokuyo_scan_bar.pos_hokuyo.y = -60;
-	hokuyo_scan_bar.pos_hokuyo.alpha = -PI/4.0f;
+	hokuyo_scan_bar.pos_hokuyo.y = -130;
+	hokuyo_scan_bar.pos_hokuyo.alpha = -0.80f;
 	hokuyo_scan_bar.pos_hokuyo.ca = cosf(hokuyo_scan_bar.pos_hokuyo.alpha);
 	hokuyo_scan_bar.pos_hokuyo.sa = sinf(hokuyo_scan_bar.pos_hokuyo.alpha);
 
@@ -91,7 +91,7 @@ static void detection_task()
 //		portTickType current_time = systick_get_time();
 //		log_format(LOG_INFO, "compute_time : %lu us", (long unsigned int) tick_to_us(current_time - last_time));
 		xSemaphoreGive(hokuyo_scan_mutex);
-		usb_add(USB_HOKUYO_FOO_SEG, &detection_seg, sizeof(detection_seg));
+//		usb_add(USB_HOKUYO_FOO_SEG, &detection_seg, sizeof(detection_seg));
 	}
 
 	vTaskDelete(NULL);
@@ -117,6 +117,6 @@ void can_hokuyo_data(struct can_msg *msg)
 	detection_can_hokuyo_id += msg->size;
 	if(detection_can_hokuyo_id == 1364)
 	{
-//		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan_bar, sizeof(hokuyo_scan_bar));
+		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan_bar, sizeof(hokuyo_scan_bar));
 	}
 }
