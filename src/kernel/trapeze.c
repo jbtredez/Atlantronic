@@ -23,7 +23,7 @@ void trapeze_apply(struct trapeze* t, float s)
 	}
 
 	// saturation de v_max à cause de la saturation en accélération
-	float v_abs = fabs(v);
+	float v_abs = fabsf(v);
 	if( v_abs < v_max )
 	{
 		if( v_max - v_abs > a_max )
