@@ -619,9 +619,27 @@ void control_rotate_to(float alpha)
 {
 	log_format(LOG_INFO, "param %f", alpha);
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	if(control_state != CONTROL_END)
+	{
+		control_state = CONTROL_ROTATE;
+	}
+	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
+	control_dest = control_cons;
 	float da = fmodf(alpha - control_cons.alpha, 2*PI);
-	control_rotate(da);
+	control_dest.alpha += da;
+	control_dest.ca = cosf(control_dest.alpha);
+	control_dest.sa = sinf(control_dest.alpha);
+	control_param.ad.angle = da;
+	control_param.ad.distance = 0;
+	control_timer = 0;
+	control_aMax_av = 0;
+	control_vMax_av = 0;
+	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
+	pid_reset(&control_pid_av);
+	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
 }
 
