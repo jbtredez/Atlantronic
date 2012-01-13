@@ -20,6 +20,7 @@
 #include "adc.h"
 #include "gpio.h"
 #include <math.h>
+#include <stdlib.h>
 #include "us.h"
 
 //! @todo réglage au pif
@@ -27,8 +28,8 @@
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
-
-#define TE                         (float) ((float)CONTROL_TICK_PERIOD) / ((float)72000000)
+#define CONTROL_HZ                 200
+#define TE                         0.005f
 
 #define CONTROL_POS_REACHED_TOLERANCE_X        2.0f
 
@@ -158,6 +159,12 @@ static void control_task(void* arg)
 
 	while(1)
 	{
+		// mise à jour de la position
+		location_update();
+
+		// recuperation des entrées AN
+		adc_get(&control_an);
+
 		control_compute();
 
 		wake_time += CONTROL_TICK_PERIOD;
@@ -229,12 +236,9 @@ static void control_compute()
 	int sens1 = 1;
 	int sens2 = 1;
 
-	location_update();
 	control_pos = location_get_position();
 	float v_d = location_get_speed_curv_abs();
 	float v_r = location_get_speed_rot();
-
-	adc_get(&control_an);
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
@@ -256,8 +260,8 @@ static void control_compute()
 			goto end_pwm_critical;
 			break;
 		case CONTROL_READY_ASSER:
-			control_param.ad.angle = 0;
-			control_param.ad.distance = 0;
+			control_v_dist_cons = 0;
+			control_v_rot_cons = 0;
 			break;
 		case CONTROL_STRAIGHT:
 		case CONTROL_ROTATE:
@@ -266,7 +270,7 @@ static void control_compute()
 			// => on va tout couper.
 			if( control_contact)
 			{
-				log(LOG_INFO, "collision : goto => free");
+				log(LOG_INFO, "collision - contact : goto => free");
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
@@ -307,7 +311,9 @@ static void control_compute()
 			control_compute_goto();
 			break;
 		case CONTROL_ARC:
-			// TODO
+			log_format(LOG_ERROR, "trajectoire non programmee : %ld", control_state);
+			control_state = CONTROL_READY_FREE;
+			vTaskSetEvent(EVENT_CONTROL_READY);
 			goto end_pwm_critical;
 			break;
 		case CONTROL_END:
@@ -315,13 +321,15 @@ static void control_compute()
 			break;
 		default:
 			// erreur de prog ou corruption mem
+			log_format(LOG_ERROR, "etat inconnu : %ld", control_state);
+			control_state = CONTROL_READY_FREE;
+			vTaskSetEvent(EVENT_CONTROL_READY);
 			goto end_pwm_critical;
 			break;
 	}
 
-	// gestion du timeout
+	// gestion du timeout (on demande de ne pas bouger pendant 2 sec avec asservissement actif)
 	// condition "on ne demande pas de bouger" (donc zero pur)
-//	if( (control_param.ad.angle && control_v_rot_cons == 0) || (control_param.ad.distance && control_v_dist_cons == 0) )
 	if( control_v_rot_cons == 0 && control_v_dist_cons == 0 )
 	{
 		// on augmente le temps avec consigne nulle
@@ -330,6 +338,7 @@ static void control_compute()
 		{
 			// ca fait 2 seconde qu'on devrait avoir terminé la trajectoire
 			// il y a un probleme
+			log_format(LOG_INFO, "2 sec sans bouger => CONTROL_READY_FREE");
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
 		}
@@ -366,7 +375,7 @@ static void control_compute()
 	else
 	{
 		// la rotation ne prend pas toute la pwm
-		float max = PWM_ARR - fabs(u_rot);
+		float max = PWM_ARR - fabsf(u_rot);
 		if( u_av > max)
 		{
 			u_av = max;
@@ -420,7 +429,7 @@ static void control_compute_goto()
 	if(control_param.ad.angle)
 	{
 		// TODO marge en dur
-		if(fabs(control_dest.alpha - control_pos.alpha) < 0.02f)
+		if(fabsf(control_dest.alpha - control_pos.alpha) < 0.02f)
 		{
 			control_param.ad.angle = 0;
 			control_cons.alpha = control_dest.alpha;
@@ -481,16 +490,17 @@ static void control_compute_goto()
 		}
 		else
 		{
+			control_v_rot_cons = 0;
 			trapeze_set(&control_trapeze, control_vMax_av, control_aMax_av);
 			trapeze_apply(&control_trapeze, control_param.ad.distance);
-			control_cons.x += control_trapeze.v * control_cons.ca;
-			control_cons.y += control_trapeze.v * control_cons.sa;
 			control_v_dist_cons = control_trapeze.v;
-			control_v_rot_cons = 0;
+			control_cons.x += control_v_dist_cons * control_cons.ca;
+			control_cons.y += control_v_dist_cons * control_cons.sa;
 		}
 	}
 	else
 	{
+		log(LOG_INFO, "target reached");
 		control_v_dist_cons = 0;
 		control_v_rot_cons = 0;
 		control_state = CONTROL_READY_ASSER;
