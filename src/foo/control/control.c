@@ -228,6 +228,27 @@ static void control_recalage()
 	}
 }
 
+static int control_check_speed(int mes, int cons, int delta)
+{
+	int res = CONTROL_SPEED_OK;
+
+	if( abs(mes) > abs(cons) + delta)
+	{
+		res = CONTROL_OVER_SPEED;
+	}
+	else if( abs(cons) > abs(mes) + delta )
+	{
+		res = CONTROL_UNDER_SPEED;
+	}
+	else if( abs(cons - mes) > delta && cons * mes < 0)
+	{
+		res =  CONTROL_WRONG_WAY;
+	}
+
+	return res;
+}
+
+
 static void control_compute()
 {
 	float u1 = 0;
@@ -251,7 +272,15 @@ static void control_compute()
 	// detection de collisions
 	control_colision_detection();
 
-	// calcul du prochain point
+	// verification du suivit de vitesse
+	int vd_mm = v_d * CONTROL_HZ;
+	int vd_cons_mm = control_v_dist_cons * CONTROL_HZ;
+	int speed_check = control_check_speed(vd_mm, vd_cons_mm, 100);
+
+	// calcul du prochain point :
+	// control_v_dist_cons
+	// control_v_rot_cons
+	// control_cons
 	switch(control_state)
 	{
 		case CONTROL_READY_FREE:
@@ -271,6 +300,12 @@ static void control_compute()
 			if( control_contact)
 			{
 				log(LOG_INFO, "collision - contact : goto => free");
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+			}
+			else if(speed_check)
+			{
+				log_format(LOG_ERROR, "erreur de suivit cons %d mes %d check %d", vd_cons_mm, vd_mm, speed_check);
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}

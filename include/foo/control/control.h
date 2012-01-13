@@ -27,6 +27,14 @@ enum control_way
 	CONTROL_BACKWARD
 };
 
+enum control_speed
+{
+	CONTROL_SPEED_OK,
+	CONTROL_OVER_SPEED,
+	CONTROL_UNDER_SPEED,
+	CONTROL_WRONG_WAY,
+};
+
 struct control_usb_data
 {
 	int32_t control_state;
