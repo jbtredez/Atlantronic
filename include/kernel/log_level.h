@@ -7,10 +7,11 @@
 
 enum log_level
 {
-	LOG_ERROR,
-	LOG_INFO,
-	LOG_DEBUG1,
-	LOG_DEBUG2,
+	LOG_ERROR,      //!< logs d'erreur
+	LOG_INFO,       //!< logs d'info
+	LOG_DEBUG1,     //!< logs de debug (pas trop verbeux)
+	LOG_DEBUG2,     //!< logs de debug (logs verbeux, ou periodiques 100ms)
+	LOG_DEBUG3,     //!< logs de debug (logs verbeux, ou periodiques  < 100ms)
 	LOG_MAX,
 };
 
