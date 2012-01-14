@@ -32,6 +32,10 @@
 #define PARAM_DIST_MOD_GAIN                (float) (1.0f / (2.0f * PARAM_MOT_RED))
 #define PARAM_ROT_MOD_GAIN                 (float) (1.0f / (PARAM_VOIE_MOT * PARAM_MOT_RED))
 
+#define PARAM_LEFT_CORNER_X                    155
+#define PARAM_LEFT_CORNER_Y                    175
+#define PARAM_RIGHT_CORNER_X                   155
+#define PARAM_RIGHT_CORNER_Y                  -175
 
 #define PARAM_NP_X                          -95.0f
 
