@@ -545,11 +545,11 @@ void plot_table(struct graph* graph)
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(PARAM_NP_X, -150);
-		glVertex2f(PARAM_NP_X, 150);
-		glVertex2f(300 + PARAM_NP_X, 150);
-		glVertex2f(300 + PARAM_NP_X, -150);
-		glVertex2f(PARAM_NP_X, -150);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
 		glEnd();
 		glPopMatrix();
 	}
@@ -784,6 +784,8 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg)
 {
 	(void) arg;
+	int res;
+
 	switch(event->keyval)
 	{
 		case GDK_Escape:
@@ -796,6 +798,14 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 		case GDK_KP_Add:
 		case GDK_plus:
 			graph_zoomf(&graph[current_graph], 0.5);
+			break;
+		case GDK_r:
+			res = pthread_mutex_lock(&robot_interface.mutex);
+			if(res == 0)
+			{
+				robot_interface.control_usb_data_count = 0;
+				pthread_mutex_unlock(&robot_interface.mutex);
+			}
 			break;
 		case GDK_u:
 			graph_reset_roi(&graph[current_graph]);
