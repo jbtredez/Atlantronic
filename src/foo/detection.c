@@ -27,7 +27,7 @@
 static void detection_task();
 int detection_module_init();
 static void detection_compute();
-static void detection_compute_front_distance();
+static void detection_compute_front_object();
 void can_hokuyo_reset(struct can_msg *msg);
 void can_hokuyo_data(struct can_msg *msg);
 
