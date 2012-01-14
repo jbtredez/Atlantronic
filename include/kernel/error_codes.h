@@ -61,12 +61,13 @@ enum fault
 #define ERR_INIT_USB            0x209
 #define ERR_INIT_AX12           0x20a
 #define ERR_INIT_CONTROL        0x20b
-#define ERR_INIT_TEST           0x20c
+#define ERR_INIT_DETECTION      0x20c
 #define ERR_INIT_END            0x20d
 #define ERR_INIT_HOKUYO         0x20e
 #define ERR_INIT_CAN            0x20f
 #define ERR_INIT_CONTROL_PINCE  0x210
 #define ERR_INIT_CAN_US         0x211
 #define ERR_INIT_ERROR          0x212
+#define ERR_INIT_TEST           0x213
 
 #endif
