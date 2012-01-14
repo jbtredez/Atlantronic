@@ -96,6 +96,10 @@ struct control_cmd_param_arg
 	float kalpha;
 };
 
+void control_set_max_speed(float speed);
+
+void control_set_max_acc(float acc);
+
 void control_straight(float dist);
 
 void control_straight_to_wall(float dist);

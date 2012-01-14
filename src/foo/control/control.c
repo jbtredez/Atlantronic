@@ -22,6 +22,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include "us.h"
+#include "detection.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       300
@@ -72,7 +73,7 @@ static struct trapeze control_trapeze;
 static struct adc_an control_an;
 static uint8_t control_contact;
 static uint8_t control_us;
-static volatile struct vect_pos control_pos;
+static struct vect_pos control_pos;
 static portTickType control_timer;
 static float control_kx;
 static float control_ky;
@@ -94,7 +95,8 @@ static struct pid control_pid_rot;
 
 static int control_module_init()
 {
-	control_use_us = US_FRONT_MASK | US_BACK_MASK;
+// TODO : us desactives pour les tests d'arrêt avec hokuyo
+//	control_use_us = US_FRONT_MASK | US_BACK_MASK;
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
@@ -129,10 +131,8 @@ static int control_module_init()
 	control_ky = 0.0f;
 	control_kalpha = 0.015f;
 
-	control_aMax_av = 0;
-	control_vMax_av = 0;
-	control_aMax_rot = 0;
-	control_vMax_rot = 0;
+	control_set_max_speed(1000);
+	control_set_max_acc(500);
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -275,7 +275,7 @@ static void control_compute()
 	// verification du suivit de vitesse
 	int vd_mm = v_d * CONTROL_HZ;
 	int vd_cons_mm = control_v_dist_cons * CONTROL_HZ;
-	int speed_check = control_check_speed(vd_mm, vd_cons_mm, 100);
+	int speed_check = control_check_speed(vd_mm, vd_cons_mm, 200);
 
 	// calcul du prochain point :
 	// control_v_dist_cons
@@ -306,8 +306,8 @@ static void control_compute()
 			else if(speed_check)
 			{
 				log_format(LOG_ERROR, "erreur de suivit cons %d mes %d check %d", vd_cons_mm, vd_mm, speed_check);
-				control_state = CONTROL_READY_FREE;
-				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+				//control_state = CONTROL_READY_FREE;
+				//vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
 			else
 			{
@@ -527,7 +527,25 @@ static void control_compute_goto()
 		{
 			control_v_rot_cons = 0;
 			trapeze_set(&control_trapeze, control_vMax_av, control_aMax_av);
-			trapeze_apply(&control_trapeze, control_param.ad.distance);
+			float distance = control_param.ad.distance;
+			if(distance > 0)
+			{
+				struct vect_pos front_obj;
+				struct vect_pos front_obj_robot;
+				detection_get_front_object(&front_obj);
+				pos_table_to_robot(&control_pos, &front_obj, &front_obj_robot);
+				float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
+				if(dist < 0)
+				{
+					dist = 0;
+				}
+
+				if(dist < ex)
+				{
+					distance = control_trapeze.s + dist;
+				}
+			}
+			trapeze_apply(&control_trapeze, distance);
 			control_v_dist_cons = control_trapeze.v;
 			control_cons.x += control_v_dist_cons * control_cons.ca;
 			control_cons.y += control_v_dist_cons * control_cons.sa;
@@ -579,6 +597,22 @@ static void control_colision_detection()
 	}
 }
 
+void control_set_max_speed(float speed)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	control_vMax_av = speed * TE;
+	control_vMax_rot = speed * TE / ((float) PI*PARAM_VOIE_MOT);
+	xSemaphoreGive(control_mutex);
+}
+
+void control_set_max_acc(float acc)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	control_aMax_av = acc*TE*TE;
+	control_aMax_rot = acc*TE*TE/((float) PI*PARAM_VOIE_MOT);
+	xSemaphoreGive(control_mutex);
+}
+
 void control_cmd_straight(void* arg)
 {
 	struct control_cmd_straight_arg* cmd_arg = (struct control_cmd_straight_arg*) arg;
@@ -602,10 +636,6 @@ void control_straight(float dist)
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
 	control_timer = 0;
-	control_aMax_av = 500.0f*TE*TE;
-	control_vMax_av = 1000.0f*TE;
-	control_aMax_rot = 0;
-	control_vMax_rot = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
@@ -635,10 +665,6 @@ void control_rotate(float angle)
 	control_param.ad.angle = angle;
 	control_param.ad.distance = 0;
 	control_timer = 0;
-	control_aMax_av = 0;
-	control_vMax_av = 0;
-	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
@@ -669,10 +695,6 @@ void control_rotate_to(float alpha)
 	control_param.ad.angle = da;
 	control_param.ad.distance = 0;
 	control_timer = 0;
-	control_aMax_av = 0;
-	control_vMax_av = 0;
-	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
@@ -752,10 +774,6 @@ void control_goto_near(float x, float y, float dist, enum control_way sens)
 	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
 
 	control_timer = 0;
-	control_aMax_av = 350.0f*TE*TE;
-	control_vMax_av = 1300.0f*TE;
-	control_aMax_rot = 1200.0f*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	control_vMax_rot = 1500.0f*TE/((float) PI*PARAM_VOIE_MOT);
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
@@ -784,10 +802,6 @@ void control_straight_to_wall(float dist)
 	control_param.ad.angle = 0;
 	control_param.ad.distance = dist;
 	control_timer = 0;
-	control_aMax_av = 100.0f*TE*TE;
-	control_vMax_av = 250.0f*TE;
-	control_aMax_rot = 0;
-	control_vMax_rot = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
