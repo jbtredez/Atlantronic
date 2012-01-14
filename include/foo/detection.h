@@ -8,5 +8,7 @@
 #include <stdint.h>
 #include "kernel/vect_pos.h"
 
+void detection_get_front_object(struct vect_pos* obj);
+
 #endif
 
