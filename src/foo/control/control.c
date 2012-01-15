@@ -21,7 +21,6 @@
 #include "gpio.h"
 #include <math.h>
 #include <stdlib.h>
-#include "us.h"
 #include "detection.h"
 
 //! @todo réglage au pif
@@ -72,7 +71,6 @@ static float control_v_rot_cons;
 static struct trapeze control_trapeze;
 static struct adc_an control_an;
 static uint8_t control_contact;
-static uint8_t control_us;
 static struct vect_pos control_pos;
 static portTickType control_timer;
 static float control_kx;
@@ -82,7 +80,6 @@ static float control_aMax_av;
 static float control_vMax_av;
 static float control_aMax_rot;
 static float control_vMax_rot;
-static int control_use_us;
 
 union
 {
@@ -95,8 +92,6 @@ static struct pid control_pid_rot;
 
 static int control_module_init()
 {
-// TODO : us desactives pour les tests d'arrêt avec hokuyo
-//	control_use_us = US_FRONT_MASK | US_BACK_MASK;
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
 
@@ -487,27 +482,6 @@ static void control_compute_goto()
 	}
 	else if(control_param.ad.distance)
 	{
-		if( control_param.ad.distance > 0)
-		{
-			if( control_us & US_FRONT_MASK)
-			{
-				control_v_dist_cons = 0;
-				control_v_rot_cons = 0;
-				control_state = CONTROL_READY_FREE;
-				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
-			}
-		}
-		else
-		{
-			if( control_us & US_BACK_MASK)
-			{
-				control_v_dist_cons = 0;
-				control_v_rot_cons = 0;
-				control_state = CONTROL_READY_FREE;
-				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
-			}
-		}
-
 		// TODO marges en dur
 		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
 		//float ey = -control_pos.sa * (control_dest.x - control_pos.x) + control_pos.ca * (control_dest.y - control_pos.y);
@@ -586,15 +560,6 @@ static void control_colision_detection()
 		control_contact |= CONTACT_LEFT;
 	}
 */
-	// arrêt sur us si demande des us
-	if( control_use_us )
-	{
-		control_us = us_check_collision() & control_use_us;
-	}
-	else
-	{
-		control_us = 0;
-	}
 }
 
 void control_set_max_speed(float speed)
@@ -831,9 +796,4 @@ void control_free()
 		vTaskSetEvent(EVENT_CONTROL_READY);
 	}
 	xSemaphoreGive(control_mutex);
-}
-
-void control_set_use_us(uint8_t use_us_mask)
-{
-	control_use_us = use_us_mask;
 }

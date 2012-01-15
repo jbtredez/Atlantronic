@@ -8,45 +8,42 @@ digraph robot
 	node [color=lawngreen, style=filled ]
 	strategy
 	control
-	cli
-	log
 	ax12
 	detection
 	pince_control
+	usb
+	hokuyo
 
 	// modules - fonctions
 	node [color=lightblue2, style=filled ]
-	avoidance
-	"colision detection"
 	location
 	odometry
 	beacon
 	pince
 	us
-	hokuyo
+	log
 
 	// io
 	node [color=lightblue3, style=filled ]
 	{
-		rank=same;
+//		rank=same;
 		adc
 		gpio
 		pwm
 		encoders
-		usb
 		can
 		usart
 		led
 	}
 
 	// liens
-	strategy -> avoidance
 	strategy -> control
 	strategy -> pince
-	avoidance -> control
 	control -> adc
 	control -> gpio
 	control -> location
+	control -> detection
+	control -> usb
 	location -> odometry
 	location -> beacon
 	pince -> ax12
@@ -60,9 +57,9 @@ digraph robot
 	log -> usb
 
 	hokuyo -> usart
-	ax12 -> "usart"
-	us -> "can"
-	beacon -> "can"
-	odometry -> "encoders"
-	control -> "pwm"
+	ax12 -> usart
+	us -> can
+	beacon -> can
+	odometry -> encoders
+	control -> pwm
 }
