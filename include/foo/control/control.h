@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"
+#include "control/trajectory.h"
 
 enum control_state
 {
@@ -17,13 +18,6 @@ enum control_state
 	CONTROL_STRAIGHT_TO_WALL,     //!< on recule dans un mur pour recaler. On va tout droit au debut puis on desactive l'asservissement en rotation dés qu'un coté touche le mur
 	CONTROL_GOTO,                 //!< goto
 	CONTROL_END,                  //!< end : halted forever
-};
-
-enum control_way
-{
-	CONTROL_ANY_WAY,
-	CONTROL_FORWARD,
-	CONTROL_BACKWARD
 };
 
 enum control_speed
@@ -95,10 +89,6 @@ struct control_cmd_param_arg
 	float kalpha;
 };
 
-void control_set_max_speed(float speed);
-
-void control_set_max_acc(float acc);
-
 void control_straight(float dist);
 
 void control_straight_to_wall(float dist);
@@ -107,7 +97,7 @@ void control_rotate(float angle);
 
 void control_rotate_to(float alpha);
 
-void control_goto_near(float x, float y, float dist, enum control_way sens);
+void control_goto_near(float x, float y, float dist, enum trajectory_way sens);
 
 void control_free();
 

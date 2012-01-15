@@ -13,7 +13,6 @@
 #include "kernel/vect_pos.h"
 #include "pwm.h"
 #include "control/pid.h"
-#include "kernel/trapeze.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/event.h"
 #include "kernel/driver/usb.h"
@@ -22,16 +21,15 @@
 #include <math.h>
 #include <stdlib.h>
 #include "detection.h"
+#include "control/trajectory.h"
 
 //! @todo réglage au pif
-#define CONTROL_STACK_SIZE       300
+#define CONTROL_STACK_SIZE       350
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
 #define CONTROL_HZ                 200
 #define TE                         0.005f
-
-#define CONTROL_POS_REACHED_TOLERANCE_X        2.0f
 
 static void control_task(void *);
 static float sinc( float x );
@@ -49,26 +47,12 @@ static void control_cmd_free(void* arg);
 static void control_cmd_param(void* arg);
 static void control_cmd_print_param(void* arg);
 
-struct control_param_ad
-{
-	float angle;
-	float distance;
-};
-
-struct control_param_arc
-{
-	float r;
-	float angle;
-};
-
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static int32_t control_state;
-static struct vect_pos control_dest;
 static struct vect_pos control_cons;
 static float control_v_dist_cons;
 static float control_v_rot_cons;
-static struct trapeze control_trapeze;
 static struct adc_an control_an;
 static uint8_t control_contact;
 static struct vect_pos control_pos;
@@ -76,16 +60,7 @@ static portTickType control_timer;
 static float control_kx;
 static float control_ky;
 static float control_kalpha;
-static float control_aMax_av;
-static float control_vMax_av;
-static float control_aMax_rot;
-static float control_vMax_rot;
-
-union
-{
-	struct control_param_ad ad;
-	struct control_param_arc arc;
-} control_param;
+static struct trajectory control_traj;
 
 static struct pid control_pid_av;
 static struct pid control_pid_rot;
@@ -126,8 +101,10 @@ static int control_module_init()
 	control_ky = 0.0f;
 	control_kalpha = 0.015f;
 
-	control_set_max_speed(1000);
-	control_set_max_acc(500);
+	control_traj.trapeze_av.v_max = 1000 * TE;
+	control_traj.trapeze_rot.v_max = 1000 * TE / ((float) PI*PARAM_VOIE_MOT);
+	control_traj.trapeze_av.a_max = 500 * TE * TE;
+	control_traj.trapeze_rot.a_max = 500 * TE * TE / ((float) PI*PARAM_VOIE_MOT);
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -428,9 +405,9 @@ end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
 	control_usb_data.control_state = control_state;
-	control_usb_data.control_dest_x = control_dest.x;
-	control_usb_data.control_dest_y = control_dest.y;
-	control_usb_data.control_dest_alpha = control_dest.alpha;
+//	control_usb_data.control_dest_x = control_dest.x;
+//	control_usb_data.control_dest_y = control_dest.y;
+//	control_usb_data.control_dest_alpha = control_dest.alpha;
 	control_usb_data.control_cons_x = control_cons.x;
 	control_usb_data.control_cons_y = control_cons.y;
 	control_usb_data.control_cons_alpha = control_cons.alpha;
@@ -448,78 +425,15 @@ end_pwm_critical:
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }
 
+//! generation de trajectoire pour aller vers le point voulu
 static void control_compute_goto()
 {
-	if(control_param.ad.angle)
-	{
-		// TODO marge en dur
-		if(fabsf(control_dest.alpha - control_pos.alpha) < 0.02f)
-		{
-			control_param.ad.angle = 0;
-			control_cons.alpha = control_dest.alpha;
-			control_cons.ca = control_dest.ca;
-			control_cons.sa = control_dest.sa;
-			control_v_dist_cons = 0;
-			control_v_rot_cons = 0;
-			trapeze_reset(&control_trapeze, 0, 0);
-		}
-		else
-		{
-			trapeze_set(&control_trapeze, control_vMax_rot, control_aMax_rot);
-			trapeze_apply(&control_trapeze, control_param.ad.angle);
-			control_cons.alpha += control_trapeze.v;
-			control_cons.ca = cosf(control_cons.alpha);
-			control_cons.sa = sinf(control_cons.alpha);
-			control_v_dist_cons = 0;
-			control_v_rot_cons = control_trapeze.v;
-		}
-	}
-	else if(control_param.ad.distance)
-	{
-		// TODO marges en dur
-		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
-		//float ey = -control_pos.sa * (control_dest.x - control_pos.x) + control_pos.ca * (control_dest.y - control_pos.y);
+	int res = trajectory_compute(&control_traj, &control_pos);
+	control_cons = control_traj.pos_cons;
+	control_v_dist_cons = control_traj.trapeze_av.v;
+	control_v_rot_cons = control_traj.trapeze_rot.v;
 
-		if( fabsf(ex) < CONTROL_POS_REACHED_TOLERANCE_X)
-		{
-			//if(fabsf(ey) < 10.0f)
-			//{
-				control_param.ad.distance = 0;
-				control_cons = control_dest;
-				control_v_dist_cons = 0;
-				control_v_rot_cons = 0;
-				trapeze_reset(&control_trapeze, 0, 0);
-			//}
-		}
-		else
-		{
-			control_v_rot_cons = 0;
-			trapeze_set(&control_trapeze, control_vMax_av, control_aMax_av);
-			float distance = control_param.ad.distance;
-			if(distance > 0)
-			{
-				struct vect_pos front_obj;
-				struct vect_pos front_obj_robot;
-				detection_get_front_object(&front_obj);
-				pos_table_to_robot(&control_pos, &front_obj, &front_obj_robot);
-				float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
-				if(dist < 0)
-				{
-					dist = 0;
-				}
-
-				if(dist < ex)
-				{
-					distance = control_trapeze.s + dist;
-				}
-			}
-			trapeze_apply(&control_trapeze, distance);
-			control_v_dist_cons = control_trapeze.v;
-			control_cons.x += control_v_dist_cons * control_cons.ca;
-			control_cons.y += control_v_dist_cons * control_cons.sa;
-		}
-	}
-	else
+	if(res)
 	{
 		log(LOG_INFO, "target reached");
 		control_v_dist_cons = 0;
@@ -533,7 +447,7 @@ static void control_compute_goto()
 //! on detecte une colision sur le coté droit ou sur le coté gauche
 static void control_colision_detection()
 {
-	if( control_param.ad.distance < 0)
+/*	if( control_param.ad.distance < 0)
 	{
 		control_contact = get_contact();
 	}
@@ -541,7 +455,7 @@ static void control_colision_detection()
 	{
 		control_contact = 0;
 	}
-
+*/
 /*	// TODO régler seuil
 	if( control_an.i_right > 2000 )
 	{
@@ -554,22 +468,6 @@ static void control_colision_detection()
 		control_contact |= CONTACT_LEFT;
 	}
 */
-}
-
-void control_set_max_speed(float speed)
-{
-	xSemaphoreTake(control_mutex, portMAX_DELAY);
-	control_vMax_av = speed * TE;
-	control_vMax_rot = speed * TE / ((float) PI*PARAM_VOIE_MOT);
-	xSemaphoreGive(control_mutex);
-}
-
-void control_set_max_acc(float acc)
-{
-	xSemaphoreTake(control_mutex, portMAX_DELAY);
-	control_aMax_av = acc*TE*TE;
-	control_aMax_rot = acc*TE*TE/((float) PI*PARAM_VOIE_MOT);
-	xSemaphoreGive(control_mutex);
 }
 
 void control_cmd_straight(void* arg)
@@ -587,13 +485,7 @@ void control_straight(float dist)
 		control_state = CONTROL_STRAIGHT;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
-	control_cons = location_get_position();
-	control_dest = control_cons;
-	control_dest.x += control_dest.ca * dist;
-	control_dest.y += control_dest.sa * dist;
-	control_param.ad.angle = 0;
-	control_param.ad.distance = dist;
+	trajectory_init_straight(&control_traj, dist);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -609,20 +501,14 @@ void control_cmd_rotate(void* arg)
 void control_rotate(float angle)
 {
 	log_format(LOG_INFO, "param %f", angle);
+
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_ROTATE;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
-	control_cons = location_get_position();
-	control_dest = control_cons;
-	control_dest.alpha += angle;
-	control_dest.ca = cosf(control_dest.alpha);
-	control_dest.sa = sinf(control_dest.alpha);
-	control_param.ad.angle = angle;
-	control_param.ad.distance = 0;
+	trajectory_init_rotate(&control_traj, angle);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -638,43 +524,19 @@ void control_cmd_rotate_to(void* arg)
 void control_rotate_to(float alpha)
 {
 	log_format(LOG_INFO, "param %f", alpha);
+
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_ROTATE;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
-	control_cons = location_get_position();
-	control_dest = control_cons;
-	float da = fmodf(alpha - control_cons.alpha, 2*PI);
-	control_dest.alpha += da;
-	control_dest.ca = cosf(control_dest.alpha);
-	control_dest.sa = sinf(control_dest.alpha);
-	control_param.ad.angle = da;
-	control_param.ad.distance = 0;
+
+	trajectory_init_rotate_to(&control_traj, alpha);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
-}
-
-float trouverRotation(float debut, float fin)
-{
-	float alpha = fin - debut;
-	alpha = fmodf(alpha, 2*PI); // Retour dans [-2*PI;2*PI]
-	
-	// Retour dans [-PI;PI] si neccessaire
-	if (alpha > PI)
-	{
-		alpha -= 2*PI;
-	}
-	else if (alpha < -PI)
-	{
-		alpha += 2*PI;
-	}
-	
-	return alpha;
 }
 
 void control_cmd_goto_near(void* arg)
@@ -683,59 +545,23 @@ void control_cmd_goto_near(void* arg)
 	control_goto_near(cmd_arg->x, cmd_arg->y, cmd_arg->dist, cmd_arg->way);
 }
 
-void control_goto_near(float x, float y, float dist, enum control_way sens)
+void control_goto_near(float x, float y, float dist, enum trajectory_way sens)
 {
 	log_format(LOG_INFO, "param %.2f %.2f %.2f %d", x, y, dist, sens);
+
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_GOTO;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
-	control_cons = location_get_position();
 
-
-	float dx = x - control_cons.x;
-	float dy = y - control_cons.y;
-	control_param.ad.distance = sqrtf(dx*dx+dy*dy) - dist;
-	float a = atan2f(dy, dx);
-
-	if(sens == CONTROL_FORWARD)
-	{
-		control_param.ad.angle = trouverRotation(control_cons.alpha, a);
-	}
-	else if(sens == CONTROL_BACKWARD)
-	{
-		control_param.ad.angle = trouverRotation(control_cons.alpha, a + PI);
-		control_param.ad.distance *= -1;
-	}
-	else
-	{
-		float theta1av = trouverRotation(control_cons.alpha, a);
-		float theta1re = trouverRotation(control_cons.alpha, a + PI);
-
-		if ( fabsf(theta1av) > fabsf(theta1re))
-		{
-			control_param.ad.angle = theta1re;
-			control_param.ad.distance *= -1;
-		}
-		else
-		{
-			control_param.ad.angle = theta1av;
-		}
-	}
-
-	control_dest.alpha = control_cons.alpha + control_param.ad.angle;
-	control_dest.ca = cosf(control_dest.alpha);
-	control_dest.sa = sinf(control_dest.alpha);
-	control_dest.x = control_cons.x + control_param.ad.distance * control_dest.ca;
-	control_dest.y = control_cons.y + control_param.ad.distance * control_dest.sa;
-
+	trajectory_init_goto(&control_traj, x, y, dist, sens);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
+
 }
 
 void control_cmd_straight_to_wall(void* arg)
@@ -747,13 +573,13 @@ void control_cmd_straight_to_wall(void* arg)
 void control_straight_to_wall(float dist)
 {
 	log_format(LOG_INFO, "param %.2f", dist);
+#if 0
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trapeze_reset(&control_trapeze, 0, 0);
 	control_cons = location_get_position();
 	control_dest = control_cons;
 	control_dest.x += control_dest.ca * dist;
@@ -764,6 +590,7 @@ void control_straight_to_wall(float dist)
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
+#endif
 }
 
 int32_t control_get_state()
