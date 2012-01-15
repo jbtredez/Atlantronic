@@ -10,7 +10,6 @@
 #include <math.h>
 #include "kernel/robot_parameters.h"
 #include "pince.h"
-#include "control/control_pince.h"
 #include "recalage.h"
 #include "kernel/hokuyo_tools.h"
 #include "us.h"

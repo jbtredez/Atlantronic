@@ -10,7 +10,6 @@
 #include <math.h>
 #include "kernel/robot_parameters.h"
 #include "pince.h"
-#include "foo/control/control_pince.h"
 
 //! @todo réglage au pif
 #define TEST_DEPLACEMENT_STACK_SIZE       100
@@ -52,13 +51,13 @@ static void test_deplacement_task()
 
 	while(1)
 	{
-		control_goto_near(-700.0f, -700.0f, 0,CONTROL_ANY_WAY);
+		control_goto_near(-700.0f, -700.0f, 0, TRAJECTORY_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		control_goto_near(-700.0f, 350.0f, 0,CONTROL_ANY_WAY);
+		control_goto_near(-700.0f, 350.0f, 0, TRAJECTORY_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		control_goto_near(700.0f, 350.0f, 0,CONTROL_ANY_WAY);
+		control_goto_near(700.0f, 350.0f, 0, TRAJECTORY_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
-		control_goto_near(700.0f, -700.0f, 0,CONTROL_ANY_WAY);
+		control_goto_near(700.0f, -700.0f, 0, TRAJECTORY_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}
 

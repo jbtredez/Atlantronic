@@ -9,15 +9,12 @@
 #include "kernel/rcc.h"
 #include "kernel/robot_parameters.h"
 #include "pince.h"
-#include "control/control_pince.h"
 #include "kernel/us_def.h"
 
 void recalage()
 {
 	pince_configure();
 	pince_close();
-
-	control_pince_independant(1500, 1500);
 
 	if(getcolor() == COLOR_BLUE)
 	{
