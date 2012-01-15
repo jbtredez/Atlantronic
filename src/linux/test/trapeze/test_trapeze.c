@@ -11,7 +11,8 @@ int main()
 {
 	struct trapeze trapeze;
 
-	trapeze_set(&trapeze, 2.0f/HZ, 1.0f/(HZ*HZ));
+	trapeze.v_max = 2.0f/HZ;
+	trapeze.a_max = 1.0f/(HZ*HZ);
 
 	int i = 0;
 	float d = 0;
