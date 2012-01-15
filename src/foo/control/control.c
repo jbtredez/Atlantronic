@@ -340,12 +340,6 @@ static void control_compute()
 			}
 			control_compute_goto();
 			break;
-		case CONTROL_ARC:
-			log_format(LOG_ERROR, "trajectoire non programmee : %ld", control_state);
-			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent(EVENT_CONTROL_READY);
-			goto end_pwm_critical;
-			break;
 		case CONTROL_END:
 			goto end_pwm_critical;
 			break;

@@ -16,7 +16,6 @@ enum control_state
 	CONTROL_STRAIGHT,             //!< go straight
 	CONTROL_STRAIGHT_TO_WALL,     //!< on recule dans un mur pour recaler. On va tout droit au debut puis on desactive l'asservissement en rotation dés qu'un coté touche le mur
 	CONTROL_GOTO,                 //!< goto
-	CONTROL_ARC,                  //!< arc
 	CONTROL_END,                  //!< end : halted forever
 };
 
