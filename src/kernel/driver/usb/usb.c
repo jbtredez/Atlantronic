@@ -11,7 +11,7 @@
 #include "kernel/log.h"
 
 #define USB_BUFER_SIZE          4096
-#define USB_STACK_SIZE           300
+#define USB_STACK_SIZE           350
 
 static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
