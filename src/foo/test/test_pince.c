@@ -6,7 +6,6 @@
 #include "kernel/event.h"
 #include "kernel/rcc.h"
 #include "pince.h"
-#include "foo/control/control_pince.h"
 
 //! @todo réglage au pif
 #define TEST_PINCE_STACK_SIZE       100
@@ -39,16 +38,10 @@ static void test_pince_task()
 
 	while(1)
 	{
-		//control_pince_independant(70, 70);
-		control_pince_dual(70, 0);
-		vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, ms_to_tick(3000));
 		pince_close();
-		vTaskDelay(ms_to_tick(200));
-		//control_pince_independant(2500, 2500);
-		control_pince_dual(3000, 0);
-		vTaskWaitEvent(EVENT_CONTROL_PINCE_READY, ms_to_tick(3000));
+		vTaskDelay(ms_to_tick(2000));
 		pince_open();
-		vTaskDelay(ms_to_tick(400));
+		vTaskDelay(ms_to_tick(2000));
 	}
 
 	vTaskDelete(NULL);
