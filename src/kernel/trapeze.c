@@ -61,12 +61,6 @@ void trapeze_apply(struct trapeze* t, float s)
 	t->s = s_filtre;
 }
 
-void trapeze_set(struct trapeze* t, float v_max, float a_max)
-{
-	t->a_max = a_max;
-	t->v_max = v_max;
-}
-
 void trapeze_reset(struct trapeze* t, float s, float v)
 {
 	t->s = s;
