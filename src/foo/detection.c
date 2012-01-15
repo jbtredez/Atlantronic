@@ -62,17 +62,16 @@ int detection_module_init()
 	detection_front_object.x = 400000;
 	detection_front_object.y = 400000;
 
-	// TODO conf a virer dans kernel/robot_parameters.h
-	hokuyo_scan.sens = -1;
-	hokuyo_scan.pos_hokuyo.x = 130;
-	hokuyo_scan.pos_hokuyo.y = 160;
-	hokuyo_scan.pos_hokuyo.alpha = PI/4.0f;
+	hokuyo_scan.sens = PARAM_FOO_HOKUYO_SENS;
+	hokuyo_scan.pos_hokuyo.x = PARAM_FOO_HOKUYO_X;
+	hokuyo_scan.pos_hokuyo.y = PARAM_FOO_HOKUYO_Y;
+	hokuyo_scan.pos_hokuyo.alpha = PARAM_FOO_HOKUYO_ALPHA;
 	hokuyo_scan.pos_hokuyo.ca = cosf(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = sinf(hokuyo_scan.pos_hokuyo.alpha);
-	hokuyo_scan_bar.sens =  1;
-	hokuyo_scan_bar.pos_hokuyo.x = 130;
-	hokuyo_scan_bar.pos_hokuyo.y = -130;
-	hokuyo_scan_bar.pos_hokuyo.alpha = -0.80f;
+	hokuyo_scan_bar.sens =  PARAM_BAR_HOKUYO_SENS;
+	hokuyo_scan_bar.pos_hokuyo.x = PARAM_BAR_HOKUYO_X;
+	hokuyo_scan_bar.pos_hokuyo.y = PARAM_BAR_HOKUYO_Y;
+	hokuyo_scan_bar.pos_hokuyo.alpha = PARAM_BAR_HOKUYO_ALPHA;
 	hokuyo_scan_bar.pos_hokuyo.ca = cosf(hokuyo_scan_bar.pos_hokuyo.alpha);
 	hokuyo_scan_bar.pos_hokuyo.sa = sinf(hokuyo_scan_bar.pos_hokuyo.alpha);
 

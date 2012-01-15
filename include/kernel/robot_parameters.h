@@ -39,4 +39,14 @@
 
 #define PARAM_NP_X                          -95.0f
 
+#define PARAM_FOO_HOKUYO_X                     130
+#define PARAM_FOO_HOKUYO_Y                     160
+#define PARAM_FOO_HOKUYO_ALPHA              0.785f
+#define PARAM_FOO_HOKUYO_SENS                   -1
+
+#define PARAM_BAR_HOKUYO_X                     130
+#define PARAM_BAR_HOKUYO_Y                    -130
+#define PARAM_BAR_HOKUYO_ALPHA              -0.80f
+#define PARAM_BAR_HOKUYO_SENS                    1
+
 #endif
