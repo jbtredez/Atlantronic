@@ -62,7 +62,7 @@ int cmd_control_param(void* arg)
 
 	if(count != 9)
 	{
-		printf("cmd_goto_near kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
+		printf("cmd_control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
 		return CMD_SUCESS;
 	}
 
