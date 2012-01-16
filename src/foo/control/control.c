@@ -97,14 +97,16 @@ static int control_module_init()
 	//static float control_kx = 0.01f;
 	//static float control_ky = 0;
 	//static float control_kalpha = 0.015f;
-	control_kx = 0.01f;
+	control_kx = 0;//0.01f;
 	control_ky = 0.0f;
-	control_kalpha = 0.015f;
+	control_kalpha = 0;//0.015f;
 
-	control_traj.trapeze_av.v_max = 1000 * TE;
-	control_traj.trapeze_rot.v_max = 1000 * TE / ((float) PI*PARAM_VOIE_MOT);
+	control_traj.trapeze_av.v_max = 400 * TE;
 	control_traj.trapeze_av.a_max = 500 * TE * TE;
+	control_traj.trapeze_av.d_max = 1000 * TE * TE;
+	control_traj.trapeze_rot.v_max = 400 * TE / ((float) PI*PARAM_VOIE_MOT);
 	control_traj.trapeze_rot.a_max = 500 * TE * TE / ((float) PI*PARAM_VOIE_MOT);
+	control_traj.trapeze_rot.d_max = 1000 * TE * TE / ((float) PI*PARAM_VOIE_MOT);
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -162,7 +164,7 @@ void control_cmd_print_param(void* arg)
 
 	log_format(LOG_INFO, "av: %f %f %f", control_pid_av.kp/PWM_ARR, control_pid_av.ki/PWM_ARR, control_pid_av.kd/PWM_ARR);
 	log_format(LOG_INFO, "rot: %f %f %f", control_pid_rot.kp/PWM_ARR, control_pid_rot.ki/PWM_ARR, control_pid_rot.kd/PWM_ARR);
-	log_format(LOG_INFO, "rot: %f %f %f", control_kx, control_ky, control_kalpha);
+	log_format(LOG_INFO, "pos: %f %f %f", control_kx, control_ky, control_kalpha);
 }
 
 static float sinc( float x )
@@ -573,24 +575,17 @@ void control_cmd_straight_to_wall(void* arg)
 void control_straight_to_wall(float dist)
 {
 	log_format(LOG_INFO, "param %.2f", dist);
-#if 0
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	control_cons = location_get_position();
-	control_dest = control_cons;
-	control_dest.x += control_dest.ca * dist;
-	control_dest.y += control_dest.sa * dist;
-	control_param.ad.angle = 0;
-	control_param.ad.distance = dist;
+	trajectory_init_straight(&control_traj, dist);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
-#endif
 }
 
 int32_t control_get_state()

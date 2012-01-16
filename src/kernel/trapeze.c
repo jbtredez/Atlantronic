@@ -10,19 +10,20 @@ void trapeze_apply(struct trapeze* t, float s)
 	// abscisse curviligne qui reste à faire
 	float ds = s - t->s;
 	float a_max = t->a_max;
+	float d_max = t->d_max;
 	float v_max = t->v_max;
 	float v = t->v;
 
 	// saturation de v_max pour la rampe de décélération
-//	float v_max_stop = sqrtf( 2 * fabs(ds) * a_max);
-	float v_max_stop = sqrtf(a_max*a_max/4 + 2*fabs(ds)*a_max) - a_max/2;
+//	float v_max_stop = sqrtf( 2 * fabsf(ds) * a_max);
+	float v_max_stop = sqrtf(d_max*d_max/4 + 2*fabsf(ds)*d_max) - d_max/2;
 
 	if(v_max_stop < v_max)
 	{
 		v_max = v_max_stop;
 	}
 
-	// saturation de v_max à cause de la saturation en accélération
+	// saturation de v_max à cause de la saturation en accélération / décélération
 	float v_abs = fabsf(v);
 	if( v_abs < v_max )
 	{
@@ -33,9 +34,9 @@ void trapeze_apply(struct trapeze* t, float s)
 	}
 	else
 	{
-		if( v_abs - v_max > a_max )
+		if( v_abs - v_max > d_max )
 		{
-			v_max = v_abs - a_max;
+			v_max = v_abs - d_max;
 		}
 	}
 

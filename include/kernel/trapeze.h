@@ -8,6 +8,7 @@
 struct trapeze
 {
 	float a_max;
+	float d_max;
 	float v_max;
 
 	float s;
