@@ -10,7 +10,6 @@ digraph robot
 	control
 	ax12
 	detection
-	pince_control
 	usb
 	hokuyo
 
@@ -18,6 +17,7 @@ digraph robot
 	node [color=lightblue2, style=filled ]
 	location
 	odometry
+	trajectory
 	beacon
 	pince
 	us
@@ -42,14 +42,12 @@ digraph robot
 	control -> adc
 	control -> gpio
 	control -> location
-	control -> detection
+	control -> trajectory
 	control -> usb
+	trajectory -> detection
 	location -> odometry
 	location -> beacon
 	pince -> ax12
-	pince -> pince_control
-	pince_control -> pwm
-	pince_control -> adc
 	detection -> hokuyo
 	detection -> us
 	detection -> location
