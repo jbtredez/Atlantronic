@@ -155,7 +155,7 @@ int trajectory_compute(struct trajectory* t, struct vect_pos* pos_mes)
 				struct vect_pos front_obj;
 				struct vect_pos front_obj_robot;
 				detection_get_front_object(&front_obj);
-				pos_table_to_robot(pos_mes, &front_obj, &front_obj_robot);
+				pos_table_to_robot(&t->pos_cons, &front_obj, &front_obj_robot);
 				float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
 				if(dist < 0)
 				{
