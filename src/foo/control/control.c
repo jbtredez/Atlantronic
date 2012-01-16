@@ -280,8 +280,8 @@ static void control_compute()
 			else if(speed_check)
 			{
 				log_format(LOG_ERROR, "erreur de suivit cons %d mes %d check %d", vd_cons_mm, vd_mm, speed_check);
-				//control_state = CONTROL_READY_FREE;
-				//vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
 			}
 			else
 			{
