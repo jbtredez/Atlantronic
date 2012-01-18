@@ -481,13 +481,16 @@ void control_cmd_straight(void* arg)
 void control_straight(float dist)
 {
 	log_format(LOG_INFO, "param %.2f", dist);
+
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trajectory_init_straight(&control_traj, dist);
+
+	trajectory_straight(&control_traj, dist);
+
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -510,7 +513,7 @@ void control_rotate(float angle)
 		control_state = CONTROL_ROTATE;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trajectory_init_rotate(&control_traj, angle);
+	trajectory_rotate(&control_traj, angle);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -533,8 +536,7 @@ void control_rotate_to(float alpha)
 		control_state = CONTROL_ROTATE;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-
-	trajectory_init_rotate_to(&control_traj, alpha);
+	trajectory_rotate_to(&control_traj, alpha);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -557,8 +559,7 @@ void control_goto_near(float x, float y, float dist, enum trajectory_way sens)
 		control_state = CONTROL_GOTO;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-
-	trajectory_init_goto(&control_traj, x, y, dist, sens);
+	trajectory_goto(&control_traj, x, y, dist, sens);
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
@@ -575,13 +576,16 @@ void control_cmd_straight_to_wall(void* arg)
 void control_straight_to_wall(float dist)
 {
 	log_format(LOG_INFO, "param %.2f", dist);
+
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_STRAIGHT_TO_WALL;
 	}
 	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
-	trajectory_init_straight(&control_traj, dist);
+
+	trajectory_straight(&control_traj, dist);
+
 	control_timer = 0;
 	pid_reset(&control_pid_av);
 	pid_reset(&control_pid_rot);
