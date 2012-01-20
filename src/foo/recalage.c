@@ -13,6 +13,7 @@
 
 void recalage()
 {
+#if 0
 	pince_configure();
 	pince_close();
 
@@ -44,4 +45,5 @@ void recalage()
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	control_straight(110);
 	vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
+#endif
 }

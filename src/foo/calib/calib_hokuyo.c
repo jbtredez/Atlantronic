@@ -68,6 +68,7 @@ void calib_hokuyo()
 
 static void calib_task()
 {
+#if 0
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	// on attend la fin du nouveau scan
@@ -97,6 +98,6 @@ static void calib_task()
 
 	control_straight(-600.0f);
 	vTaskWaitEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION, portMAX_DELAY);
-
+#endif
 	vTaskDelete(NULL);
 }

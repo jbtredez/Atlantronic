@@ -6,6 +6,7 @@
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/control.h"
+#include "foo/control/trajectory.h"
 
 static struct com* cmd_com = NULL;
 
@@ -91,7 +92,7 @@ int cmd_control_print_param()
 
 int cmd_straight(void* arg)
 {
-	struct control_cmd_straight_arg cmd_arg;
+	struct trajectory_cmd_arg cmd_arg;
 	int count = sscanf(arg, "%f", &cmd_arg.dist);
 
 	if(count != 1)
@@ -100,8 +101,10 @@ int cmd_straight(void* arg)
 		return 0;
 	}
 
+	cmd_arg.type = TRAJECTORY_STRAIGHT;
+
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_STRAIGHT;
+	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	if(cmd_com)
@@ -114,7 +117,7 @@ int cmd_straight(void* arg)
 
 int cmd_straight_to_wall(void* arg)
 {
-	struct control_cmd_straight_to_wall_arg cmd_arg;
+	struct trajectory_cmd_arg cmd_arg;
 	int count = sscanf(arg, "%f", &cmd_arg.dist);
 
 	if(count != 1)
@@ -123,8 +126,10 @@ int cmd_straight_to_wall(void* arg)
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
+
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_STRAIGHT_TO_WALL;
+	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 	if(cmd_com)
 	{
@@ -136,8 +141,8 @@ int cmd_straight_to_wall(void* arg)
 
 int cmd_rotate(void* arg)
 {
-	struct control_cmd_rotate_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.angle);
+	struct trajectory_cmd_arg cmd_arg;
+	int count = sscanf(arg, "%f", &cmd_arg.alpha);
 
 	if(count != 1)
 	{
@@ -145,8 +150,10 @@ int cmd_rotate(void* arg)
 		return 0;
 	}
 
+	cmd_arg.type = TRAJECTORY_ROTATE;
+
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ROTATE;
+	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 	if(cmd_com)
 	{
@@ -158,8 +165,8 @@ int cmd_rotate(void* arg)
 
 int cmd_rotate_to(void* arg)
 {
-	struct control_cmd_rotate_to_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.angle);
+	struct trajectory_cmd_arg cmd_arg;
+	int count = sscanf(arg, "%f", &cmd_arg.alpha);
 
 	if(count != 1)
 	{
@@ -167,8 +174,10 @@ int cmd_rotate_to(void* arg)
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.type = TRAJECTORY_ROTATE_TO;
+
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ROTATE_TO;
+	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 	if(cmd_com)
 	{
@@ -192,17 +201,19 @@ int cmd_free()
 
 int cmd_goto_near(void* arg)
 {
-	struct control_cmd_goto_near_arg cmd_arg;
-	int count = sscanf(arg, "%f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.dist, &cmd_arg.way);
+	struct trajectory_cmd_arg cmd_arg;
+	int count = sscanf(arg, "%f %f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.alpha, &cmd_arg.dist, &cmd_arg.way);
 
 	if(count != 4)
 	{
-		printf("cmd_goto_near x y dist way\n");
+		printf("cmd_goto_near x y alpha dist way\n");
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.type = TRAJECTORY_GOTO;
+
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_GOTO_NEAR;
+	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 	if(cmd_com)
 	{

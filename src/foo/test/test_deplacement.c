@@ -48,7 +48,7 @@ static void test_deplacement_task()
 	//pince_configure();
 	//pince_close();
 	//control_pince_dual(1000, 0);
-
+#if 0
 	while(1)
 	{
 		control_goto_near(-700.0f, -700.0f, 0, TRAJECTORY_ANY_WAY);
@@ -60,6 +60,6 @@ static void test_deplacement_task()
 		control_goto_near(700.0f, -700.0f, 0, TRAJECTORY_ANY_WAY);
 		vTaskWaitEvent(EVENT_CONTROL_READY, portMAX_DELAY);
 	}
-
+#endif
 	vTaskDelete(NULL);
 }

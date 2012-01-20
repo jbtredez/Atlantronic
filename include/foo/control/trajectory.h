@@ -5,48 +5,36 @@
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
-#include <stdint.h>
-#include "kernel/vect_pos.h"
-#include "kernel/trapeze.h"
+#include "control/control.h"
+#include "location/location.h"
 
-#define TRAJECTORY_MAX_INTER_PT          10
-
-enum trajectory_way
+enum trajectory_usb_cmd_type
 {
-	TRAJECTORY_ANY_WAY,
-	TRAJECTORY_FORWARD,
-	TRAJECTORY_BACKWARD
+	TRAJECTORY_STRAIGHT,
+	TRAJECTORY_STRAIGHT_TO_WALL,
+	TRAJECTORY_ROTATE,
+	TRAJECTORY_ROTATE_TO,
+	TRAJECTORY_GOTO
 };
 
-struct trajectory
+struct trajectory_cmd_arg
 {
-	struct vect_pos pt[TRAJECTORY_MAX_INTER_PT]; //!< point de passage
-	uint32_t num_pt;                             //!< nombre de points (>= 1)
-	uint32_t current;                            //!< id de la destination courante
-	enum trajectory_way sens;
-	float dist_approx;
-
-	struct vect_pos pos_cons;      //!< position de consigne actuelle
-	struct vect_pos dest_cons;     //!< destination de consigne actuelle ( différent de "end" en cas d'evitement, c'est un point de passage)
-	struct trapeze trapeze_rot;
-	struct trapeze trapeze_av;
-
-	float angle;
+	uint32_t type;
+	float x;
+	float y;
+	float alpha;
 	float dist;
+	uint32_t way;
 };
 
-void trajectory_reset(struct trajectory* t);
+void trajectory_straight(float dist);
 
-void trajectory_add_point(struct trajectory* t, struct vect_pos* pt);
+void trajectory_straight_to_wall(float dist);
 
-void trajectory_straight(struct trajectory* t, float dist);
+void trajectory_rotate(float angle);
 
-void trajectory_rotate(struct trajectory* t, float angle);
+void trajectory_rotate_to(float angle);
 
-void trajectory_rotate_to(struct trajectory* t, float angle);
-
-void trajectory_goto(struct trajectory* t, float x, float y, float dist, enum trajectory_way sens);
-
-int trajectory_compute(struct trajectory* t, struct vect_pos* pos_mes);
+void trajectory_goto_near(float x, float y, float dist, enum trajectory_way sens);
 
 #endif

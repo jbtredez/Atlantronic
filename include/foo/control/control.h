@@ -7,16 +7,12 @@
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"
-#include "control/trajectory.h"
 
 enum control_state
 {
 	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
 	CONTROL_READY_FREE,           //!< no trajectory ongoing, control off
-	CONTROL_ROTATE,               //!< rotate
-	CONTROL_STRAIGHT,             //!< go straight
-	CONTROL_STRAIGHT_TO_WALL,     //!< on recule dans un mur pour recaler. On va tout droit au debut puis on desactive l'asservissement en rotation dés qu'un coté touche le mur
-	CONTROL_GOTO,                 //!< goto
+	CONTROL_TRAJECTORY,           //!< trajectoire en cours
 	CONTROL_END,                  //!< end : halted forever
 };
 
@@ -48,34 +44,6 @@ struct control_usb_data
 	uint16_t control_i_left;
 } __attribute__((packed));
 
-struct control_cmd_straight_arg
-{
-	float dist;
-};
-
-struct control_cmd_straight_to_wall_arg
-{
-	float dist;
-};
-
-struct control_cmd_rotate_arg
-{
-	float angle;
-};
-
-struct control_cmd_rotate_to_arg
-{
-	float angle;
-};
-
-struct control_cmd_goto_near_arg
-{
-	float x;
-	float y;
-	float dist;
-	uint32_t way;
-};
-
 struct control_cmd_param_arg
 {
 	float kp_av;
@@ -89,19 +57,18 @@ struct control_cmd_param_arg
 	float kalpha;
 };
 
-void control_straight(float dist);
+enum trajectory_way
+{
+	TRAJECTORY_ANY_WAY,
+	TRAJECTORY_FORWARD,
+	TRAJECTORY_BACKWARD
+};
 
-void control_straight_to_wall(float dist);
-
-void control_rotate(float angle);
-
-void control_rotate_to(float alpha);
-
-void control_goto_near(float x, float y, float dist, enum trajectory_way sens);
+void control_goto_near(float x, float y, float alpha, float dist, enum trajectory_way sens);
 
 void control_free();
 
-void control_set_use_us(uint8_t use_us_mask);
+float control_find_rotate(float debut, float fin);
 
 int32_t control_get_state();
 
