@@ -189,8 +189,13 @@ int cmd_rotate_to(void* arg)
 
 int cmd_free()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_FREE;
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.type = TRAJECTORY_FREE;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 	if(cmd_com)
 	{
 		com_write(cmd_com, buffer, sizeof(buffer));

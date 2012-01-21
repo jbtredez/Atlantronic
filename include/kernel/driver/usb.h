@@ -19,7 +19,6 @@ enum
 enum usb_cmd
 {
 	USB_CMD_TRAJECTORY = 0,
-	USB_CMD_FREE,
 	USB_CMD_CONTROL_PARAM,
 	USB_CMD_CONTROL_PRINT_PARAM,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier

@@ -8,8 +8,9 @@
 #include "control/control.h"
 #include "location/location.h"
 
-enum trajectory_usb_cmd_type
+enum trajectory_cmd_type
 {
+	TRAJECTORY_FREE,
 	TRAJECTORY_STRAIGHT,
 	TRAJECTORY_STRAIGHT_TO_WALL,
 	TRAJECTORY_ROTATE,
@@ -36,5 +37,7 @@ void trajectory_rotate(float angle);
 void trajectory_rotate_to(float angle);
 
 void trajectory_goto_near(float x, float y, float dist, enum trajectory_way way);
+
+void trajectory_free();
 
 #endif

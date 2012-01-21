@@ -112,7 +112,6 @@ static int control_module_init()
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
 
-	usb_add_cmd(USB_CMD_FREE, &control_cmd_free);
 	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
 	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
 
@@ -249,7 +248,7 @@ static void control_compute()
 		{
 			log_format(LOG_ERROR, "erreur de suivit cons %d mes %d check %d", vd_cons_mm, vd_mm, speed_check);
 			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
 		}
 		else
@@ -281,7 +280,7 @@ static void control_compute()
 			// il y a un probleme
 			log_format(LOG_INFO, "2 sec sans bouger => CONTROL_READY_FREE");
 			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_TIMEOUT);
+			vTaskSetEvent( EVENT_CONTROL_TIMEOUT );
 		}
 		goto end_pwm_critical;
 	}
@@ -372,76 +371,83 @@ static void control_compute_trajectory()
 
 	if(control_angle)
 	{
-		if(	fabsf(control_dest.alpha - control_pos.alpha) < TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+		trapeze_apply(&control_trapeze_rot, control_angle);
+		control_cons.alpha += control_trapeze_rot.v;
+		control_cons.ca = cosf(control_cons.alpha);
+		control_cons.sa = sinf(control_cons.alpha);
+
+		if(control_trapeze_rot.s == control_angle && control_trapeze_rot.v == 0)
 		{
 			control_angle = 0;
 			control_cons.alpha = control_dest.alpha;
 			control_cons.ca = control_dest.ca;
 			control_cons.sa = control_dest.sa;
-			trapeze_reset(&control_trapeze_rot, 0, 0);
-		}
-		else
-		{
-			trapeze_apply(&control_trapeze_rot, control_angle);
-			control_cons.alpha += control_trapeze_rot.v;
-			control_cons.ca = cosf(control_cons.alpha);
-			control_cons.sa = sinf(control_cons.alpha);
+			if(	fabsf(control_dest.alpha - control_pos.alpha) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+			{
+				trapeze_reset(&control_trapeze_rot, 0, 0);
+				trapeze_reset(&control_trapeze_av, 0, 0);
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
+			}
 		}
 	}
 	else if(control_dist)
 	{
 		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
+		float distance = control_dist;
+		if(distance > 0)
+		{
+			struct vect_pos front_obj;
+			struct vect_pos front_obj_robot;
+			detection_get_front_object(&front_obj);
+			pos_table_to_robot(&control_cons, &front_obj, &front_obj_robot);
+			float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
+			if(dist < 0)
+			{
+				dist = 0;
+				collision = 1;
+			}
 
-		if( fabsf(ex) < TRAJECTORY_POS_REACHED_TOLERANCE_X)
+			if(dist < ex)
+			{
+				distance = control_trapeze_av.s + dist;
+			}
+		}
+
+		trapeze_apply(&control_trapeze_av, distance);
+
+		control_cons.x += control_trapeze_av.v * control_cons.ca;
+		control_cons.y += control_trapeze_av.v * control_cons.sa;
+
+		if(control_trapeze_av.s == control_dist && control_trapeze_av.v == 0)
 		{
 			control_dist = 0;
 			control_cons = control_dest;
 			trapeze_reset(&control_trapeze_av, 0, 0);
-		}
-		else
-		{
-			float distance = control_dist;
-			if(distance > 0)
+
+			if( fabsf(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
-				struct vect_pos front_obj;
-				struct vect_pos front_obj_robot;
-				detection_get_front_object(&front_obj);
-				pos_table_to_robot(&control_cons, &front_obj, &front_obj_robot);
-				float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
-				if(dist < 0)
-				{
-					dist = 0;
-					collision = 1;
-				}
-
-				if(dist < ex)
-				{
-					distance = control_trapeze_av.s + dist;
-				}
+				trapeze_reset(&control_trapeze_rot, 0, 0);
+				trapeze_reset(&control_trapeze_av, 0, 0);
+				control_state = CONTROL_READY_FREE;
+				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
-
-			trapeze_apply(&control_trapeze_av, distance);
-
-			control_cons.x += control_trapeze_av.v * control_cons.ca;
-			control_cons.y += control_trapeze_av.v * control_cons.sa;
 		}
 	}
 	else
 	{
-		log(LOG_INFO, "target reached");
 		trapeze_reset(&control_trapeze_rot, 0, 0);
 		trapeze_reset(&control_trapeze_av, 0, 0);
 		control_state = CONTROL_READY_ASSER;
-		vTaskSetEvent(EVENT_CONTROL_READY);
+		vTaskSetEvent(EVENT_CONTROL_TARGET_REACHED);
 	}
 
 	if( collision && fabsf(control_trapeze_av.v) < 0.01f && fabsf(control_trapeze_rot.v) < 0.001f)
 	{
-		log(LOG_INFO, "collision");
 		trapeze_reset(&control_trapeze_rot, 0, 0);
 		trapeze_reset(&control_trapeze_av, 0, 0);
-		control_state = CONTROL_READY_ASSER;
-		vTaskSetEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION);
+		control_state = CONTROL_READY_FREE;
+		vTaskSetEvent( EVENT_CONTROL_COLSISION );
 	}
 }
 
@@ -472,7 +478,7 @@ void control_goto_near(float x, float y, float alpha, float dist, enum trajector
 	{
 		control_state = CONTROL_TRAJECTORY;
 	}
-	vTaskClearEvent(EVENT_CONTROL_READY | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
+	vTaskClearEvent(EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 
 	control_trapeze_av.s = 0;
 	control_trapeze_rot.s = 0;
@@ -538,12 +544,6 @@ int32_t control_get_state()
 	return tmp;
 }
 
-void control_cmd_free(void* arg)
-{
-	(void) arg;
-	control_free();
-}
-
 void control_free()
 {
 	log(LOG_INFO, "free wheel");
@@ -551,7 +551,6 @@ void control_free()
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_READY_FREE;
-		vTaskSetEvent(EVENT_CONTROL_READY);
 	}
 	xSemaphoreGive(control_mutex);
 }
