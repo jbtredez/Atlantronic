@@ -35,6 +35,6 @@ void trajectory_rotate(float angle);
 
 void trajectory_rotate_to(float angle);
 
-void trajectory_goto_near(float x, float y, float dist, enum trajectory_way sens);
+void trajectory_goto_near(float x, float y, float dist, enum trajectory_way way);
 
 #endif
