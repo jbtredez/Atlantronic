@@ -101,6 +101,11 @@ clean_modules:
 
 .PHONY: clean_modules
 
+install: modules
+	@echo "  INSTALL $(shell pwd)/scripts/udev/65-atlantronic.rules"
+	@+install scripts/udev/65-atlantronic.rules /etc/udev/rules.d -m 644 -o root -g root
+	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
+
 qemu:
 	@cd qemu && ./configure --target-list=arm-softmmu
 	@+make -C qemu

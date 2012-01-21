@@ -1,0 +1,2 @@
+KERNEL=="bar*",  GROUP="robot", MODE=660
+KERNEL=="foo*",  GROUP="robot", MODE=660
