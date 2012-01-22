@@ -7,10 +7,10 @@
 
 #include <stdint.h>
 
-struct vect2i
+struct fx16_vect2
 {
-	int x;
-	int y;
+	int16_t x;
+	int16_t y;
 };
 
 struct fx_vect2

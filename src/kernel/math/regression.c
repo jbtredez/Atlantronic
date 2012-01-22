@@ -49,7 +49,7 @@ end:
 	return err;
 }
 
-void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
+int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2* regression_pt)
 {
 	int a = 0;
 	int b = size-1;
@@ -58,10 +58,11 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 	int dist = 0;
 	int dist_max = -1;
 	float nab = 0;
-	struct vect2i ab;
-	struct vect2i ac;
+	struct fx_vect2 ab;
+	struct fx_vect2 ac;
 
-	memset(type, 0x00, size);
+	int regression_num = 0;
+	int pta = 0;
 
 	while( a < size && pt[a].x == 0 && pt[a].y == 0)
 		a++;
@@ -71,7 +72,9 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 		goto end;
 	}
 
-	type[a] = 1;
+	regression_pt[0].x = pt[a].x >> 16;
+	regression_pt[0].y = pt[a].y >> 16;
+	regression_num++;
 
 	while( b > a && pt[b].x == 0 && pt[b].y == 0)
 		b--;
@@ -81,7 +84,9 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 		goto end;
 	}
 
-	type[b] = 1;
+	regression_pt[1].x = pt[b].x >> 16;
+	regression_pt[1].y = pt[b].y >> 16;
+	regression_num++;
 
 	while(1)
 	{
@@ -105,7 +110,14 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 		if(dist_max > seuil * nab && b - a > 2)
 		{
 			// nouveau point
-			type[id_max] = 1;
+			int i;
+			for( i = regression_num - 1 ; i > pta ; i--)
+			{
+				regression_pt[i + 1] = regression_pt[i];
+			}
+			regression_pt[pta + 1].x = pt[id_max].x >> 16;
+			regression_pt[pta + 1].y = pt[id_max].y >> 16;
+			regression_num++;
 
 			// choix du segment a regarder
 			if(id_max > a+1)
@@ -116,14 +128,18 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 
 			if(id_max < b - 1)
 			{
+				pta++;
 				a = id_max;
 				continue;
 			}
+
+			pta++;
 		}
 
+		pta++;
 		a = b;
 		b++;
-		while(b < size && type[b] != 1)
+		while(b < size && ((pt[b].x >> 16) != regression_pt[pta+1].x || (pt[b].y >> 16) != regression_pt[pta+1].y) )
 		{
 			b++;
 		}
@@ -135,5 +151,5 @@ void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 	}
 
 end:
-	return;
+	return regression_num;
 }

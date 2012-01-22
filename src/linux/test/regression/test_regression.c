@@ -46,7 +46,8 @@ int main()
 	float* x = malloc(sizeof(float) * total_size);
 	float* y = malloc(sizeof(float) * total_size);
 	float* w = malloc(sizeof(float) * total_size);
-	struct fx_vect_pos* points = malloc(sizeof(struct fx_vect_pos) * total_size);
+	struct fx_vect2* points = malloc(sizeof(struct fx_vect2) * total_size);
+	struct fx16_vect2 * reg = malloc(sizeof(struct fx16_vect2) * total_size);
 	float epsilon;
 
 	int id = 0;
@@ -65,28 +66,23 @@ int main()
 		}
 	}
 
-	char* type = malloc(sizeof(char) * total_size);
+	int reg_size = regression_poly(points, total_size, (int)ecart, reg);
 
-	regression_poly(points, total_size, ecart, type);
+	printf("Il y a %d segments\n", reg_size - 1);
 
-	int num_seg = 0;
-	for(i = 1; i<total_size; i++)
+	if( reg_size < 2)
 	{
-		if(type[i] == 1)
-		{
-			num_seg++;
-		}
+		return 0;
 	}
-	printf("Il y a %d segments\n", num_seg);
 
-	float* a_reg = malloc(sizeof(float) * num_seg);
-	float* b_reg = malloc(sizeof(float) * num_seg);
+	float* a_reg = malloc(sizeof(float) * (reg_size-1));
+	float* b_reg = malloc(sizeof(float) * (reg_size-1));
 
-	int a = 0;
 	int seg = 0;
-	for(i = 1; i<total_size; i++)
+	int a = 0;
+	for(i = 0; i<total_size; i++)
 	{
-		if(type[i] == 1)
+		if( (points[i].x >> 16) == reg[seg+1].x && (points[i].y >> 16) == reg[seg+1].y)
 		{
 			int err = regression_linear(x+a, y+a, w, i-a, a_reg + seg, b_reg + seg);
 			if(err)
@@ -94,8 +90,9 @@ int main()
 				printf("error - regression_linear : %d\n", err);
 				return 0;
 			}
-			a = i;
+
 			printf("y = %g x + %g\n", a_reg[seg], b_reg[seg]);
+			a = i;
 			seg++;
 		}
 	}
@@ -116,23 +113,16 @@ int main()
 	}
 	fprintf(p, "e\n");
 
-	for(i = 0; i < total_size; i++)
+	for(i = 0; i < reg_size; i++)
 	{
-		if(type[i])
-		{
-			fprintf(p, "%f %f\n", x[i], y[i]);
-		}
+		fprintf(p, "%d %d\n", reg[i].x, reg[i].y);
 	}
 	fprintf(p, "e\n");
 
-	seg = 0;
-	for(i = 0; i < total_size; i++)
+	for(i = 0; i < reg_size - 1; i++)
 	{
-		if(type[i] && i > 0)
-		{
-			seg++;
-		}
-		fprintf(p, "%f %f\n", x[i], a_reg[seg] * x[i] + b_reg[seg]);
+		fprintf(p, "%d %f\n", reg[i].x, a_reg[i] * reg[i].x + b_reg[i]);
+		fprintf(p, "%d %f\n", reg[i+1].x, a_reg[i] * reg[i+1].x + b_reg[i]);
 	}
 	fprintf(p, "e\n");
 

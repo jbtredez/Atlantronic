@@ -36,9 +36,10 @@ static struct hokuyo_scan hokuyo_scan_bar;
 //static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS];
+struct fx16_vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS];
+int detection_reg_size;
 //static int hokuyo_num_obj;
 int detection_reg_ecart = 40;
-static char detection_seg[HOKUYO_NUM_POINTS];
 static struct vect_pos detection_front_object;
 
 static xSemaphoreHandle detection_mutex;
@@ -59,6 +60,8 @@ int detection_module_init()
 	{
 		return ERR_INIT_DETECTION;
 	}
+
+	detection_reg_size = 0;
 
 	detection_front_object.x = 400000;
 	detection_front_object.y = 400000;
@@ -120,72 +123,56 @@ void detection_get_front_object(struct vect_pos* obj)
 
 static void detection_compute_front_object()
 {
-	int i = 0;
-	int a;
-	while(i< HOKUYO_NUM_POINTS && detection_seg[i] != 1)
-	{
-		i++;
-	}
-
-	a = i;
-	i++;
-
+	int i;
 	float d;
 	struct vect_pos obj = { 400000, 400000, 0, 1, 0 };
-	for( ; i< HOKUYO_NUM_POINTS; i++)
+
+	for(i = 0; i < detection_reg_size - 1; i++)
 	{
-		if(detection_seg[i] == 1)
+		int32_t dy = detection_hokuyo_reg[i+1].y - detection_hokuyo_reg[i].y;
+		// elimination de segments
+		if( (detection_hokuyo_reg[i].x < 0 && detection_hokuyo_reg[i+1].x < 0)
+			|| (detection_hokuyo_reg[i].y > PARAM_LEFT_CORNER_Y && detection_hokuyo_reg[i+1].y > PARAM_LEFT_CORNER_Y)
+			|| (detection_hokuyo_reg[i].y < PARAM_RIGHT_CORNER_Y && detection_hokuyo_reg[i+1].y < PARAM_RIGHT_CORNER_Y)
+			|| (dy == 0) )
 		{
-			int32_t dy = detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y;
+			continue;
+		}
 
-			// elimination de segments
-			if( (detection_hokuyo_pos[a].x < 0 && detection_hokuyo_pos[i].x < 0)
-				|| (detection_hokuyo_pos[a].y > PARAM_LEFT_CORNER_Y && detection_hokuyo_pos[i].y > PARAM_LEFT_CORNER_Y)
-				|| (detection_hokuyo_pos[a].y < PARAM_RIGHT_CORNER_Y && detection_hokuyo_pos[i].y < PARAM_RIGHT_CORNER_Y)
-				|| (dy == 0) )
-			{
-				a = i;
-				continue;
-			}
+		int32_t dx = detection_hokuyo_reg[i+1].x - detection_hokuyo_reg[i].x;
+		float coef = (PARAM_RIGHT_CORNER_Y - detection_hokuyo_reg[i].y) / (float)dy;
+		if(coef < 0)
+		{
+			coef = 0;
+		}
+		else if(coef > 1)
+		{
+			coef = 1;
+		}
 
-			int32_t dx = detection_hokuyo_pos[i].x - detection_hokuyo_pos[a].x;
+		d = detection_hokuyo_reg[i].x + coef * dx;
 
-			float coef = (PARAM_RIGHT_CORNER_Y*65536 - detection_hokuyo_pos[a].y) / (float)dy;
-			if(coef < 0)
-			{
-				coef = 0;
-			}
-			else if(coef > 1)
-			{
-				coef = 1;
-			}
+		if( d < obj.x)
+		{
+			obj.x = d;
+			obj.y = detection_hokuyo_reg[i].y + coef * dy;
+		}
 
-			d = (detection_hokuyo_pos[a].x + coef * dx) / 65536.0f;
+		coef = (PARAM_LEFT_CORNER_Y - detection_hokuyo_reg[i].y) / (float)dy;
+		if(coef < 0)
+		{
+			coef = 0;
+		}
+		else if(coef > 1)
+		{
+			coef = 1;
+		}
 
-			if( d < obj.x)
-			{
-				obj.x = d;
-				obj.y = (detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y))/65536.0f;
-			}
-
-			coef = (PARAM_LEFT_CORNER_Y*65536 - detection_hokuyo_pos[a].y) / (float)dy;
-			if(coef < 0)
-			{
-				coef = 0;
-			}
-			else if(coef > 1)
-			{
-				coef = 1;
-			}
-
-			d = (detection_hokuyo_pos[a].x + coef * dx) / 65536.0f;
-			if( d < obj.x)
-			{
-				obj.x = d;
-				obj.y = (detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y)) / 65536.0f;
-			}
-
-			a = i;
+		d = detection_hokuyo_reg[i].x + coef * dx;
+		if( d < obj.x)
+		{
+			obj.x = d;
+			obj.y = detection_hokuyo_reg[i].y + coef * dy;
 		}
 	}
 
@@ -205,7 +192,7 @@ void detection_compute()
 //	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos, detection_hokuyo_csangle);
-	regression_poly(detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_reg_ecart, detection_seg);
+	detection_reg_size = regression_poly(detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_reg_ecart, detection_hokuyo_reg);
 
 	detection_compute_front_object();
 

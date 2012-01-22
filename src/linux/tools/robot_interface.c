@@ -99,6 +99,11 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 	data->control_usb_data_count = 0;
 	memset(data->error_status, 0x00, sizeof(data->error_status));
 
+	for(i = 0; i < HOKUYO_MAX ; i++)
+	{
+		data->detection_reg_num[i] = 0;
+	}
+
 	for( i = 0; i < COM_MAX ; i++)
 	{
 		struct robot_interface_arg* args = (struct robot_interface_arg*) malloc(sizeof(struct robot_interface_arg));
@@ -339,7 +344,7 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 
 	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
 	hokuyo_compute_xy(&data->hokuyo_scan[id], data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
-	regression_poly(data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, HOKUYO_NUM_POINTS, 40, data->detection_seg + HOKUYO_NUM_POINTS * id);
+	data->detection_reg_num[id] = regression_poly(data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, HOKUYO_NUM_POINTS, 40, data->detection_hokuyo_reg + HOKUYO_NUM_POINTS * id);
 
 	for(i = id * HOKUYO_NUM_POINTS; i < (id + 1) * HOKUYO_NUM_POINTS; i++)
 	{
@@ -376,7 +381,7 @@ static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int 
 		goto end;
 	}
 
-	memcpy(&data->detection_seg, msg, size);
+//	memcpy(&data->detection_seg, msg, size);
 
 	pthread_mutex_unlock(&data->mutex);
 
