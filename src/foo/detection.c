@@ -19,7 +19,7 @@
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
-#define HOKUYO_NUM_OBJECT            100
+//#define HOKUYO_NUM_OBJECT            100
 #define HOKUYO_FOO                     0
 #define HOKUYO_BAR                     1
 
@@ -33,10 +33,11 @@ void can_hokuyo_data(struct can_msg *msg);
 
 static int detection_can_hokuyo_id;
 static struct hokuyo_scan hokuyo_scan_bar;
-static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
-struct vect_pos detection_hokuyo_pos[HOKUYO_NUM_POINTS];
-static int hokuyo_num_obj;
-float detection_reg_ecart = 25;
+//static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
+struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
+struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS];
+//static int hokuyo_num_obj;
+int detection_reg_ecart = 40;
 static char detection_seg[HOKUYO_NUM_POINTS];
 static struct vect_pos detection_front_object;
 
@@ -75,7 +76,7 @@ int detection_module_init()
 	hokuyo_scan_bar.pos_hokuyo.ca = cosf(hokuyo_scan_bar.pos_hokuyo.alpha);
 	hokuyo_scan_bar.pos_hokuyo.sa = sinf(hokuyo_scan_bar.pos_hokuyo.alpha);
 
-	hokuyo_precompute_angle(&hokuyo_scan, detection_hokuyo_pos);
+	hokuyo_precompute_angle(&hokuyo_scan, detection_hokuyo_csangle);
 
 	detection_can_hokuyo_id = 0;
 	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
@@ -135,7 +136,7 @@ static void detection_compute_front_object()
 	{
 		if(detection_seg[i] == 1)
 		{
-			float dy = detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y;
+			int32_t dy = detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y;
 
 			// elimination de segments
 			if( (detection_hokuyo_pos[a].x < 0 && detection_hokuyo_pos[i].x < 0)
@@ -147,9 +148,9 @@ static void detection_compute_front_object()
 				continue;
 			}
 
-			float dx = (detection_hokuyo_pos[i].x - detection_hokuyo_pos[a].x);
+			int32_t dx = detection_hokuyo_pos[i].x - detection_hokuyo_pos[a].x;
 
-			float coef = (PARAM_RIGHT_CORNER_Y - detection_hokuyo_pos[a].y) / dy;
+			float coef = (PARAM_RIGHT_CORNER_Y*65536 - detection_hokuyo_pos[a].y) / (float)dy;
 			if(coef < 0)
 			{
 				coef = 0;
@@ -159,15 +160,15 @@ static void detection_compute_front_object()
 				coef = 1;
 			}
 
-			d = detection_hokuyo_pos[a].x + coef * dx;
+			d = (detection_hokuyo_pos[a].x + coef * dx) / 65536.0f;
 
 			if( d < obj.x)
 			{
 				obj.x = d;
-				obj.y = detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y);
+				obj.y = (detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y))/65536.0f;
 			}
 
-			coef = (PARAM_LEFT_CORNER_Y - detection_hokuyo_pos[a].y) / dy;
+			coef = (PARAM_LEFT_CORNER_Y*65536 - detection_hokuyo_pos[a].y) / (float)dy;
 			if(coef < 0)
 			{
 				coef = 0;
@@ -177,11 +178,11 @@ static void detection_compute_front_object()
 				coef = 1;
 			}
 
-			d = detection_hokuyo_pos[a].x + coef * dx;
+			d = (detection_hokuyo_pos[a].x + coef * dx) / 65536.0f;
 			if( d < obj.x)
 			{
 				obj.x = d;
-				obj.y = detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y);
+				obj.y = (detection_hokuyo_pos[a].y + coef * (detection_hokuyo_pos[i].y - detection_hokuyo_pos[a].y)) / 65536.0f;
 			}
 
 			a = i;
@@ -203,7 +204,7 @@ void detection_compute()
 {
 //	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
-	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos);
+	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos, detection_hokuyo_csangle);
 	regression_poly(detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_reg_ecart, detection_seg);
 
 	detection_compute_front_object();

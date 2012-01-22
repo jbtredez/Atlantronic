@@ -16,34 +16,35 @@
 #define HOKUYO_START_ANGLE               (-(135 / 180.0f - 44 / 512.0f) * PI)
 #define HOKUYO_DTHETA         	         (PI / 512.0f)
 
-void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct vect_pos *pos)
+void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct fx_vect2 *csangle)
 {
 	float alpha = scan->sens * HOKUYO_START_ANGLE + scan->pos_hokuyo.alpha;
 	int size = HOKUYO_NUM_POINTS;
 
 	for( ; size--; )
 	{
-		pos->alpha = alpha;
-		pos->ca = cosf(alpha);
-		pos->sa = sinf(alpha);
-		pos++;
+		csangle->x = (int32_t) ( cosf(alpha) * 65536 );
+		csangle->y = (int32_t) ( sinf(alpha) * 65536 );
+		csangle++;
 		alpha += scan->sens * HOKUYO_DTHETA;
 	}
 }
 
-void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect_pos *pos)
+void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos, struct fx_vect2 *csangle)
 {
 	int size = HOKUYO_NUM_POINTS;
 	uint16_t* distance = scan->distance;
-	float dx = scan->pos_hokuyo.x;
-	float dy = scan->pos_hokuyo.y;
+	int32_t dx = (int32_t) (scan->pos_hokuyo.x * 65536);
+	int32_t dy = (int32_t) (scan->pos_hokuyo.y * 65536);
 
 	for( ; size--; )
 	{
 		if(*distance > 19 && *distance < 4000)
 		{
-			pos->x = *distance * pos->ca + dx;
-			pos->y = *distance * pos->sa + dy;
+			// distance en mm, ca en virgule fixe "16.16" => "2.16" (cos dans -1 1)
+			// => multiplication simple
+			pos->x = *distance * csangle->x + dx;
+			pos->y = *distance * csangle->y + dy;
 		}
 		else
 		{
@@ -53,6 +54,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect_pos *pos)
 
 		distance++;
 		pos++;
+		csangle++;
 	}
 }
 

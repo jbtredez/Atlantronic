@@ -5,10 +5,27 @@
 //! @brief vect_pos
 //! @author Atlantronic
 
+#include <stdint.h>
+
 struct vect2i
 {
 	int x;
 	int y;
+};
+
+struct fx_vect2
+{
+	int32_t x;
+	int32_t y;
+};
+
+struct fx_vect_pos
+{
+	int32_t x;
+	int32_t y;
+	int32_t alpha;
+	int32_t ca;
+	int32_t sa;
 };
 
 //! @struct vect_pos

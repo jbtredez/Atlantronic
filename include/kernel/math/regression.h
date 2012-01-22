@@ -11,6 +11,6 @@
 //! si wi = 0, le couple (xi, yi) n'est pas pris en compte. Plus wi est grand, plus la mesure est importante
 int regression_linear(float* x, float* y, float* w, int size, float* a, float* b);
 
-int regression_poly(struct vect_pos* pt, int size, float seuil, char* type);
+void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type);
 
 #endif

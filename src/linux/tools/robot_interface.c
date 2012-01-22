@@ -317,8 +317,9 @@ end:
 
 static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size)
 {
-	int res = 0;
 	(void) com_id;
+	int res = 0;
+	int i;
 
 	if(size != sizeof(struct hokuyo_scan))
 	{
@@ -336,9 +337,18 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 
 	memcpy(&data->hokuyo_scan[id], msg, size);
 
-	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
-	hokuyo_compute_xy(&data->hokuyo_scan[id], data->hokuyo_pos + HOKUYO_NUM_POINTS * id);
-	regression_poly(data->hokuyo_pos + HOKUYO_NUM_POINTS * id, HOKUYO_NUM_POINTS, 25, data->detection_seg + HOKUYO_NUM_POINTS * id);
+	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
+	hokuyo_compute_xy(&data->hokuyo_scan[id], data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
+	regression_poly(data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, HOKUYO_NUM_POINTS, 40, data->detection_seg + HOKUYO_NUM_POINTS * id);
+
+	for(i = id * HOKUYO_NUM_POINTS; i < (id + 1) * HOKUYO_NUM_POINTS; i++)
+	{
+		data->hokuyo_pos[i].x = data->detection_hokuyo_pos[i].x / 65536.0f;
+		data->hokuyo_pos[i].y = data->detection_hokuyo_pos[i].y / 65536.0f;
+		data->hokuyo_pos[i].alpha = 0;
+		data->hokuyo_pos[i].ca = 1;
+		data->hokuyo_pos[i].sa = 0;
+	}
 
 	pthread_mutex_unlock(&data->mutex);
 

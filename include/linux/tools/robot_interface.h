@@ -39,6 +39,8 @@ struct robot_interface
 	struct error_status error_status[COM_MAX][ERR_MAX];
 
 	// calculs
+	struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*3];
+	struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS*3];
 	struct vect_pos hokuyo_pos[HOKUYO_NUM_POINTS*3];
 	char detection_seg[HOKUYO_NUM_POINTS*3];
 };

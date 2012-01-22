@@ -46,7 +46,7 @@ int main()
 	float* x = malloc(sizeof(float) * total_size);
 	float* y = malloc(sizeof(float) * total_size);
 	float* w = malloc(sizeof(float) * total_size);
-	struct vect_pos* points = malloc(sizeof(struct vect_pos) * total_size);
+	struct fx_vect_pos* points = malloc(sizeof(struct fx_vect_pos) * total_size);
 	float epsilon;
 
 	int id = 0;
@@ -59,8 +59,8 @@ int main()
 			y_real[id] = pt_y[i] + j*pas[i] * (pt_y[i+1] - pt_y[i])/d[i];
 			x[id] = x_real[id];
 			y[id] = y_real[id] + epsilon;
-			points[id].x = x_real[id];
-			points[id].y = y_real[id] + epsilon;
+			points[id].x = x_real[id] * 65536;
+			points[id].y = (y_real[id] + epsilon) * 65536;
 			w[id] = 1;
 		}
 	}

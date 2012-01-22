@@ -49,9 +49,8 @@ end:
 	return err;
 }
 
-int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
+void regression_poly(struct fx_vect2* pt, int size, int seuil, char* type)
 {
-	int err = 0;
 	int a = 0;
 	int b = size-1;
 	int c = 0;
@@ -64,7 +63,7 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 
 	memset(type, 0x00, size);
 
-	while( a < size && (int)pt[a].x == 0 && (int)pt[a].y == 0)
+	while( a < size && pt[a].x == 0 && pt[a].y == 0)
 		a++;
 
 	if(a >= size)
@@ -74,7 +73,7 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 
 	type[a] = 1;
 
-	while( b > a && (int)pt[b].x == 0 && (int)pt[b].y == 0)
+	while( b > a && pt[b].x == 0 && pt[b].y == 0)
 		b--;
 
 	if( a == b)
@@ -87,16 +86,16 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 	while(1)
 	{
 		dist_max = -1;
-		ab.x = (int)pt[b].x - (int)pt[a].x;
-		ab.y = (int)pt[b].y - (int)pt[a].y;
+		ab.x = (pt[b].x - pt[a].x) >> 16; // en mm
+		ab.y = (pt[b].y - pt[a].y) >> 16; // en mm
 		nab = sqrtf(ab.x*ab.x+ab.y*ab.y);
 
 		for(c = a + 1; c<b; c++)
 		{
-			ac.x = (int)pt[c].x - (int)pt[a].x;
-			ac.y = (int)pt[c].y - (int)pt[a].y;
+			ac.x = (pt[c].x - pt[a].x) >> 16; // en mm
+			ac.y = (pt[c].y - pt[a].y) >> 16; // en mm
 			dist = abs(ab.x * ac.y - ab.y * ac.x);
-			if(dist > dist_max && ((int)pt[c].x != 0 || (int)pt[c].y != 0))
+			if(dist > dist_max && (pt[c].x != 0 || pt[c].y != 0))
 			{
 				dist_max = dist;
 				id_max = c;
@@ -136,5 +135,5 @@ int regression_poly(struct vect_pos* pt, int size, float seuil, char* type)
 	}
 
 end:
-	return err;
+	return;
 }
