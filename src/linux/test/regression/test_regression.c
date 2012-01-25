@@ -66,7 +66,7 @@ int main()
 		}
 	}
 
-	int reg_size = regression_poly(points, total_size, (int)ecart, reg);
+	int reg_size = regression_poly(points, total_size, (int)ecart, reg, total_size);
 
 	printf("Il y a %d segments\n", reg_size - 1);
 

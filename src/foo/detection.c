@@ -19,7 +19,8 @@
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
-//#define HOKUYO_NUM_OBJECT            100
+#define HOKUYO_NUM_OBJECT            100
+#define HOKUYO_REG_SEG               200
 #define HOKUYO_FOO                     0
 #define HOKUYO_BAR                     1
 
@@ -33,12 +34,12 @@ void can_hokuyo_data(struct can_msg *msg);
 
 static int detection_can_hokuyo_id;
 static struct hokuyo_scan hokuyo_scan_bar;
-//static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
+static struct hokuyo_object hokuyo_object[HOKUYO_NUM_OBJECT];
 struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS];
-struct fx16_vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS];
+struct fx16_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 int detection_reg_size;
-//static int hokuyo_num_obj;
+static int hokuyo_num_obj;
 int detection_reg_ecart = 40;
 static struct vect_pos detection_front_object;
 
@@ -108,7 +109,7 @@ static void detection_task()
 //		portTickType current_time = systick_get_time();
 //		log_format(LOG_INFO, "compute_time : %lu us", (long unsigned int) tick_to_us(current_time - last_time));
 		xSemaphoreGive(hokuyo_scan_mutex);
-//		usb_add(USB_HOKUYO_FOO_SEG, &detection_seg, sizeof(detection_seg));
+		usb_add(USB_HOKUYO_FOO_SEG, &detection_hokuyo_reg, sizeof(detection_hokuyo_reg[0]) * detection_reg_size);
 	}
 
 	vTaskDelete(NULL);
@@ -189,10 +190,10 @@ static void detection_compute_front_object()
 
 void detection_compute()
 {
-//	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
+	hokuyo_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, hokuyo_object, HOKUYO_NUM_OBJECT);
 
 	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos, detection_hokuyo_csangle);
-	detection_reg_size = regression_poly(detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_reg_ecart, detection_hokuyo_reg);
+	detection_reg_size = regression_poly(detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_reg_ecart, detection_hokuyo_reg, HOKUYO_REG_SEG);
 
 	detection_compute_front_object();
 
@@ -211,6 +212,6 @@ void can_hokuyo_data(struct can_msg *msg)
 	detection_can_hokuyo_id += msg->size;
 	if(detection_can_hokuyo_id == 1364)
 	{
-		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan_bar, sizeof(hokuyo_scan_bar));
+//		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan_bar, sizeof(hokuyo_scan_bar));
 	}
 }

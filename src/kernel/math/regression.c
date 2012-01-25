@@ -49,7 +49,7 @@ end:
 	return err;
 }
 
-int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2* regression_pt)
+int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2* regression_pt, int reg_size)
 {
 	int a = 0;
 	int b = size-1;
@@ -88,7 +88,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2*
 	regression_pt[1].y = pt[b].y >> 16;
 	regression_num++;
 
-	while(1)
+	while(regression_num < reg_size)
 	{
 		dist_max = -1;
 		ab.x = (pt[b].x - pt[a].x) >> 16; // en mm
