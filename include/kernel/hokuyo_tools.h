@@ -20,7 +20,7 @@
 struct hokuyo_object
 {
 	uint16_t start;
-	uint16_t stop;
+	uint16_t size;
 };
 
 void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct fx_vect2 *csangle);

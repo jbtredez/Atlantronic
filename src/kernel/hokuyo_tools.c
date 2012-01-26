@@ -58,6 +58,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos, struct fx
 	}
 }
 
+#if 0
 // TODO : à demenager, pas utile cette année (mais pourrait l'être plus tard)
 int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct vect_pos *pawn_pos)
 {
@@ -85,15 +86,16 @@ int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct 
 
 	return res;
 }
+#endif
 
 int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_object* obj, unsigned int obj_size)
 {
 	int res = 0;
 	unsigned int i = 0;
 	unsigned int object_start = 0;
-	unsigned int object_end = 0;
+	int object_size = 0;
 	int gap = 0;
-	int object_start_distance;
+	int last_dist;
 	int dist;
 
 	while(i < size)
@@ -104,14 +106,14 @@ int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_obj
 			i++;
 		}
 
-		if (i >= size)
+		if (i >= size - 1)
 		{
 			goto end;
 		}
 
 		// debut de l'objet
 		object_start = i;
-		object_start_distance = distance[object_start];
+		last_dist = distance[i];
 		gap = 0;
 		i++;
 		while(i < size && abs(gap) < GAP)
@@ -123,17 +125,18 @@ int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_obj
 			}
 			else
 			{
-				gap = dist - object_start_distance;
+				gap = dist - last_dist;
+				last_dist = dist;
 			}
 			i++;
 		}
 		i--;
 
-		// fin de l'objet
-		object_end = i - 1;
+		// taille de l'objet
+		object_size = i - (int) object_start;
 
-		// on filtre les objets avec une vue angulaire faible
-		if(object_end - object_start > 5)
+		// on filtre les objets avec une vue angulaire faible : 3 points mini (1 degré)
+		if(object_size > 2)
 		{
 			if(obj_size == 0)
 			{
@@ -141,7 +144,7 @@ int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_obj
 			}
 			obj_size--;
 			obj->start = object_start;
-			obj->stop = object_end;
+			obj->size = object_size;
 			obj++;
 			res++;
 		}
