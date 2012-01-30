@@ -209,7 +209,7 @@ int cmd_goto_near(void* arg)
 	struct trajectory_cmd_arg cmd_arg;
 	int count = sscanf(arg, "%f %f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.alpha, &cmd_arg.dist, &cmd_arg.way);
 
-	if(count != 4)
+	if(count != 5)
 	{
 		printf("cmd_goto_near x y alpha dist way\n");
 		return CMD_SUCESS;
