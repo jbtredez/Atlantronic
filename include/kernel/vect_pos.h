@@ -39,6 +39,10 @@ struct vect_pos
 	float sa;         //!< sin(alpha)
 };
 
+void fx_vect2_robot_to_table(struct vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+
+void fx_vect2_table_to_robot(struct vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+
 void pos_robot_to_table(struct vect_pos *pos_robot, struct vect_pos *pos_in, struct vect_pos *pos_out);
 
 void pos_table_to_robot(struct vect_pos *pos_robot, struct vect_pos *pos_in, struct vect_pos *pos_out);
