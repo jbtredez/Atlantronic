@@ -143,7 +143,7 @@ static void detection_compute_front_object()
 		int maxj = detection_object[i].start + detection_object[i].size - 1;
 		for( j = detection_object[i].start; j < maxj; j++)
 		{
-			int32_t dy = detection_hokuyo_reg[j+1].y - detection_hokuyo_reg[j].y;
+			int32_t dy = detection_hokuyo_reg[j+1].y - detection_hokuyo_reg[j].y; // en mm
 			// elimination de segments
 			if( (detection_hokuyo_reg[j].x < 0 && detection_hokuyo_reg[j+1].x < 0)
 				|| (detection_hokuyo_reg[j].y > PARAM_LEFT_CORNER_Y && detection_hokuyo_reg[j+1].y > PARAM_LEFT_CORNER_Y)
@@ -153,7 +153,7 @@ static void detection_compute_front_object()
 				continue;
 			}
 
-			int32_t dx = detection_hokuyo_reg[j+1].x - detection_hokuyo_reg[j].x;
+			int32_t dx = detection_hokuyo_reg[j+1].x - detection_hokuyo_reg[j].x; // en mm
 			float coef = (PARAM_RIGHT_CORNER_Y - detection_hokuyo_reg[j].y) / (float)dy;
 			if(coef < 0)
 			{
@@ -256,7 +256,7 @@ void detection_compute()
 	detection_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
 	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos, detection_hokuyo_csangle);
 
-	for( i = 0 ; i < detection_reg_size ; i++)
+	for( i = 0 ; i < detection_num_obj ; i++)
 	{
 		detection_object[i].size = regression_poly(detection_hokuyo_pos + detection_object[i].start, detection_object[i].size, detection_reg_ecart, detection_hokuyo_reg + detection_reg_size, HOKUYO_REG_SEG - detection_reg_size);
 		detection_object[i].start = detection_reg_size;
