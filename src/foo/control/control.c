@@ -46,7 +46,7 @@ void control_cmd_print_param(void* arg);
 
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
-static int32_t control_state;
+static enum control_state control_state;
 static struct vect_pos control_cons;
 static struct adc_an control_an;
 static struct vect_pos control_pos;
@@ -397,11 +397,14 @@ static void control_compute_trajectory()
 		float distance = control_dist;
 		if(distance > 0)
 		{
-			struct vect_pos front_obj;
-			struct vect_pos front_obj_robot;
-			detection_get_front_object(&front_obj);
-			pos_table_to_robot(&control_cons, &front_obj, &front_obj_robot);
-			float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 50;
+			struct fx_vect2 a_table;
+			struct fx_vect2 b_table;
+			struct fx_vect2 a_robot;
+			struct fx_vect2 b_robot;
+			detection_get_front_seg(&a_table, &b_table);
+			fx_vect2_table_to_robot(&control_cons, &a_table, &a_robot);
+			fx_vect2_table_to_robot(&control_cons, &b_table, &b_robot);
+			float dist = a_robot.x/65536.0f - PARAM_LEFT_CORNER_X - 50;
 			if(dist < 0)
 			{
 				dist = 0;

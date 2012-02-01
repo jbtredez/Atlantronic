@@ -17,9 +17,16 @@
 
 #define TRAJECTORY_STACK_SIZE       350
 
+enum trajectory_state
+{
+	TRAJECTORY_NONE,
+	TRAJECTORY_TO_DEST,
+	TRAJECTORY_BASIC_AVOIDANCE,
+};
+
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
-static void trajectory_compute();
+static void trajectory_compute(enum trajectory_state next_state);
 
 // requete pour la tache trajectory + mutex
 struct trajectory_cmd_arg trajectory_request;
@@ -30,8 +37,7 @@ static struct vect_pos trajectory_dest;
 static float trajectory_approx_dist;
 static enum trajectory_way trajectory_way;
 static enum trajectory_cmd_type trajectory_type;
-static int trajectory_avoidance_activated;
-static int trajectory_dest_requested;
+static enum trajectory_state trajectory_state;
 
 static int trajectory_module_init()
 {
@@ -53,7 +59,7 @@ static int trajectory_module_init()
 
 	usb_add_cmd(USB_CMD_TRAJECTORY, &trajectory_cmd);
 
-	trajectory_dest_requested = 0;
+	trajectory_state = TRAJECTORY_NONE;
 
 	return 0;
 }
@@ -72,6 +78,7 @@ static void trajectory_task(void* arg)
 
 		if(ev & EVENT_TRAJECTORY_UPDATE)
 		{
+			trajectory_state = TRAJECTORY_NONE;
 			xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
 			trajectory_dest = location_get_position();
@@ -84,7 +91,14 @@ static void trajectory_task(void* arg)
 					trajectory_dest.x += trajectory_dest.ca * trajectory_request.dist;
 					trajectory_dest.y += trajectory_dest.sa * trajectory_request.dist;
 					trajectory_approx_dist = 0;
-					trajectory_way = TRAJECTORY_ANY_WAY;
+					if(trajectory_request.dist > 0)
+					{
+						trajectory_way = TRAJECTORY_FORWARD;
+					}
+					else
+					{
+						trajectory_way = TRAJECTORY_BACKWARD;
+					}
 					break;
 				case TRAJECTORY_STRAIGHT_TO_WALL:
 					trajectory_dest.x += trajectory_dest.ca * trajectory_request.dist;
@@ -124,11 +138,9 @@ static void trajectory_task(void* arg)
 			vTaskClearEvent(EVENT_TRAJECTORY_UPDATE);
 			xSemaphoreGive(trajectory_mutex);
 
-			trajectory_avoidance_activated = 0;
-
 			if(trajectory_type != TRAJECTORY_FREE)
 			{
-				trajectory_compute();
+				trajectory_compute(TRAJECTORY_TO_DEST);
 			}
 			else
 			{
@@ -140,16 +152,24 @@ static void trajectory_task(void* arg)
 		{
 			log(LOG_INFO, "collision");
 			vTaskClearEvent(EVENT_CONTROL_COLSISION);
-			trajectory_avoidance_activated = 1;
-			trajectory_compute();
+			trajectory_compute(TRAJECTORY_BASIC_AVOIDANCE);
 		}
 
 		if(ev & EVENT_CONTROL_TARGET_REACHED)
 		{
-			if( trajectory_dest_requested )
+			switch(trajectory_state)
 			{
-				log(LOG_INFO, "target reached");
+				default:
+				case TRAJECTORY_NONE:
+					break;
+				case TRAJECTORY_TO_DEST:
+					log(LOG_INFO, "target reached");
+					break;
+				case TRAJECTORY_BASIC_AVOIDANCE:
+					trajectory_compute(TRAJECTORY_BASIC_AVOIDANCE);
+					break;
 			}
+
 			vTaskClearEvent(EVENT_CONTROL_TARGET_REACHED);
 		}
 
@@ -161,31 +181,31 @@ static void trajectory_task(void* arg)
 	}
 }
 
-static void trajectory_compute()
+static void trajectory_compute(enum trajectory_state next_state)
 {
-	if(!trajectory_avoidance_activated)
+	struct vect_pos pos = location_get_position();
+
+	if(next_state == TRAJECTORY_TO_DEST)
 	{
-		trajectory_dest_requested = 1;
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, trajectory_way);
-		return;
+	}
+	else if( next_state == TRAJECTORY_BASIC_AVOIDANCE)
+	{
+		struct fx_vect2 a_table;
+		struct fx_vect2 b_table;
+		struct fx_vect2 a_robot;
+		struct fx_vect2 b_robot;
+		detection_get_front_seg(&a_table, &b_table);
+		fx_vect2_table_to_robot(&pos, &a_table, &a_robot);
+		fx_vect2_table_to_robot(&pos, &b_table, &b_robot);
+		float dist = (a_robot.x >> 16) - PARAM_LEFT_CORNER_X - 150;
+
+		pos.x += dist * pos.ca;
+		pos.y += dist * pos.sa;
+		control_goto_near(pos.x, pos.y, pos.alpha, 0, TRAJECTORY_BACKWARD);
 	}
 
-	// evitement basique
-/*
-	struct vect_pos pos = location_get_position();
-	struct vect_pos front_obj;
-	struct vect_pos front_obj_robot;
-
-	trajectory_dest_requested = 0;
-
-	detection_get_front_object(&front_obj);
-	pos_table_to_robot(&pos, &front_obj, &front_obj_robot);
-	float dist = front_obj_robot.x - PARAM_LEFT_CORNER_X - 100;
-
-	pos.x += dist * pos.ca;
-	pos.y += dist * pos.sa;
-	control_goto_near(pos.x, pos.y, pos.alpha, 0, TRAJECTORY_BACKWARD);
-*/
+	trajectory_state = next_state;
 }
 
 void trajectory_cmd(void* arg)
