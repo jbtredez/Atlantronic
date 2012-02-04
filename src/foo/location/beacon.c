@@ -7,7 +7,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/portmacro.h"
 
-static struct vect_pos beacon_pos;
+static struct fx_vect_pos beacon_pos;
 
 static int beacon_module_init()
 {
@@ -25,9 +25,9 @@ void beacon_update()
 	#warning TODO beacon_update
 }
 
-struct vect_pos beacon_get_position()
+struct fx_vect_pos beacon_get_position()
 {
-	struct vect_pos p;
+	struct fx_vect_pos p;
 	portENTER_CRITICAL();
 	p = beacon_pos;
 	portEXIT_CRITICAL();

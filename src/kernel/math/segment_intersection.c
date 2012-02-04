@@ -4,7 +4,7 @@
 //! @return 0 si h est trouvé, < 0 sinon
 int segment_intersection(const struct fx_vect2 a, const struct fx_vect2 b, const struct fx_vect2 c, const struct fx_vect2 d, struct fx_vect2* h)
 {
-	int32_t den = (((int64_t)(b.y - a.y)) * ((int64_t)(d.x - c.x)) - ((int64_t)(d.y - c.y)) * ((int64_t)(b.x - a.x))) >> 16;
+	int64_t den = (((int64_t)(b.y - a.y)) * ((int64_t)(d.x - c.x)) - ((int64_t)(d.y - c.y)) * ((int64_t)(b.x - a.x))) >> 16;
 	int64_t num = ((int64_t)(d.x - c.x)) * ((int64_t)(c.y - a.y)) - ((int64_t)(d.y - c.y)) * ((int64_t)(c.x - a.x));
 
 	if(den == 0)

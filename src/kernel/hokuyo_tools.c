@@ -18,34 +18,21 @@
 #define HOKUYO_START_ANGLE               (- 22282240 )      //!< 135 degrés + 44 HOKUYO_DTHETA
 
 
-void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct fx_vect2 *csangle)
-{
-	int32_t alpha = scan->sens * HOKUYO_START_ANGLE + scan->pos_hokuyo.alpha;
-	int size = HOKUYO_NUM_POINTS;
-
-	for( ; size--; )
-	{
-		csangle->x = fx_cos(alpha);
-		csangle->y = fx_sin(alpha);
-		csangle++;
-		alpha += scan->sens * HOKUYO_DTHETA;
-	}
-}
-
-void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos, struct fx_vect2 *csangle)
+void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos)
 {
 	int size = HOKUYO_NUM_POINTS;
 	uint16_t* distance = scan->distance;
-	int32_t dx = scan->pos_hokuyo.x;
-	int32_t dy = scan->pos_hokuyo.y;
+	struct fx_vect_pos hokuyo_pos_table;
+	pos_robot_to_table(&scan->pos_robot, &scan->pos_hokuyo, &hokuyo_pos_table);
+	int32_t alpha = scan->sens * HOKUYO_START_ANGLE + hokuyo_pos_table.alpha;
 
 	for( ; size--; )
 	{
 		if(*distance > 19 && *distance < 4000)
 		{
 			// distance en mm, ca en virgule fixe
-			pos->x = ((*distance * (int64_t)csangle->x) >> 14) + dx;
-			pos->y = ((*distance * (int64_t)csangle->y) >> 14) + dy;
+			pos->x = ((*distance * (int64_t)fx_cos(alpha)) >> 14) + hokuyo_pos_table.x;
+			pos->y = ((*distance * (int64_t)fx_sin(alpha)) >> 14) + hokuyo_pos_table.y;
 		}
 		else
 		{
@@ -55,18 +42,18 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos, struct fx
 
 		distance++;
 		pos++;
-		csangle++;
+		alpha += scan->sens * HOKUYO_DTHETA;
 	}
 }
 
 #if 0
 // TODO : à demenager, pas utile cette année (mais pourrait l'être plus tard)
-int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct vect_pos *pawn_pos)
+int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct fx_vect_pos *pawn_pos)
 {
 	int res = 0;
 
 	unsigned int delta = obj->stop - obj->start;
-	float tanAlpha = tanf(HOKUYO_DTHETA * delta / 2.0f);
+	float tanAlpha = fx_tan(HOKUYO_DTHETA * delta / 2.0f);
 
 	float r1 = distance[obj->start] * tanAlpha;
 	float r2 = distance[obj->stop] * tanAlpha;
@@ -78,8 +65,8 @@ int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct 
 		// distance du point du milieu + rayon du pion
 		float dist = distance[med] + 100.0f;
 		pawn_pos->alpha = HOKUYO_START_ANGLE + HOKUYO_DTHETA * med;
-		pawn_pos->ca = cosf(pawn_pos->alpha);
-		pawn_pos->sa = sinf(pawn_pos->alpha);
+		pawn_pos->ca = fx_cos(pawn_pos->alpha);
+		pawn_pos->sa = fx_sin(pawn_pos->alpha);
 		pawn_pos->x = dist * pawn_pos->ca;
 		pawn_pos->y = - dist * pawn_pos->sa;
 		res = 1;

@@ -11,7 +11,7 @@
 //! Il y a 1024 entrées et 2 entrées supplémentaires pour avoir un algo plus générique
 //! Remarque la dernière entrée "ne sert à rien" (en valeur), elle permet de ne pas faire de cas particulier
 //! lors de l'interpolation linéaire qui fait un accès à la case "n+1" (et va être multipliée par 0).
-int32_t sin_tbl[1026] =
+static const int32_t sin_tbl[1026] =
 {
           0,    1647099,    3294193,    4941281,    6588356,    8235416,    9882456,   11529474,
    13176464,   14823423,   16470347,   18117233,   19764076,   21410872,   23057618,   24704310,

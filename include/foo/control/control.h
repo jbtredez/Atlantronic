@@ -27,16 +27,16 @@ enum control_speed
 struct control_usb_data
 {
 	int32_t control_state;
-	float control_cons_x;
-	float control_cons_y;
-	float control_cons_alpha;
-	float control_pos_x;
-	float control_pos_y;
-	float control_pos_alpha;
-	float control_v_dist_cons;
-	float control_v_rot_cons;
-	float control_v_dist_mes;
-	float control_v_rot_mes;
+	int32_t control_cons_x;
+	int32_t control_cons_y;
+	int32_t control_cons_alpha;
+	int32_t control_pos_x;
+	int32_t control_pos_y;
+	int32_t control_pos_alpha;
+	int32_t control_v_dist_cons;
+	int32_t control_v_rot_cons;
+	int32_t control_v_dist_mes;
+	int32_t control_v_rot_mes;
 	uint16_t control_i_right;
 	uint16_t control_i_left;
 } __attribute__((packed));
@@ -61,7 +61,7 @@ enum trajectory_way
 	TRAJECTORY_BACKWARD
 };
 
-void control_goto_near(float x, float y, float alpha, float dist, enum trajectory_way sens);
+void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way sens);
 
 void control_free();
 

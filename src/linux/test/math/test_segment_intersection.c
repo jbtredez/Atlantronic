@@ -19,8 +19,8 @@ void check_segment_intersection(int id, struct fx_vect2 a, struct fx_vect2 b, st
 	else
 	{
 		printf("TEST %d KO <------\n", id);
-		printf("expected : res = %d, h.x = %d, h.y = %d\n", res_expected, h_expected.x, h_expected.y);
-		printf("result   : res = %d, h.x = %d, h.y = %d\n", res, h.x, h.y);
+		printf("expected : res = %d, h.x = %d, h.y = %d (%f %f)\n", res_expected, h_expected.x, h_expected.y, h_expected.x / 65536.0f, h_expected.y / 65536.0f);
+		printf("result   : res = %d, h.x = %d, h.y = %d (%f %f)\n", res, h.x, h.y, h.x / 65536.0f, h.y / 65536.0f);
 		error_count++;
 	}
 }
@@ -79,6 +79,19 @@ int main()
 	h.y = -((889 << 16) + 10545);
 
 	check_segment_intersection(7, a, b, c, d, 0, h);
+
+	a.x = 0;
+	a.y = 0;
+	b.x = 4096 << 16;
+	b.y = 0;
+	c.x = 318 << 16;
+	c.y = 29 << 16;
+	d.x = 353 << 16;
+	d.y = -54 << 16;
+	h.x = 21639168;
+	h.y = 0;
+
+	check_segment_intersection(8, a, b, c, d, 0, h);
 
 	return error_count;
 }

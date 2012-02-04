@@ -11,9 +11,9 @@
 #include "kernel/log.h"
 #include "kernel/event.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/math/trigo.h"
 #include "control/trajectory.h"
 #include "detection.h"
-#include <math.h>
 
 #define TRAJECTORY_STACK_SIZE       350
 
@@ -33,8 +33,8 @@ struct trajectory_cmd_arg trajectory_request;
 static xSemaphoreHandle trajectory_mutex;
 
 // donnees privees a la tache
-static struct vect_pos trajectory_dest;
-static float trajectory_approx_dist;
+static struct fx_vect_pos trajectory_dest;
+static int32_t trajectory_approx_dist;
 static enum trajectory_way trajectory_way;
 static enum trajectory_cmd_type trajectory_type;
 static enum trajectory_state trajectory_state;
@@ -81,20 +81,14 @@ static void trajectory_task(void* arg)
 			trajectory_state = TRAJECTORY_NONE;
 			xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
-			struct fx_vect_pos p = location_get_position();
-			trajectory_dest.x = p.x / 65536.0f;
-			trajectory_dest.y = p.y / 65536.0f;
-			trajectory_dest.alpha = p.alpha * 2 * 3.141592654f / ((float)(1<<26));
-			trajectory_dest.ca = p.ca / ((float)(1<<30));
-			trajectory_dest.sa = p.sa / ((float)(1<<30));
-
+			trajectory_dest = location_get_position();
 			trajectory_type = trajectory_request.type;
 
 			switch(trajectory_request.type)
 			{
 				case TRAJECTORY_STRAIGHT:
-					trajectory_dest.x += trajectory_dest.ca * trajectory_request.dist;
-					trajectory_dest.y += trajectory_dest.sa * trajectory_request.dist;
+					trajectory_dest.x += ((int64_t)trajectory_dest.ca * (int64_t)trajectory_request.dist) >> 30;
+					trajectory_dest.y += ((int64_t)trajectory_dest.sa * (int64_t)trajectory_request.dist) >> 30;
 					trajectory_approx_dist = 0;
 					if(trajectory_request.dist > 0)
 					{
@@ -106,22 +100,22 @@ static void trajectory_task(void* arg)
 					}
 					break;
 				case TRAJECTORY_STRAIGHT_TO_WALL:
-					trajectory_dest.x += trajectory_dest.ca * trajectory_request.dist;
-					trajectory_dest.y += trajectory_dest.sa * trajectory_request.dist;
+					trajectory_dest.x += ((int64_t)trajectory_dest.ca * (int64_t)trajectory_request.dist) >> 30;
+					trajectory_dest.y += ((int64_t)trajectory_dest.sa * (int64_t)trajectory_request.dist) >> 30;
 					trajectory_approx_dist = 0;
 					trajectory_way = TRAJECTORY_ANY_WAY;
 					break;
 				case TRAJECTORY_ROTATE:
 					trajectory_dest.alpha += trajectory_request.alpha;
-					trajectory_dest.ca = cosf(trajectory_dest.alpha);
-					trajectory_dest.sa = sinf(trajectory_dest.alpha);
+					trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
+					trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
 					trajectory_approx_dist = 0;
 					trajectory_way = TRAJECTORY_ANY_WAY;
 					break;
 				case TRAJECTORY_ROTATE_TO:
-					trajectory_dest.alpha += control_find_rotate(trajectory_dest.alpha * (1 << 26) / (2 * PI), trajectory_request.alpha* (1 << 26) / (2 * PI)) * 2 * PI / ((float)(1<<26));
-					trajectory_dest.ca = cosf(trajectory_dest.alpha);
-					trajectory_dest.sa = sinf(trajectory_dest.alpha);
+					trajectory_dest.alpha += control_find_rotate(trajectory_dest.alpha, trajectory_request.alpha);
+					trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
+					trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
 					trajectory_approx_dist = 0;
 					trajectory_way = trajectory_request.way;
 					break;
@@ -129,8 +123,8 @@ static void trajectory_task(void* arg)
 					trajectory_dest.x = trajectory_request.x;
 					trajectory_dest.y = trajectory_request.y;
 					trajectory_dest.alpha = trajectory_request.alpha;
-					trajectory_dest.ca = cosf(trajectory_dest.alpha);
-					trajectory_dest.sa = sinf(trajectory_dest.alpha);
+					trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
+					trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
 					trajectory_approx_dist = trajectory_request.dist;
 					trajectory_way = trajectory_request.way;
 					break;
@@ -188,34 +182,31 @@ static void trajectory_task(void* arg)
 
 static void trajectory_compute(enum trajectory_state next_state)
 {
-//	struct fx_vect_pos pos = location_get_position();
-/*	struct fx_vect_pos p = location_get_position();
-	pos.x = p.x / 65536.0f;
-	pos.y = p.y / 65536.0f;
-	pos.alpha = p.alpha * 2 * 3.141592654f / ((float)(1<<26));
-	pos.ca = p.ca / ((float)(1<<30));
-	pos.sa = p.sa / ((float)(1<<30));
-*/
+	struct fx_vect_pos pos = location_get_position();
+
 	if(next_state == TRAJECTORY_TO_DEST)
 	{
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, trajectory_way);
 	}
-/*	else if( next_state == TRAJECTORY_BASIC_AVOIDANCE)
+	else if( next_state == TRAJECTORY_BASIC_AVOIDANCE)
 	{
-		struct fx_vect2 a_table;
-		struct fx_vect2 b_table;
-		struct fx_vect2 a_robot;
-		struct fx_vect2 b_robot;
-		detection_get_front_seg(&a_table, &b_table);
-		fx_vect2_table_to_robot(&pos, &a_table, &a_robot);
-		fx_vect2_table_to_robot(&pos, &b_table, &b_robot);
-		float dist = (a_robot.x >> 16) - PARAM_LEFT_CORNER_X/65536.0f - 150;
+		if( trajectory_state == TRAJECTORY_TO_DEST)
+		{
+			struct fx_vect2 a_table;
+			struct fx_vect2 b_table;
+			struct fx_vect2 a_robot;
+			struct fx_vect2 b_robot;
+			detection_get_front_seg(&a_table, &b_table);
+			fx_vect2_table_to_robot(&pos, &a_table, &a_robot);
+			fx_vect2_table_to_robot(&pos, &b_table, &b_robot);
+			int32_t dist = a_robot.x - PARAM_LEFT_CORNER_X - (150 << 16);
 
-		pos.x += (dist * pos.ca) / ((float) (1 << 14));
-		pos.y += (dist * pos.sa) / ((float) (1 << 14));
-		control_goto_near(pos.x/65536.0f, pos.y/65536.0f, pos.alpha * 2 * 3.141592654f / ((float)(1<<26)), 0, TRAJECTORY_BACKWARD);
+			pos.x += ((int64_t)dist * (int64_t)pos.ca) >> 30;
+			pos.y += ((int64_t)dist * (int64_t)pos.sa) >> 30;
+			control_goto_near(pos.x, pos.y, pos.alpha, 0, TRAJECTORY_BACKWARD);
+		}
 	}
-*/
+
 	trajectory_state = next_state;
 }
 
@@ -239,7 +230,7 @@ void trajectory_free()
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_straight_to_wall(float dist)
+void trajectory_straight_to_wall(int32_t dist)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
@@ -250,7 +241,7 @@ void trajectory_straight_to_wall(float dist)
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_rotate(float angle)
+void trajectory_rotate(int32_t angle)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
@@ -261,7 +252,7 @@ void trajectory_rotate(float angle)
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_rotate_to(float angle)
+void trajectory_rotate_to(int32_t angle)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
@@ -272,7 +263,7 @@ void trajectory_rotate_to(float angle)
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_straight(float dist)
+void trajectory_straight(int32_t dist)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
@@ -283,7 +274,7 @@ void trajectory_straight(float dist)
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_goto_near(float x, float y, float dist, enum trajectory_way way)
+void trajectory_goto_near(int32_t x, int32_t y, int32_t dist, enum trajectory_way way)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 

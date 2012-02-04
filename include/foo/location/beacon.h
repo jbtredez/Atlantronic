@@ -10,6 +10,6 @@
 
 void beacon_update();
 
-struct vect_pos beacon_get_position();
+struct fx_vect_pos beacon_get_position();
 
 #endif

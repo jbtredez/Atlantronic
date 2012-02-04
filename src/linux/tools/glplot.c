@@ -460,8 +460,7 @@ void plot_table(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
 		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			fx_vect2_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &robot_interface.detection_hokuyo_pos[i], &pos_table);
-			draw_plus(pos_table.x/65536.0f, pos_table.y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -471,11 +470,7 @@ void plot_table(struct graph* graph)
 		glBegin(GL_LINE_STRIP);
 		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < HOKUYO_FOO*HOKUYO_NUM_POINTS + robot_interface.detection_reg_num[HOKUYO_FOO]; i++)
 		{
-			struct fx_vect2 reg;
-			reg.x = robot_interface.detection_hokuyo_reg[i].x;
-			reg.y = robot_interface.detection_hokuyo_reg[i].y;
-			fx_vect2_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO].pos_robot, &reg, &pos_table);
-			glVertex2f(pos_table.x, pos_table.y);
+			glVertex2f(robot_interface.detection_hokuyo_reg[i].x, robot_interface.detection_hokuyo_reg[i].y);
 		}
 		glEnd();
 	}
@@ -509,7 +504,7 @@ void plot_table(struct graph* graph)
 		{
 			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
 			{
-				draw_plus(robot_interface.control_usb_data[i].control_cons_x, robot_interface.control_usb_data[i].control_cons_y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+				draw_plus(robot_interface.control_usb_data[i].control_cons_x/65536.0f, robot_interface.control_usb_data[i].control_cons_y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			}
 		}
 	}
@@ -519,7 +514,7 @@ void plot_table(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(i=0; i < max; i++)
 		{
-			draw_plus(robot_interface.control_usb_data[i].control_pos_x, robot_interface.control_usb_data[i].control_pos_y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.control_usb_data[i].control_pos_x/65536.0f, robot_interface.control_usb_data[i].control_pos_y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -527,16 +522,13 @@ void plot_table(struct graph* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] )
 	{
 		glColor3f(0, 0, 0);
-		struct vect_pos pos_robot;
-		pos_robot.x = robot_interface.control_usb_data[max-1].control_pos_x;
-		pos_robot.y = robot_interface.control_usb_data[max-1].control_pos_y;
-		pos_robot.alpha = robot_interface.control_usb_data[max-1].control_pos_alpha;
-		pos_robot.ca = cos(pos_robot.alpha);
-		pos_robot.sa = sin(pos_robot.alpha);
+		float x_robot = robot_interface.control_usb_data[max-1].control_pos_x/65536.0f; // en mm
+		float y_robot = robot_interface.control_usb_data[max-1].control_pos_y/65536.0f; // en mm
+		float alpha_robot = robot_interface.control_usb_data[max-1].control_pos_alpha * 360.0f / ((float)(1<<26)); // en degrés
 
 		glPushMatrix();
-		glTranslatef(pos_robot.x, pos_robot.y, 0);
-		glRotatef(pos_robot.alpha * 180 / M_PI, 0, 0, 1);
+		glTranslatef(x_robot, y_robot, 0);
+		glRotatef(alpha_robot, 0, 0, 1);
 		glBegin(GL_LINES);
 		glVertex2f(0, 0);
 		glVertex2f(5 * font_height, 0);
@@ -546,11 +538,11 @@ void plot_table(struct graph* graph)
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
-		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
-		glVertex2f(PARAM_LEFT_CORNER_X/65536.0f, PARAM_LEFT_CORNER_Y);
-		glVertex2f(PARAM_RIGHT_CORNER_X/65536.0f, PARAM_RIGHT_CORNER_Y);
-		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y/65536.0f);
+		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y/65536.0f);
+		glVertex2f(PARAM_LEFT_CORNER_X/65536.0f, PARAM_LEFT_CORNER_Y/65536.0f);
+		glVertex2f(PARAM_RIGHT_CORNER_X/65536.0f, PARAM_RIGHT_CORNER_Y/65536.0f);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y/65536.0f);
 		glEnd();
 		glPopMatrix();
 	}
@@ -603,7 +595,7 @@ void plot_speed_dist(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_CONS]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 #if 0
@@ -617,8 +609,8 @@ void plot_speed_dist(struct graph* graph)
 			{
 				dist = 0;
 			}
-			float dx = robot_interface.control_usb_data[i].control_cons_x - robot_interface.control_usb_data[i-1].control_cons_x;
-			float dy = robot_interface.control_usb_data[i].control_cons_y - robot_interface.control_usb_data[i-1].control_cons_y;
+			float dx = (robot_interface.control_usb_data[i].control_cons_x - robot_interface.control_usb_data[i-1].control_cons_x)/65536.0f;
+			float dy = (robot_interface.control_usb_data[i].control_cons_y - robot_interface.control_usb_data[i-1].control_cons_y)/65536.0f;
 			dist += sqrtf(dx*dx+dy*dy);
 			draw_plus(5*i, dist, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
@@ -629,7 +621,7 @@ void plot_speed_dist(struct graph* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_MES]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*200, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 #if 0
@@ -643,8 +635,8 @@ void plot_speed_dist(struct graph* graph)
 			{
 				dist = 0;
 			}
-			float dx = robot_interface.control_usb_data[i].control_pos_x - robot_interface.control_usb_data[i-1].control_pos_x;
-			float dy = robot_interface.control_usb_data[i].control_pos_y - robot_interface.control_usb_data[i-1].control_pos_y;
+			float dx = (robot_interface.control_usb_data[i].control_pos_x - robot_interface.control_usb_data[i-1].control_pos_x)/65536.0f;
+			float dy = (robot_interface.control_usb_data[i].control_pos_y - robot_interface.control_usb_data[i-1].control_pos_y)/65536.0f;
 			dist += sqrtf(dx*dx+dy*dy);
 			draw_plus(5*i, dist, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}

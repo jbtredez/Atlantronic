@@ -21,22 +21,22 @@ enum trajectory_cmd_type
 struct trajectory_cmd_arg
 {
 	uint32_t type;
-	float x;
-	float y;
-	float alpha;
-	float dist;
+	int32_t x;
+	int32_t y;
+	int32_t alpha;
+	int32_t dist;
 	uint32_t way;
 };
 
-void trajectory_straight(float dist);
+void trajectory_straight(int32_t dist);
 
-void trajectory_straight_to_wall(float dist);
+void trajectory_straight_to_wall(int32_t dist);
 
-void trajectory_rotate(float angle);
+void trajectory_rotate(int32_t angle);
 
-void trajectory_rotate_to(float angle);
+void trajectory_rotate_to(int32_t angle);
 
-void trajectory_goto_near(float x, float y, float dist, enum trajectory_way way);
+void trajectory_goto_near(int32_t x, int32_t y, int32_t dist, enum trajectory_way way);
 
 void trajectory_free();
 

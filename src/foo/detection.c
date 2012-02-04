@@ -13,10 +13,9 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
+#include "kernel/math/trigo.h"
 #include "location/location.h"
 #include "gpio.h"
-
-#include <math.h>
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
@@ -29,7 +28,7 @@
 static void detection_task();
 int detection_module_init();
 static void detection_compute();
-static void detection_compute_front_object();
+static void detection_compute_front_object(struct fx_vect_pos pos);
 void can_hokuyo_reset(struct can_msg *msg);
 void can_hokuyo_data(struct can_msg *msg);
 
@@ -37,7 +36,6 @@ static int detection_can_hokuyo_id;
 static struct hokuyo_scan hokuyo_scan_bar;
 static struct hokuyo_object detection_object[DETECTION_NUM_OBJECT];
 struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
-struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS];
 struct fx16_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 int detection_reg_size;
 static int detection_num_obj;
@@ -66,25 +64,23 @@ int detection_module_init()
 
 	detection_reg_size = 0;
 
-	detection_front_seg[0].x = 30000 << 16;
-	detection_front_seg[0].y = -30000 << 16;
-	detection_front_seg[1].x = 30000 << 16;
-	detection_front_seg[1].y = 30000 << 16;
+	detection_front_seg[0].x = 1 << 30;
+	detection_front_seg[0].y = -1 << 30;
+	detection_front_seg[1].x = 1 << 30;
+	detection_front_seg[1].y = 1 << 30;
 
 	hokuyo_scan.sens = PARAM_FOO_HOKUYO_SENS;
 	hokuyo_scan.pos_hokuyo.x = PARAM_FOO_HOKUYO_X;
 	hokuyo_scan.pos_hokuyo.y = PARAM_FOO_HOKUYO_Y;
 	hokuyo_scan.pos_hokuyo.alpha = PARAM_FOO_HOKUYO_ALPHA;
-	hokuyo_scan.pos_hokuyo.ca = cosf(hokuyo_scan.pos_hokuyo.alpha);
-	hokuyo_scan.pos_hokuyo.sa = sinf(hokuyo_scan.pos_hokuyo.alpha);
+	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
+	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan_bar.sens =  PARAM_BAR_HOKUYO_SENS;
 	hokuyo_scan_bar.pos_hokuyo.x = PARAM_BAR_HOKUYO_X;
 	hokuyo_scan_bar.pos_hokuyo.y = PARAM_BAR_HOKUYO_Y;
 	hokuyo_scan_bar.pos_hokuyo.alpha = PARAM_BAR_HOKUYO_ALPHA;
-	hokuyo_scan_bar.pos_hokuyo.ca = cosf(hokuyo_scan_bar.pos_hokuyo.alpha);
-	hokuyo_scan_bar.pos_hokuyo.sa = sinf(hokuyo_scan_bar.pos_hokuyo.alpha);
-
-	hokuyo_precompute_angle(&hokuyo_scan, detection_hokuyo_csangle);
+	hokuyo_scan_bar.pos_hokuyo.ca = fx_cos(hokuyo_scan_bar.pos_hokuyo.alpha);
+	hokuyo_scan_bar.pos_hokuyo.sa = fx_sin(hokuyo_scan_bar.pos_hokuyo.alpha);
 
 	detection_can_hokuyo_id = 0;
 	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
@@ -130,122 +126,109 @@ void detection_get_front_seg(struct fx_vect2* a, struct fx_vect2* b)
 	xSemaphoreGive(detection_mutex);
 }
 
-static void detection_compute_front_object()
+static void detection_compute_front_object(struct fx_vect_pos pos)
 {
-	int i;
-	int j;
-	float d;
-	int objId;
-	struct vect_pos obj = { 400000, 400000, 0, 1, 0 };
+	int i = 0;
+	int j = 0;
+	int32_t x_min = 1 << 30;
+	int objId = -1;
 
-	for( i = 0 ; i < detection_num_obj ; i++)
-	{
-		int maxj = detection_object[i].start + detection_object[i].size - 1;
-		for( j = detection_object[i].start; j < maxj; j++)
-		{
-			int32_t dy = detection_hokuyo_reg[j+1].y - detection_hokuyo_reg[j].y; // en mm
-			// elimination de segments
-			if( (detection_hokuyo_reg[j].x < 0 && detection_hokuyo_reg[j+1].x < 0)
-				|| (detection_hokuyo_reg[j].y > PARAM_LEFT_CORNER_Y && detection_hokuyo_reg[j+1].y > PARAM_LEFT_CORNER_Y)
-				|| (detection_hokuyo_reg[j].y < PARAM_RIGHT_CORNER_Y && detection_hokuyo_reg[j+1].y < PARAM_RIGHT_CORNER_Y)
-				|| (dy == 0) )
-			{
-				continue;
-			}
-
-			int32_t dx = detection_hokuyo_reg[j+1].x - detection_hokuyo_reg[j].x; // en mm
-			float coef = (PARAM_RIGHT_CORNER_Y - detection_hokuyo_reg[j].y) / (float)dy;
-			if(coef < 0)
-			{
-				coef = 0;
-			}
-			else if(coef > 1)
-			{
-				coef = 1;
-			}
-
-			d = detection_hokuyo_reg[j].x + coef * dx;
-
-			if( d < obj.x)
-			{
-				objId = i;
-				obj.x = d;
-				obj.y = detection_hokuyo_reg[j].y + coef * dy;
-			}
-
-			coef = (PARAM_LEFT_CORNER_Y - detection_hokuyo_reg[j].y) / (float)dy;
-			if(coef < 0)
-			{
-				coef = 0;
-			}
-			else if(coef > 1)
-			{
-				coef = 1;
-			}
-
-			d = detection_hokuyo_reg[j].x + coef * dx;
-			if( d < obj.x)
-			{
-				objId = i;
-				obj.x = d;
-				obj.y = detection_hokuyo_reg[j].y + coef * dy;
-			}
-		}
-	}
-
-	if(obj.x < PARAM_LEFT_CORNER_X/65536.0f || obj.x < PARAM_RIGHT_CORNER_X/65536.0f)
-	{
-		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
-		log_format(LOG_ERROR, "erreur de calibration ? : obj %.2f %.2f", obj.x, obj.y);
-	}
-
-	i = detection_object[objId].start;
-	j = i + detection_object[objId].size-1;
-
-	struct fx_vect2 a;
-	struct fx_vect2 b;
-	a.x = ((int32_t)obj.x) << 16;
-	b.x = a.x;
-
-	if( detection_hokuyo_reg[i].y < detection_hokuyo_reg[j].y)
-	{
-		a.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
-		b.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
-	}
-	else
-	{
-		a.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
-		b.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
-	}
-
-	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &a, detection_front_seg);
-	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &b, detection_front_seg+1);
-	xSemaphoreGive(detection_mutex);
-}
-
-int detection_check_trajectory(struct fx_vect2 a, struct fx_vect2 b, struct fx_vect2* seg_a, struct fx_vect2 seg_b)
-{
-	int i;
-	int j;
 	struct fx_vect2 c;
 	struct fx_vect2 d;
 	struct fx_vect2 h;
+	struct fx_vect2 tmp;
+
+	struct fx_vect2 a1 = { 0,  PARAM_LEFT_CORNER_Y };
+	struct fx_vect2 b1 = { 1 << 30,  PARAM_LEFT_CORNER_Y };
+	struct fx_vect2 a2 = { 0, PARAM_RIGHT_CORNER_Y };
+	struct fx_vect2 b2 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
 
 	for( i = 0 ; i < detection_num_obj ; i++)
 	{
-		int maxj = detection_object[i].start + detection_object[i].size - 1;
-		for( j = detection_object[i].start; j < maxj; j++)
+		j = detection_object[i].start;
+		int maxj = j + detection_object[i].size;
+		tmp.x = ((int32_t) detection_hokuyo_reg[j].x) << 16;
+		tmp.y = ((int32_t) detection_hokuyo_reg[j].y) << 16;
+		fx_vect2_table_to_robot(&pos, &tmp, &c);
+		for( j++; j < maxj; j++)
 		{
-			c.x = detection_hokuyo_reg[j].x;
-			c.y = detection_hokuyo_reg[j].y;
-			d.x = detection_hokuyo_reg[j+1].x;
-			d.y = detection_hokuyo_reg[j+1].y;
-			segment_intersection(a, b, c, d, &h);
+			tmp.x = ((int32_t) detection_hokuyo_reg[j].x) << 16;
+			tmp.y = ((int32_t) detection_hokuyo_reg[j].y) << 16;
+			fx_vect2_table_to_robot(&pos, &tmp, &d);
+			int err1 = segment_intersection(a1, b1, c, d, &h);
+			if(err1 == 0)
+			{
+				if( h.x < x_min)
+				{
+					x_min = h.x;
+					objId = j;
+				}
+			}
+
+			int err2 = segment_intersection(a2, b2, c, d, &h);
+			if(err2 == 0)
+			{
+				if( h.x < x_min)
+				{
+					x_min = h.x;
+					objId = j;
+				}
+			}
+
+			if( err1 && err2 )
+			{
+				// pas d'intersection avec [a1 b1] ou [a2 b2]
+				// on regarde si le segment n'est pas completement entre les deux
+				// inutle de verifier les 2 points vu qu'il n'y a pas d'intersection avec les 2 segments
+				if( c.x > 0 && c.y > a1.y && c.y < a2.y)
+				{
+					if( c.x < x_min)
+					{
+						x_min = c.x;
+						objId = j;
+					}
+					if( d.x < x_min)
+					{
+						x_min = c.x;
+						objId = j;
+					}
+				}
+			}
+
+			c = d;
 		}
 	}
 
-	return 0;
+	if(x_min < PARAM_LEFT_CORNER_X || x_min < PARAM_RIGHT_CORNER_X)
+	{
+		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
+		log_format(LOG_ERROR, "erreur de calibration ? : x_min %ld",x_min >> 16);
+	}
+
+	if(objId >= 0)
+	{
+		i = detection_object[objId].start;
+		j = i + detection_object[objId].size-1;
+
+		b1.x = x_min;
+		b2.x = x_min;
+
+		if( detection_hokuyo_reg[i].y < detection_hokuyo_reg[j].y)
+		{
+			b1.y = detection_hokuyo_reg[i].y;
+			b2.y = detection_hokuyo_reg[j].y;
+		}
+		else
+		{
+			b1.y = detection_hokuyo_reg[j].y;
+			b2.y = detection_hokuyo_reg[i].y;
+		}
+	}
+
+	xSemaphoreTake(detection_mutex, portMAX_DELAY);
+	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &b1, detection_front_seg);
+	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &b2, detection_front_seg+1);
+	xSemaphoreGive(detection_mutex);
 }
 
 void detection_compute()
@@ -254,7 +237,7 @@ void detection_compute()
 	detection_reg_size = 0;
 
 	detection_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
-	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos, detection_hokuyo_csangle);
+	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos);
 
 	for( i = 0 ; i < detection_num_obj ; i++)
 	{
@@ -263,24 +246,15 @@ void detection_compute()
 		detection_reg_size += detection_object[i].size;
 	}
 
-	detection_compute_front_object();
-
-	for( i = 0 ; i < detection_reg_size ; i++)
-	{
-		struct fx_vect2 a;
-		struct fx_vect2 b;
-		a.x = detection_hokuyo_reg[i].x;
-		a.y = detection_hokuyo_reg[i].y;
-		fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &a, &b);
-		detection_hokuyo_reg[i].x = b.x;
-		detection_hokuyo_reg[i].y = b.y;
-	}
+	struct fx_vect_pos pos = location_get_position();
+	detection_compute_front_object(pos);
 
 	log_format(LOG_DEBUG2, "front object %d %d %d %d", (int)detection_front_seg[0].x >> 16, (int)detection_front_seg[0].y >> 16, (int)detection_front_seg[1].x >> 16, (int)detection_front_seg[1].y >> 16);
 }
 
 void can_hokuyo_reset(struct can_msg *msg)
 {
+	(void) msg;
 	detection_can_hokuyo_id = 0;
 //	hokuyo_scan_bar.pos_robot = location_get_position();
 }

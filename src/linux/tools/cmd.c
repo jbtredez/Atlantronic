@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "linux/tools/com.h"
 #include "linux/tools/cmd.h"
@@ -93,7 +94,8 @@ int cmd_control_print_param()
 int cmd_straight(void* arg)
 {
 	struct trajectory_cmd_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.dist);
+	float dist;
+	int count = sscanf(arg, "%f", &dist);
 
 	if(count != 1)
 	{
@@ -101,6 +103,7 @@ int cmd_straight(void* arg)
 		return 0;
 	}
 
+	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_STRAIGHT;
 
 	char buffer[1+sizeof(cmd_arg)];
@@ -118,7 +121,8 @@ int cmd_straight(void* arg)
 int cmd_straight_to_wall(void* arg)
 {
 	struct trajectory_cmd_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.dist);
+	float dist;
+	int count = sscanf(arg, "%f", &dist);
 
 	if(count != 1)
 	{
@@ -126,6 +130,7 @@ int cmd_straight_to_wall(void* arg)
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
 
 	char buffer[1+sizeof(cmd_arg)];
@@ -142,7 +147,8 @@ int cmd_straight_to_wall(void* arg)
 int cmd_rotate(void* arg)
 {
 	struct trajectory_cmd_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.alpha);
+	float alpha;
+	int count = sscanf(arg, "%f", &alpha);
 
 	if(count != 1)
 	{
@@ -150,6 +156,7 @@ int cmd_rotate(void* arg)
 		return 0;
 	}
 
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
 	cmd_arg.type = TRAJECTORY_ROTATE;
 
 	char buffer[1+sizeof(cmd_arg)];
@@ -166,7 +173,8 @@ int cmd_rotate(void* arg)
 int cmd_rotate_to(void* arg)
 {
 	struct trajectory_cmd_arg cmd_arg;
-	int count = sscanf(arg, "%f", &cmd_arg.alpha);
+	float alpha;
+	int count = sscanf(arg, "%f", &alpha);
 
 	if(count != 1)
 	{
@@ -174,6 +182,7 @@ int cmd_rotate_to(void* arg)
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
 	cmd_arg.type = TRAJECTORY_ROTATE_TO;
 
 	char buffer[1+sizeof(cmd_arg)];
@@ -207,7 +216,11 @@ int cmd_free()
 int cmd_goto_near(void* arg)
 {
 	struct trajectory_cmd_arg cmd_arg;
-	int count = sscanf(arg, "%f %f %f %f %u", &cmd_arg.x, &cmd_arg.y, &cmd_arg.alpha, &cmd_arg.dist, &cmd_arg.way);
+	float x;
+	float y;
+	float alpha;
+	float dist;
+	int count = sscanf(arg, "%f %f %f %f %u", &x, &y, &alpha, &dist, &cmd_arg.way);
 
 	if(count != 5)
 	{
@@ -215,6 +228,10 @@ int cmd_goto_near(void* arg)
 		return CMD_SUCESS;
 	}
 
+	cmd_arg.x = x * 65536.0f;
+	cmd_arg.y = y * 65536.0f;
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_GOTO;
 
 	char buffer[1+sizeof(cmd_arg)];
