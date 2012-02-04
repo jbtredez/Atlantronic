@@ -5,12 +5,12 @@
 #include "location/location.h"
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
-#include <math.h>
+#include "kernel/math/trigo.h"
 
-static float location_v_distance;   //!< en "m / unité de temps"
-static float location_v_rotate;     //!< en "rd / unité de temps"
+static int32_t location_v_distance;   //!< en "m / unité de temps"
+static int32_t location_v_rotate;     //!< en "rd / unité de temps"
 
-static struct vect_pos location_pos;
+static struct fx_vect_pos location_pos;
 
 static int location_module_init()
 {
@@ -36,39 +36,39 @@ void location_update()
 	portEXIT_CRITICAL();
 }
 
-struct vect_pos location_get_position()
+struct fx_vect_pos location_get_position()
 {
-	struct vect_pos p;
+	struct fx_vect_pos p;
 	portENTER_CRITICAL();
 	p = location_pos;
 	portEXIT_CRITICAL();
 	return p;
 }
 
-void location_set_position(float x, float y, float alpha)
+void location_set_position(int32_t x, int32_t y, int32_t alpha)
 {
 	portENTER_CRITICAL();
 	location_pos.x = x;
 	location_pos.y = y;
 	location_pos.alpha = alpha;
-	location_pos.ca = cosf(alpha);
-	location_pos.sa = sinf(alpha);
+	location_pos.ca = fx_cos(alpha);
+	location_pos.sa = fx_sin(alpha);
 	odometry_set_position(location_pos);
 	portEXIT_CRITICAL();
 }
 
-float location_get_speed_curv_abs()
+int32_t location_get_speed_curv_abs()
 {
-	float v;
+	int32_t v;
 	portENTER_CRITICAL();
 	v = location_v_distance;
 	portEXIT_CRITICAL();
 	return v;
 }
 
-float location_get_speed_rot()
+int32_t location_get_speed_rot()
 {
-	float v;
+	int32_t v;
 	portENTER_CRITICAL();
 	v = location_v_rotate;
 	portEXIT_CRITICAL();

@@ -27,9 +27,6 @@ enum control_speed
 struct control_usb_data
 {
 	int32_t control_state;
-	float control_dest_x;
-	float control_dest_y;
-	float control_dest_alpha;
 	float control_cons_x;
 	float control_cons_y;
 	float control_cons_alpha;
@@ -46,15 +43,15 @@ struct control_usb_data
 
 struct control_cmd_param_arg
 {
-	float kp_av;
-	float ki_av;
-	float kd_av;
-	float kp_rot;
-	float ki_rot;
-	float kd_rot;
-	float kx;
-	float ky;
-	float kalpha;
+	int32_t kp_av;
+	int32_t ki_av;
+	int32_t kd_av;
+	int32_t kp_rot;
+	int32_t ki_rot;
+	int32_t kd_rot;
+	int32_t kx;
+	int32_t ky;
+	int32_t kalpha;
 };
 
 enum trajectory_way
@@ -68,7 +65,7 @@ void control_goto_near(float x, float y, float alpha, float dist, enum trajector
 
 void control_free();
 
-float control_find_rotate(float debut, float fin);
+int32_t control_find_rotate(int32_t debut, int32_t fin);
 
 int32_t control_get_state();
 

@@ -10,12 +10,12 @@
 
 void odometry_update();
 
-void odometry_set_position(const struct vect_pos pos);
+void odometry_set_position(const struct fx_vect_pos pos);
 
-struct vect_pos odometry_get_position();
+struct fx_vect_pos odometry_get_position();
 
-float odometry_get_speed_curv_abs();
+int32_t odometry_get_speed_curv_abs();
 
-float odometry_get_speed_rot();
+int32_t odometry_get_speed_rot();
 
 #endif

@@ -59,7 +59,7 @@ int cmd_quit()
 int cmd_control_param(void* arg)
 {
 	struct control_cmd_param_arg cmd_arg;
-	int count = sscanf(arg, "%f %f %f %f %f %f %f %f %f", &cmd_arg.kp_av, &cmd_arg.ki_av, &cmd_arg.kd_av, &cmd_arg.kp_rot, &cmd_arg.ki_rot, &cmd_arg.kd_rot, &cmd_arg.kx, &cmd_arg.ky, &cmd_arg.kalpha);
+	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d", &cmd_arg.kp_av, &cmd_arg.ki_av, &cmd_arg.kd_av, &cmd_arg.kp_rot, &cmd_arg.ki_rot, &cmd_arg.kd_rot, &cmd_arg.kx, &cmd_arg.ky, &cmd_arg.kalpha);
 
 	if(count != 9)
 	{

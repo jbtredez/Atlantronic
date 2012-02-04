@@ -41,7 +41,6 @@ struct robot_interface
 	// calculs
 	struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*3];
 	struct fx_vect2 detection_hokuyo_csangle[HOKUYO_NUM_POINTS*3];
-	struct vect_pos hokuyo_pos[HOKUYO_NUM_POINTS*3];
 	struct fx16_vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*3];
 	int detection_reg_num[3];
 };

@@ -9,19 +9,20 @@
 
 struct pid
 {
-	float kp;              //!< proportional gain
-	float ki;              //!< integral gain (* te)
-	float kd;              //!< derivate gain (/ te)
+	int32_t kp;            //!< proportional gain
+	int32_t ki;            //!< integral gain (* te)
+	int32_t kd;            //!< derivate gain (/ te)
+	int fx_unit;           //!< gains en 2^-fx_unit
 
-	float integral;        //!< previous integral
-	float previous_in;     //!< previous input (for derivative)
-	float max_integral;    //!< saturate integral
-	float max_out;         //!< saturate output
+	int32_t integral;      //!< previous integral
+	int32_t previous_in;   //!< previous input (for derivative)
+	int32_t max_integral;    //!< saturate integral
+	int32_t max_out;       //!< saturate output
 };
 
-void pid_init(struct pid *pid, float kp, float ki, float kd, float max);
+void pid_init(struct pid *pid, int32_t kp, int32_t ki, int32_t kd, int32_t max, int fx_unit);
 
-float pid_apply(struct pid *pid, float in);
+int32_t pid_apply(struct pid *pid, int32_t in);
 
 void pid_reset(struct pid *pid);
 

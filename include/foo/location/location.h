@@ -12,12 +12,12 @@
 
 void location_update();
 
-struct vect_pos location_get_position();
+struct fx_vect_pos location_get_position();
 
-void location_set_position(float x, float y, float alpha);
+void location_set_position(int32_t x, int32_t y, int32_t alpha);
 
-float location_get_speed_curv_abs();
+int32_t location_get_speed_curv_abs();
 
-float location_get_speed_rot();
+int32_t location_get_speed_rot();
 
 #endif

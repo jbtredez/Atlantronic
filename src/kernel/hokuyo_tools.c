@@ -7,24 +7,26 @@
 #include "kernel/systick.h"
 #include "kernel/vect_pos.h"
 #include "kernel/error_codes.h"
+#include "kernel/math/trigo.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 
 #define GAP 90 //150
-#define HOKUYO_START_ANGLE               (-(135 / 180.0f - 44 / 512.0f) * PI)
-#define HOKUYO_DTHETA         	         (PI / 512.0f)
+
+#define HOKUYO_DTHETA         	              65536
+#define HOKUYO_START_ANGLE               (- 22282240 )      //!< 135 degrés + 44 HOKUYO_DTHETA
+
 
 void hokuyo_precompute_angle(struct hokuyo_scan* scan, struct fx_vect2 *csangle)
 {
-	float alpha = scan->sens * HOKUYO_START_ANGLE + scan->pos_hokuyo.alpha;
+	int32_t alpha = scan->sens * HOKUYO_START_ANGLE + scan->pos_hokuyo.alpha;
 	int size = HOKUYO_NUM_POINTS;
 
 	for( ; size--; )
 	{
-		csangle->x = (int32_t) ( cosf(alpha) * 65536 );
-		csangle->y = (int32_t) ( sinf(alpha) * 65536 );
+		csangle->x = fx_cos(alpha);
+		csangle->y = fx_sin(alpha);
 		csangle++;
 		alpha += scan->sens * HOKUYO_DTHETA;
 	}
@@ -34,17 +36,16 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos, struct fx
 {
 	int size = HOKUYO_NUM_POINTS;
 	uint16_t* distance = scan->distance;
-	int32_t dx = (int32_t) (scan->pos_hokuyo.x * 65536);
-	int32_t dy = (int32_t) (scan->pos_hokuyo.y * 65536);
+	int32_t dx = scan->pos_hokuyo.x;
+	int32_t dy = scan->pos_hokuyo.y;
 
 	for( ; size--; )
 	{
 		if(*distance > 19 && *distance < 4000)
 		{
-			// distance en mm, ca en virgule fixe "16.16" => "2.16" (cos dans -1 1)
-			// => multiplication simple
-			pos->x = *distance * csangle->x + dx;
-			pos->y = *distance * csangle->y + dy;
+			// distance en mm, ca en virgule fixe
+			pos->x = ((*distance * (int64_t)csangle->x) >> 14) + dx;
+			pos->y = ((*distance * (int64_t)csangle->y) >> 14) + dy;
 		}
 		else
 		{

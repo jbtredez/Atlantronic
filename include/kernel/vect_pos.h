@@ -21,9 +21,9 @@ struct fx_vect2
 
 struct fx_vect_pos
 {
-	int32_t x;
-	int32_t y;
-	int32_t alpha;
+	int32_t x;          //!< coordonnée selon l'axe x en 2^-16 mm
+	int32_t y;          //!< coordonnée selon l'axe y en 2^-16 mm
+	int32_t alpha;      //!< orientation en 2^-24 tours
 	int32_t ca;
 	int32_t sa;
 };
@@ -39,11 +39,11 @@ struct vect_pos
 	float sa;         //!< sin(alpha)
 };
 
-void fx_vect2_robot_to_table(struct vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void fx_vect2_robot_to_table(struct fx_vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void fx_vect2_table_to_robot(struct vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void fx_vect2_table_to_robot(struct fx_vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void pos_robot_to_table(struct vect_pos *pos_robot, struct vect_pos *pos_in, struct vect_pos *pos_out);
+void pos_robot_to_table(struct fx_vect_pos *pos_robot, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
 
 void pos_table_to_robot(struct vect_pos *pos_robot, struct vect_pos *pos_in, struct vect_pos *pos_out);
 

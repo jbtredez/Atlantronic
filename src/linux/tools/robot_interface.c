@@ -324,7 +324,6 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 {
 	(void) com_id;
 	int res = 0;
-	int i;
 
 	if(size != sizeof(struct hokuyo_scan))
 	{
@@ -344,15 +343,6 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 
 	hokuyo_precompute_angle(&data->hokuyo_scan[id], data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
 	hokuyo_compute_xy(&data->hokuyo_scan[id], data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id, data->detection_hokuyo_csangle + HOKUYO_NUM_POINTS * id);
-
-	for(i = id * HOKUYO_NUM_POINTS; i < (id + 1) * HOKUYO_NUM_POINTS; i++)
-	{
-		data->hokuyo_pos[i].x = data->detection_hokuyo_pos[i].x / 65536.0f;
-		data->hokuyo_pos[i].y = data->detection_hokuyo_pos[i].y / 65536.0f;
-		data->hokuyo_pos[i].alpha = 0;
-		data->hokuyo_pos[i].ca = 1;
-		data->hokuyo_pos[i].sa = 0;
-	}
 
 	pthread_mutex_unlock(&data->mutex);
 

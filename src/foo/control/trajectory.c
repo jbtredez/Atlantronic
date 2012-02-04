@@ -81,7 +81,12 @@ static void trajectory_task(void* arg)
 			trajectory_state = TRAJECTORY_NONE;
 			xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
-			trajectory_dest = location_get_position();
+			struct fx_vect_pos p = location_get_position();
+			trajectory_dest.x = p.x / 65536.0f;
+			trajectory_dest.y = p.y / 65536.0f;
+			trajectory_dest.alpha = p.alpha * 2 * 3.141592654f / ((float)(1<<26));
+			trajectory_dest.ca = p.ca / ((float)(1<<30));
+			trajectory_dest.sa = p.sa / ((float)(1<<30));
 
 			trajectory_type = trajectory_request.type;
 
@@ -114,7 +119,7 @@ static void trajectory_task(void* arg)
 					trajectory_way = TRAJECTORY_ANY_WAY;
 					break;
 				case TRAJECTORY_ROTATE_TO:
-					trajectory_dest.alpha += control_find_rotate(trajectory_dest.alpha, trajectory_request.alpha);
+					trajectory_dest.alpha += control_find_rotate(trajectory_dest.alpha * (1 << 26) / (2 * PI), trajectory_request.alpha* (1 << 26) / (2 * PI)) * 2 * PI / ((float)(1<<26));
 					trajectory_dest.ca = cosf(trajectory_dest.alpha);
 					trajectory_dest.sa = sinf(trajectory_dest.alpha);
 					trajectory_approx_dist = 0;
@@ -183,13 +188,19 @@ static void trajectory_task(void* arg)
 
 static void trajectory_compute(enum trajectory_state next_state)
 {
-	struct vect_pos pos = location_get_position();
-
+//	struct fx_vect_pos pos = location_get_position();
+/*	struct fx_vect_pos p = location_get_position();
+	pos.x = p.x / 65536.0f;
+	pos.y = p.y / 65536.0f;
+	pos.alpha = p.alpha * 2 * 3.141592654f / ((float)(1<<26));
+	pos.ca = p.ca / ((float)(1<<30));
+	pos.sa = p.sa / ((float)(1<<30));
+*/
 	if(next_state == TRAJECTORY_TO_DEST)
 	{
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, trajectory_way);
 	}
-	else if( next_state == TRAJECTORY_BASIC_AVOIDANCE)
+/*	else if( next_state == TRAJECTORY_BASIC_AVOIDANCE)
 	{
 		struct fx_vect2 a_table;
 		struct fx_vect2 b_table;
@@ -198,13 +209,13 @@ static void trajectory_compute(enum trajectory_state next_state)
 		detection_get_front_seg(&a_table, &b_table);
 		fx_vect2_table_to_robot(&pos, &a_table, &a_robot);
 		fx_vect2_table_to_robot(&pos, &b_table, &b_robot);
-		float dist = (a_robot.x >> 16) - PARAM_LEFT_CORNER_X - 150;
+		float dist = (a_robot.x >> 16) - PARAM_LEFT_CORNER_X/65536.0f - 150;
 
-		pos.x += dist * pos.ca;
-		pos.y += dist * pos.sa;
-		control_goto_near(pos.x, pos.y, pos.alpha, 0, TRAJECTORY_BACKWARD);
+		pos.x += (dist * pos.ca) / ((float) (1 << 14));
+		pos.y += (dist * pos.sa) / ((float) (1 << 14));
+		control_goto_near(pos.x/65536.0f, pos.y/65536.0f, pos.alpha * 2 * 3.141592654f / ((float)(1<<26)), 0, TRAJECTORY_BACKWARD);
 	}
-
+*/
 	trajectory_state = next_state;
 }
 

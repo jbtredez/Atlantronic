@@ -38,11 +38,11 @@ static void test_deplacement_task()
 
 	if(getcolor() == COLOR_BLUE)
 	{
-		location_set_position(-700.0f, -700.0f, 0);
+		location_set_position(-700 << 16, -700 << 16, 0);
 	}
 	else
 	{
-		location_set_position(700.0f, -700.0f, PI);
+		location_set_position(700 << 16, -700 << 16, 1 << 25);
 	}
 
 	//pince_configure();

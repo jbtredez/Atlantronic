@@ -17,8 +17,8 @@
 
 struct hokuyo_scan
 {
-	struct vect_pos pos_robot; //!< position absolue du robot au moment du scan
-	struct vect_pos pos_hokuyo; //!< position du hokuyo dans le repère robot
+	struct fx_vect_pos pos_robot; //!< position absolue du robot au moment du scan
+	struct fx_vect_pos pos_hokuyo; //!< position du hokuyo dans le repère robot
 	signed char sens; //!< sens du hokuyo (1 = vers le haut, -1 = vers le bas)
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
 };

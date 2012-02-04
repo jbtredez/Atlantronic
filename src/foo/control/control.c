@@ -6,6 +6,7 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/module.h"
+#include "kernel/math/trigo.h"
 #include "control/control.h"
 #include "priority.h"
 #include "kernel/log.h"
@@ -26,8 +27,8 @@
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
-#define TRAJECTORY_POS_REACHED_TOLERANCE_X        2.0f
-#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   0.02f
+#define TRAJECTORY_POS_REACHED_TOLERANCE_X        (2 * 65536)
+#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
@@ -35,7 +36,7 @@
 #define TE                         0.005f
 
 static void control_task(void *);
-static float sinc( float x );
+static int32_t sinc( int32_t x );
 static void control_compute();
 static void control_compute_trajectory();
 
@@ -47,18 +48,21 @@ void control_cmd_print_param(void* arg);
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static enum control_state control_state;
-static struct vect_pos control_cons;
+
+static struct fx_vect_pos control_cons;
+static struct fx_vect_pos control_pos;
+static struct fx_vect_pos control_dest;
+
 static struct adc_an control_an;
-static struct vect_pos control_pos;
+
 static portTickType control_timer;
-static float control_kx;
-static float control_ky;
-static float control_kalpha;
-static struct vect_pos control_dest;
+static int32_t control_kx;
+static int32_t control_ky;
+static int32_t control_kalpha;
 static struct trapeze control_trapeze_rot;
 static struct trapeze control_trapeze_av;
-static float control_angle;
-static float control_dist;
+static int32_t control_angle;
+static int32_t control_dist;
 
 static struct pid control_pid_av;
 static struct pid control_pid_rot;
@@ -80,21 +84,13 @@ static int control_module_init()
 		return ERR_INIT_CONTROL;
 	}
 
-	// coupe 2011 - coefs samedi - Angers
-	// pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
-	// pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
+#if( PWM_ARR != 2879)
+#error "revoir les gains d'asservissement"
+#endif
 
-	// test
-	//pid_init(&control_pid_av, 0.7f, 0.01f, 0.0f, PWM_ARR);
-	//pid_init(&control_pid_rot, 312.0f, 16.0f, 0.0f, PWM_ARR);
+	pid_init(&control_pid_av, 94339072, 18867814, 0, PWM_ARR, 32);
+	pid_init(&control_pid_rot, 4520030, 722629, 0, PWM_ARR, 26);
 
-	pid_init(&control_pid_av, 0.5f, 0.10f, 0, PWM_ARR);
-	pid_init(&control_pid_rot, 250.0f, 40.0f, 0, PWM_ARR);
-
-	// coupe 2011 - coefs samedi - Angers
-	//static float control_kx = 0.01f;
-	//static float control_ky = 0;
-	//static float control_kalpha = 0.015f;
 	control_kx = 0;//0.01f;
 	control_ky = 0.0f;
 	control_kalpha = 0;//0.015f;
@@ -102,12 +98,12 @@ static int control_module_init()
 	trapeze_reset(&control_trapeze_av, 0, 0);
 	trapeze_reset(&control_trapeze_rot, 0, 0);
 
-	control_trapeze_av.v_max = 400 * TE;
-	control_trapeze_av.a_max = 500 * TE * TE;
-	control_trapeze_av.d_max = 1000 * TE * TE;
-	control_trapeze_rot.v_max = 400 * TE / ((float) PI*PARAM_VOIE_MOT);
-	control_trapeze_rot.a_max = 500 * TE * TE / ((float) PI*PARAM_VOIE_MOT);
-	control_trapeze_rot.d_max = 1000 * TE * TE / ((float) PI*PARAM_VOIE_MOT);
+	control_trapeze_av.v_max = 400 * TE * 65536.0f;
+	control_trapeze_av.a_max = 500 * TE * TE * 65536.0f;
+	control_trapeze_av.d_max = 1000 * TE * TE * 65536.0f;
+	control_trapeze_rot.v_max = 400 * TE / ((float) PI*PARAM_VOIE_MOT) / ( 2 * 3.141592654f / ((float)(1<<26)) );
+	control_trapeze_rot.a_max = 500 * TE * TE / ((float) PI*PARAM_VOIE_MOT) / ( 2 * 3.141592654f / ((float)(1<<26)) );
+	control_trapeze_rot.d_max = 1000 * TE * TE / ((float) PI*PARAM_VOIE_MOT) / ( 2 * 3.141592654f / ((float)(1<<26)) );
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -145,8 +141,13 @@ void control_cmd_param(void* arg)
 {
 	struct control_cmd_param_arg* cmd_arg = (struct control_cmd_param_arg*) arg;
 
-	pid_init(&control_pid_av, cmd_arg->kp_av, cmd_arg->ki_av, cmd_arg->kd_av, PWM_ARR);
-	pid_init(&control_pid_rot, cmd_arg->kp_rot, cmd_arg->ki_rot, cmd_arg->kd_rot, PWM_ARR);
+	control_pid_av.kp = cmd_arg->kp_av;
+	control_pid_av.ki = cmd_arg->ki_av;
+	control_pid_av.kd = cmd_arg->kd_av;
+
+	control_pid_rot.kp = cmd_arg->kp_rot;
+	control_pid_rot.ki = cmd_arg->ki_rot;
+	control_pid_rot.kd = cmd_arg->kd_rot;
 
 	control_kx = cmd_arg->kx;
 	control_ky = cmd_arg->ky;
@@ -157,20 +158,22 @@ void control_cmd_print_param(void* arg)
 {
 	(void) arg;
 
-	log_format(LOG_INFO, "av: %f %f %f", control_pid_av.kp/PWM_ARR, control_pid_av.ki/PWM_ARR, control_pid_av.kd/PWM_ARR);
-	log_format(LOG_INFO, "rot: %f %f %f", control_pid_rot.kp/PWM_ARR, control_pid_rot.ki/PWM_ARR, control_pid_rot.kd/PWM_ARR);
-	log_format(LOG_INFO, "pos: %f %f %f", control_kx, control_ky, control_kalpha);
+	log_format(LOG_INFO, "av: %d %d %d (en 2^-%d)", (int)control_pid_av.kp, (int)control_pid_av.ki, (int)control_pid_av.kd, control_pid_av.fx_unit);
+	log_format(LOG_INFO, "rot: %d %d %d (en 2^-%d)", (int)control_pid_rot.kp, (int)control_pid_rot.ki, (int)control_pid_rot.kd, control_pid_rot.fx_unit);
+	log_format(LOG_INFO, "pos: %d %d %d", (int)control_kx, (int)control_ky, (int)control_kalpha);
 }
 
-static float sinc( float x )
+static int32_t sinc( int32_t x )
 {
-	if( fabsf(x) < 0.01f )
+	if( abs(x) < 1068070 ) // < 0.1 rd
 	{
 		return 1.0f;
 	}
 	else
 	{
-		return (sinf(x)/x);
+		int64_t sx = fx_sin(x);
+		sx <<= 26;
+		return sx / x;
 	}
 }
 #if 0
@@ -197,7 +200,7 @@ static void control_recalage()
 	}
 }
 #endif
-static int control_check_speed(int mes, int cons, int delta)
+static int32_t control_check_speed(int32_t mes, int32_t cons, int32_t delta)
 {
 	int res = CONTROL_SPEED_OK;
 
@@ -226,8 +229,8 @@ static void control_compute()
 	int sens2 = 1;
 
 	control_pos = location_get_position();
-	float v_d = location_get_speed_curv_abs();
-	float v_r = location_get_speed_rot();
+	int32_t v_d = location_get_speed_curv_abs();
+	int32_t v_r = location_get_speed_rot();
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
@@ -238,15 +241,13 @@ static void control_compute()
 	}
 
 	// verification du suivit de vitesse
-	int vd_mm = v_d * CONTROL_HZ;
-	int vd_cons_mm = control_trapeze_av.v * CONTROL_HZ;
-	int speed_check = control_check_speed(vd_mm, vd_cons_mm, 200);
+	int speed_check = control_check_speed(v_d, control_trapeze_av.v, (200 << 16) / CONTROL_HZ);
 
 	if( control_state == CONTROL_TRAJECTORY)
 	{
 		if(speed_check)
 		{
-			log_format(LOG_ERROR, "erreur de suivit cons %d mes %d check %d", vd_cons_mm, vd_mm, speed_check);
+			log_format(LOG_ERROR, "erreur de suivit cons %i mes %d check %d", (int)v_d, (int) control_trapeze_av.v, speed_check);
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
@@ -290,12 +291,12 @@ static void control_compute()
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
-	float ex = control_pos.ca  * (control_cons.x - control_pos.x) + control_pos.sa * (control_cons.y - control_pos.y);
-	float ey = -control_pos.sa * (control_cons.x - control_pos.x) + control_pos.ca * (control_cons.y - control_pos.y);
-	float ealpha = control_cons.alpha - control_pos.alpha;
+	int32_t ex = (  (int64_t)control_pos.ca * (int64_t)(control_cons.x - control_pos.x) + (int64_t)control_pos.sa * (int64_t)(control_cons.y - control_pos.y)) >> 30;
+//	int32_t ey = (- (int64_t)control_pos.sa * (int64_t)(control_cons.x - control_pos.x) + (int64_t)control_pos.ca * (int64_t)(control_cons.y - control_pos.y)) >> 30;
+	int32_t ealpha = control_cons.alpha - control_pos.alpha;
 
-	float v_d_c = control_trapeze_av.v * cosf(ealpha) + control_kx * ex;
-	float v_r_c = control_trapeze_rot.v + control_ky * control_trapeze_av.v * sinc(ealpha) * ey + control_kalpha * ealpha;
+	int32_t v_d_c = (((int64_t)control_trapeze_av.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
+	int32_t v_r_c = (int32_t)control_trapeze_rot.v + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_trapeze_av.v * sinc(ealpha) * ey;
 
 	// régulation en vitesse
 	float u_av = pid_apply(&control_pid_av, v_d_c - v_d);
@@ -344,19 +345,16 @@ end_pwm_critical:
 	pwm_set(PWM_RIGHT, (uint32_t)u1, sens1);
 	pwm_set(PWM_LEFT, (uint32_t)u2, sens2);
 	control_usb_data.control_state = control_state;
-	control_usb_data.control_dest_x = control_dest.x;
-	control_usb_data.control_dest_y = control_dest.y;
-	control_usb_data.control_dest_alpha = control_dest.alpha;
-	control_usb_data.control_cons_x = control_cons.x;
-	control_usb_data.control_cons_y = control_cons.y;
-	control_usb_data.control_cons_alpha = control_cons.alpha;
-	control_usb_data.control_pos_x = control_pos.x;
-	control_usb_data.control_pos_y = control_pos.y;
-	control_usb_data.control_pos_alpha = control_pos.alpha;
-	control_usb_data.control_v_dist_cons = control_trapeze_av.v;
-	control_usb_data.control_v_rot_cons = control_trapeze_rot.v;
-	control_usb_data.control_v_dist_mes = v_d;
-	control_usb_data.control_v_rot_mes = v_r;
+	control_usb_data.control_cons_x = control_cons.x / 65536.0f;
+	control_usb_data.control_cons_y = control_cons.y / 65536.0f;
+	control_usb_data.control_cons_alpha = control_cons.alpha * 2 * 3.141592654f / ((float)(1<<26));
+	control_usb_data.control_pos_x = control_pos.x / 65536.0f;
+	control_usb_data.control_pos_y = control_pos.y / 65536.0f;
+	control_usb_data.control_pos_alpha = control_pos.alpha * 2 * 3.141592654f / ((float)(1<<26));
+	control_usb_data.control_v_dist_cons = control_trapeze_av.v /65536.0f;
+	control_usb_data.control_v_rot_cons = control_trapeze_rot.v * 2 * 3.141592654f / ((float)(1<<26));
+	control_usb_data.control_v_dist_mes = v_d / 65536.0f;
+	control_usb_data.control_v_rot_mes = v_r *2*3.141592654f/((float)(1<<26));
 	control_usb_data.control_i_right = control_an.i_right;
 	control_usb_data.control_i_left = control_an.i_left;
 	xSemaphoreGive(control_mutex);
@@ -373,8 +371,8 @@ static void control_compute_trajectory()
 	{
 		trapeze_apply(&control_trapeze_rot, control_angle);
 		control_cons.alpha += control_trapeze_rot.v;
-		control_cons.ca = cosf(control_cons.alpha);
-		control_cons.sa = sinf(control_cons.alpha);
+		control_cons.ca = fx_cos(control_cons.alpha);
+		control_cons.sa = fx_sin(control_cons.alpha);
 
 		if(control_trapeze_rot.s == control_angle && control_trapeze_rot.v == 0)
 		{
@@ -382,7 +380,7 @@ static void control_compute_trajectory()
 			control_cons.alpha = control_dest.alpha;
 			control_cons.ca = control_dest.ca;
 			control_cons.sa = control_dest.sa;
-			if(	fabsf(control_dest.alpha - control_pos.alpha) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+			if(	abs( control_dest.alpha - control_pos.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
 				trapeze_reset(&control_trapeze_rot, 0, 0);
 				trapeze_reset(&control_trapeze_av, 0, 0);
@@ -393,8 +391,8 @@ static void control_compute_trajectory()
 	}
 	else if(control_dist)
 	{
-		float ex = control_pos.ca  * (control_dest.x - control_pos.x) + control_pos.sa * (control_dest.y - control_pos.y);
-		float distance = control_dist;
+		int32_t ex = ((int64_t)control_pos.ca  * (int64_t)(control_dest.x - control_pos.x) + (int64_t)control_pos.sa * (int64_t)(control_dest.y - control_pos.y)) >> 30;
+		int32_t distance = control_dist;
 		if(distance > 0)
 		{
 			struct fx_vect2 a_table;
@@ -404,7 +402,7 @@ static void control_compute_trajectory()
 			detection_get_front_seg(&a_table, &b_table);
 			fx_vect2_table_to_robot(&control_cons, &a_table, &a_robot);
 			fx_vect2_table_to_robot(&control_cons, &b_table, &b_robot);
-			float dist = a_robot.x/65536.0f - PARAM_LEFT_CORNER_X - 50;
+			int32_t dist = a_robot.x - PARAM_LEFT_CORNER_X - 50*65536;
 			if(dist < 0)
 			{
 				dist = 0;
@@ -419,8 +417,8 @@ static void control_compute_trajectory()
 
 		trapeze_apply(&control_trapeze_av, distance);
 
-		control_cons.x += control_trapeze_av.v * control_cons.ca;
-		control_cons.y += control_trapeze_av.v * control_cons.sa;
+		control_cons.x += ( (int64_t)control_trapeze_av.v * (int64_t)control_cons.ca) >> 30;
+		control_cons.y += ( (int64_t)control_trapeze_av.v * (int64_t)control_cons.sa) >> 30;
 
 		if(control_trapeze_av.s == control_dist && control_trapeze_av.v == 0)
 		{
@@ -428,7 +426,7 @@ static void control_compute_trajectory()
 			control_cons = control_dest;
 			trapeze_reset(&control_trapeze_av, 0, 0);
 
-			if( fabsf(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
+			if( abs(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
 				trapeze_reset(&control_trapeze_rot, 0, 0);
 				trapeze_reset(&control_trapeze_av, 0, 0);
@@ -445,7 +443,7 @@ static void control_compute_trajectory()
 		vTaskSetEvent(EVENT_CONTROL_TARGET_REACHED);
 	}
 
-	if( collision && fabsf(control_trapeze_av.v) < 0.01f && fabsf(control_trapeze_rot.v) < 0.001f)
+	if( collision && abs(control_trapeze_av.v) < 655 && abs(control_trapeze_rot.v) < 10680)
 	{
 		trapeze_reset(&control_trapeze_rot, 0, 0);
 		trapeze_reset(&control_trapeze_av, 0, 0);
@@ -454,13 +452,29 @@ static void control_compute_trajectory()
 	}
 }
 
-float control_find_rotate(float debut, float fin)
+int32_t control_find_rotate(int32_t debut, int32_t fin)
 {
-	float alpha = fin - debut;
-	alpha = fmodf(alpha, 2*PI); // Retour dans [-2*PI;2*PI]
+	int32_t alpha = fin - debut;
+
+	// modulo 1 tour => retour dans [ 0 ; 1 tour = 2^26 [
+	if(alpha < 0)
+	{
+		alpha = 0x4000000 - ((-alpha) & 0x3ffffff);
+	}
+	else
+	{
+		alpha &= 0x3ffffff;
+	}
+//	alpha = fmodf(alpha, 2*PI); // Retour dans [-2*PI;2*PI]
+
+	// retour dans [ -0.5 ; 0.5 ] tour
+	if( alpha & 0x2000000 )
+	{
+		alpha -= 0x4000000;
+	}
 
 	// Retour dans [-PI;PI] si neccessaire
-	if (alpha > PI)
+/*	if (alpha > PI)
 	{
 		alpha -= 2*PI;
 	}
@@ -468,7 +482,7 @@ float control_find_rotate(float debut, float fin)
 	{
 		alpha += 2*PI;
 	}
-
+*/
 	return alpha;
 }
 
@@ -486,29 +500,29 @@ void control_goto_near(float x, float y, float alpha, float dist, enum trajector
 	control_trapeze_av.s = 0;
 	control_trapeze_rot.s = 0;
 
-	float dx = x - control_pos.x;
-	float dy = y - control_pos.y;
-	control_dist = sqrtf(dx*dx+dy*dy) - dist;
+	int64_t dx = x*65536 - control_pos.x;
+	int64_t dy = y*65536 - control_pos.y;
+	control_dist = sqrtf(dx*dx+dy*dy) - dist*65536;
 	control_cons = control_pos;
 
-	if(control_dist > 0.1f)
+	if(control_dist >> 16)
 	{
 		control_trapeze_rot.v = 0;
-		float a = atan2f(dy, dx);
+		int32_t a = atan2f(dy, dx) * (1 << 26) / (2 * PI);
 
 		if(sens == TRAJECTORY_FORWARD)
 		{
-			control_angle = control_find_rotate(control_pos.alpha, a);
+			control_angle = control_find_rotate(control_pos.alpha, a );
 		}
 		else if(sens == TRAJECTORY_BACKWARD)
 		{
-			control_angle = control_find_rotate(control_pos.alpha, a + PI);
+			control_angle = control_find_rotate(control_pos.alpha, a + 0x2000000);
 			control_dist *= -1;
 		}
 		else
 		{
 			float angle_forward = control_find_rotate(control_pos.alpha, a);
-			float angle_backward = control_find_rotate(control_pos.alpha, a + PI);
+			float angle_backward = control_find_rotate(control_pos.alpha, a + 0x2000000);
 
 			if ( fabsf(angle_forward) > fabsf(angle_backward))
 			{
@@ -524,14 +538,14 @@ void control_goto_near(float x, float y, float alpha, float dist, enum trajector
 	else
 	{
 		control_trapeze_av.v = 0;
-		control_angle = alpha - control_pos.alpha;
+		control_angle = alpha* (1 << 26) / (2 * PI) - control_pos.alpha;
 	}
 
 	control_dest.alpha = control_pos.alpha + control_angle;
-	control_dest.ca = cosf(control_dest.alpha);
-	control_dest.sa = sinf(control_dest.alpha);
-	control_dest.x = control_pos.x + control_dist * control_dest.ca;
-	control_dest.y = control_pos.y + control_dist * control_dest.sa;
+	control_dest.ca = fx_cos(control_dest.alpha);
+	control_dest.sa = fx_sin(control_dest.alpha);
+	control_dest.x = control_pos.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);
+	control_dest.y = control_pos.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
 
 	control_timer = 0;
 	pid_reset(&control_pid_av);

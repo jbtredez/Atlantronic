@@ -11,9 +11,9 @@ int main()
 {
 	struct trapeze trapeze;
 
-	trapeze.v_max = 2.0f/HZ;
-	trapeze.a_max = 1.0f/(HZ*HZ);
-	trapeze.d_max = 2.0f/(HZ*HZ);
+	trapeze.v_max = 65536*2.0f/HZ;
+	trapeze.a_max = 65536*1.0f/(HZ*HZ);
+	trapeze.d_max = 65536*2.0f/(HZ*HZ);
 
 	int i = 0;
 	float d = 0;
@@ -31,8 +31,8 @@ int main()
 
 	for(i = 0; i < HZ*10; i++)
 	{
-		trapeze_apply(&trapeze, -10);
-		d2 = trapeze.s;
+		trapeze_apply(&trapeze, -10*65536);
+		d2 = trapeze.s/65536.0f;
 		v2 = (d2 - d) * HZ;
 		a = (v2 - v) * HZ;
 		fprintf(f, "%f\t%f\t%f\t%f\n", ((float)i)/HZ, a, v, d);

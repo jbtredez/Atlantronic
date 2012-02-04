@@ -4,11 +4,12 @@
 
 #include "control/pid.h"
 
-void pid_init(struct pid *pid, float kp, float ki, float kd, float max)
+void pid_init(struct pid *pid, int32_t kp, int32_t ki, int32_t kd, int32_t max, int fx_unit)
 {
-	pid->kp = kp * max;
-	pid->ki = ki * max;
-	pid->kd = kd * max;
+	pid->kp = kp;
+	pid->ki = ki;
+	pid->kd = kd;
+	pid->fx_unit = fx_unit;
 
 	pid->integral = 0;
 	pid->previous_in = 0;
@@ -16,10 +17,10 @@ void pid_init(struct pid *pid, float kp, float ki, float kd, float max)
 	pid->max_out = max;
 }
 
-float pid_apply(struct pid *pid, float in)
+int32_t pid_apply(struct pid *pid, int32_t in)
 {
-	float derivate;
-	float out;
+	int32_t derivate;
+	int32_t out;
 
 	derivate = in - pid->previous_in;
 	pid->previous_in = in;
@@ -39,7 +40,7 @@ float pid_apply(struct pid *pid, float in)
 	}
 
 	// calcul du PID
-	out = pid->kp * in + pid->ki * pid->integral + pid->kd * derivate;
+	out = ((int64_t)pid->kp * (int64_t)in + (int64_t)pid->ki * (int64_t)pid->integral + (int64_t)pid->kd * (int64_t)derivate) >> pid->fx_unit;
 
 	// saturation de la sortie
 	if(pid->max_out)

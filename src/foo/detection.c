@@ -193,7 +193,7 @@ static void detection_compute_front_object()
 		}
 	}
 
-	if(obj.x < PARAM_LEFT_CORNER_X || obj.x < PARAM_RIGHT_CORNER_X)
+	if(obj.x < PARAM_LEFT_CORNER_X/65536.0f || obj.x < PARAM_RIGHT_CORNER_X/65536.0f)
 	{
 		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
 		log_format(LOG_ERROR, "erreur de calibration ? : obj %.2f %.2f", obj.x, obj.y);
@@ -282,7 +282,7 @@ void detection_compute()
 void can_hokuyo_reset(struct can_msg *msg)
 {
 	detection_can_hokuyo_id = 0;
-	hokuyo_scan_bar.pos_robot = location_get_position();
+//	hokuyo_scan_bar.pos_robot = location_get_position();
 }
 
 void can_hokuyo_data(struct can_msg *msg)
