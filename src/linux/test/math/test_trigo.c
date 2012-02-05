@@ -62,5 +62,30 @@ int main()
 		printf("KO <-----\n");
 	}
 
+	// test des fx_atan2
+	max_err = 0;
+	for(val = 0; val < (1 << 28) ; val ++)
+	{
+		int32_t alpha = atan2(2000, val/ ((double)(1 << 16))) * (1 << 26)/(2*M_PI);
+		int32_t fxalpha = fx_atan2(2000 << 16, val);
+		int32_t err = abs(alpha - fxalpha);
+
+		if(err > max_err)
+		{
+			max_err = err;
+		}
+	}
+
+	printf("fx_atan2 - erreur max : %d (%g) : ", max_err, max_err * (2*M_PI)/ ((float)(1 << 26)));
+	if(max_err < 5e-6 * (1 << 26)/(2*M_PI))
+	{
+		printf("OK\n");
+	}
+	else
+	{
+		error_count++;
+		printf("KO <-----\n");
+	}
+
 	return error_count;
 }

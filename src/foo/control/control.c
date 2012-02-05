@@ -98,8 +98,8 @@ static int control_module_init()
 #error "revoir les gains d'asservissement"
 #endif
 
-	pid_init(&control_pid_av, 94339072, 18867814, 0, PWM_ARR, 32);
-	pid_init(&control_pid_rot, 4520030, 722629, 0, PWM_ARR, 26);
+	pid_init(&control_pid_av, 64339072, 18867814, 0, PWM_ARR, 32);
+	pid_init(&control_pid_rot, 3520030, 722629, 0, PWM_ARR, 26);
 
 	control_kx = 0;
 	control_ky = 0;
@@ -504,7 +504,7 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	if(control_dist >> 16)
 	{
 		control_trapeze_rot.v = 0;
-		int32_t a = atan2f(dy, dx) * (1 << 26) / (2 * PI);
+		int32_t a = fx_atan2(dy, dx);
 
 		if(sens == TRAJECTORY_FORWARD)
 		{

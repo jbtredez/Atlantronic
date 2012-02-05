@@ -183,3 +183,48 @@ int32_t fx_cos(int32_t alpha)
 {
 	return fx_sin(0x1000000 - alpha);
 }
+
+int32_t fx_atan2(int32_t y, int32_t x)
+{
+	int32_t t0, t1, t2, t3;
+	int n = 0;
+
+	t2 = abs(x);
+	t1 = abs(y);
+	if(t2 > t1)
+	{
+		t0 = t2;
+	}
+	else
+	{
+		t0 = t1;
+		t1 = t2;
+		n = 1;
+	}
+
+	// t2 < 1 car t1 > t0
+	t2 = ((int64_t)t1 << 30) / t0;
+	t3 = ((int64_t)t2 * (int64_t)t2) >> 30;
+	t0 = -2303695;
+	t0 = (((int64_t)t0 * (int64_t)t3) >> 30) + 9822374;
+	t0 = (((int64_t)t0 * (int64_t)t3) >> 30) - 20718705;
+	t0 = (((int64_t)t0 * (int64_t)t3) >> 30) + 33432481;
+	t0 = (((int64_t)t0 * (int64_t)t3) >> 30) - 56905886;
+	t0 = (((int64_t)t0 * (int64_t)t3) >> 30) + 170890572;
+	t2 = ((int64_t)t0 * (int64_t)t2) >> 30;
+
+	if( n)
+	{
+		t2 = 0x10000000 - t2; // 0.25 tour
+	}
+	if( x < 0)
+	{
+		t2 = 0x20000000 - t2; // 0.5 tour
+	}
+	if( y < 0)
+	{
+		t2 = -t2;
+	}
+
+	return t2 >> 4;
+}
