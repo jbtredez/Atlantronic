@@ -15,6 +15,7 @@
 
 #define PARAM_INVERTED_VOIE_FX39          1825521547      //!< inverse de la voie en 2^-39 mm^-1 ( = 1 / 301.15mm)
 
+// TODO a virer, utiliser les param _FX dans la simulation
 #define PARAM_RIGHT_ODO_WHEEL_RADIUS          40.1000061f
 #define PARAM_LEFT_ODO_WHEEL_RADIUS           40.1000061f
 #define PARAM_RIGHT_MOT_WHEEL_RADIUS          50.0f
@@ -34,6 +35,7 @@
 #define PARAM_MOT_RED                            21
 #define PARAM_ODO_RED                             1
 
+// TODO a virer, utiliser les param _FX dans la simulation
 #define PARAM_DIST_ODO_GAIN                (float) (PI / (PARAM_ODO_RED * PARAM_ENCODERS_RES) )
 #define PARAM_ROT_ODO_GAIN                 (float) (2.0f * PI / (PARAM_ENCODERS_RES * PARAM_VOIE_ODO * PARAM_ODO_RED))
 #define PARAM_DIST_MOD_GAIN                (float) (1.0f / (2.0f * PARAM_MOT_RED))

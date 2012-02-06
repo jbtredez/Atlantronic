@@ -3,10 +3,12 @@ digraph robot
 	ratio=fill;
 	size="16,10";
 	center=true;
+	maxiter=100;
 
 	// modules - taches
 	node [color=lawngreen, style=filled ]
 	strategy
+	trajectory
 	control
 	ax12
 	detection
@@ -17,7 +19,6 @@ digraph robot
 	node [color=lightblue2, style=filled ]
 	location
 	odometry
-	trajectory
 	beacon
 	pince
 	us
@@ -29,21 +30,21 @@ digraph robot
 //		rank=same;
 		adc
 		gpio
-		pwm
+		"pwm 1 2"
 		encoders
 		can
-		usart
+		usart3
+		uart4
 		led
 	}
 
 	// liens
-	strategy -> control
+	strategy -> trajectory
 	strategy -> pince
 	control -> adc
 	control -> gpio
 	control -> location
-	control -> trajectory
-	control -> usb
+	trajectory -> control
 	trajectory -> detection
 	location -> odometry
 	location -> beacon
@@ -51,13 +52,14 @@ digraph robot
 	detection -> hokuyo
 	detection -> us
 	detection -> location
-	detection -> usb
+	trajectory -> location
+	strategy -> location
 	log -> usb
 
-	hokuyo -> usart
-	ax12 -> usart
+	hokuyo -> usart3
+	ax12 -> uart4
 	us -> can
 	beacon -> can
 	odometry -> encoders
-	control -> pwm
+	control -> "pwm 1 2"
 }

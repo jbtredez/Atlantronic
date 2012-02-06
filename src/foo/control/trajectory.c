@@ -33,6 +33,7 @@ struct trajectory_cmd_arg trajectory_request;
 static xSemaphoreHandle trajectory_mutex;
 
 // donnees privees a la tache
+static struct fx_vect_pos trajectory_pos; //!< position du robot au moment du reveil de la tache
 static struct fx_vect_pos trajectory_dest;
 static int32_t trajectory_approx_dist;
 static enum trajectory_way trajectory_way;
@@ -74,14 +75,16 @@ static void trajectory_task(void* arg)
 
 	while(1)
 	{
-		ev = vTaskWaitEvent(EVENT_CONTROL_COLSISION | EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_TRAJECTORY_UPDATE, portMAX_DELAY);
+		ev = vTaskWaitEvent(EVENT_CONTROL_COLSISION | EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_TRAJECTORY_UPDATE | EVENT_DETECTION_UPDATED, portMAX_DELAY);
+
+		trajectory_pos = location_get_position();
 
 		if(ev & EVENT_TRAJECTORY_UPDATE)
 		{
 			trajectory_state = TRAJECTORY_NONE;
 			xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
-			trajectory_dest = location_get_position();
+			trajectory_dest = trajectory_pos;
 			trajectory_type = trajectory_request.type;
 
 			switch(trajectory_request.type)
@@ -177,12 +180,21 @@ static void trajectory_task(void* arg)
 			log(LOG_ERROR, "target not reached");
 			vTaskClearEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 		}
+
+		if( ev & EVENT_DETECTION_UPDATED)
+		{
+			struct fx_vect2 a;
+			struct fx_vect2 b;
+			detection_compute_front_object(&trajectory_pos, &a, &b);
+			control_set_front_object(&a, 100<<16);
+			vTaskClearEvent(EVENT_DETECTION_UPDATED);
+		}
 	}
 }
 
 static void trajectory_compute(enum trajectory_state next_state)
 {
-	struct fx_vect_pos pos = location_get_position();
+	struct fx_vect_pos pos = trajectory_pos;
 
 	if(next_state == TRAJECTORY_TO_DEST)
 	{
@@ -195,10 +207,8 @@ static void trajectory_compute(enum trajectory_state next_state)
 			struct fx_vect2 a_table;
 			struct fx_vect2 b_table;
 			struct fx_vect2 a_robot;
-			struct fx_vect2 b_robot;
-			detection_get_front_seg(&a_table, &b_table);
+			detection_compute_front_object(&pos, &a_table, &b_table);
 			fx_vect2_table_to_robot(&pos, &a_table, &a_robot);
-			fx_vect2_table_to_robot(&pos, &b_table, &b_robot);
 			int32_t dist = a_robot.x - PARAM_LEFT_CORNER_X - (150 << 16);
 
 			pos.x += ((int64_t)dist * (int64_t)pos.ca) >> 30;

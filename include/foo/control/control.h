@@ -61,12 +61,18 @@ enum trajectory_way
 	TRAJECTORY_BACKWARD
 };
 
-void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way sens);
+void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way);
 
+//!< arrêt de l'asservissement des moteurs
 void control_free();
 
+//!< donne la rotation a effecter pour aller de l'angle debut à l'angle fin
 int32_t control_find_rotate(int32_t debut, int32_t fin);
 
+//!< etat de control
 int32_t control_get_state();
+
+//!< permet d'indiquer un obstacle sur la trajectoire, en cours de mouvement, et la distance d'approche souhaitée
+void control_set_front_object(struct fx_vect2* a, int32_t approx_dist);
 
 #endif

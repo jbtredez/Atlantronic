@@ -22,7 +22,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include "detection.h"
 #include "kernel/trapeze.h"
 
 //! @todo réglage au pif
@@ -62,6 +61,9 @@ static enum control_state control_state;
 static struct fx_vect_pos control_cons;
 static struct fx_vect_pos control_pos;
 static struct fx_vect_pos control_dest;
+
+static struct fx_vect2 control_front_object;    //!< objet devant le robot
+static int32_t control_front_object_approx;     //!< distance d'approche de l'objet
 
 static struct adc_an control_an;
 
@@ -117,6 +119,9 @@ static int control_module_init()
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
+	control_front_object_approx = 0;
+	control_front_object.x = 1 << 30;
+	control_front_object.y = 1 << 30;
 
 	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
 	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
@@ -400,16 +405,12 @@ static void control_compute_trajectory()
 	{
 		int32_t ex = ((int64_t)control_pos.ca  * (int64_t)(control_dest.x - control_pos.x) + (int64_t)control_pos.sa * (int64_t)(control_dest.y - control_pos.y)) >> 30;
 		int32_t distance = control_dist;
+
 		if(distance > 0)
 		{
-			struct fx_vect2 a_table;
-			struct fx_vect2 b_table;
-			struct fx_vect2 a_robot;
-			struct fx_vect2 b_robot;
-			detection_get_front_seg(&a_table, &b_table);
-			fx_vect2_table_to_robot(&control_cons, &a_table, &a_robot);
-			fx_vect2_table_to_robot(&control_cons, &b_table, &b_robot);
-			int32_t dist = a_robot.x - PARAM_LEFT_CORNER_X - (50 << 16);
+			struct fx_vect2 obj_robot;
+			fx_vect2_table_to_robot(&control_cons, &control_front_object, &obj_robot);
+			int32_t dist = obj_robot.x - PARAM_LEFT_CORNER_X - control_front_object_approx;
 			if(dist < 0)
 			{
 				dist = 0;
@@ -565,5 +566,13 @@ void control_free()
 	{
 		control_state = CONTROL_READY_FREE;
 	}
+	xSemaphoreGive(control_mutex);
+}
+
+void control_set_front_object(struct fx_vect2* a, int32_t approx_dist)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	control_front_object = *a;
+	control_front_object_approx = approx_dist;
 	xSemaphoreGive(control_mutex);
 }
