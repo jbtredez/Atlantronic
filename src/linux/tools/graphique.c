@@ -2,12 +2,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "linux/tools/graph.h"
+#include "linux/tools/graphique.h"
 
-static float graph_quantize(float range);
-static void graph_update_data(struct graph* graph);
+static float graphique_quantize(float range);
+static void graphique_update_data(struct graphique* graph);
 
-void graph_init(struct graph* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y)
+void graphique_init(struct graphique* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y)
 {
 	int i = 0;
 
@@ -33,11 +33,11 @@ void graph_init(struct graph* graph, const char* name, float xmin, float xmax, f
 	graph->bordure_pixel_y = bordure_pixel_y;
 
 	// par defaut roi = tout
-	graph_reset_roi(graph);
-	graph_update_data(graph);
+	graphique_reset_roi(graph);
+	graphique_update_data(graph);
 }
 
-void graph_add_courbe(struct graph* graph, int id, const char* name, int activated, float r, float g, float b)
+void graphique_add_courbe(struct graphique* graph, int id, const char* name, int activated, float r, float g, float b)
 {
 	if(id >= MAX_COURBES || id < 0)
 	{
@@ -57,7 +57,7 @@ void graph_add_courbe(struct graph* graph, int id, const char* name, int activat
 	strcpy(graph->courbes_names[id], name);
 }
 
-void graph_destroy(struct graph* graph)
+void graphique_destroy(struct graphique* graph)
 {
 	int i;
 	if(graph->name)
@@ -76,20 +76,20 @@ void graph_destroy(struct graph* graph)
 	}
 }
 
-void graph_reset_roi(struct graph* graph)
+void graphique_reset_roi(struct graphique* graph)
 {
 	graph->roi_xmin = graph->xmin;
 	graph->roi_xmax = graph->xmax;
 	graph->roi_ymin = graph->ymin;
 	graph->roi_ymax = graph->ymax;
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }
 
-static void graph_update_data(struct graph* graph)
+static void graphique_update_data(struct graphique* graph)
 {
-	graph->tics_dx = graph_quantize(graph->roi_xmax - graph->roi_xmin);
-	graph->tics_dy = graph_quantize(graph->roi_ymax - graph->roi_ymin);
+	graph->tics_dx = graphique_quantize(graph->roi_xmax - graph->roi_xmin);
+	graph->tics_dy = graphique_quantize(graph->roi_ymax - graph->roi_ymin);
 
 	graph->ratio_x = (graph->roi_xmax - graph->roi_xmin) / (graph->screen_width - 2 * graph->bordure_pixel_x);
 	graph->ratio_y = (graph->roi_ymax - graph->roi_ymin) / (graph->screen_height - 2 * graph->bordure_pixel_y);
@@ -103,7 +103,7 @@ static void graph_update_data(struct graph* graph)
 	graph->plot_ymax = graph->roi_ymax + bordure_y;
 }
 
-static float graph_quantize(float range)
+static float graphique_quantize(float range)
 {
 	float power = pow(10, floor(log10(range)));
 	float xnorm = range / power;
@@ -142,23 +142,23 @@ static float graph_quantize(float range)
 	return tics * power;
 }
 
-void graph_resize_screen(struct graph* graph, int screen_width, int screen_height)
+void graphique_resize_screen(struct graphique* graph, int screen_width, int screen_height)
 {
 	graph->screen_width = screen_width;
 	graph->screen_height = screen_height;
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }
 
-void graph_set_border(struct graph* graph, int bordure_pixel_x, int bordure_pixel_y)
+void graphique_set_border(struct graphique* graph, int bordure_pixel_x, int bordure_pixel_y)
 {
 	graph->bordure_pixel_x = bordure_pixel_x;
 	graph->bordure_pixel_y = bordure_pixel_y;
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }
 
-void graph_resize_axis_x(struct graph* graph, float xmin, float xmax)
+void graphique_resize_axis_x(struct graphique* graph, float xmin, float xmax)
 {
 	int reset_roi = 0;
 
@@ -172,13 +172,13 @@ void graph_resize_axis_x(struct graph* graph, float xmin, float xmax)
 
 	if(reset_roi)
 	{
-		graph_reset_roi(graph);
+		graphique_reset_roi(graph);
 	}
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }
 
-void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2)
+void graphique_zoom(struct graphique* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2)
 {
 	if(mouse_x1 > mouse_x2)
 	{
@@ -206,10 +206,10 @@ void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse
 	graph->roi_ymin += zoom_y1 * yrange;
 	graph->roi_ymax -= (1-zoom_y2) * yrange;
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }
 
-void graph_zoomf(struct graph* graph, float zoom)
+void graphique_zoomf(struct graphique* graph, float zoom)
 {
 	float xrange = graph->roi_xmax - graph->roi_xmin;
 	float yrange = graph->roi_ymax - graph->roi_ymin;
@@ -222,5 +222,5 @@ void graph_zoomf(struct graph* graph, float zoom)
 	graph->roi_ymin = ymed - 0.5 * yrange * zoom;
 	graph->roi_ymax = ymed + 0.5 * yrange * zoom;
 
-	graph_update_data(graph);
+	graphique_update_data(graph);
 }

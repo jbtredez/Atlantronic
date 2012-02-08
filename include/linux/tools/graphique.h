@@ -1,9 +1,9 @@
-#ifndef GRAPH_H
-#define GRAPH_H
+#ifndef GRAPHIQUE_H
+#define GRAPHIQUE_H
 
 #define MAX_COURBES        10
 
-struct graph
+struct graphique
 {
 	char* name;
 	char* courbes_names[MAX_COURBES];
@@ -36,22 +36,22 @@ struct graph
 	float ratio_y; //!< ratio selon l'axe y en unite par pixel
 };
 
-void graph_init(struct graph* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y);
+void graphique_init(struct graphique* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y);
 
-void graph_set_border(struct graph* graph, int bordure_pixel_x, int bordure_pixel_y);
+void graphique_set_border(struct graphique* graph, int bordure_pixel_x, int bordure_pixel_y);
 
-void graph_add_courbe(struct graph* graph, int id, const char* name, int activated, float r, float g, float b);
+void graphique_add_courbe(struct graphique* graph, int id, const char* name, int activated, float r, float g, float b);
 
-void graph_destroy(struct graph* graph);
+void graphique_destroy(struct graphique* graph);
 
-void graph_reset_roi(struct graph* graph);
+void graphique_reset_roi(struct graphique* graph);
 
-void graph_resize_screen(struct graph* graph, int screen_width, int screen_height);
+void graphique_resize_screen(struct graphique* graph, int screen_width, int screen_height);
 
-void graph_resize_axis_x(struct graph* graph, float xmin, float xmax);
+void graphique_resize_axis_x(struct graphique* graph, float xmin, float xmax);
 
-void graph_zoom(struct graph* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2);
+void graphique_zoom(struct graphique* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2);
 
-void graph_zoomf(struct graph* graph, float zoom);
+void graphique_zoomf(struct graphique* graph, float zoom);
 
 #endif

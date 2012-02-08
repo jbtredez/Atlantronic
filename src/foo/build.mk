@@ -32,6 +32,7 @@ obj-foo-strat0 += kernel/trapeze.o
 obj-foo-strat0 += foo/control/control.o
 obj-foo-strat0 += foo/control/trajectory.o
 obj-foo-strat0 += foo/control/pid.o
+obj-foo-strat0 += foo/graph.o
 obj-foo-strat0 += foo/pwm.o
 obj-foo-strat0 += foo/location/odometry.o
 obj-foo-strat0 += foo/location/location.o
