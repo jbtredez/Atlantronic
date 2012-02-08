@@ -71,14 +71,14 @@ int adc_module_init()
 	ADC1->SQR2 = ADC_SQR2_SQ7_3 | ADC_SQR2_SQ7_2                                   | // 1100 : AN12 (vBat1)
 	             ADC_SQR2_SQ8_3 |                  ADC_SQR2_SQ8_1                  ; // 1010 : AN10 (vBatAru)
 
-	ADC1->SMPR2 = ADC_SMPR2_SMP4  | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN4 (potentiomètre 1)
-	              ADC_SMPR2_SMP5  ; // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN5 (intensité moteur 2)
-	ADC1->SMPR1 = ADC_SMPR1_SMP10 | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN10 (vBatAru)
-	              ADC_SMPR1_SMP11 | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN11 (intensité moteur 4)
-	              ADC_SMPR1_SMP12 | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN12 (vBat1)
-	              ADC_SMPR1_SMP13 | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN13 (intensité moteur 3)
-	              ADC_SMPR1_SMP14 | // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN14 (potentiomètre 2)
-	              ADC_SMPR1_SMP15 ; // 1.5 cycle (à 12Mhz) pour l'échantillonage de AN15 (intensité moteur 1)
+	ADC1->SMPR2 = ADC_SMPR2_SMP4  | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN4 (potentiomètre 1)
+	              ADC_SMPR2_SMP5  ; // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN5 (intensité moteur 2)
+	ADC1->SMPR1 = ADC_SMPR1_SMP10 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN10 (vBatAru)
+	              ADC_SMPR1_SMP11 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN11 (intensité moteur 4)
+	              ADC_SMPR1_SMP12 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN12 (vBat1)
+	              ADC_SMPR1_SMP13 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN13 (intensité moteur 3)
+	              ADC_SMPR1_SMP14 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN14 (potentiomètre 2)
+	              ADC_SMPR1_SMP15 ; // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN15 (intensité moteur 1)
 
 	ADC1->SQR1 = (ADC1->SQR1 & ~ADC_SQR1_L) | ADC_SQR1_L_2 | ADC_SQR1_L_1 | ADC_SQR1_L_0; // 8 conversions - 1
 
