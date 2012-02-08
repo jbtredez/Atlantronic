@@ -36,8 +36,8 @@
 
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((200 << 16) / CONTROL_HZ)
 
-#define CONTROL_VMAX_AV                          ((400 << 16) / CONTROL_HZ)
-#define CONTROL_AMAX_AV                          ((500 << 16) / (CONTROL_HZ * CONTROL_HZ))
+#define CONTROL_VMAX_AV                          ((800 << 16) / CONTROL_HZ)
+#define CONTROL_AMAX_AV                          ((600 << 16) / (CONTROL_HZ * CONTROL_HZ))
 #define CONTROL_DMAX_AV                          ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ))
 
 #define CONTROL_VMAX_ROT                         ((((int64_t)100 << 26) / CONTROL_HZ)  / ( PI*PARAM_VOIE_MOT ))
@@ -262,13 +262,14 @@ static void control_compute()
 	}
 
 	// verification du suivit de vitesse
+	// TODO : ajouter un timer : remise à zero si ok, incrementer si ko et si depassement => retourner ko
 	int speed_check = control_check_speed(v_d, control_trapeze_av.v, CONTROL_SPEED_CHECK_TOLERANCE);
 
 	if( control_state == CONTROL_TRAJECTORY)
 	{
 		if(speed_check)
 		{
-			log_format(LOG_ERROR, "erreur de suivit cons %i mes %d check %d", (int)v_d, (int) control_trapeze_av.v, speed_check);
+			log_format(LOG_ERROR, "erreur de suivit cons %i mes %d check %d", (int)(v_d * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
@@ -369,6 +370,8 @@ end_pwm_critical:
 	control_usb_data.control_v_rot_mes = v_r;
 	control_usb_data.control_i_right = control_an.i_right;
 	control_usb_data.control_i_left = control_an.i_left;
+	control_usb_data.control_u_right = u1;
+	control_usb_data.control_u_left = u2;
 	xSemaphoreGive(control_mutex);
 
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));

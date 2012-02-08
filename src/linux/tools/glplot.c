@@ -13,6 +13,7 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/graph.h"
 #include "kernel/robot_parameters.h"
+#include "foo/pwm.h"
 #include "kernel/math/trigo.h"
 
 // limitation du rafraichissement
@@ -49,9 +50,13 @@ enum
 
 enum
 {
-	SUBGRAPH_SPEED_DIST_MES = 0,
-	SUBGRAPH_SPEED_DIST_CONS,
-	SUBGRAPH_SPEED_DIST_NUM,
+	SUBGRAPH_CONTROL_SPEED_DIST_MES = 0,
+	SUBGRAPH_CONTROL_SPEED_DIST_CONS,
+	SUBGRAPH_CONTROL_PWM_RIGHT,
+	SUBGRAPH_CONTROL_PWM_LEFT,
+	SUBGRAPH_CONTROL_I_RIGHT,
+	SUBGRAPH_CONTROL_I_LEFT,
+	SUBGRAPH_CONTROL_NUM,
 };
 
 static GLuint font_base;
@@ -129,14 +134,18 @@ int main(int argc, char *argv[])
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
 	graph_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
 
-	graph_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo (histograme)", 0, 682, 0, 4100, 800, 600, 0, 0);
+	graph_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
 	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1, 1, 0, 0);
 	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO_BAR, "Hokuyo bar (via foo)", 1, 0, 1, 0);
 	graph_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 0, 0, 0, 1);
 
-	graph_init(&graph[GRAPH_SPEED_DIST], "Vitesses (avance)", 0, 90000, -1500, 1500, 800, 600, 0, 0);
-	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
-	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
+	graph_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_RIGHT, "PWM droite", 1, 1, 0, 1);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_LEFT, "PWM gauche ", 1, 0, 1, 1);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_RIGHT, "I droite ", 0, 1, 0.65, 0);
+	graph_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_LEFT, "I gauche ", 0, 1, 0, 0);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -519,7 +528,7 @@ void plot_table(struct graph* graph)
 	}
 
 	// affichage du repère robot
-	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
 		glColor3f(0, 0, 0);
 		float x_robot = robot_interface.control_usb_data[max-1].control_pos_x/65536.0f; // en mm
@@ -590,14 +599,51 @@ void plot_speed_dist(struct graph* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 
-	if( graph->courbes_activated[SUBGRAPH_SPEED_DIST_CONS] )
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_CONS] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_CONS]);
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_CONS]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_PWM_RIGHT] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_PWM_RIGHT]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_u_right * 1000.0f / (PWM_ARR + 1), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_PWM_LEFT] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_PWM_LEFT]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_u_left * 1000.0f / (PWM_ARR + 1), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_RIGHT] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_RIGHT]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_i_right, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_LEFT] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_LEFT]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_i_left, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
 #if 0
 	// TODO : precalculer
 	{
@@ -616,9 +662,9 @@ void plot_speed_dist(struct graph* graph)
 		}
 	}
 #endif
-	if( graph->courbes_activated[SUBGRAPH_SPEED_DIST_MES] )
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_SPEED_DIST_MES]);
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
