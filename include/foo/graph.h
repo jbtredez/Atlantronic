@@ -6,9 +6,10 @@
 //! @author Atlantronic
 
 #include <stdint.h>
+#include "kernel/vect_pos.h"
 
-#define GRAPH_NUM_PT             20
-#define GRAPH_NUM_LINK           26
+#define GRAPH_NUM_NODE           20
+#define GRAPH_NUM_LINK           52
 
 struct graph_link
 {
@@ -17,9 +18,26 @@ struct graph_link
 	uint16_t dist;
 };
 
+struct graph_node
+{
+	struct fx_vect2 pos;
+	uint8_t link_id;
+	uint8_t link_num;
+};
+
+struct graph_dijkstra_info
+{
+	uint16_t dist;
+	uint8_t prev_node;
+	uint8_t is_best;
+};
+
 #ifdef LINUX
-extern const struct fx_vect2 graph_pt[GRAPH_NUM_PT];
+extern const struct graph_node graph_node[GRAPH_NUM_NODE];
 extern const struct graph_link graph_link[GRAPH_NUM_LINK];
 #endif
+
+//! graph_dijkstra_info* info : tableau de taille minimale GRAPH_NUM_NODE
+int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info);
 
 #endif

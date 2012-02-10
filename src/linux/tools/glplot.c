@@ -543,15 +543,19 @@ void plot_table(struct graphique* graph)
 		{
 			int a = graph_link[i].a;
 			int b = graph_link[i].b;
-			float x1 = graph_pt[a].x / 65536.0f;
-			float y1 = graph_pt[a].y / 65536.0f;
-			float x2 = graph_pt[b].x / 65536.0f;
-			float y2 = graph_pt[b].y / 65536.0f;
-			glBegin(GL_LINES);
-			glVertex2f(x1, y1);
-			glVertex2f(x2, y2);
-			glEnd();
-			glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, font_base, "%d", graph_link[i].dist);
+			// on trace les liens une seule fois
+			if( a < b)
+			{
+				float x1 = graph_node[a].pos.x / 65536.0f;
+				float y1 = graph_node[a].pos.y / 65536.0f;
+				float x2 = graph_node[b].pos.x / 65536.0f;
+				float y2 = graph_node[b].pos.y / 65536.0f;
+				glBegin(GL_LINES);
+				glVertex2f(x1, y1);
+				glVertex2f(x2, y2);
+				glEnd();
+				glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, font_base, "%d", graph_link[i].dist);
+			}
 		}
 		glDisable(GL_LINE_STIPPLE);
 	}
@@ -559,10 +563,10 @@ void plot_table(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
-		for(i=0; i < GRAPH_NUM_PT; i++)
+		for(i=0; i < GRAPH_NUM_NODE; i++)
 		{
-			draw_plus(graph_pt[i].x / 65536.0f, graph_pt[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-			glPrintf_xcenter_yhigh2(graph_pt[i].x / 65536.0f, graph_pt[i].y/65536.0f, ratio_x, ratio_y, font_base, "%d", i);
+			draw_plus(graph_node[i].pos.x / 65536.0f, graph_node[i].pos.y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			glPrintf_xcenter_yhigh2(graph_node[i].pos.x / 65536.0f, graph_node[i].pos.y/65536.0f, ratio_x, ratio_y, font_base, "%d", i);
 		}
 	}
 
