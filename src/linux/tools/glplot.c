@@ -969,8 +969,10 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 2: // gachette gauche (xbox)
+				robot_interface_straight_speed(&robot_interface, val, 1);
 				break;
 			case 5: // gachette droite (xbox)
+				robot_interface_straight_speed(&robot_interface, val, -1);
 				break;
 			default:
 				break;

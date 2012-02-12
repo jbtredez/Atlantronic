@@ -8,6 +8,12 @@
 #include <stdint.h>
 #include "kernel/vect_pos.h"
 
+//! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
+#define CONTROL_TICK_PERIOD        ms_to_tick(5)
+#define CONTROL_HZ                 200
+#define CONTROL_TE                 0.005f
+
+
 enum control_state
 {
 	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
@@ -56,6 +62,12 @@ struct control_cmd_param_arg
 	int32_t kalpha;
 };
 
+struct control_cmd_max_speed_arg
+{
+	uint32_t vmax_av;
+	uint32_t vmax_rot;
+};
+
 enum trajectory_way
 {
 	TRAJECTORY_ANY_WAY,
@@ -76,5 +88,9 @@ int32_t control_get_state();
 
 //!< permet d'indiquer un obstacle sur la trajectoire, en cours de mouvement, et la distance d'approche souhaitée
 void control_set_front_object(struct fx_vect2* a, int32_t approx_dist);
+
+//!< limitation de la vitesse.
+//!< vitesse en % de la vmax de configuration
+void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot);
 
 #endif

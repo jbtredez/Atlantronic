@@ -15,6 +15,10 @@ static struct robot_interface* cmd_robot = NULL;
 int cmd_help();
 int cmd_quit();
 int cmd_goto_near(void* arg);
+int cmd_max_speed(void* arg);
+int cmd_pince_open();
+int cmd_pince_close();
+int cmd_pince_configure();
 int cmd_straight(void* arg);
 int cmd_straight_to_wall(void* arg);
 int cmd_rotate(void* arg);
@@ -29,6 +33,10 @@ COMMAND usb_commands[] = {
 	{ "free", cmd_free, "free()" },
 	{ "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
 	{ "help", cmd_help, "Display this text" },
+	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot)" },
+	{ "pince_open", cmd_pince_open, "ouverture des pinces"},
+	{ "pince_close", cmd_pince_close, "fermeture des pinces"},
+	{ "pince_configure", cmd_pince_configure, "configuration des pinces"},
 	{ "q", cmd_quit, "Quit" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate(angle)" },
@@ -181,5 +189,40 @@ int cmd_goto_near(void* arg)
 
 	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way);
 
+	return CMD_SUCESS;
+}
+
+int cmd_max_speed(void* arg)
+{
+	float v_max_av;
+	float v_max_rot;
+	int count = sscanf(arg, "%f %f", &v_max_av, &v_max_rot);
+
+	if(count != 2)
+	{
+		log_info("max_speed v_max_av v_max_rot\n");
+		return CMD_SUCESS;
+	}
+
+	robot_interface_set_max_speed(cmd_robot, v_max_av, v_max_rot);
+
+	return CMD_SUCESS;
+}
+
+int cmd_pince_configure()
+{
+	robot_interface_pince(cmd_robot, PINCE_CONFIGURE);
+	return CMD_SUCESS;
+}
+
+int cmd_pince_open()
+{
+	robot_interface_pince(cmd_robot, PINCE_CLOSE);
+	return CMD_SUCESS;
+}
+
+int cmd_pince_close()
+{
+	robot_interface_pince(cmd_robot, PINCE_OPEN);
 	return CMD_SUCESS;
 }

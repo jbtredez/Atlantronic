@@ -29,23 +29,18 @@
 #define TRAJECTORY_POS_REACHED_TOLERANCE_X       (2 << 16)
 #define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
 
-//! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
-#define CONTROL_TICK_PERIOD        ms_to_tick(5)
-#define CONTROL_HZ                 200
-#define TE                         0.005f
-
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((200 << 16) / CONTROL_HZ)
 
-#define CONTROL_VMAX_AV                          ((800 << 16) / CONTROL_HZ)
-#define CONTROL_AMAX_AV                          ((600 << 16) / (CONTROL_HZ * CONTROL_HZ))
-#define CONTROL_DMAX_AV                          ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ))
+const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
+const int32_t CONTROL_AMAX_AV = ((600 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
-#define CONTROL_VMAX_ROT                         ((((int64_t)100 << 26) / CONTROL_HZ)  / ( PI*PARAM_VOIE_MOT ))
-#define CONTROL_AMAX_ROT                         ((((int64_t)125 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ))
-#define CONTROL_DMAX_ROT                         ((((int64_t)250 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ))
+const int32_t CONTROL_VMAX_ROT = ((((int64_t)100 << 26) / CONTROL_HZ)  / ( PI*PARAM_VOIE_MOT ));
+const int32_t CONTROL_AMAX_ROT = ((((int64_t)125 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ));
+const int32_t CONTROL_DMAX_ROT = ((((int64_t)250 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ));
 
 static void control_task(void *);
-static int32_t sinc( int32_t x );
+//static int32_t sinc( int32_t x );
 static void control_compute();
 static void control_compute_trajectory();
 
@@ -53,6 +48,7 @@ static void control_compute_trajectory();
 void control_cmd_free(void* arg);
 void control_cmd_param(void* arg);
 void control_cmd_print_param(void* arg);
+void control_cmd_set_max_speed(void* arg);
 
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
@@ -100,8 +96,8 @@ static int control_module_init()
 #error "revoir les gains d'asservissement"
 #endif
 
-	pid_init(&control_pid_av, 64339072, 18867814, 0, PWM_ARR, 32);
-	pid_init(&control_pid_rot, 3520030, 722629, 0, PWM_ARR, 26);
+	pid_init(&control_pid_av, 60000000, 15000000, 0, PWM_ARR, 32);
+	pid_init(&control_pid_rot, 3000000, 500000, 0, PWM_ARR, 26);
 
 	control_kx = 0;
 	control_ky = 0;
@@ -125,6 +121,7 @@ static int control_module_init()
 
 	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
 	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
+	usb_add_cmd(USB_CMD_CONTROL_MAX_SPEED, &control_cmd_set_max_speed);
 
 	return 0;
 }
@@ -178,6 +175,13 @@ void control_cmd_print_param(void* arg)
 	log_format(LOG_INFO, "pos: %d %d %d", (int)control_kx, (int)control_ky, (int)control_kalpha);
 }
 
+void control_cmd_set_max_speed(void* arg)
+{
+	struct control_cmd_max_speed_arg* cmd_arg = (struct control_cmd_max_speed_arg*) arg;
+	control_set_max_speed(cmd_arg->vmax_av, cmd_arg->vmax_rot);
+}
+
+#if 0
 static int32_t sinc( int32_t x )
 {
 	if( abs(x) < 1068070 ) // < 0.1 rd
@@ -191,6 +195,8 @@ static int32_t sinc( int32_t x )
 		return sx / x;
 	}
 }
+#endif
+
 #if 0
 static void control_recalage()
 {
@@ -221,6 +227,18 @@ static void control_recalage()
 	}
 }
 #endif
+
+void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot)
+{
+	v_max_dist = ((int64_t)v_max_dist * (int64_t)CONTROL_VMAX_AV) >> 16;
+	v_max_rot = ((int64_t)v_max_rot * (int64_t)CONTROL_VMAX_ROT) >> 16;
+
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	control_trapeze_av.v_max = v_max_dist;
+	control_trapeze_rot.v_max = v_max_rot;
+	xSemaphoreGive(control_mutex);
+}
+
 static int32_t control_check_speed(int32_t mes, int32_t cons, int32_t delta)
 {
 	int res = CONTROL_SPEED_OK;

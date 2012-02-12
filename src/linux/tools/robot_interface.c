@@ -560,3 +560,55 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
+
+int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot)
+{
+	struct control_cmd_max_speed_arg cmd_arg;
+
+	cmd_arg.vmax_av = fabsf(vmax_av) * 65536.0f;
+	cmd_arg.vmax_rot = fabsf(vmax_rot) * 65536.0f;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_CONTROL_MAX_SPEED;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_straight_speed(struct robot_interface* data, float v, int dir)
+{
+	int res = pthread_mutex_lock(&data->mutex);
+	enum control_state control_state = CONTROL_READY_FREE;
+	int control_v_dist_cons = 0;
+
+	if(res == 0)
+	{
+		if(data->control_usb_data_count > 0)
+		{
+			control_state = data->control_usb_data[data->control_usb_data_count-1].control_state;
+			control_v_dist_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_dist_cons;
+		}
+
+		pthread_mutex_unlock(&data->mutex);
+	}
+	else
+	{
+		v = 0;
+	}
+
+	if(v < 0.1f)
+	{
+		robot_interface_set_max_speed(data, 0, 0);
+	}
+	else
+	{
+		robot_interface_set_max_speed(data, v, v);
+		if(control_state != CONTROL_TRAJECTORY || dir * control_v_dist_cons < 0)
+		{
+			robot_interface_straight(data, dir*30000);
+			usleep(50000);
+		}
+	}
+
+	return 0;
+}
