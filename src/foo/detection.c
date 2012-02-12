@@ -28,12 +28,6 @@ static void detection_compute();
 static void can_hokuyo_reset(struct can_msg *msg);
 static void can_hokuyo_data(struct can_msg *msg);
 
-// TODO envoyer par CAN les segments du hokuyo de bar
-#if 0
-static int detection_can_hokuyo_id;
-static struct hokuyo_scan hokuyo_scan_bar;
-#endif
-
 // données privées à la tache detection, ne doit pas être disponible
 // à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
 // Les méthodes de calculs doivent utiliser les objets et segments
@@ -72,16 +66,7 @@ int detection_module_init()
 	hokuyo_scan.pos_hokuyo.alpha = PARAM_FOO_HOKUYO_ALPHA;
 	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
-#if 0
-	hokuyo_scan_bar.sens =  PARAM_BAR_HOKUYO_SENS;
-	hokuyo_scan_bar.pos_hokuyo.x = PARAM_BAR_HOKUYO_X;
-	hokuyo_scan_bar.pos_hokuyo.y = PARAM_BAR_HOKUYO_Y;
-	hokuyo_scan_bar.pos_hokuyo.alpha = PARAM_BAR_HOKUYO_ALPHA;
-	hokuyo_scan_bar.pos_hokuyo.ca = fx_cos(hokuyo_scan_bar.pos_hokuyo.alpha);
-	hokuyo_scan_bar.pos_hokuyo.sa = fx_sin(hokuyo_scan_bar.pos_hokuyo.alpha);
 
-	detection_can_hokuyo_id = 0;
-#endif
 	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
 	can_register(CAN_HOKUYO_DATA, CAN_STANDARD_FORMAT, can_hokuyo_data);
 
@@ -251,21 +236,9 @@ void detection_compute()
 void can_hokuyo_reset(struct can_msg *msg)
 {
 	(void) msg;
-#if 0
-	detection_can_hokuyo_id = 0;
-	hokuyo_scan_bar.pos_robot = location_get_position();
-#endif
 }
 
 void can_hokuyo_data(struct can_msg *msg)
 {
 	(void) msg;
-#if 0
-	memcpy(((unsigned char*)hokuyo_scan_bar.distance) + detection_can_hokuyo_id, msg->data, msg->size);
-	detection_can_hokuyo_id += msg->size;
-	if(detection_can_hokuyo_id == 1364)
-	{
-		usb_add(USB_HOKUYO_FOO_BAR, &hokuyo_scan_bar, sizeof(hokuyo_scan_bar));
-	}
-#endif
 }
