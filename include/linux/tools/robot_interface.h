@@ -71,6 +71,8 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 //!< vitesse en % de vmax de configuration du robot
 int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot);
 
-int robot_interface_straight_speed(struct robot_interface* data, float v, int dir);
+int robot_interface_straight_speed(struct robot_interface* data, float v);
+
+int robot_interface_rotate_speed(struct robot_interface* data, float v);
 
 #endif

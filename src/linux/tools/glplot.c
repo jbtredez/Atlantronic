@@ -968,11 +968,14 @@ static void joystick_event(int event, float val)
 		// c'est un axe
 		switch(event)
 		{
+			case 0: // joystick gauche (xbox)
+				robot_interface_rotate_speed(&robot_interface, val);
+				break;
 			case 2: // gachette gauche (xbox)
-				robot_interface_straight_speed(&robot_interface, val, 1);
+				robot_interface_straight_speed(&robot_interface, val);
 				break;
 			case 5: // gachette droite (xbox)
-				robot_interface_straight_speed(&robot_interface, val, -1);
+				robot_interface_straight_speed(&robot_interface, -val);
 				break;
 			default:
 				break;

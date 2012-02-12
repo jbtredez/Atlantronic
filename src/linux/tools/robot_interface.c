@@ -575,18 +575,26 @@ int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, f
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_straight_speed(struct robot_interface* data, float v, int dir)
+int robot_interface_rotate_speed(struct robot_interface* data, float v)
 {
-	int res = pthread_mutex_lock(&data->mutex);
 	enum control_state control_state = CONTROL_READY_FREE;
+	int control_v_rot_cons = 0;
 	int control_v_dist_cons = 0;
+	int dir = 1;
+	if(v < 0)
+	{
+		v = -v;
+		dir = -1;
+	}
 
+	int res = pthread_mutex_lock(&data->mutex);
 	if(res == 0)
 	{
 		if(data->control_usb_data_count > 0)
 		{
 			control_state = data->control_usb_data[data->control_usb_data_count-1].control_state;
 			control_v_dist_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_dist_cons;
+			control_v_rot_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_rot_cons;
 		}
 
 		pthread_mutex_unlock(&data->mutex);
@@ -596,14 +604,78 @@ int robot_interface_straight_speed(struct robot_interface* data, float v, int di
 		v = 0;
 	}
 
-	if(v < 0.1f)
+	// on avance déjà, pas de rotation
+	if( control_v_dist_cons != 0)
 	{
-		robot_interface_set_max_speed(data, 0, 0);
+		return 0;
+	}
+
+	if( v < 0.2f)
+	{
+		if( fabsf(control_v_rot_cons) > 0)
+		{
+			robot_interface_set_max_speed(data, 0, 0);
+		}
 	}
 	else
 	{
 		robot_interface_set_max_speed(data, v, v);
-		if(control_state != CONTROL_TRAJECTORY || dir * control_v_dist_cons < 0)
+		if(control_state != CONTROL_TRAJECTORY || dir * control_v_rot_cons < 0 || (control_v_dist_cons == 0 && control_v_rot_cons == 0))
+		{
+			robot_interface_rotate(data, 60*dir);
+			usleep(50000);
+		}
+	}
+
+	return 0;
+}
+
+int robot_interface_straight_speed(struct robot_interface* data, float v)
+{
+	enum control_state control_state = CONTROL_READY_FREE;
+	int control_v_dist_cons = 0;
+	int control_v_rot_cons = 0;
+	int dir = 1;
+	if(v < 0)
+	{
+		v = -v;
+		dir = -1;
+	}
+
+	int res = pthread_mutex_lock(&data->mutex);
+	if(res == 0)
+	{
+		if(data->control_usb_data_count > 0)
+		{
+			control_state = data->control_usb_data[data->control_usb_data_count-1].control_state;
+			control_v_dist_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_dist_cons;
+			control_v_rot_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_rot_cons;
+		}
+
+		pthread_mutex_unlock(&data->mutex);
+	}
+	else
+	{
+		v = 0;
+	}
+
+	// rotation deja en cours
+	if( control_v_rot_cons != 0)
+	{
+		return 0;
+	}
+
+	if( v < 0.1f)
+	{
+		if( fabsf(control_v_dist_cons) > 0)
+		{
+			robot_interface_set_max_speed(data, 0, 0);
+		}
+	}
+	else
+	{
+		robot_interface_set_max_speed(data, v, v);
+		if(control_state != CONTROL_TRAJECTORY || dir * control_v_dist_cons < 0 || (control_v_dist_cons == 0 && control_v_rot_cons == 0))
 		{
 			robot_interface_straight(data, dir*30000);
 			usleep(50000);
