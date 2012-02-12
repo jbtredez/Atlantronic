@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	}
 
 	robot_interface_init(&robot_interface, file_foo, file_bar, NULL, NULL);
-	cmd_init(&robot_interface.com[0]);
+	cmd_init(&robot_interface, NULL);
 
 	while(1)
 	{

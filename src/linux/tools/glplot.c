@@ -12,6 +12,7 @@
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/cmd.h"
 #include "linux/tools/graphique.h"
+#include "linux/tools/joystick.h"
 #include "kernel/robot_parameters.h"
 #include "foo/pwm.h"
 #include "foo/graph.h"
@@ -33,7 +34,6 @@ enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
 	SUBGRAPH_TABLE_HOKUYO_FOO,
-	SUBGRAPH_TABLE_HOKUYO_FOO_BAR,
 	SUBGRAPH_TABLE_HOKUYO_BAR,
 	SUBGRAPH_TABLE_HOKUYO_FOO_SEG,
 	SUBGRAPH_TABLE_POS_CONS,
@@ -47,7 +47,6 @@ enum
 {
 	GRAPH_HOKUYO_HIST_FOO = 0,
 	GRAPH_HOKUYO_HIST_BAR,
-	GRAPH_HOKUYO_HIST_FOO_BAR,
 	GRAPH_HOKUYO_HIST_NUM,
 };
 
@@ -78,8 +77,10 @@ static float mouse_y2 = 0;
 static int drawing_zoom_selection = 0;
 static int current_graph = GRAPH_TABLE;
 static GtkWidget* opengl_window;
+static GtkWidget* main_window;
 
 struct graphique graph[GRAPH_NUM];
+struct joystick joystick;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -91,6 +92,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event);
 static void mounse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
+static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void draw_plus(float x, float y, float rx, float ry);
@@ -99,6 +101,7 @@ static void glPrintf_xright2_yhigh(float x, float y, float x_ratio, float y_rati
 static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glprint(float x, float y, GLuint base, char* buffer, int size);
+void gtk_end();
 
 void read_callback();
 
@@ -134,8 +137,7 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_BAR, "Hokuyo bar (via foo)", 1, 0.5, 0.5, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 0, 0.5, 0.5, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1, 0.5, 0.5, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH, "Graph", 1, 0, 0, 0);
@@ -143,8 +145,7 @@ int main(int argc, char *argv[])
 
 	graphique_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO_BAR, "Hokuyo bar (via foo)", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 0, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 1, 0, 0, 1);
 
 	graphique_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
@@ -174,7 +175,7 @@ int main(int argc, char *argv[])
 	}
 
 	// création de la fenêtre
-	GtkWidget* main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(main_window),"USB Interface");
 	gtk_window_set_default_size(GTK_WINDOW(main_window), 400, 300);
 
@@ -260,8 +261,9 @@ int main(int argc, char *argv[])
 
 	gtk_widget_show_all(main_window);
 
+	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 	robot_interface_init(&robot_interface, file_foo, file_bar, read_callback, opengl_window);
-	cmd_init(&robot_interface.com[0]);
+	cmd_init(&robot_interface, gtk_end);
 
 	gtk_main();
 
@@ -269,7 +271,16 @@ int main(int argc, char *argv[])
 
 	robot_interface_destroy(&robot_interface);
 
+	joystick_destroy(&joystick);
+
 	return 0;
+}
+
+void gtk_end()
+{
+	gdk_threads_enter();
+	gtk_main_quit();
+	gdk_threads_leave();
 }
 
 void read_callback(GtkWidget* widget)
@@ -466,9 +477,6 @@ void plot_table(struct graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
-
-	struct fx_vect2 pos_table = {0, 0};
-
 	int i;
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
@@ -491,23 +499,12 @@ void plot_table(struct graphique* graph)
 		glEnd();
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_BAR] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_BAR]);
-		for(i=HOKUYO_FOO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO_BAR+1)*HOKUYO_NUM_POINTS; i++)
-		{
-			fx_vect2_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].pos_robot, &robot_interface.detection_hokuyo_pos[i], &pos_table);
-			draw_plus(pos_table.x/65536.0f, pos_table.y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-		}
-	}
-
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
 		for(i=HOKUYO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_BAR+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			fx_vect2_robot_to_table(&robot_interface.hokuyo_scan[HOKUYO_BAR].pos_robot, &robot_interface.detection_hokuyo_pos[i], &pos_table);
-			draw_plus(pos_table.x, pos_table.y, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -613,15 +610,6 @@ void plot_hokuyo_hist(struct graphique* graph)
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_FOO].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-		}
-	}
-
-	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_FOO_BAR] )
-	{
-		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO_BAR]);
-		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
-		{
-			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_FOO_BAR].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -940,6 +928,55 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 	(void) event;
 	(void) arg;
 	return TRUE;
+}
+
+static void joystick_event(int event, float val)
+{
+	if(event & JOYSTICK_BTN_BASE)
+	{
+		int v = rint(val);
+		// c'est un bouton
+		switch(event & ~JOYSTICK_BTN_BASE)
+		{
+			case 0: // A (xbox)
+				if( v )
+				{
+					robot_interface_pince(&robot_interface, PINCE_OPEN);
+				}
+				break;
+			case 1: // B (xbox)
+				if( v )
+				{
+					robot_interface_pince(&robot_interface, PINCE_CLOSE);
+				}
+				break;
+			case 2: // X (xbox)
+				break;
+			case 3: // Y (xbox)
+				break;
+			case 4: // LB (xbox)
+				break;
+			case 5: // RB (xbox)
+				break;
+			default:
+				break;
+		}
+		//log_info("bouton %d : %d", event & ~JOYSTICK_BTN_BASE, (int)rint(val));
+	}
+	else
+	{
+		// c'est un axe
+		switch(event)
+		{
+			case 2: // gachette gauche (xbox)
+				break;
+			case 5: // gachette droite (xbox)
+				break;
+			default:
+				break;
+		}
+		//log_info("axe %d : %f", event, val);
+	}
 }
 
 static void glprint(float x, float y, GLuint base, char* buffer, int size)

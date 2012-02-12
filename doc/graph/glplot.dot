@@ -1,0 +1,28 @@
+digraph robot
+{
+	ratio=fill;
+	size="16,10";
+	center=true;
+	maxiter=100;
+
+	// modules - taches
+	node [color=lawngreen, style=filled ]
+	joystick
+	robot_interface
+	glplot
+	cli
+
+	// modules - fonctions
+	node [color=lightblue2, style=filled ]
+	com
+	graphique
+	cmd
+
+	// liens
+	robot_interface -> com
+	glplot -> graphique
+	glplot -> robot_interface
+	glplot -> joystick
+	cli -> cmd
+	cmd -> robot_interface
+}

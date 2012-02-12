@@ -9,7 +9,8 @@
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
 
-static struct com* cmd_com = NULL;
+static void (*cmd_exit_callback)(void) = NULL;
+static struct robot_interface* cmd_robot = NULL;
 
 int cmd_help();
 int cmd_quit();
@@ -38,209 +39,147 @@ COMMAND usb_commands[] = {
 	{ (char *)NULL, (Function *)NULL, (char *)NULL }
 };
 
-int cmd_init(struct com* com)
+int cmd_init(struct robot_interface* robot, void (*f)(void))
 {
-	cmd_com = com;
+	cmd_robot = robot;
+	cmd_exit_callback = f;
 	return cli_init(usb_commands);
 }
 
 int cmd_help()
 {
-	printf("Aide\n");
+	log_info("Aide\n");
 	return CMD_SUCESS;
 }
 
 int cmd_quit()
 {
-	printf("Quit\n");
-	exit(0); // TODO
+	log_info("Quit\n");
+	if(cmd_exit_callback)
+	{
+		cmd_exit_callback();
+	}
 	return CMD_QUIT;
 }
 
 int cmd_control_param(void* arg)
 {
-	struct control_cmd_param_arg cmd_arg;
-	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d", &cmd_arg.kp_av, &cmd_arg.ki_av, &cmd_arg.kd_av, &cmd_arg.kp_rot, &cmd_arg.ki_rot, &cmd_arg.kd_rot, &cmd_arg.kx, &cmd_arg.ky, &cmd_arg.kalpha);
+	int kp_av;
+	int ki_av;
+	int kd_av;
+	int kp_rot;
+	int ki_rot;
+	int kd_rot;
+	int kx;
+	int ky;
+	int kalpha;
+	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d", &kp_av, &ki_av, &kd_av, &kp_rot, &ki_rot, &kd_rot, &kx, &ky, &kalpha);
 
 	if(count != 9)
 	{
-		printf("cmd_control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
+		log_info("cmd_control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
 		return CMD_SUCESS;
 	}
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_PARAM;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_control_set_param(cmd_robot, kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha);
 
 	return CMD_SUCESS;
 }
 
 int cmd_control_print_param()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_control_print_param(cmd_robot);
 
 	return CMD_SUCESS;
 }
 
 int cmd_straight(void* arg)
 {
-	struct trajectory_cmd_arg cmd_arg;
 	float dist;
 	int count = sscanf(arg, "%f", &dist);
 
 	if(count != 1)
 	{
-		printf("cmd_straight dist\n");
-		return 0;
+		log_info("cmd_straight dist\n");
+		return CMD_SUCESS;
 	}
 
-	cmd_arg.dist = dist * 65536.0f;
-	cmd_arg.type = TRAJECTORY_STRAIGHT;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_straight(cmd_robot, dist);
 
 	return CMD_SUCESS;
 }
 
 int cmd_straight_to_wall(void* arg)
 {
-	struct trajectory_cmd_arg cmd_arg;
 	float dist;
 	int count = sscanf(arg, "%f", &dist);
 
 	if(count != 1)
 	{
-		printf("cmd_straight_to_wall dist\n");
+		log_info("cmd_straight_to_wall dist\n");
 		return CMD_SUCESS;
 	}
 
-	cmd_arg.dist = dist * 65536.0f;
-	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_straight_to_wall(cmd_robot, dist);
 
 	return CMD_SUCESS;
 }
 
 int cmd_rotate(void* arg)
 {
-	struct trajectory_cmd_arg cmd_arg;
 	float alpha;
 	int count = sscanf(arg, "%f", &alpha);
 
 	if(count != 1)
 	{
-		printf("cmd_rotate dist\n");
-		return 0;
+		log_info("cmd_rotate dist\n");
+		return CMD_SUCESS;
 	}
 
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
-	cmd_arg.type = TRAJECTORY_ROTATE;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_rotate(cmd_robot, alpha);
 
 	return CMD_SUCESS;
 }
 
 int cmd_rotate_to(void* arg)
 {
-	struct trajectory_cmd_arg cmd_arg;
 	float alpha;
 	int count = sscanf(arg, "%f", &alpha);
 
 	if(count != 1)
 	{
-		printf("cmd_rotate_to dist\n");
+		log_info("cmd_rotate_to dist\n");
 		return CMD_SUCESS;
 	}
 
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
-	cmd_arg.type = TRAJECTORY_ROTATE_TO;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_rotate_to(cmd_robot, alpha);
 
 	return CMD_SUCESS;
 }
 
 int cmd_free()
 {
-	struct trajectory_cmd_arg cmd_arg;
-
-	cmd_arg.type = TRAJECTORY_FREE;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_free(cmd_robot);
 
 	return CMD_SUCESS;
 }
 
 int cmd_goto_near(void* arg)
 {
-	struct trajectory_cmd_arg cmd_arg;
 	float x;
 	float y;
 	float alpha;
 	float dist;
-	int count = sscanf(arg, "%f %f %f %f %u", &x, &y, &alpha, &dist, &cmd_arg.way);
+	unsigned int way;
+	int count = sscanf(arg, "%f %f %f %f %u", &x, &y, &alpha, &dist, &way);
 
 	if(count != 5)
 	{
-		printf("cmd_goto_near x y alpha dist way\n");
+		log_info("cmd_goto_near x y alpha dist way\n");
 		return CMD_SUCESS;
 	}
 
-	cmd_arg.x = x * 65536.0f;
-	cmd_arg.y = y * 65536.0f;
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
-	cmd_arg.dist = dist * 65536.0f;
-	cmd_arg.type = TRAJECTORY_GOTO;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-	if(cmd_com)
-	{
-		com_write(cmd_com, buffer, sizeof(buffer));
-	}
+	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way);
 
 	return CMD_SUCESS;
 }

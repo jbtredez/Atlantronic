@@ -1,14 +1,18 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <math.h>
 #include "linux/tools/robot_interface.h"
+#include "linux/tools/com.h"
+#include "linux/tools/cli.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/math/regression.h"
 #include "kernel/log_level.h"
-#include "linux/tools/com.h"
 #include "kernel/driver/usb.h"
 #include "kernel/rcc.h"
-#include "linux/tools/cli.h"
+#include "foo/control/control.h"
+#include "foo/control/trajectory.h"
+
 
 const char* err_description[ERR_MAX] =
 {
@@ -71,13 +75,14 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 
 int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg)
 {
-	pthread_t tid;
 	int i;
 	int err = 0;
 	int res = 0;
 
 	data->callback = callback;
 	data->callback_arg = callback_arg;
+	data->stop_task = 1;
+
 	if(file_foo)
 	{
 		com_init(&data->com[COM_FOO], file_foo);
@@ -109,7 +114,8 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 		struct robot_interface_arg* args = (struct robot_interface_arg*) malloc(sizeof(struct robot_interface_arg));
 		args->robot = data;
 		args->com_id = i;
-		res = pthread_create(&tid, NULL, robot_interface_task, args);
+		data->stop_task = 0;
+		res = pthread_create(&data->tid, NULL, robot_interface_task, args);
 		if(res)
 		{
 			err = res;
@@ -123,6 +129,11 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 void robot_interface_destroy(struct robot_interface* data)
 {
 	int i;
+
+	data->stop_task = 1;
+	usleep(100000);
+	pthread_cancel(data->tid);
+
 	for( i = 0; i < COM_MAX; i++)
 	{
 		com_close(&data->com[i]);
@@ -143,13 +154,18 @@ static void* robot_interface_task(void* arg)
 
 	com_open_block(com);
 
-	while(1)
+	while( !robot->stop_task)
 	{
 		uint16_t type;
 		uint16_t size;
 
 		// lecture entete
 		res = com_read_header(com, &type, &size);
+		if( robot->stop_task)
+		{
+			goto end;
+		}
+
 		if( res )
 		{
 			com_open_block(com);
@@ -158,6 +174,11 @@ static void* robot_interface_task(void* arg)
 
 		// lecture du message
 		res = com_read(com, size + 4);
+		if( robot->stop_task)
+		{
+			goto end;
+		}
+
 		if( res )
 		{
 			com_open_block(com);
@@ -182,9 +203,6 @@ static void* robot_interface_task(void* arg)
 				break;
 			case USB_HOKUYO_BAR:
 				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_BAR, msg, size);
-				break;
-			case USB_HOKUYO_FOO_BAR:
-				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_FOO_BAR, msg, size);
 				break;
 			case USB_HOKUYO_FOO_SEG:
 				res = robot_interface_process_hokuyo_seg(robot, args->com_id, HOKUYO_FOO, msg, size);
@@ -237,6 +255,7 @@ static void* robot_interface_task(void* arg)
 		}
 	}
 
+end:
 	return NULL;
 }
 
@@ -362,6 +381,12 @@ static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int 
 		goto end;
 	}
 
+	if( num > HOKUYO_NUM_POINTS)
+	{
+		res = -1;
+		goto end;
+	}
+
 	res = pthread_mutex_lock(&data->mutex);
 
 	if(res)
@@ -405,4 +430,133 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 
 end:
 	return res;
+}
+
+int robot_interface_control_print_param(struct robot_interface* data)
+{
+	char buffer[1];
+	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_control_set_param(struct robot_interface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
+{
+	struct control_cmd_param_arg cmd_arg;
+
+	cmd_arg.kp_av = kp_av;
+	cmd_arg.ki_av = ki_av;
+	cmd_arg.kd_av = kd_av;
+	cmd_arg.kp_rot = kp_rot;
+	cmd_arg.ki_rot = ki_rot;
+	cmd_arg.kd_rot = kd_rot;
+	cmd_arg.kx = kx;
+	cmd_arg.ky = ky;
+	cmd_arg.kalpha = kalpha;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_CONTROL_PARAM;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_straight(struct robot_interface* data, float dist)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.type = TRAJECTORY_STRAIGHT;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_straight_to_wall(struct robot_interface* data, float dist)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_rotate(struct robot_interface* data, float alpha)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.type = TRAJECTORY_ROTATE;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_rotate_to(struct robot_interface* data, float alpha)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.type = TRAJECTORY_ROTATE_TO;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_free(struct robot_interface* data)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.type = TRAJECTORY_FREE;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.x = x * 65536.0f;
+	cmd_arg.y = y * 65536.0f;
+	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.type = TRAJECTORY_GOTO;
+	cmd_arg.way = way;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type)
+{
+	struct pince_cmd_arg cmd_arg;
+
+	cmd_arg.type = cmd_type;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_PINCE;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
