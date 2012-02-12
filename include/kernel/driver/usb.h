@@ -10,7 +10,6 @@ enum
 	USB_LOG = 1,
 	USB_ERR,
 	USB_HOKUYO_FOO,
-	USB_HOKUYO_FOO_BAR,
 	USB_HOKUYO_BAR,
 	USB_HOKUYO_FOO_SEG,
 	USB_CONTROL
@@ -21,6 +20,7 @@ enum usb_cmd
 	USB_CMD_TRAJECTORY = 0,
 	USB_CMD_CONTROL_PARAM,
 	USB_CMD_CONTROL_PRINT_PARAM,
+	USB_CMD_PINCE,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

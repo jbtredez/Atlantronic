@@ -1,11 +1,24 @@
 #include "pince.h"
 #include "ax12.h"
 #include "kernel/module.h"
+#include "kernel/driver/usb.h"
+#include "kernel/log.h"
 
 #define PINCE_AX12_RIGHT      1
 #define PINCE_AX12_LEFT       2
 
 #define AX12_RIGHT_EMPTY_THRESHOLD   0x200
+
+static void pince_cmd(void* arg);
+
+static int pince_module_init()
+{
+	usb_add_cmd(USB_CMD_PINCE, &pince_cmd);
+
+	return 0;
+}
+
+module_init(pince_module_init, INIT_PINCE);
 
 void pince_configure()
 {
@@ -24,14 +37,14 @@ void pince_configure()
 
 void pince_open()
 {
-	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
-	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
+	log(LOG_INFO, "pince_open");
 	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
 }
 
 void pince_close()
 {
+	log(LOG_INFO, "pince_close");
 	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x295);
 	ax12_set_goal_position(PINCE_AX12_LEFT, 0x160);
 }
@@ -42,9 +55,22 @@ int pince_full()
 	return ax12_pos < AX12_RIGHT_EMPTY_THRESHOLD;
 }
 
-static void pince_module_exit()
+static void pince_cmd(void* arg)
 {
-	pince_open();
-}
+	struct pince_cmd_arg* cmd_arg = (struct pince_cmd_arg*) arg;
 
-module_exit(pince_module_exit, EXIT_AX12);
+	switch(cmd_arg->type)
+	{
+		case PINCE_CONFIGURE:
+			pince_configure();
+			break;
+		case PINCE_OPEN:
+			pince_open();
+			break;
+		case PINCE_CLOSE:
+			pince_close();
+			break;
+		default:
+			break;
+	}
+}
