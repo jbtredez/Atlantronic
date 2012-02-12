@@ -11,7 +11,8 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/semphr.h"
-
+#include "kernel/robot_parameters.h"
+#include "kernel/math/trigo.h"
 #include "gpio.h"
 #include <math.h>
 
@@ -38,17 +39,18 @@ int hokuyo_to_can_module_init()
 	hokuyo_to_can_msg.format = CAN_STANDARD_FORMAT;
 	hokuyo_to_can_msg.type = CAN_DATA_FRAME;
 
-	hokuyo_scan.sens =  1;
+	hokuyo_scan.sens =  PARAM_BAR_HOKUYO_SENS;
+	hokuyo_scan.pos_hokuyo.x = PARAM_BAR_HOKUYO_X;
+	hokuyo_scan.pos_hokuyo.y = PARAM_BAR_HOKUYO_Y;
+	hokuyo_scan.pos_hokuyo.alpha = PARAM_BAR_HOKUYO_ALPHA;
+	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
+	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
+
 	hokuyo_scan.pos_robot.x = 0;
 	hokuyo_scan.pos_robot.y = 0;
 	hokuyo_scan.pos_robot.alpha = 0;
-	hokuyo_scan.pos_robot.ca = 1;
-	hokuyo_scan.pos_robot.sa = 0;
-	hokuyo_scan.pos_hokuyo.x = 0;
-	hokuyo_scan.pos_hokuyo.y = 0;
-	hokuyo_scan.pos_hokuyo.alpha = 0;
-	hokuyo_scan.pos_hokuyo.ca = 1;
-	hokuyo_scan.pos_hokuyo.sa = 0;
+	hokuyo_scan.pos_robot.ca = fx_cos(hokuyo_scan.pos_robot.alpha);
+	hokuyo_scan.pos_robot.sa = fx_sin(hokuyo_scan.pos_robot.alpha);
 
 	return 0;
 }
