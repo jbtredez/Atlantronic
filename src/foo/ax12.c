@@ -9,6 +9,7 @@
 #include "kernel/queue.h"
 #include "kernel/event.h"
 #include "kernel/error.h"
+#include "kernel/rcc.h"
 
 #define AX12_INSTRUCTION_READ_COMPLETE    0x00
 #define AX12_INSTRUCTION_PING             0x01
@@ -23,8 +24,8 @@
 #define AX12_STACK_SIZE            100
 #define AX12_ARG_MAX                 3
 #define AX12_READ_TIMEOUT       720000
-#define AX12_INTER_FRAME_TIME      720
-#define AX12_MAX_RETRY               3
+#define AX12_INTER_FRAME_TIME  us_to_tick(15)
+#define AX12_MAX_RETRY              10
 
 struct ax12_request
 {
