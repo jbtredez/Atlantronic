@@ -2,6 +2,7 @@
 #define CLI_H
 
 #include <readline/readline.h>
+#include <errno.h>
 
 enum
 {
@@ -27,7 +28,14 @@ extern char cli_prompt[];
 #define log_error(msg, arg ...) \
 	do \
 	{ \
-		cli_log("\r%10s:%i: "msg"\n%s%s", __FUNCTION__, __LINE__, ##arg, cli_prompt, rl_line_buffer);\
+		if( rl_line_buffer ) \
+		{ \
+			cli_log("\r%10s:%i: "msg"\n%s%s", __FUNCTION__, __LINE__, ##arg, cli_prompt, rl_line_buffer);\
+		}\
+		else \
+		{ \
+			cli_log("\r%10s:%i: "msg"\n%s", __FUNCTION__, __LINE__, ##arg, cli_prompt);\
+		} \
 	}while(0)
 
 #define log_error_errno(msg, arg ...) \
@@ -37,14 +45,28 @@ extern char cli_prompt[];
 		if( errno != cli_last_error) \
 		{ \
 			cli_last_error = errno; \
-			cli_log("\r%10s:%i: "msg" : %s (%d)\n%s%s", __FUNCTION__, __LINE__, ##arg, strerror(errno), errno, cli_prompt, rl_line_buffer);\
+			if( rl_line_buffer ) \
+			{ \
+				cli_log("\r%10s:%i: "msg" : %s (%d)\n%s%s", __FUNCTION__, __LINE__, ##arg, strerror(errno), errno, cli_prompt, rl_line_buffer);\
+			} \
+			else \
+			{ \
+				cli_log("\r%10s:%i: "msg" : %s (%d)\n%s", __FUNCTION__, __LINE__, ##arg, strerror(errno), errno, cli_prompt);\
+			} \
 		}\
 	}while(0)
 
 #define log_info(msg, arg ...) \
 	do \
 	{ \
-		cli_log("\r"msg"\n%s%s", ##arg, cli_prompt, rl_line_buffer);\
+		if( rl_line_buffer ) \
+		{ \
+			cli_log("\r"msg"\n%s%s", ##arg, cli_prompt, rl_line_buffer);\
+		} \
+		else \
+		{ \
+			cli_log("\r"msg"\n%s", ##arg, cli_prompt);\
+		} \
 	}while(0)
 
 #endif
