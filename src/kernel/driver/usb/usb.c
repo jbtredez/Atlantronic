@@ -17,8 +17,12 @@ static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
 static unsigned int usb_write_size;
-static unsigned char usb_rx_buffer[64];
-static unsigned int usb_read_size;
+static unsigned char usb_rx_buffer[64]; //!< buffer usb de reception
+static unsigned char usb_rx_buffer2[64]; //!< buffer usb de reception (second)
+static unsigned int usb_read_size; //!< taille du buffer usb de reception
+static unsigned int usb_read_size2; //!< taille du buffer usb de reception (second)
+static unsigned int usb_rx_buffer_id; //!< id courant du buffer usb de reception (à traiter par la tache)
+static volatile int usb_rx_waiting; //!< les 2 buffers de reception sont pleins, on fait attendre le pc pour ne pas perdre de messages
 static xSemaphoreHandle usb_mutex;
 static void (*usb_cmd[USB_CMD_NUM])(void*);
 
@@ -34,6 +38,9 @@ static int usb_module_init(void)
 	usb_write_size = 0;
 	usb_endpoint_ready = 1;
 	usb_read_size = 0;
+	usb_read_size2 = 0;
+	usb_rx_buffer_id = 0;
+	usb_rx_waiting = 0;
 
 	for(i = 0; i < USB_CMD_NUM; i++)
 	{
@@ -119,6 +126,8 @@ void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
 void usb_task(void * arg)
 {
 	(void) arg;
+	unsigned char* rx_buffer;
+	unsigned int* read_size;
 
 	while(1)
 	{
@@ -127,14 +136,26 @@ void usb_task(void * arg)
 			vTaskDelay( ms_to_tick(100) );
 		}
 
-		if( usb_read_size )
+		// choix du bon buffer
+		if( usb_rx_buffer_id == 0)
 		{
-			int id = usb_rx_buffer[0];
+			rx_buffer = usb_rx_buffer;
+			read_size = &usb_read_size;
+		}
+		else
+		{
+			rx_buffer = usb_rx_buffer2;
+			read_size = &usb_read_size2;
+		}
+
+		if( *read_size )
+		{
+			int id = rx_buffer[0];
 			if( id < USB_CMD_NUM )
 			{
 				if( usb_cmd[id] )
 				{
-					usb_cmd[id](usb_rx_buffer+1);
+					usb_cmd[id](rx_buffer+1);
 				}
 				else
 				{
@@ -146,7 +167,17 @@ void usb_task(void * arg)
 				log_format(LOG_ERROR, "command %d not found", id);
 			}
 
-			usb_read_size = 0;
+			*read_size = 0;
+			usb_rx_buffer_id = (usb_rx_buffer_id + 1) & 0x01;
+		}
+
+		// on a fait attendre un 3ieme message de la part du pc.
+		// donc le second buffer est déjà plein et on va depiler directement le message
+		// dans le buffer courant qu'on vient de traiter
+		if(usb_rx_waiting)
+		{
+			usb_rx_waiting = 0;
+			*read_size = USB_SIL_Read(EP2_OUT, rx_buffer);
 		}
 
 		if( usb_endpoint_ready )
@@ -220,8 +251,36 @@ void EP1_IN_Callback(void)
 void EP2_OUT_Callback(void)
 {
 	// pas de commande en cours de traitement
-	if( usb_read_size == 0)
+	if( usb_rx_buffer_id == 0)
 	{
-		usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
+		if( usb_read_size == 0)
+		{
+			usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
+		}
+		else if( usb_read_size2 == 0)
+		{
+			// perte du message precedent si if( usb_read_size2 == 0)
+			usb_read_size2 = USB_SIL_Read(EP2_OUT, usb_rx_buffer2);
+		}
+		else
+		{
+			usb_rx_waiting = 1;
+		}
+	}
+	else
+	{
+		if( usb_read_size2 == 0)
+		{
+			usb_read_size2 = USB_SIL_Read(EP2_OUT, usb_rx_buffer2);
+		}
+		else if( usb_read_size == 0)
+		{
+			// perte du message precedent si if( usb_read_size == 0)
+			usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
+		}
+		else
+		{
+			usb_rx_waiting = 1;
+		}
 	}
 }
