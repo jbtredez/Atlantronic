@@ -38,6 +38,7 @@ extern const struct graph_link graph_link[GRAPH_NUM_LINK];
 #endif
 
 //! graph_dijkstra_info* info : tableau de taille minimale GRAPH_NUM_NODE
-int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info);
+//! valid_links : tableau de taille minimale GRAPH_NUM_LINK
+int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* valid_links);
 
 #endif

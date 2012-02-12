@@ -87,7 +87,7 @@ const struct graph_link graph_link[GRAPH_NUM_LINK] =
 	{ 19, 18, 400 },
 };
 
-int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info)
+int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* valid_links)
 {
 	int i;
 	int j;
@@ -111,14 +111,17 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info)
 		int max = graph_node[i].link_id + graph_node[i].link_num;
 		for(j = graph_node[i].link_id; j < max; j++)
 		{
-			int connected_node = graph_link[j].b;
-			// calcul de la distance en passant par la
-			uint16_t dist = info[i].dist + graph_link[j].dist;
-			if( info[connected_node].dist > dist)
+			if( valid_links[j])
 			{
-				// on a trouvé un chemin plus court pour aller vers "connected_node"
-				info[connected_node].dist = dist;
-				info[connected_node].prev_node = i;
+				int connected_node = graph_link[j].b;
+				// calcul de la distance en passant par la
+				uint16_t dist = info[i].dist + graph_link[j].dist;
+				if( info[connected_node].dist > dist)
+				{
+					// on a trouvé un chemin plus court pour aller vers "connected_node"
+					info[connected_node].dist = dist;
+					info[connected_node].prev_node = i;
+				}
 			}
 		}
 
@@ -126,7 +129,7 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info)
 		i = a;
 		for(j = 0; j<GRAPH_NUM_NODE; j++)
 		{
-			if( ! info[j].is_best && info[j].dist <= best_dist)
+			if( ! info[j].is_best && info[j].dist < best_dist)
 			{
 				best_dist = info[j].dist;
 				i = j;
