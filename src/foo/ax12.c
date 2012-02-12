@@ -69,15 +69,6 @@ static int ax12_module_init()
 
 module_init(ax12_module_init, INIT_AX12);
 
-static void ax12_module_exit()
-{
-//	ax12_set_torque_limit(0xfe, 0x00);
-//	ax12_set_torque_limit(0xfe, 0x00);
-//	ax12_set_torque_limit(0xfe, 0x00);
-}
-
-module_exit(ax12_module_exit, EXIT_AX12);
-
 static void ax12_task(void* arg)
 {
 	(void) arg;
