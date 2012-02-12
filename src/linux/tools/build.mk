@@ -19,6 +19,7 @@ obj-linux-glplot += kernel/vect_pos.o
 obj-linux-glplot += linux/tools/cli.o
 obj-linux-glplot += linux/tools/cmd.o
 obj-linux-glplot += linux/tools/graphique.o
+obj-linux-glplot += linux/tools/joystick.o
 obj-linux-glplot += foo/graph.o
 obj-linux-glplot += linux/tools/robot_interface.o
 cflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
