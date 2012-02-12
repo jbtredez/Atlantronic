@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdarg.h>
+#include <locale.h>
 
 #include "foo/control/control.h"
 #include "linux/tools/cli.h"
@@ -180,6 +181,8 @@ void* cli_task(void* arg)
 {
 	char *buf;
 	(void) arg;
+
+	setlocale(LC_ALL, "C");
 
 	rl_attempted_completion_function = (CPPFunction *)completion;
 
