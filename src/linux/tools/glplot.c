@@ -54,6 +54,8 @@ enum
 {
 	SUBGRAPH_CONTROL_SPEED_DIST_MES = 0,
 	SUBGRAPH_CONTROL_SPEED_DIST_CONS,
+	SUBGRAPH_CONTROL_SPEED_ROT_MES,
+	SUBGRAPH_CONTROL_SPEED_ROT_CONS,
 	SUBGRAPH_CONTROL_PWM_RIGHT,
 	SUBGRAPH_CONTROL_PWM_LEFT,
 	SUBGRAPH_CONTROL_I_RIGHT,
@@ -150,6 +152,8 @@ int main(int argc, char *argv[])
 	graphique_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_RIGHT, "PWM droite", 1, 1, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_LEFT, "PWM gauche ", 1, 0, 1, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_RIGHT, "I droite ", 0, 1, 0.65, 0);
@@ -389,7 +393,11 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	screen_width = widget->allocation.width;
 	screen_height = widget->allocation.height;
 
-	graphique_resize_screen(&graph[current_graph], screen_width, screen_height);
+	int i;
+	for( i = 0; i < GRAPH_NUM; i++)
+	{
+		graphique_resize_screen(&graph[i], screen_width, screen_height);
+	}
 
 	glViewport(0, 0, screen_width, screen_height);
 	glMatrixMode(GL_PROJECTION);
@@ -635,7 +643,34 @@ void plot_speed_dist(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_CONS]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*CONTROL_HZ/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_CONS] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_CONS]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_cons*1000.0f * CONTROL_HZ/16777216.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*CONTROL_HZ/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_MES] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_MES]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_mes*1000.0f * CONTROL_HZ/16777216.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -692,16 +727,7 @@ void plot_speed_dist(struct graphique* graph)
 			draw_plus(5*i, dist, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-#endif
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
-		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*200/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-		}
-	}
-#if 0
+
 	{
 		// TODO : precalculer
 		glColor3f(1, 1, 0);
