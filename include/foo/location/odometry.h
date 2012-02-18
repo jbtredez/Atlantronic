@@ -6,16 +6,12 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/vect_pos.h"
+#include "kernel/math/kinematics.h"
 
 void odometry_update();
 
-void odometry_set_position(const struct fx_vect_pos pos);
+void odometry_set_position(const int32_t x, const int32_t y, const int32_t alpha);
 
-struct fx_vect_pos odometry_get_position();
-
-int32_t odometry_get_speed_curv_abs();
-
-int32_t odometry_get_speed_rot();
+struct kinematics odometry_get_kinematics();
 
 #endif

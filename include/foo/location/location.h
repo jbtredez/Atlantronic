@@ -12,12 +12,10 @@
 
 void location_update();
 
+struct kinematics location_get_kinematics();
+
 struct fx_vect_pos location_get_position();
 
 void location_set_position(int32_t x, int32_t y, int32_t alpha);
-
-int32_t location_get_speed_curv_abs();
-
-int32_t location_get_speed_rot();
 
 #endif

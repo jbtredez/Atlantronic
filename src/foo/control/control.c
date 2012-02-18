@@ -54,8 +54,8 @@ static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static enum control_state control_state;
 
+static struct kinematics control_kinematics;
 static struct fx_vect_pos control_cons;
-static struct fx_vect_pos control_pos;
 static struct fx_vect_pos control_dest;
 
 static struct fx_vect2 control_front_object;    //!< objet devant le robot
@@ -268,9 +268,7 @@ static void control_compute()
 	int32_t u1 = 0;
 	int32_t u2 = 0;
 
-	control_pos = location_get_position();
-	int32_t v_d = location_get_speed_curv_abs();
-	int32_t v_r = location_get_speed_rot();
+	control_kinematics = location_get_kinematics();
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
@@ -282,7 +280,7 @@ static void control_compute()
 
 	// verification du suivit de vitesse
 	// TODO : ajouter un timer : remise à zero si ok, incrementer si ko et si depassement => retourner ko
-	int speed_check = control_check_speed(v_d, control_trapeze_av.v, CONTROL_SPEED_CHECK_TOLERANCE);
+	int speed_check = control_check_speed(control_kinematics.v, control_trapeze_av.v, CONTROL_SPEED_CHECK_TOLERANCE);
 
 	if( control_state == CONTROL_TRAJECTORY)
 	{
@@ -297,7 +295,7 @@ static void control_compute()
 
 		if(control_speed_check_error_count > 10 )
 		{
-			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(v_d * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
+			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
@@ -341,22 +339,22 @@ static void control_compute()
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
-	int32_t ex = (  (int64_t)control_pos.ca * (int64_t)(control_cons.x - control_pos.x) + (int64_t)control_pos.sa * (int64_t)(control_cons.y - control_pos.y)) >> 30;
-//	int32_t ey = (- (int64_t)control_pos.sa * (int64_t)(control_cons.x - control_pos.x) + (int64_t)control_pos.ca * (int64_t)(control_cons.y - control_pos.y)) >> 30;
-	int32_t ealpha = control_cons.alpha - control_pos.alpha;
+	int32_t ex = (  (int64_t)control_kinematics.ca * (int64_t)(control_cons.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_cons.y - control_kinematics.y)) >> 30;
+//	int32_t ey = (- (int64_t)control_kinematics.sa * (int64_t)(control_cons.x - control_kinematics.x) + (int64_t)control_kinematics.ca * (int64_t)(control_cons.y - control_kinematics.y)) >> 30;
+	int32_t ealpha = control_cons.alpha - control_kinematics.alpha;
 
-	int32_t v_d_c = (((int64_t)control_trapeze_av.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
-	int32_t v_r_c = (int32_t)control_trapeze_rot.v + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_trapeze_av.v * sinc(ealpha) * ey;
+	int32_t v_c = (((int64_t)control_trapeze_av.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
+	int32_t w_c = (int32_t)control_trapeze_rot.v + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_trapeze_av.v * sinc(ealpha) * ey;
 
 	// régulation en vitesse
-	int32_t u_rot = pid_apply(&control_pid_rot, v_r_c - v_r);
+	int32_t u_rot = pid_apply(&control_pid_rot, w_c - control_kinematics.w);
 	int32_t u_av = 0;
 
 	// on prefere l'angle à l'avance en cas de saturation
 	if( abs(u_rot) != PWM_ARR)
 	{
 		// la rotation ne prend pas toute la pwm
-		u_av = pid_apply(&control_pid_av, v_d_c - v_d);
+		u_av = pid_apply(&control_pid_av, v_c - control_kinematics.v);
 		int32_t max = PWM_ARR - abs(u_rot);
 		if( u_av > max)
 		{
@@ -378,13 +376,13 @@ end_pwm_critical:
 	control_usb_data.control_cons_x = control_cons.x;
 	control_usb_data.control_cons_y = control_cons.y;
 	control_usb_data.control_cons_alpha = control_cons.alpha;
-	control_usb_data.control_pos_x = control_pos.x;
-	control_usb_data.control_pos_y = control_pos.y;
-	control_usb_data.control_pos_alpha = control_pos.alpha;
+	control_usb_data.control_pos_x = control_kinematics.x;
+	control_usb_data.control_pos_y = control_kinematics.y;
+	control_usb_data.control_pos_alpha = control_kinematics.alpha;
 	control_usb_data.control_v_dist_cons = control_trapeze_av.v;
 	control_usb_data.control_v_rot_cons = control_trapeze_rot.v;
-	control_usb_data.control_v_dist_mes = v_d;
-	control_usb_data.control_v_rot_mes = v_r;
+	control_usb_data.control_v_dist_mes = control_kinematics.v;
+	control_usb_data.control_v_rot_mes = control_kinematics.w;
 	control_usb_data.control_i_right = control_an.i_right;
 	control_usb_data.control_i_left = control_an.i_left;
 	control_usb_data.control_u_right = u1;
@@ -412,7 +410,7 @@ static void control_compute_trajectory()
 			control_cons.alpha = control_dest.alpha;
 			control_cons.ca = control_dest.ca;
 			control_cons.sa = control_dest.sa;
-			if(	abs( control_dest.alpha - control_pos.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+			if(	abs( control_dest.alpha - control_kinematics.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
 				trapeze_reset(&control_trapeze_rot, 0, 0);
 				trapeze_reset(&control_trapeze_av, 0, 0);
@@ -423,7 +421,7 @@ static void control_compute_trajectory()
 	}
 	else if(control_dist)
 	{
-		int32_t ex = ((int64_t)control_pos.ca  * (int64_t)(control_dest.x - control_pos.x) + (int64_t)control_pos.sa * (int64_t)(control_dest.y - control_pos.y)) >> 30;
+		int32_t ex = ((int64_t)control_kinematics.ca  * (int64_t)(control_dest.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_dest.y - control_kinematics.y)) >> 30;
 		int32_t distance = control_dist;
 
 		if(distance > 0)
@@ -523,10 +521,14 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	control_trapeze_av.s = 0;
 	control_trapeze_rot.s = 0;
 
-	int64_t dx = x - control_pos.x;
-	int64_t dy = y - control_pos.y;
+	int64_t dx = x - control_kinematics.x;
+	int64_t dy = y - control_kinematics.y;
 	control_dist = sqrtf(dx*dx+dy*dy) - dist;
-	control_cons = control_pos;
+	control_cons.x = control_kinematics.x;
+	control_cons.y = control_kinematics.y;
+	control_cons.alpha = control_kinematics.alpha;
+	control_cons.ca = control_kinematics.ca;
+	control_cons.sa = control_kinematics.sa;
 
 	if(control_dist >> 16)
 	{
@@ -535,17 +537,17 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 
 		if(sens == TRAJECTORY_FORWARD)
 		{
-			control_angle = control_find_rotate(control_pos.alpha, a);
+			control_angle = control_find_rotate(control_kinematics.alpha, a);
 		}
 		else if(sens == TRAJECTORY_BACKWARD)
 		{
-			control_angle = control_find_rotate(control_pos.alpha, a + 0x2000000);
+			control_angle = control_find_rotate(control_kinematics.alpha, a + 0x2000000);
 			control_dist *= -1;
 		}
 		else
 		{
-			int32_t angle_forward = control_find_rotate(control_pos.alpha, a);
-			int32_t angle_backward = control_find_rotate(control_pos.alpha, a + 0x2000000);
+			int32_t angle_forward = control_find_rotate(control_kinematics.alpha, a);
+			int32_t angle_backward = control_find_rotate(control_kinematics.alpha, a + 0x2000000);
 
 			if ( abs(angle_forward) > abs(angle_backward))
 			{
@@ -561,14 +563,14 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	else
 	{
 		control_trapeze_av.v = 0;
-		control_angle = alpha - control_pos.alpha;
+		control_angle = alpha - control_kinematics.alpha;
 	}
 
-	control_dest.alpha = control_pos.alpha + control_angle;
+	control_dest.alpha = control_kinematics.alpha + control_angle;
 	control_dest.ca = fx_cos(control_dest.alpha);
 	control_dest.sa = fx_sin(control_dest.alpha);
-	control_dest.x = control_pos.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);
-	control_dest.y = control_pos.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
+	control_dest.x = control_kinematics.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);
+	control_dest.y = control_kinematics.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
 
 	control_timer = 0;
 	xSemaphoreGive(control_mutex);

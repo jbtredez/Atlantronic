@@ -12,24 +12,21 @@
 static uint16_t encoders_right;
 static uint16_t encoders_left;
 
-static int32_t odometry_v_dist;    //!< en "2^-16 m / unité de temps"
-static int32_t odometry_v_rotate;  //!< en "2^-26 tours / unité de temps"
 
-static struct fx_vect_pos odometry_pos;
+static struct kinematics odometry_kinematics;
 
 static int odometry_module_init()
 {
 	encoders_right = encoders_get(ENCODERS_MOT_RIGHT);
 	encoders_left = encoders_get(ENCODERS_MOT_LEFT);
 
-	odometry_pos.x = 0;
-	odometry_pos.y = 0;
-	odometry_pos.alpha = 0;
-	odometry_pos.ca = 1 << 16;
-	odometry_pos.sa = 0;
-
-	odometry_v_dist = 0;
-	odometry_v_rotate = 0;
+	odometry_kinematics.x = 0;
+	odometry_kinematics.y = 0;
+	odometry_kinematics.alpha = 0;
+	odometry_kinematics.ca = 1 << 30;
+	odometry_kinematics.sa = 0;
+	odometry_kinematics.v = 0;
+	odometry_kinematics.w = 0;
 
 	return 0;
 };
@@ -53,56 +50,41 @@ void odometry_update()
 	delta_left  *= PARAM_LEFT_ODO_WHEEL_RADIUS_FX  * PARAM_LEFT_ODO_WHEEL_WAY;
 
 	// on evite de perdre en precision lors du calcul
-	int32_t vd = ((int64_t)(delta_right + delta_left) * (int64_t)PI_FX29) >> ( 29 + PARAM_ENCODERS_BIT_RES);
-	int32_t vr = ((int64_t)(delta_right - delta_left) * (int64_t)PARAM_INVERTED_VOIE_FX39) >> ( 29 + PARAM_ENCODERS_BIT_RES);
+	int32_t v = ((int64_t)(delta_right + delta_left) * (int64_t)PI_FX29) >> ( 29 + PARAM_ENCODERS_BIT_RES);
+	int32_t w = ((int64_t)(delta_right - delta_left) * (int64_t)PARAM_INVERTED_VOIE_FX39) >> ( 29 + PARAM_ENCODERS_BIT_RES);
 
 	// update
 	portENTER_CRITICAL();
 	encoders_right = enc_right;
 	encoders_left  = enc_left;
-	odometry_v_dist = vd;
-	odometry_v_rotate = vr;
-	odometry_pos.x += ((int64_t)vd * (int64_t)odometry_pos.ca) >> 30;
-	odometry_pos.y += ((int64_t)vd * (int64_t)odometry_pos.sa) >> 30;
-	odometry_pos.alpha += vr;
-	odometry_pos.ca = fx_cos(odometry_pos.alpha);
-	odometry_pos.sa = fx_sin(odometry_pos.alpha);
+	odometry_kinematics.v = v;
+	odometry_kinematics.w = w;
+	odometry_kinematics.x += ((int64_t)v * (int64_t)odometry_kinematics.ca) >> 30;
+	odometry_kinematics.y += ((int64_t)v * (int64_t)odometry_kinematics.sa) >> 30;
+	odometry_kinematics.alpha += w;
+	odometry_kinematics.ca = fx_cos(odometry_kinematics.alpha);
+	odometry_kinematics.sa = fx_sin(odometry_kinematics.alpha);
 	portEXIT_CRITICAL();
 }
 
-struct fx_vect_pos odometry_get_position()
+struct kinematics odometry_get_kinematics()
 {
-	struct fx_vect_pos p;
+	struct kinematics k;
 	portENTER_CRITICAL();
-	p = odometry_pos;
+	k = odometry_kinematics;
 	portEXIT_CRITICAL();
-	return p;
+	return k;
 }
 
-void odometry_set_position(const struct fx_vect_pos pos)
+void odometry_set_position(const int32_t x, const int32_t y, const int32_t alpha)
 {
 	portENTER_CRITICAL();
 	encoders_right = encoders_get(ENCODERS_MOT_RIGHT);
 	encoders_left = encoders_get(ENCODERS_MOT_LEFT);
-	odometry_pos = pos;
+	odometry_kinematics.x = x;
+	odometry_kinematics.y = y;
+	odometry_kinematics.alpha = alpha;
+	odometry_kinematics.ca = fx_cos(odometry_kinematics.alpha);
+	odometry_kinematics.sa = fx_sin(odometry_kinematics.alpha);
 	portEXIT_CRITICAL();
 }
-
-int32_t odometry_get_speed_curv_abs()
-{
-	int32_t v;
-	portENTER_CRITICAL();
-	v = odometry_v_dist;
-	portEXIT_CRITICAL();
-	return v;
-}
-
-int32_t odometry_get_speed_rot()
-{
-	int32_t v;
-	portENTER_CRITICAL();
-	v = odometry_v_rotate;
-	portEXIT_CRITICAL();
-	return v;
-}
-
