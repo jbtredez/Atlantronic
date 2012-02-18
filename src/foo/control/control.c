@@ -29,7 +29,7 @@
 #define TRAJECTORY_POS_REACHED_TOLERANCE_X       (2 << 16)
 #define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
 
-#define CONTROL_SPEED_CHECK_TOLERANCE            ((200 << 16) / CONTROL_HZ)
+#define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
 const int32_t CONTROL_AMAX_AV = ((600 << 16) / (CONTROL_HZ * CONTROL_HZ));
@@ -64,6 +64,8 @@ static int32_t control_front_object_approx;     //!< distance d'approche de l'ob
 static struct adc_an control_an;
 
 static portTickType control_timer;
+static int control_speed_check_error_count;
+
 static int32_t control_kx;
 static int32_t control_ky;
 static int32_t control_kalpha;
@@ -118,6 +120,8 @@ static int control_module_init()
 	control_front_object_approx = 0;
 	control_front_object.x = 1 << 30;
 	control_front_object.y = 1 << 30;
+
+	control_speed_check_error_count = 0;
 
 	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
 	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
@@ -264,9 +268,6 @@ static void control_compute()
 	int32_t u1 = 0;
 	int32_t u2 = 0;
 
-	int sens1 = 1;
-	int sens2 = 1;
-
 	control_pos = location_get_position();
 	int32_t v_d = location_get_speed_curv_abs();
 	int32_t v_r = location_get_speed_rot();
@@ -287,7 +288,16 @@ static void control_compute()
 	{
 		if(speed_check)
 		{
-			log_format(LOG_ERROR, "erreur de suivit cons %i mes %d check %d", (int)(v_d * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
+			control_speed_check_error_count++;
+		}
+		else
+		{
+			control_speed_check_error_count = 0;
+		}
+
+		if(control_speed_check_error_count > 10 )
+		{
+			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(v_d * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
@@ -362,19 +372,8 @@ static void control_compute()
 	u2 = u_av - u_rot;
 
 end_pwm_critical:
-	if(u1 < 0)
-	{
-		sens1 = -1;
-		u1 = -u1;
-	}
-	if(u2 < 0)
-	{
-		sens2 = -1;
-		u2 = -u2;
-	}
-
-	pwm_set(PWM_RIGHT, (uint16_t)u1, sens1);
-	pwm_set(PWM_LEFT, (uint16_t)u2, sens2);
+	pwm_set(PWM_RIGHT, u1);
+	pwm_set(PWM_LEFT, u2);
 	control_usb_data.control_state = control_state;
 	control_usb_data.control_cons_x = control_cons.x;
 	control_usb_data.control_cons_y = control_cons.y;
@@ -509,6 +508,12 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, sens);
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	if( control_state == CONTROL_READY_FREE)
+	{
+		pid_reset(&control_pid_av);
+		pid_reset(&control_pid_rot);
+	}
+
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_TRAJECTORY;
@@ -566,8 +571,6 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	control_dest.y = control_pos.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
 
 	control_timer = 0;
-	pid_reset(&control_pid_av);
-	pid_reset(&control_pid_rot);
 	xSemaphoreGive(control_mutex);
 }
 

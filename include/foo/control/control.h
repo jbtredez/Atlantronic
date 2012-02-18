@@ -45,8 +45,8 @@ struct control_usb_data
 	int32_t control_v_rot_mes;
 	uint16_t control_i_right;
 	uint16_t control_i_left;
-	uint16_t control_u_right;
-	uint16_t control_u_left;
+	int16_t control_u_right;
+	int16_t control_u_left;
 } __attribute__((packed));
 
 struct control_cmd_param_arg

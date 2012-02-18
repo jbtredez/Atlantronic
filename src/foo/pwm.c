@@ -79,8 +79,15 @@ static int pwm_module_init()
 
 module_init(pwm_module_init, INIT_PWM);
 
-void pwm_set(const unsigned int num, uint16_t val, int dir)
+void pwm_set(const unsigned int num, int16_t val)
 {
+	int dir = 1;
+	if(val < 0)
+	{
+		val = -val;
+		dir = -1;
+	}
+
 	switch(num)
 	{
 		case PWM_RIGHT:
