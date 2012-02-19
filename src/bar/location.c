@@ -67,3 +67,16 @@ struct kinematics location_get_kinematics()
 	portEXIT_CRITICAL();
 	return k;
 }
+
+struct fx_vect_pos location_get_position()
+{
+	struct fx_vect_pos p;
+	portENTER_CRITICAL();
+	p.x = location_kinematics.x;
+	p.y = location_kinematics.y;
+	p.alpha = location_kinematics.alpha;
+	p.ca = location_kinematics.ca;
+	p.sa = location_kinematics.sa;
+	portEXIT_CRITICAL();
+	return p;
+}

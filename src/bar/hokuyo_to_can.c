@@ -14,6 +14,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/math/trigo.h"
 #include "gpio.h"
+#include "location.h"
 #include <math.h>
 
 
@@ -64,6 +65,8 @@ static void hokuyo_to_can_task()
 		// on attend la fin du nouveau scan
 		vTaskWaitEvent(EVENT_LOCAL_HOKUYO_UPDATE, portMAX_DELAY);
 		vTaskClearEvent(EVENT_LOCAL_HOKUYO_UPDATE);
+
+		hokuyo_scan.pos_robot = location_get_position();
 
 		xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
 		hokuyo_to_can_compute();
