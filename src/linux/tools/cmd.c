@@ -217,12 +217,12 @@ int cmd_pince_configure()
 
 int cmd_pince_open()
 {
-	robot_interface_pince(cmd_robot, PINCE_CLOSE);
+	robot_interface_pince(cmd_robot, PINCE_OPEN);
 	return CMD_SUCESS;
 }
 
 int cmd_pince_close()
 {
-	robot_interface_pince(cmd_robot, PINCE_OPEN);
+	robot_interface_pince(cmd_robot, PINCE_CLOSE);
 	return CMD_SUCESS;
 }
