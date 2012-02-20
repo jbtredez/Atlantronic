@@ -55,7 +55,7 @@ static xSemaphoreHandle control_mutex;
 static enum control_state control_state;
 
 static struct kinematics control_kinematics;
-static struct fx_vect_pos control_cons;
+static struct kinematics control_kinematics_cons;
 static struct fx_vect_pos control_dest;
 
 static struct fx_vect2 control_front_object;    //!< objet devant le robot
@@ -69,10 +69,16 @@ static int control_speed_check_error_count;
 static int32_t control_kx;
 static int32_t control_ky;
 static int32_t control_kalpha;
-static struct trapeze control_trapeze_rot;
-static struct trapeze control_trapeze_av;
-static int32_t control_angle;
+static int32_t control_alpha_align;
 static int32_t control_dist;
+
+// limitation de vitesses, accélérations, décélérations
+static int32_t control_vmax_av;
+static int32_t control_amax_av;
+static int32_t control_dmax_av;
+static int32_t control_vmax_rot;
+static int32_t control_amax_rot;
+static int32_t control_dmax_rot;
 
 static struct pid control_pid_av;
 static struct pid control_pid_rot;
@@ -105,15 +111,12 @@ static int control_module_init()
 	control_ky = 0;
 	control_kalpha = 0;
 
-	trapeze_reset(&control_trapeze_av, 0, 0);
-	trapeze_reset(&control_trapeze_rot, 0, 0);
-
-	control_trapeze_av.v_max = CONTROL_VMAX_AV;
-	control_trapeze_av.a_max = CONTROL_AMAX_AV;
-	control_trapeze_av.d_max = CONTROL_DMAX_AV;
-	control_trapeze_rot.v_max = CONTROL_VMAX_ROT;
-	control_trapeze_rot.a_max = CONTROL_AMAX_ROT;
-	control_trapeze_rot.d_max = CONTROL_DMAX_ROT;
+	control_vmax_av = CONTROL_VMAX_AV;
+	control_amax_av = CONTROL_AMAX_AV;
+	control_dmax_av = CONTROL_DMAX_AV;
+	control_vmax_rot = CONTROL_VMAX_ROT;
+	control_amax_rot = CONTROL_AMAX_ROT;
+	control_dmax_rot = CONTROL_DMAX_ROT;
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
@@ -238,8 +241,8 @@ void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot)
 	v_max_rot = ((int64_t)v_max_rot * (int64_t)CONTROL_VMAX_ROT) >> 16;
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
-	control_trapeze_av.v_max = v_max_dist;
-	control_trapeze_rot.v_max = v_max_rot;
+	control_vmax_av = v_max_dist;
+	control_vmax_rot = v_max_rot;
 	xSemaphoreGive(control_mutex);
 }
 
@@ -280,7 +283,7 @@ static void control_compute()
 
 	// verification du suivit de vitesse
 	// TODO : ajouter un timer : remise à zero si ok, incrementer si ko et si depassement => retourner ko
-	int speed_check = control_check_speed(control_kinematics.v, control_trapeze_av.v, CONTROL_SPEED_CHECK_TOLERANCE);
+	int speed_check = control_check_speed(control_kinematics.v, control_kinematics_cons.v, CONTROL_SPEED_CHECK_TOLERANCE);
 
 	if( control_state == CONTROL_TRAJECTORY)
 	{
@@ -295,7 +298,7 @@ static void control_compute()
 
 		if(control_speed_check_error_count > 10 )
 		{
-			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_trapeze_av.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
+			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_kinematics_cons.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
 			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
@@ -307,19 +310,19 @@ static void control_compute()
 	}
 	else if(control_state == CONTROL_READY_ASSER)
 	{
-		trapeze_reset(&control_trapeze_rot, 0, 0);
-		trapeze_reset(&control_trapeze_av, 0, 0);
+		control_kinematics_cons.v = 0;
+		control_kinematics_cons.w = 0;
 	}
 	else
 	{
-		trapeze_reset(&control_trapeze_rot, 0, 0);
-		trapeze_reset(&control_trapeze_av, 0, 0);
+		control_kinematics_cons.v = 0;
+		control_kinematics_cons.w = 0;
 		goto end_pwm_critical;
 	}
 
 	// gestion du timeout (on demande de ne pas bouger pendant 2 sec avec asservissement actif)
 	// condition "on ne demande pas de bouger" (donc zero pur)
-	if( control_trapeze_rot.v == 0 && control_trapeze_av.v == 0 )
+	if( control_kinematics_cons.w == 0 && control_kinematics_cons.v == 0 )
 	{
 		// on augmente le temps avec consigne nulle
 		control_timer += CONTROL_TICK_PERIOD;
@@ -339,12 +342,12 @@ static void control_compute()
 	}
 
 	// calcul de l'erreur de position dans le repère du robot
-	int32_t ex = (  (int64_t)control_kinematics.ca * (int64_t)(control_cons.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_cons.y - control_kinematics.y)) >> 30;
-//	int32_t ey = (- (int64_t)control_kinematics.sa * (int64_t)(control_cons.x - control_kinematics.x) + (int64_t)control_kinematics.ca * (int64_t)(control_cons.y - control_kinematics.y)) >> 30;
-	int32_t ealpha = control_cons.alpha - control_kinematics.alpha;
+	int32_t ex = (  (int64_t)control_kinematics.ca * (int64_t)(control_kinematics_cons.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_kinematics_cons.y - control_kinematics.y)) >> 30;
+//	int32_t ey = (- (int64_t)control_kinematics.sa * (int64_t)(control_kinematics_cons.x - control_kinematics.x) + (int64_t)control_kinematics.ca * (int64_t)(control_kinematics_cons.y - control_kinematics.y)) >> 30;
+	int32_t ealpha = control_kinematics_cons.alpha - control_kinematics.alpha;
 
-	int32_t v_c = (((int64_t)control_trapeze_av.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
-	int32_t w_c = (int32_t)control_trapeze_rot.v + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_trapeze_av.v * sinc(ealpha) * ey;
+	int32_t v_c = (((int64_t)control_kinematics_cons.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
+	int32_t w_c = (int32_t)control_kinematics_cons.w + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_kinematics_cons.v * sinc(ealpha) * ey;
 
 	// régulation en vitesse
 	int32_t u_rot = pid_apply(&control_pid_rot, w_c - control_kinematics.w);
@@ -373,14 +376,14 @@ end_pwm_critical:
 	pwm_set(PWM_RIGHT, u1);
 	pwm_set(PWM_LEFT, u2);
 	control_usb_data.control_state = control_state;
-	control_usb_data.control_cons_x = control_cons.x;
-	control_usb_data.control_cons_y = control_cons.y;
-	control_usb_data.control_cons_alpha = control_cons.alpha;
+	control_usb_data.control_cons_x = control_kinematics_cons.x;
+	control_usb_data.control_cons_y = control_kinematics_cons.y;
+	control_usb_data.control_cons_alpha = control_kinematics_cons.alpha;
+	control_usb_data.control_v_dist_cons = control_kinematics_cons.v;
+	control_usb_data.control_v_rot_cons = control_kinematics_cons.w;
 	control_usb_data.control_pos_x = control_kinematics.x;
 	control_usb_data.control_pos_y = control_kinematics.y;
 	control_usb_data.control_pos_alpha = control_kinematics.alpha;
-	control_usb_data.control_v_dist_cons = control_trapeze_av.v;
-	control_usb_data.control_v_rot_cons = control_trapeze_rot.v;
 	control_usb_data.control_v_dist_mes = control_kinematics.v;
 	control_usb_data.control_v_rot_mes = control_kinematics.w;
 	control_usb_data.control_i_right = control_an.i_right;
@@ -397,23 +400,19 @@ static void control_compute_trajectory()
 {
 	int collision = 0;
 
-	if(control_angle)
+	// on s'oriente correctement
+	if(control_alpha_align != control_kinematics_cons.alpha || control_kinematics_cons.w != 0)
 	{
-		trapeze_apply(&control_trapeze_rot, control_angle);
-		control_cons.alpha += control_trapeze_rot.v;
-		control_cons.ca = fx_cos(control_cons.alpha);
-		control_cons.sa = fx_sin(control_cons.alpha);
+		control_kinematics_cons.v = 0;
+		control_kinematics_cons.w = trapeze_speed_filter(control_kinematics_cons.w, control_alpha_align - control_kinematics_cons.alpha, control_amax_rot, control_dmax_rot, control_vmax_rot);
+		control_kinematics_cons.alpha += control_kinematics_cons.w;
+		control_kinematics_cons.ca = fx_cos(control_kinematics_cons.alpha);
+		control_kinematics_cons.sa = fx_sin(control_kinematics_cons.alpha);
 
-		if(control_trapeze_rot.s == control_angle && control_trapeze_rot.v == 0)
+		if(control_kinematics_cons.alpha == control_alpha_align && control_kinematics_cons.w == 0)
 		{
-			control_angle = 0;
-			control_cons.alpha = control_dest.alpha;
-			control_cons.ca = control_dest.ca;
-			control_cons.sa = control_dest.sa;
-			if(	abs( control_dest.alpha - control_kinematics.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+			if(	abs( control_alpha_align - control_kinematics.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
-				trapeze_reset(&control_trapeze_rot, 0, 0);
-				trapeze_reset(&control_trapeze_av, 0, 0);
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
@@ -421,13 +420,13 @@ static void control_compute_trajectory()
 	}
 	else if(control_dist)
 	{
-		int32_t ex = ((int64_t)control_kinematics.ca  * (int64_t)(control_dest.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_dest.y - control_kinematics.y)) >> 30;
+		int32_t ex_cons = ((int64_t)control_kinematics_cons.ca  * (int64_t)(control_dest.x - control_kinematics_cons.x) + (int64_t)control_kinematics_cons.sa * (int64_t)(control_dest.y - control_kinematics_cons.y)) >> 30;
 		int32_t distance = control_dist;
 
 		if(distance > 0)
 		{
 			struct fx_vect2 obj_robot;
-			fx_vect2_table_to_robot(&control_cons, &control_front_object, &obj_robot);
+			fx_vect2_table_to_robot((struct fx_vect_pos*)&control_kinematics_cons, &control_front_object, &obj_robot);
 			int32_t dist = obj_robot.x - PARAM_LEFT_CORNER_X - control_front_object_approx;
 			if(dist < 0)
 			{
@@ -435,27 +434,33 @@ static void control_compute_trajectory()
 				collision = 1;
 			}
 
-			if(dist < ex)
+			if(dist < ex_cons)
 			{
-				distance = control_trapeze_av.s + dist;
+				ex_cons = dist;
 			}
 		}
 
-		trapeze_apply(&control_trapeze_av, distance);
+		control_kinematics_cons.v = trapeze_speed_filter(control_kinematics_cons.v, ex_cons, control_amax_av, control_dmax_av, control_vmax_av);
+		control_kinematics_cons.w = 0;
+		if(control_kinematics_cons.v == ex_cons)
+		{
+			control_kinematics_cons.x = control_dest.x;
+			control_kinematics_cons.y = control_dest.y;
+		}
+		else
+		{
+			control_kinematics_cons.x += ( (int64_t)control_kinematics_cons.v * (int64_t)control_kinematics_cons.ca) >> 30;
+			control_kinematics_cons.y += ( (int64_t)control_kinematics_cons.v * (int64_t)control_kinematics_cons.sa) >> 30;
+		}
 
-		control_cons.x += ( (int64_t)control_trapeze_av.v * (int64_t)control_cons.ca) >> 30;
-		control_cons.y += ( (int64_t)control_trapeze_av.v * (int64_t)control_cons.sa) >> 30;
-
-		if(control_trapeze_av.s == control_dist && control_trapeze_av.v == 0)
+		if(ex_cons == 0 && control_kinematics_cons.v == 0)
 		{
 			control_dist = 0;
-			control_cons = control_dest;
-			trapeze_reset(&control_trapeze_av, 0, 0);
+			control_alpha_align = control_dest.alpha;
 
+			int32_t ex = ((int64_t)control_kinematics.ca  * (int64_t)(control_dest.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_dest.y - control_kinematics.y)) >> 30;
 			if( abs(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
-				trapeze_reset(&control_trapeze_rot, 0, 0);
-				trapeze_reset(&control_trapeze_av, 0, 0);
 				control_state = CONTROL_READY_FREE;
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
@@ -463,16 +468,16 @@ static void control_compute_trajectory()
 	}
 	else
 	{
-		trapeze_reset(&control_trapeze_rot, 0, 0);
-		trapeze_reset(&control_trapeze_av, 0, 0);
+		control_kinematics_cons.v = 0;
+		control_kinematics_cons.w = 0;
 		control_state = CONTROL_READY_ASSER;
 		vTaskSetEvent(EVENT_CONTROL_TARGET_REACHED);
 	}
 
-	if( collision && abs(control_trapeze_av.v) < 655 && abs(control_trapeze_rot.v) < 10680)
+	if( collision && abs(control_kinematics_cons.v) < 655 && abs(control_kinematics_cons.w) < 10680)
 	{
-		trapeze_reset(&control_trapeze_rot, 0, 0);
-		trapeze_reset(&control_trapeze_av, 0, 0);
+		control_kinematics_cons.v = 0;
+		control_kinematics_cons.w = 0;
 		control_state = CONTROL_READY_FREE;
 		vTaskSetEvent( EVENT_CONTROL_COLSISION );
 	}
@@ -501,9 +506,9 @@ int32_t control_find_rotate(int32_t debut, int32_t fin)
 	return alpha;
 }
 
-void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way sens)
+void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way)
 {
-	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, sens);
+	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, way);
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if( control_state == CONTROL_READY_FREE)
@@ -518,30 +523,24 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	}
 	vTaskClearEvent(EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 
-	control_trapeze_av.s = 0;
-	control_trapeze_rot.s = 0;
-
+	int32_t da;
 	int64_t dx = x - control_kinematics.x;
 	int64_t dy = y - control_kinematics.y;
 	control_dist = sqrtf(dx*dx+dy*dy) - dist;
-	control_cons.x = control_kinematics.x;
-	control_cons.y = control_kinematics.y;
-	control_cons.alpha = control_kinematics.alpha;
-	control_cons.ca = control_kinematics.ca;
-	control_cons.sa = control_kinematics.sa;
+	control_kinematics_cons = control_kinematics;
 
 	if(control_dist >> 16)
 	{
-		control_trapeze_rot.v = 0;
+		control_kinematics_cons.w = 0;
 		int32_t a = fx_atan2(dy, dx);
 
-		if(sens == TRAJECTORY_FORWARD)
+		if(way == TRAJECTORY_FORWARD)
 		{
-			control_angle = control_find_rotate(control_kinematics.alpha, a);
+			da = control_find_rotate(control_kinematics.alpha, a);
 		}
-		else if(sens == TRAJECTORY_BACKWARD)
+		else if(way == TRAJECTORY_BACKWARD)
 		{
-			control_angle = control_find_rotate(control_kinematics.alpha, a + 0x2000000);
+			da = control_find_rotate(control_kinematics.alpha, a + 0x2000000);
 			control_dist *= -1;
 		}
 		else
@@ -551,22 +550,23 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 
 			if ( abs(angle_forward) > abs(angle_backward))
 			{
-				control_angle = angle_backward;
+				da = angle_backward;
 				control_dist *= -1;
 			}
 			else
 			{
-				control_angle = angle_forward;
+				da = angle_forward;
 			}
 		}
 	}
 	else
 	{
-		control_trapeze_av.v = 0;
-		control_angle = alpha - control_kinematics.alpha;
+		control_kinematics_cons.v = 0;
+		da = alpha - control_kinematics.alpha;
 	}
 
-	control_dest.alpha = control_kinematics.alpha + control_angle;
+	control_alpha_align = control_kinematics.alpha + da;
+	control_dest.alpha = alpha;
 	control_dest.ca = fx_cos(control_dest.alpha);
 	control_dest.sa = fx_sin(control_dest.alpha);
 	control_dest.x = control_kinematics.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);

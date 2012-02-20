@@ -1,67 +1,58 @@
 //! @file trapeze.c
-//! @brief Trapezoidal speed
+//! @brief Trapezoidal speed filter
 //! @author Atlantronic
 
 #include "kernel/trapeze.h"
 #include <math.h>
 #include <stdlib.h>
 
-void trapeze_apply(struct trapeze* t, int32_t s)
+//! @param v vitesse actuelle
+//! @param ds abscisse curviligne qui reste à faire
+int32_t trapeze_speed_filter(int32_t v, int32_t ds, int32_t amax, int32_t dmax, int32_t vmax)
 {
-	// abscisse curviligne qui reste à faire
-	int32_t ds = s - t->s;
-	int32_t v_max = t->v_max;
-
-	// saturation de v_max pour la rampe de décélération
-	// formule theorique : v_max_stop = sqrt( 2 * fabs(ds) * d_max);
+	// saturation de vmax pour la rampe de décélération
+	// formule theorique : vmax_stop = sqrt( 2 * fabs(ds) * d_max);
 	// formule modifiée pour limiter le pic de décélération à la fin
-	int32_t half_d_max = t->d_max >> 1;
-	int32_t v_max_stop = sqrtf( (int64_t)half_d_max * (int64_t)half_d_max + ( ((int64_t)abs(ds) * (int64_t)t->d_max) << 1)) - half_d_max;
+	int32_t half_dmax = dmax >> 1;
+	int32_t vmax_stop = sqrtf( (int64_t)half_dmax * (int64_t)half_dmax + ( ((int64_t)abs(ds) * (int64_t)dmax) << 1)) - half_dmax;
 
-	if(v_max_stop < v_max)
+	if(vmax_stop < vmax)
 	{
-		v_max = v_max_stop;
+		vmax = vmax_stop;
 	}
 
-	// saturation de v_max à cause de la saturation en accélération / décélération
-	int32_t v_abs = abs(t->v);
-	if( v_abs < v_max )
+	// saturation de vmax à cause de la saturation en accélération / décélération
+	int32_t vabs = abs(v);
+	if( vabs < vmax )
 	{
-		int32_t vm = v_abs + t->a_max;
-		if( v_max > vm )
+		int32_t vm = vabs + amax;
+		if( vmax > vm )
 		{
-			v_max = vm;
+			vmax = vm;
 		}
 	}
 	else
 	{
-		int32_t vm = v_abs - t->d_max;
-		if( vm  > v_max )
+		int32_t vm = vabs - dmax;
+		if( vm  > vmax )
 		{
-			v_max = vm;
+			vmax = vm;
 		}
 	}
 
 	// saturation à cause de la position (pour ne pas dépasser)
-	if(ds > v_max)
+	if(ds > vmax)
 	{
-		t->s += v_max;
-		t->v = v_max;
+		v = vmax;
 	}
-	else if( ds < - v_max)
+	else if( ds < - vmax)
 	{
-		t->s -= v_max;
-		t->v = -v_max;
+		v = -vmax;
 	}
 	else
 	{
-		t->s = s;
-		t->v = ds;
+		v = ds;
 	}
-}
 
-void trapeze_reset(struct trapeze* t, int32_t s, int32_t v)
-{
-	t->s = s;
-	t->v = v;
+	return v;
 }

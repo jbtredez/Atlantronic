@@ -9,18 +9,15 @@
 
 int main()
 {
-	struct trapeze trapeze;
-
-	trapeze.v_max = 65536*2.0f/HZ;
-	trapeze.a_max = 65536*1.0f/(HZ*HZ);
-	trapeze.d_max = 65536*2.0f/(HZ*HZ);
+	int32_t vmax = 65536*2.0f/HZ;
+	int32_t amax = 65536*1.0f/(HZ*HZ);
+	int32_t dmax = 65536*2.0f/(HZ*HZ);
 
 	int i = 0;
-	float d = 0;
-	float d2 = 0;
-	float v = 0;
-	float v2 = 0;
-	float a = 0;
+	int32_t d = 0;
+	int32_t v = 0;
+	int32_t v_old = 0;
+	int32_t a = 0;
 
 	FILE* f = fopen("log/test_trapeze.txt", "w");
 	if(f == NULL)
@@ -31,13 +28,11 @@ int main()
 
 	for(i = 0; i < HZ*10; i++)
 	{
-		trapeze_apply(&trapeze, -10*65536);
-		d2 = trapeze.s/65536.0f;
-		v2 = (d2 - d) * HZ;
-		a = (v2 - v) * HZ;
-		fprintf(f, "%f\t%f\t%f\t%f\n", ((float)i)/HZ, a, v, d);
-		d = d2;
-		v = v2;
+		v = trapeze_speed_filter(v, -10*65536 - d, amax, dmax, vmax);
+		d += v;
+		a = v - v_old;
+		fprintf(f, "%f\t%f\t%f\t%f\n", ((float)i)/HZ, a * HZ * HZ / 65536.0f , v * HZ / 65536.0f, d / 65536.0f);
+		v_old = v;
 	}
 
 	fclose(f);
