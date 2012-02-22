@@ -48,6 +48,7 @@ digraph robot
 	trajectory -> detection
 	location -> odometry
 	location -> beacon
+	location -> can
 	pince -> ax12
 	detection -> hokuyo
 	detection -> us
