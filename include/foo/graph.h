@@ -32,13 +32,21 @@ struct graph_dijkstra_info
 	uint8_t is_best;
 };
 
-#ifdef LINUX
+struct graph_node_dist
+{
+	uint16_t dist;
+	uint16_t id;
+};
+
 extern const struct graph_node graph_node[GRAPH_NUM_NODE];
 extern const struct graph_link graph_link[GRAPH_NUM_LINK];
-#endif
 
 //! graph_dijkstra_info* info : tableau de taille minimale GRAPH_NUM_NODE
 //! valid_links : tableau de taille minimale GRAPH_NUM_LINK
 int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* valid_links);
+
+//! calcule la distance entre le point et tout les noeuds du graph
+//! resultat dans un tableau trié de la plus petite distance à la plus grande
+int graph_compute_node_distance(struct fx_vect2 pos, struct graph_node_dist* node_dist );
 
 #endif

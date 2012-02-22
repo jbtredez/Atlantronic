@@ -1,4 +1,5 @@
 #include "foo/graph.h"
+#include <math.h>
 
 //! Le tableau graph_link doit être trié et il doit y avoir un liens dans chaque sens (avec la même distance)
 //! Il doit être cohérent avec le tableau de noeud qui indique l'id de début des liens connectés au noeud et la taille
@@ -143,6 +144,33 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 	}
 
 	info[i].is_best = 1;
+
+	return 0;
+}
+
+int graph_compute_node_distance(struct fx_vect2 pos, struct graph_node_dist* node_dist )
+{
+	int i;
+	int j;
+	int64_t dx;
+	int64_t dy;
+	uint16_t dist;
+
+	for(i = 0; i< GRAPH_NUM_NODE; i++)
+	{
+		dx = pos.x - graph_node[i].pos.x;
+		dy = pos.y - graph_node[i].pos.y;
+		dist = ((int32_t)sqrtf(dx * dx + dy * dy)) >> 16;
+
+		j = i-1;
+		while(j >= 0 && node_dist[j].dist > dist)
+		{
+			node_dist[j+1] = node_dist[j];
+			j--;
+		}
+		node_dist[j+1].dist = dist;
+		node_dist[j+1].id = i;
+	}
 
 	return 0;
 }
