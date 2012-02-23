@@ -506,7 +506,7 @@ int32_t control_find_rotate(int32_t debut, int32_t fin)
 	return alpha;
 }
 
-void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way)
+void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_trajectory_type traj_type, enum trajectory_way way)
 {
 	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, way);
 
@@ -566,7 +566,15 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum t
 	}
 
 	control_alpha_align = control_kinematics.alpha + da;
-	control_dest.alpha = alpha;
+	if( traj_type == CONTROL_LINE_XY)
+	{
+		// pas de rotation finale
+		control_dest.alpha = control_alpha_align;
+	}
+	else
+	{
+		control_dest.alpha = alpha;
+	}
 	control_dest.ca = fx_cos(control_dest.alpha);
 	control_dest.sa = fx_sin(control_dest.alpha);
 	control_dest.x = control_kinematics.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);

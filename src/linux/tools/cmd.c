@@ -14,6 +14,7 @@ static struct robot_interface* cmd_robot = NULL;
 
 int cmd_help();
 int cmd_quit();
+int cmd_goto_graph(void* arg);
 int cmd_goto_near(void* arg);
 int cmd_max_speed(void* arg);
 int cmd_pince_open();
@@ -31,6 +32,7 @@ COMMAND usb_commands[] = {
 	{ "control_param", cmd_control_param, "comtrol_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha)" },
 	{ "control_print_param", cmd_control_print_param, "cmd_control_print_param()"},
 	{ "free", cmd_free, "free()" },
+	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
 	{ "help", cmd_help, "Display this text" },
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot)" },
@@ -188,6 +190,13 @@ int cmd_goto_near(void* arg)
 	}
 
 	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way);
+
+	return CMD_SUCESS;
+}
+
+int cmd_goto_graph(void* arg)
+{
+	robot_interface_goto_graph(cmd_robot);
 
 	return CMD_SUCESS;
 }

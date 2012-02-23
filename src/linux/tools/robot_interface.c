@@ -548,6 +548,19 @@ int robot_interface_goto_near(struct robot_interface* data, float x, float y, fl
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_goto_graph(struct robot_interface* data)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.type = TRAJECTORY_GOTO_GRAPH;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type)
 {
 	struct pince_cmd_arg cmd_arg;

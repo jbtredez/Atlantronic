@@ -64,6 +64,8 @@ int robot_interface_rotate_to(struct robot_interface* data, float alpha);
 
 int robot_interface_free(struct robot_interface* data);
 
+int robot_interface_goto_graph(struct robot_interface* data);
+
 int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way);
 
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);

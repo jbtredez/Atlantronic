@@ -93,6 +93,7 @@ obj-foo-test_deplacement += kernel/driver/usb/otgd_fs_pcd.o
 obj-foo-test_deplacement += foo/gpio.o
 obj-foo-test_deplacement += foo/control/control.o
 obj-foo-test_deplacement += foo/control/trajectory.o
+obj-foo-test_deplacement += foo/graph.o
 obj-foo-test_deplacement += foo/control/pid.o
 obj-foo-test_deplacement += foo/detection.o
 obj-foo-test_deplacement += kernel/driver/hokuyo.o
