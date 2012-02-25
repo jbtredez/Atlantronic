@@ -122,9 +122,6 @@ void usart_open( enum usart_id id, uint32_t frequency)
 
 void isr_usart3(void)
 {
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK();
-
 	// affichage de l'erreur
 	if( USART3->SR & USART_SR_FE)
 	{
@@ -144,22 +141,13 @@ void isr_usart3(void)
 	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	USART3->DR;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_TC);
 
-	portCLEAR_INTERRUPT_MASK();
-
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
+	// on n'envoi pas l'evenement EVENT_USART3_TC pour attendre le timeout
+	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
 }
 
 void isr_uart4(void)
 {
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-
-	portSET_INTERRUPT_MASK();
-
 	// affichage de l'erreur
 	if( UART4->SR & USART_SR_FE)
 	{
@@ -179,14 +167,9 @@ void isr_uart4(void)
 	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	UART4->DR;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_TC);
 
-	portCLEAR_INTERRUPT_MASK();
-
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
+	// on n'envoi pas l'evenement EVENT_UART4_TC pour attendre le timeout
+	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
 }
 
 void isr_dma1_channel2(void)

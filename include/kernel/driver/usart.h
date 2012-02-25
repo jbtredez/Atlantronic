@@ -22,12 +22,13 @@ enum usart_id
 #define ERR_USART_READ_SR_NE    0x04
 #define ERR_USART_READ_SR_ORE   0x08
 
+//!< ouverture usart
 void usart_open( enum usart_id id, uint32_t frequency);
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_set_read_dma_size(enum usart_id id, uint16_t size);
 
-//! @return 0 si tout va bien, code d'erreur sinon :
+//! @return 0 si tout va bien, code d'erreur (champ de bit) sinon :
 //! ERR_USART_TIMEOUT     : timeout
 //! ERR_USART_READ_SR_FE  : desynchro, bruit ou octet "break"
 //! ERR_USART_READ_SR_NE  : bruit
