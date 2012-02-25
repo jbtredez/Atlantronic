@@ -6,10 +6,7 @@
 //! @author Atlantronic
 
 #include "kernel/driver/usart.h"
-
-void ax12_ping(uint8_t id);
-void ax12_action(uint8_t id);
-void ax12_reset(uint8_t id);
+#include "ax12_id.h"
 
 #define AX12_ID                   0x03
 #define AX12_TORQUE_LIMIT_EEPROM  0x0e
@@ -27,6 +24,21 @@ void ax12_reset(uint8_t id);
 #define AX12_MAX_GOAL_POSITION   0x3ff
 #define AX12_MAX_TORQUE_LIMIT    0x3ff
 
+#define AX12_CMD_SCAN                    0x01
+#define AX12_CMD_SET_ID                  0x02
+#define AX12_CMD_SET_GOAL_POSITION       0x03
+
+struct ax12_cmd_param
+{
+	uint8_t cmd_id;         //!< id de la commande
+	uint8_t id;             //!< id de l'ax12
+	uint16_t param;         //!< parametre
+};
+
+#define ERR_AX12_SEND_CHECK             0x80
+#define ERR_AX12_PROTO                  0x81
+#define ERR_AX12_CHECKSUM               0x82
+
 #define AX12_INPUT_VOLTAGE_ERROR_MASK    0x01
 #define AX12_ANGLE_LIMIT_ERROR_MASK      0x02
 #define AX12_OVERHEATING_ERROR_MASK      0x04
@@ -35,16 +47,32 @@ void ax12_reset(uint8_t id);
 #define AX12_OVERLOAD_ERROR_MASK         0x20
 #define AX12_INSTRUCTION_ERROR_MASK      0x40
 
-void ax12_set_led(uint8_t id, uint8_t on);
-void ax12_set_moving_speed(uint8_t id, uint16_t speed);
-void ax12_set_goal_position(uint8_t id, uint16_t goal);
-void ax12_set_id(uint8_t old_id, uint8_t id);
-void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
-void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
-void ax12_set_torque_enable(uint8_t id, uint8_t enable);
+struct ax12_error
+{
+	//!< bit 7 à 1 : ERR_AX12_SEND_CHECK, ERR_AX12_PROTO ou ERR_AX12_CHECKSUM
+	//!< bit 7 à 0 : erreur usart sur les 4 bits de poids faible
+	uint8_t transmit_error;
+	//!< erreur interne ax12 (champ de bit)
+	uint8_t internal_error;
+};
 
-uint16_t ax12_get_position(uint8_t id);
+//!< affichage d'une erreur ax12
+void ax12_print_error(int id, struct ax12_error err);
 
-void ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
+//!< ping un ax12.
+struct ax12_error ax12_ping(uint8_t id);
+struct ax12_error ax12_action(uint8_t id);
+struct ax12_error ax12_reset(uint8_t id);
+
+struct ax12_error ax12_set_led(uint8_t id, uint8_t on);
+struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed);
+struct ax12_error ax12_set_goal_position(uint8_t id, uint16_t goal);
+struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
+struct ax12_error ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
+struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable);
+
+uint16_t ax12_get_position(uint8_t id, struct ax12_error* error);
+
+struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
 
 #endif

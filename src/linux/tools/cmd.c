@@ -12,6 +12,9 @@
 static void (*cmd_exit_callback)(void) = NULL;
 static struct robot_interface* cmd_robot = NULL;
 
+int cmd_ax12_scan();
+int cmd_ax12_set_id(void* arg);
+int cmd_ax12_set_goal_position(void* arg);
 int cmd_help();
 int cmd_quit();
 int cmd_goto_graph(void* arg);
@@ -29,6 +32,9 @@ int cmd_control_param(void*);
 int cmd_control_print_param();
 
 COMMAND usb_commands[] = {
+	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id"},
+	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12"},
+	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12"},
 	{ "control_param", cmd_control_param, "comtrol_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha)" },
 	{ "control_print_param", cmd_control_print_param, "cmd_control_print_param()"},
 	{ "free", cmd_free, "free()" },
@@ -54,6 +60,44 @@ int cmd_init(struct robot_interface* robot, void (*f)(void))
 	cmd_robot = robot;
 	cmd_exit_callback = f;
 	return cli_init(usb_commands);
+}
+
+int cmd_ax12_scan()
+{
+	robot_interface_ax12_scan(cmd_robot);
+	return CMD_SUCESS;
+}
+
+int cmd_ax12_set_id(void* arg)
+{
+	unsigned int id;
+	unsigned int new_id;
+	int count = sscanf(arg, "%u %u", &id, &new_id);
+
+	if(count != 2)
+	{
+		log_info("cmd_ax12_set_id id newid\n");
+		return CMD_SUCESS;
+	}
+
+	robot_interface_ax12_set_id(cmd_robot, id, new_id);
+	return CMD_SUCESS;
+}
+
+int cmd_ax12_set_goal_position(void* arg)
+{
+	unsigned int id;
+	unsigned int goal_position;
+	int count = sscanf(arg, "%u %u", &id, &goal_position);
+
+	if(count != 2)
+	{
+		log_info("cmd_ax12_set_id id newid\n");
+		return CMD_SUCESS;
+	}
+
+	robot_interface_ax12_set_goal_position(cmd_robot, id, goal_position);
+	return CMD_SUCESS;
 }
 
 int cmd_help()
@@ -196,6 +240,7 @@ int cmd_goto_near(void* arg)
 
 int cmd_goto_graph(void* arg)
 {
+	(void) arg;
 	robot_interface_goto_graph(cmd_robot);
 
 	return CMD_SUCESS;

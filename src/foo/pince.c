@@ -4,9 +4,6 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-#define PINCE_AX12_RIGHT      1
-#define PINCE_AX12_LEFT       2
-
 #define AX12_RIGHT_EMPTY_THRESHOLD   0x200
 
 static void pince_cmd(void* arg);
@@ -23,35 +20,43 @@ module_init(pince_module_init, INIT_PINCE);
 void pince_configure()
 {
 	// TODO ping des pinces // verif de la com
-	ax12_set_moving_speed(PINCE_AX12_RIGHT, 0x3ff);
-	ax12_set_moving_speed(PINCE_AX12_LEFT, 0x3ff);
+	ax12_set_moving_speed(AX12_PINCE_RIGHT, 0x3ff);
+	ax12_set_moving_speed(AX12_PINCE_LEFT, 0x3ff);
 
-	ax12_set_torque_limit(PINCE_AX12_RIGHT, 0x300);
-	ax12_set_torque_limit(PINCE_AX12_LEFT, 0x300);
+	ax12_set_torque_limit(AX12_PINCE_RIGHT, 0x300);
+	ax12_set_torque_limit(AX12_PINCE_LEFT, 0x300);
 
-	ax12_set_torque_enable(PINCE_AX12_RIGHT, 1);
-	ax12_set_torque_enable(PINCE_AX12_LEFT, 1);
-	ax12_write8(PINCE_AX12_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
-	ax12_write8(PINCE_AX12_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
+	ax12_set_torque_enable(AX12_PINCE_RIGHT, 1);
+	ax12_set_torque_enable(AX12_PINCE_LEFT, 1);
+	ax12_write8(AX12_PINCE_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
+	ax12_write8(AX12_PINCE_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
 }
 
 void pince_open()
 {
 	log(LOG_INFO, "pince_open");
-	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x160);
-	ax12_set_goal_position(PINCE_AX12_LEFT, 0x295);
+	ax12_set_goal_position(AX12_PINCE_RIGHT, 0x160);
+	ax12_set_goal_position(AX12_PINCE_LEFT, 0x295);
 }
 
 void pince_close()
 {
 	log(LOG_INFO, "pince_close");
-	ax12_set_goal_position(PINCE_AX12_RIGHT, 0x295);
-	ax12_set_goal_position(PINCE_AX12_LEFT, 0x160);
+	ax12_set_goal_position(AX12_PINCE_RIGHT, 0x295);
+	ax12_set_goal_position(AX12_PINCE_LEFT, 0x160);
 }
 
 int pince_full()
 {
-	uint16_t ax12_pos = ax12_get_position(PINCE_AX12_RIGHT);
+	struct ax12_error error;
+	uint16_t ax12_pos = ax12_get_position(AX12_PINCE_RIGHT, &error);
+
+	// TODO cas d'erreur a revoir
+	if(error.transmit_error)
+	{
+		return 0;
+	}
+
 	return ax12_pos < AX12_RIGHT_EMPTY_THRESHOLD;
 }
 

@@ -10,8 +10,9 @@
 #include "kernel/event.h"
 #include "kernel/error.h"
 #include "kernel/rcc.h"
+#include "kernel/log.h"
+#include "kernel/driver/usb.h"
 
-#define AX12_INSTRUCTION_READ_COMPLETE    0x00
 #define AX12_INSTRUCTION_PING             0x01
 #define AX12_INSTRUCTION_READ_DATA        0x02
 #define AX12_INSTRUCTION_WRITE_DATA       0x03
@@ -21,10 +22,10 @@
 #define AX12_INSTRUCTION_SYNC_WRITE       0x83
 
 #define AX12_QUEUE_SIZE             10
-#define AX12_STACK_SIZE            100
+#define AX12_STACK_SIZE            350
 #define AX12_ARG_MAX                 3
-#define AX12_READ_TIMEOUT       720000
-#define AX12_INTER_FRAME_TIME  us_to_tick(15)
+#define AX12_READ_TIMEOUT        ms_to_tick(10)
+#define AX12_INTER_FRAME_TIME    us_to_tick(15)
 #define AX12_MAX_RETRY              10
 
 struct ax12_request
@@ -33,7 +34,15 @@ struct ax12_request
 	uint8_t instruction;
 	uint8_t argc;
 	uint8_t arg[AX12_ARG_MAX];
-	struct ax12_request* rep;
+	struct ax12_status* status;
+};
+
+struct ax12_status
+{
+	struct ax12_error error;
+	uint8_t complete;
+	uint8_t argc;
+	uint8_t arg[AX12_ARG_MAX];
 };
 
 static void ax12_task(void *arg);
@@ -41,7 +50,15 @@ static xQueueHandle ax12_queue;
 static uint8_t ax12_write_dma_buffer[6 + AX12_ARG_MAX];
 static uint8_t ax12_read_dma_buffer[2*(6 + AX12_ARG_MAX)];
 static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
-static uint32_t ax12_send(struct ax12_request *req);
+static void ax12_send(struct ax12_request *req);
+static void ax12_send_request(struct ax12_request* request);
+
+// fonctions de commandes (utilisation par usb uniquement)
+static void ax12_cmd(void* arg);
+static void ax12_cmd_scan();
+static void ax12_cmd_set_id(uint8_t old_id, uint8_t id);
+
+static struct ax12_error ax12_error[AX12_MAX_ID];
 
 static int ax12_module_init()
 {
@@ -65,6 +82,14 @@ static int ax12_module_init()
 	usart_set_write_dma_buffer(UART4_HALF_DUPLEX, ax12_write_dma_buffer);
 	usart_set_read_dma_buffer(UART4_HALF_DUPLEX, ax12_read_dma_buffer);
 
+	usb_add_cmd(USB_CMD_AX12, &ax12_cmd);
+
+	int i;
+	for(i = 0; i < AX12_MAX_ID; i++)
+	{
+		ax12_error[i].transmit_error = 0xff;
+	}
+
 	return 0;
 }
 
@@ -74,34 +99,71 @@ static void ax12_task(void* arg)
 {
 	(void) arg;
 
+	struct ax12_status status;
+	struct ax12_error err;
 	struct ax12_request req;
-	uint32_t res;
+	int last_ping_id = 1;
 
 	while(1)
 	{
-		if(xQueueReceive(ax12_queue, &req, portMAX_DELAY))
+		if(xQueueReceive(ax12_queue, &req, ms_to_tick(50)))
 		{
+			// la tache qui envoi le message ne veut pas de reponse
+			if(req.status == 0)
+			{
+				req.status = &status;
+			}
+
 			uint8_t i = 0;
 			do
 			{
-				res = ax12_send(&req);
-				error_check_update(ERR_AX12_DISCONNECTED, res);
-				error_check_update(ERR_AX12_USART_FE, res);
-				error_check_update(ERR_AX12_USART_NE, res);
-				error_check_update(ERR_AX12_USART_ORE, res);
-				error_check_update(ERR_AX12_SEND_CHECK, res);
-				error_check_update(ERR_AX12_PROTO, res);
-				error_check_update(ERR_AX12_CHECKSUM, res);
-				error_check_update(ERR_AX12_INTERNAL_ERROR, res);
+				ax12_send(&req);
 
 				// delai entre 2 messages sur le bus
 				vTaskDelay(AX12_INTER_FRAME_TIME);
-			}while(res && i < AX12_MAX_RETRY);
+				i++;
+			}while(req.status->error.transmit_error && i < AX12_MAX_RETRY && req.status->error.transmit_error != ERR_USART_TIMEOUT);
+
+			err = req.status->error;
+			req.status->complete = 1;
+			vTaskSetEvent(EVENT_AX12_SEND_COMPLETE);
+		}
+		else
+		{
+			// il ne se passe rien sur le bus, on va faire un ping
+			req.instruction = AX12_INSTRUCTION_PING;
+			req.argc = 0;
+			req.status = &status;
+			req.id = last_ping_id + 1;
+			if(req.id >= AX12_MAX_ID)
+			{
+				req.id = 2;
+			}
+			ax12_send(&req);
+			vTaskDelay(AX12_INTER_FRAME_TIME);
+			err = status.error;
+			last_ping_id = req.id;
+		}
+
+		if(req.id < AX12_MAX_ID)
+		{
+			if(ax12_error[req.id].transmit_error != err.transmit_error || ax12_error[req.id].internal_error != err.internal_error)
+			{
+				ax12_print_error(req.id, err);
+				ax12_error[req.id] = err;
+			}
+		}
+
+		if(err.transmit_error && err.transmit_error != ERR_USART_TIMEOUT)
+		{
+			// on vide tout ce qui traine dans le buffer de reception
+			usart_set_read_dma_size(UART4_HALF_DUPLEX, sizeof(ax12_read_dma_buffer));
+			usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 		}
 	}
 }
 
-uint32_t ax12_send(struct ax12_request *req)
+void ax12_send(struct ax12_request *req)
 {
 	uint32_t res = 0;
 	uint8_t write_size = 6 + req->argc;
@@ -138,24 +200,6 @@ uint32_t ax12_send(struct ax12_request *req)
 	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	if( res )
 	{
-		switch(res)
-		{
-			case ERR_USART_TIMEOUT:
-				res = ERR_AX12_DISCONNECTED;
-				break;
-			case ERR_USART_READ_SR_FE:
-				res = ERR_AX12_USART_FE;
-				break;
-			case ERR_USART_READ_SR_NE:
-				res = ERR_AX12_USART_NE;
-				break;
-			case ERR_USART_READ_SR_ORE:
-				res = ERR_AX12_USART_ORE;
-				break;
-			default:
-				res = ERR_AX12_DISCONNECTED;
-				break;
-		}
 		goto end;
 	}
 
@@ -171,7 +215,7 @@ uint32_t ax12_send(struct ax12_request *req)
 	}
 
 	ax12_buffer = ax12_read_dma_buffer + write_size;
-	// pas de broadcast (et status des ax12 à 2) => réponse attendue
+	// pas de broadcast => réponse attendue
 	if(req->id != 0xFE)
 	{
 		int size = read_size - write_size;
@@ -189,215 +233,220 @@ uint32_t ax12_send(struct ax12_request *req)
 			goto end;
 		}
 
-		// traitement du message reçu
-		// erreur ax12 dans ax12_buffer[4]
-		// erreur de tension
-		if( ax12_buffer[4] &  AX12_INPUT_VOLTAGE_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE, ERROR_CLEAR);
-		}
-
-		// erreur d'angle
-		if( ax12_buffer[4] & AX12_ANGLE_LIMIT_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_ANGLE_LIMIT, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_ANGLE_LIMIT, ERROR_CLEAR);
-		}
-
-		// erreur de surchauffe
-		if( ax12_buffer[4] & AX12_OVERHEATING_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_OVERHEATING, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_OVERHEATING, ERROR_CLEAR);
-		}
-
-		// erreur valeur en dehors de la plage admissible
-		if( ax12_buffer[4] & AX12_RANGE_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_RANGE, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_RANGE, ERROR_CLEAR);
-		}
-
-		// erreur checksum cote ax12
-		if( ax12_buffer[4] &  AX12_CHECKSUM_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_CHECKSUM, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_CHECKSUM, ERROR_CLEAR);
-		}
-
-		// erreur surcharge
-		if( ax12_buffer[4] & AX12_OVERLOAD_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_OVERLOAD, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_OVERLOAD, ERROR_CLEAR);
-		}
-
-		// erreur d'instruction
-		if( ax12_buffer[4] & AX12_INSTRUCTION_ERROR_MASK )
-		{
-			error(ERR_AX12_INTERNAL_ERROR_INSTRUCTION, ERROR_ACTIVE);
-			res = ERR_AX12_INTERNAL_ERROR;
-		}
-		else
-		{
-			error(ERR_AX12_INTERNAL_ERROR_INSTRUCTION, ERROR_CLEAR);
-		}
-
-		if(res)
-		{
-			goto end;
-		}
+		req->status->error.internal_error = ax12_buffer[4];
 
 		if(size == 7)
 		{
-			req->rep->arg[0] = ax12_buffer[5];
-			req->rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+			req->status->arg[0] = ax12_buffer[5];
 		}
 		else if(size == 8)
 		{
-			req->rep->arg[0] = ax12_buffer[5];
-			req->rep->arg[1] = ax12_buffer[6];
-			req->rep->instruction = AX12_INSTRUCTION_READ_COMPLETE;
-			vTaskSetEvent(EVENT_AX12_READ_COMPLETE);
+			req->status->arg[0] = ax12_buffer[5];
+			req->status->arg[1] = ax12_buffer[6];
 		}
 	}
 
 end:
-	return res;
+	req->status->error.transmit_error = res;
 }
 
-void ax12_ping(uint8_t id)
+void ax12_print_error(int id, struct ax12_error err)
+{
+	if(err.transmit_error)
+	{
+		if(err.transmit_error == ERR_AX12_SEND_CHECK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : échec de la verification des octets envoyés", id);
+		}
+		else if(err.transmit_error == ERR_AX12_PROTO)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur protocole", id);
+		}
+		else if( err.transmit_error == ERR_AX12_CHECKSUM)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : somme de verification incompatible", id);
+		}
+		else
+		{
+			if(err.transmit_error | ERR_USART_TIMEOUT)
+			{
+				log_format(LOG_ERROR, "ax12 %3d : timeout", id);
+			}
+			if(err.transmit_error | ERR_USART_READ_SR_FE)
+			{
+				log_format(LOG_ERROR, "ax12 %3d : desynchro, bruit ou octet \"break\" sur l'usart", id);
+			}
+			if(err.transmit_error | ERR_USART_READ_SR_NE)
+			{
+				log_format(LOG_ERROR, "ax12 %3d : bruit sur l'usart", id);
+			}
+			if(err.transmit_error | ERR_USART_READ_SR_ORE)
+			{
+				log_format(LOG_ERROR, "ax12 %3d : overrun sur l'usart", id);
+			}
+		}
+	}
+	else if(err.internal_error)
+	{
+		if( err.internal_error | AX12_INPUT_VOLTAGE_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - problème de tension", id);
+		}
+		if( err.internal_error | AX12_ANGLE_LIMIT_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - angle invalide", id);
+		}
+		if( err.internal_error | AX12_OVERHEATING_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - surchauffe", id);
+		}
+		if( err.internal_error | AX12_RANGE_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - valeur non admissible", id);
+		}
+		if( err.internal_error | AX12_CHECKSUM_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - somme de verification incompatible", id);
+		}
+		if( err.internal_error | AX12_OVERLOAD_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - surcharge de l'actioneur", id);
+		}
+		if( err.internal_error | AX12_INSTRUCTION_ERROR_MASK)
+		{
+			log_format(LOG_ERROR, "ax12 %3d : erreur interne - instruction invalide", id);
+		}
+	}
+	else
+	{
+		log_format(LOG_INFO, "ax12 %3d ok", id);
+	}
+}
+
+struct ax12_error ax12_ping(uint8_t id)
 {
 	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_PING;
 	req.argc = 0;
+	req.status = &status;
 
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
+	ax12_send_request(&req);
+	return status.error;
 }
 
-uint8_t ax12_read8(uint8_t id, uint8_t offset)
+static void ax12_send_request(struct ax12_request* request)
 {
-	volatile struct ax12_request req;
+	if(request->status)
+	{
+		memset(request->status, 0x00, sizeof(request->status));
+		vTaskClearEvent(EVENT_AX12_SEND_COMPLETE);
+	}
+
+	// si c'est plein, on va attendre
+	xQueueSendToBack(ax12_queue, (void*) request, portMAX_DELAY);
+
+	// on souhaite attendre la reponse
+	if(request->status)
+	{
+		do
+		{
+			vTaskWaitEvent(EVENT_AX12_SEND_COMPLETE, portMAX_DELAY);
+			vTaskClearEvent(EVENT_AX12_SEND_COMPLETE);
+		}while(	!request->status->complete );
+	}
+}
+
+uint8_t ax12_read8(uint8_t id, uint8_t offset, struct ax12_error* error)
+{
+	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_READ_DATA;
 	req.arg[0] = offset;
 	req.arg[1] = 0x01;
 	req.argc = 2;
-	req.rep = (struct ax12_request*) &req;
+	req.status = &status;
 
-	vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
-
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, (void*) &req, portMAX_DELAY);
-
-	do
-	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
-		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
-	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
+	ax12_send_request(&req);
+	*error = status.error;
 
 	return req.arg[0];
 }
 
-uint16_t ax12_read16(uint8_t id, uint8_t offset)
+uint16_t ax12_read16(uint8_t id, uint8_t offset, struct ax12_error* error)
 {
-	volatile struct ax12_request req;
+	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_READ_DATA;
 	req.arg[0] = offset;
 	req.arg[1] = 0x02;
 	req.argc = 2;
-	req.rep = (struct ax12_request*) &req;
+	req.status = &status;
 
-	vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
-
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, (void*) &req, portMAX_DELAY);
-
-	do
-	{
-		vTaskWaitEvent(EVENT_AX12_READ_COMPLETE, portMAX_DELAY);
-		vTaskClearEvent(EVENT_AX12_READ_COMPLETE);
-	}while(	req.instruction != AX12_INSTRUCTION_READ_COMPLETE );
+	ax12_send_request(&req);
+	*error = status.error;
 
 	return req.arg[0] + (req.arg[1] << 8);
 }
 
-void ax12_write8(uint8_t id, uint8_t offset, uint8_t data)
+struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data)
 {
 	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_WRITE_DATA;
 	req.arg[0] = offset;
 	req.arg[1] = data;
 	req.argc = 2;
+	req.status = &status;
 
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
+	ax12_send_request(&req);
+	return status.error;
 }
 
-void ax12_write16(uint8_t id, uint8_t offset, uint16_t data)
+struct ax12_error ax12_write16(uint8_t id, uint8_t offset, uint16_t data)
 {
 	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_WRITE_DATA;
 	req.arg[0] = offset;
 	req.arg[1] = (uint8_t) (data & 0xFF);
 	req.arg[2] = (uint8_t) ((data >> 8) & 0xFF);
 	req.argc = 3;
+	req.status = &status;
 
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
+	ax12_send_request(&req);
+	return status.error;
 }
 
-void ax12_action(uint8_t id)
+struct ax12_error ax12_action(uint8_t id)
 {
 	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_ACTION;
 	req.argc = 0;
+	req.status = &status;
 
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
+	ax12_send_request(&req);
+	return status.error;
 }
 
-void ax12_reset(uint8_t id)
+struct ax12_error ax12_reset(uint8_t id)
 {
 	struct ax12_request req;
+	struct ax12_status status;
 	req.id = id;
 	req.instruction = AX12_INSTRUCTION_RESET;
 	req.argc = 0;
+	req.status = 0;
 
-	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, &req, portMAX_DELAY);
+	ax12_send_request(&req);
+	return status.error;
 }
 
 static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size)
@@ -414,53 +463,104 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size)
 	return checksum;
 }
 
-// fonction non inline pour permettre l'utilisation depuis gdb
-void ax12_set_led(uint8_t id, uint8_t on)
+struct ax12_error ax12_set_led(uint8_t id, uint8_t on)
 {
-	ax12_write8(id, AX12_LED, on);
+	return ax12_write8(id, AX12_LED, on);
 }
 
 // fonction non inline pour permettre l'utilisation depuis gdb
-void ax12_set_moving_speed(uint8_t id, uint16_t speed)
+struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed)
 {
-	ax12_write16(id, AX12_MOVING_SPEED, speed & AX12_MAX_MOVING_SPEED);
+	return ax12_write16(id, AX12_MOVING_SPEED, speed & AX12_MAX_MOVING_SPEED);
 }
 
-// fonction non inline pour permettre l'utilisation depuis gdb
-void ax12_set_goal_position(uint8_t id, uint16_t goal)
+struct ax12_error ax12_set_goal_position(uint8_t id, uint16_t goal)
 {
-	ax12_write16(id, AX12_GOAL_POSITION, goal & AX12_MAX_GOAL_POSITION);
+	return ax12_write16(id, AX12_GOAL_POSITION, goal & AX12_MAX_GOAL_POSITION);
 }
 
-void ax12_set_id(uint8_t old_id, uint8_t id)
-{
-	if(id <= 0xfd)
-	{
-		ax12_write8(old_id, AX12_ID, id);
-	}
-}
-
-void ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
+struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
 {
 	if( vTaskGetEvent() & EVENT_END )
 	{
 		torque_limit = 0x00;
 	}
 
-	ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
+	return ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 
-void ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
+struct ax12_error ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
 {
-	ax12_write16(id, AX12_TORQUE_LIMIT_EEPROM, torque_limit & AX12_MAX_TORQUE_LIMIT);
+	return ax12_write16(id, AX12_TORQUE_LIMIT_EEPROM, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 
-void ax12_set_torque_enable(uint8_t id, uint8_t enable)
+struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable)
 {
-	ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
+	return ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
 }
 
-uint16_t ax12_get_position(uint8_t id)
+uint16_t ax12_get_position(uint8_t id, struct ax12_error* error)
 {
-	return ax12_read16(id, AX12_PRESENT_POSITION);
+	return ax12_read16(id, AX12_PRESENT_POSITION, error);
+}
+
+static void ax12_cmd(void* arg)
+{
+	struct ax12_cmd_param* param = (struct ax12_cmd_param*)arg;
+	switch(param->cmd_id)
+	{
+		case AX12_CMD_SCAN:
+			ax12_cmd_scan();
+			break;
+		case AX12_CMD_SET_ID:
+			ax12_cmd_set_id(param->id, param->param & 0xff);
+			break;
+		case AX12_CMD_SET_GOAL_POSITION:
+			ax12_set_goal_position(param->id, param->param);
+			break;
+		default:
+			log_format(LOG_ERROR, "unknown ax12 command : %d", param->cmd_id);
+			break;
+	}
+}
+
+static void ax12_cmd_scan()
+{
+	int i;
+	struct ax12_error error;
+
+	log(LOG_INFO, "ax12 - scan");
+
+	for(i = 1; i<254; i++)
+	{
+		error = ax12_ping(i);
+		if(! error.transmit_error)
+		{
+			log_format(LOG_INFO, "ax12 %3d détecté - status %#.2x", i, error.internal_error);
+		}
+	}
+
+	log(LOG_INFO, "ax12 - end scan");
+}
+
+static void ax12_cmd_set_id(uint8_t old_id, uint8_t id)
+{
+	struct ax12_error error;
+
+	if(id <= 0xfd)
+	{
+		error = ax12_write8(old_id, AX12_ID, id);
+		if( error.transmit_error)
+		{
+			log(LOG_ERROR, "erreur de transmission");
+		}
+		else
+		{
+			log_format(LOG_INFO, "id %d -> %d - status = %#.2x", old_id, id, error.internal_error);
+		}
+	}
+	else
+	{
+		log(LOG_ERROR, "changement d'id par broadcast non autorisé");
+	}
 }

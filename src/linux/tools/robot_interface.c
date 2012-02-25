@@ -12,7 +12,7 @@
 #include "kernel/rcc.h"
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
-
+#include "foo/ax12.h"
 
 const char* err_description[ERR_MAX] =
 {
@@ -23,23 +23,6 @@ const char* err_description[ERR_MAX] =
 
 	// USART
 	[ERR_USART_UNKNOWN_DEVICE] = "usart : id invalide",
-
-	// AX12
-	[ERR_AX12_DISCONNECTED] = "ax12 deconnecté",
-	[ERR_AX12_USART_FE] = "ax12 : desynchro, bruit ou octet \"break\" sur l'usart",
-	[ERR_AX12_USART_NE] = "ax12 : bruit sur l'usart",
-	[ERR_AX12_USART_ORE] = "ax12 : overrun sur l'usart",
-	[ERR_AX12_SEND_CHECK] = "ax12 : échec de la verification des octets envoyés",
-	[ERR_AX12_PROTO] = "ax12 : erreur protocole",
-	[ERR_AX12_CHECKSUM] = "ax12 : somme de verification incompatible",
-	[ERR_AX12_INTERNAL_ERROR] = "ax12 : erreur interne",
-	[ERR_AX12_INTERNAL_ERROR_INPUT_VOLTAGE] = "ax12 : erreur interne - problème de tension",
-	[ERR_AX12_INTERNAL_ERROR_ANGLE_LIMIT] = "ax12 : erreur interne - angle invalide",
-	[ERR_AX12_INTERNAL_ERROR_OVERHEATING] = "ax12 : erreur interne - surchauffe",
-	[ERR_AX12_INTERNAL_ERROR_RANGE] = "ax12 : erreur interne - valeur non admissible",
-	[ERR_AX12_INTERNAL_ERROR_CHECKSUM] = "ax12 : erreur interne - somme de verification incompatible",
-	[ERR_AX12_INTERNAL_ERROR_OVERLOAD] = "ax12 : erreur interne - surcharge de l'actioneur",
-	[ERR_AX12_INTERNAL_ERROR_INSTRUCTION] = "ax12 : erreur interne - instruction invalide",
 
 	// HOKUYO
 	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo débranché",
@@ -430,6 +413,49 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 
 end:
 	return res;
+}
+
+int robot_interface_ax12_scan(struct robot_interface* data)
+{
+	struct ax12_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = AX12_CMD_SCAN;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_AX12;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_t new_id)
+{
+	struct ax12_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = AX12_CMD_SET_ID;
+	cmd_arg.id = id;
+	cmd_arg.param = new_id;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_AX12;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, uint16_t pos)
+{
+	struct ax12_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = AX12_CMD_SET_GOAL_POSITION;
+	cmd_arg.id = id;
+	cmd_arg.param = pos;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_AX12;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
 int robot_interface_control_print_param(struct robot_interface* data)

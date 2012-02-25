@@ -50,9 +50,25 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 
 void robot_interface_destroy(struct robot_interface* data);
 
+// ---------- gestion des ax12 -------------------------------------------------
+
+int robot_interface_ax12_scan(struct robot_interface* data);
+
+int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_t new_id);
+
+int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, uint16_t pos);
+
+// ---------- gestion des pinces -----------------------------------------------
+
+int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
+
+// ---------- gestion control --------------------------------------------------
+
 int robot_interface_control_print_param(struct robot_interface* data);
 
 int robot_interface_control_set_param(struct robot_interface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha);
+
+// ---------- gestion trajectoire ----------------------------------------------
 
 int robot_interface_straight(struct robot_interface* data, float dist);
 
@@ -67,8 +83,6 @@ int robot_interface_free(struct robot_interface* data);
 int robot_interface_goto_graph(struct robot_interface* data);
 
 int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way);
-
-int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
 
 //!< vitesse en % de vmax de configuration du robot
 int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot);
