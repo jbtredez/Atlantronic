@@ -16,10 +16,11 @@
 #define EVENT_TRAJECTORY_UPDATE          0x100    //!< évènement de mise à jour de la trajectoire (usage interne à trajectory)
 #define EVENT_CAN_TX_END                 0x200
 #define EVENT_ADC_READY                  0x400
-#define EVENT_AX12_READ_COMPLETE         0x800
+#define EVENT_AX12_SEND_COMPLETE         0x800
 #define EVENT_DETECTION_UPDATE          x01000
 #define EVENT_CONTROL_TIMEOUT           0x2000
-#define EVENT_USB                       0x4000
-#define EVENT_DETECTION_UPDATED         0x8000    //!< la tache detection a mis à jour les objets vus
+#define EVENT_USB_READ                  0x4000
+#define EVENT_USB_WRITE                 0x8000
+#define EVENT_DETECTION_UPDATED        0x10000    //!< la tache detection a mis à jour les objets vus
 
 #endif

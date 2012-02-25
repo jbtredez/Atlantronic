@@ -11,7 +11,8 @@
 #include "kernel/log.h"
 
 #define USB_BUFER_SIZE          4096
-#define USB_STACK_SIZE           350
+#define USB_READ_STACK_SIZE      350
+#define USB_WRITE_STACK_SIZE      50
 
 static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
@@ -26,7 +27,9 @@ static volatile int usb_rx_waiting; //!< les 2 buffers de reception sont pleins,
 static xSemaphoreHandle usb_mutex;
 static void (*usb_cmd[USB_CMD_NUM])(void*);
 
-void usb_task(void *);
+void usb_read_task(void *);
+void usb_write_task(void *);
+
 static volatile unsigned int usb_endpoint_ready;
 
 static int usb_module_init(void)
@@ -63,7 +66,14 @@ static int usb_module_init(void)
 	USB_Init();
 
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(usb_task, "usb", USB_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
+	portBASE_TYPE err = xTaskCreate(usb_read_task, "usb_r", USB_READ_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
+
+	if(err != pdPASS)
+	{
+		return ERR_INIT_USB;
+	}
+
+	err = xTaskCreate(usb_write_task, "usb_w", USB_WRITE_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
 
 	if(err != pdPASS)
 	{
@@ -112,7 +122,7 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		usb_write_byte(*((unsigned char*)msg));
 		msg++;
 	}
-	vTaskSetEvent(EVENT_USB);
+	vTaskSetEvent(EVENT_USB_WRITE);
 
 	xSemaphoreGive(usb_mutex);
 }
@@ -122,8 +132,8 @@ void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
 	usb_cmd[id] = cmd;
 }
 
-//! Usb task
-void usb_task(void * arg)
+//! Usb read task
+void usb_read_task(void * arg)
 {
 	(void) arg;
 	unsigned char* rx_buffer;
@@ -180,6 +190,23 @@ void usb_task(void * arg)
 			*read_size = USB_SIL_Read(EP2_OUT, rx_buffer);
 		}
 
+		vTaskWaitEvent(EVENT_USB_READ, portMAX_DELAY);
+		vTaskClearEvent(EVENT_USB_READ);
+	}
+}
+
+//! Usb write task
+void usb_write_task(void * arg)
+{
+	(void) arg;
+
+	while(1)
+	{
+		while( bDeviceState != CONFIGURED )
+		{
+			vTaskDelay( ms_to_tick(100) );
+		}
+
 		if( usb_endpoint_ready )
 		{
 			xSemaphoreTake(usb_mutex, portMAX_DELAY);
@@ -199,8 +226,8 @@ void usb_task(void * arg)
 			xSemaphoreGive(usb_mutex);
 		}
 
-		vTaskWaitEvent(EVENT_USB, portMAX_DELAY);
-		vTaskClearEvent(EVENT_USB);
+		vTaskWaitEvent(EVENT_USB_WRITE, portMAX_DELAY);
+		vTaskClearEvent(EVENT_USB_WRITE);
 	}
 }
 
@@ -238,7 +265,7 @@ void EP1_IN_Callback(void)
 
 	usb_endpoint_ready = 1;
 	usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB);
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_READ);
 
 	if( xHigherPriorityTaskWoken )
 	{
@@ -250,6 +277,9 @@ void EP1_IN_Callback(void)
 
 void EP2_OUT_Callback(void)
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK();
+
 	// pas de commande en cours de traitement
 	if( usb_rx_buffer_id == 0)
 	{
@@ -283,4 +313,12 @@ void EP2_OUT_Callback(void)
 			usb_rx_waiting = 1;
 		}
 	}
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_WRITE);
+
+	if( xHigherPriorityTaskWoken )
+	{
+		vPortYieldFromISR();
+	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
