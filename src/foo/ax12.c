@@ -268,19 +268,19 @@ void ax12_print_error(int id, struct ax12_error err)
 		}
 		else
 		{
-			if(err.transmit_error | ERR_USART_TIMEOUT)
+			if(err.transmit_error & ERR_USART_TIMEOUT)
 			{
 				log_format(LOG_ERROR, "ax12 %3d : timeout", id);
 			}
-			if(err.transmit_error | ERR_USART_READ_SR_FE)
+			if(err.transmit_error & ERR_USART_READ_SR_FE)
 			{
 				log_format(LOG_ERROR, "ax12 %3d : desynchro, bruit ou octet \"break\" sur l'usart", id);
 			}
-			if(err.transmit_error | ERR_USART_READ_SR_NE)
+			if(err.transmit_error & ERR_USART_READ_SR_NE)
 			{
 				log_format(LOG_ERROR, "ax12 %3d : bruit sur l'usart", id);
 			}
-			if(err.transmit_error | ERR_USART_READ_SR_ORE)
+			if(err.transmit_error & ERR_USART_READ_SR_ORE)
 			{
 				log_format(LOG_ERROR, "ax12 %3d : overrun sur l'usart", id);
 			}
@@ -288,31 +288,31 @@ void ax12_print_error(int id, struct ax12_error err)
 	}
 	else if(err.internal_error)
 	{
-		if( err.internal_error | AX12_INPUT_VOLTAGE_ERROR_MASK)
+		if( err.internal_error & AX12_INPUT_VOLTAGE_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - problème de tension", id);
 		}
-		if( err.internal_error | AX12_ANGLE_LIMIT_ERROR_MASK)
+		if( err.internal_error & AX12_ANGLE_LIMIT_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - angle invalide", id);
 		}
-		if( err.internal_error | AX12_OVERHEATING_ERROR_MASK)
+		if( err.internal_error & AX12_OVERHEATING_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - surchauffe", id);
 		}
-		if( err.internal_error | AX12_RANGE_ERROR_MASK)
+		if( err.internal_error & AX12_RANGE_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - valeur non admissible", id);
 		}
-		if( err.internal_error | AX12_CHECKSUM_ERROR_MASK)
+		if( err.internal_error & AX12_CHECKSUM_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - somme de verification incompatible", id);
 		}
-		if( err.internal_error | AX12_OVERLOAD_ERROR_MASK)
+		if( err.internal_error & AX12_OVERLOAD_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - surcharge de l'actioneur", id);
 		}
-		if( err.internal_error | AX12_INSTRUCTION_ERROR_MASK)
+		if( err.internal_error & AX12_INSTRUCTION_ERROR_MASK)
 		{
 			log_format(LOG_ERROR, "ax12 %3d : erreur interne - instruction invalide", id);
 		}
