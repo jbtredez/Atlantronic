@@ -102,7 +102,8 @@ uint32_t hokuyo_init()
 
 	do
 	{
-		usart_open(USART3_FULL_DUPLEX, 19200);
+		// tentative a la vitesse d'utilisation (hokuyo déjà configuré)
+		usart_open(USART3_FULL_DUPLEX, HOKUYO_SPEED);
 		usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
 
 		// on vide tout ce qui traine sur la ligne de reception
@@ -115,11 +116,29 @@ uint32_t hokuyo_init()
 		err = hokuyo_scip2();
 		if(err & ERR_HOKUYO_TIMEOUT)
 		{
-			// pas de réponse à 19200, le hokuyo est peut être resté configuré
-			// => on tente à la vitesse d'utilisation
-			usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
+			// pas de réponse à HOKUYO_SPEED, le hokuyo n'est peut être pas configuré
+			// => on tente à la vitesse de base 19200
+			usart_set_frequency(USART3_FULL_DUPLEX, 19200);
 
 			err = hokuyo_scip2();
+
+			if(err)
+			{
+				hokuyo_fault_update(err);
+				continue;
+			}
+
+			log(LOG_INFO, "hokuyo - set speed");
+			// mise a la bonne vitesse
+			err = hokuyo_set_speed();
+
+			if(err)
+			{
+				hokuyo_fault_update(err);
+				continue;
+			}
+
+			usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
 		}
 
 		if(err)
@@ -127,16 +146,6 @@ uint32_t hokuyo_init()
 			hokuyo_fault_update(err);
 			continue;
 		}
-
-		err = hokuyo_set_speed();
-
-		if(err)
-		{
-			hokuyo_fault_update(err);
-			continue;
-		}
-
-		usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
 
 		err = hokuyo_laser_on();
 		hokuyo_fault_update(err);
@@ -167,12 +176,9 @@ static void hokuyo_task()
 		hokuyo_fault_update(err);
 		if(err)
 		{
-			if(err == ERR_HOKUYO_TIMEOUT)
-			{
-				hokuyo_init();
-				// on gruge, le premier scan est plus long
-				last_scan_time = systick_get_time() + ms_to_tick(100);
-			}
+			hokuyo_init();
+			// on gruge, le premier scan est plus long
+			last_scan_time = systick_get_time() + ms_to_tick(100);
 		}
 		else
 		{
