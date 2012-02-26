@@ -140,7 +140,7 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( h.x < x_min)
 				{
 					x_min = h.x;
-					objId = j;
+					objId = i;
 				}
 			}
 
@@ -150,7 +150,7 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( h.x < x_min)
 				{
 					x_min = h.x;
-					objId = j;
+					objId = i;
 				}
 			}
 
@@ -164,25 +164,18 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 					if( c.x < x_min)
 					{
 						x_min = c.x;
-						objId = j;
+						objId = i;
 					}
 					if( d.x < x_min)
 					{
 						x_min = c.x;
-						objId = j;
+						objId = i;
 					}
 				}
 			}
 
 			c = d;
 		}
-	}
-	xSemaphoreGive(detection_mutex);
-
-	if(x_min < PARAM_LEFT_CORNER_X || x_min < PARAM_RIGHT_CORNER_X)
-	{
-		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
-		log_format(LOG_ERROR, "erreur de calibration ? : x_min %ld",x_min >> 16);
 	}
 
 	if(objId >= 0)
@@ -205,9 +198,16 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 		}
 	}
 
+	xSemaphoreGive(detection_mutex);
 
-	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &b1, a);
-	fx_vect2_robot_to_table(&hokuyo_scan.pos_robot, &b2, b);
+	if(x_min < PARAM_LEFT_CORNER_X || x_min < PARAM_RIGHT_CORNER_X)
+	{
+		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
+		log_format(LOG_ERROR, "erreur de calibration ? : x_min %ld", x_min >> 16);
+	}
+
+	fx_vect2_robot_to_table(pos, &b1, a);
+	fx_vect2_robot_to_table(pos, &b2, b);
 
 	return x_min;
 }
