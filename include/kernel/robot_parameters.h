@@ -46,16 +46,16 @@
 #define PARAM_RIGHT_CORNER_X                   175*65536
 #define PARAM_RIGHT_CORNER_Y                   175*65536
 
-#define PARAM_NP_X                          -95.0f
+#define PARAM_NP_X                                -95.0f
 
-#define PARAM_FOO_HOKUYO_X                     130*65536
-#define PARAM_FOO_HOKUYO_Y                     160*65536
-#define PARAM_FOO_HOKUYO_ALPHA              (1 << 23)
-#define PARAM_FOO_HOKUYO_SENS                   -1
+#define PARAM_FOO_HOKUYO_X                     115*65536
+#define PARAM_FOO_HOKUYO_Y                    -130*65536
+#define PARAM_FOO_HOKUYO_ALPHA                (-1 << 23)
+#define PARAM_FOO_HOKUYO_SENS                          1
 
-#define PARAM_BAR_HOKUYO_X                     130*65536
-#define PARAM_BAR_HOKUYO_Y                    -130*65536
-#define PARAM_BAR_HOKUYO_ALPHA              (-1 << 23)
-#define PARAM_BAR_HOKUYO_SENS                    1
+#define PARAM_BAR_HOKUYO_X                     115*65536
+#define PARAM_BAR_HOKUYO_Y                     130*65536
+#define PARAM_BAR_HOKUYO_ALPHA                 (1 << 23)
+#define PARAM_BAR_HOKUYO_SENS                          1
 
 #endif
