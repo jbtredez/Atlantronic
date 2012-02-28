@@ -163,14 +163,14 @@ static void trajectory_task(void* arg)
 		if(ev & EVENT_CONTROL_COLSISION)
 		{
 			log(LOG_INFO, "collision");
-			if( trajectory_type == TRAJECTORY_STRAIGHT)
+			/*if( trajectory_type == TRAJECTORY_STRAIGHT)
 			{
 				trajectory_compute(TRAJECTORY_BASIC_AVOIDANCE);
 			}
 			else if( trajectory_type == TRAJECTORY_GOTO)
-			{
+			{*/
 				trajectory_compute(TRAJECTORY_USE_GRAPH);
-			}
+			//}
 			vTaskClearEvent(EVENT_CONTROL_COLSISION);
 		}
 
@@ -216,9 +216,33 @@ static int trajectory_find_way_to_graph()
 {
 	// passe en stack, pas trop de noeuds
 	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
-	struct fx_vect2 pos = {trajectory_pos.x, trajectory_pos.y};
+	struct fx_vect2 p = {trajectory_pos.x, trajectory_pos.y};
 
-	graph_compute_node_distance(pos, node_dist);
+	graph_compute_node_distance(p, node_dist);
+
+	struct fx_vect2 a_table;
+	struct fx_vect2 b_table;
+	struct fx_vect_pos pos = trajectory_pos;
+	int32_t xmin;
+	int i;
+	int id = 0;
+
+	for( i = 0 ; i < GRAPH_NUM_NODE; i++)
+	{
+		id = node_dist[i].id;
+		int32_t dx = graph_node[id].pos.x - pos.x;
+		int32_t dy = graph_node[id].pos.y - pos.y;
+		pos.alpha = fx_atan2(dy, dx);
+		pos.ca = fx_cos(pos.alpha);
+		pos.sa = fx_sin(pos.alpha);
+		xmin = detection_compute_front_object(&pos, &a_table, &b_table) >> 16;
+		if(node_dist[i].dist < xmin)
+		{
+			break;
+		}
+	}
+
+	log_format(LOG_INFO, "point graph : %d", id);
 
 	trajectory_dest.x = graph_node[node_dist[0].id].pos.x;
 	trajectory_dest.y = graph_node[node_dist[0].id].pos.y;
