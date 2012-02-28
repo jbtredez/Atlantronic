@@ -587,6 +587,21 @@ int robot_interface_goto_graph(struct robot_interface* data)
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_set_position(struct robot_interface* data, float x, float y, float alpha)
+{
+	struct location_cmd_arg cmd_arg;
+
+	cmd_arg.x = x * 65536.0f;
+	cmd_arg.y = y * 65536.0f;
+	cmd_arg.alpha = alpha  * (1 << 26) / (2 * M_PI);
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_LOCATION_SET_POSITION;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type)
 {
 	struct pince_cmd_arg cmd_arg;

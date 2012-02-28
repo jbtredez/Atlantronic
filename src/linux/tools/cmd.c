@@ -19,6 +19,7 @@ int cmd_help();
 int cmd_quit();
 int cmd_goto_graph(void* arg);
 int cmd_goto_near(void* arg);
+int cmd_localization_set_position(void* arg);
 int cmd_max_speed(void* arg);
 int cmd_pince_open();
 int cmd_pince_close();
@@ -41,6 +42,7 @@ COMMAND usb_commands[] = {
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
 	{ "help", cmd_help, "Display this text" },
+	{ "localization_set_position", cmd_localization_set_position, "set robot position (x, y, alpha)"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot)" },
 	{ "pince_open", cmd_pince_open, "ouverture des pinces"},
 	{ "pince_close", cmd_pince_close, "fermeture des pinces"},
@@ -143,6 +145,24 @@ int cmd_control_param(void* arg)
 int cmd_control_print_param()
 {
 	robot_interface_control_print_param(cmd_robot);
+
+	return CMD_SUCESS;
+}
+
+int cmd_localization_set_position(void* arg)
+{
+	float x;
+	float y;
+	float alpha;
+	int count = sscanf(arg, "%f %f %f", &x, &y, &alpha);
+
+	if(count != 3)
+	{
+		log_info("localization_set_position x y alpha\n");
+		return CMD_SUCESS;
+	}
+
+	robot_interface_set_position(cmd_robot, x, y, alpha);
 
 	return CMD_SUCESS;
 }

@@ -8,12 +8,16 @@
 #include "kernel/math/trigo.h"
 #include "kernel/driver/can.h"
 #include "kernel/can/can_id.h"
+#include "kernel/driver/usb.h"
 
 static struct kinematics location_kinematics;
+static void location_cmd_set_position(void* arg);
 
 static int location_module_init()
 {
 	location_kinematics = odometry_get_kinematics();
+
+	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, location_cmd_set_position);
 
 	return 0;
 };
@@ -78,4 +82,11 @@ void location_set_position(int32_t x, int32_t y, int32_t alpha)
 	odometry_set_position(x, y, alpha);
 	location_kinematics = odometry_get_kinematics();
 	portEXIT_CRITICAL();
+}
+
+static void location_cmd_set_position(void* arg)
+{
+	struct location_cmd_arg* cmd_arg = (struct location_cmd_arg*) arg;
+
+	location_set_position(cmd_arg->x, cmd_arg->y, cmd_arg->alpha);
 }

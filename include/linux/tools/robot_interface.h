@@ -62,6 +62,10 @@ int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t
 
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
 
+// ---------- localisation -----------------------------------------------------
+
+int robot_interface_set_position(struct robot_interface* data, float x, float y, float alpha);
+
 // ---------- gestion control --------------------------------------------------
 
 int robot_interface_control_print_param(struct robot_interface* data);

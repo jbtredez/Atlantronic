@@ -10,6 +10,13 @@
 #include "location/odometry.h"
 #include "location/beacon.h"
 
+struct location_cmd_arg
+{
+	int32_t x;
+	int32_t y;
+	int32_t alpha;
+};
+
 void location_update();
 
 struct kinematics location_get_kinematics();
