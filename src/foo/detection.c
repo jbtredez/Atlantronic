@@ -134,6 +134,28 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 			tmp.x = ((int32_t) detection_hokuyo_reg[j].x) << 16;
 			tmp.y = ((int32_t) detection_hokuyo_reg[j].y) << 16;
 			fx_vect2_table_to_robot(pos, &tmp, &d);
+
+			// point c devant le robot et dans le tube
+			if( c.x > 0 && c.y > a1.y && c.y < a2.y)
+			{
+				if( c.x < x_min)
+				{
+					x_min = c.x;
+					objId = i;
+				}
+			}
+
+			// point d devant le robot et dans le tube
+			if( d.x > 0 && d.y > a1.y && d.y < a2.y)
+			{
+				if( d.x < x_min)
+				{
+					x_min = d.x;
+					objId = i;
+				}
+			}
+
+			// gestion du cas c et/ou d ne sont pas dans le tube
 			int err1 = segment_intersection(a1, b1, c, d, &h);
 			if(err1 == 0)
 			{
@@ -154,26 +176,6 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				}
 			}
 
-			if( err1 && err2 )
-			{
-				// pas d'intersection avec [a1 b1] ou [a2 b2]
-				// on regarde si le segment n'est pas completement entre les deux
-				// inutle de verifier les 2 points vu qu'il n'y a pas d'intersection avec les 2 segments
-				if( c.x > 0 && c.y > a1.y && c.y < a2.y)
-				{
-					if( c.x < x_min)
-					{
-						x_min = c.x;
-						objId = i;
-					}
-					if( d.x < x_min)
-					{
-						x_min = c.x;
-						objId = i;
-					}
-				}
-			}
-
 			c = d;
 		}
 	}
@@ -188,13 +190,13 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 
 		if( detection_hokuyo_reg[i].y < detection_hokuyo_reg[j].y)
 		{
-			b1.y = detection_hokuyo_reg[i].y;
-			b2.y = detection_hokuyo_reg[j].y;
+			b1.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
+			b2.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
 		}
 		else
 		{
-			b1.y = detection_hokuyo_reg[j].y;
-			b2.y = detection_hokuyo_reg[i].y;
+			b1.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
+			b2.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
 		}
 	}
 
