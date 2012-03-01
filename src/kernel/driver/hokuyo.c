@@ -34,6 +34,13 @@
 
 const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
+#if defined( __foo__ )
+const char* hokuyo_hs_cmd = "HS0\n";
+#elif defined( __bar__ )
+const char* hokuyo_hs_cmd = "HS1\n";
+#else
+#error unknown card
+#endif
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
@@ -44,6 +51,7 @@ xSemaphoreHandle hokuyo_scan_mutex;
 static uint32_t hokuyo_scip2();
 static uint32_t hokuyo_set_speed();
 static uint32_t hokuyo_laser_on();
+static uint32_t hokuyo_hs();
 static void hokuyo_task();
 static void hokuyo_fault_update(uint32_t err);
 static uint32_t hokuyo_init();
@@ -148,6 +156,15 @@ uint32_t hokuyo_init()
 		}
 
 		err = hokuyo_laser_on();
+
+		if(err)
+		{
+			hokuyo_fault_update(err);
+			continue;
+		}
+
+		err = hokuyo_hs();
+
 		hokuyo_fault_update(err);
 	}
 	while(err);
@@ -359,6 +376,33 @@ static uint32_t hokuyo_set_speed()
 		default:
 			err = ERR_HOKUYO_UNKNOWN_STATUS;
 			goto end;
+	}
+
+end:
+	return err;
+}
+
+static uint32_t hokuyo_hs()
+{
+	uint32_t err = 0;
+
+	err = hokuyo_transaction((unsigned char*) hokuyo_hs_cmd, 4, 9, ms_to_tick(100));
+
+	if(err)
+	{
+		goto end;
+	}
+
+	if( hokuyo_read_dma_buffer[4] != '0')
+	{
+		err = ERR_HOKUYO_UNKNOWN_STATUS;
+		goto end;
+	}
+
+	if( hokuyo_read_dma_buffer[5] != '0' && hokuyo_read_dma_buffer[5] != '2')
+	{
+		err = ERR_HOKUYO_UNKNOWN_STATUS;
+		goto end;
 	}
 
 end:
