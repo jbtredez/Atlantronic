@@ -49,7 +49,7 @@ end:
 	return err;
 }
 
-int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2* regression_pt, int reg_size)
+int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* regression_pt, int reg_size)
 {
 	int a = 0;
 	int b = size-1;
@@ -72,8 +72,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2*
 		goto end;
 	}
 
-	regression_pt[0].x = pt[a].x >> 16;
-	regression_pt[0].y = pt[a].y >> 16;
+	regression_pt[0] = pt[a];
 	regression_num++;
 
 	while( b > a && pt[b].x == 0 && pt[b].y == 0)
@@ -84,8 +83,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2*
 		goto end;
 	}
 
-	regression_pt[1].x = pt[b].x >> 16;
-	regression_pt[1].y = pt[b].y >> 16;
+	regression_pt[1] = pt[b];
 	regression_num++;
 
 	while(regression_num < reg_size)
@@ -115,8 +113,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2*
 			{
 				regression_pt[i + 1] = regression_pt[i];
 			}
-			regression_pt[pta + 1].x = pt[id_max].x >> 16;
-			regression_pt[pta + 1].y = pt[id_max].y >> 16;
+			regression_pt[pta + 1] = pt[id_max];
 			regression_num++;
 
 			// choix du segment a regarder
@@ -139,7 +136,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx16_vect2*
 		pta++;
 		a = b;
 		b++;
-		while(b < size && ((pt[b].x >> 16) != regression_pt[pta+1].x || (pt[b].y >> 16) != regression_pt[pta+1].y) )
+		while(b < size && (pt[b].x != regression_pt[pta+1].x || pt[b].y != regression_pt[pta+1].y) )
 		{
 			b++;
 		}

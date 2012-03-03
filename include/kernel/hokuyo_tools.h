@@ -8,17 +8,10 @@
 #include <stdint.h>
 #include "kernel/driver/hokuyo.h"
 #include "kernel/vect_pos.h"
-
-struct hokuyo_object
-{
-	uint16_t start;
-	uint16_t size;
-};
+#include "kernel/math/polyline.h"
 
 void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos);
 
-int hokuyo_find_objects(uint16_t* distance, unsigned int size, struct hokuyo_object* obj, unsigned int obj_size);
-
-//int hokuyo_object_is_pawn(uint16_t* distance, struct hokuyo_object* obj, struct fx_vect_pos *pawn_pos);
+int hokuyo_find_objects(uint16_t* distance, struct fx_vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size);
 
 #endif

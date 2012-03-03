@@ -14,9 +14,10 @@
 #include "linux/tools/graphique.h"
 #include "linux/tools/joystick.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/math/trigo.h"
 #include "foo/pwm.h"
 #include "foo/graph.h"
-#include "kernel/math/trigo.h"
+#include "foo/table.h"
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
@@ -135,7 +136,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	graphique_init(&graph[GRAPH_TABLE], "Table", -1500, 1500, -1000, 1000, 800, 600, 0, 0);
+	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
@@ -486,14 +487,19 @@ void plot_table(struct graphique* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 	int i;
+	int j;
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
+	glPushMatrix();
+	glColor3f(0,0,0);
+	glScalef(1/65536.0f, 1/65536.0f, 1);
+	for(i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
-		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
+		glBegin(GL_LINE_STRIP);
+		for(j = 0; j < table_obj[i].size; j++)
 		{
-			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
 		}
+		glEnd();
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG] && robot_interface.detection_reg_num[HOKUYO_FOO] > 1)
@@ -505,6 +511,17 @@ void plot_table(struct graphique* graph)
 			glVertex2f(robot_interface.detection_hokuyo_reg[i].x, robot_interface.detection_hokuyo_reg[i].y);
 		}
 		glEnd();
+	}
+
+	glPopMatrix();
+
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
+		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
+		{
+			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )

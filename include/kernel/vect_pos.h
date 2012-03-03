@@ -6,18 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-
-struct fx16_vect2
-{
-	int16_t x;
-	int16_t y;
-};
-
-struct fx_vect2
-{
-	int32_t x;
-	int32_t y;
-};
+#include "kernel/math/vect2.h"
 
 //! @struct fx_vect_pos
 //! représentation d'un vecteur sur la table

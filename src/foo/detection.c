@@ -14,8 +14,10 @@
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
 #include "kernel/math/trigo.h"
+#include "kernel/math/polyline.h"
 #include "location/location.h"
 #include "gpio.h"
+#include "table.h"
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
@@ -36,9 +38,9 @@ static int detection_reg_ecart = 25;
 
 // données partagées par la tache et des méthodes d'accés
 static xSemaphoreHandle detection_mutex;
-static struct fx16_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
+static struct fx_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
-static struct hokuyo_object detection_object[DETECTION_NUM_OBJECT];
+static struct polyline detection_object[DETECTION_NUM_OBJECT];
 static int detection_num_obj;
 
 int detection_module_init()
@@ -104,36 +106,29 @@ static void detection_task()
 	vTaskDelete(NULL);
 }
 
-int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b)
+static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b)
 {
-	int i = 0;
-	int j = 0;
-	int32_t x_min = 1 << 30;
-	int objId = -1;
-
-	struct fx_vect2 c;
-	struct fx_vect2 d;
-	struct fx_vect2 h;
-	struct fx_vect2 tmp;
-
 	struct fx_vect2 a1 = { 0,  PARAM_LEFT_CORNER_Y };
 	struct fx_vect2 b1 = { 1 << 30,  PARAM_LEFT_CORNER_Y };
 	struct fx_vect2 a2 = { 0, PARAM_RIGHT_CORNER_Y };
 	struct fx_vect2 b2 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
 
-	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	for( i = 0 ; i < detection_num_obj ; i++)
+	struct fx_vect2 c;
+	struct fx_vect2 d;
+	struct fx_vect2 h;
+
+	int i;
+	int j;
+	int32_t x_min = 1 << 30;
+	int32_t y_c = 0;
+	int32_t y_d = 0;
+
+	for(i = 0; i < size; i++)
 	{
-		j = detection_object[i].start;
-		int maxj = j + detection_object[i].size;
-		tmp.x = ((int32_t) detection_hokuyo_reg[j].x) << 16;
-		tmp.y = ((int32_t) detection_hokuyo_reg[j].y) << 16;
-		fx_vect2_table_to_robot(pos, &tmp, &c);
-		for( j++; j < maxj; j++)
+		fx_vect2_table_to_robot(pos, &polyline[i].pt[0], &c);
+		for(j = 1; j < polyline[i].size; j++)
 		{
-			tmp.x = ((int32_t) detection_hokuyo_reg[j].x) << 16;
-			tmp.y = ((int32_t) detection_hokuyo_reg[j].y) << 16;
-			fx_vect2_table_to_robot(pos, &tmp, &d);
+			fx_vect2_table_to_robot(pos, &polyline[i].pt[j], &d);
 
 			// point c devant le robot et dans le tube
 			if( c.x > 0 && c.y > a1.y && c.y < a2.y)
@@ -141,7 +136,8 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( c.x < x_min)
 				{
 					x_min = c.x;
-					objId = i;
+					y_c = c.y;
+					y_d = d.y;
 				}
 			}
 
@@ -151,7 +147,8 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( d.x < x_min)
 				{
 					x_min = d.x;
-					objId = i;
+					y_c = c.y;
+					y_d = d.y;
 				}
 			}
 
@@ -162,7 +159,8 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( h.x < x_min)
 				{
 					x_min = h.x;
-					objId = i;
+					y_c = c.y;
+					y_d = d.y;
 				}
 			}
 
@@ -172,7 +170,8 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 				if( h.x < x_min)
 				{
 					x_min = h.x;
-					objId = i;
+					y_c = c.y;
+					y_d = d.y;
 				}
 			}
 
@@ -180,36 +179,54 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 		}
 	}
 
-	if(objId >= 0)
+	if(y_c != y_d)
 	{
-		i = detection_object[objId].start;
-		j = i + detection_object[objId].size-1;
-
 		b1.x = x_min;
 		b2.x = x_min;
 
-		if( detection_hokuyo_reg[i].y < detection_hokuyo_reg[j].y)
+		if( y_c < y_d)
 		{
-			b1.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
-			b2.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
+			b1.y = y_c << 16;
+			b2.y = y_d << 16;
 		}
 		else
 		{
-			b1.y = ((int32_t)detection_hokuyo_reg[j].y) << 16;
-			b2.y = ((int32_t)detection_hokuyo_reg[i].y) << 16;
+			b1.y = y_d << 16;
+			b2.y = y_c << 16;
 		}
 	}
 
+	fx_vect2_robot_to_table(pos, &b1, a);
+	fx_vect2_robot_to_table(pos, &b2, b);
+
+	return x_min;
+}
+
+int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b)
+{
+	int32_t x_min;
+	int32_t x_min_table;
+	struct fx_vect2 c;
+	struct fx_vect2 d;
+
+	xSemaphoreTake(detection_mutex, portMAX_DELAY);
+	x_min = detection_compute_object_on_trajectory(pos, detection_object, detection_num_obj, a, b);
 	xSemaphoreGive(detection_mutex);
+
+	x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
+
+	if(x_min_table < x_min)
+	{
+		x_min = x_min_table;
+		*a = c;
+		*b = d;
+	}
 
 	if(x_min < PARAM_LEFT_CORNER_X || x_min < PARAM_RIGHT_CORNER_X)
 	{
 		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
 		log_format(LOG_ERROR, "erreur de calibration ? : x_min %ld", x_min >> 16);
 	}
-
-	fx_vect2_robot_to_table(pos, &b1, a);
-	fx_vect2_robot_to_table(pos, &b2, b);
 
 	return x_min;
 }
@@ -223,13 +240,13 @@ void detection_compute()
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	detection_num_obj = hokuyo_find_objects(hokuyo_scan.distance, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
+	detection_num_obj = hokuyo_find_objects(hokuyo_scan.distance, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
 	detection_reg_size = 0;
 
 	for( i = 0 ; i < detection_num_obj ; i++)
 	{
-		detection_object[i].size = regression_poly(detection_hokuyo_pos + detection_object[i].start, detection_object[i].size, detection_reg_ecart, detection_hokuyo_reg + detection_reg_size, HOKUYO_REG_SEG - detection_reg_size);
-		detection_object[i].start = detection_reg_size;
+		detection_object[i].size = regression_poly(detection_object[i].pt, detection_object[i].size, detection_reg_ecart, detection_hokuyo_reg + detection_reg_size, HOKUYO_REG_SEG - detection_reg_size);
+		detection_object[i].pt = &detection_hokuyo_reg[detection_reg_size];
 		detection_reg_size += detection_object[i].size;
 	}
 	xSemaphoreGive(detection_mutex);

@@ -47,7 +47,7 @@ int main()
 	float* y = malloc(sizeof(float) * total_size);
 	float* w = malloc(sizeof(float) * total_size);
 	struct fx_vect2* points = malloc(sizeof(struct fx_vect2) * total_size);
-	struct fx16_vect2 * reg = malloc(sizeof(struct fx16_vect2) * total_size);
+	struct fx_vect2 * reg = malloc(sizeof(struct fx_vect2) * total_size);
 	float epsilon;
 
 	int id = 0;
