@@ -357,8 +357,8 @@ static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int 
 
 	(void) com_id;
 
-	unsigned int num = size / sizeof(data->detection_reg_num[0]);
-	if(size != num * sizeof(data->detection_reg_num[0]) )
+	unsigned int num = size / sizeof(data->detection_hokuyo_reg[0]);
+	if(size != num * sizeof(data->detection_hokuyo_reg[0]) )
 	{
 		res = -1;
 		goto end;
