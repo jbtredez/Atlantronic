@@ -82,7 +82,7 @@ int main()
 	int a = 0;
 	for(i = 0; i<total_size; i++)
 	{
-		if( (points[i].x >> 16) == reg[seg+1].x && (points[i].y >> 16) == reg[seg+1].y)
+		if( points[i].x == reg[seg+1].x && points[i].y == reg[seg+1].y)
 		{
 			int err = regression_linear(x+a, y+a, w, i-a, a_reg + seg, b_reg + seg);
 			if(err)
@@ -115,14 +115,14 @@ int main()
 
 	for(i = 0; i < reg_size; i++)
 	{
-		fprintf(p, "%d %d\n", reg[i].x, reg[i].y);
+		fprintf(p, "%f %f\n", reg[i].x / 65536.0f, reg[i].y / 65536.0f);
 	}
 	fprintf(p, "e\n");
 
 	for(i = 0; i < reg_size - 1; i++)
 	{
-		fprintf(p, "%d %f\n", reg[i].x, a_reg[i] * reg[i].x + b_reg[i]);
-		fprintf(p, "%d %f\n", reg[i+1].x, a_reg[i] * reg[i+1].x + b_reg[i]);
+		fprintf(p, "%f %f\n", reg[i].x / 65536.0f, a_reg[i] * reg[i].x/65536.0f + b_reg[i]);
+		fprintf(p, "%f %f\n", reg[i+1].x / 65536.0f, a_reg[i] * reg[i+1].x/65536.0f + b_reg[i]);
 	}
 	fprintf(p, "e\n");
 
