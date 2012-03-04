@@ -48,7 +48,7 @@ static int trajectory_module_init()
 {
 	xTaskHandle xHandle;
 
-	portBASE_TYPE err = xTaskCreate(trajectory_task, "traj", TRAJECTORY_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
+	portBASE_TYPE err = xTaskCreate(trajectory_task, "traj", TRAJECTORY_STACK_SIZE, NULL, PRIORITY_TASK_TRAJECTORY, &xHandle);
 
 	if(err != pdPASS)
 	{

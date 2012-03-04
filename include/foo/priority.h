@@ -13,8 +13,8 @@
 #define PRIORITY_TASK_HOKUYO          3
 #define PRIORITY_TASK_DETECTION       3
 #define PRIORITY_TASK_AX12            4
-#define PRIORITY_TASK_CAN             5
-#define PRIORITY_TASK_TRAJECTORY      6
+#define PRIORITY_TASK_TRAJECTORY      5
+#define PRIORITY_TASK_CAN             6
 #define PRIORITY_TASK_CONTROL         7
 #define PRIORITY_TASK_ADC             8
 #define PRIORITY_TASK_END             9
