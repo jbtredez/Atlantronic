@@ -210,7 +210,9 @@ void isr_can1_tx(void)
 void isr_can1_rx0(void)
 {
 	struct can_msg msg;
-	portBASE_TYPE xHigherPriorityTaskWoken;
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+
+	portSET_INTERRUPT_MASK();
 
 	if( CAN1->RF0R & CAN_RF0R_FOVR0)
 	{
@@ -253,13 +255,15 @@ void isr_can1_rx0(void)
 			error_from_isr(ERR_CAN_READ_QUEUE_FULL, ERROR_ACTIVE);
 		}
 
-		if( xHigherPriorityTaskWoken )
-		{
-			vPortYieldFromISR();
-		}
-
 		CAN1->RF0R |= CAN_RF0R_RFOM0;
 	}
+
+	if( xHigherPriorityTaskWoken )
+	{
+		vPortYieldFromISR();
+	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void can_write_mailbox(struct can_msg *msg)
