@@ -10,17 +10,17 @@
 #define PRIORITY_TASK_ERROR           1
 #define PRIORITY_TASK_USB             2
 #define PRIORITY_TASK_STRATEGY        3
-#define PRIORITY_TASK_HOKUYO          3
-#define PRIORITY_TASK_DETECTION       3
-#define PRIORITY_TASK_AX12            4
-#define PRIORITY_TASK_TRAJECTORY      5
-#define PRIORITY_TASK_CAN             6
-#define PRIORITY_TASK_CONTROL         7
-#define PRIORITY_TASK_ADC             8
-#define PRIORITY_TASK_END             9
+#define PRIORITY_TASK_TRAJECTORY      4
+#define PRIORITY_TASK_HOKUYO          5
+#define PRIORITY_TASK_DETECTION       5
+#define PRIORITY_TASK_AX12            6
+#define PRIORITY_TASK_CAN             7
+#define PRIORITY_TASK_CONTROL         8
+#define PRIORITY_TASK_ADC             9
+#define PRIORITY_TASK_END            10
 
 // priority : 0 ... configMAX_PRIORITIES-1
-#define configMAX_PRIORITIES		  10
+#define configMAX_PRIORITIES		  11
 
 // attention, les priorités sont codées sur 4 bits (les bits de poids fort).
 // La fonction setpriority s'occupe de mettre la priorité comme il faut.
