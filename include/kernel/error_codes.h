@@ -51,6 +51,7 @@ enum fault
 #define ERR_INIT_TRAJECTORY     0x210
 #define ERR_INIT_CAN_US         0x211
 #define ERR_INIT_ERROR          0x212
-#define ERR_INIT_TEST           0x213
+#define ERR_INIT_ODOMETRY       0x213
+#define ERR_INIT_TEST           0x214
 
 #endif
