@@ -86,7 +86,9 @@ int robot_interface_free(struct robot_interface* data);
 
 int robot_interface_goto_graph(struct robot_interface* data);
 
-int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way);
+int robot_interface_goto_near_xy(struct robot_interface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
+
+int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type);
 
 //!< vitesse en % de vmax de configuration du robot
 int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot);

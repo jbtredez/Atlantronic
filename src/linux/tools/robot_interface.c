@@ -493,6 +493,7 @@ int robot_interface_straight(struct robot_interface* data, float dist)
 
 	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_STRAIGHT;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;
@@ -507,6 +508,7 @@ int robot_interface_straight_to_wall(struct robot_interface* data, float dist)
 
 	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;
@@ -521,6 +523,7 @@ int robot_interface_rotate(struct robot_interface* data, float alpha)
 
 	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
 	cmd_arg.type = TRAJECTORY_ROTATE;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;
@@ -535,6 +538,7 @@ int robot_interface_rotate_to(struct robot_interface* data, float alpha)
 
 	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
 	cmd_arg.type = TRAJECTORY_ROTATE_TO;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;
@@ -548,6 +552,7 @@ int robot_interface_free(struct robot_interface* data)
 	struct trajectory_cmd_arg cmd_arg;
 
 	cmd_arg.type = TRAJECTORY_FREE;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;
@@ -556,7 +561,25 @@ int robot_interface_free(struct robot_interface* data)
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way)
+int robot_interface_goto_near_xy(struct robot_interface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.x = x * 65536.0f;
+	cmd_arg.y = y * 65536.0f;
+	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.type = TRAJECTORY_GOTO_XY;
+	cmd_arg.avoidance_type = avoidance_type;
+	cmd_arg.way = way;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_TRAJECTORY;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -564,7 +587,8 @@ int robot_interface_goto_near(struct robot_interface* data, float x, float y, fl
 	cmd_arg.y = y * 65536.0f;
 	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
 	cmd_arg.dist = dist * 65536.0f;
-	cmd_arg.type = TRAJECTORY_GOTO;
+	cmd_arg.type = TRAJECTORY_GOTO_XYA;
+	cmd_arg.avoidance_type = avoidance_type;
 	cmd_arg.way = way;
 
 	char buffer[1+sizeof(cmd_arg)];
@@ -579,6 +603,7 @@ int robot_interface_goto_graph(struct robot_interface* data)
 	struct trajectory_cmd_arg cmd_arg;
 
 	cmd_arg.type = TRAJECTORY_GOTO_GRAPH;
+	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_TRAJECTORY;

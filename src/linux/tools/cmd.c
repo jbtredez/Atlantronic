@@ -19,6 +19,7 @@ int cmd_help();
 int cmd_quit();
 int cmd_goto_graph(void* arg);
 int cmd_goto_near(void* arg);
+int cmd_goto_near_xy(void* arg);
 int cmd_localization_set_position(void* arg);
 int cmd_max_speed(void* arg);
 int cmd_pince_open();
@@ -33,26 +34,27 @@ int cmd_control_param(void*);
 int cmd_control_print_param();
 
 COMMAND usb_commands[] = {
-	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id"},
-	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12"},
-	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12"},
-	{ "control_param", cmd_control_param, "comtrol_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha)" },
-	{ "control_print_param", cmd_control_print_param, "cmd_control_print_param()"},
+	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
+	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
+	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id pos"},
+	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
+	{ "control_print_param", cmd_control_print_param, "control_print_param"},
 	{ "free", cmd_free, "free()" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
-	{ "goto_near", cmd_goto_near, "Goto near(x, y, dist, way)" },
+	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
+	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
 	{ "help", cmd_help, "Display this text" },
-	{ "localization_set_position", cmd_localization_set_position, "set robot position (x, y, alpha)"},
-	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot)" },
+	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
+	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_open", cmd_pince_open, "ouverture des pinces"},
 	{ "pince_close", cmd_pince_close, "fermeture des pinces"},
 	{ "pince_configure", cmd_pince_configure, "configuration des pinces"},
 	{ "q", cmd_quit, "Quit" },
 	{ "quit", cmd_quit, "Quit" },
-	{ "rotate", cmd_rotate, "rotate(angle)" },
-	{ "rotate_to", cmd_rotate_to, "rotate_to(angle)" },
-	{ "straight", cmd_straight, "straight(dist)" },
-	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall(dist)" },
+	{ "rotate", cmd_rotate, "rotate angle" },
+	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
+	{ "straight", cmd_straight, "straight dist" },
+	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall dist" },
 	{ "?", cmd_help, "Synonym for `help'" },
 	{ (char *)NULL, (Function *)NULL, (char *)NULL }
 };
@@ -78,8 +80,7 @@ int cmd_ax12_set_id(void* arg)
 
 	if(count != 2)
 	{
-		log_info("cmd_ax12_set_id id newid\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_ax12_set_id(cmd_robot, id, new_id);
@@ -94,8 +95,7 @@ int cmd_ax12_set_goal_position(void* arg)
 
 	if(count != 2)
 	{
-		log_info("cmd_ax12_set_id id newid\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_ax12_set_goal_position(cmd_robot, id, goal_position);
@@ -133,8 +133,7 @@ int cmd_control_param(void* arg)
 
 	if(count != 9)
 	{
-		log_info("cmd_control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_control_set_param(cmd_robot, kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha);
@@ -158,8 +157,7 @@ int cmd_localization_set_position(void* arg)
 
 	if(count != 3)
 	{
-		log_info("localization_set_position x y alpha\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_set_position(cmd_robot, x, y, alpha);
@@ -174,8 +172,7 @@ int cmd_straight(void* arg)
 
 	if(count != 1)
 	{
-		log_info("cmd_straight dist\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_straight(cmd_robot, dist);
@@ -190,8 +187,7 @@ int cmd_straight_to_wall(void* arg)
 
 	if(count != 1)
 	{
-		log_info("cmd_straight_to_wall dist\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_straight_to_wall(cmd_robot, dist);
@@ -206,8 +202,7 @@ int cmd_rotate(void* arg)
 
 	if(count != 1)
 	{
-		log_info("cmd_rotate dist\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_rotate(cmd_robot, alpha);
@@ -222,8 +217,7 @@ int cmd_rotate_to(void* arg)
 
 	if(count != 1)
 	{
-		log_info("cmd_rotate_to dist\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_rotate_to(cmd_robot, alpha);
@@ -245,15 +239,34 @@ int cmd_goto_near(void* arg)
 	float alpha;
 	float dist;
 	unsigned int way;
-	int count = sscanf(arg, "%f %f %f %f %u", &x, &y, &alpha, &dist, &way);
+	unsigned int avoidance_type;
+	int count = sscanf(arg, "%f %f %f %f %u %u", &x, &y, &alpha, &dist, &way, &avoidance_type);
+
+	if(count != 6)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way, avoidance_type);
+
+	return CMD_SUCESS;
+}
+
+int cmd_goto_near_xy(void* arg)
+{
+	float x;
+	float y;
+	float dist;
+	unsigned int way;
+	unsigned int avoidance_type;
+	int count = sscanf(arg, "%f %f %f %u %u", &x, &y, &dist, &way, &avoidance_type);
 
 	if(count != 5)
 	{
-		log_info("cmd_goto_near x y alpha dist way\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
-	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way);
+	robot_interface_goto_near_xy(cmd_robot, x, y, dist, way, avoidance_type);
 
 	return CMD_SUCESS;
 }
@@ -274,8 +287,7 @@ int cmd_max_speed(void* arg)
 
 	if(count != 2)
 	{
-		log_info("max_speed v_max_av v_max_rot\n");
-		return CMD_SUCESS;
+		return CMD_ERROR;
 	}
 
 	robot_interface_set_max_speed(cmd_robot, v_max_av, v_max_rot);

@@ -506,7 +506,7 @@ int32_t control_find_rotate(int32_t debut, int32_t fin)
 	return alpha;
 }
 
-void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_trajectory_type traj_type, enum trajectory_way way)
+void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_type type, enum trajectory_way way)
 {
 	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, way);
 
@@ -523,13 +523,13 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	}
 	vTaskClearEvent(EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 
-	int32_t da;
+	int32_t da = 0;
 	int64_t dx = x - control_kinematics.x;
 	int64_t dy = y - control_kinematics.y;
 	control_dist = sqrtf(dx*dx+dy*dy) - dist;
 	control_kinematics_cons = control_kinematics;
 
-	if(control_dist >> 16)
+	if(control_dist >> 16 && type != CONTROL_LINE_A)
 	{
 		control_kinematics_cons.w = 0;
 		int32_t a = fx_atan2(dy, dx);
@@ -561,18 +561,22 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	}
 	else
 	{
+		control_dist = 0;
 		control_kinematics_cons.v = 0;
-		da = alpha - control_kinematics.alpha;
 	}
 
 	control_alpha_align = control_kinematics.alpha + da;
-	if( traj_type == CONTROL_LINE_XY)
+	if( type == CONTROL_LINE_XY)
 	{
 		// pas de rotation finale
 		control_dest.alpha = control_alpha_align;
 	}
 	else
 	{
+		if( control_dist == 0 )
+		{
+			control_alpha_align = alpha;
+		}
 		control_dest.alpha = alpha;
 	}
 	control_dest.ca = fx_cos(control_dest.alpha);

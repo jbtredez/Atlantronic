@@ -15,19 +15,27 @@ enum trajectory_cmd_type
 	TRAJECTORY_STRAIGHT_TO_WALL,
 	TRAJECTORY_ROTATE,
 	TRAJECTORY_ROTATE_TO,
-	TRAJECTORY_GOTO,
+	TRAJECTORY_GOTO_XY,
+	TRAJECTORY_GOTO_XYA,
 	TRAJECTORY_GOTO_GRAPH,
+};
+
+enum trajectory_avoidance_type
+{
+	TRAJECTORY_AVOIDANCE_STOP,        //!< arrêt en cas d'obstacle
+	TRAJECTORY_AVOIDANCE_GRAPH,       //!< passage par le graph en cas d'obstacle
 };
 
 struct trajectory_cmd_arg
 {
-	uint32_t type;
+	uint16_t type;             //!< type de trajectoire
+	uint16_t avoidance_type;   //!< type d'évitement
+	uint16_t way;              //!< sens
 	int32_t x;
 	int32_t y;
 	int32_t alpha;
 	int32_t dist;
-	uint32_t way;
-};
+} __attribute__ (( packed ));
 
 //!< roue libre
 void trajectory_free();
@@ -37,7 +45,9 @@ void trajectory_goto_graph();
 
 void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way);
 
-void trajectory_goto_near(int32_t x, int32_t y, int32_t dist, enum trajectory_way way);
+void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+
+void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
 void trajectory_rotate(int32_t angle);
 

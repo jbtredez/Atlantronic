@@ -160,7 +160,14 @@ int execute_line (char* line)
 	word = line + i;
 
 	// Call the function.
-	return ((*(command->func)) (word));
+	int res = ((*(command->func)) (word));
+
+	if(res == CMD_ERROR)
+	{
+		log_info("command error : %s", command->doc);
+	}
+
+	return res;
 }
 
 int cli_init(COMMAND* cmd)
@@ -203,7 +210,7 @@ void* cli_task(void* arg)
 				case CMD_UNKNOWN:
 					if(system(buf) == -1 )
 					{
-						printf("Erreur system\n");
+						log_info("Erreur system");
 					}
 					break;
 				case CMD_QUIT:
