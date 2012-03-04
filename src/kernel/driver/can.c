@@ -173,7 +173,7 @@ static void can_read_task(void *arg)
 					can_map[i].callback(&msg);
 				}
 			}
-			error_from_isr(ERR_CAN_READ_QUEUE_FULL, ERROR_CLEAR);
+			error(ERR_CAN_READ_QUEUE_FULL, ERROR_CLEAR);
 		}
 	}
 }
