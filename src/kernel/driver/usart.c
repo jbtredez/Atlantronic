@@ -193,12 +193,12 @@ void isr_dma1_channel3(void)
 		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_TC);
 	}
 
-	portCLEAR_INTERRUPT_MASK();
-
 	if( xHigherPriorityTaskWoken )
 	{
 		vPortYieldFromISR();
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void isr_dma2_channel5(void)
@@ -223,12 +223,12 @@ void isr_dma2_channel3(void)
 		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_TC);
 	}
 
-	portCLEAR_INTERRUPT_MASK();
-
 	if( xHigherPriorityTaskWoken )
 	{
 		vPortYieldFromISR();
 	}
+
+	portCLEAR_INTERRUPT_MASK();
 }
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
