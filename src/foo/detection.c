@@ -222,12 +222,6 @@ int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2*
 		*b = d;
 	}
 
-	if(x_min < PARAM_LEFT_CORNER_X || x_min < PARAM_RIGHT_CORNER_X)
-	{
-		// erreur de calibration des hokuyo (position en x dans le repère robot) ou de la position des coins (x)
-		log_format(LOG_ERROR, "erreur de calibration ? : x_min %ld", x_min >> 16);
-	}
-
 	return x_min;
 }
 
