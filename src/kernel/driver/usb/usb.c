@@ -104,8 +104,8 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		return;
 	}
 
-	// on se reserve le buffer circulaire que pour les log et erreurs s'il n'y a personne sur l'usb
-	if( bDeviceState != CONFIGURED && type != USB_LOG && type != USB_ERR )
+	// on se reserve le buffer circulaire pour les log s'il n'y a personne sur l'usb
+	if( bDeviceState != CONFIGURED && type != USB_LOG )
 	{
 		return;
 	}
