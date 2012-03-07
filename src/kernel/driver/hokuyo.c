@@ -3,7 +3,6 @@
 //! @author Atlantronic
 
 #include "kernel/driver/hokuyo.h"
-#include "kernel/error.h"
 #include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
@@ -85,20 +84,20 @@ static void hokuyo_fault_update(uint32_t err)
 {
 	if(err)
 	{
-		error(FAULT_HOKUYO_DISCONNECTED, ERROR_ACTIVE);
+		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
 	}
 	else
 	{
-		error(FAULT_HOKUYO_DISCONNECTED, ERROR_CLEAR);
+		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
 	}
 
 	if( err & (ERR_HOKUYO_USART_FE | ERR_HOKUYO_USART_NE | ERR_HOKUYO_USART_ORE | ERR_HOKUYO_CHECK_CMD | ERR_HOKUYO_CHECKSUM | ERR_HOKUYO_UNKNOWN_STATUS))
 	{
-		error(FAULT_HOKUYO_DATA_CORRUPTION, ERROR_ACTIVE);
+		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
 	}
 	else
 	{
-		error(FAULT_HOKUYO_DATA_CORRUPTION, ERROR_CLEAR);
+		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
 	}
 }
 

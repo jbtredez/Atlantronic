@@ -7,7 +7,7 @@
 //!
 //! idle task priority : 0
 
-#define PRIORITY_TASK_ERROR           1
+#define PRIORITY_TASK_FAULT           1
 #define PRIORITY_TASK_USB             2
 #define PRIORITY_TASK_STRATEGY        3
 #define PRIORITY_TASK_TRAJECTORY      4

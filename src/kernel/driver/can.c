@@ -163,7 +163,7 @@ static void can_read_task(void *arg)
 
 	while(1)
 	{
-		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
+		if(xQueueReceive(can_read_queue, &msg, 0))
 		{
 			int i = 0;
 			for( i = 0 ; i < can_map_max ; i++)
@@ -173,7 +173,11 @@ static void can_read_task(void *arg)
 					can_map[i].callback(&msg);
 				}
 			}
-			error(ERR_CAN_READ_QUEUE_FULL, ERROR_CLEAR);
+		}
+		else
+		{
+			fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
+			vTaskDelay(ms_to_tick(2));
 		}
 	}
 }
@@ -217,7 +221,7 @@ void isr_can1_rx0(void)
 
 	if( CAN1->RF0R & CAN_RF0R_FOVR0)
 	{
-		error_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, ERROR_ACTIVE);
+		fault_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, FAULT_ACTIVE);
 	}
 
 	// reception sur la FIFO 0
@@ -253,7 +257,7 @@ void isr_can1_rx0(void)
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
-			error_from_isr(ERR_CAN_READ_QUEUE_FULL, ERROR_ACTIVE);
+			fault_from_isr(ERR_CAN_READ_QUEUE_FULL, FAULT_ACTIVE);
 		}
 
 		CAN1->RF0R |= CAN_RF0R_RFOM0;
@@ -303,7 +307,7 @@ uint32_t can_set_filter(unsigned int id, unsigned char format)
 	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
 	if (can_filter_id > 27)
 	{
-		error(ERR_CAN_FILTER_LIST_FULL, ERROR_ACTIVE);
+		fault(ERR_CAN_FILTER_LIST_FULL, FAULT_ACTIVE);
 		res = ERR_CAN_FILTER_LIST_FULL;
 		goto end;
 	}

@@ -3,7 +3,7 @@
 //! @author Atlantronic
 
 #include "kernel/FreeRTOSConfig.h"
-#include "kernel/error.h"
+#include "kernel/fault.h"
 #include "gpio.h"
 
 #define BAR_NUMBER       0x00

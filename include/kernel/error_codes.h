@@ -26,7 +26,7 @@ enum fault
 	// math
 	ERR_LINEAR_REG_NULL_DET,
 
-	ERR_MAX,
+	FAULT_MAX,
 };
 
 // codes pour les led (erreur grave, pas de log par usb)
@@ -52,6 +52,7 @@ enum fault
 #define ERR_INIT_CAN_US         0x211
 #define ERR_INIT_ERROR          0x212
 #define ERR_INIT_ODOMETRY       0x213
-#define ERR_INIT_TEST           0x214
+#define ERR_INIT_FAULT          0x214
+#define ERR_INIT_TEST           0x215
 
 #endif

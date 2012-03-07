@@ -5,7 +5,7 @@
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/error_codes.h"
-#include "kernel/error.h"
+#include "kernel/fault.h"
 #include "foo/control/control.h"
 #include "foo/pince.h"
 
@@ -38,7 +38,7 @@ struct robot_interface
 	struct hokuyo_scan hokuyo_scan[HOKUYO_MAX];
 	struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 	int control_usb_data_count;
-	struct error_status error_status[COM_MAX][ERR_MAX];
+	struct fault_status fault_status[COM_MAX][FAULT_MAX];
 
 	// calculs
 	struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];

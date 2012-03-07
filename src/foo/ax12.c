@@ -8,7 +8,6 @@
 #include "kernel/task.h"
 #include "kernel/queue.h"
 #include "kernel/event.h"
-#include "kernel/error.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"

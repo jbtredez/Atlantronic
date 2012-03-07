@@ -14,7 +14,7 @@
 #include "foo/control/trajectory.h"
 #include "foo/ax12.h"
 
-const char* err_description[ERR_MAX] =
+const char* err_description[FAULT_MAX] =
 {
 	// CAN
 	[ERR_CAN_READ_QUEUE_FULL] = "can : queue de lecture pleine",
@@ -85,7 +85,7 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 	}
 
 	data->control_usb_data_count = 0;
-	memset(data->error_status, 0x00, sizeof(data->error_status));
+	memset(data->fault_status, 0x00, sizeof(data->fault_status));
 
 	for(i = 0; i < HOKUYO_MAX ; i++)
 	{
@@ -283,9 +283,9 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 {
 	int res = 0;
 	int i = 0;
-	struct error_status* err_list = (struct error_status*) msg;
+	struct fault_status* err_list = (struct fault_status*) msg;
 
-	if(size != sizeof(struct error_status) * ERR_MAX)
+	if(size != sizeof(struct fault_status) * FAULT_MAX)
 	{
 		res = -1;
 		goto end;
@@ -299,20 +299,20 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 		goto end;
 	}
 
-	for(i=0; i< ERR_MAX; i++)
+	for(i=0; i< FAULT_MAX; i++)
 	{
 		unsigned char state = err_list[i].state;
-		if(state != data->error_status[com_id][i].state)
+		if(state != data->fault_status[com_id][i].state)
 		{
-			if( state == 0)
+			if( (state & 0x01) == 0)
 			{
-				log_info("\033[32m%4s %12lu    Fault\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[32m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state >> 1, state & 0x01);
 			}
 			else
 			{
-				log_info("\033[31m%4s %12lu    Fault\t%s (%d), status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state);
+				log_info("\033[31m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state >> 1, state & 0x01);
 			}
-			data->error_status[com_id][i] = err_list[i];
+			data->fault_status[com_id][i] = err_list[i];
 		}
 	}
 

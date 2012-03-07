@@ -14,7 +14,7 @@
 //!
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init)
 
-#include "kernel/error.h"
+#include "kernel/fault.h"
 
 // init frequence cpu, bus internes...
 #define INIT_RCC                      "00"
@@ -22,7 +22,7 @@
 // init gpio, usb et error pour afficher les erreurs sur les led et envoyer des log
 #define INIT_GPIO                     "01"
 #define INIT_USB                      "02"
-#define INIT_ERROR                    "03"
+#define INIT_FAULT                    "03"
 
 // init de la communication
 #define INIT_USART                    "04"

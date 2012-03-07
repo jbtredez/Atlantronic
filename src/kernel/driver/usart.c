@@ -2,7 +2,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/rcc.h"
-#include "kernel/error.h"
+#include "kernel/fault.h"
 #include "gpio.h"
 #include "kernel/event.h"
 
@@ -97,7 +97,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 			break;
 		default:
-			error(ERR_USART_UNKNOWN_DEVICE, ERROR_ACTIVE);
+			fault(ERR_USART_UNKNOWN_DEVICE, FAULT_ACTIVE);
 			return;
 			break;
 	}
