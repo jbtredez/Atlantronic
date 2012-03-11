@@ -7,10 +7,10 @@
 //!
 //! idle task priority : 0
 
-#define PRIORITY_TASK_FAULT           1
-#define PRIORITY_TASK_USB             2
-#define PRIORITY_TASK_STRATEGY        3
-#define PRIORITY_TASK_TRAJECTORY      4
+#define PRIORITY_TASK_STRATEGY        1
+#define PRIORITY_TASK_TRAJECTORY      2
+#define PRIORITY_TASK_FAULT           3
+#define PRIORITY_TASK_USB             4
 #define PRIORITY_TASK_HOKUYO          5
 #define PRIORITY_TASK_DETECTION       5
 #define PRIORITY_TASK_AX12            6
