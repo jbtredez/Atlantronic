@@ -458,7 +458,7 @@ static void control_compute_trajectory()
 			control_kinematics_cons.y += ( (int64_t)control_kinematics_cons.v * (int64_t)control_kinematics_cons.sa) >> 30;
 		}
 
-		if(ex_cons == 0 && control_kinematics_cons.v == 0)
+		if(ex_cons == 0 && control_kinematics_cons.v == 0 && !collision)
 		{
 			control_dist = 0;
 			control_alpha_align = control_dest.alpha;
@@ -469,6 +469,8 @@ static void control_compute_trajectory()
 				control_state = CONTROL_READY_FREE;
 				log(LOG_ERROR, "avance - not reached");
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
+				// TODO voir si on replanifie une traj direct (3 tentatives)
+				//control_dist = ex;
 			}
 		}
 	}
