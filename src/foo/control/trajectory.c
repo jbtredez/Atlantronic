@@ -17,12 +17,12 @@
 #include "graph.h"
 
 #define TRAJECTORY_STACK_SIZE       350
-#define TRAJECTORY_APPROX_DIST     (100<<16)      //!< distance d'approche d'un objet
+#define TRAJECTORY_APPROX_DIST     (50<<16)      //!< distance d'approche d'un objet
 
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
 static void trajectory_compute();
-static int trajectory_find_way_to_graph();
+static int trajectory_find_way_to_graph(struct fx_vect_pos pos);
 
 // requete pour la tache trajectory + mutex
 struct trajectory_cmd_arg trajectory_request;
@@ -37,6 +37,10 @@ static enum trajectory_cmd_type trajectory_type;
 static enum trajectory_avoidance_type trajectory_avoidance_type;
 static enum trajectory_state trajectory_state;
 static int32_t trajectory_hokuyo_enable_check; //!< utilisation ou non des hokuyos
+static struct graph_dijkstra_info trajectory_dijkstra_info[GRAPH_NUM_NODE];
+static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
+static uint8_t trajectory_current_graph_id;
+static uint8_t trajectory_last_graph_id;
 
 static int trajectory_module_init()
 {
@@ -69,6 +73,7 @@ module_init(trajectory_module_init, INIT_TRAJECTORY);
 static void trajectory_update()
 {
 	struct trajectory_cmd_arg cmd_arg;
+	int id;
 
 	// mutex pour trajectory_request
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
@@ -126,7 +131,14 @@ static void trajectory_update()
 			trajectory_way = cmd_arg.way;
 			break;
 		case TRAJECTORY_GOTO_GRAPH:
-			trajectory_find_way_to_graph();
+			id = trajectory_find_way_to_graph(trajectory_pos);
+			log_format(LOG_INFO, "point graph : %d", id);
+
+			trajectory_dest.x = graph_node[id].pos.x;
+			trajectory_dest.y = graph_node[id].pos.y;
+			trajectory_dest.alpha = 0;
+			trajectory_dest.ca = 1;
+			trajectory_dest.sa = 0;
 			break;
 		case TRAJECTORY_FREE:
 		default:
@@ -171,7 +183,11 @@ static void trajectory_task(void* arg)
 					break;
 				case TRAJECTORY_AVOIDANCE_GRAPH:
 					log(LOG_INFO, "collision -> graph");
-					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
+					// si on n'est pas sur le graph
+					if(trajectory_state != TRAJECTORY_STATE_USING_GRAPH)
+					{
+						trajectory_state = TRAJECTORY_STATE_MOVING_TO_GRAPH;
+					}
 					trajectory_compute();
 					break;
 			}
@@ -193,6 +209,10 @@ static void trajectory_task(void* arg)
 					log(LOG_INFO, "target reached");
 					trajectory_state = TRAJECTORY_STATE_TARGET_REACHED;
 					vTaskSetEvent(EVENT_TRAJECTORY_END);
+					break;
+				case TRAJECTORY_STATE_MOVING_TO_GRAPH:
+					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
+					trajectory_compute();
 					break;
 				case TRAJECTORY_STATE_USING_GRAPH:
 					trajectory_compute();
@@ -224,20 +244,20 @@ static void trajectory_task(void* arg)
 	}
 }
 
-static int trajectory_find_way_to_graph()
+static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 {
 	// passe en stack, pas trop de noeuds
 	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
-	struct fx_vect2 p = {trajectory_pos.x, trajectory_pos.y};
+	struct fx_vect2 p = {pos.x, pos.y};
 
 	graph_compute_node_distance(p, node_dist);
 
 	struct fx_vect2 a_table;
 	struct fx_vect2 b_table;
-	struct fx_vect_pos pos = trajectory_pos;
 	int32_t xmin;
 	int i;
 	int id = 0;
+	int32_t dist;
 
 	for( i = 0 ; i < GRAPH_NUM_NODE; i++)
 	{
@@ -247,28 +267,90 @@ static int trajectory_find_way_to_graph()
 		pos.alpha = fx_atan2(dy, dx);
 		pos.ca = fx_cos(pos.alpha);
 		pos.sa = fx_sin(pos.alpha);
-		xmin = detection_compute_front_object(&pos, &a_table, &b_table) >> 16;
+		xmin = detection_compute_front_object(&pos, &a_table, &b_table);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
-		if(node_dist[i].dist < xmin - PARAM_LEFT_CORNER_X - TRAJECTORY_APPROX_DIST - (10<<16))
+		dist = node_dist[i].dist;
+		dist <<= 16;
+		if( dist < xmin - PARAM_LEFT_CORNER_X - TRAJECTORY_APPROX_DIST - (10<<16))
 		{
 			break;
 		}
 	}
 
-	log_format(LOG_INFO, "point graph : %d", id);
+	// rien de réalisable pour le moment, on va vers le plus proche
+	if(i == GRAPH_NUM_NODE)
+	{
+		return node_dist[0].id;
+	}
 
-	trajectory_dest.x = graph_node[node_dist[0].id].pos.x;
-	trajectory_dest.y = graph_node[node_dist[0].id].pos.y;
-	trajectory_dest.alpha = 0;
-	trajectory_dest.ca = 1;
-	trajectory_dest.sa = 0;
-
-	return 0;
+	return id;
 }
 
 static void trajectory_compute()
 {
+	if( trajectory_state == TRAJECTORY_STATE_MOVING_TO_GRAPH)
+	{
+		trajectory_current_graph_id = trajectory_find_way_to_graph(trajectory_pos);
+		log_format(LOG_INFO, "point entrée graph : %d", trajectory_current_graph_id);
+
+		control_goto_near(graph_node[trajectory_current_graph_id].pos.x, graph_node[trajectory_current_graph_id].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_ANY_WAY);
+	}
+	else if( trajectory_state == TRAJECTORY_STATE_USING_GRAPH)
+	{
+		trajectory_last_graph_id = trajectory_find_way_to_graph(trajectory_dest);
+		if(trajectory_current_graph_id == trajectory_last_graph_id)
+		{
+			trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
+		}
+		else
+		{
+			int i = 0;
+			struct fx_vect_pos pos;
+			struct fx_vect2 a_table;
+			struct fx_vect2 b_table;
+			int32_t xmin;
+
+			for(i=0; i< GRAPH_NUM_LINK; i++)
+			{
+				pos.x = graph_node[graph_link[i].a].pos.x;
+				pos.y = graph_node[graph_link[i].a].pos.y;
+				pos.alpha = graph_link[i].alpha;
+				pos.ca = fx_cos(pos.alpha);
+				pos.sa = fx_sin(pos.alpha);
+				xmin = detection_compute_front_object(&pos, &a_table, &b_table) >> 16;
+				if(graph_link[i].dist < xmin)
+				{
+					trajectory_graph_valid_links[i] = 1;
+				}
+				else
+				{
+					trajectory_graph_valid_links[i] = 0;
+				}
+			}
+
+			log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_current_graph_id, trajectory_last_graph_id);
+			int res = graph_dijkstra(trajectory_current_graph_id, trajectory_last_graph_id, trajectory_dijkstra_info, trajectory_graph_valid_links);
+			if(res)
+			{
+				log_format(LOG_INFO, "aucun chemin trouvé");
+				// TODO erreur
+			}
+			else
+			{
+				int i = trajectory_last_graph_id;
+				while(trajectory_dijkstra_info[i].prev_node != trajectory_current_graph_id)
+				{
+					log_format(LOG_INFO, "chemin - graph : %d <- %d", i, trajectory_dijkstra_info[i].prev_node);
+					i = trajectory_dijkstra_info[i].prev_node;
+				}
+				log_format(LOG_INFO, "chemin - graph : %d <- %d", i, trajectory_dijkstra_info[i].prev_node);
+				trajectory_current_graph_id = i;
+				control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
+			}
+		}
+	}
+
 	if(trajectory_state == TRAJECTORY_STATE_MOVING_TO_DEST)
 	{
 		enum control_type control_type = CONTROL_LINE_XYA;
@@ -292,11 +374,6 @@ static void trajectory_compute()
 				break;
 		};
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
-	}
-	else if( trajectory_state == TRAJECTORY_STATE_USING_GRAPH)
-	{
-		// TODO
-		trajectory_find_way_to_graph();
 	}
 }
 
