@@ -64,6 +64,7 @@ static int32_t control_front_object_approx;     //!< distance d'approche de l'ob
 static struct adc_an control_an;
 
 static portTickType control_timer;
+static portTickType control_timer_stop_mes;
 static int control_speed_check_error_count;
 
 static int32_t control_kx;
@@ -120,6 +121,7 @@ static int control_module_init()
 
 	control_state = CONTROL_READY_FREE;
 	control_timer = 0;
+	control_timer_stop_mes = 0;
 	control_front_object_approx = 0;
 	control_front_object.x = 1 << 30;
 	control_front_object.y = 1 << 30;
@@ -204,37 +206,6 @@ static int32_t sinc( int32_t x )
 }
 #endif
 
-#if 0
-static void control_recalage()
-{
-	int32_t alpha = control_pos.alpha;
-
-	// modulo 1 tour => retour dans [ 0 ; 1 tour = 2^26 [
-	if(alpha < 0)
-	{
-		alpha = 0x4000000 - ((-alpha) & 0x3ffffff);
-	}
-	else
-	{
-		alpha &= 0x3ffffff;
-	}
-
-
-	if( control_pos.y + PARAM_NP_X + 1050.0f < 200.0f && fabsf(alpha - PI/2.0f) < PI/8.0f)
-	{
-		location_set_position(control_pos.x, -1050.0f - PARAM_NP_X, PI/2.0f);
-	}
-	else if( (alpha < PI/8.0f) && (control_pos.x + PARAM_NP_X + 1500.0f < 200.0f) )
-	{
-		location_set_position(-1500.0f - PARAM_NP_X, control_pos.y, 0);
-	}
-	else if( (fabsf(alpha - PI) < PI/8.0f) && (control_pos.x - PARAM_NP_X - 1500.0f > -200.0f) )
-	{
-		location_set_position(1500.0f + PARAM_NP_X, control_pos.y, PI);
-	}
-}
-#endif
-
 void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot)
 {
 	v_max_dist = ((int64_t)v_max_dist * (int64_t)CONTROL_VMAX_AV) >> 16;
@@ -275,14 +246,42 @@ static void control_compute()
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
+	// gestion de la fin de la partie : arrêt complet des moteurs quoi qu'il arrive
 	if(vTaskGetEvent() & EVENT_END)
 	{
 		control_state = CONTROL_END;
 		goto end_pwm_critical;
 	}
 
+	// mise a jour du timer "on ne bouge plus" (sur la mesure)
+	if( abs(control_kinematics.v) < 6553 && abs(control_kinematics.w) < 2500)
+	{
+		control_timer_stop_mes += CONTROL_TICK_PERIOD;
+	}
+	else
+	{
+		control_timer_stop_mes = 0;
+	}
+
+	// recalage en marche arrière
+	if( control_state == CONTROL_BACK_TO_WALL)
+	{
+		// on ne bouge plus depuis 300ms
+		if( control_timer_stop_mes > ms_to_tick(300) )
+		{
+			control_state = CONTROL_READY_FREE;
+			vTaskSetEvent( EVENT_CONTROL_COLSISION );
+		}
+		else
+		{
+			u1 = - PWM_ARR / 4;
+			u2 = - PWM_ARR / 4;
+		}
+
+		goto end_pwm_critical;
+	}
+
 	// verification du suivit de vitesse
-	// TODO : ajouter un timer : remise à zero si ok, incrementer si ko et si depassement => retourner ko
 	int speed_check = control_check_speed(control_kinematics.v, control_kinematics_cons.v, CONTROL_SPEED_CHECK_TOLERANCE);
 
 	if( control_state == CONTROL_TRAJECTORY)
@@ -414,6 +413,7 @@ static void control_compute_trajectory()
 			if(	abs( control_alpha_align - control_kinematics.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
 				control_state = CONTROL_READY_FREE;
+				log(LOG_ERROR, "rotation - not reached");
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
 		}
@@ -427,16 +427,21 @@ static void control_compute_trajectory()
 		{
 			struct fx_vect2 obj_robot;
 			fx_vect2_table_to_robot((struct fx_vect_pos*)&control_kinematics_cons, &control_front_object, &obj_robot);
-			int32_t dist = obj_robot.x - PARAM_LEFT_CORNER_X - control_front_object_approx;
-			if(dist < 0)
+			int32_t dmin = obj_robot.x - PARAM_LEFT_CORNER_X;
+			int32_t dist = dmin - control_front_object_approx;
+			// on ignore les objets du robot ou derrière
+			if( dmin >= 0)
 			{
-				dist = 0;
-				collision = 1;
-			}
+				if(dist < 0)
+				{
+					dist = 0;
+					collision = 1;
+				}
 
-			if(dist < ex_cons)
-			{
-				ex_cons = dist;
+				if(dist < ex_cons)
+				{
+					ex_cons = dist;
+				}
 			}
 		}
 
@@ -462,6 +467,7 @@ static void control_compute_trajectory()
 			if( abs(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
 				control_state = CONTROL_READY_FREE;
+				log(LOG_ERROR, "avance - not reached");
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
 		}
@@ -529,6 +535,7 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	control_dist = sqrtf(dx*dx+dy*dy) - dist;
 	control_kinematics_cons = control_kinematics;
 
+	// TODO deplacer le seuil après le calcul de l'angle : si c'est en x : ok, si c'est en y => ko jusqu'à 5mm
 	if(control_dist >> 16 && type != CONTROL_LINE_A)
 	{
 		control_kinematics_cons.w = 0;
@@ -585,6 +592,20 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	control_dest.y = control_kinematics.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
 
 	control_timer = 0;
+	control_timer_stop_mes = 0;
+	xSemaphoreGive(control_mutex);
+}
+
+void control_back_to_wall()
+{
+	log(LOG_INFO, "back to wall");
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	if(control_state != CONTROL_END)
+	{
+		control_state = CONTROL_BACK_TO_WALL;
+	}
+
+	control_timer_stop_mes = 0;
 	xSemaphoreGive(control_mutex);
 }
 

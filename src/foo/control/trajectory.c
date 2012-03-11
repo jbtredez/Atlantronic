@@ -19,13 +19,6 @@
 #define TRAJECTORY_STACK_SIZE       350
 #define TRAJECTORY_APPROX_DIST     (100<<16)      //!< distance d'approche d'un objet
 
-enum trajectory_state
-{
-	TRAJECTORY_NONE,
-	TRAJECTORY_TO_DEST,
-	TRAJECTORY_USE_GRAPH,
-};
-
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
 static void trajectory_compute();
@@ -43,6 +36,7 @@ static enum trajectory_way trajectory_way;
 static enum trajectory_cmd_type trajectory_type;
 static enum trajectory_avoidance_type trajectory_avoidance_type;
 static enum trajectory_state trajectory_state;
+static int32_t trajectory_hokuyo_enable_check; //!< utilisation ou non des hokuyos
 
 static int trajectory_module_init()
 {
@@ -64,7 +58,8 @@ static int trajectory_module_init()
 
 	usb_add_cmd(USB_CMD_TRAJECTORY, &trajectory_cmd);
 
-	trajectory_state = TRAJECTORY_NONE;
+	trajectory_state = TRAJECTORY_STATE_NONE;
+	trajectory_hokuyo_enable_check = 1;
 
 	return 0;
 }
@@ -81,7 +76,7 @@ static void trajectory_update()
 	vTaskClearEvent(EVENT_TRAJECTORY_UPDATE);
 	xSemaphoreGive(trajectory_mutex);
 
-	trajectory_state = TRAJECTORY_NONE;
+	trajectory_state = TRAJECTORY_STATE_NONE;
 	trajectory_dest = trajectory_pos;
 	trajectory_approx_dist = 0;
 	trajectory_way = TRAJECTORY_ANY_WAY;
@@ -90,8 +85,10 @@ static void trajectory_update()
 
 	switch(cmd_arg.type)
 	{
-		case TRAJECTORY_STRAIGHT:
 		case TRAJECTORY_STRAIGHT_TO_WALL:
+			control_back_to_wall();
+			return;
+		case TRAJECTORY_STRAIGHT:
 			trajectory_dest.x += ((int64_t)trajectory_dest.ca * (int64_t)cmd_arg.dist) >> 30;
 			trajectory_dest.y += ((int64_t)trajectory_dest.sa * (int64_t)cmd_arg.dist) >> 30;
 			if(cmd_arg.dist > 0)
@@ -138,7 +135,7 @@ static void trajectory_update()
 			return;
 	}
 
-	trajectory_state = TRAJECTORY_TO_DEST;
+	trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 	trajectory_compute();
 }
 
@@ -167,12 +164,14 @@ static void trajectory_task(void* arg)
 			{
 				default:
 				case TRAJECTORY_AVOIDANCE_STOP:
+					// pas d'évitement, fin de la trajectoire
 					log(LOG_INFO, "collision -> stop");
-					trajectory_state = TRAJECTORY_NONE;
+					trajectory_state = TRAJECTORY_STATE_COLISION;
+					vTaskSetEvent(EVENT_TRAJECTORY_END);
 					break;
 				case TRAJECTORY_AVOIDANCE_GRAPH:
 					log(LOG_INFO, "collision -> graph");
-					trajectory_state = TRAJECTORY_USE_GRAPH;
+					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
 					trajectory_compute();
 					break;
 			}
@@ -185,13 +184,17 @@ static void trajectory_task(void* arg)
 			switch(trajectory_state)
 			{
 				default:
-				case TRAJECTORY_NONE:
+				case TRAJECTORY_STATE_NONE:
+				case TRAJECTORY_STATE_TARGET_REACHED:
+				case TRAJECTORY_STATE_TARGET_NOT_REACHED:
+				case TRAJECTORY_STATE_COLISION:
 					break;
-				case TRAJECTORY_TO_DEST:
+				case TRAJECTORY_STATE_MOVING_TO_DEST:
 					log(LOG_INFO, "target reached");
+					trajectory_state = TRAJECTORY_STATE_TARGET_REACHED;
+					vTaskSetEvent(EVENT_TRAJECTORY_END);
 					break;
-				case TRAJECTORY_USE_GRAPH:
-					trajectory_state = TRAJECTORY_USE_GRAPH;
+				case TRAJECTORY_STATE_USING_GRAPH:
 					trajectory_compute();
 					break;
 			}
@@ -199,17 +202,24 @@ static void trajectory_task(void* arg)
 
 		if( ev & EVENT_CONTROL_TARGET_NOT_REACHED)
 		{
-			log(LOG_ERROR, "target not reached");
 			vTaskClearEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
+
+			log(LOG_ERROR, "target not reached");
+			trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+			vTaskSetEvent(EVENT_TRAJECTORY_END);
 		}
 
 		if( ev & EVENT_DETECTION_UPDATED)
 		{
-			struct fx_vect2 a;
-			struct fx_vect2 b;
-			detection_compute_front_object(&trajectory_pos, &a, &b);
-			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
 			vTaskClearEvent(EVENT_DETECTION_UPDATED);
+
+			struct fx_vect2 a = {1 << 30, 1 << 30};
+			if( trajectory_hokuyo_enable_check )
+			{
+				struct fx_vect2 b;
+				detection_compute_front_object(&trajectory_pos, &a, &b);
+			}
+			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
 		}
 	}
 }
@@ -259,7 +269,7 @@ static int trajectory_find_way_to_graph()
 
 static void trajectory_compute()
 {
-	if(trajectory_state == TRAJECTORY_TO_DEST)
+	if(trajectory_state == TRAJECTORY_STATE_MOVING_TO_DEST)
 	{
 		enum control_type control_type = CONTROL_LINE_XYA;
 		switch(trajectory_type)
@@ -283,7 +293,7 @@ static void trajectory_compute()
 		};
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
 	}
-	else if( trajectory_state == TRAJECTORY_USE_GRAPH)
+	else if( trajectory_state == TRAJECTORY_STATE_USING_GRAPH)
 	{
 		// TODO
 		trajectory_find_way_to_graph();
@@ -306,18 +316,19 @@ void trajectory_free()
 
 	trajectory_request.type = TRAJECTORY_FREE;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_straight_to_wall(int32_t dist)
+void trajectory_straight_to_wall()
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
 	trajectory_request.type = TRAJECTORY_STRAIGHT_TO_WALL;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
-	trajectory_request.dist = dist;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -330,6 +341,7 @@ void trajectory_rotate(int32_t angle)
 	trajectory_request.type = TRAJECTORY_ROTATE;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 	trajectory_request.alpha = angle;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -342,6 +354,7 @@ void trajectory_rotate_to(int32_t angle)
 	trajectory_request.type = TRAJECTORY_ROTATE_TO;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 	trajectory_request.alpha = angle;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -354,6 +367,7 @@ void trajectory_straight(int32_t dist)
 	trajectory_request.type = TRAJECTORY_STRAIGHT;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 	trajectory_request.dist = dist;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -369,6 +383,7 @@ void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory
 	trajectory_request.y = y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -385,6 +400,7 @@ void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enu
 	trajectory_request.alpha = alpha;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -406,6 +422,7 @@ void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_
 	trajectory_request.y = graph_node[node_id].pos.y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
@@ -417,7 +434,23 @@ void trajectory_goto_graph()
 
 	trajectory_request.type = TRAJECTORY_GOTO_GRAPH;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	vTaskClearEvent(EVENT_TRAJECTORY_END);
 	vTaskSetEvent(EVENT_TRAJECTORY_UPDATE);
 
 	xSemaphoreGive(trajectory_mutex);
+}
+
+enum trajectory_state trajectory_get_state()
+{
+	return trajectory_state;
+}
+
+void trajectory_disable_hokuyo()
+{
+	trajectory_hokuyo_enable_check = 0;
+}
+
+void trajectory_enable_hokuyo()
+{
+	trajectory_hokuyo_enable_check = 1;
 }

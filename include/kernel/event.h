@@ -22,5 +22,6 @@
 #define EVENT_USB_READ                  0x4000
 #define EVENT_USB_WRITE                 0x8000
 #define EVENT_DETECTION_UPDATED        0x10000    //!< la tache detection a mis à jour les objets vus
+#define EVENT_TRAJECTORY_END           0x20000    //!< évènement de fin de trajectoire
 
 #endif

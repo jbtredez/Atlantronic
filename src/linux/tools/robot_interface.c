@@ -502,11 +502,10 @@ int robot_interface_straight(struct robot_interface* data, float dist)
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_straight_to_wall(struct robot_interface* data, float dist)
+int robot_interface_straight_to_wall(struct robot_interface* data)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.dist = dist * 65536.0f;
 	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 

@@ -19,6 +19,7 @@ enum control_state
 	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
 	CONTROL_READY_FREE,           //!< no trajectory ongoing, control off
 	CONTROL_TRAJECTORY,           //!< trajectoire en cours
+	CONTROL_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	CONTROL_END,                  //!< end : halted forever
 };
 
@@ -84,6 +85,9 @@ enum control_type
 
 //!< deplacement vers la position demandée en fonction du type de trajectoire et du sens
 void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_type type, enum trajectory_way way);
+
+//!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
+void control_back_to_wall();
 
 //!< arrêt de l'asservissement des moteurs
 void control_free();

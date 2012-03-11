@@ -26,6 +26,16 @@ enum trajectory_avoidance_type
 	TRAJECTORY_AVOIDANCE_GRAPH,       //!< passage par le graph en cas d'obstacle
 };
 
+enum trajectory_state
+{
+	TRAJECTORY_STATE_NONE,
+	TRAJECTORY_STATE_MOVING_TO_DEST,
+	TRAJECTORY_STATE_USING_GRAPH,
+	TRAJECTORY_STATE_TARGET_REACHED,
+	TRAJECTORY_STATE_TARGET_NOT_REACHED,
+	TRAJECTORY_STATE_COLISION,
+};
+
 struct trajectory_cmd_arg
 {
 	uint16_t type;             //!< type de trajectoire
@@ -55,6 +65,14 @@ void trajectory_rotate_to(int32_t angle);
 
 void trajectory_straight(int32_t dist);
 
-void trajectory_straight_to_wall(int32_t dist);
+void trajectory_straight_to_wall();
+
+//!< desactivation de l'arrêt sur obstacle détecté par hokuyo
+void trajectory_disable_hokuyo();
+
+//!< activation de l'arrêt sur obstacle détecté par hokuyo
+void trajectory_enable_hokuyo();
+
+enum trajectory_state trajectory_get_state();
 
 #endif

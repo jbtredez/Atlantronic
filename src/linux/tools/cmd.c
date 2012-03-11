@@ -26,7 +26,7 @@ int cmd_pince_open();
 int cmd_pince_close();
 int cmd_pince_configure();
 int cmd_straight(void* arg);
-int cmd_straight_to_wall(void* arg);
+int cmd_straight_to_wall();
 int cmd_rotate(void* arg);
 int cmd_rotate_to(void* arg);
 int cmd_free();
@@ -54,7 +54,7 @@ COMMAND usb_commands[] = {
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
 	{ "straight", cmd_straight, "straight dist" },
-	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall dist" },
+	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "?", cmd_help, "Synonym for `help'" },
 	{ (char *)NULL, (Function *)NULL, (char *)NULL }
 };
@@ -180,17 +180,9 @@ int cmd_straight(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_straight_to_wall(void* arg)
+int cmd_straight_to_wall()
 {
-	float dist;
-	int count = sscanf(arg, "%f", &dist);
-
-	if(count != 1)
-	{
-		return CMD_ERROR;
-	}
-
-	robot_interface_straight_to_wall(cmd_robot, dist);
+	robot_interface_straight_to_wall(cmd_robot);
 
 	return CMD_SUCESS;
 }

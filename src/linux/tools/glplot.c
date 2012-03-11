@@ -611,12 +611,13 @@ void plot_table(struct graphique* graph)
 		glEnd();
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
+		glScalef(1/65536.0f, 1/65536.0f, 1);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y/65536.0f);
-		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y/65536.0f);
-		glVertex2f(PARAM_LEFT_CORNER_X/65536.0f, PARAM_LEFT_CORNER_Y/65536.0f);
-		glVertex2f(PARAM_RIGHT_CORNER_X/65536.0f, PARAM_RIGHT_CORNER_Y/65536.0f);
-		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y/65536.0f);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
 		glEnd();
 		glPopMatrix();
 	}

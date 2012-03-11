@@ -46,7 +46,7 @@
 #define PARAM_RIGHT_CORNER_X                   180*65536
 #define PARAM_RIGHT_CORNER_Y                   175*65536
 
-#define PARAM_NP_X                                -95.0f
+#define PARAM_NP_X                            (-95 << 16)
 
 #define PARAM_FOO_HOKUYO_X                     115*65536
 #define PARAM_FOO_HOKUYO_Y                    -130*65536

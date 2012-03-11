@@ -76,7 +76,7 @@ int robot_interface_control_set_param(struct robot_interface* data, int kp_av, i
 
 int robot_interface_straight(struct robot_interface* data, float dist);
 
-int robot_interface_straight_to_wall(struct robot_interface* data, float dist);
+int robot_interface_straight_to_wall(struct robot_interface* data);
 
 int robot_interface_rotate(struct robot_interface* data, float alpha);
 
