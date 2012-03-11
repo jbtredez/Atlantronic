@@ -13,9 +13,10 @@
 
 struct graph_link
 {
-	uint8_t a;
-	uint8_t b;
-	uint16_t dist;
+	uint8_t a;         //!< noeud de depart
+	uint8_t b;         //!< noeud d'arrivé
+	uint16_t dist;     //!< distance entre les deux noeuds
+	uint32_t alpha;    //!< angle de la droite dans le repère absolu (table)
 };
 
 struct graph_node

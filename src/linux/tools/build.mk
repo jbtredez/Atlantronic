@@ -30,3 +30,8 @@ bin-linux += glplot
 obj-linux-sin_table_gen += linux/tools/sin_table_gen.o
 lib-linux-sin_table_gen += -lm
 bin-linux += sin_table_gen
+
+obj-linux-graph_gen += linux/tools/graph_gen.o
+obj-linux-graph_gen += kernel/math/trigo.o
+lib-linux-graph_gen += -lm
+bin-linux += graph_gen
