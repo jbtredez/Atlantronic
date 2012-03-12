@@ -20,8 +20,6 @@
 
 // masques
 #define AX12_MAX_MOVING_SPEED    0x3ff
-#define AX12_MAX_GOAL_POSITION   0x3ff
-#define AX12_MAX_GOAL_POSITION   0x3ff
 #define AX12_MAX_TORQUE_LIMIT    0x3ff
 
 #define AX12_CMD_SCAN                    0x01
@@ -32,7 +30,7 @@ struct ax12_cmd_param
 {
 	uint8_t cmd_id;         //!< id de la commande
 	uint8_t id;             //!< id de l'ax12
-	uint16_t param;         //!< parametre
+	int32_t param;          //!< parametre
 };
 
 #define ERR_AX12_SEND_CHECK             0x80
@@ -66,7 +64,10 @@ struct ax12_error ax12_reset(uint8_t id);
 
 struct ax12_error ax12_set_led(uint8_t id, uint8_t on);
 struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed);
-struct ax12_error ax12_set_goal_position(uint8_t id, uint16_t goal);
+
+//!< deplacement de l'ax12 vers l'angle alpha (en 2^-26 tours)
+struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha);
+
 struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
 struct ax12_error ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
 struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable);

@@ -36,7 +36,7 @@ int cmd_control_print_param();
 COMMAND usb_commands[] = {
 	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
-	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id pos"},
+	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
 	{ "control_print_param", cmd_control_print_param, "control_print_param"},
 	{ "free", cmd_free, "free()" },
@@ -90,15 +90,15 @@ int cmd_ax12_set_id(void* arg)
 int cmd_ax12_set_goal_position(void* arg)
 {
 	unsigned int id;
-	unsigned int goal_position;
-	int count = sscanf(arg, "%u %u", &id, &goal_position);
+	float alpha;
+	int count = sscanf(arg, "%u %f", &id, &alpha);
 
 	if(count != 2)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_ax12_set_goal_position(cmd_robot, id, goal_position);
+	robot_interface_ax12_set_goal_position(cmd_robot, id, alpha);
 	return CMD_SUCESS;
 }
 

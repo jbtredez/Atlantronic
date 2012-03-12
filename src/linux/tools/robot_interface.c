@@ -443,13 +443,13 @@ int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, uint16_t pos)
+int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, float alpha)
 {
 	struct ax12_cmd_param cmd_arg;
 
 	cmd_arg.cmd_id = AX12_CMD_SET_GOAL_POSITION;
 	cmd_arg.id = id;
-	cmd_arg.param = pos;
+	cmd_arg.param = alpha * (1 << 26) / (2 * M_PI);
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_AX12;

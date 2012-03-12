@@ -35,15 +35,15 @@ void pince_configure()
 void pince_open()
 {
 	log(LOG_INFO, "pince_open");
-	ax12_set_goal_position(AX12_PINCE_RIGHT, 0x160);
-	ax12_set_goal_position(AX12_PINCE_LEFT, 0x295);
+	ax12_set_goal_position(AX12_PINCE_RIGHT, 15000000);
+	ax12_set_goal_position(AX12_PINCE_LEFT, -15000000);
 }
 
 void pince_close()
 {
 	log(LOG_INFO, "pince_close");
-	ax12_set_goal_position(AX12_PINCE_RIGHT, 0x295);
-	ax12_set_goal_position(AX12_PINCE_LEFT, 0x160);
+	ax12_set_goal_position(AX12_PINCE_RIGHT, -15000000);
+	ax12_set_goal_position(AX12_PINCE_LEFT,   15000000);
 }
 
 int pince_full()

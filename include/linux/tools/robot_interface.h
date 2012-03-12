@@ -56,7 +56,7 @@ int robot_interface_ax12_scan(struct robot_interface* data);
 
 int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_t new_id);
 
-int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, uint16_t pos);
+int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, float alpha);
 
 // ---------- gestion des pinces -----------------------------------------------
 

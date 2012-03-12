@@ -473,9 +473,39 @@ struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed)
 	return ax12_write16(id, AX12_MOVING_SPEED, speed & AX12_MAX_MOVING_SPEED);
 }
 
-struct ax12_error ax12_set_goal_position(uint8_t id, uint16_t goal)
+struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 {
-	return ax12_write16(id, AX12_GOAL_POSITION, goal & AX12_MAX_GOAL_POSITION);
+	// modulo 1 tour => retour dans [ 0 ; 1 tour = 2^26 [
+	if(alpha < 0)
+	{
+		alpha = 0x4000000 - ((-alpha) & 0x3ffffff);
+	}
+	else
+	{
+		alpha &= 0x3ffffff;
+	}
+
+	// retour dans [ -0.5 ; 0.5 ] tour
+	if( alpha & 0x2000000 )
+	{
+		alpha -= 0x4000000;
+	}
+
+	// passage en unité ax12
+	// zero au milieu qui vaut "0x1ff"
+	alpha = (((alpha >> 12) * 1228) >> 14) + 0x1ff;
+
+	// saturation
+	if(alpha < 0)
+	{
+		alpha = 0;
+	}
+	else if( alpha > 0x3ff)
+	{
+		alpha = 0x3ff;
+	}
+
+	return ax12_write16(id, AX12_GOAL_POSITION, (uint16_t) alpha);
 }
 
 struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
