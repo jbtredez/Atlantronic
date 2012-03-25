@@ -106,7 +106,7 @@ clean_modules:
 
 install: modules
 	@echo "  INSTALL $(shell pwd)/scripts/udev/65-atlantronic.rules"
-	@+install -D -m 644 -o root -g root -p scripts/udev/65-atlantronic.rules $(DESTDIR)/etc/udev/rules.d
+	@+install -D -m 644 -o root -g root -p scripts/udev/65-atlantronic.rules $(DESTDIR)/etc/udev/rules.d/65-atlantronic.rules
 	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
 
 qemu:
