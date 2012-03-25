@@ -12,6 +12,9 @@
 #       - obj-foo-homologation += x.o y.o z.o
 #       - lib-foo-homologation += -lncurses
 
+# pour le module noyau
+export INSTALL_MOD_PATH:=$(DESTDIR)
+
 # dossiers
 src := src
 obj := obj
@@ -103,7 +106,7 @@ clean_modules:
 
 install: modules
 	@echo "  INSTALL $(shell pwd)/scripts/udev/65-atlantronic.rules"
-	@+install scripts/udev/65-atlantronic.rules /etc/udev/rules.d -m 644 -o root -g root
+	@+install -D -m 644 -o root -g root -p scripts/udev/65-atlantronic.rules $(DESTDIR)/etc/udev/rules.d
 	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
 
 qemu:
