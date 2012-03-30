@@ -37,6 +37,7 @@ static enum trajectory_cmd_type trajectory_type;
 static enum trajectory_avoidance_type trajectory_avoidance_type;
 static enum trajectory_state trajectory_state;
 static int32_t trajectory_hokuyo_enable_check; //!< utilisation ou non des hokuyos
+static int32_t trajectory_static_check_enable; //!< verification des éléments statiques
 static struct graph_dijkstra_info trajectory_dijkstra_info[GRAPH_NUM_NODE];
 static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
 static uint8_t trajectory_current_graph_id;
@@ -64,6 +65,7 @@ static int trajectory_module_init()
 
 	trajectory_state = TRAJECTORY_STATE_NONE;
 	trajectory_hokuyo_enable_check = 1;
+	trajectory_static_check_enable = 1;
 
 	return 0;
 }
@@ -148,6 +150,39 @@ static void trajectory_update()
 	}
 
 	trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
+
+	// verification : trajectoire possible ?
+	if(trajectory_static_check_enable && (cmd_arg.type == TRAJECTORY_GOTO_XY || cmd_arg.type == TRAJECTORY_GOTO_XYA))
+	{
+		// TODO : check fait pour la marche avant, tolérance plus grande si on le fait en marche arrière ?
+		// on regarde si c'est possible / objets statiques de la table
+		// si c'est pas possible, on passe par le graph
+		struct fx_vect2 a_table;
+		struct fx_vect2 b_table;
+
+		// position actuelle avec alignement (marche avant) avec la destination
+		struct fx_vect_pos pos = trajectory_pos;
+		int32_t dx = trajectory_dest.x - trajectory_pos.x;
+		int32_t dy = trajectory_dest.y - trajectory_pos.y;
+		pos.alpha = fx_atan2(dy, dx);
+		pos.ca = fx_cos(pos.alpha);
+		pos.sa = fx_sin(pos.alpha);
+
+		int32_t xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, &pos, &a_table, &b_table) >> 16;
+
+		// passage en mm pour faire les calculs sur 32bits
+		dx = dx >> 16;
+		dy = dy >> 16;
+		int32_t dist2 = dx * dx +  dy * dy;
+		int32_t xmin2 = xmin * xmin;
+		if( xmin2 < dist2)
+		{
+			// trajectoire impossible, on passe par le graph
+			log(LOG_INFO, "goto - obstacle statique, utilisation du graph");
+			trajectory_state = TRAJECTORY_STATE_MOVING_TO_GRAPH;
+		}
+	}
+
 	trajectory_compute();
 }
 
@@ -237,7 +272,7 @@ static void trajectory_task(void* arg)
 			if( trajectory_hokuyo_enable_check )
 			{
 				struct fx_vect2 b;
-				detection_compute_front_object(&trajectory_pos, &a, &b);
+				detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &trajectory_pos, &a, &b);
 			}
 			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
 		}
@@ -258,6 +293,22 @@ static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 	int i;
 	int id = 0;
 	int32_t dist;
+	enum detection_type detect_type = DETECTION_FULL;
+
+	if(!trajectory_static_check_enable && !trajectory_hokuyo_enable_check)
+	{
+		// on y va direct, pas de gestion d'obstacles
+		return node_dist[0].id;
+	}
+
+	if(trajectory_static_check_enable && ! trajectory_hokuyo_enable_check)
+	{
+		detect_type = DETECTION_STATIC_OBJ;
+	}
+	else if(!trajectory_static_check_enable && trajectory_hokuyo_enable_check)
+	{
+		detect_type = DETECTION_DYNAMIC_OBJ;
+	}
 
 	for( i = 0 ; i < GRAPH_NUM_NODE; i++)
 	{
@@ -267,7 +318,7 @@ static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 		pos.alpha = fx_atan2(dy, dx);
 		pos.ca = fx_cos(pos.alpha);
 		pos.sa = fx_sin(pos.alpha);
-		xmin = detection_compute_front_object(&pos, &a_table, &b_table);
+		xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
@@ -311,21 +362,38 @@ static void trajectory_compute()
 			struct fx_vect2 b_table;
 			int32_t xmin;
 
-			for(i=0; i< GRAPH_NUM_LINK; i++)
+			if(!trajectory_static_check_enable && !trajectory_hokuyo_enable_check)
 			{
-				pos.x = graph_node[graph_link[i].a].pos.x;
-				pos.y = graph_node[graph_link[i].a].pos.y;
-				pos.alpha = graph_link[i].alpha;
-				pos.ca = fx_cos(pos.alpha);
-				pos.sa = fx_sin(pos.alpha);
-				xmin = detection_compute_front_object(&pos, &a_table, &b_table) >> 16;
-				if(graph_link[i].dist < xmin)
+				// pas de gestion d'obstacles
+			}
+			else
+			{
+				enum detection_type detect_type = DETECTION_FULL;
+				if(trajectory_static_check_enable && ! trajectory_hokuyo_enable_check)
 				{
-					trajectory_graph_valid_links[i] = 1;
+					detect_type = DETECTION_STATIC_OBJ;
 				}
-				else
+				else if(!trajectory_static_check_enable && trajectory_hokuyo_enable_check)
 				{
-					trajectory_graph_valid_links[i] = 0;
+					detect_type = DETECTION_DYNAMIC_OBJ;
+				}
+
+				for(i=0; i< GRAPH_NUM_LINK; i++)
+				{
+					pos.x = graph_node[graph_link[i].a].pos.x;
+					pos.y = graph_node[graph_link[i].a].pos.y;
+					pos.alpha = graph_link[i].alpha;
+					pos.ca = fx_cos(pos.alpha);
+					pos.sa = fx_sin(pos.alpha);
+					xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table) >> 16;
+					if(graph_link[i].dist < xmin)
+					{
+						trajectory_graph_valid_links[i] = 1;
+					}
+					else
+					{
+						trajectory_graph_valid_links[i] = 0;
+					}
 				}
 			}
 
@@ -520,6 +588,16 @@ void trajectory_goto_graph()
 enum trajectory_state trajectory_get_state()
 {
 	return trajectory_state;
+}
+
+void trajectory_disable_static_check()
+{
+	trajectory_static_check_enable = 0;
+}
+
+void trajectory_enable_static_check()
+{
+	trajectory_static_check_enable = 1;
 }
 
 void trajectory_disable_hokuyo()

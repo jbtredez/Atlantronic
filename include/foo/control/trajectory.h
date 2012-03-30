@@ -74,6 +74,12 @@ void trajectory_disable_hokuyo();
 //!< activation de l'arrêt sur obstacle détecté par hokuyo
 void trajectory_enable_hokuyo();
 
+//!< desactivation de l'arrêt sur obstacle statique
+void trajectory_enable_static_check();
+
+//!< activation de l'arrêt sur obstacle statique
+void trajectory_disable_static_check();
+
 enum trajectory_state trajectory_get_state();
 
 #endif

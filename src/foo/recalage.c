@@ -47,6 +47,7 @@ void recalage()
 
 	control_set_max_speed( (1 << 16) / 4, (1 << 16) / 4);
 	trajectory_disable_hokuyo();
+	trajectory_disable_static_check();
 
 	trajectory_straight_to_wall();
 	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_COLISION ) )
@@ -117,6 +118,7 @@ void recalage()
 
 free:
 	trajectory_enable_hokuyo();
+	trajectory_enable_static_check();
 	control_set_max_speed(1 << 16, 1 << 16);
 	trajectory_free();
 }

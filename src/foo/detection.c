@@ -18,6 +18,7 @@
 #include "location/location.h"
 #include "gpio.h"
 #include "table.h"
+#include "detection.h"
 
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
@@ -202,24 +203,41 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 	return x_min;
 }
 
-int32_t detection_compute_front_object(struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b)
+int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b)
 {
-	int32_t x_min;
-	int32_t x_min_table;
+	int32_t x_min = 1 << 30;
+	int32_t x_min_table = 1 << 30;
 	struct fx_vect2 c;
 	struct fx_vect2 d;
 
-	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	x_min = detection_compute_object_on_trajectory(pos, detection_object, detection_num_obj, a, b);
-	xSemaphoreGive(detection_mutex);
-
-	x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
-
-	if(x_min_table < x_min)
+	if(type == DETECTION_FULL || type == DETECTION_DYNAMIC_OBJ)
 	{
-		x_min = x_min_table;
-		*a = c;
-		*b = d;
+		xSemaphoreTake(detection_mutex, portMAX_DELAY);
+		x_min = detection_compute_object_on_trajectory(pos, detection_object, detection_num_obj, a, b);
+		xSemaphoreGive(detection_mutex);
+	}
+	else
+	{
+		c.x = x_min;
+		d.y = PARAM_LEFT_CORNER_Y;
+
+		d.x = x_min;
+		d.y = PARAM_RIGHT_CORNER_Y;
+
+		fx_vect2_robot_to_table(pos, &c, a);
+		fx_vect2_robot_to_table(pos, &d, b);
+	}
+
+	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
+	{
+		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
+
+		if(x_min_table < x_min)
+		{
+			x_min = x_min_table;
+			*a = c;
+			*b = d;
+		}
 	}
 
 	return x_min;
