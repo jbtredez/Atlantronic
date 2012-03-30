@@ -6,6 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
+#include "kernel/math/fx.h"
 
 struct kinematics
 {
