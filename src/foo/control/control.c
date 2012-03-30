@@ -588,8 +588,8 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 		}
 		control_dest.alpha = alpha;
 	}
-	control_dest.ca = fx_cos(control_dest.alpha);
-	control_dest.sa = fx_sin(control_dest.alpha);
+	control_dest.ca = fx_cos(control_alpha_align);
+	control_dest.sa = fx_sin(control_alpha_align);
 	control_dest.x = control_kinematics.x + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.ca) >> 30);
 	control_dest.y = control_kinematics.y + (int32_t)(((int64_t)control_dist * (int64_t)control_dest.sa) >> 30);
 
