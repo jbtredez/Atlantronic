@@ -9,7 +9,7 @@ const struct fx_vect2 table_contour[5] =
 //!< bordure diagonale zone marron coté bleu
 const struct fx_vect2 table_diag_border_blue[2] =
 {
-	{ -1175 << 16, -1000 << 16 }, { -1053 << 16, -260 << 16 }
+	{ -1175 << 16, -1000 << 16 }, { -1138 << 16, -251 << 16 }
 };
 
 //!< bordure case depart zone marron coté bleu
@@ -21,7 +21,7 @@ const struct fx_vect2 table_start_border_blue[4] =
 //!< bordure diagonale zone marron coté rouge
 const struct fx_vect2 table_diag_border_red[2] =
 {
-	{  1175 << 16, -1000 << 16 }, {  1053 << 16, -260 << 16 }
+	{  1175 << 16, -1000 << 16 }, {  1138 << 16, -251 << 16 }
 };
 
 //!< bordure case depart zone marron coté rouge
