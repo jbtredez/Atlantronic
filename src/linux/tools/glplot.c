@@ -486,6 +486,8 @@ void plot_table(struct graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
+	float plus_dx = 16384 * font_width * ratio_x;
+	float plus_dy = 16384 * font_width * ratio_y;
 	int i;
 	int j;
 
@@ -513,14 +515,12 @@ void plot_table(struct graphique* graph)
 		glEnd();
 	}
 
-	glPopMatrix();
-
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
 		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
 	}
 
@@ -529,7 +529,7 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
 		for(i=HOKUYO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_BAR+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(robot_interface.detection_hokuyo_pos[i].x/65536.0f, robot_interface.detection_hokuyo_pos[i].y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
 	}
 
@@ -542,7 +542,7 @@ void plot_table(struct graphique* graph)
 		{
 			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
 			{
-				draw_plus(robot_interface.control_usb_data[i].control_cons_x/65536.0f, robot_interface.control_usb_data[i].control_cons_y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+				draw_plus(robot_interface.control_usb_data[i].control_cons_x, robot_interface.control_usb_data[i].control_cons_y, plus_dx, plus_dy);
 			}
 		}
 	}
@@ -552,7 +552,7 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(i=0; i < max; i++)
 		{
-			draw_plus(robot_interface.control_usb_data[i].control_pos_x/65536.0f, robot_interface.control_usb_data[i].control_pos_y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(robot_interface.control_usb_data[i].control_pos_x, robot_interface.control_usb_data[i].control_pos_y, plus_dx, plus_dy);
 		}
 	}
 
@@ -568,15 +568,15 @@ void plot_table(struct graphique* graph)
 			// on trace les liens une seule fois
 			if( a < b)
 			{
-				float x1 = graph_node[a].pos.x / 65536.0f;
-				float y1 = graph_node[a].pos.y / 65536.0f;
-				float x2 = graph_node[b].pos.x / 65536.0f;
-				float y2 = graph_node[b].pos.y / 65536.0f;
+				float x1 = graph_node[a].pos.x;
+				float y1 = graph_node[a].pos.y;
+				float x2 = graph_node[b].pos.x;
+				float y2 = graph_node[b].pos.y;
 				glBegin(GL_LINES);
 				glVertex2f(x1, y1);
 				glVertex2f(x2, y2);
 				glEnd();
-				glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, font_base, "%d", graph_link[i].dist);
+				glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x * 65536, ratio_y * 65536, font_base, "%d", graph_link[i].dist);
 			}
 		}
 		glDisable(GL_LINE_STIPPLE);
@@ -587,8 +587,8 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
 		for(i=0; i < GRAPH_NUM_NODE; i++)
 		{
-			draw_plus(graph_node[i].pos.x / 65536.0f, graph_node[i].pos.y/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-			glPrintf_xcenter_yhigh2(graph_node[i].pos.x / 65536.0f, graph_node[i].pos.y/65536.0f, ratio_x, ratio_y, font_base, "%d", i);
+			draw_plus(graph_node[i].pos.x, graph_node[i].pos.y, plus_dx, plus_dy);
+			glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x * 65536, ratio_y * 65536, font_base, "%d", i);
 		}
 	}
 
@@ -596,8 +596,8 @@ void plot_table(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
 		glColor3f(0, 0, 0);
-		float x_robot = robot_interface.control_usb_data[max-1].control_pos_x/65536.0f; // en mm
-		float y_robot = robot_interface.control_usb_data[max-1].control_pos_y/65536.0f; // en mm
+		float x_robot = robot_interface.control_usb_data[max-1].control_pos_x;
+		float y_robot = robot_interface.control_usb_data[max-1].control_pos_y;
 		float alpha_robot = robot_interface.control_usb_data[max-1].control_pos_alpha * 360.0f / ((float)(1<<26)); // en degrés
 
 		glPushMatrix();
@@ -605,13 +605,12 @@ void plot_table(struct graphique* graph)
 		glRotatef(alpha_robot, 0, 0, 1);
 		glBegin(GL_LINES);
 		glVertex2f(0, 0);
-		glVertex2f(5 * font_height, 0);
+		glVertex2f(50 * 65536, 0);
 		glVertex2f(0, 0);
-		glVertex2f(0, 5 * font_height);
+		glVertex2f(0, 50 * 65536);
 		glEnd();
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
-		glScalef(1/65536.0f, 1/65536.0f, 1);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
 		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
@@ -621,6 +620,7 @@ void plot_table(struct graphique* graph)
 		glEnd();
 		glPopMatrix();
 	}
+	glPopMatrix();
 }
 
 void plot_hokuyo_hist(struct graphique* graph)
