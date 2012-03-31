@@ -26,7 +26,7 @@
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
-#define TRAJECTORY_POS_REACHED_TOLERANCE_X       (2 << 16)
+#define TRAJECTORY_POS_REACHED_TOLERANCE_X       (4 << 16)
 #define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
 
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
@@ -500,10 +500,8 @@ int32_t control_find_rotate(int32_t debut, int32_t fin)
 	{
 		alpha = 0x4000000 - ((-alpha) & 0x3ffffff);
 	}
-	else
-	{
-		alpha &= 0x3ffffff;
-	}
+
+	alpha &= 0x3ffffff;
 
 	// retour dans [ -0.5 ; 0.5 ] tour
 	if( alpha & 0x2000000 )
@@ -516,7 +514,7 @@ int32_t control_find_rotate(int32_t debut, int32_t fin)
 
 void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_type type, enum trajectory_way way)
 {
-	log_format(LOG_INFO, "param %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, way);
+	log_format(LOG_INFO, "param %d %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, type, way);
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 	if( control_state == CONTROL_READY_FREE)
