@@ -24,6 +24,7 @@ enum usb_cmd
 	USB_CMD_LOCATION_SET_POSITION,
 	USB_CMD_PINCE,
 	USB_CMD_AX12,
+	USB_CMD_RECALAGE,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

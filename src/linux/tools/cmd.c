@@ -27,6 +27,7 @@ int cmd_pince_close();
 int cmd_pince_configure();
 int cmd_straight(void* arg);
 int cmd_straight_to_wall();
+int cmd_recalage();
 int cmd_rotate(void* arg);
 int cmd_rotate_to(void* arg);
 int cmd_free();
@@ -53,6 +54,7 @@ COMMAND usb_commands[] = {
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
+	{ "recalage", cmd_recalage, "recalage"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "?", cmd_help, "Synonym for `help'" },
@@ -302,5 +304,11 @@ int cmd_pince_open()
 int cmd_pince_close()
 {
 	robot_interface_pince(cmd_robot, PINCE_CLOSE);
+	return CMD_SUCESS;
+}
+
+int cmd_recalage()
+{
+	robot_interface_recalage(cmd_robot);
 	return CMD_SUCESS;
 }

@@ -6,10 +6,23 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/driver/usb.h"
 #include "gpio.h"
 #include "location/location.h"
 #include "pince.h"
 #include "control/trajectory.h"
+
+void recalage();
+int recalage_module_init();
+
+int recalage_module_init()
+{
+	usb_add_cmd(USB_CMD_RECALAGE, &recalage);
+
+	return 0;
+}
+
+module_init(recalage_module_init, INIT_STRATEGY);
 
 int recalage_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
@@ -45,7 +58,7 @@ void recalage()
 		location_set_position(800 << 16, 800 << 16, -1 << 24);
 	}
 
-	control_set_max_speed( (1 << 16) / 4, (1 << 16) / 4);
+	control_set_max_speed( (1 << 16) / 3, 1 << 16);
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
 
@@ -102,6 +115,7 @@ void recalage()
 	{
 		location_set_position(((1500 << 16) + PARAM_NP_X), pos.y, 1 << 25);
 	}
+
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(10));
@@ -117,8 +131,8 @@ void recalage()
 	log(LOG_INFO, "recalage termine");
 
 free:
+	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();
 	control_set_max_speed(1 << 16, 1 << 16);
-	trajectory_free();
 }

@@ -62,6 +62,10 @@ int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t
 
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
 
+// ---------- gestion recalage ------------------------------------------------
+
+int robot_interface_recalage(struct robot_interface* data);
+
 // ---------- localisation -----------------------------------------------------
 
 int robot_interface_set_position(struct robot_interface* data, float x, float y, float alpha);
