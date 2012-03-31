@@ -6,7 +6,7 @@ Requirements :
 	- binutils-2.22
 	- gcc-4.5.3
 	- gdb-7.3.1
-	- newlib-1.19
+	- newlib-1.19 (--disable-newlib-supplied-syscalls --disable-newlib-mb --disable-newlib-hw-fp --disable-newlib-io-float)
 
 doc : 
 	- doxygen >= 1.6.3
