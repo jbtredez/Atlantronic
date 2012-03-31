@@ -9,7 +9,7 @@
 #include "kernel/vect_pos.h"
 
 #define GRAPH_NUM_NODE           20
-#define GRAPH_NUM_LINK           52
+#define GRAPH_NUM_LINK           56
 
 struct graph_link
 {
