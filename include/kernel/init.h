@@ -25,14 +25,12 @@
 #define INIT_FAULT                    "03"
 
 // init de la communication
-#define INIT_USART                    "04"
 #define INIT_CAN                      "05"
 
 // init adc
 #define INIT_ADC                      "06"
 
 #define INIT_ENCODERS                 "07"
-#define INIT_CURRENT                  "08"
 #define INIT_PWM                      "09"
 #define INIT_AX12                     "10"
 #define INIT_ODOMETRY                 "11"
