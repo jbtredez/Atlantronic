@@ -60,10 +60,10 @@ static int usb_module_init(void)
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 	RCC->AHBENR |= RCC_AHBENR_OTGFSEN; // USB OTG FS clock enable
 
+	USB_Init();
+
 	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
-
-	USB_Init();
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(usb_read_task, "usb_r", USB_READ_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
