@@ -7,11 +7,14 @@
 #include "kernel/task.h"
 #include "kernel/event.h"
 #include "kernel/rcc.h"
+#include "kernel/driver/usb.h"
+#include "kernel/log.h"
 #include "gpio.h"
 
 #define END_STACK_SIZE           100
-const uint64_t DUREE_MATCH_TICK = 90ULL * 72000000ULL;
+uint64_t end_match_tick = 90ULL * 72000000ULL;
 
+static void end_cmd_set_time(void* arg);
 static void end_task(void *arg);
 
 static int end_module_init()
@@ -24,23 +27,31 @@ static int end_module_init()
 		return ERR_INIT_END;
 	}
 
+	usb_add_cmd(USB_CMD_MATCH_TIME, &end_cmd_set_time);
+
 	return 0;
 }
 
 module_init(end_module_init, INIT_END);
 
+static void end_cmd_set_time(void* arg)
+{
+	// temps passé en ms
+	uint64_t time = *((uint32_t*) arg);
+	if( ! (vTaskGetEvent() & EVENT_GO))
+	{
+		end_match_tick = ms_to_tick( time ); 
+		log_format(LOG_INFO, "duree du match => %d ms", (int)time);
+	}
+}
+
 static void end_task(void *arg)
 {
 	(void) arg;
 
-//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-	while(getGo() == 0)
-	{
-		vTaskDelay(ms_to_tick(50));
-	}
-
-	vTaskSetEvent(EVENT_GO);
-	vTaskDelay(DUREE_MATCH_TICK);
+	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	log(LOG_INFO, "GO");
+	vTaskDelay(end_match_tick);
 	vTaskSetEvent(EVENT_END);
 
 	exitModules();

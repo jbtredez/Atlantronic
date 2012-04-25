@@ -4,10 +4,13 @@
 #include "kernel/task.h"
 #include "kernel/event.h"
 #include "kernel/systick.h"
+#include "kernel/driver/usb.h"
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
+
+static void gpio_cmd_go();
 
 static int gpio_module_init(void)
 {
@@ -15,7 +18,7 @@ static int gpio_module_init(void)
 	gpio_go = 0;
 	gpio_recaler = 0;
 
-	// cpateur contact bordure droit et gauche, LED warning
+	// capteur contact bordure droit et gauche, LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
 	// PB0 entrée input flotante
@@ -75,10 +78,28 @@ static int gpio_module_init(void)
 
 	setLed(LED_0 | LED_1 | LED_2 | LED_3 | LED_4 | LED_5 | LED_WARNING);
 
+	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
+
 	return 0;
 }
 
 module_init(gpio_module_init, INIT_GPIO);
+
+static void gpio_cmd_go()
+{
+	gpio_go = 1;
+	setLed(0x23F);
+	systick_start_match();
+	vTaskSetEvent(EVENT_GO);
+}
+
+static portBASE_TYPE gpio_go_from_isr()
+{
+	gpio_go = 1;
+	setLed(0x23F);
+	systick_start_match_from_isr();
+	return vTaskSetEventFromISR(EVENT_GO);
+}
 
 void isr_exti9_5(void)
 {
@@ -89,18 +110,12 @@ void isr_exti9_5(void)
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
 		EXTI->PR |= EXTI_PR_PR8;
-		gpio_go = 1;
-		setLed(0x23F);
-		systick_start_match_from_isr();
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_GO);
+		xHigherPriorityTaskWoken = gpio_go_from_isr();
 	}
 	if( EXTI->PR & EXTI_PR_PR6)
 	{
 		EXTI->PR |= EXTI_PR_PR6;
-		gpio_go = 1;
-		setLed(0x23F);
-		systick_start_match_from_isr();
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_GO);
+		xHigherPriorityTaskWoken = gpio_go_from_isr();
 	}
 	if( EXTI->PR & EXTI_PR_PR9)
 	{

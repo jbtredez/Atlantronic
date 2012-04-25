@@ -17,6 +17,7 @@ int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
 int cmd_help();
 int cmd_quit();
+int cmd_go();
 int cmd_goto_graph(void* arg);
 int cmd_goto_near(void* arg);
 int cmd_goto_near_xy(void* arg);
@@ -25,6 +26,7 @@ int cmd_max_speed(void* arg);
 int cmd_pince_open();
 int cmd_pince_close();
 int cmd_pince_configure();
+int cmd_set_match_time(void* arg);
 int cmd_straight(void* arg);
 int cmd_straight_to_wall();
 int cmd_recalage();
@@ -40,7 +42,9 @@ COMMAND usb_commands[] = {
 	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
 	{ "control_print_param", cmd_control_print_param, "control_print_param"},
+	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "free", cmd_free, "free()" },
+	{ "go", cmd_go, "go" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
 	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
@@ -310,5 +314,26 @@ int cmd_pince_close()
 int cmd_recalage()
 {
 	robot_interface_recalage(cmd_robot);
+	return CMD_SUCESS;
+}
+
+int cmd_go()
+{
+	robot_interface_go(cmd_robot);
+	return CMD_SUCESS;
+}
+
+int cmd_set_match_time(void* arg)
+{
+	int time;
+
+	int count = sscanf(arg, "%d", &time);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_set_match_time(cmd_robot, time);
 	return CMD_SUCESS;
 }

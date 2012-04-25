@@ -647,6 +647,23 @@ int robot_interface_recalage(struct robot_interface* data)
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_go(struct robot_interface* data)
+{
+	char buffer[1];
+	buffer[0] = USB_CMD_GO;
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_set_match_time(struct robot_interface* data, uint32_t time)
+{
+	char buffer[5];
+	buffer[0] = USB_CMD_GO;
+	memcpy(buffer + 1, &time, 4);
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot)
 {
 	struct control_cmd_max_speed_arg cmd_arg;
