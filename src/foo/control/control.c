@@ -105,8 +105,8 @@ static int control_module_init()
 #error "revoir les gains d'asservissement"
 #endif
 
-	pid_init(&control_pid_av, 60000000, 15000000, 0, PWM_ARR, 32);
-	pid_init(&control_pid_rot, 3000000, 500000, 0, PWM_ARR, 26);
+	pid_init(&control_pid_av, 100000000, 10000000, 0, PWM_ARR, 32);
+	pid_init(&control_pid_rot, 2000000, 300000, 0, PWM_ARR, 26);
 
 	control_kx = 0;
 	control_ky = 0;
