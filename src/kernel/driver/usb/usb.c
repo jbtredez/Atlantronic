@@ -14,6 +14,8 @@
 #define USB_READ_STACK_SIZE      350
 #define USB_WRITE_STACK_SIZE      50
 
+// variables statiques => segment bss, initialisation a 0
+
 static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
@@ -34,21 +36,7 @@ static volatile unsigned int usb_endpoint_ready;
 
 static int usb_module_init(void)
 {
-	int i;
-
-	usb_buffer_begin = 0;
-	usb_buffer_end = 0;
-	usb_write_size = 0;
 	usb_endpoint_ready = 1;
-	usb_read_size = 0;
-	usb_read_size2 = 0;
-	usb_rx_buffer_id = 0;
-	usb_rx_waiting = 0;
-
-	for(i = 0; i < USB_CMD_NUM; i++)
-	{
-		usb_cmd[i] = NULL;
-	}
 
 	usb_mutex = xSemaphoreCreateMutex();
 
