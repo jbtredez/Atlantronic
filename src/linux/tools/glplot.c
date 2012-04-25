@@ -130,11 +130,6 @@ int main(int argc, char *argv[])
 	{
 		g_thread_init(NULL);
 	}
-	else
-	{
-		fprintf(stderr, "pas de support des g_thread, risque de bug (non prévu et non testé) - abandon");
-		return 0;
-	}
 
 	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
