@@ -15,6 +15,10 @@ int64_t systick_get_time_from_isr();
 
 int64_t systick_get_match_time();
 
+//!< enregistrement du temps du debut du match (si match non débuté)
+void systick_start_match();
+
+//!< enregistrement du temps du debut du match (si match non débuté)
 void systick_start_match_from_isr();
 
 #endif

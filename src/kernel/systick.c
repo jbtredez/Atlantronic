@@ -137,3 +137,10 @@ void systick_start_match_from_isr()
 		systick_time_start_match = systick_get_time_from_isr();
 	}
 }
+
+void systick_start_match()
+{
+	portENTER_CRITICAL();
+	systick_start_match_from_isr();
+	portEXIT_CRITICAL();
+}
