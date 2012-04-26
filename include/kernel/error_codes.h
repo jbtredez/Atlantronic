@@ -53,6 +53,8 @@ enum fault
 #define ERR_INIT_ERROR          0x212
 #define ERR_INIT_ODOMETRY       0x213
 #define ERR_INIT_FAULT          0x214
-#define ERR_INIT_TEST           0x215
+#define ERR_INIT_STRAT          0x215
+#define ERR_INIT_ARM            0x216
+#define ERR_INIT_TEST           0x217
 
 #endif

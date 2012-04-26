@@ -32,7 +32,7 @@ int strat_module_init()
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_TEST;
+		return ERR_INIT_STRAT;
 	}
 
 	strat_dir = 1;
