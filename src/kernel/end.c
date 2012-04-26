@@ -53,6 +53,7 @@ static void end_task(void *arg)
 	log(LOG_INFO, "GO");
 	vTaskDelay(end_match_tick);
 	vTaskSetEvent(EVENT_END);
+	log(LOG_INFO, "Fin du match");
 
 	exitModules();
 	setLed(0x00);
