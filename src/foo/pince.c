@@ -12,6 +12,10 @@ static int pince_module_init()
 {
 	usb_add_cmd(USB_CMD_PINCE, &pince_cmd);
 
+	// TODO mettre les limites
+	ax12_set_goal_limit(AX12_PINCE_RIGHT, 0, 0x3ff);
+	ax12_set_goal_limit(AX12_PINCE_LEFT, 0, 0x3ff);
+
 	return 0;
 }
 
@@ -19,7 +23,6 @@ module_init(pince_module_init, INIT_PINCE);
 
 void pince_configure()
 {
-	// TODO ping des pinces // verif de la com
 	ax12_set_moving_speed(AX12_PINCE_RIGHT, 0x3ff);
 	ax12_set_moving_speed(AX12_PINCE_LEFT, 0x3ff);
 
@@ -28,8 +31,8 @@ void pince_configure()
 
 	ax12_set_torque_enable(AX12_PINCE_RIGHT, 1);
 	ax12_set_torque_enable(AX12_PINCE_LEFT, 1);
-	ax12_write8(AX12_PINCE_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
-	ax12_write8(AX12_PINCE_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
+//	ax12_write8(AX12_PINCE_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
+//	ax12_write8(AX12_PINCE_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
 }
 
 void pince_open()

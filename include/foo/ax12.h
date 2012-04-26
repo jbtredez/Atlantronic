@@ -57,6 +57,9 @@ struct ax12_error
 //!< affichage d'une erreur ax12
 void ax12_print_error(int id, struct ax12_error err);
 
+//!< configuration des limites d'un ax12 (limites mécaniques par exemple pour ne pas forcer)
+void ax12_set_goal_limit(uint8_t id, uint16_t min, uint16_t max);
+
 //!< ping un ax12.
 struct ax12_error ax12_ping(uint8_t id);
 struct ax12_error ax12_action(uint8_t id);

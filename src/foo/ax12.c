@@ -44,6 +44,12 @@ struct ax12_status
 	uint8_t arg[AX12_ARG_MAX];
 };
 
+struct ax12_limits
+{
+	uint16_t minGoal;
+	uint16_t maxGoal;
+};
+
 static void ax12_task(void *arg);
 static xQueueHandle ax12_queue;
 static uint8_t ax12_write_dma_buffer[6 + AX12_ARG_MAX];
@@ -58,6 +64,7 @@ static void ax12_cmd_scan();
 static void ax12_cmd_set_id(uint8_t old_id, uint8_t id);
 
 static struct ax12_error ax12_error[AX12_MAX_ID];
+static struct ax12_limits ax12_limits[AX12_MAX_ID];
 
 static int ax12_module_init()
 {
@@ -87,6 +94,7 @@ static int ax12_module_init()
 	for(i = 0; i < AX12_MAX_ID; i++)
 	{
 		ax12_error[i].transmit_error = 0xff;
+		ax12_limits[i].maxGoal = 0x3ff;
 	}
 
 	return 0;
@@ -495,14 +503,24 @@ struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 	// zero au milieu qui vaut "0x1ff"
 	alpha = (((alpha >> 12) * 1228) >> 14) + 0x1ff;
 
-	// saturation
-	if(alpha < 0)
+	uint16_t min = 0;
+	uint16_t max = 0x3ff;
+
+	// si c'est un ax12 connu, on regarde les limites
+	if( id < AX12_MAX_ID )
 	{
-		alpha = 0;
+		min = ax12_limits[id].minGoal;
+		max = ax12_limits[id].maxGoal;
 	}
-	else if( alpha > 0x3ff)
+
+	// saturation
+	if(alpha < min)
 	{
-		alpha = 0x3ff;
+		alpha = min;
+	}
+	else if( alpha > max)
+	{
+		alpha = max;
 	}
 
 	return ax12_write16(id, AX12_GOAL_POSITION, (uint16_t) alpha);
@@ -592,4 +610,25 @@ static void ax12_cmd_set_id(uint8_t old_id, uint8_t id)
 	{
 		log(LOG_ERROR, "changement d'id par broadcast non autorisé");
 	}
+}
+
+void ax12_set_goal_limit(uint8_t id, uint16_t min, uint16_t max)
+{
+	if( id >= AX12_MAX_ID )
+	{
+		return;
+	}
+
+	if(min > 0x3ff)
+	{
+		min = 0x3ff;
+	}
+
+	if( max > 0x3ff)
+	{
+		max = 0x3ff;
+	}
+
+	ax12_limits[id].minGoal = min;
+	ax12_limits[id].maxGoal = max;
 }
