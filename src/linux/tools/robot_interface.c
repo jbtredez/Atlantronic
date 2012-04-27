@@ -658,7 +658,7 @@ int robot_interface_go(struct robot_interface* data)
 int robot_interface_set_match_time(struct robot_interface* data, uint32_t time)
 {
 	char buffer[5];
-	buffer[0] = USB_CMD_GO;
+	buffer[0] = USB_CMD_MATCH_TIME;
 	memcpy(buffer + 1, &time, 4);
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
