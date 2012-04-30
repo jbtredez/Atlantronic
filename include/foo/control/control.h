@@ -61,13 +61,13 @@ struct control_cmd_param_arg
 	int32_t kx;
 	int32_t ky;
 	int32_t kalpha;
-};
+}  __attribute__((packed));
 
 struct control_cmd_max_speed_arg
 {
 	uint32_t vmax_av;
 	uint32_t vmax_rot;
-};
+}  __attribute__((packed));
 
 enum trajectory_way
 {
