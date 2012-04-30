@@ -5,12 +5,14 @@
 #include "kernel/event.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
+#include "kernel/log.h"
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
 
 static void gpio_cmd_go();
+static void gpio_cmd_color(void* arg);
 
 static int gpio_module_init(void)
 {
@@ -22,16 +24,17 @@ static int gpio_module_init(void)
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
 	// PB0 entrée input flotante
+	GPIOB->CRL = (GPIOB->CRL & ~GPIO_CRL_MODE0 & ~GPIO_CRL_CNF0) | GPIO_CRL_CNF0_0;
 	// PB1 entrée input flotante
-	GPIOB->CRL = ( GPIOB->CRL & ~(
-	                GPIO_CRL_MODE0 | GPIO_CRL_CNF0 |
-	                GPIO_CRL_MODE1 | GPIO_CRL_CNF1
-		         ) ) |
-		            GPIO_CRL_CNF0_0 |
-		            GPIO_CRL_CNF1_0 ;
-
+	GPIOB->CRL = (GPIOB->CRL & ~GPIO_CRL_MODE1 & ~GPIO_CRL_CNF1) | GPIO_CRL_CNF1_0;
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
+	// PB12 sortie push-pull, 2MHz (moteur pas à pas)
+	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE12 & ~GPIO_CRH_CNF12) | GPIO_CRH_MODE12_1;
+	// PB13 sortie push-pull, 2MHz (moteur pas à pas)
+	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE13 & ~GPIO_CRH_CNF13) | GPIO_CRH_MODE13_1;
+	// PB14 sortie push-pull, 2MHz (moteur pas à pas)
+	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE14 & ~GPIO_CRH_CNF14) | GPIO_CRH_MODE14_1;
 
 	// Boutons 1, 2 et 3
 	// activation GPIOD
@@ -58,7 +61,6 @@ static int gpio_module_init(void)
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4) | GPIO_CRL_MODE4_1;
 	// PE5 sortie push-pull, 2MHz
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE5 & ~GPIO_CRL_CNF5) | GPIO_CRL_MODE5_1;
-
 	// PE6 : entree input flotante ( bouton go )
 	GPIOE->CRL = (GPIOE->CRL & ~GPIO_CRL_MODE6 & ~GPIO_CRL_CNF6) | GPIO_CRL_CNF6_0;
 
@@ -79,6 +81,7 @@ static int gpio_module_init(void)
 	setLed(LED_0 | LED_1 | LED_2 | LED_3 | LED_4 | LED_5 | LED_WARNING);
 
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
+	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
 
 	return 0;
 }
@@ -91,6 +94,26 @@ static void gpio_cmd_go()
 	setLed(0x23F);
 	systick_start_match();
 	vTaskSetEvent(EVENT_GO);
+}
+
+static void gpio_cmd_color(void* arg)
+{
+	uint8_t new_color = *((uint8_t*) arg);
+	if(gpio_go == 0)
+	{
+		if(new_color == COLOR_RED)
+		{
+			color = COLOR_RED;
+			setLed(0x06);
+			log(LOG_INFO, "couleur => rouge");
+		}
+		else
+		{
+			color = COLOR_BLUE;
+			log(LOG_INFO, "couleur => bleu");
+			setLed(0x30);
+		}
+	}
 }
 
 static portBASE_TYPE gpio_go_from_isr()

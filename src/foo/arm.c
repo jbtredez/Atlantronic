@@ -5,13 +5,31 @@
 #include "arm.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/systick.h"
 #include "kernel/rcc.h"
+#include "kernel/log.h"
+#include "kernel/trapeze.h"
+#include "kernel/driver/usb.h"
 #include "ax12.h"
 
 #define ARM_STACK_SIZE       300
+#define ARM_STEP_BY_MM         5
+#define ARM_HZ              1000
 
+static xSemaphoreHandle arm_mutex;
+static uint32_t arm_z_cmd;    //!< commande en hauteur du bras
+
+static int32_t arm_z;
+static int32_t arm_vz;
+static int32_t arm_z_step;
+
+const int32_t ARM_VMAX = (125 << 16) / ARM_HZ;
+const int32_t ARM_AMAX = (400 << 16) / (ARM_HZ * ARM_HZ);
+const int32_t ARM_DMAX = (400 << 16) / (ARM_HZ * ARM_HZ);
+
+static void arm_cmd_zab(void* arg);
 static void arm_task();
 
 static int arm_module_init()
@@ -24,11 +42,18 @@ static int arm_module_init()
 		return ERR_INIT_ARM;
 	}
 
+	arm_mutex = xSemaphoreCreateMutex();
+
+	if(arm_mutex == NULL)
+	{
+		return ERR_INIT_ARM;
+	}
+
 	// TODO : mettre les limites
 	ax12_set_goal_limit(AX12_ARM_1, 0, 0x3ff);
 	ax12_set_goal_limit(AX12_ARM_2, 0, 0x3ff);
 
-	// TODO gestion usb
+	usb_add_cmd(USB_CMD_ARM, &arm_cmd_zab);
 
 	return 0;
 }
@@ -37,23 +62,69 @@ module_init(arm_module_init, INIT_ARM);
 
 static void arm_task()
 {
+	// TODO procedure de mise à zéro
+	arm_z = 0;
+	arm_vz = 0;
+	arm_z_step = 0;
+
+	GPIOB->ODR |= GPIO_ODR_ODR12;
+
 	while(1)
 	{
+		arm_vz = trapeze_speed_filter(arm_vz, arm_z_cmd - arm_z, ARM_AMAX, ARM_DMAX, ARM_VMAX);
+		arm_z += arm_vz;
+
+		int32_t delta = ((arm_z * ARM_STEP_BY_MM) >> 16) - arm_z_step;
+		if( delta > 0 )
+		{
+			GPIOB->ODR |= GPIO_ODR_ODR13;
+			GPIOB->ODR &= ~GPIO_ODR_ODR14;
+			GPIOB->ODR |= GPIO_ODR_ODR14;
+			arm_z_step++;
+		}
+		else if( delta < 0)
+		{
+			GPIOB->ODR &= ~GPIO_ODR_ODR13;
+			GPIOB->ODR &= ~GPIO_ODR_ODR14;
+			GPIOB->ODR |= GPIO_ODR_ODR14;
+			arm_z_step--;
+		}
+
 		vTaskDelay(ms_to_tick(1));
 	}
 }
 
-int arm_goto_zab(int32_t z, int32_t a, int32_t b)
+void arm_cmd_zab(void* arg)
 {
-	// TODO axe z
+	struct arm_cmd_zab_param* param = (struct arm_cmd_zab_param*) arg;
+
+	arm_goto_zab(param->z, param->a, param->b);
+}
+
+int arm_goto_zab(uint32_t z, int32_t a, int32_t b)
+{
+	log_format(LOG_INFO, "z = %zd a = %zd b = %zd", z, a, b);
+
 	ax12_set_goal_position(AX12_ARM_1, a);
 	ax12_set_goal_position(AX12_ARM_2, b);
+
+	// saturation pour ne pas forcer
+	if( z > (200 << 16) )
+	{
+		z = (200 << 16);
+	}
+
+	xSemaphoreTake(arm_mutex, portMAX_DELAY);
+	arm_z_cmd = z;
+	xSemaphoreGive(arm_mutex);
 
 	return 0;
 }
 
-int arm_goto_xyz(int32_t x, int32_t y, int32_t z)
+int arm_goto_xyz(int32_t x, int32_t y, uint32_t z)
 {
+	log_format(LOG_INFO, "x = %zd y = %zd z = %zd", x, y, z);
+
 	// TODO changement repère robot vers repere articulaire
 	int32_t a = 0;
 	int32_t b = 0;

@@ -62,11 +62,17 @@ int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t
 
 int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
 
+// ---------- gestion du bras --------------------------------------------------
+
+int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b);
+
 // ---------- gestion recalage, go, couleur... ---------------------------------
 
 int robot_interface_recalage(struct robot_interface* data);
 
 int robot_interface_go(struct robot_interface* data);
+
+int robot_interface_color(struct robot_interface* data, uint8_t color);
 
 //!< time : temps en ms
 int robot_interface_set_match_time(struct robot_interface* data, uint32_t time);

@@ -12,10 +12,17 @@
 //!< @param a : angle du permier ax12 (2^-26 tours)
 //!< @param b : angle du second ax12 (2^-26 tours)
 //!< @return 0 si c'est possible, -1 sinon
-int arm_goto_zab(int32_t z, int32_t a, int32_t b);
+int arm_goto_zab(uint32_t z, int32_t a, int32_t b);
 
 //!< met le bras au dessus de la position (x, y, z) (repère robot) en fonction
 //!< du plus court chemin
-int arm_goto_xyz(int32_t x, int32_t y, int32_t z);
+int arm_goto_xyz(int32_t x, int32_t y, uint32_t z);
+
+struct arm_cmd_zab_param
+{
+	uint32_t z;
+	int32_t a;
+	int32_t b;
+} __attribute__((packed));
 
 #endif

@@ -13,6 +13,7 @@
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
 #include "foo/ax12.h"
+#include "foo/arm.h"
 
 const char* err_description[FAULT_MAX] =
 {
@@ -639,6 +640,21 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b)
+{
+	struct arm_cmd_zab_param cmd_arg;
+
+	cmd_arg.z = z * 65536.0f;
+	cmd_arg.a = a * (1 << 26) / (2 * M_PI);
+	cmd_arg.b = b * (1 << 26) / (2 * M_PI);
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_ARM;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_recalage(struct robot_interface* data)
 {
 	char buffer[1];
@@ -651,6 +667,15 @@ int robot_interface_go(struct robot_interface* data)
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_GO;
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
+int robot_interface_color(struct robot_interface* data, uint8_t color)
+{
+	char buffer[2];
+	buffer[0] = USB_CMD_COLOR;
+	buffer[1] = color;
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }

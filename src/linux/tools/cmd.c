@@ -12,6 +12,7 @@
 static void (*cmd_exit_callback)(void) = NULL;
 static struct robot_interface* cmd_robot = NULL;
 
+int cmd_arm_zab(void *arg);
 int cmd_ax12_scan();
 int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
@@ -26,6 +27,7 @@ int cmd_max_speed(void* arg);
 int cmd_pince_open();
 int cmd_pince_close();
 int cmd_pince_configure();
+int cmd_set_color(void* arg);
 int cmd_set_match_time(void* arg);
 int cmd_straight(void* arg);
 int cmd_straight_to_wall();
@@ -37,6 +39,7 @@ int cmd_control_param(void*);
 int cmd_control_print_param();
 
 COMMAND usb_commands[] = {
+	{ "arm_zab", cmd_arm_zab, "deplacement du bras (z, a, b)"},
 	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
 	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
@@ -59,6 +62,7 @@ COMMAND usb_commands[] = {
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
 	{ "recalage", cmd_recalage, "recalage"},
+	{ "set_color", cmd_set_color, "set color"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "?", cmd_help, "Synonym for `help'" },
@@ -335,5 +339,37 @@ int cmd_set_match_time(void* arg)
 	}
 
 	robot_interface_set_match_time(cmd_robot, time);
+	return CMD_SUCESS;
+}
+
+int cmd_set_color(void* arg)
+{
+	int color;
+
+	int count = sscanf(arg, "%d", &color);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_color(cmd_robot, (uint8_t) color);
+	return CMD_SUCESS;
+}
+
+int cmd_arm_zab(void *arg)
+{
+	float z;
+	float a;
+	float b;
+
+	int count = sscanf(arg, "%f %f %f", &z, &a, &b);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_arm_zab(cmd_robot, z, a, b);
 	return CMD_SUCESS;
 }
