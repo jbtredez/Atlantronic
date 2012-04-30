@@ -1,0 +1,52 @@
+\documentclass[a4paper,11pt]{report}
+\usepackage[a4paper]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[normalem]{ulem}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{amsmath,amsfonts,amssymb}
+
+% macro pour enlever le nom chapitre
+\makeatletter
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \interlinepenalty\@M
+    \ifnum \c@secnumdepth >\m@ne
+        \Huge\bfseries \thechapter\quad
+    \fi
+    \Huge \bfseries #1\par\nobreak
+    \vskip 40\p@
+  }}
+
+\def\@makeschapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright
+    \normalfont
+    \interlinepenalty\@M
+    \Huge \bfseries  #1\par\nobreak
+    \vskip 40\p@
+  }}
+\makeatother
+
+\title
+{
+	\normalsize
+	{
+		Atlantronic\\
+		2011-2012
+	}\\
+	\vspace{15mm}
+	\Huge Documentation générale
+}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\input{usb/usb.tex}
+
+\end{document}

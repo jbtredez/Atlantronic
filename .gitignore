@@ -16,6 +16,10 @@ doc/doxygen
 *.hex
 *~
 *.png
+*.aux
+*.log
+*.pdf
+*.toc
 
 Module.symvers
 Module.markers

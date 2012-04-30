@@ -1,0 +1,32 @@
+\chapter{USB}
+
+\section{Introduction}
+
+Une grande partie des fonctions implémentées sont utilisables depuis l'usb (via l'interface en ligne de commande usb\_interface ou glplot par exemple). Il y a plusieurs objectifs :
+\begin{itemize}
+\item récupérer les log
+\item afficher des informations sur ce qui se passe en temps réel (tracer des courbes de vitesses, afficher les points vus par les hokuyos ...)
+\item être capable de faire des tests unitaires et des tests d'intégration sur le robot.
+\item commander le robot à distance lors des tests pour tester une stratégie avant de la coder
+\end{itemize}
+
+\section{Interfaces}
+Les cartes foo et bar sont en mode device et ne présentent qu'une seule interface.
+Endpoints :
+\begin{itemize}
+\item 0 : contrôle
+\item 1 : bulk in (carte -> pc)
+\item 2 : bulk out (pc -> carte)
+\end{itemize}
+
+\section{Format des messages}
+
+Les messages qui transitent sur les endpoints bulk sont composés d'une entête et des données :
+
+\begin{itemize}
+\item taille (16 bit)
+\item type (16 bits)
+\item data
+\end{itemize}
+
+\clearpage

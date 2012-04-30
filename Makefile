@@ -79,6 +79,10 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@
 	$(V)@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
+%.pdf: %.tex
+	pdflatex -output-directory doc $<
+	pdflatex -output-directory doc $<
+
 # cibles
 # cible par defaut :
 ifneq ($(ARCH),)
@@ -138,7 +142,15 @@ dot: $(BIN_DOC)
 
 .PHONY: dot
 
-doc: dot
+pdf: $(doc)/atlantronic.pdf
+
+.PHONY: pdf
+
+TEXSRC:= $(shell find $(doc)/ -name "*.tex")
+
+doc/atlantronic.pdf: $(TEXSRC)
+
+doc: dot pdf
 	@mkdir -p $(doc)/doxygen
 	@doxygen Doxyfile > /dev/null
 
@@ -148,6 +160,13 @@ clean:
 	@rm -frv $(obj)
 	@rm -frv $(bin)
 	@rm -frv $(doc)/doxygen
+	@rm -fv $(doc)/*.pdf
+	@rm -fv $(doc)/*.dvi
+	@rm -fv $(doc)/*.aux
+	@rm -fv $(doc)/*.ps
+	@rm -fv $(doc)/*.log
+	@rm -fv $(doc)/*.toc
+
 	@find . -name \*~ -exec rm \-fv {} \;
 
 .PHONY: clean
