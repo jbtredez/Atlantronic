@@ -17,6 +17,7 @@
 #define ARM_STACK_SIZE       300
 #define ARM_STEP_BY_MM         5
 #define ARM_HZ              1000
+#define ARM_ZMAX            (200 << 16)
 
 static xSemaphoreHandle arm_mutex;
 static uint32_t arm_z_cmd;    //!< commande en hauteur du bras
@@ -109,9 +110,9 @@ int arm_goto_zab(uint32_t z, int32_t a, int32_t b)
 	ax12_set_goal_position(AX12_ARM_2, b);
 
 	// saturation pour ne pas forcer
-	if( z > (200 << 16) )
+	if( z > ARM_ZMAX )
 	{
-		z = (200 << 16);
+		z = ARM_ZMAX;
 	}
 
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
