@@ -7,7 +7,7 @@
 
 //! changement de repere du repère local au repere absolu
 //! origin : origine du repère local dans le repère absolu
-void vect2_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out)
+void vect2_loc_to_abs(const struct fx_vect_pos *origin, const struct fx_vect2 *pos_in, struct fx_vect2 *pos_out)
 {
 	pos_out->x = origin->x + (((int64_t)origin->ca * (int64_t)pos_in->x - (int64_t)origin->sa * (int64_t)pos_in->y) >> 30);
 	pos_out->y = origin->y + (((int64_t)origin->sa * (int64_t)pos_in->x + (int64_t)origin->ca * (int64_t)pos_in->y) >> 30);
@@ -15,7 +15,7 @@ void vect2_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struc
 
 //! changement de repere du repère local au repere absolu
 //! origin : origine du repère local dans le repère absolu
-void pos_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out)
+void pos_loc_to_abs(const struct fx_vect_pos *origin, const struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out)
 {
 	pos_out->x = origin->x + (((int64_t)origin->ca * (int64_t)pos_in->x - (int64_t)origin->sa * (int64_t)pos_in->y) >> 30);
 	pos_out->y = origin->y + (((int64_t)origin->sa * (int64_t)pos_in->x + (int64_t)origin->ca * (int64_t)pos_in->y) >> 30);
@@ -26,7 +26,7 @@ void pos_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, stru
 
 //! changement de repere du repère absolu au repere local
 //! origin : origine du repère local dans le repère absolu
-void pos_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out)
+void pos_abs_to_loc(const struct fx_vect_pos *origin, const struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out)
 {
 	int32_t x = pos_in->x - origin->x;
 	int32_t y = pos_in->y - origin->y;
@@ -39,7 +39,7 @@ void pos_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, stru
 
 //! changement de repere du repère absolu au repere local
 //! origin : origine du repère local dans le repère absolu
-void vect2_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out)
+void vect2_abs_to_loc(const struct fx_vect_pos *origin, const struct fx_vect2 *pos_in, struct fx_vect2 *pos_out)
 {
 	int32_t x = pos_in->x - origin->x;
 	int32_t y = pos_in->y - origin->y;

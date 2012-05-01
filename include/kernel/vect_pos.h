@@ -19,12 +19,12 @@ struct fx_vect_pos
 	int32_t sa;
 };
 
-void vect2_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void vect2_loc_to_abs(const struct fx_vect_pos *origin, const struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void vect2_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void vect2_abs_to_loc(const struct fx_vect_pos *origin, const struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void pos_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
+void pos_loc_to_abs(const struct fx_vect_pos *origin, const struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
 
-void pos_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
+void pos_abs_to_loc(const struct fx_vect_pos *origin, const struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
 
 #endif
