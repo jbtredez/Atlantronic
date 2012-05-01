@@ -1,5 +1,6 @@
 #include "kernel/math/trigo.h"
 #include <stdlib.h>
+#include <math.h>
 
 //! @file trigo.c
 //! @brief Fonctions trigo en virgule fixe
@@ -227,4 +228,31 @@ int32_t fx_atan2(int32_t y, int32_t x)
 	}
 
 	return t2 >> 4;
+}
+
+int32_t fx_acos(int32_t x)
+{
+	int32_t negate = 0;
+	int32_t res = -3200675;
+
+	if(x < 0)
+	{
+		negate = 1;
+		x = -x;
+	}
+
+	if( x > 65536)
+	{
+		res = 0;
+		goto end;
+	}
+
+	res = (((int64_t)res * (int64_t)x) >> 16) + 12690560;
+	res = (((int64_t)res * (int64_t)x) >> 16) - 36248510;
+	res = (((int64_t)res * (int64_t)x) >> 16) + 268423916;
+	res = ((int64_t)res * (int64_t)sqrtf( ((int64_t)(65536 - x)) << 16)) >> 16;
+	res = res - 2 * negate * res;
+
+end:
+	return negate * 0x2000000 + (res >> 4); // 0.5 tour
 }

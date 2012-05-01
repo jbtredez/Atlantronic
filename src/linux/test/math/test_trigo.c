@@ -9,13 +9,10 @@
 
 int error_count;
 
-int main()
+void test_fx_sin()
 {
 	int32_t val;
-	error_count = 0;
 	int32_t max_err = 0;
-
-	// test des fx_sin
 	for(val = 0; val < (1 << 26) ; val ++)
 	{
 		int32_t fxs = fx_sin(val + (20 << 26));
@@ -37,9 +34,12 @@ int main()
 		error_count++;
 		printf("KO <-----\n");
 	}
+}
 
-	// test des fx_cos
-	max_err = 0;
+void test_fx_cos()
+{
+	int32_t val;
+	int32_t max_err = 0;
 	for(val = 0; val < (1 << 26) ; val ++)
 	{
 		int32_t fxs = fx_cos(val + (20 << 26));
@@ -61,9 +61,12 @@ int main()
 		error_count++;
 		printf("KO <-----\n");
 	}
+}
 
-	// test des fx_atan2
-	max_err = 0;
+void test_fx_atan2()
+{
+	int32_t val;
+	int32_t max_err = 0;
 	for(val = 0; val < (1 << 28) ; val ++)
 	{
 		int32_t alpha = atan2(2000, val/ ((double)(1 << 16))) * (1 << 26)/(2*M_PI);
@@ -85,6 +88,65 @@ int main()
 	{
 		error_count++;
 		printf("KO <-----\n");
+	}
+}
+
+void test_fx_acos()
+{
+	int32_t val;
+	int32_t max_err = 0;
+	for(val = -(1<<16); val < (1 << 16) ; val ++)
+	{
+		int32_t alpha = acos(val/ ((double)(1 << 16))) * (1 << 26)/(2*M_PI);
+		int32_t fxalpha = fx_acos(val);
+		int32_t err = abs(alpha - fxalpha);
+
+		if(err > max_err)
+		{
+			max_err = err;
+		}
+	}
+
+	printf("fx_acos - erreur max : %d (%g) : ", max_err, max_err * (2*M_PI)/ ((float)(1 << 26)));
+	if(max_err < 9.5e-5 * (1 << 26)/(2*M_PI))
+	{
+		printf("OK\n");
+	}
+	else
+	{
+		error_count++;
+		printf("KO <-----\n");
+	}
+}
+
+int main(int argc, char** argv)
+{
+	error_count = 0;
+
+	int test_id = 0;
+	if( argc > 1)
+	{
+		test_id = atoi(argv[1]);
+	}
+
+	if( !test_id || test_id == 1 )
+	{
+		test_fx_sin();
+	}
+
+	if( !test_id || test_id == 2 )
+	{
+		test_fx_cos();
+	}
+
+	if( !test_id || test_id == 3 )
+	{
+		test_fx_atan2();
+	}
+
+	if( !test_id || test_id == 4 )
+	{
+		test_fx_acos();
 	}
 
 	return error_count;

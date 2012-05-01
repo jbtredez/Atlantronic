@@ -20,4 +20,8 @@ int32_t fx_cos(int32_t alpha);
 //!< @return arctan2 en 2^-26 tours
 int32_t fx_atan2(int32_t y, int32_t x);
 
+//!< @param x en 2^-16 mm
+//!< @return arctan2 en 2^-26 tours
+int32_t fx_acos(int32_t x);
+
 #endif
