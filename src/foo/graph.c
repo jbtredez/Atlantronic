@@ -4,7 +4,7 @@
 //! Le tableau graph_link doit être trié et il doit y avoir un liens dans chaque sens (avec la même distance)
 //! Il doit être cohérent avec le tableau de noeud qui indique l'id de début des liens connectés au noeud et la taille
 //! Il y a redondance des donées pour permettre un traitement plus simple et plus rapide
-// TODO faire fonction de check de cohérence : liens triés, noeud => id de debut et de fin [noeud+1].link_id = [noeud].link_id+[noeud].link_num avec debut à 0 + verif des noeuds avec le bon id du noeud en premier => table de liens, distances  = sqrt (...) +- 1mm ;, liens dans les 2 sens ...
+//! Les tableaux graph_node et graph_link sont générés automatiquement (cf graph_gen) pour eviter les erreurs
 
 //!< noeuds du graph
 const struct graph_node graph_node[GRAPH_NUM_NODE] =
