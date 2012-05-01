@@ -426,7 +426,7 @@ static void control_compute_trajectory()
 		if(distance > 0)
 		{
 			struct fx_vect2 obj_robot;
-			fx_vect2_table_to_robot((struct fx_vect_pos*)&control_kinematics_cons, &control_front_object, &obj_robot);
+			vect2_abs_to_loc((struct fx_vect_pos*)&control_kinematics_cons, &control_front_object, &obj_robot);
 			int32_t dmin = obj_robot.x - PARAM_LEFT_CORNER_X;
 			int32_t dist = dmin - control_front_object_approx;
 			// on ignore les objets du robot ou derrière

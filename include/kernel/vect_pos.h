@@ -19,12 +19,12 @@ struct fx_vect_pos
 	int32_t sa;
 };
 
-void fx_vect2_robot_to_table(struct fx_vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void vect2_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void fx_vect2_table_to_robot(struct fx_vect_pos *pos_robot, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
+void vect2_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect2 *pos_in, struct fx_vect2 *pos_out);
 
-void pos_robot_to_table(struct fx_vect_pos *pos_robot, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
+void pos_loc_to_abs(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
 
-void pos_table_to_robot(struct fx_vect_pos *pos_robot, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
+void pos_abs_to_loc(struct fx_vect_pos *origin, struct fx_vect_pos *pos_in, struct fx_vect_pos *pos_out);
 
 #endif

@@ -23,7 +23,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos)
 	int size = HOKUYO_NUM_POINTS;
 	uint16_t* distance = scan->distance;
 	struct fx_vect_pos hokuyo_pos_table;
-	pos_robot_to_table(&scan->pos_robot, &scan->pos_hokuyo, &hokuyo_pos_table);
+	pos_loc_to_abs(&scan->pos_robot, &scan->pos_hokuyo, &hokuyo_pos_table);
 	int32_t alpha = scan->sens * HOKUYO_START_ANGLE + hokuyo_pos_table.alpha;
 
 	for( ; size--; )

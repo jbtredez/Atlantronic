@@ -126,10 +126,10 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 
 	for(i = 0; i < size; i++)
 	{
-		fx_vect2_table_to_robot(pos, &polyline[i].pt[0], &c);
+		vect2_abs_to_loc(pos, &polyline[i].pt[0], &c);
 		for(j = 1; j < polyline[i].size; j++)
 		{
-			fx_vect2_table_to_robot(pos, &polyline[i].pt[j], &d);
+			vect2_abs_to_loc(pos, &polyline[i].pt[j], &d);
 
 			// point c devant le robot et dans le tube
 			if( c.x > 0 && c.y > a1.y && c.y < a2.y)
@@ -197,8 +197,8 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 		}
 	}
 
-	fx_vect2_robot_to_table(pos, &b1, a);
-	fx_vect2_robot_to_table(pos, &b2, b);
+	vect2_loc_to_abs(pos, &b1, a);
+	vect2_loc_to_abs(pos, &b2, b);
 
 	return x_min;
 }
@@ -224,8 +224,8 @@ int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_
 		d.x = x_min;
 		d.y = PARAM_RIGHT_CORNER_Y;
 
-		fx_vect2_robot_to_table(pos, &c, a);
-		fx_vect2_robot_to_table(pos, &d, b);
+		vect2_loc_to_abs(pos, &c, a);
+		vect2_loc_to_abs(pos, &d, b);
 	}
 
 	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
