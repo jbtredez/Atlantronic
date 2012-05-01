@@ -13,8 +13,8 @@
 
 #define PWM_RIGHT    0
 #define PWM_LEFT     1
-#define PWM_UP_RIGHT 2
-#define PWM_UP_LEFT  3
+#define PWM_BRIDGE   2
+#define PWM_UNUSED   3
 
 #if( RCC_PCLK2 != 72000000)
 #error revoir les pwm

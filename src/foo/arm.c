@@ -12,6 +12,7 @@
 #include "kernel/log.h"
 #include "kernel/trapeze.h"
 #include "kernel/driver/usb.h"
+#include "foo/pwm.h"
 #include "ax12.h"
 
 #define ARM_STACK_SIZE       300
@@ -31,6 +32,7 @@ const int32_t ARM_AMAX = (400 << 16) / (ARM_HZ * ARM_HZ);
 const int32_t ARM_DMAX = (400 << 16) / (ARM_HZ * ARM_HZ);
 
 static void arm_cmd_zab(void* arg);
+static void arm_cmd_bridge(void* arg);
 static void arm_task();
 
 static int arm_module_init()
@@ -55,6 +57,7 @@ static int arm_module_init()
 	ax12_set_goal_limit(AX12_ARM_2, 0, 0x3ff);
 
 	usb_add_cmd(USB_CMD_ARM, &arm_cmd_zab);
+	usb_add_cmd(USB_CMD_ARM_BRIDGE, &arm_cmd_bridge);
 
 	return 0;
 }
@@ -95,7 +98,7 @@ static void arm_task()
 	}
 }
 
-void arm_cmd_zab(void* arg)
+static void arm_cmd_zab(void* arg)
 {
 	struct arm_cmd_zab_param* param = (struct arm_cmd_zab_param*) arg;
 
@@ -133,4 +136,29 @@ int arm_goto_xyz(int32_t x, int32_t y, uint32_t z)
 	arm_goto_zab(z, a, b);
 
 	return 0;
+}
+
+void arm_bridge_on()
+{
+	// pwm a 50% car la pompe est en 12V
+	pwm_set(PWM_BRIDGE, PWM_ARR / 2);
+}
+
+void arm_bridge_off()
+{
+	pwm_set(PWM_BRIDGE, 0);
+}
+
+static void arm_cmd_bridge(void* arg)
+{
+	uint8_t on = *((uint8_t*) arg);
+
+	if( on )
+	{
+		arm_bridge_on();
+	}
+	else
+	{
+		arm_bridge_off();
+	}
 }

@@ -66,6 +66,8 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 
 int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b);
 
+int robot_interface_arm_bridge(struct robot_interface* data, uint8_t on);
+
 // ---------- gestion recalage, go, couleur... ---------------------------------
 
 int robot_interface_recalage(struct robot_interface* data);

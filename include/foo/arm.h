@@ -18,6 +18,12 @@ int arm_goto_zab(uint32_t z, int32_t a, int32_t b);
 //!< du plus court chemin
 int arm_goto_xyz(int32_t x, int32_t y, uint32_t z);
 
+//!< mise en marche de la pompe
+void arm_bridge_on();
+
+//!< arrêt de la pompe
+void arm_bridge_off();
+
 struct arm_cmd_zab_param
 {
 	uint32_t z;

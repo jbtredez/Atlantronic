@@ -655,6 +655,15 @@ int robot_interface_arm_zab(struct robot_interface* data, float z, float a, floa
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_arm_bridge(struct robot_interface* data, uint8_t on)
+{
+	char buffer[2];
+	buffer[0] = USB_CMD_ARM_BRIDGE;
+	buffer[1] = on;
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_recalage(struct robot_interface* data)
 {
 	char buffer[1];

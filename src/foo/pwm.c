@@ -112,7 +112,7 @@ void pwm_set(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR2 = val;
 			break;
-		case PWM_UP_RIGHT:
+		case PWM_BRIDGE:
 			if(dir > 0)
 			{
 				GPIOE->ODR |= GPIO_ODR_ODR12;
@@ -123,7 +123,7 @@ void pwm_set(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR3 = val;
 			break;
-		case PWM_UP_LEFT:
+		case PWM_UNUSED:
 			if(dir > 0)
 			{
 				GPIOE->ODR |= GPIO_ODR_ODR15;
