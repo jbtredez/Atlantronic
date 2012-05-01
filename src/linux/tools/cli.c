@@ -164,7 +164,7 @@ int execute_line (char* line)
 
 	if(res == CMD_ERROR)
 	{
-		log_info("command error : %s", command->doc);
+		cli_log("command error : %s\n", command->doc);
 	}
 
 	return res;
@@ -195,6 +195,8 @@ void* cli_task(void* arg)
 
 	// activation auto-complete
 	rl_bind_key('\t',rl_complete);
+
+	cli_log("\r");
 
 	while((buf = readline(cli_prompt)) != NULL)
 	{
