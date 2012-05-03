@@ -28,7 +28,8 @@ enum usb_cmd
 	USB_CMD_GO,
 	USB_CMD_MATCH_TIME,
 	USB_CMD_COLOR,
-	USB_CMD_ARM,
+	USB_CMD_ARM_XYZ,
+	USB_CMD_ARM_ZAB,
 	USB_CMD_ARM_BRIDGE,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };

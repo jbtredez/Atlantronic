@@ -13,7 +13,8 @@ static void (*cmd_exit_callback)(void) = NULL;
 static struct robot_interface* cmd_robot = NULL;
 
 int cmd_arm_bridge(void* arg);
-int cmd_arm_zab(void *arg);
+int cmd_arm_xyz(void* arg);
+int cmd_arm_zab(void* arg);
 int cmd_ax12_scan();
 int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
@@ -41,6 +42,7 @@ int cmd_control_print_param();
 
 COMMAND usb_commands[] = {
 	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
+	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z)"},
 	{ "arm_zab", cmd_arm_zab, "deplacement du bras (z, a, b)"},
 	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
@@ -360,7 +362,7 @@ int cmd_set_color(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_zab(void *arg)
+int cmd_arm_zab(void* arg)
 {
 	float z;
 	float a;
@@ -374,6 +376,23 @@ int cmd_arm_zab(void *arg)
 	}
 
 	robot_interface_arm_zab(cmd_robot, z, a, b);
+	return CMD_SUCESS;
+}
+
+int cmd_arm_xyz(void* arg)
+{
+	float x;
+	float y;
+	float z;
+
+	int count = sscanf(arg, "%f %f %f", &x, &y, &z);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_arm_xyz(cmd_robot, x, y, z);
 	return CMD_SUCESS;
 }
 

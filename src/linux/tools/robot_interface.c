@@ -640,6 +640,21 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z)
+{
+	struct arm_cmd_xyz_param cmd_arg;
+
+	cmd_arg.x = x * 65536.0f;
+	cmd_arg.y = y * 65536.0f;
+	cmd_arg.z = z * 65536.0f;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_ARM_XYZ;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b)
 {
 	struct arm_cmd_zab_param cmd_arg;
@@ -649,7 +664,7 @@ int robot_interface_arm_zab(struct robot_interface* data, float z, float a, floa
 	cmd_arg.b = b * (1 << 26) / (2 * M_PI);
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM;
+	buffer[0] = USB_CMD_ARM_ZAB;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
