@@ -16,9 +16,6 @@ void pince_open();
 //!< fermeture des pinces
 void pince_close();
 
-//!< indique si la pince est pleine
-int pince_full();
-
 enum pince_cmd_type
 {
 	PINCE_CONFIGURE,
