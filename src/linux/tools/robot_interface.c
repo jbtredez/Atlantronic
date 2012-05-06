@@ -13,7 +13,6 @@
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
 #include "foo/ax12.h"
-#include "foo/arm.h"
 
 const char* err_description[FAULT_MAX] =
 {
@@ -640,31 +639,38 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z)
+int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z, enum arm_cmd_type type)
 {
-	struct arm_cmd_xyz_param cmd_arg;
+	struct arm_cmd_goto_param cmd_arg;
+
+	if(type == ARM_CMD_ART)
+	{
+		return -1;
+	}
 
 	cmd_arg.x = x * 65536.0f;
 	cmd_arg.y = y * 65536.0f;
 	cmd_arg.z = z * 65536.0f;
+	cmd_arg.type = type;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_XYZ;
+	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b)
+int robot_interface_arm_abz(struct robot_interface* data, float a, float b, float z)
 {
-	struct arm_cmd_zab_param cmd_arg;
+	struct arm_cmd_goto_param cmd_arg;
 
-	cmd_arg.z = z * 65536.0f;
 	cmd_arg.a = a * (1 << 26) / (2 * M_PI);
 	cmd_arg.b = b * (1 << 26) / (2 * M_PI);
+	cmd_arg.z = z * 65536.0f;
+	cmd_arg.type = ARM_CMD_ART;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_ZAB;
+	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));

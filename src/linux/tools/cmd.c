@@ -14,7 +14,7 @@ static struct robot_interface* cmd_robot = NULL;
 
 int cmd_arm_bridge(void* arg);
 int cmd_arm_xyz(void* arg);
-int cmd_arm_zab(void* arg);
+int cmd_arm_abz(void* arg);
 int cmd_ax12_scan();
 int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
@@ -28,7 +28,6 @@ int cmd_localization_set_position(void* arg);
 int cmd_max_speed(void* arg);
 int cmd_pince_open();
 int cmd_pince_close();
-int cmd_pince_configure();
 int cmd_set_color(void* arg);
 int cmd_set_match_time(void* arg);
 int cmd_straight(void* arg);
@@ -42,8 +41,8 @@ int cmd_control_print_param();
 
 COMMAND usb_commands[] = {
 	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
-	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z)"},
-	{ "arm_zab", cmd_arm_zab, "deplacement du bras (z, a, b)"},
+	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z, type)"},
+	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
 	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
 	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
@@ -60,7 +59,6 @@ COMMAND usb_commands[] = {
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_open", cmd_pince_open, "ouverture des pinces"},
 	{ "pince_close", cmd_pince_close, "fermeture des pinces"},
-	{ "pince_configure", cmd_pince_configure, "configuration des pinces"},
 	{ "q", cmd_quit, "Quit" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
@@ -302,12 +300,6 @@ int cmd_max_speed(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_pince_configure()
-{
-	robot_interface_pince(cmd_robot, PINCE_CONFIGURE);
-	return CMD_SUCESS;
-}
-
 int cmd_pince_open()
 {
 	robot_interface_pince(cmd_robot, PINCE_OPEN);
@@ -362,20 +354,20 @@ int cmd_set_color(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_zab(void* arg)
+int cmd_arm_abz(void* arg)
 {
 	float z;
 	float a;
 	float b;
 
-	int count = sscanf(arg, "%f %f %f", &z, &a, &b);
+	int count = sscanf(arg, "%f %f %f", &a, &b, &z);
 
 	if(count != 3)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_zab(cmd_robot, z, a, b);
+	robot_interface_arm_abz(cmd_robot, a, b, z);
 	return CMD_SUCESS;
 }
 
@@ -384,15 +376,16 @@ int cmd_arm_xyz(void* arg)
 	float x;
 	float y;
 	float z;
+	int type;
 
-	int count = sscanf(arg, "%f %f %f", &x, &y, &z);
+	int count = sscanf(arg, "%f %f %f %d", &x, &y, &z, &type);
 
-	if(count != 3)
+	if(count != 4)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_xyz(cmd_robot, x, y, z);
+	robot_interface_arm_xyz(cmd_robot, x, y, z, type);
 	return CMD_SUCESS;
 }
 

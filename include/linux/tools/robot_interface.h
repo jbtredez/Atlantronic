@@ -8,6 +8,7 @@
 #include "kernel/fault.h"
 #include "foo/control/control.h"
 #include "foo/pince.h"
+#include "foo/arm.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 
@@ -64,9 +65,9 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 
 // ---------- gestion du bras --------------------------------------------------
 
-int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z);
+int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z, enum arm_cmd_type type);
 
-int robot_interface_arm_zab(struct robot_interface* data, float z, float a, float b);
+int robot_interface_arm_abz(struct robot_interface* data, float a, float b, float z);
 
 int robot_interface_arm_bridge(struct robot_interface* data, uint8_t on);
 
