@@ -379,7 +379,7 @@ uint8_t ax12_read8(uint8_t id, uint8_t offset, struct ax12_error* error)
 	ax12_send_request(&req);
 	*error = status.error;
 
-	return req.arg[0];
+	return status.arg[0];
 }
 
 uint16_t ax12_read16(uint8_t id, uint8_t offset, struct ax12_error* error)
@@ -396,7 +396,7 @@ uint16_t ax12_read16(uint8_t id, uint8_t offset, struct ax12_error* error)
 	ax12_send_request(&req);
 	*error = status.error;
 
-	return req.arg[0] + (req.arg[1] << 8);
+	return status.arg[0] + (status.arg[1] << 8);
 }
 
 struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data)
@@ -546,14 +546,20 @@ struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable)
 	return ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
 }
 
-uint16_t ax12_get_position(uint8_t id, struct ax12_error* error)
+int32_t ax12_get_position(uint8_t id, struct ax12_error* error)
 {
-	return ax12_read16(id, AX12_PRESENT_POSITION, error);
+	int32_t alpha = ax12_read16(id, AX12_PRESENT_POSITION, error);
+	// passage en unité fx
+	// zero au milieu qui vaut "0x1ff"
+	return (((alpha - 0x1ff) << 14) / 1288) << 12;
 }
 
 static void ax12_cmd(void* arg)
 {
 	struct ax12_cmd_param* param = (struct ax12_cmd_param*)arg;
+	struct ax12_error err;
+	int32_t alpha;
+
 	switch(param->cmd_id)
 	{
 		case AX12_CMD_SCAN:
@@ -564,6 +570,13 @@ static void ax12_cmd(void* arg)
 			break;
 		case AX12_CMD_SET_GOAL_POSITION:
 			ax12_set_goal_position(param->id, param->param);
+			break;
+		case AX12_CMD_GET_POSITION:
+			alpha = ax12_get_position(param->id, &err);
+			if(!err.transmit_error)
+			{
+				log_format(LOG_INFO, "ax12 %u - pos %d", param->id, (int)alpha);
+			}
 			break;
 		default:
 			log_format(LOG_ERROR, "unknown ax12 command : %d", param->cmd_id);

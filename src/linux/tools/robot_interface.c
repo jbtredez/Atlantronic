@@ -483,6 +483,20 @@ int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_ax12_get_position(struct robot_interface* data, uint8_t id)
+{
+	struct ax12_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = AX12_CMD_GET_POSITION;
+	cmd_arg.id = id;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_AX12;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_control_print_param(struct robot_interface* data)
 {
 	char buffer[1];

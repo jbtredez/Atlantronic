@@ -25,6 +25,7 @@
 #define AX12_CMD_SCAN                    0x01
 #define AX12_CMD_SET_ID                  0x02
 #define AX12_CMD_SET_GOAL_POSITION       0x03
+#define AX12_CMD_GET_POSITION            0x04
 
 struct ax12_cmd_param
 {
@@ -75,7 +76,8 @@ struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit);
 struct ax12_error ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit);
 struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable);
 
-uint16_t ax12_get_position(uint8_t id, struct ax12_error* error);
+//!< angle donné en 2^-26 tours
+int32_t ax12_get_position(uint8_t id, struct ax12_error* error);
 
 struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
 
