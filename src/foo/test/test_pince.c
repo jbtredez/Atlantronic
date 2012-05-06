@@ -32,7 +32,6 @@ static void test_pince_task()
 {
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	pince_configure();
 	pince_open();
 	vTaskDelay(ms_to_tick(1000));
 

@@ -55,6 +55,8 @@ enum fault
 #define ERR_INIT_FAULT          0x214
 #define ERR_INIT_STRAT          0x215
 #define ERR_INIT_ARM            0x216
-#define ERR_INIT_TEST           0x217
+#define ERR_INIT_PINCE          0x217
+#define ERR_INIT_ADC            0x218
+#define ERR_INIT_TEST           0x219
 
 #endif

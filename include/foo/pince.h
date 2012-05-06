@@ -7,9 +7,6 @@
 
 #include <stdint.h>
 
-//!< configuration des pinces
-void pince_configure();
-
 //!< ouverture des pincces
 void pince_open();
 
@@ -18,9 +15,8 @@ void pince_close();
 
 enum pince_cmd_type
 {
-	PINCE_CONFIGURE,
-	PINCE_OPEN,
 	PINCE_CLOSE,
+	PINCE_OPEN,
 };
 
 struct pince_cmd_arg
