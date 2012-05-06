@@ -20,6 +20,11 @@ static int gpio_module_init(void)
 	gpio_go = 0;
 	gpio_recaler = 0;
 
+	// activation de GPIOA
+	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+	// PA4 entrée input flotante : capteur de fin de course du bas pour le bras
+	GPIOA->CRL = (GPIOA->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4) | GPIO_CRL_CNF4_0;
+
 	// capteur contact bordure droit et gauche, LED warning
 	// activation GPIOB
 	RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
@@ -29,11 +34,11 @@ static int gpio_module_init(void)
 	GPIOB->CRL = (GPIOB->CRL & ~GPIO_CRL_MODE1 & ~GPIO_CRL_CNF1) | GPIO_CRL_CNF1_0;
 	// PB9 sortie push-pull, 2MHz
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE9 & ~GPIO_CRH_CNF9) | GPIO_CRH_MODE9_1;
-	// PB12 sortie push-pull, 2MHz (moteur pas à pas)
+	// PB12 sortie push-pull, 2MHz (moteur pas à pas - puissance)
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE12 & ~GPIO_CRH_CNF12) | GPIO_CRH_MODE12_1;
-	// PB13 sortie push-pull, 2MHz (moteur pas à pas)
+	// PB13 sortie push-pull, 2MHz (moteur pas à pas - sens du moteur)
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE13 & ~GPIO_CRH_CNF13) | GPIO_CRH_MODE13_1;
-	// PB14 sortie push-pull, 2MHz (moteur pas à pas)
+	// PB14 sortie push-pull, 2MHz (moteur pas à pas - commande des pas a faire)
 	GPIOB->CRH = (GPIOB->CRH & ~GPIO_CRH_MODE14 & ~GPIO_CRH_CNF14) | GPIO_CRH_MODE14_1;
 
 	// Boutons 1, 2 et 3

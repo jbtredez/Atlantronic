@@ -29,7 +29,6 @@ int adc_module_init()
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
 
 	GPIOA->CRL = GPIOA->CRL & ~ (
-	                  GPIO_CRL_MODE4 | GPIO_CRL_CNF4 |  // PA4 entrée AN4
 	                  GPIO_CRL_MODE5 | GPIO_CRL_CNF5    // PA5 entrée AN5
 	             );
 
@@ -41,7 +40,6 @@ int adc_module_init()
 	                  GPIO_CRL_MODE1 | GPIO_CRL_CNF1 |  // PC1 entrée AN11
 	                  GPIO_CRL_MODE2 | GPIO_CRL_CNF2 |  // PC2 entrée AN12
 	                  GPIO_CRL_MODE3 | GPIO_CRL_CNF3 |  // PC3 entrée AN13
-	                  GPIO_CRL_MODE4 | GPIO_CRL_CNF4 |  // PC4 entrée AN14
 	                  GPIO_CRL_MODE5 | GPIO_CRL_CNF5    // PC5 entrée AN15
                  );
 
@@ -61,26 +59,21 @@ int adc_module_init()
 
 	ADC1->SQR1 = 0x00;
 	ADC1->SQR2 = 0x00;
-	ADC1->SQR3 =                  ADC_SQR3_SQ1_2                                   | // 0100 : AN4  (potentiomètre 1)
-	 			 ADC_SQR3_SQ2_3 | ADC_SQR3_SQ2_2 | ADC_SQR3_SQ2_1                  | // 1110 : AN14 (potentiomètre 2)
- 	 			 ADC_SQR3_SQ3_3 | ADC_SQR3_SQ3_2 | ADC_SQR3_SQ3_1 | ADC_SQR3_SQ3_0 | // 1111 : AN15 (intensité moteur 1)
- 	 			                  ADC_SQR3_SQ4_2 |                  ADC_SQR3_SQ4_0 | // 0101 : AN5  (intensité moteur 2)
- 	 			 ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_2 |                  ADC_SQR3_SQ5_0 | // 1101 : AN13 (intensité moteur 3)
- 	 			 ADC_SQR3_SQ6_3 |                  ADC_SQR3_SQ6_1 | ADC_SQR3_SQ6_0 ; // 1011 : AN11 (intensité moteur 4)
+	ADC1->SQR3 = ADC_SQR3_SQ1_3 | ADC_SQR3_SQ1_2 | ADC_SQR3_SQ1_1 | ADC_SQR3_SQ1_0 | // 1111 : AN15 (intensité moteur 1)
+ 	 			                  ADC_SQR3_SQ2_2 |                  ADC_SQR3_SQ2_0 | // 0101 : AN5  (intensité moteur 2)
+ 	 			 ADC_SQR3_SQ3_3 | ADC_SQR3_SQ3_2 |                  ADC_SQR3_SQ3_0 | // 1101 : AN13 (intensité moteur 3)
+ 	 			 ADC_SQR3_SQ4_3 |                  ADC_SQR3_SQ4_1 | ADC_SQR3_SQ4_0 | // 1011 : AN11 (intensité moteur 4)
+  	 			 ADC_SQR3_SQ5_3 | ADC_SQR3_SQ5_2                                   | // 1100 : AN12 (vBat1)
+  	 			 ADC_SQR3_SQ6_3 |                  ADC_SQR3_SQ6_1                  ; // 1010 : AN10 (vBatAru)
 
-	ADC1->SQR2 = ADC_SQR2_SQ7_3 | ADC_SQR2_SQ7_2                                   | // 1100 : AN12 (vBat1)
-	             ADC_SQR2_SQ8_3 |                  ADC_SQR2_SQ8_1                  ; // 1010 : AN10 (vBatAru)
-
-	ADC1->SMPR2 = ADC_SMPR2_SMP4  | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN4 (potentiomètre 1)
-	              ADC_SMPR2_SMP5  ; // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN5 (intensité moteur 2)
+	ADC1->SMPR2 = ADC_SMPR2_SMP5  ; // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN5 (intensité moteur 2)
 	ADC1->SMPR1 = ADC_SMPR1_SMP10 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN10 (vBatAru)
 	              ADC_SMPR1_SMP11 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN11 (intensité moteur 4)
 	              ADC_SMPR1_SMP12 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN12 (vBat1)
 	              ADC_SMPR1_SMP13 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN13 (intensité moteur 3)
-	              ADC_SMPR1_SMP14 | // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN14 (potentiomètre 2)
 	              ADC_SMPR1_SMP15 ; // 239.5 cycle (à 12Mhz) pour l'échantillonage de AN15 (intensité moteur 1)
 
-	ADC1->SQR1 = (ADC1->SQR1 & ~ADC_SQR1_L) | ADC_SQR1_L_2 | ADC_SQR1_L_1 | ADC_SQR1_L_0; // 8 conversions - 1
+	ADC1->SQR1 = (ADC1->SQR1 & ~ADC_SQR1_L) | ADC_SQR1_L_2 | ADC_SQR1_L_0; // 6 conversions - 1
 
 	// dma
 	RCC->AHBENR |= RCC_AHBENR_DMA1EN;
@@ -92,7 +85,7 @@ int adc_module_init()
 	// mode circulaire
 	// transfert : mem périph => mem
 	DMA1_Channel1->CCR = DMA_CCR1_MSIZE_0 | DMA_CCR1_PSIZE_0 | DMA_CCR1_MINC | DMA_CCR1_CIRC | DMA_CCR1_TCIE;
-	DMA1_Channel1->CNDTR = (0x08) & DMA_CNDTR1_NDT;
+	DMA1_Channel1->CNDTR = (0x06) & DMA_CNDTR1_NDT;
 	DMA1_Channel1->CPAR = (uint32_t) &ADC1->DR;
 	DMA1_Channel1->CMAR = (uint32_t) adc_dma;
 
@@ -112,7 +105,7 @@ int adc_module_init()
 
 	if(err != pdPASS)
 	{
-		return -1; // TODO err code
+		return ERR_INIT_ADC;
 	}
 
 	return 0;

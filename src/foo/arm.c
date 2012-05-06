@@ -22,7 +22,7 @@
 
 #define ARM_STACK_SIZE       300
 #define ARM_STEP_BY_MM         5
-#define ARM_HZ              1000
+#define ARM_HZ               500
 #define ARM_ZMAX            (200 << 16)
 
 static xSemaphoreHandle arm_mutex;
@@ -38,7 +38,7 @@ static int32_t arm_vz;
 static int32_t arm_z_step;
 
 //!< vitesse max du moteur pas à pas
-const int32_t ARM_VMAX = (125 << 16) / ARM_HZ;
+const int32_t ARM_VMAX = (100 << 16) / ARM_HZ;
 //!< accélération max du moteur pas à pas
 const int32_t ARM_AMAX = (400 << 16) / (ARM_HZ * ARM_HZ);
 //!< décélération max du moteur pas à pas
@@ -95,6 +95,8 @@ module_init(arm_module_init, INIT_ARM);
 static void arm_task()
 {
 	int32_t count = 0;
+	struct ax12_error err1;
+	struct ax12_error err2;
 	// configuration des ax12
 	ax12_set_moving_speed(AX12_ARM_1, 0x3ff);
 	ax12_set_moving_speed(AX12_ARM_2, 0x3ff);
@@ -105,15 +107,32 @@ static void arm_task()
 	ax12_set_torque_enable(AX12_ARM_1, 1);
 	ax12_set_torque_enable(AX12_ARM_2, 1);
 
-	// TODO procedure de mise à zéro
-	ax12_set_goal_position(AX12_ARM_1, 0);
-	ax12_set_goal_position(AX12_ARM_2, 0);
+	// puissance
+	GPIOB->ODR |= GPIO_ODR_ODR12;
+
+	// on va descendre jusqu'au capteur
+	GPIOB->ODR &= ~GPIO_ODR_ODR13;
+	while(!(GPIOA->IDR & GPIO_IDR_IDR4))
+	{
+		ax12_set_goal_position(AX12_ARM_1, 0);
+		ax12_set_goal_position(AX12_ARM_2, 0);
+		int32_t a = ax12_get_position(AX12_ARM_1, &err1);
+		int32_t b = ax12_get_position(AX12_ARM_2, &err2);
+		// on ne descend pas si le bras n'est pas environ au milieu (pour ne pas écraser les hokuyos par exemple)
+		// 10 degrés => 1864135
+		if( !err1.transmit_error && ! err2.transmit_error && abs(a) < 1864135 && abs(b) < 1864135)
+		{
+			GPIOB->ODR &= ~GPIO_ODR_ODR14;
+			GPIOB->ODR |= GPIO_ODR_ODR14;
+		}
+		vTaskDelay(ms_to_tick(10));
+	}
 
 	arm_z = 0;
 	arm_vz = 0;
 	arm_z_step = 0;
-
-	GPIOB->ODR |= GPIO_ODR_ODR12;
+	// on va monter au début
+	arm_z_cmd = (150 << 16);
 
 	while(1)
 	{
@@ -139,7 +158,7 @@ static void arm_task()
 		}
 
 		// toutes les 10ms on s'occupe des axes x et y
-		if( count == 10)
+		if( count == 5)
 		{
 			count = 0;
 
@@ -161,7 +180,7 @@ static void arm_task()
 
 		xSemaphoreGive(arm_mutex);
 
-		vTaskDelay(ms_to_tick(1));
+		vTaskDelay(ms_to_tick(2));
 	}
 }
 
@@ -265,9 +284,9 @@ static int arm_compute_xyz_abs()
 	return 0;
 }
 
-int arm_goto_abz(uint32_t z, int32_t a, int32_t b)
+int arm_goto_abz(int32_t a, int32_t b, uint32_t z)
 {
-	log_format(LOG_INFO, "z = %d a = %d b = %d", (int)z, (int)a, (int)b);
+	log_format(LOG_INFO, "a = %d b = %d z = %u", (int)a, (int)b, (unsigned int)z);
 
 	// saturation pour ne pas forcer
 	if( z > ARM_ZMAX )
