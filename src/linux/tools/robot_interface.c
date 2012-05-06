@@ -51,6 +51,7 @@ struct robot_interface_arg
 
 static void* robot_interface_task(void* arg);
 static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_go(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
@@ -192,6 +193,9 @@ static void* robot_interface_task(void* arg)
 				break;
 			case USB_CONTROL:
 				res = robot_interface_process_control(robot, args->com_id, msg, size);
+				break;
+			case USB_GO:
+				res = robot_interface_process_go(robot, args->com_id, msg, size);
 				break;
 			default:
 				res = -1;
@@ -410,6 +414,27 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
 	pthread_mutex_unlock(&data->mutex);
+
+end:
+	return res;
+}
+
+static int robot_interface_process_go(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+{
+	(void) data;
+	(void) com_id;
+	int res = 0;
+	uint64_t match_time;
+
+	if(size != sizeof(match_time))
+	{
+		res = -1;
+		goto end;
+	}
+
+	memcpy(&match_time, msg, size);
+
+	log_info("GO - durée du match : %f ms", match_time / 72000.0f);
 
 end:
 	return res;

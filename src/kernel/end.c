@@ -50,6 +50,7 @@ static void end_task(void *arg)
 	(void) arg;
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	usb_add(USB_GO, &end_match_tick, sizeof(end_match_tick));
 	log(LOG_INFO, "GO");
 	vTaskDelay(end_match_tick);
 	vTaskSetEvent(EVENT_END);
