@@ -555,7 +555,7 @@ void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_
 {
 	if( node_id >= GRAPH_NUM_NODE)
 	{
-		log_format(LOG_ERROR, "node_id inconnu : %zd", node_id);
+		log_format(LOG_ERROR, "node_id inconnu : %d", (int)node_id);
 		return;
 	}
 
