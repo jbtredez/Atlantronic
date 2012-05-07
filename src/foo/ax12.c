@@ -11,6 +11,8 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "kernel/semphr.h"
+#include <stdlib.h>
 
 #define AX12_INSTRUCTION_PING             0x01
 #define AX12_INSTRUCTION_READ_DATA        0x02
@@ -20,12 +22,20 @@
 #define AX12_INSTRUCTION_RESET            0x06
 #define AX12_INSTRUCTION_SYNC_WRITE       0x83
 
-#define AX12_QUEUE_SIZE             10
 #define AX12_STACK_SIZE            350
 #define AX12_ARG_MAX                 3
 #define AX12_READ_TIMEOUT        ms_to_tick(10)
 #define AX12_INTER_FRAME_TIME    us_to_tick(15)
 #define AX12_MAX_RETRY              10
+#define AX12_MAX_REQUEST            10
+
+struct ax12_status
+{
+	struct ax12_error error;
+	uint8_t complete;
+	uint8_t argc;
+	uint8_t arg[AX12_ARG_MAX];
+};
 
 struct ax12_request
 {
@@ -36,22 +46,24 @@ struct ax12_request
 	struct ax12_status* status;
 };
 
-struct ax12_status
+struct ax12_device
 {
-	struct ax12_error error;
-	uint8_t complete;
-	uint8_t argc;
-	uint8_t arg[AX12_ARG_MAX];
-};
-
-struct ax12_limits
-{
-	uint16_t minGoal;
-	uint16_t maxGoal;
+	//!< bit 7 à 1 : ERR_AX12_SEND_CHECK, ERR_AX12_PROTO ou ERR_AX12_CHECKSUM
+	//!< bit 7 à 0 : erreur usart sur les 4 bits de poids faible
+	uint8_t transmit_error;
+	//!< erreur interne ax12 (champ de bit)
+	uint8_t internal_error;
+	struct ax12_request request_fifo[AX12_MAX_REQUEST];
+	uint8_t request_size;
+	uint8_t request_begin;
+	uint8_t request_end;
+	uint16_t min_goal;
+	uint16_t max_goal;
+	uint16_t goal_pos;
+	uint16_t pos;
 };
 
 static void ax12_task(void *arg);
-static xQueueHandle ax12_queue;
 static uint8_t ax12_write_dma_buffer[6 + AX12_ARG_MAX];
 static uint8_t ax12_read_dma_buffer[2*(6 + AX12_ARG_MAX)];
 static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size);
@@ -63,24 +75,25 @@ static void ax12_cmd(void* arg);
 static void ax12_cmd_scan();
 static void ax12_cmd_set_id(uint8_t old_id, uint8_t id);
 
-static struct ax12_error ax12_error[AX12_MAX_ID];
-static struct ax12_limits ax12_limits[AX12_MAX_ID];
+static xSemaphoreHandle ax12_mutex;
+static struct ax12_device ax12_device[AX12_MAX_ID];
+
 
 static int ax12_module_init()
 {
 	usart_open(UART4_HALF_DUPLEX, 1000000);
 
-	ax12_queue = xQueueCreate(AX12_QUEUE_SIZE, sizeof(struct ax12_request));
-
-	if(ax12_queue == 0)
-	{
-		return ERR_INIT_AX12;
-	}
-
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(ax12_task, "ax12", AX12_STACK_SIZE, NULL, PRIORITY_TASK_AX12, &xHandle);
 
 	if(err != pdPASS)
+	{
+		return ERR_INIT_AX12;
+	}
+
+	ax12_mutex = xSemaphoreCreateMutex();
+
+	if( ax12_mutex == NULL)
 	{
 		return ERR_INIT_AX12;
 	}
@@ -93,8 +106,9 @@ static int ax12_module_init()
 	int i;
 	for(i = 0; i < AX12_MAX_ID; i++)
 	{
-		ax12_error[i].transmit_error = 0xff;
-		ax12_limits[i].maxGoal = 0x3ff;
+		ax12_device[i].transmit_error = 0xff;
+		ax12_device[i].max_goal = 0x3ff;
+		ax12_device[i].goal_pos = 0x1ff;
 	}
 
 	return 0;
@@ -109,12 +123,20 @@ static void ax12_task(void* arg)
 	struct ax12_status status;
 	struct ax12_error err;
 	struct ax12_request req;
-	int last_ping_id = 1;
+	int id = 0;
 
 	while(1)
 	{
-		if(xQueueReceive(ax12_queue, &req, ms_to_tick(50)))
+		xSemaphoreTake(ax12_mutex, portMAX_DELAY);
+
+		// on regarde s'il y a des choses à envoyer dans la fifo (plutôt de la configuration)
+		if( ax12_device[id].request_size)
 		{
+			req = ax12_device[id].request_fifo[ax12_device[id].request_begin];
+			ax12_device[id].request_begin = (ax12_device[id].request_begin + 1) % AX12_MAX_REQUEST;
+			ax12_device[id].request_size--;
+			xSemaphoreGive(ax12_mutex);
+
 			// la tache qui envoi le message ne veut pas de reponse
 			if(req.status == 0)
 			{
@@ -137,27 +159,47 @@ static void ax12_task(void* arg)
 		}
 		else
 		{
-			// il ne se passe rien sur le bus, on va faire un ping
-			req.instruction = AX12_INSTRUCTION_PING;
-			req.argc = 0;
-			req.status = &status;
-			req.id = last_ping_id + 1;
-			if(req.id >= AX12_MAX_ID)
+			xSemaphoreGive(ax12_mutex);
+
+			if(id > 0)
 			{
-				req.id = 2;
+				// rien dans la fifo => lecture de la position de l'ax12
+				req.instruction = AX12_INSTRUCTION_READ_DATA;
+				req.arg[0] = AX12_PRESENT_POSITION;
+				req.arg[1] = 0x02;
+				req.argc = 2;
+				req.status = &status;
+				req.id = id;
+				ax12_send(&req);
+				vTaskDelay(AX12_INTER_FRAME_TIME);
+				err = status.error;
+				if( !err.transmit_error )
+				{
+					ax12_device[id].pos = status.arg[0] + (status.arg[1] << 8);
+
+					if( abs((int)ax12_device[id].pos - (int)ax12_device[id].goal_pos) > 1)
+					{
+						// on va envoyer la position désirée
+						req.instruction = AX12_INSTRUCTION_WRITE_DATA;
+						req.arg[0] = AX12_GOAL_POSITION;
+						req.arg[1] = (uint8_t) (ax12_device[id].goal_pos & 0xFF);
+						req.arg[2] = (uint8_t) ((ax12_device[id].goal_pos >> 8) & 0xFF);
+						req.argc = 3;
+						ax12_send(&req);
+						vTaskDelay(AX12_INTER_FRAME_TIME);
+					}
+				}
+				err = status.error;
 			}
-			ax12_send(&req);
-			vTaskDelay(AX12_INTER_FRAME_TIME);
-			err = status.error;
-			last_ping_id = req.id;
 		}
 
 		if(req.id < AX12_MAX_ID)
 		{
-			if(ax12_error[req.id].transmit_error != err.transmit_error || ax12_error[req.id].internal_error != err.internal_error)
+			if(ax12_device[req.id].transmit_error != err.transmit_error || ax12_device[req.id].internal_error != err.internal_error)
 			{
 				ax12_print_error(req.id, err);
-				ax12_error[req.id] = err;
+				ax12_device[req.id].transmit_error = err.transmit_error;
+				ax12_device[req.id].internal_error = err.internal_error;
 			}
 		}
 
@@ -167,6 +209,8 @@ static void ax12_task(void* arg)
 			usart_set_read_dma_size(UART4_HALF_DUPLEX, sizeof(ax12_read_dma_buffer));
 			usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
 		}
+
+		id = (id + 1) % AX12_MAX_ID;
 	}
 }
 
@@ -345,6 +389,18 @@ struct ax12_error ax12_ping(uint8_t id)
 
 static void ax12_send_request(struct ax12_request* request)
 {
+	struct ax12_device* dev;
+
+	if( request->id < AX12_MAX_ID )
+	{
+		dev = &ax12_device[request->id];
+	}
+	else
+	{
+		dev = &ax12_device[0];
+	}
+
+	// on souhaite attendre la reponse
 	if(request->status)
 	{
 		memset(request->status, 0x00, sizeof(request->status));
@@ -352,9 +408,25 @@ static void ax12_send_request(struct ax12_request* request)
 	}
 
 	// si c'est plein, on va attendre
-	xQueueSendToBack(ax12_queue, (void*) request, portMAX_DELAY);
+	do
+	{
+		xSemaphoreTake(ax12_mutex, portMAX_DELAY);
 
-	// on souhaite attendre la reponse
+		if( dev->request_size < AX12_MAX_REQUEST )
+		{
+			dev->request_fifo[ dev->request_end ] = *request;
+			dev->request_end = (dev->request_end + 1) % AX12_MAX_REQUEST;
+			dev->request_size++;
+			xSemaphoreGive(ax12_mutex);
+			break;
+		}
+		else
+		{
+			xSemaphoreGive(ax12_mutex);
+			vTaskDelay(ms_to_tick(10));
+		}
+	}while(1);
+
 	if(request->status)
 	{
 		do
@@ -483,6 +555,8 @@ struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed)
 
 struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 {
+	struct ax12_error err;
+
 	// modulo 1 tour => retour dans [ 0 ; 1 tour = 2^26 [
 	if(alpha < 0)
 	{
@@ -509,8 +583,8 @@ struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 	// si c'est un ax12 connu, on regarde les limites
 	if( id < AX12_MAX_ID )
 	{
-		min = ax12_limits[id].minGoal;
-		max = ax12_limits[id].maxGoal;
+		min = ax12_device[id].min_goal;
+		max = ax12_device[id].max_goal;
 	}
 
 	// saturation
@@ -523,7 +597,22 @@ struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 		alpha = max;
 	}
 
-	return ax12_write16(id, AX12_GOAL_POSITION, (uint16_t) alpha);
+	if( id < AX12_MAX_ID )
+	{
+		// utilisation de la tache pour la mise à jour
+		xSemaphoreTake(ax12_mutex, portMAX_DELAY);
+		ax12_device[id].goal_pos = alpha;
+		err.transmit_error = ax12_device[id].transmit_error;
+		err.internal_error = ax12_device[id].internal_error;
+		xSemaphoreGive(ax12_mutex);
+	}
+	else
+	{
+		// envoi simple
+		err = ax12_write16(id, AX12_GOAL_POSITION, (uint16_t) alpha);
+	}
+
+	return err;
 }
 
 struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
@@ -548,7 +637,20 @@ struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable)
 
 int32_t ax12_get_position(uint8_t id, struct ax12_error* error)
 {
-	int32_t alpha = ax12_read16(id, AX12_PRESENT_POSITION, error);
+	int32_t alpha = 0x1ff;
+	if(id < AX12_MAX_ID )
+	{
+		xSemaphoreTake(ax12_mutex, portMAX_DELAY);
+		alpha = ax12_device[id].pos;
+		error->transmit_error = ax12_device[id].transmit_error;
+		error->internal_error = ax12_device[id].internal_error;
+		xSemaphoreGive(ax12_mutex);
+	}
+	else
+	{
+		alpha = ax12_read16(id, AX12_PRESENT_POSITION, error);
+	}
+
 	// passage en unité fx
 	// zero au milieu qui vaut "0x1ff"
 	return (((alpha - 0x1ff) << 14) / 1288) << 12;
@@ -642,6 +744,6 @@ void ax12_set_goal_limit(uint8_t id, uint16_t min, uint16_t max)
 		max = 0x3ff;
 	}
 
-	ax12_limits[id].minGoal = min;
-	ax12_limits[id].maxGoal = max;
+	ax12_device[id].min_goal = min;
+	ax12_device[id].max_goal = max;
 }
