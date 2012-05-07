@@ -17,7 +17,7 @@
 #define EVENT_CAN_TX_END                 0x200
 #define EVENT_ADC_READY                  0x400
 #define EVENT_AX12_SEND_COMPLETE         0x800
-#define EVENT_DETECTION_UPDATE          x01000
+#define EVENT_DETECTION_UPDATE          0x1000
 #define EVENT_CONTROL_TIMEOUT           0x2000
 #define EVENT_USB_READ                  0x4000
 #define EVENT_USB_WRITE                 0x8000
