@@ -69,7 +69,7 @@ static void pince_task(void* arg)
 		xSemaphoreTake(pince_mutex, portMAX_DELAY);
 		order = pince_order;
 		xSemaphoreGive(pince_mutex);
-#if 0
+
 		// TODO en fonction de order et de l'état courant des pinces
 		switch(order)
 		{
@@ -84,7 +84,6 @@ static void pince_task(void* arg)
 			default:
 				break;
 		}
-#endif
 
 		vTaskDelay(ms_to_tick(50));
 	}
