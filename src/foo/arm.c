@@ -31,6 +31,10 @@ static int32_t arm_b_cmd;     //!< commande du bras (angle b)
 static uint32_t arm_x_cmd;    //!< commande du bras (selon x)
 static uint32_t arm_y_cmd;    //!< commande du bras (selon y)
 static uint32_t arm_z_cmd;    //!< commande en hauteur du bras
+static uint32_t arm_x1_cmd;   //!< commande de la ventouse
+static uint32_t arm_y1_cmd;   //!< commande de la ventouse
+static uint32_t arm_x2_cmd;   //!< commande de la ventouse
+static uint32_t arm_y2_cmd;   //!< commande de la ventouse
 static uint32_t arm_cmd_type; //!< type de commande
 
 static int32_t arm_z;
@@ -53,6 +57,15 @@ const struct fx_vect_pos ARM_BASE = {
 	.sa = 0
 };
 
+//!< position de la ventouse par rapport au servo du bout du bras
+const struct fx_vect_pos VENTOUSE = {
+	.x = (45 << 16),
+	.y = (35 << 16),
+	.alpha = (1<<23), // ventouse à 45 degrés
+	.ca = 759250125,
+	.sa = 759250125
+};
+
 static const int32_t ARM_L1 = 118 << 16;
 static const int32_t ARM_L2 = 120 << 16;
 
@@ -60,6 +73,7 @@ static const int32_t ARM_L2 = 120 << 16;
 static int arm_compute_ab(int32_t x, int32_t y, int way);
 static int arm_compute_xyz_loc();
 static int arm_compute_xyz_abs();
+static int arm_compute_ventouse_abs();
 static void arm_cmd_goto(void* arg);
 static void arm_cmd_bridge(void* arg);
 static void arm_task();
@@ -173,6 +187,9 @@ static void arm_task()
 				case ARM_CMD_XYZ_LOC:
 					arm_compute_xyz_loc();
 					break;
+				case ARM_CMD_VENTOUSE_ABS:
+					arm_compute_ventouse_abs();
+					break;
 			}
 			ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
 			ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
@@ -246,7 +263,14 @@ static int arm_compute_xyz_loc()
 	struct fx_vect_pos C_arm;
 	pos_abs_to_loc(&ARM_BASE, &C_robot, &C_arm);
 
-	int res = arm_compute_ab(C_arm.x, C_arm.y, 1);
+	// choix du sens en fonction du signe de y pour prendre la solution avec le coude le plus au centre possible
+	int way = 1;
+	if( C_arm.y < 0)
+	{
+		way = -1;
+	}
+
+	int res = arm_compute_ab(C_arm.x, C_arm.y, way);
 
 	if(res)
 	{
@@ -284,6 +308,81 @@ static int arm_compute_xyz_abs()
 	return 0;
 }
 
+int arm_compute_ventouse_abs()
+{
+	struct fx_vect2 X1;
+	struct fx_vect2 X2;
+	struct fx_vect2 X1_robot;
+	struct fx_vect2 X2_robot;
+	struct fx_vect_pos pos_robot = location_get_position();
+
+	// orientation de la doite ((x1,y1) ; (x2,y2))
+	int32_t alpha = fx_atan2(arm_y2_cmd - arm_y1_cmd, arm_x2_cmd - arm_x1_cmd);
+
+	int32_t b_abs = alpha + (1<<24) - VENTOUSE.alpha;
+	// somme des angles a + b
+	int32_t a_b = b_abs - pos_robot.alpha; 
+
+	int32_t cb_abs = fx_cos(b_abs);
+	int32_t sb_abs = fx_sin(b_abs);
+
+	int32_t dx = ((int64_t)ARM_L2 * (int64_t)cb_abs) >> 30;
+	int32_t dy = ((int64_t)ARM_L2 * (int64_t)sb_abs) >> 30;
+	X1.x = arm_x1_cmd - dx;
+	X1.y = arm_y1_cmd - dy;
+	X2.x = arm_x2_cmd - dx;
+	X2.y = arm_y2_cmd - dy;
+
+	vect2_abs_to_loc(&pos_robot, &X1, &X1_robot);
+	vect2_abs_to_loc(&pos_robot, &X2, &X2_robot);
+	vect2_abs_to_loc(&ARM_BASE, &X1_robot, &X1);
+	vect2_abs_to_loc(&ARM_BASE, &X2_robot, &X2);
+
+	int32_t ux = X2.x - X1.x;
+	int32_t uy = X2.y - X1.y;
+
+	// ux^2 + uy^2
+	int64_t ux2_uy2 = (((int64_t) ux * (int64_t) ux) >> 16) + (((int64_t) uy * (int64_t) uy) >> 16);
+
+	// ux * y1 - uy * x1
+	int64_t uxy1_uyx1 = (int64_t) ux * (int64_t) X1.y - (int64_t) uy * (int64_t) X1.x;
+	int32_t uxy1_uyx1_over_ux2_uy2 = uxy1_uyx1 / ux2_uy2;
+	int64_t delta2 = ((int64_t)ARM_L1 * (int64_t)ARM_L1) / (ux2_uy2 >> 16) - ((int64_t)uxy1_uyx1_over_ux2_uy2*(int64_t)uxy1_uyx1_over_ux2_uy2);
+
+	if(delta2 < 0)
+	{
+		// pas de solution
+		return -1;
+	}
+
+	int32_t delta = sqrtf(delta2);
+	// ux * x1 + uy * y1
+	int64_t uxx1_uyy1 = (int64_t)ux * (int64_t)X1.x + (int64_t)uy * (int64_t)X1.y;
+	int32_t uxx1_uyy1_over_ux2_uy2 = uxx1_uyy1 / ux2_uy2;
+
+	// 2 solutions (ou deux fois la même dans le cas limite). On tente la premiere
+	int32_t k = uxx1_uyy1_over_ux2_uy2 + delta;
+	int32_t a = fx_atan2(X2.y + (((int64_t)k * (int64_t)uy) >> 16), X2.x + ((((int64_t)k * (int64_t)ux)>>16)));
+
+	// prise en compte de la saturation sur a : 90 degrés => 90/360 * 2^26 = 16777216
+	if( abs(a) > 16777216)
+	{
+		// on tente la seconde solution
+		k = uxx1_uyy1_over_ux2_uy2 - delta;
+		a = fx_atan2(X2.y + (((int64_t)k * (int64_t)uy) >> 16), X2.x + ((((int64_t)k * (int64_t)ux)>>16)));
+		if( abs(a) > 16777216)
+		{
+			// pas de solutions viable
+			return -1;
+		}
+	}
+
+	arm_a_cmd = a;
+	arm_b_cmd = a_b - a;
+
+	return 0;
+}
+
 int arm_goto_abz(int32_t a, int32_t b, uint32_t z)
 {
 	log_format(LOG_INFO, "a = %d b = %d z = %u", (int)a, (int)b, (unsigned int)z);
@@ -317,6 +416,9 @@ static void arm_cmd_goto(void* arg)
 		case ARM_CMD_XYZ_LOC:
 			arm_goto_xyz(param->x, param->y, param->z, param->type);
 			break;
+		case ARM_CMD_VENTOUSE_ABS:
+			arm_ventouse_goto(param->x1, param->y1, param->x2, param->y2, param->z);
+			break;
 		default:
 			break;
 	}
@@ -337,6 +439,28 @@ int arm_goto_xyz(int32_t x, int32_t y, uint32_t z, enum arm_cmd_type type)
 	arm_y_cmd = y;
 	arm_z_cmd = z;
 	arm_cmd_type = type;
+	xSemaphoreGive(arm_mutex);
+
+	return 0;
+}
+
+int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z)
+{
+	log_format(LOG_INFO, "x1 = %d y1 = %d x2 =  %d y2 = %d z = %d", (int)x1, (int)y1, (int)x2, (int)y2, (int)z);
+
+	// saturation pour ne pas forcer
+	if( z > ARM_ZMAX )
+	{
+		z = ARM_ZMAX;
+	}
+
+	xSemaphoreTake(arm_mutex, portMAX_DELAY);
+	arm_x1_cmd = x1;
+	arm_y1_cmd = y1;
+	arm_x2_cmd = x2;
+	arm_y2_cmd = y2;
+	arm_z_cmd = z;
+	arm_cmd_type = ARM_CMD_VENTOUSE_ABS;
 	xSemaphoreGive(arm_mutex);
 
 	return 0;

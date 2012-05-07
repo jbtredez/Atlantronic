@@ -699,6 +699,24 @@ int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, floa
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
+int robot_interface_arm_ventouse(struct robot_interface* data, float x1, float y1, float x2, float y2, float z)
+{
+	struct arm_cmd_goto_param cmd_arg;
+
+	cmd_arg.x1 = x1 * 65536.0f;
+	cmd_arg.y1 = y1 * 65536.0f;
+	cmd_arg.x2 = x2 * 65536.0f;
+	cmd_arg.y2 = y2 * 65536.0f;
+	cmd_arg.z = z * 65536.0f;
+	cmd_arg.type = ARM_CMD_VENTOUSE_ABS;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_ARM_GOTO;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
+}
+
 int robot_interface_arm_abz(struct robot_interface* data, float a, float b, float z)
 {
 	struct arm_cmd_goto_param cmd_arg;
