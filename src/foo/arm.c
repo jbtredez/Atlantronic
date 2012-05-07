@@ -70,10 +70,12 @@ static const int32_t ARM_L1 = 118 << 16;
 static const int32_t ARM_L2 = 120 << 16;
 
 //!< modèle géométrique inverse du bras
+//!< way : sens du coude du bras
 static int arm_compute_ab(int32_t x, int32_t y, int way);
 static int arm_compute_xyz_loc();
 static int arm_compute_xyz_abs();
-static int arm_compute_ventouse_abs();
+//! ventouse_way : direction de la ventouse (-+ 45 degrés) selon la position du dernier servo
+static int arm_compute_ventouse_abs(int ventouse_way);
 static void arm_cmd_goto(void* arg);
 static void arm_cmd_bridge(void* arg);
 static void arm_task();
@@ -146,7 +148,7 @@ static void arm_task()
 	arm_vz = 0;
 	arm_z_step = 0;
 	// on va monter au début
-	arm_z_cmd = (150 << 16);
+	arm_z_cmd = (100 << 16);
 
 	while(1)
 	{
@@ -188,7 +190,8 @@ static void arm_task()
 					arm_compute_xyz_loc();
 					break;
 				case ARM_CMD_VENTOUSE_ABS:
-					arm_compute_ventouse_abs();
+					// TODO : sens de la ventouse
+					arm_compute_ventouse_abs(1);
 					break;
 			}
 			ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
@@ -308,7 +311,7 @@ static int arm_compute_xyz_abs()
 	return 0;
 }
 
-int arm_compute_ventouse_abs()
+int arm_compute_ventouse_abs(int ventouse_way)
 {
 	struct fx_vect2 X1;
 	struct fx_vect2 X2;
@@ -319,15 +322,16 @@ int arm_compute_ventouse_abs()
 	// orientation de la doite ((x1,y1) ; (x2,y2))
 	int32_t alpha = fx_atan2(arm_y2_cmd - arm_y1_cmd, arm_x2_cmd - arm_x1_cmd);
 
-	int32_t b_abs = alpha + (1<<24) - VENTOUSE.alpha;
+	// angle b du secondd bras dans le repere absolu
+	int32_t b_abs = alpha + (1<<24) - ventouse_way * VENTOUSE.alpha;
 	// somme des angles a + b
 	int32_t a_b = b_abs - pos_robot.alpha; 
 
+	// translation des points X1 et X2 => point de contact en B
 	int32_t cb_abs = fx_cos(b_abs);
 	int32_t sb_abs = fx_sin(b_abs);
-
-	int32_t dx = ((int64_t)ARM_L2 * (int64_t)cb_abs) >> 30;
-	int32_t dy = ((int64_t)ARM_L2 * (int64_t)sb_abs) >> 30;
+	int32_t dx = (((int64_t)(ARM_L2 + VENTOUSE.x) * (int64_t)cb_abs) >> 30) - ventouse_way * (((int64_t) VENTOUSE.y * (int64_t)sb_abs) >> 30);
+	int32_t dy = (((int64_t)(ARM_L2 + VENTOUSE.x) * (int64_t)sb_abs) >> 30) + ventouse_way * (((int64_t) VENTOUSE.y * (int64_t)cb_abs) >> 30);
 	X1.x = arm_x1_cmd - dx;
 	X1.y = arm_y1_cmd - dy;
 	X2.x = arm_x2_cmd - dx;
