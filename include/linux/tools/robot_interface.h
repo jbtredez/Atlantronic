@@ -71,7 +71,7 @@ int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, floa
 
 int robot_interface_arm_abz(struct robot_interface* data, float a, float b, float z);
 
-int robot_interface_arm_ventouse(struct robot_interface* data, float x1, float y1, float x2, float y2, float z);
+int robot_interface_arm_ventouse(struct robot_interface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way);
 
 int robot_interface_arm_bridge(struct robot_interface* data, uint8_t on);
 

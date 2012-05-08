@@ -414,15 +414,16 @@ int cmd_arm_ventouse(void* arg)
 	float x2;
 	float y2;
 	float z;
+	int tool_way;
 
-	int count = sscanf(arg, "%f %f %f %f %f", &x1, &y1, &x2, &y2, &z);
+	int count = sscanf(arg, "%f %f %f %f %f %d", &x1, &y1, &x2, &y2, &z, &tool_way);
 
-	if(count != 5)
+	if(count != 6)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_ventouse(cmd_robot, x1, y1, x2, y2, z);
+	robot_interface_arm_ventouse(cmd_robot, x1, y1, x2, y2, z, tool_way);
 	return CMD_SUCESS;
 }
 
