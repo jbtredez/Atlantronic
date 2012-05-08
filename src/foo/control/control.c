@@ -35,9 +35,9 @@ const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
 const int32_t CONTROL_AMAX_AV = ((600 << 16) / (CONTROL_HZ * CONTROL_HZ));
 const int32_t CONTROL_DMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
-const int32_t CONTROL_VMAX_ROT = ((((int64_t)100 << 26) / CONTROL_HZ)  / ( PI*PARAM_VOIE_MOT ));
-const int32_t CONTROL_AMAX_ROT = ((((int64_t)125 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ));
-const int32_t CONTROL_DMAX_ROT = ((((int64_t)250 << 26) / (CONTROL_HZ * CONTROL_HZ))  / ( PI*PARAM_VOIE_MOT ));
+const int32_t CONTROL_VMAX_ROT = 0.3f*(1<<26) / CONTROL_HZ; // 0.3 tr/s
+const int32_t CONTROL_AMAX_ROT = 0.4f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 0.4 tr/s²
+const int32_t CONTROL_DMAX_ROT = 0.6f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 0.3 tr/s²
 
 static void control_task(void *);
 //static int32_t sinc( int32_t x );
