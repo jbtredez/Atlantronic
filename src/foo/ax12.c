@@ -48,6 +48,7 @@ struct ax12_request
 
 struct ax12_device
 {
+	uint8_t update; //!< lecture et envoi automatique de la position
 	//!< bit 7 à 1 : ERR_AX12_SEND_CHECK, ERR_AX12_PROTO ou ERR_AX12_CHECKSUM
 	//!< bit 7 à 0 : erreur usart sur les 4 bits de poids faible
 	uint8_t transmit_error;
@@ -161,7 +162,7 @@ static void ax12_task(void* arg)
 		{
 			xSemaphoreGive(ax12_mutex);
 
-			if(id > 0)
+			if(id > 0 && ax12_device[id].update)
 			{
 				// rien dans la fifo => lecture de la position de l'ax12
 				req.instruction = AX12_INSTRUCTION_READ_DATA;
@@ -746,4 +747,12 @@ void ax12_set_goal_limit(uint8_t id, uint16_t min, uint16_t max)
 
 	ax12_device[id].min_goal = min;
 	ax12_device[id].max_goal = max;
+}
+
+void ax12_auto_update(uint8_t id, uint8_t update)
+{
+	if( id < AX12_MAX_ID )
+	{
+		ax12_device[id].update = update;
+	}
 }

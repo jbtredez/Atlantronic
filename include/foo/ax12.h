@@ -81,4 +81,6 @@ int32_t ax12_get_position(uint8_t id, struct ax12_error* error);
 
 struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
 
+void ax12_auto_update(uint8_t id, uint8_t update);
+
 #endif
