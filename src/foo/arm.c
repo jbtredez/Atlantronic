@@ -23,7 +23,9 @@
 #define ARM_STACK_SIZE       300
 #define ARM_STEP_BY_MM         5
 #define ARM_HZ               500
-#define ARM_ZMAX            (200 << 16)
+#define ARM_ZMIN        (65<<16)
+#define ARM_ZMAX     (265 << 16)
+#define ARM_ZINIT    (100 << 16)  //!< hauteur au lancement
 
 static xSemaphoreHandle arm_mutex;
 static int32_t arm_a_cmd;     //!< commande du bras (angle a)
@@ -78,6 +80,7 @@ static int arm_compute_xyz_abs();
 //! ventouse_way : direction de la ventouse (-+ 45 degrés) selon la position du dernier servo
 static int arm_compute_ventouse_abs();
 static void arm_cmd_goto(void* arg);
+static uint32_t arm_satz(uint32_t z);
 static void arm_cmd_bridge(void* arg);
 static void arm_task();
 
@@ -150,9 +153,9 @@ static void arm_task()
 		vTaskDelay(ms_to_tick(10));
 	}
 
-	arm_z = 0;
+	arm_z = ARM_ZMIN;
 	arm_vz = 0;
-	arm_z_step = 0;
+	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
 	// on va monter au début
 	arm_z_cmd = (100 << 16);
 
@@ -392,15 +395,26 @@ int arm_compute_ventouse_abs()
 	return 0;
 }
 
+static uint32_t arm_satz(uint32_t z)
+{
+	if( z > ARM_ZMAX )
+	{
+		z = ARM_ZMAX;
+	}
+	else if( z < ARM_ZMIN)
+	{
+		z = ARM_ZMIN;
+	}
+
+	return z;
+}
+
 int arm_goto_abz(int32_t a, int32_t b, uint32_t z)
 {
 	log_format(LOG_INFO, "a = %d b = %d z = %u", (int)a, (int)b, (unsigned int)z);
 
 	// saturation pour ne pas forcer
-	if( z > ARM_ZMAX )
-	{
-		z = ARM_ZMAX;
-	}
+	z = arm_satz(z);
 
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
 	arm_a_cmd = a;
@@ -438,10 +452,7 @@ int arm_goto_xyz(int32_t x, int32_t y, uint32_t z, enum arm_cmd_type type)
 	log_format(LOG_INFO, "x = %d y = %d z = %d", (int)x, (int)y, (int)z);
 
 	// saturation pour ne pas forcer
-	if( z > ARM_ZMAX )
-	{
-		z = ARM_ZMAX;
-	}
+	z = arm_satz(z);
 
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
 	arm_x_cmd = x;
@@ -458,10 +469,7 @@ int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z
 	log_format(LOG_INFO, "x1 = %d y1 = %d x2 =  %d y2 = %d z = %d", (int)x1, (int)y1, (int)x2, (int)y2, (int)z);
 
 	// saturation pour ne pas forcer
-	if( z > ARM_ZMAX )
-	{
-		z = ARM_ZMAX;
-	}
+	z = arm_satz(z);
 
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
 	arm_x1_cmd = x1;
