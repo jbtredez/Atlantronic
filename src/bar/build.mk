@@ -31,6 +31,7 @@ obj-bar-us_hokuyo += kernel/driver/usb/otgd_fs_pcd.o
 #obj-bar-us_hokuyo += kernel/end.o
 obj-bar-us_hokuyo += kernel/fault.o
 obj-bar-us_hokuyo += bar/us.o
+obj-bar-us_hokuyo += bar/pwm.o
 obj-bar-us_hokuyo += bar/location.o
 obj-bar-us_hokuyo += bar/hokuyo_to_can.o
 obj-bar-us_hokuyo += bar/gpio.o

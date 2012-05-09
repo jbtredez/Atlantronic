@@ -8,10 +8,7 @@
 #include <stdint.h>
 #include "kernel/rcc.h"
 
-#define PWM_RIGHT    0
-#define PWM_LEFT     1
-#define PWM_BRIDGE   2
-#define PWM_UNUSED   3
+#define PWM_SERVO1    0
 
 #if( RCC_PCLK2 != 72000000)
 #error revoir les pwm
@@ -21,12 +18,16 @@
 // PSC = (RCC_PCLK2 * 2 / TIM1CLK) - 1 sinon
 // But :
 //  - profiter un max de la plage des 16bits pour la PWM
-// => PSC = 0, on maximise TIMCLK donc ARR
-#define PWM_PSC     0x00
+// => PSC = 22, on maximise TIMCLK donc ARR
+#define PWM_PSC        21
 
-// pour PSC = 0, TIMCLK = 72 MHz
-// donc ARR = TIM1CLK / 25000 - 1 = 2879 pour une PWM à 25 kHz. On a une resolution de 2880 sur une periode
-#define PWM_ARR     2879
+// pour PSC = 0xFFFF, TIMCLK = 3272727 Hz
+// donc ARR = TIM1CLK / 50 - 1 = 65453 pour une PWM à 50 Hz. On a une resolution de 65453 sur une periode
+#define PWM_ARR     65453
+
+#define PWM_SERVO1_MIN    (int16_t)((PWM_ARR * 2.7f)/100)
+#define PWM_SERVO1_MAX    (int16_t)((PWM_ARR * 12.1f)/100)
+#define PWM_SERVO1_MED    (int16_t)((PWM_ARR * 7.1f)/100)
 
 //! set a pwm
 //!
