@@ -74,6 +74,9 @@ static int pwm_module_init()
 	TIM1->CR1 |= TIM_CR1_CEN;
 	TIM1->BDTR |= TIM_BDTR_MOE;
 
+	// pwm à 60% pour le ventilo	
+	pwm_set(PWM_FAN, - 0.6*PWM_ARR);
+
 	return 0;
 }
 
@@ -123,7 +126,7 @@ void pwm_set(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR3 = val;
 			break;
-		case PWM_UNUSED:
+		case PWM_FAN:
 			if(dir > 0)
 			{
 				GPIOE->ODR |= GPIO_ODR_ODR15;
@@ -146,5 +149,5 @@ void isr_pwm_reset(void)
 	TIM1->CCR1 = 0;
 	TIM1->CCR2 = 0;
 	TIM1->CCR3 = 0;
-	TIM1->CCR4 = 0;
+//	TIM1->CCR4 = 0;
 }
