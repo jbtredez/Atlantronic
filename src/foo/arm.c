@@ -73,8 +73,17 @@ struct fx_vect_pos VENTOUSE = {
 	.sa = 759250125
 };
 
-static int32_t ARM_L1 = 118 << 16;
-static int32_t ARM_L2 = 120 << 16;
+//!< position du crochet par rapport au servo du bout du bras
+struct fx_vect_pos HOOK = {
+	.x = (25 << 16),
+	.y = (35 << 16),
+	.alpha = -(1<<23), // crochet à -45 degrés
+	.ca = 759250125,
+	.sa = -759250125
+};
+
+static const int32_t ARM_L1 = 118 << 16;
+static const int32_t ARM_L2 = 120 << 16;
 
 //!< modèle géométrique inverse du bras
 //!< way : sens du coude du bras
@@ -82,7 +91,7 @@ static int arm_compute_ab(int32_t x, int32_t y, int way);
 static int arm_compute_xyz_loc();
 static int arm_compute_xyz_abs();
 //! ventouse_way : direction de la ventouse (-+ 45 degrés) selon la position du dernier servo
-static int arm_compute_ventouse_abs();
+static int arm_compute_tool_abs(struct fx_vect_pos tool_pos);
 static void arm_cmd_goto(void* arg);
 static uint32_t arm_satz(uint32_t z);
 static void arm_cmd_bridge(void* arg);
@@ -166,6 +175,7 @@ static void arm_task()
 	arm_z = ARM_ZMIN;
 	arm_vz = 0;
 	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
+
 	// on va monter au début
 	arm_z_cmd = (100 << 16);
 
@@ -209,7 +219,10 @@ static void arm_task()
 					arm_compute_xyz_loc();
 					break;
 				case ARM_CMD_VENTOUSE_ABS:
-					arm_compute_ventouse_abs();
+					arm_compute_tool_abs(VENTOUSE);
+					break;
+				case ARM_CMD_HOOK_ABS:
+					arm_compute_tool_abs(HOOK);
 					break;
 			}
 			ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
@@ -333,7 +346,7 @@ static int arm_compute_xyz_abs()
 	return 0;
 }
 
-int arm_compute_ventouse_abs()
+int arm_compute_tool_abs(struct fx_vect_pos tool_pos)
 {
 	struct fx_vect2 X1;
 	struct fx_vect2 X2;
@@ -345,15 +358,15 @@ int arm_compute_ventouse_abs()
 	int32_t alpha = fx_atan2(arm_y2_cmd - arm_y1_cmd, arm_x2_cmd - arm_x1_cmd);
 
 	// angle b du secondd bras dans le repere absolu
-	int32_t b_abs = alpha + (1<<24) - arm_tool_way_cmd * VENTOUSE.alpha;
+	int32_t b_abs = alpha + (1<<24) - arm_tool_way_cmd * tool_pos.alpha;
 	// somme des angles a + b
 	int32_t a_b = b_abs - pos_robot.alpha; 
 
 	// translation des points X1 et X2 => point de contact en B
 	int32_t cb_abs = fx_cos(b_abs);
 	int32_t sb_abs = fx_sin(b_abs);
-	int32_t dx = (((int64_t)(ARM_L2 + VENTOUSE.x) * (int64_t)cb_abs) >> 30) - arm_tool_way_cmd * (((int64_t) VENTOUSE.y * (int64_t)sb_abs) >> 30);
-	int32_t dy = (((int64_t)(ARM_L2 + VENTOUSE.x) * (int64_t)sb_abs) >> 30) + arm_tool_way_cmd * (((int64_t) VENTOUSE.y * (int64_t)cb_abs) >> 30);
+	int32_t dx = (((int64_t)(ARM_L2 + tool_pos.x) * (int64_t)cb_abs) >> 30) - arm_tool_way_cmd * (((int64_t) tool_pos.y * (int64_t)sb_abs) >> 30);
+	int32_t dy = (((int64_t)(ARM_L2 + tool_pos.x) * (int64_t)sb_abs) >> 30) + arm_tool_way_cmd * (((int64_t) tool_pos.y * (int64_t)cb_abs) >> 30);
 	X1.x = arm_x1_cmd - dx;
 	X1.y = arm_y1_cmd - dy;
 	X2.x = arm_x2_cmd - dx;
@@ -493,6 +506,26 @@ int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z
 	arm_z_cmd = z;
 	arm_tool_way_cmd = tool_way;
 	arm_cmd_type = ARM_CMD_VENTOUSE_ABS;
+	xSemaphoreGive(arm_mutex);
+
+	return 0;
+}
+
+int arm_hook_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, int8_t tool_way)
+{
+	log_format(LOG_INFO, "x1 = %d y1 = %d x2 =  %d y2 = %d z = %d", (int)x1, (int)y1, (int)x2, (int)y2, (int)z);
+
+	// saturation pour ne pas forcer
+	z = arm_satz(z);
+
+	xSemaphoreTake(arm_mutex, portMAX_DELAY);
+	arm_x1_cmd = x1;
+	arm_y1_cmd = y1;
+	arm_x2_cmd = x2;
+	arm_y2_cmd = y2;
+	arm_z_cmd = z;
+	arm_tool_way_cmd = tool_way;
+	arm_cmd_type = ARM_CMD_HOOK_ABS;
 	xSemaphoreGive(arm_mutex);
 
 	return 0;

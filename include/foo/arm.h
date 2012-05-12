@@ -13,6 +13,7 @@ enum arm_cmd_type
 	ARM_CMD_XYZ_LOC,
 	ARM_CMD_XYZ_ABS,
 	ARM_CMD_VENTOUSE_ABS,
+	ARM_CMD_HOOK_ABS,
 };
 
 //!< met le bras à la position souhaitée (coordonées articulaires)
@@ -31,6 +32,9 @@ int arm_goto_xyz(int32_t x, int32_t y, uint32_t z, enum arm_cmd_type type);
 
 //!< place la ventouse perpendiculairement au segment [(x1, y1, z) (x2, y2, z)]
 int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, int8_t tool_way);
+
+//!< place le crochet perpendiculairement au segment [(x1, y1, z) (x2, y2, z)]
+int arm_hook_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, int8_t tool_way);
 
 //!< mise en marche de la pompe
 void arm_bridge_on();
