@@ -10,10 +10,10 @@
 #define PI                              3.141592654f
 #define PI_FX29                           1686629713      //!< pi en 2^-29 rd
 
-#define PARAM_RIGHT_ODO_WHEEL_RADIUS_FX      2627994      //!< rayon de la roue droite en 2^-16 mm (virgule fixe) ( = 40.1 mm)
-#define PARAM_LEFT_ODO_WHEEL_RADIUS_FX       2627994      //!< rayon de la roue droite en 2^-16 mm (virgule fixe) ( = 40.1 mm)
+#define PARAM_RIGHT_ODO_WHEEL_RADIUS_FX      2588574      //!< rayon de la roue droite en 2^-16 mm (virgule fixe) ( = 39.5 mm)
+#define PARAM_LEFT_ODO_WHEEL_RADIUS_FX       2588574      //!< rayon de la roue droite en 2^-16 mm (virgule fixe) ( = 49.5 mm)
 
-#define PARAM_INVERTED_VOIE_FX39          1773405851      //!< inverse de la voie en 2^-39 mm^-1 ( = 1 / 310mm)
+#define PARAM_INVERTED_VOIE_FX39          1782028570      //!< inverse de la voie en 2^-39 mm^-1 ( = 1 / 308.5mm)
 
 #define PARAM_RIGHT_ODO_WHEEL_WAY                 1
 #define PARAM_LEFT_ODO_WHEEL_WAY                  1
