@@ -15,12 +15,19 @@
 
 #define STRAT_STACK_SIZE       300
 
+enum totem_pos
+{
+	TOTEM_POS_HIGH,
+	TOTEM_POS_LOW,
+	TOTEM_POS_OP_HIGH,
+	TOTEM_POS_OP_LOW,
+};
+
 static int strat_dir;
 
 static void strat_task();
 static void strat_sortie();
-static void strat_ratissage_totem(int haut, int adverse);
-static void strat_ratissage_totem_lannion(int haut);
+static int strat_ratissage_totem(enum totem_pos pos);
 static void strat_bouteille(int id);
 
 int strat_module_init();
@@ -61,15 +68,13 @@ static void strat_task()
 		strat_dir = -1;
 	}
 
-//	pince_open();
-
 	trajectory_disable_hokuyo();
 
 	strat_sortie();
 
-	strat_ratissage_totem_lannion(1);
-	//strat_ratissage_totem(1, 0);
+	strat_ratissage_totem(TOTEM_POS_HIGH);
 
+#if 0
 	strat_bouteille(0);
 
 	int i = 0;
@@ -82,6 +87,7 @@ static void strat_task()
 	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
 
 	strat_bouteille(1);
+#endif
 
 	vTaskDelete(NULL);
 }
@@ -113,125 +119,67 @@ void strat_sortie()
 	// pas d'évitement par graph, on n'a pas le choix, il faut avancer
 	do
 	{
-		trajectory_goto_near_xy(strat_dir * mm2fx(900), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-//		trajectory_goto_near_xy(strat_dir * mm2fx(-900), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		trajectory_goto_near_xy(strat_dir * mm2fx(0), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 		vTaskDelay(ms_to_tick(50));
 	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED);
 }
 
-static void strat_ratissage_totem_lannion(int haut)
+static int strat_ratissage_totem(enum totem_pos pos)
 {
-	log_format(LOG_INFO, "strat_ratissage_totem_lannion haut = %d", haut);
-	if(haut)
+	int dir;
+	int high;
+
+	log_format(LOG_INFO, "ratissage_totem %d", pos);
+	switch(pos)
 	{
-		haut = 1;
+		default:
+		case TOTEM_POS_HIGH:
+			high = 1;
+			dir = strat_dir;
+			break;
+		case TOTEM_POS_LOW:
+			high = -1;
+			dir = strat_dir;
+			break;
+		case TOTEM_POS_OP_HIGH:
+			high = 1;
+			dir = -strat_dir;
+			break;
+		case TOTEM_POS_OP_LOW:
+			high = -1;
+			dir = -strat_dir;
+			break;
 	}
-	else
-	{
-		haut = -1;
-	}
 
-	trajectory_free();
-	vTaskDelay(ms_to_tick(350));
-
-	pince_open();
-	int i = 0;
-
-	do
-	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(900), haut * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	i = 0;
-	do
-	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(-600), haut * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	i = 0;
-	do
-	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(-1250), mm2fx(250), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	trajectory_goto_near_xy( strat_dir * mm2fx(-1300), mm2fx(-150), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy(0, high * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	vTaskDelay(ms_to_tick(50));
 
-	i = 0;
-	do
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(-1250), mm2fx(250), 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	trajectory_free();
-	vTaskDelay(ms_to_tick(350));
-
-	pince_close();
-}
-
-static void strat_ratissage_totem(int haut, int adverse)
-{
-	int i = 0;
-
-	log_format(LOG_INFO, "ratissage_totem haut = %d adv = %d", haut, adverse);
-	if(haut)
-	{
-		haut = 1;
-	}
-	else
-	{
-		haut = -1;
+		return -1;
 	}
 
-	if(adverse)
+	// TODO voir les pinces
+
+	trajectory_goto_near_xy(dir * mm2fx(-275), high * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		adverse = -strat_dir;
+		return -1;
 	}
-	else
+
+	
+#if 0
+	trajectory_goto_near_xy(dir * mm2fx(-1250), 0, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		adverse = strat_dir;
+		return -1;
 	}
-
-	i = 0;
-	do
-	{
-		trajectory_goto_near_xy(0, haut * mm2fx(400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	i = 0;
-	do
-	{
-		trajectory_goto_near_xy(adverse * mm2fx(-600), haut * mm2fx(400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
-
-	i = 0;
-	do
-	{
-		trajectory_goto_near_xy(adverse * mm2fx(-1250), 0, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
+#endif
+	return 0;
 }
 
 static void strat_bouteille(int id)
