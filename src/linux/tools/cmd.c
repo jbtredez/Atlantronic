@@ -28,8 +28,7 @@ int cmd_goto_near(void* arg);
 int cmd_goto_near_xy(void* arg);
 int cmd_localization_set_position(void* arg);
 int cmd_max_speed(void* arg);
-int cmd_pince_open();
-int cmd_pince_close();
+int cmd_pince_set_position(void* arg);
 int cmd_set_color(void* arg);
 int cmd_set_match_time(void* arg);
 int cmd_straight(void* arg);
@@ -61,8 +60,7 @@ COMMAND usb_commands[] = {
 	{ "help", cmd_help, "Display this text" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
-	{ "pince_open", cmd_pince_open, "ouverture des pinces"},
-	{ "pince_close", cmd_pince_close, "fermeture des pinces"},
+	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "q", cmd_quit, "Quit" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
@@ -318,15 +316,18 @@ int cmd_max_speed(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_pince_open()
+int cmd_pince_set_position (void* arg)
 {
-	robot_interface_pince(cmd_robot, PINCE_OPEN);
-	return CMD_SUCESS;
-}
+	int pince_left;
+	int pince_right;
+	int count = sscanf(arg, "%d %d", &pince_left, &pince_right);
 
-int cmd_pince_close()
-{
-	robot_interface_pince(cmd_robot, PINCE_CLOSE);
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_pince(cmd_robot, pince_left, pince_right);
 	return CMD_SUCESS;
 }
 

@@ -63,7 +63,7 @@ int robot_interface_ax12_get_position(struct robot_interface* data, uint8_t id);
 
 // ---------- gestion des pinces -----------------------------------------------
 
-int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type);
+int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);
 
 // ---------- gestion du bras --------------------------------------------------
 

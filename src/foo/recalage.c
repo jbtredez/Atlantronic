@@ -49,7 +49,7 @@ void recalage()
 
 	struct fx_vect_pos pos;
 
-	pince_close();
+	pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
 
 	if(getcolor() == COLOR_BLUE)
 	{

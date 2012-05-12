@@ -32,14 +32,14 @@ static void test_pince_task()
 {
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
-	pince_open();
+	pince_set_position(PINCE_OPEN,PINCE_OPEN);
 	vTaskDelay(ms_to_tick(1000));
 
 	while(1)
 	{
-		pince_close();
+		pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
 		vTaskDelay(ms_to_tick(2000));
-		pince_open();
+		pince_set_position(PINCE_OPEN,PINCE_OPEN);
 		vTaskDelay(ms_to_tick(2000));
 	}
 

@@ -161,6 +161,7 @@ static int strat_ratissage_totem(enum totem_pos pos)
 	}
 
 	// TODO voir les pinces
+	// pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
 
 	trajectory_goto_near_xy(dir * mm2fx(-275), high * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
