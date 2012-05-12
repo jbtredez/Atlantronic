@@ -32,12 +32,12 @@
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
-const int32_t CONTROL_AMAX_AV = ((600 << 16) / (CONTROL_HZ * CONTROL_HZ));
-const int32_t CONTROL_DMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_AMAX_AV = ((1300 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((1300 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
-const int32_t CONTROL_VMAX_ROT = 0.3f*(1<<26) / CONTROL_HZ; // 0.3 tr/s
-const int32_t CONTROL_AMAX_ROT = 0.4f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 0.4 tr/s²
-const int32_t CONTROL_DMAX_ROT = 0.6f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 0.3 tr/s²
+const int32_t CONTROL_VMAX_ROT = 0.8f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
+const int32_t CONTROL_AMAX_ROT = 1.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_DMAX_ROT = 1.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
 
 static void control_task(void *);
 //static int32_t sinc( int32_t x );
@@ -295,7 +295,7 @@ static void control_compute()
 			control_speed_check_error_count = 0;
 		}
 
-		if(control_speed_check_error_count > 10 )
+		if(control_speed_check_error_count > 40 )
 		{
 			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_kinematics_cons.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
