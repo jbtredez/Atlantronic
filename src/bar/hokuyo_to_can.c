@@ -76,8 +76,10 @@ static void hokuyo_to_can_task()
 	vTaskDelete(NULL);
 }
 
+// TODO : calculer les segments et envoyer les seg
 void hokuyo_to_can_compute()
 {
+#if 0
 	unsigned int i = 0;
 	int res;
 	unsigned char* buf = (unsigned char*) hokuyo_scan.distance;
@@ -124,5 +126,6 @@ void hokuyo_to_can_compute()
 	}
 
 end:
+#endif
 	return;
 }

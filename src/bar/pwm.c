@@ -47,7 +47,7 @@ static int pwm_module_init()
 
 	TIM1->CCER = TIM_CCER_CC4E;
 
-	TIM1->CCR4 = PWM_SERVO1_MED; // pwm initiale sur le canal 4 (position du servo au milieu)
+	TIM1->CCR4 = PWM_SERVO1_MIN; // pwm initiale sur le canal 4 (position du servo au milieu)
 
 	// on active le tout
 	TIM1->CR1 |= TIM_CR1_CEN;

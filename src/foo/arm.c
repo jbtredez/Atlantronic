@@ -14,6 +14,8 @@
 #include "kernel/vect_pos.h"
 #include "kernel/driver/usb.h"
 #include "kernel/math/trigo.h"
+#include "kernel/driver/can.h"
+#include "kernel/can/can_id.h"
 #include "foo/location/location.h"
 #include "foo/pwm.h"
 #include "ax12.h"
@@ -43,6 +45,8 @@ static uint32_t arm_cmd_type; //!< type de commande
 static int32_t arm_z;
 static int32_t arm_vz;
 static int32_t arm_z_step;
+
+static struct can_msg arm_servo_msg;
 
 //!< vitesse max du moteur pas à pas
 const int32_t ARM_VMAX = (100 << 16) / ARM_HZ;
@@ -102,6 +106,12 @@ static int arm_module_init()
 	}
 
 	arm_tool_way_cmd = 1;
+
+	// pre remplissage du message can
+	arm_servo_msg.id = CAN_SERVO;
+	arm_servo_msg.format = CAN_STANDARD_FORMAT;
+	arm_servo_msg.type = CAN_DATA_FRAME;
+	arm_servo_msg.size = 1;
 
 	ax12_set_goal_limit(AX12_ARM_1, 0xcc, 0x332);
 	ax12_set_goal_limit(AX12_ARM_2, 0x00, 0x3ff);
@@ -204,6 +214,10 @@ static void arm_task()
 			}
 			ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
 			ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
+
+			arm_servo_msg.data[0] = 127 - arm_tool_way_cmd * 127;
+
+			can_write(&arm_servo_msg, ms_to_tick(1));
 		}
 
 		xSemaphoreGive(arm_mutex);

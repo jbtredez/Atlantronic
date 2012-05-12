@@ -28,8 +28,8 @@
 static void detection_task();
 static int detection_module_init();
 static void detection_compute();
-static void can_hokuyo_reset(struct can_msg *msg);
-static void can_hokuyo_data(struct can_msg *msg);
+//static void can_hokuyo_reset(struct can_msg *msg);
+//static void can_hokuyo_data(struct can_msg *msg);
 
 // données privées à la tache detection, ne doit pas être disponible
 // à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
@@ -70,8 +70,8 @@ int detection_module_init()
 	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
 
-	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
-	can_register(CAN_HOKUYO_DATA, CAN_STANDARD_FORMAT, can_hokuyo_data);
+//	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
+//	can_register(CAN_HOKUYO_DATA, CAN_STANDARD_FORMAT, can_hokuyo_data);
 
 	return 0;
 }
@@ -263,7 +263,7 @@ void detection_compute()
 	}
 	xSemaphoreGive(detection_mutex);
 }
-
+/*
 void can_hokuyo_reset(struct can_msg *msg)
 {
 	(void) msg;
@@ -273,3 +273,4 @@ void can_hokuyo_data(struct can_msg *msg)
 {
 	(void) msg;
 }
+*/

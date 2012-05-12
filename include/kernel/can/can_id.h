@@ -10,13 +10,18 @@
 
 // uint8_t us_activate_mask
 #define CAN_US_ACTIVATE           0x11
+
+// cinématique
 #define CAN_KINEMATICS_1          0x12
 #define CAN_KINEMATICS_2          0x13
 #define CAN_KINEMATICS_3          0x14
 
+// uint8_t servo1
+#define CAN_SERVO                 0x15
+
 // data hokuyo (4 uint16_t par message)
-#define CAN_HOKUYO_DATA_RESET     0x13
-#define CAN_HOKUYO_DATA           0x14
+//#define CAN_HOKUYO_DATA_RESET     0x13
+//#define CAN_HOKUYO_DATA           0x14
 
 #endif
 
