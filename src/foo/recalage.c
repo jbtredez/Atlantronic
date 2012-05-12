@@ -45,6 +45,8 @@ int recalage_wait_and_check_trajectory_result(enum trajectory_state wanted_state
 
 void recalage()
 {
+	log(LOG_INFO, "recalage...");
+
 	struct fx_vect_pos pos;
 
 	pince_close();
