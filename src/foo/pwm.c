@@ -75,7 +75,7 @@ static int pwm_module_init()
 	TIM1->BDTR |= TIM_BDTR_MOE;
 
 	// pwm à 60% pour le ventilo	
-	pwm_set(PWM_FAN, - 0.6*PWM_ARR);
+	pwm_set(PWM_FAN, - 0.6f*PWM_ARR);
 
 	return 0;
 }
