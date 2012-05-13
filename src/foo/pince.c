@@ -40,8 +40,8 @@ static int pince_module_init()
 
 	usb_add_cmd(USB_CMD_PINCE, &pince_cmd);
 
-	ax12_set_goal_limit(AX12_PINCE_RIGHT, 0x150, 0x320);//-9117696 15056896
-	ax12_set_goal_limit(AX12_PINCE_LEFT, 0xdf, 0x2af);//-15003648 9166848 (0 plus du cote fermé)
+	ax12_set_goal_limit(AX12_PINCE_RIGHT, 0xed, 0x310);
+	ax12_set_goal_limit(AX12_PINCE_LEFT, 0xed, 0x324);
 
 	return 0;
 }
@@ -52,13 +52,11 @@ static void pince_task(void* arg)
 {
 	(void) arg;
 	
-	//TODO regarder arm.c (transmit_error)
-
 	bool bool_obstruct_left;
 	bool bool_obstruct_right;
-	int32_t alpha_left;
-	int32_t alpha_right;
-	int32_t alpha_close_left;
+	int32_t alpha_left = 800000;
+	int32_t alpha_right = -800000;
+	int32_t alpha_close_left = 15000000;
 	int32_t actual_pos_left;
 	int32_t actual_pos_right;
 	
@@ -91,33 +89,48 @@ static void pince_task(void* arg)
 		// recupération des positions courantes
 		actual_pos_left=ax12_get_position (AX12_PINCE_LEFT, &err_left);
 		actual_pos_right=ax12_get_position (AX12_PINCE_RIGHT, &err_right);
-		
+
 		// si la pince gauche est dans l'intervalle obstruant 
-		if(actual_pos_right<alpha_right)
+		if(actual_pos_right < alpha_right)
+		{
 			bool_obstruct_right = TRUE;
+		}
 		else
+		{
 			bool_obstruct_right = FALSE;
+		}
 
 		// si la pince droite est dans l'intervalle obstruant 
-		if((actual_pos_left<alpha_left)&&(actual_pos_left>alpha_close_left))
+		if((actual_pos_left > alpha_left) && (actual_pos_left < alpha_close_left))
+		{
 			bool_obstruct_left=TRUE;
+		}
 		else
+		{
 			bool_obstruct_left=FALSE;
+		}
 
 		// si les deux pinces sont dans l'intervalle obstruant 
 		if((bool_obstruct_right)&&(bool_obstruct_left))
+		{
 			ax12_set_goal_position(AX12_PINCE_RIGHT, alpha_right);
+		}
 
 		// si la pince gauche peut bouger
 		if(!bool_obstruct_left)
+		{
 			ax12_set_goal_position(AX12_PINCE_RIGHT, pince_order_right);
-
+		}
 		
 		// si la pince droite peut bouger
 		if((!bool_obstruct_right)||(!bool_obstruct_left))
+		{
 			ax12_set_goal_position(AX12_PINCE_LEFT, pince_order_left);
+		}
 		else
+		{
 			ax12_set_goal_position(AX12_PINCE_LEFT, actual_pos_left);
+		}
 
 		vTaskDelay(ms_to_tick(50));
 	}
@@ -131,13 +144,13 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 	switch(left)
 	{
 		case PINCE_OPEN:
-			pince_order_left = -15003648;
+			pince_order_left = -15000000;
 			break;
 		case PINCE_MIDDLE:
 			pince_order_left = 0;
 			break;
 		case PINCE_CLOSE:
-			pince_order_left = 9166848;
+			pince_order_left = 16000000;
 			break;
 		default:
 			break;
@@ -146,13 +159,13 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 	switch(right)
 	{	
 		case PINCE_OPEN:
-			pince_order_right = 15056896;
+			pince_order_right = 15000000;
 			break;
 		case PINCE_MIDDLE:
 			pince_order_right = 0;
 			break;
 		case PINCE_CLOSE:
-			pince_order_right = -9117696;
+			pince_order_right = -15000000;
 			break;
 		default:
 			break;
@@ -165,10 +178,5 @@ static void pince_cmd(void* arg)
 {
 	struct pince_cmd_arg* cmd_arg = (struct pince_cmd_arg*) arg;
 
-	xSemaphoreTake(pince_mutex, portMAX_DELAY);
-
-	pince_order_left = cmd_arg->type_left;
-	pince_order_right = cmd_arg->type_right;
-	
-	xSemaphoreGive(pince_mutex);
+	pince_set_position(cmd_arg->type_left, cmd_arg->type_right);
 }
