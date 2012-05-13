@@ -33,14 +33,14 @@
 
 #define PARAM_NP_X                            (-63 << 16)
 
-#define PARAM_FOO_HOKUYO_X                     115*65536
-#define PARAM_FOO_HOKUYO_Y                    -130*65536
-#define PARAM_FOO_HOKUYO_ALPHA                (-1 << 23)
+#define PARAM_FOO_HOKUYO_X                     105*65536
+#define PARAM_FOO_HOKUYO_Y                     140*65536
+#define PARAM_FOO_HOKUYO_ALPHA                 (1 << 23)
 #define PARAM_FOO_HOKUYO_SENS                          1
 
-#define PARAM_BAR_HOKUYO_X                     115*65536
-#define PARAM_BAR_HOKUYO_Y                     130*65536
-#define PARAM_BAR_HOKUYO_ALPHA                 (1 << 23)
+#define PARAM_BAR_HOKUYO_X                     105*65536
+#define PARAM_BAR_HOKUYO_Y                    -140*65536
+#define PARAM_BAR_HOKUYO_ALPHA                (-1 << 23)
 #define PARAM_BAR_HOKUYO_SENS                          1
 
 // TODO a virer, utiliser les param _FX dans la simulation
