@@ -109,7 +109,7 @@ static int control_module_init()
 	pid_init(&control_pid_rot, 2000000, 300000, 0, PWM_ARR, 26);
 
 	control_kx = 0;
-	control_ky = 0;
+	control_ky = 1000;
 	control_kalpha = 0;
 
 	control_vmax_av = CONTROL_VMAX_AV;
@@ -189,22 +189,6 @@ void control_cmd_set_max_speed(void* arg)
 	struct control_cmd_max_speed_arg* cmd_arg = (struct control_cmd_max_speed_arg*) arg;
 	control_set_max_speed(cmd_arg->vmax_av, cmd_arg->vmax_rot);
 }
-
-#if 0
-static int32_t sinc( int32_t x )
-{
-	if( abs(x) < 1068070 ) // < 0.1 rd
-	{
-		return 1.0f;
-	}
-	else
-	{
-		int64_t sx = fx_sin(x);
-		sx <<= 26;
-		return sx / x;
-	}
-}
-#endif
 
 void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot)
 {
@@ -342,11 +326,11 @@ static void control_compute()
 
 	// calcul de l'erreur de position dans le repère du robot
 	int32_t ex = (  (int64_t)control_kinematics.ca * (int64_t)(control_kinematics_cons.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_kinematics_cons.y - control_kinematics.y)) >> 30;
-//	int32_t ey = (- (int64_t)control_kinematics.sa * (int64_t)(control_kinematics_cons.x - control_kinematics.x) + (int64_t)control_kinematics.ca * (int64_t)(control_kinematics_cons.y - control_kinematics.y)) >> 30;
+	int32_t ey = (- (int64_t)control_kinematics.sa * (int64_t)(control_kinematics_cons.x - control_kinematics.x) + (int64_t)control_kinematics.ca * (int64_t)(control_kinematics_cons.y - control_kinematics.y)) >> 30;
 	int32_t ealpha = control_kinematics_cons.alpha - control_kinematics.alpha;
 
 	int32_t v_c = (((int64_t)control_kinematics_cons.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
-	int32_t w_c = (int32_t)control_kinematics_cons.w + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16);// + control_ky * control_kinematics_cons.v * sinc(ealpha) * ey;
+	int32_t w_c = (int32_t)control_kinematics_cons.w + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16) + (((((int64_t)control_ky * (int64_t)control_kinematics_cons.v) >> 16) * (int64_t)ey) >> 16);
 
 	// régulation en vitesse
 	int32_t u_rot = pid_apply(&control_pid_rot, w_c - control_kinematics.w);
