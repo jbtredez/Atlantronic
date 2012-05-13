@@ -27,7 +27,7 @@
 #define ARM_HZ               500
 #define ARM_ZMIN        (65<<16)
 #define ARM_ZMAX     (265 << 16)
-#define ARM_ZINIT    (100 << 16)  //!< hauteur au lancement
+#define ARM_ZINIT    (140 << 16)  //!< hauteur au lancement
 #define ARM_ZMIN_ARM_CENTER      (80<<16) //!< hauteur minimale avant laquelle on doit centrer le bras
 
 static xSemaphoreHandle arm_mutex;
@@ -178,7 +178,7 @@ static void arm_task()
 	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
 
 	// on va monter au début
-	arm_goto_xyz(200<<16, 0, 100<<16, ARM_CMD_XYZ_LOC);
+	arm_goto_xyz(200<<16, 0, ARM_ZINIT, ARM_CMD_XYZ_LOC);
 
 	while(1)
 	{
