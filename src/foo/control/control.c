@@ -32,12 +32,12 @@
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
-const int32_t CONTROL_AMAX_AV = ((1300 << 16) / (CONTROL_HZ * CONTROL_HZ));
-const int32_t CONTROL_DMAX_AV = ((1300 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_AMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
-const int32_t CONTROL_VMAX_ROT = 0.8f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
-const int32_t CONTROL_AMAX_ROT = 1.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
-const int32_t CONTROL_DMAX_ROT = 1.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_VMAX_ROT = 0.7f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
+const int32_t CONTROL_AMAX_ROT = 1.0f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_DMAX_ROT = 1.0f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
 
 static void control_task(void *);
 //static int32_t sinc( int32_t x );
@@ -584,7 +584,7 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 		{
 			control_alpha_align = alpha;
 		}
-		control_dest.alpha = alpha;
+		control_dest.alpha = control_kinematics.alpha + control_find_rotate(control_kinematics.alpha, alpha);
 	}
 	control_dest.ca = fx_cos(control_alpha_align);
 	control_dest.sa = fx_sin(control_alpha_align);
