@@ -58,7 +58,7 @@ static void pince_task(void* arg)
 	bool bool_obstruct_right;
 	int32_t alpha_left;
 	int32_t alpha_right;
-	int32_t alpha_close_right;
+	int32_t alpha_close_left;
 	int32_t actual_pos_left;
 	int32_t actual_pos_right;
 	
@@ -93,31 +93,31 @@ static void pince_task(void* arg)
 		actual_pos_right=ax12_get_position (AX12_PINCE_RIGHT, &err_right);
 		
 		// si la pince gauche est dans l'intervalle obstruant 
-		if(actual_pos_left<alpha_left)
-			bool_obstruct_left = TRUE;
+		if(actual_pos_right<alpha_right)
+			bool_obstruct_right = TRUE;
 		else
-			bool_obstruct_left = FALSE;
+			bool_obstruct_right = FALSE;
 
 		// si la pince droite est dans l'intervalle obstruant 
-		if((actual_pos_right<alpha_right)&&(actual_pos_right>alpha_close_right))
-			bool_obstruct_right=TRUE;
+		if((actual_pos_left<alpha_left)&&(actual_pos_left>alpha_close_left))
+			bool_obstruct_left=TRUE;
 		else
-			bool_obstruct_right=FALSE;
+			bool_obstruct_left=FALSE;
 
 		// si les deux pinces sont dans l'intervalle obstruant 
-		if((bool_obstruct_left)&&(bool_obstruct_right))
-			ax12_set_goal_position(AX12_PINCE_LEFT, alpha_left);
+		if((bool_obstruct_right)&&(bool_obstruct_left))
+			ax12_set_goal_position(AX12_PINCE_RIGHT, alpha_right);
 
 		// si la pince gauche peut bouger
-		if(!bool_obstruct_right)
-			ax12_set_goal_position(AX12_PINCE_LEFT, pince_order_left);
+		if(!bool_obstruct_left)
+			ax12_set_goal_position(AX12_PINCE_RIGHT, pince_order_right);
 
 		
 		// si la pince droite peut bouger
-		if((!bool_obstruct_left)||(!bool_obstruct_right))
-			ax12_set_goal_position(AX12_PINCE_RIGHT, pince_order_right);
+		if((!bool_obstruct_right)||(!bool_obstruct_left))
+			ax12_set_goal_position(AX12_PINCE_LEFT, pince_order_left);
 		else
-			ax12_set_goal_position(AX12_PINCE_RIGHT, actual_pos_right);
+			ax12_set_goal_position(AX12_PINCE_LEFT, actual_pos_left);
 
 		vTaskDelay(ms_to_tick(50));
 	}
@@ -131,13 +131,13 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 	switch(left)
 	{
 		case PINCE_OPEN:
-			pince_order_left = 15000000;
+			pince_order_left = -15003648;
 			break;
 		case PINCE_MIDDLE:
-			pince_order_left = 15000000;
+			pince_order_left = 0;
 			break;
 		case PINCE_CLOSE:
-			pince_order_left = 15000000;
+			pince_order_left = 9166848;
 			break;
 		default:
 			break;
@@ -146,13 +146,13 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 	switch(right)
 	{	
 		case PINCE_OPEN:
-			pince_order_right = 15000000;
+			pince_order_right = 15056896;
 			break;
 		case PINCE_MIDDLE:
-			pince_order_right = 15000000;
+			pince_order_right = 0;
 			break;
 		case PINCE_CLOSE:
-			pince_order_right = 15000000;
+			pince_order_right = -9117696;
 			break;
 		default:
 			break;
