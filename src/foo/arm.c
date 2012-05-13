@@ -28,6 +28,7 @@
 #define ARM_ZMIN        (65<<16)
 #define ARM_ZMAX     (265 << 16)
 #define ARM_ZINIT    (100 << 16)  //!< hauteur au lancement
+#define ARM_ZMIN_ARM_CENTER      (80<<16) //!< hauteur minimale avant laquelle on doit centrer le bras
 
 static xSemaphoreHandle arm_mutex;
 static int32_t arm_a_cmd;     //!< commande du bras (angle a)
@@ -169,7 +170,7 @@ static void arm_task()
 			GPIOB->ODR &= ~GPIO_ODR_ODR14;
 			GPIOB->ODR |= GPIO_ODR_ODR14;
 		}
-		vTaskDelay(ms_to_tick(10));
+		vTaskDelay(ms_to_tick(5));
 	}
 
 	arm_z = ARM_ZMIN;
@@ -177,7 +178,7 @@ static void arm_task()
 	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
 
 	// on va monter au début
-	arm_z_cmd = (100 << 16);
+	arm_goto_xyz(200<<16, 0, 100<<16, ARM_CMD_XYZ_LOC);
 
 	while(1)
 	{
@@ -196,10 +197,27 @@ static void arm_task()
 		}
 		else if( delta < 0)
 		{
-			GPIOB->ODR &= ~GPIO_ODR_ODR13;
-			GPIOB->ODR &= ~GPIO_ODR_ODR14;
-			GPIOB->ODR |= GPIO_ODR_ODR14;
-			arm_z_step--;
+			if( !(GPIOA->IDR & GPIO_IDR_IDR4) )
+			{
+				int32_t a = ax12_get_position(AX12_ARM_1, &err1);
+				int32_t b = ax12_get_position(AX12_ARM_2, &err2);
+				// on ne descend pas si le bras n'est pas environ au milieu (pour ne pas écraser les hokuyos par exemple)
+				// 10 degrés => 1864135
+				if( arm_z > ARM_ZMIN_ARM_CENTER || (!err1.transmit_error && ! err2.transmit_error && abs(a) < 1864135 && abs(b) < 1864135))
+				{
+					// on souhaite descendre et on ne touche pas le capteur de fin de course du bas
+					GPIOB->ODR &= ~GPIO_ODR_ODR13;
+					GPIOB->ODR &= ~GPIO_ODR_ODR14;
+					GPIOB->ODR |= GPIO_ODR_ODR14;
+					arm_z_step--;
+				}
+			}
+			else
+			{
+				arm_z = ARM_ZMIN;
+				arm_vz = 0;
+				arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
+			}
 		}
 
 		// toutes les 10ms on s'occupe des axes x et y
@@ -225,8 +243,16 @@ static void arm_task()
 					arm_compute_tool_abs(HOOK);
 					break;
 			}
-			ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
-			ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
+			if( arm_z > ARM_ZMIN_ARM_CENTER )
+			{
+				ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
+				ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
+			}
+			else
+			{
+				ax12_set_goal_position(AX12_ARM_1, 0);
+				ax12_set_goal_position(AX12_ARM_2, 0);
+			}
 
 			arm_servo_msg.data[0] = 127 - arm_tool_way_cmd * 127;
 
