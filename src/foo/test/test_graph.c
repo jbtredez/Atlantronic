@@ -75,7 +75,7 @@ void strat_sortie()
 	
 	do
 	{
-		trajectory_goto_near_xy(strat_dir * mm2fx(750), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		trajectory_goto_near_xy(strat_dir * mm2fx(-750), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 		vTaskDelay(ms_to_tick(50));
 	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED);	
