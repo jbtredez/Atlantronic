@@ -665,11 +665,12 @@ int robot_interface_set_position(struct robot_interface* data, float x, float y,
 	return com_write(&data->com[COM_FOO], buffer, sizeof(buffer));
 }
 
-int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type)
+int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
 {
 	struct pince_cmd_arg cmd_arg;
 
-	cmd_arg.type = cmd_type;
+	cmd_arg.type_left = cmd_type_left;
+	cmd_arg.type_right = cmd_type_right;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_PINCE;

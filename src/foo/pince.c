@@ -16,7 +16,8 @@ static void pince_task(void* arg);
 
 // mutex de protection
 static xSemaphoreHandle pince_mutex;
-static enum pince_cmd_type pince_order;
+static enum pince_cmd_type pince_order_right;
+static enum pince_cmd_type pince_order_left;
 
 
 static int pince_module_init()
@@ -39,8 +40,8 @@ static int pince_module_init()
 
 	usb_add_cmd(USB_CMD_PINCE, &pince_cmd);
 
-	ax12_set_goal_limit(AX12_PINCE_RIGHT, 0x150, 0x320);
-	ax12_set_goal_limit(AX12_PINCE_LEFT, 0xdf, 0x2af);
+	ax12_set_goal_limit(AX12_PINCE_RIGHT, 0x150, 0x320);//-9117696 15056896
+	ax12_set_goal_limit(AX12_PINCE_LEFT, 0xdf, 0x2af);//-15003648 9166848 (0 plus du cote fermé)
 
 	return 0;
 }
@@ -50,7 +51,19 @@ module_init(pince_module_init, INIT_PINCE);
 static void pince_task(void* arg)
 {
 	(void) arg;
+	
+	//TODO regarder arm.c (transmit_error)
 
+	bool bool_obstruct_left;
+	bool bool_obstruct_right;
+	int32_t alpha_left;
+	int32_t alpha_right;
+	int32_t alpha_close_right;
+	int32_t actual_pos_left;
+	int32_t actual_pos_right;
+	
+	struct ax12_error err_left;
+	struct ax12_error err_right;
 	// configuration des pinces
 	ax12_set_moving_speed(AX12_PINCE_RIGHT, 0x3ff);
 	ax12_set_moving_speed(AX12_PINCE_LEFT, 0x3ff);
@@ -63,45 +76,88 @@ static void pince_task(void* arg)
 //	ax12_write8(AX12_PINCE_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
 //	ax12_write8(AX12_PINCE_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
 
+	ax12_auto_update(AX12_PINCE_RIGHT, 1);
+	ax12_auto_update(AX12_PINCE_LEFT, 1);
+	
 	while(1)
 	{
-		enum pince_cmd_type order;
+		enum pince_cmd_type order_left;
+		enum pince_cmd_type order_right;
 		xSemaphoreTake(pince_mutex, portMAX_DELAY);
-		order = pince_order;
+		order_left = pince_order_left;
+		order_right = pince_order_right;
 		xSemaphoreGive(pince_mutex);
 
-		// TODO en fonction de order et de l'état courant des pinces
-		switch(order)
-		{
-			case PINCE_OPEN:
-				ax12_set_goal_position(AX12_PINCE_RIGHT, 15000000);
-				ax12_set_goal_position(AX12_PINCE_LEFT, -15000000);
-				break;
-			case PINCE_CLOSE:
-				ax12_set_goal_position(AX12_PINCE_RIGHT, -15000000);
-				ax12_set_goal_position(AX12_PINCE_LEFT,   15000000);
-				break;
-			default:
-				break;
-		}
+		// recupération des positions courantes
+		actual_pos_left=ax12_get_position (AX12_PINCE_LEFT, &err_left);
+		actual_pos_right=ax12_get_position (AX12_PINCE_RIGHT, &err_right);
+		
+		// si la pince gauche est dans l'intervalle obstruant 
+		if(actual_pos_left<alpha_left)
+			bool_obstruct_left = TRUE;
+		else
+			bool_obstruct_left = FALSE;
+
+		// si la pince droite est dans l'intervalle obstruant 
+		if((actual_pos_right<alpha_right)&&(actual_pos_right>alpha_close_right))
+			bool_obstruct_right=TRUE;
+		else
+			bool_obstruct_right=FALSE;
+
+		// si les deux pinces sont dans l'intervalle obstruant 
+		if((bool_obstruct_left)&&(bool_obstruct_right))
+			ax12_set_goal_position(AX12_PINCE_LEFT, alpha_left);
+
+		// si la pince gauche peut bouger
+		if(!bool_obstruct_right)
+			ax12_set_goal_position(AX12_PINCE_LEFT, pince_order_left);
+
+		
+		// si la pince droite peut bouger
+		if((!bool_obstruct_left)||(!bool_obstruct_right))
+			ax12_set_goal_position(AX12_PINCE_RIGHT, pince_order_right);
+		else
+			ax12_set_goal_position(AX12_PINCE_RIGHT, actual_pos_right);
 
 		vTaskDelay(ms_to_tick(50));
 	}
 }
 
-void pince_open()
+void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 {
 	log(LOG_INFO, "pince_open");
 	xSemaphoreTake(pince_mutex, portMAX_DELAY);
-	pince_order = PINCE_OPEN;
-	xSemaphoreGive(pince_mutex);
-}
 
-void pince_close()
-{
-	log(LOG_INFO, "pince_close");
-	xSemaphoreTake(pince_mutex, portMAX_DELAY);
-	pince_order = PINCE_CLOSE;
+	switch(left)
+	{
+		case PINCE_OPEN:
+			pince_order_left = 15000000;
+			break;
+		case PINCE_MIDDLE:
+			pince_order_left = 15000000;
+			break;
+		case PINCE_CLOSE:
+			pince_order_left = 15000000;
+			break;
+		default:
+			break;
+	}
+	
+	switch(right)
+	{	
+		case PINCE_OPEN:
+			pince_order_right = 15000000;
+			break;
+		case PINCE_MIDDLE:
+			pince_order_right = 15000000;
+			break;
+		case PINCE_CLOSE:
+			pince_order_right = 15000000;
+			break;
+		default:
+			break;
+	}
+			
 	xSemaphoreGive(pince_mutex);
 }
 
@@ -110,14 +166,9 @@ static void pince_cmd(void* arg)
 	struct pince_cmd_arg* cmd_arg = (struct pince_cmd_arg*) arg;
 
 	xSemaphoreTake(pince_mutex, portMAX_DELAY);
-	switch(cmd_arg->type)
-	{
-		case PINCE_OPEN:
-		case PINCE_CLOSE:
-			pince_order = cmd_arg->type;
-			break;
-		default:
-			break;
-	}
+
+	pince_order_left = cmd_arg->type_left;
+	pince_order_right = cmd_arg->type_right;
+	
 	xSemaphoreGive(pince_mutex);
 }

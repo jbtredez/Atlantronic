@@ -165,6 +165,7 @@ static int strat_ratissage_totem(enum totem_pos pos)
 	}
 
 	// TODO voir les pinces
+	// pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
 	int32_t alpha =  -0.02f*(1<<26);
 	if( dir == 1)
 	{

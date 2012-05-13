@@ -936,7 +936,7 @@ static int init_font(GLuint base, char* f)
 	// Tell GLX which font & glyphs to use
 	first = font_info->min_char_or_byte2;
 	last  = font_info->max_char_or_byte2;
-	glXUseXFont(font_info->fid, first, last-first+1, base+first);
+	//glXUseXFont(font_info->fid, first, last-first+1, base+first);
 
 	font_height = font_info->ascent;
 	font_digit_height = font_info->per_char['0'].ascent; // on prend la hauteur de 0
@@ -1046,13 +1046,13 @@ static void joystick_event(int event, float val)
 			case 0: // A (xbox)
 				if( v )
 				{
-					robot_interface_pince(&robot_interface, PINCE_OPEN);
+					robot_interface_pince(&robot_interface, PINCE_OPEN, PINCE_OPEN);
 				}
 				break;
 			case 1: // B (xbox)
 				if( v )
 				{
-					robot_interface_pince(&robot_interface, PINCE_CLOSE);
+					robot_interface_pince(&robot_interface, PINCE_CLOSE, PINCE_CLOSE);
 				}
 				break;
 			case 2: // X (xbox)
