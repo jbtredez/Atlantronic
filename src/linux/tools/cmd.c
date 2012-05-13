@@ -15,6 +15,7 @@ static struct robot_interface* cmd_robot = NULL;
 int cmd_arm_bridge(void* arg);
 int cmd_arm_xyz(void* arg);
 int cmd_arm_ventouse(void* arg);
+int cmd_arm_hook(void* arg);
 int cmd_arm_abz(void* arg);
 int cmd_ax12_scan();
 int cmd_ax12_set_id(void* arg);
@@ -45,6 +46,7 @@ COMMAND usb_commands[] = {
 	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
 	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z, type)"},
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
+	{ "arm_hook", cmd_arm_hook, "deplacement du crochet perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_hook x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
 	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
@@ -424,6 +426,26 @@ int cmd_arm_ventouse(void* arg)
 	}
 
 	robot_interface_arm_ventouse(cmd_robot, x1, y1, x2, y2, z, tool_way);
+	return CMD_SUCESS;
+}
+
+int cmd_arm_hook(void* arg)
+{
+	float x1;
+	float y1;
+	float x2;
+	float y2;
+	float z;
+	int tool_way;
+
+	int count = sscanf(arg, "%f %f %f %f %f %d", &x1, &y1, &x2, &y2, &z, &tool_way);
+
+	if(count != 6)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_arm_hook(cmd_robot, x1, y1, x2, y2, z, tool_way);
 	return CMD_SUCESS;
 }
 

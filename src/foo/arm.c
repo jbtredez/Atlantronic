@@ -495,6 +495,9 @@ static void arm_cmd_goto(void* arg)
 		case ARM_CMD_VENTOUSE_ABS:
 			arm_ventouse_goto(param->x1, param->y1, param->x2, param->y2, param->z, param->tool_way);
 			break;
+		case ARM_CMD_HOOK_ABS:
+			arm_hook_goto(param->x1, param->y1, param->x2, param->y2, param->z, param->tool_way);
+			break;
 		default:
 			break;
 	}
