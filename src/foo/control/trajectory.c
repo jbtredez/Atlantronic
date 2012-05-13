@@ -551,7 +551,7 @@ void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enu
 	xSemaphoreGive(trajectory_mutex);
 }
 
-void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way)
+void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
 {
 	if( node_id >= GRAPH_NUM_NODE)
 	{
@@ -562,7 +562,7 @@ void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 
 	trajectory_request.type = TRAJECTORY_GOTO_XY;
-	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	trajectory_request.avoidance_type = avoidance_type;
 	trajectory_request.x = graph_node[node_id].pos.x;
 	trajectory_request.y = graph_node[node_id].pos.y;
 	trajectory_request.dist = dist;

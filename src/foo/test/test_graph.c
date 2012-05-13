@@ -90,7 +90,7 @@ int strat_parcours_graph(enum trajectory_way way)
 
 	for(i=0;i<node_list_size;i++)
 	{
-		trajectory_goto_graph_node(node_list[i], 0, way);
+		trajectory_goto_graph_node(node_list[i], 0, way, TRAJECTORY_AVOIDANCE_GRAPH);
 		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 		if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 		{

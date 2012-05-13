@@ -54,7 +54,7 @@ void trajectory_free();
 //!< rejoindre le graph
 void trajectory_goto_graph();
 
-void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way);
+void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
 void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
