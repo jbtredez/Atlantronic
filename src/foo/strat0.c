@@ -12,6 +12,7 @@
 #include "recalage.h"
 #include "us.h"
 #include "control/trajectory.h"
+#include "foo/arm.h"
 
 #define STRAT_STACK_SIZE       300
 
@@ -152,33 +153,78 @@ static int strat_ratissage_totem(enum totem_pos pos)
 			break;
 	}
 
-	trajectory_goto_near_xy(0, high * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	// on anticipe sur le servo
+	arm_set_tool_way(0);
+
+	trajectory_goto_near_xy(0, high * mm2fx(310), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		return -1;
+//		return -1;
 	}
 
 	// TODO voir les pinces
+	int32_t alpha =  -0.02f*(1<<26);
+	if( dir == 1)
+	{
+		alpha = (1<<25) - alpha;
+	}
 
-	trajectory_goto_near_xy(dir * mm2fx(-275), high * mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	trajectory_goto_near(dir * mm2fx(-75), high * mm2fx(310), alpha, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		return -1;
+//		return -1;
 	}
 
-	
-#if 0
-	trajectory_goto_near_xy(dir * mm2fx(-1250), 0, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	// prise du lingo
+	arm_ventouse_goto(3000 << 16, 140<<16, 0, 140<<16, 120<<16, dir);
+	arm_bridge_on();
+	vTaskDelay(ms_to_tick(1000));
+	arm_ventouse_goto( 3000 << 16, 65<<16, 0, 65<<16, 120<<16, dir);
+	vTaskDelay(ms_to_tick(1000));
+
+	// retour vers le centre du robot
+	arm_goto_xyz(200<<16, 0, 120<<16, ARM_CMD_XYZ_LOC);
+	vTaskDelay(ms_to_tick(500));
+
+	// on débute la marche arrière
+	trajectory_goto_near_xy(0, mm2fx(310), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+	arm_bridge_off();
+	arm_set_tool_way(-dir);
+	vTaskDelay(ms_to_tick(500));
+	// préparation de l'outil à la bonne hauteur
+	arm_goto_xyz(200<<16, 0, 220<<16, ARM_CMD_XYZ_LOC);
+	vTaskDelay(ms_to_tick(1500));
+
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		return -1;
+//		return -1;
 	}
-#endif
+
+	arm_hook_goto( 3000 << 16, 110<<16, 0, 110<<16, 220<<16, -dir);
+	vTaskDelay(ms_to_tick(2000));
+
+	trajectory_goto_near_xy(strat_dir * mm2fx(-760), mm2fx(310), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+//		return -1;
+	}
+
+	trajectory_goto_near_xy(strat_dir * mm2fx(-1250), mm2fx(150), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+//		return -1;
+	}
+
 	return 0;
 }
 
