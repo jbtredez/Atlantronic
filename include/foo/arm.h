@@ -36,6 +36,9 @@ int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z
 //!< place le crochet perpendiculairement au segment [(x1, y1, z) (x2, y2, z)]
 int arm_hook_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, int8_t tool_way);
 
+//!< orientation de l'outil
+int arm_set_tool_way(int8_t tool_way);
+
 //!< mise en marche de la pompe
 void arm_bridge_on();
 

@@ -557,6 +557,17 @@ int arm_hook_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, in
 	return 0;
 }
 
+int arm_set_tool_way(int8_t tool_way)
+{
+	log_format(LOG_INFO, "servo %d", tool_way);
+
+	xSemaphoreTake(arm_mutex, portMAX_DELAY);
+	arm_tool_way_cmd = tool_way;
+	xSemaphoreGive(arm_mutex);
+
+	return 0;
+}
+
 void arm_bridge_on()
 {
 	// pwm "a 50%" car la pompe est en 12V
