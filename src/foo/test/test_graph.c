@@ -84,152 +84,20 @@ void strat_sortie()
 
 int strat_parcours_graph(enum trajectory_way way)
 {
-	trajectory_goto_graph_node(2, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	static const uint32_t node_list[]={2, 5, 4, 1, 0, 3, 6, 8, 10, 11, 14, 17, 15, 18, 19, 16, 12, 13, 9, 7, 2};
+	static const uint32_t node_list_size = sizeof(node_list)/sizeof(node_list[0]);
+	uint32_t i;
+
+	for(i=0;i<node_list_size;i++)
 	{
-		return -1;
+		trajectory_goto_graph_node(node_list[i], 0, way);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+		{
+			return -1;
+		}
 	}
 
-	trajectory_goto_graph_node(5, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(4, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(1, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(0, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(3, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(6, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(8, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(10, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(11, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(14, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(17, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(15, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(18, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(19, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(16, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(12, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(13, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(9, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(7, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_graph_node(2, 0, way);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
 	return 0;
 	
 }
