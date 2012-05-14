@@ -15,6 +15,7 @@
 #include "control/trajectory.h"
 #include "detection.h"
 #include "graph.h"
+#include <stdlib.h>
 
 #define TRAJECTORY_STACK_SIZE       350
 #define TRAJECTORY_APPROX_DIST     (150<<16)      //!< distance d'approche d'un objet
@@ -261,8 +262,16 @@ static void trajectory_task(void* arg)
 			vTaskClearEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 
 			log(LOG_ERROR, "target not reached");
-			trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
-			vTaskSetEvent(EVENT_TRAJECTORY_END);
+			if( trajectory_state != TRAJECTORY_STATE_USING_GRAPH )
+			{
+				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+				vTaskSetEvent(EVENT_TRAJECTORY_END);
+			}
+			else
+			{
+				// on continue sur le graph
+				trajectory_compute();
+			}
 		}
 
 		if( ev & EVENT_DETECTION_UPDATED)
