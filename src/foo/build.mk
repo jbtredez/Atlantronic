@@ -32,6 +32,7 @@ obj-foo-strat0 += kernel/hokuyo_tools.o
 obj-foo-strat0 += kernel/math/trigo.o
 obj-foo-strat0 += kernel/math/regression.o
 obj-foo-strat0 += kernel/math/segment_intersection.o
+obj-foo-strat0 += kernel/math/distance.o
 obj-foo-strat0 += kernel/vect_pos.o
 obj-foo-strat0 += foo/gpio.o
 obj-foo-strat0 += foo/control/control.o
