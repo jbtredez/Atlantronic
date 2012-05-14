@@ -17,7 +17,8 @@
 #include "graph.h"
 
 #define TRAJECTORY_STACK_SIZE       350
-#define TRAJECTORY_APPROX_DIST     (50<<16)      //!< distance d'approche d'un objet
+#define TRAJECTORY_APPROX_DIST     (150<<16)      //!< distance d'approche d'un objet
+#define TRAJECTORY_WALL_TOLERANCE    (150 << 16)
 
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
@@ -274,6 +275,12 @@ static void trajectory_task(void* arg)
 				struct fx_vect2 b;
 				detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &trajectory_pos, &a, &b);
 			}
+
+			if( abs(a.x) > ((1500 << 16) - TRAJECTORY_WALL_TOLERANCE) || abs(a.y) > ((1000 << 16) - TRAJECTORY_WALL_TOLERANCE) )
+			{
+				a.x = 1 << 30;
+				a.y = 1 << 30;
+			}  
 			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
 		}
 	}
