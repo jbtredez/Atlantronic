@@ -59,8 +59,6 @@ static void strat_task()
 		strat_dir = -1;
 	}
 
-	trajectory_disable_hokuyo();
-
 	strat_sortie();
 
 	strat_parcours_graph(TRAJECTORY_FORWARD);
@@ -84,7 +82,7 @@ void strat_sortie()
 
 int strat_parcours_graph(enum trajectory_way way)
 {
-	static const uint32_t node_list[]={2, 5, 4, 1, 0, 3, 6, 8, 10, 11, 14, 17, 15, 18, 19, 16, 12, 13, 9, 7, 2};
+	static const uint32_t node_list[]={2, 0, 5, 4, 1, 0, 3, 6, 8, 10, 11, 14, 17, 15, 18, 19, 16, 12, 13, 9, 7, 2};
 	static const uint32_t node_list_size = sizeof(node_list)/sizeof(node_list[0]);
 	uint32_t i;
 
