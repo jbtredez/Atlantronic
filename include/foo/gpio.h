@@ -18,8 +18,8 @@
 #define LED_5                  0x20
 #define LED_WARNING           0x200
 
-#define CONTACT_RIGHT          0x01
-#define CONTACT_LEFT           0x02
+#define SICK_RIGHT             0x01
+#define SICK_LEFT              0x02
 
 static inline uint32_t getcolor()
 {
@@ -47,9 +47,9 @@ static inline void resetRecalage()
 
 void setLed(uint32_t mask);
 
-static inline uint8_t get_contact()
+static inline uint8_t get_sick()
 {
-	return GPIOB->IDR & (CONTACT_RIGHT | CONTACT_LEFT);
+	return GPIOB->IDR & (SICK_RIGHT | SICK_LEFT);
 }
 
 #endif

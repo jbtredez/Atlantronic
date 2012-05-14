@@ -32,6 +32,7 @@
 
 // priorites des IT bloquees par l'os
 #define PRIORITY_IRQ_SYSCALL          8
+#define PRIORITY_IRQ_EXTI0            9
 #define PRIORITY_IRQ_EXTI1            9
 #define PRIORITY_IRQ_EXTI3            9
 #define PRIORITY_IRQ_EXTI9_5          9

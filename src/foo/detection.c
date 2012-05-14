@@ -43,6 +43,8 @@ static struct fx_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
 static struct polyline detection_object[DETECTION_NUM_OBJECT];
 static int detection_num_obj;
+static int detection_sick_state;
+static struct fx_vect2 detection_sick_seg[2];
 
 int detection_module_init()
 {
@@ -83,25 +85,84 @@ static void detection_task()
 	while(1)
 	{
 		// on attend la fin du nouveau scan
-		vTaskWaitEvent(EVENT_LOCAL_HOKUYO_UPDATE, portMAX_DELAY);
-		vTaskClearEvent(EVENT_LOCAL_HOKUYO_UPDATE);
+		int32_t ev = vTaskWaitEvent(EVENT_LOCAL_HOKUYO_UPDATE | EVENT_SICK, portMAX_DELAY);
 
-		// position mise en fin de scan
-		//TODO demenager dans hokuyo ?
-		hokuyo_scan.pos_robot = location_get_position();
-
+		struct fx_vect_pos pos = location_get_position();
 		xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
-//		portTickType last_time = systick_get_time();
-		detection_compute();
-//		portTickType current_time = systick_get_time();
-//		log_format(LOG_INFO, "compute_time : %lu us", (long unsigned int) tick_to_us(current_time - last_time));
-		xSemaphoreGive(hokuyo_scan_mutex);
-		vTaskSetEvent(EVENT_DETECTION_UPDATED);
+		if( ev & EVENT_LOCAL_HOKUYO_UPDATE)
+		{
+			vTaskClearEvent(EVENT_LOCAL_HOKUYO_UPDATE);
 
-		if( detection_reg_size )
+			// position mise en fin de scan
+			//TODO demenager dans hokuyo ?
+			hokuyo_scan.pos_robot = pos;
+
+	//		portTickType last_time = systick_get_time();
+			detection_compute();
+	//		portTickType current_time = systick_get_time();
+	//		log_format(LOG_INFO, "compute_time : %lu us", (long unsigned int) tick_to_us(current_time - last_time));
+		}
+
+		if(ev & EVENT_SICK)
+		{
+			vTaskClearEvent(EVENT_SICK);
+
+			detection_sick_state = get_sick(SICK_RIGHT | SICK_LEFT);
+
+			if(detection_sick_state)
+			{
+				struct fx_vect2 a = { -200 << 16,  PARAM_LEFT_CORNER_Y };
+				struct fx_vect2 b = { -200 << 16, PARAM_RIGHT_CORNER_Y };
+
+				switch(detection_sick_state)
+				{
+					case SICK_RIGHT:
+						a.x = PARAM_NP_X;
+						a.y = -250<<16;
+						b.x = -200<<16;
+						b.y = 0;
+						break;
+					case SICK_LEFT:
+						a.x = PARAM_NP_X;
+						a.y = 250<<16;
+						b.x = -200<<16;
+						b.y = 0;
+						break;
+					default:
+						break;
+				}
+
+				vect2_loc_to_abs(&pos, &a, detection_sick_seg);
+				vect2_loc_to_abs(&pos, &b, detection_sick_seg + 1);
+			}
+
+			log_format(LOG_INFO, "sick = %d", detection_sick_state);
+		}
+
+		// ajout d'un segment pour gérer les sick
+		if( detection_sick_state )
+		{
+			// ajout au tableau detection_hokuyo_reg pour l'envoi par usb
+			detection_hokuyo_reg[detection_reg_size] = detection_sick_seg[0];
+			detection_hokuyo_reg[detection_reg_size + 1] = detection_sick_seg[1];
+			detection_reg_size += 2;
+
+			// ajout du segment
+			detection_object[detection_num_obj].size = 2;
+			detection_object[detection_num_obj].pt = detection_sick_seg;
+			detection_reg_size += 2;
+			detection_num_obj++;
+		}
+
+		xSemaphoreGive(hokuyo_scan_mutex);
+
+		// on limite la fréquence de l'envoi au cas ou.
+		if( detection_reg_size && ev & EVENT_LOCAL_HOKUYO_UPDATE)
 		{
 			usb_add(USB_HOKUYO_FOO_SEG, &detection_hokuyo_reg, sizeof(detection_hokuyo_reg[0]) * detection_reg_size);
 		}
+
+		vTaskSetEvent(EVENT_DETECTION_UPDATED);
 	}
 
 	vTaskDelete(NULL);
