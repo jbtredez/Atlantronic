@@ -187,13 +187,13 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 
 		if( y_c < y_d)
 		{
-			b1.y = y_c << 16;
-			b2.y = y_d << 16;
+			b1.y = y_c;
+			b2.y = y_d;
 		}
 		else
 		{
-			b1.y = y_d << 16;
-			b2.y = y_c << 16;
+			b1.y = y_d;
+			b2.y = y_c;
 		}
 	}
 
