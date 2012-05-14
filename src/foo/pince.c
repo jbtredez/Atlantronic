@@ -54,8 +54,8 @@ static void pince_task(void* arg)
 	
 	bool bool_obstruct_left;
 	bool bool_obstruct_right;
-	int32_t alpha_left = 800000;
-	int32_t alpha_right = -800000;
+	int32_t alpha_left = 1500000;
+	int32_t alpha_right = -1500000;
 	int32_t alpha_close_left = 15000000;
 	int32_t actual_pos_left;
 	int32_t actual_pos_right;
