@@ -936,7 +936,7 @@ static int init_font(GLuint base, char* f)
 	// Tell GLX which font & glyphs to use
 	first = font_info->min_char_or_byte2;
 	last  = font_info->max_char_or_byte2;
-	glXUseXFont(font_info->fid, first, last-first+1, base+first);
+	//glXUseXFont(font_info->fid, first, last-first+1, base+first);
 
 	font_height = font_info->ascent;
 	font_digit_height = font_info->per_char['0'].ascent; // on prend la hauteur de 0
