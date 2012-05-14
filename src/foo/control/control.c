@@ -27,17 +27,17 @@
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
 #define TRAJECTORY_POS_REACHED_TOLERANCE_X       (20 << 16)
-#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
+#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.006f * (1<<26) )
 
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
-const int32_t CONTROL_AMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
-const int32_t CONTROL_DMAX_AV = ((1000 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_AMAX_AV = ((500 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((500 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
 const int32_t CONTROL_VMAX_ROT = 0.7f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
-const int32_t CONTROL_AMAX_ROT = 1.0f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
-const int32_t CONTROL_DMAX_ROT = 1.0f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_AMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_DMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
 
 static void control_task(void *);
 //static int32_t sinc( int32_t x );
@@ -394,10 +394,11 @@ static void control_compute_trajectory()
 
 		if(control_kinematics_cons.alpha == control_alpha_align && control_kinematics_cons.w == 0)
 		{
-			if(	abs( control_alpha_align - control_kinematics.alpha ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
+			int da = control_alpha_align - control_kinematics.alpha;
+			if(	abs( da ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
 				control_state = CONTROL_READY_FREE;
-				log(LOG_ERROR, "rotation - not reached");
+				log_format(LOG_ERROR, "rotation - not reached %d", da);
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
 		}
@@ -451,7 +452,7 @@ static void control_compute_trajectory()
 			if( abs(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
 				control_state = CONTROL_READY_FREE;
-				log(LOG_ERROR, "avance - not reached");
+				log_format(LOG_ERROR, "avance - not reached %d", (int)ex);
 				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 				// TODO voir si on replanifie une traj direct (3 tentatives)
 				//control_dist = ex;
