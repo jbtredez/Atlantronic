@@ -26,7 +26,7 @@
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
-#define TRAJECTORY_POS_REACHED_TOLERANCE_X       (4 << 16)
+#define TRAJECTORY_POS_REACHED_TOLERANCE_X       (20 << 16)
 #define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.02f * (1<<26) / ( 2 * 3.141592654f ))
 
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
@@ -416,7 +416,7 @@ static void control_compute_trajectory()
 			// on ignore les objets du robot ou derrière
 			if( dmin >= 0)
 			{
-				if(dist < 0)
+				if(dist < (10<<16))
 				{
 					dist = 0;
 					collision = 1;
