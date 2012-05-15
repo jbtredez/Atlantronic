@@ -91,7 +91,7 @@ static void pince_task(void* arg)
 		actual_pos_right=ax12_get_position (AX12_PINCE_RIGHT, &err_right);
 
 		// si la pince gauche est dans l'intervalle obstruant 
-		if(actual_pos_right < alpha_right)
+		if((actual_pos_right < alpha_right) && (order_right != -4821428))
 		{
 			bool_obstruct_right = TRUE;
 		}
@@ -101,7 +101,7 @@ static void pince_task(void* arg)
 		}
 
 		// si la pince droite est dans l'intervalle obstruant 
-		if((actual_pos_left > alpha_left) && (actual_pos_left < alpha_close_left))
+		if((actual_pos_left > alpha_left) && (actual_pos_left < alpha_close_left) && (order_left != 4800000))
 		{
 			bool_obstruct_left=TRUE;
 		}
@@ -146,9 +146,12 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 		case PINCE_OPEN:
 			pince_order_left = -15000000;
 			break;
+		case PINCE_STRAT:
+			pince_order_left = 4800000;
+			break;
 		case PINCE_MIDDLE:
 			pince_order_left = 0;
-			break;
+			break;		
 		case PINCE_CLOSE:
 			pince_order_left = 16000000;
 			break;
@@ -161,9 +164,12 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 		case PINCE_OPEN:
 			pince_order_right = 15000000;
 			break;
+		case PINCE_STRAT:
+			pince_order_right = -4821428;
+			break;
 		case PINCE_MIDDLE:
 			pince_order_right = 0;
-			break;
+			break;		
 		case PINCE_CLOSE:
 			pince_order_right = -15000000;
 			break;

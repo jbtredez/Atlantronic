@@ -10,6 +10,7 @@
 enum pince_cmd_type
 {
 	PINCE_CLOSE,
+	PINCE_STRAT,
 	PINCE_MIDDLE,
 	PINCE_OPEN,
 };
