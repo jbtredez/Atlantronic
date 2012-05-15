@@ -8,8 +8,22 @@
 #include <stdint.h>
 #include "kernel/math/vect2.h"
 
+//!< @function distance_point_to_point_squared
+//!< @brief calcule le carré de la distance entre deux points A et B
+//!< @param a coordonnées du point A
+//!< @param b coordonnées du point B
+//!< @return distance en mm^2
+int32_t distance_point_to_point_squared(const struct fx_vect2* a, const struct fx_vect2* b);
+
+//!< @function distance_point_to_point
+//!< @brief calcule la distance entre deux points A et B
+//!< @param a coordonnées du point A
+//!< @param b coordonnées du point B
+//!< @return distance en mm << 16
+int32_t distance_point_to_point(const struct fx_vect2* a, const struct fx_vect2* b);
+
 //!< @function distance_point_to_segment
-//!< @brief calcul la distance entre un point M et un segment AB
+//!< @brief calcule la distance entre un point M et un segment [AB]
 //!< @param m coordonnées du point M
 //!< @param a coordonnées du point A
 //!< @param b coordonnées du point B
