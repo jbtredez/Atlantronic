@@ -4,6 +4,7 @@
 
 #include "kernel/math/distance.h"
 #include <math.h>
+#include <stdlib.h>
 
 //!< @function distance_point_to_point_squared
 //!< @brief calcule le carré de la distance entre deux points A et B
@@ -63,7 +64,7 @@ int32_t distance_point_to_segment(const struct fx_vect2* m, const struct fx_vect
 		else if (t > 1.0f) return distance_point_to_point(m,b); // M est après B
 		else
 		{
-			return (fx_vect2_vector_product_z(&am,&ab)/ab_squared)<<16;
+			return (abs(fx_vect2_vector_product_z(&am,&ab))/(sqrtf(ab_squared)))*(1<<16);
 		}
 	}
 }

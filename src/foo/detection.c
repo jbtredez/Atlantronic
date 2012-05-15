@@ -360,24 +360,20 @@ static void detection_remove_static_elements_from_dynamic_list()
 			{
 				for(l=1; (l<table_obj[k].size)&&(!similar_static_segment_found); l++)
 				{
-					if ( SIMILARITY_ACCEPTANCE < detection_get_segment_similarity(
+					int32_t similarity = detection_get_segment_similarity(
 						current_dyn_object->pt +j-1,
 						current_dyn_object->pt +j,
 						table_obj[k].pt +l-1,
-						table_obj[k].pt +l))
+						table_obj[k].pt +l);
+
+					if ( similarity < SIMILARITY_ACCEPTANCE)
 					{
 						similar_static_segment_found=1;
 					}
-
 				}
 			}
 
 			if(similar_static_segment_found)
-			{
-				//le vecteur n'appartient pas à un objet statique
-				dynamic_segment_in_object=1;
-			}
-			else
 			{
 				//le vecteur appartient à un objet statique
 				if(!dynamic_segment_in_object)
@@ -396,9 +392,14 @@ static void detection_remove_static_elements_from_dynamic_list()
 					current_dyn_object->size=j;
 					current_dyn_object=&(detection_object[detection_num_obj]);
 					detection_num_obj++;
-					j=1;
+					j=0;
 					dynamic_segment_in_object=0;
 				}
+			}
+			else
+			{
+				//le vecteur n'appartient pas à un objet statique
+				dynamic_segment_in_object=1;
 			}
 
 		}
@@ -419,11 +420,11 @@ static void detection_remove_static_elements_from_dynamic_list()
 static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n)
 {
 	int32_t similarity = 0;
-	struct fx_vect2 ab = fx_vect2_difference(b, a);
-	struct fx_vect2 mn = fx_vect2_difference(n, m);
+//	struct fx_vect2 ab = fx_vect2_difference(b, a);
+//	struct fx_vect2 mn = fx_vect2_difference(n, m);
 	similarity += distance_point_to_segment(a, m, n);
 	similarity += distance_point_to_segment(b, m, n);
-	similarity += fx_vect2_vector_product_z(&ab, &mn)/distance_point_to_point_squared(m,n);
+//	similarity += fx_vect2_vector_product_z(&ab, &mn)/distance_point_to_point_squared(m,n);
 
 	return similarity;
 }
