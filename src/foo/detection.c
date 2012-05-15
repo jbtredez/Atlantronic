@@ -15,6 +15,7 @@
 #include "kernel/math/segment_intersection.h"
 #include "kernel/math/trigo.h"
 #include "kernel/math/polyline.h"
+#include "kernel/math/distance.h"
 #include "location/location.h"
 #include "gpio.h"
 #include "table.h"
@@ -28,6 +29,8 @@
 static void detection_task();
 static int detection_module_init();
 static void detection_compute();
+static void detection_remove_static_elements_from_dynamic_list();
+static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n);
 //static void can_hokuyo_reset(struct can_msg *msg);
 //static void can_hokuyo_data(struct can_msg *msg);
 
@@ -304,7 +307,7 @@ int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_
 	return x_min;
 }
 
-void detection_compute()
+static void detection_compute()
 {
 	int i;
 
@@ -322,8 +325,91 @@ void detection_compute()
 		detection_object[i].pt = &detection_hokuyo_reg[detection_reg_size];
 		detection_reg_size += detection_object[i].size;
 	}
+	detection_remove_static_elements_from_dynamic_list();
 	xSemaphoreGive(detection_mutex);
 }
+
+#define SIMILARITY_ACCEPTANCE (100 << 16)
+
+static void detection_remove_static_elements_from_dynamic_list()
+{
+	int32_t nb_objects_to_test = detection_num_obj;
+	int32_t i,j,k,l;
+	
+	//pour chaque objet détecté
+	for(i=0; i<nb_objects_to_test; i++)
+	{
+		struct polyline* current_dyn_object=&detection_object[i];
+		int8_t dynamic_segment_in_object=0;
+		//tester chaque segment (itération sur second point du segment)
+		for(j=1; j< current_dyn_object->size; j++)
+		{
+			//comparer aux segments statiques
+			for(k=0; k< TABLE_OBJ_SIZE; k++)
+			{
+				for(l=1; l<table_obj[k].size; l++)
+				{
+					if ( SIMILARITY_ACCEPTANCE < detection_get_segment_similarity(
+						current_dyn_object->pt +j-1,
+						current_dyn_object->pt +j,
+						table_obj[k].pt +l-1,
+						table_obj[k].pt +l))
+					{
+						//le vecteur n'appartient pas à un objet statique
+						dynamic_segment_in_object=1;
+					}
+					else
+					{
+						//le vecteur appartient à un objet statique
+						if(!dynamic_segment_in_object)
+						{
+							//On ampute l'objet du point précédent
+							(current_dyn_object->pt)++;
+							(current_dyn_object->size)--;
+							j--;
+						}
+						else
+						{
+							//On réduit l'objet aux segments dynamiques précédents et
+							//on reporte les segments non évalués dans un nouvel objet
+							detection_object[detection_num_obj].pt=(current_dyn_object->pt)+j;
+							detection_object[detection_num_obj].size=(current_dyn_object->size)-j;
+							current_dyn_object->size=j;
+							current_dyn_object=&(detection_object[detection_num_obj]);
+							detection_num_obj++;
+							j=1;
+							dynamic_segment_in_object=0;
+						}
+					}
+				}
+			}
+		}
+		if(current_dyn_object->size == 1)
+		{
+			//si un objet ne contient plus qu'un point, on l'élimine
+			current_dyn_object->size=0;
+			//si l'objet est en fin de liste, on libère cette position de la liste
+			if(current_dyn_object == (detection_object+detection_num_obj-1))
+			{
+				detection_num_obj--;
+			}
+		}
+	}
+}
+
+//méthode heuristique pour estimer une resemblance entre deux segments
+static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n)
+{
+	int32_t similarity = 0;
+	struct fx_vect2 ab = fx_vect2_difference(b, a);
+	struct fx_vect2 mn = fx_vect2_difference(n, m);
+	similarity += distance_point_to_segment(a, m, n);
+	similarity += distance_point_to_segment(b, m, n);
+	similarity += fx_vect2_vector_product_z(&ab, &mn)/distance_point_to_point_squared(m,n);
+
+	return similarity;
+}
+
 /*
 void can_hokuyo_reset(struct can_msg *msg)
 {
