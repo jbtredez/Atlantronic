@@ -565,15 +565,19 @@ void plot_table(struct graphique* graph)
 
 	glDisable(GL_LINE_STIPPLE);
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG] && robot_interface.detection_reg_num[HOKUYO_FOO] > 1)
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG])
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_SEG]);
-		glBegin(GL_LINE_STRIP);
-		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < HOKUYO_FOO*HOKUYO_NUM_POINTS + robot_interface.detection_reg_num[HOKUYO_FOO]; i++)
+		for(i = 0; i < robot_interface.detection_dynamic_object_size; i++)
 		{
-			glVertex2f(robot_interface.detection_hokuyo_reg[i].x, robot_interface.detection_hokuyo_reg[i].y);
+			glBegin(GL_LINE_STRIP);
+			for(j = 0; j < robot_interface.detection_dynamic_obj[i].size; j++)
+			{
+				struct fx_vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
+				glVertex2f(pt.x, pt.y);
+			}
+			glEnd();
 		}
-		glEnd();
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )

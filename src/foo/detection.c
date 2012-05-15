@@ -42,7 +42,7 @@ static xSemaphoreHandle detection_mutex;
 static struct fx_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
 static struct polyline detection_object[DETECTION_NUM_OBJECT];
-static int detection_num_obj;
+static int32_t detection_num_obj;
 static int detection_sick_state;
 static struct fx_vect2 detection_sick_seg[2];
 
@@ -142,15 +142,9 @@ static void detection_task()
 		// ajout d'un segment pour gérer les sick
 		if( detection_sick_state )
 		{
-			// ajout au tableau detection_hokuyo_reg pour l'envoi par usb
-			detection_hokuyo_reg[detection_reg_size] = detection_sick_seg[0];
-			detection_hokuyo_reg[detection_reg_size + 1] = detection_sick_seg[1];
-			detection_reg_size += 2;
-
 			// ajout du segment
 			detection_object[detection_num_obj].size = 2;
 			detection_object[detection_num_obj].pt = detection_sick_seg;
-			detection_reg_size += 2;
 			detection_num_obj++;
 		}
 
@@ -159,7 +153,23 @@ static void detection_task()
 		// on limite la fréquence de l'envoi au cas ou.
 		if( detection_reg_size && ev & EVENT_LOCAL_HOKUYO_UPDATE)
 		{
-			usb_add(USB_HOKUYO_FOO_SEG, &detection_hokuyo_reg, sizeof(detection_hokuyo_reg[0]) * detection_reg_size);
+			int i = 0;
+			int16_t detect_size = 0;
+			for(; i < detection_num_obj; i++)
+			{
+				if (detection_object[i].size)
+				{
+					detect_size++;
+				}
+			}
+
+			usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &detect_size, sizeof(detect_size));
+
+			i = 0;
+			for( ; i < detection_num_obj; i++)
+			{
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT, detection_object[i].pt, sizeof(detection_object[i].pt[0]) * detection_object[i].size);
+			}
 		}
 
 		vTaskSetEvent(EVENT_DETECTION_UPDATED);

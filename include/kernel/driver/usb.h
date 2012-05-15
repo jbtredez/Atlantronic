@@ -14,6 +14,8 @@ enum
 	USB_HOKUYO_FOO_SEG,
 	USB_CONTROL,
 	USB_GO,
+	USB_DETECTION_DYNAMIC_OBJECT_SIZE,
+	USB_DETECTION_DYNAMIC_OBJECT,
 };
 
 enum usb_cmd
@@ -31,6 +33,7 @@ enum usb_cmd
 	USB_CMD_COLOR,
 	USB_CMD_ARM_GOTO,
 	USB_CMD_ARM_BRIDGE,
+	USB_CMD_STRAT,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

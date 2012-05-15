@@ -6,6 +6,7 @@
 #include "kernel/driver/hokuyo.h"
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"
+#include "kernel/math/polyline.h"
 #include "foo/control/control.h"
 #include "foo/pince.h"
 #include "foo/arm.h"
@@ -40,6 +41,17 @@ struct robot_interface
 	struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 	int control_usb_data_count;
 	struct fault_status fault_status[COM_MAX][FAULT_MAX];
+
+	// tmp (en cours de mise à jour)
+	int detection_dynamic_object_id;
+	int detection_dynamic_object_pt_tmp_size;
+	int16_t detection_dynamic_object_size_tmp;
+	struct fx_vect2 detection_dynamic_object_pt_tmp[HOKUYO_NUM_POINTS];
+	struct polyline detection_dynamic_obj_tmp[HOKUYO_NUM_POINTS];
+
+	int16_t detection_dynamic_object_size;
+	struct fx_vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
+	struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
 
 	// calculs
 	struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];

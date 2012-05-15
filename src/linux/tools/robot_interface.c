@@ -56,6 +56,8 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 
 int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg)
 {
@@ -197,6 +199,12 @@ static void* robot_interface_task(void* arg)
 			case USB_GO:
 				res = robot_interface_process_go(robot, args->com_id, msg, size);
 				break;
+			case USB_DETECTION_DYNAMIC_OBJECT_SIZE:
+				res = robot_interface_process_detect_dyn_obj_size(robot, args->com_id, msg, size);
+				break;
+			case USB_DETECTION_DYNAMIC_OBJECT:
+				res = robot_interface_process_detect_dyn_obj(robot, args->com_id, msg, size);
+				break;
 			default:
 				res = -1;
 				break;
@@ -318,6 +326,79 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 			}
 			data->fault_status[com_id][i] = err_list[i];
 		}
+	}
+
+	pthread_mutex_unlock(&data->mutex);
+
+end:
+	return res;
+}
+
+static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+{
+	(void) com_id;
+	int res = 0;
+
+	if(size != sizeof(data->detection_dynamic_object_size_tmp))
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&data->mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	data->detection_dynamic_object_id = 0;
+	data->detection_dynamic_object_pt_tmp_size = 0;
+	memcpy(&data->detection_dynamic_object_size_tmp, msg, sizeof(data->detection_dynamic_object_size_tmp));
+
+	pthread_mutex_unlock(&data->mutex);
+
+end:
+	return res;
+}
+
+static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+{
+	(void) com_id;
+	int res = 0;
+
+	unsigned int num = size / sizeof(data->detection_dynamic_object_pt[0]);
+	if(size != num * sizeof(data->detection_dynamic_object_pt[0]) )
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&data->mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	int obj_id = data->detection_dynamic_object_id;
+
+	if(obj_id < data->detection_dynamic_object_size_tmp)
+	{
+		memcpy(&data->detection_dynamic_object_pt_tmp[data->detection_dynamic_object_pt_tmp_size], msg, size);
+		data->detection_dynamic_obj_tmp[obj_id].pt = &data->detection_dynamic_object_pt_tmp[data->detection_dynamic_object_pt_tmp_size];
+		data->detection_dynamic_obj_tmp[obj_id].size = num;
+		data->detection_dynamic_object_pt_tmp_size += num;
+
+		data->detection_dynamic_object_id++;
+	}
+	if(obj_id == data->detection_dynamic_object_size_tmp - 1)
+	{
+		memcpy(data->detection_dynamic_object_pt, data->detection_dynamic_object_pt_tmp, data->detection_dynamic_object_pt_tmp_size * sizeof(data->detection_dynamic_object_pt[0]));
+		memcpy(data->detection_dynamic_obj, data->detection_dynamic_obj_tmp, data->detection_dynamic_object_size * sizeof(data->detection_dynamic_obj[0]));
+		data->detection_dynamic_object_size = data->detection_dynamic_object_size_tmp;
 	}
 
 	pthread_mutex_unlock(&data->mutex);
