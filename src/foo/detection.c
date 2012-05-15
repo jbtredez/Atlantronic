@@ -354,10 +354,11 @@ static void detection_remove_static_elements_from_dynamic_list()
 		//tester chaque segment (itération sur second point du segment)
 		for(j=1; j< current_dyn_object->size; j++)
 		{
+			int8_t similar_static_segment_found =0;
 			//comparer aux segments statiques
-			for(k=0; k< TABLE_OBJ_SIZE; k++)
+			for(k=0; (k< TABLE_OBJ_SIZE)&&(!similar_static_segment_found); k++)
 			{
-				for(l=1; l<table_obj[k].size; l++)
+				for(l=1; (l<table_obj[k].size)&&(!similar_static_segment_found); l++)
 				{
 					if ( SIMILARITY_ACCEPTANCE < detection_get_segment_similarity(
 						current_dyn_object->pt +j-1,
@@ -365,34 +366,41 @@ static void detection_remove_static_elements_from_dynamic_list()
 						table_obj[k].pt +l-1,
 						table_obj[k].pt +l))
 					{
-						//le vecteur n'appartient pas à un objet statique
-						dynamic_segment_in_object=1;
+						similar_static_segment_found=1;
 					}
-					else
-					{
-						//le vecteur appartient à un objet statique
-						if(!dynamic_segment_in_object)
-						{
-							//On ampute l'objet du point précédent
-							(current_dyn_object->pt)++;
-							(current_dyn_object->size)--;
-							j--;
-						}
-						else
-						{
-							//On réduit l'objet aux segments dynamiques précédents et
-							//on reporte les segments non évalués dans un nouvel objet
-							detection_object[detection_num_obj].pt=(current_dyn_object->pt)+j;
-							detection_object[detection_num_obj].size=(current_dyn_object->size)-j;
-							current_dyn_object->size=j;
-							current_dyn_object=&(detection_object[detection_num_obj]);
-							detection_num_obj++;
-							j=1;
-							dynamic_segment_in_object=0;
-						}
-					}
+
 				}
 			}
+
+			if(similar_static_segment_found)
+			{
+				//le vecteur n'appartient pas à un objet statique
+				dynamic_segment_in_object=1;
+			}
+			else
+			{
+				//le vecteur appartient à un objet statique
+				if(!dynamic_segment_in_object)
+				{
+					//On ampute l'objet du point précédent
+					(current_dyn_object->pt)++;
+					(current_dyn_object->size)--;
+					j--;
+				}
+				else
+				{
+					//On réduit l'objet aux segments dynamiques précédents et
+					//on reporte les segments non évalués dans un nouvel objet
+					detection_object[detection_num_obj].pt=(current_dyn_object->pt)+j;
+					detection_object[detection_num_obj].size=(current_dyn_object->size)-j;
+					current_dyn_object->size=j;
+					current_dyn_object=&(detection_object[detection_num_obj]);
+					detection_num_obj++;
+					j=1;
+					dynamic_segment_in_object=0;
+				}
+			}
+
 		}
 		if(current_dyn_object->size == 1)
 		{
