@@ -150,7 +150,7 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 			pince_order_left = 4800000;
 			break;
 		case PINCE_MIDDLE:
-			pince_order_left = 0;
+			pince_order_left =  -800000;
 			break;		
 		case PINCE_CLOSE:
 			pince_order_left = 16000000;
@@ -168,7 +168,7 @@ void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 			pince_order_right = -4821428;
 			break;
 		case PINCE_MIDDLE:
-			pince_order_right = 0;
+			pince_order_right =  800000;
 			break;		
 		case PINCE_CLOSE:
 			pince_order_right = -15000000;
