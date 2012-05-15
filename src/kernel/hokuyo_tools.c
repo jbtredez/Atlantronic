@@ -58,9 +58,9 @@ int hokuyo_find_objects(uint16_t* distance, struct fx_vect2* hokuyo_pos, unsigne
 
 	while(i < size)
 	{
-		// on passe les points erronés
-		while( i<size && distance[i] < 20 )
-		{ 
+		// on passe les points erronés ou en dehors de la table
+		while( ( i < size && distance[i] < 20) || abs(hokuyo_pos[i].x) > (1500 << 16)|| abs(hokuyo_pos[i].y) > (1000 << 16))
+		{
 			i++;
 		}
 
