@@ -570,13 +570,16 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_SEG]);
 		for(i = 0; i < robot_interface.detection_dynamic_object_size; i++)
 		{
-			glBegin(GL_LINE_STRIP);
-			for(j = 0; j < robot_interface.detection_dynamic_obj[i].size; j++)
+			if(robot_interface.detection_dynamic_obj[i].size > 1)
 			{
-				struct fx_vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
-				glVertex2f(pt.x, pt.y);
+				glBegin(GL_LINE_STRIP);
+				for(j = 0; j < robot_interface.detection_dynamic_obj[i].size; j++)
+				{
+					struct fx_vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
+					glVertex2f(pt.x, pt.y);
+				}
+				glEnd();
 			}
-			glEnd();
 		}
 	}
 
