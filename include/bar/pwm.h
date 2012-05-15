@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include "kernel/rcc.h"
 
-#define PWM_SERVO1    0
+#define PWM_SERVO1          0
+#define PWM_SERVO_BALISE    1
 
 #if( RCC_PCLK2 != 72000000)
 #error revoir les pwm

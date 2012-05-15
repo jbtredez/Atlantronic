@@ -14,8 +14,7 @@
 #include "kernel/vect_pos.h"
 #include "kernel/driver/usb.h"
 #include "kernel/math/trigo.h"
-#include "kernel/driver/can.h"
-#include "kernel/can/can_id.h"
+#include "foo/servo.h"
 #include "foo/location/location.h"
 #include "foo/pwm.h"
 #include "ax12.h"
@@ -27,7 +26,7 @@
 #define ARM_HZ               500
 #define ARM_ZMIN        (65<<16)
 #define ARM_ZMAX     (265 << 16)
-#define ARM_ZINIT    (140 << 16)  //!< hauteur au lancement
+#define ARM_ZINIT    (110 << 16)  //!< hauteur au lancement
 #define ARM_ZMIN_ARM_CENTER      (80<<16) //!< hauteur minimale avant laquelle on doit centrer le bras
 
 static xSemaphoreHandle arm_mutex;
@@ -46,8 +45,6 @@ static uint32_t arm_cmd_type; //!< type de commande
 static int32_t arm_z;
 static int32_t arm_vz;
 static int32_t arm_z_step;
-
-static struct can_msg arm_servo_msg;
 
 //!< vitesse max du moteur pas à pas
 const int32_t ARM_VMAX = (100 << 16) / ARM_HZ;
@@ -117,12 +114,6 @@ static int arm_module_init()
 
 	arm_tool_way_cmd = 1;
 
-	// pre remplissage du message can
-	arm_servo_msg.id = CAN_SERVO;
-	arm_servo_msg.format = CAN_STANDARD_FORMAT;
-	arm_servo_msg.type = CAN_DATA_FRAME;
-	arm_servo_msg.size = 1;
-
 	ax12_set_goal_limit(AX12_ARM_1, 0xcc, 0x332);
 	ax12_set_goal_limit(AX12_ARM_2, 0x00, 0x3ff);
 
@@ -139,6 +130,9 @@ static void arm_task()
 	int32_t count = 0;
 	struct ax12_error err1;
 	struct ax12_error err2;
+	struct ax12_error err3;
+	struct ax12_error err4;
+
 	// configuration des ax12
 	ax12_auto_update(AX12_ARM_1, 1);
 	ax12_auto_update(AX12_ARM_2, 1);
@@ -201,9 +195,13 @@ static void arm_task()
 			{
 				int32_t a = ax12_get_position(AX12_ARM_1, &err1);
 				int32_t b = ax12_get_position(AX12_ARM_2, &err2);
+				int32_t pince_right = ax12_get_position(AX12_PINCE_RIGHT, &err3);
+				int32_t pince_left = ax12_get_position(AX12_PINCE_LEFT, &err4);
+
 				// on ne descend pas si le bras n'est pas environ au milieu (pour ne pas écraser les hokuyos par exemple)
 				// 10 degrés => 1864135
-				if( arm_z > ARM_ZMIN_ARM_CENTER || (!err1.transmit_error && ! err2.transmit_error && abs(a) < 1864135 && abs(b) < 1864135))
+				if( arm_z > ARM_ZMIN_ARM_CENTER ||
+				   (!err1.transmit_error && ! err2.transmit_error && ! err3.transmit_error && !err4.transmit_error && abs(a) < 1864135 && abs(b) < 1864135 && pince_left < 4800000 && pince_right > -4800000))
 				{
 					// on souhaite descendre et on ne touche pas le capteur de fin de course du bas
 					GPIOB->ODR &= ~GPIO_ODR_ODR13;
@@ -254,9 +252,7 @@ static void arm_task()
 				ax12_set_goal_position(AX12_ARM_2, 0);
 			}
 
-			arm_servo_msg.data[0] = 127 - arm_tool_way_cmd * 127;
-
-			can_write(&arm_servo_msg, ms_to_tick(1));
+			servo_set(SERVO_ARM, 127 - arm_tool_way_cmd * 127);
 		}
 
 		xSemaphoreGive(arm_mutex);

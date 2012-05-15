@@ -21,8 +21,10 @@ static int pwm_module_init()
 	// GPIOE utilisee :
 	// --> configuration sorties pwm : PE14 => alternate output push-pull, 50MHz
 	RCC->APB2ENR |=  RCC_APB2ENR_IOPEEN;
-	GPIOE->CRH = ( GPIOE->CRH & ~( GPIO_CRH_MODE14 | GPIO_CRH_CNF14 // on efface la conf de PE14
+	GPIOE->CRH = ( GPIOE->CRH & ~( GPIO_CRH_MODE13 | GPIO_CRH_CNF13 | // on efface la conf de PE13
+	                               GPIO_CRH_MODE14 | GPIO_CRH_CNF14   // on efface la conf de PE14
 	             )) |
+ 	             GPIO_CRH_CNF13_1 | GPIO_CRH_MODE13_0 | GPIO_CRH_MODE13_1 | // PE13 : alternate output push-pull, 50MHz
 	             GPIO_CRH_CNF14_1 | GPIO_CRH_MODE14_0 | GPIO_CRH_MODE14_1 ; // PE14 : alternate output push-pull, 50MHz
 
 	// activation clock sur le timer 1
@@ -43,10 +45,12 @@ static int pwm_module_init()
 
 	TIM1->CCER = 0x00; // permet de programmer CCMR1 et CCMR2
 	TIM1->BDTR = 0x00; // permet de programmer CCMR1 et CCMR2
-	TIM1->CCMR2 = TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4PE;  // mode PWM 1 sur le canal 4 avec preload
+	TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3PE | // mode PWM 1 sur le canal 3 avec preload
+	              TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4PE;  // mode PWM 1 sur le canal 4 avec preload
 
-	TIM1->CCER = TIM_CCER_CC4E;
+	TIM1->CCER = TIM_CCER_CC3E | TIM_CCER_CC4E;
 
+	TIM1->CCR3 = PWM_SERVO1_MIN; // pwm initiale sur le canal 3 (position du servo au milieu)
 	TIM1->CCR4 = PWM_SERVO1_MIN; // pwm initiale sur le canal 4 (position du servo au milieu)
 
 	// on active le tout
@@ -65,6 +69,17 @@ void pwm_set(const unsigned int num, int16_t val)
 	// milieu = (INIT_PWM * 7.1f)/100
 	switch(num)
 	{
+		case PWM_SERVO_BALISE:
+			if(val < PWM_SERVO1_MIN)
+			{
+				val = PWM_SERVO1_MIN;
+			}
+			else if(val > PWM_SERVO1_MAX)
+			{
+				val = PWM_SERVO1_MAX;
+			}
+			TIM1->CCR3 = val;
+			break;
 		case PWM_SERVO1:
 			if(val < PWM_SERVO1_MIN)
 			{

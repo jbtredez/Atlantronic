@@ -16,8 +16,9 @@ module_init(servo_module_init, INIT_SERVO);
 
 void can_servo(struct can_msg *msg)
 {
-	if(msg->size == 1)
+	if(msg->size == 2)
 	{
 		pwm_set(PWM_SERVO1, PWM_SERVO1_MIN + msg->data[0] * (PWM_SERVO1_MAX - PWM_SERVO1_MIN) / 255);
+		pwm_set(PWM_SERVO_BALISE, PWM_SERVO1_MIN + msg->data[0] * (PWM_SERVO1_MAX - PWM_SERVO1_MIN) / 255);
 	}
 }
