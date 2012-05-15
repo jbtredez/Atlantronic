@@ -3,6 +3,7 @@ obj-linux-usb_interface += linux/tools/com.o
 obj-linux-usb_interface += kernel/hokuyo_tools.o
 obj-linux-usb_interface += kernel/math/regression.o
 obj-linux-usb_interface += kernel/vect_pos.o
+obj-linux-usb_interface += kernel/math/vect2.o
 obj-linux-usb_interface += kernel/math/trigo.o
 obj-linux-usb_interface += linux/tools/cli.o
 obj-linux-usb_interface += linux/tools/cmd.o

@@ -56,16 +56,14 @@ int32_t distance_point_to_segment(const struct fx_vect2* m, const struct fx_vect
 		const struct fx_vect2 am = {(m->x)-(a->x), (m->y)-(a->y)};
 		const struct fx_vect2 ab = {(b->x)-(a->x), (b->y)-(a->y)};
 		//calculs sur variables en mm
-		const float scalaire_am_ab = ((am.x>>16)*(ab.x>>16))+((am.y>>16)*(ab.y>>16));
+		const float scalaire_am_ab = (float)fx_vect2_scalar_product(&am,&ab); 
 		const float t=scalaire_am_ab/ab_squared;
 
 		if (t < 0.0f) return distance_point_to_point(m,a); // M est avant A
 		else if (t > 1.0f) return distance_point_to_point(m,b); // M est après B
 		else
 		{
-			//projection dans le segment
-			const struct fx_vect2 p = {(a->x)+t*(ab.x), (a->y)+t*(ab.y)};
-			return distance_point_to_point(m, &p);
+			return (fx_vect2_vector_product_z(&am,&ab)/ab_squared)<<16;
 		}
 	}
 }

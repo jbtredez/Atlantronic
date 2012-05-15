@@ -16,6 +16,7 @@ obj-bar-us_hokuyo += kernel/hokuyo_tools.o
 obj-bar-us_hokuyo += kernel/vect_pos.o
 obj-bar-us_hokuyo += kernel/math/trigo.o
 obj-bar-us_hokuyo += kernel/math/distance.o
+obj-bar-us_hokuyo += kernel/math/vect2.o
 obj-bar-us_hokuyo += kernel/utf8.o
 obj-bar-us_hokuyo += kernel/driver/usb/usb.o
 obj-bar-us_hokuyo += kernel/driver/usb/usb_init.o
