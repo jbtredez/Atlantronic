@@ -51,6 +51,11 @@ static int gpio_module_init(void)
 	// PD10 entrée input flotante
 	GPIOD->CRH = (GPIOD->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10) | GPIO_CRH_CNF10_0;
 
+	// activation de GPIOC
+	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN;
+	// PC4 sortie push pull, 2MHz
+	GPIOC->CRL = (GPIOC->CRL & ~GPIO_CRL_MODE4 & ~GPIO_CRL_CNF4) | GPIO_CRL_MODE4_1;
+
 	// LED sur PE0, PE1, PE2, PE3, PE4, PE5
 	// activation GPIOE
 	RCC->APB2ENR |= RCC_APB2ENR_IOPEEN;
@@ -94,6 +99,9 @@ static int gpio_module_init(void)
 
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
+
+	// on allume les led de la balise
+	GPIOC->ODR |= GPIO_ODR_ODR4;
 
 	return 0;
 }
