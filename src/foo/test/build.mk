@@ -266,6 +266,7 @@ obj-foo-test_graph += foo/encoders.o
 obj-foo-test_graph += foo/ax12.o
 obj-foo-test_graph += foo/pince.o
 obj-foo-test_graph += foo/arm.o
+obj-foo-test_graph += foo/servo.o
 obj-foo-test_graph += foo/adc.o
 obj-foo-test_graph += foo/test/test_graph.o
 obj-foo-test_graph += foo/recalage.o
