@@ -47,6 +47,7 @@ obj-foo-strat0 += foo/location/beacon.o
 obj-foo-strat0 += foo/encoders.o
 obj-foo-strat0 += foo/ax12.o
 obj-foo-strat0 += foo/pince.o
+obj-foo-strat0 += foo/servo.o
 obj-foo-strat0 += foo/arm.o
 obj-foo-strat0 += foo/adc.o
 obj-foo-strat0 += foo/strat0.o
