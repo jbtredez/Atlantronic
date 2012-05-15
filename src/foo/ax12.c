@@ -322,7 +322,8 @@ void ax12_print_error(int id, struct ax12_error err)
 		{
 			if(err.transmit_error & ERR_USART_TIMEOUT)
 			{
-				log_format(LOG_ERROR, "ax12 %3d : timeout", id);
+				// TODO trop de log
+				//log_format(LOG_ERROR, "ax12 %3d : timeout", id);
 			}
 			if(err.transmit_error & ERR_USART_READ_SR_FE)
 			{
@@ -358,7 +359,8 @@ void ax12_print_error(int id, struct ax12_error err)
 		}
 		if( err.internal_error & AX12_CHECKSUM_ERROR_MASK)
 		{
-			log_format(LOG_ERROR, "ax12 %3d : erreur interne - somme de verification incompatible", id);
+		// TODO trop de log
+//			log_format(LOG_ERROR, "ax12 %3d : erreur interne - somme de verification incompatible", id);
 		}
 		if( err.internal_error & AX12_OVERLOAD_ERROR_MASK)
 		{
@@ -371,7 +373,8 @@ void ax12_print_error(int id, struct ax12_error err)
 	}
 	else
 	{
-		log_format(LOG_INFO, "ax12 %3d ok", id);
+		// TODO trop de log
+//		log_format(LOG_INFO, "ax12 %3d ok", id);
 	}
 }
 
