@@ -113,4 +113,4 @@ obj-foo-calib_hokuyo += kernel/math/vect2.o
 obj-foo-calib_hokuyo += kernel/math/distance.o
 obj-foo-calib_hokuyo += foo/detection.o
 obj-foo-calib_hokuyo += kernel/vect_pos.o
-bin-foo += calib_hokuyo
+#bin-foo += calib_hokuyo
