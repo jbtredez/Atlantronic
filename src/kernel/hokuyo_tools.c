@@ -77,7 +77,7 @@ int hokuyo_find_objects(uint16_t* distance, struct fx_vect2* hokuyo_pos, unsigne
 		while(i < size && abs(gap) < GAP)
 		{
 			dist = distance[i];
-			if( dist < 20 )
+			if( dist < 20 || abs(hokuyo_pos[i].x) > (1500 << 16)|| abs(hokuyo_pos[i].y) > (1000 << 16) )
 			{
 				gap = GAP;
 			}
