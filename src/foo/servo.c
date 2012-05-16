@@ -11,7 +11,7 @@ int servo_module_init()
 	can_servo_msg.id = CAN_SERVO;
 	can_servo_msg.format = CAN_STANDARD_FORMAT;
 	can_servo_msg.type = CAN_DATA_FRAME;
-	can_servo_msg.size = 1;
+	can_servo_msg.size = 2;
 
 	return 0;
 }
@@ -22,7 +22,7 @@ void servo_set(uint8_t servo_id, uint8_t val)
 {
 	if(servo_id < 2)
 	{
-		can_servo_msg.data[0] = val;
+		can_servo_msg.data[servo_id] = val;
 		can_write(&can_servo_msg, ms_to_tick(1));
 	}
 }
