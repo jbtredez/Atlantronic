@@ -10,6 +10,7 @@
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
+static uint8_t gpio_recalage_done;
 
 static void gpio_cmd_go();
 static void gpio_cmd_color(void* arg);
@@ -110,10 +111,13 @@ module_init(gpio_module_init, INIT_GPIO);
 
 static void gpio_cmd_go()
 {
-	gpio_go = 1;
-	setLed(0x23F);
-	systick_start_match();
-	vTaskSetEvent(EVENT_GO);
+	if(gpio_recalage_done)
+	{
+		gpio_go = 1;
+		setLed(0x23F);
+		systick_start_match();
+		vTaskSetEvent(EVENT_GO);
+	}
 }
 
 static void gpio_cmd_color(void* arg)
@@ -138,10 +142,17 @@ static void gpio_cmd_color(void* arg)
 
 static portBASE_TYPE gpio_go_from_isr()
 {
-	gpio_go = 1;
-	setLed(0x23F);
-	systick_start_match_from_isr();
-	return vTaskSetEventFromISR(EVENT_GO);
+	portBASE_TYPE higher_priority_task_woken = 0;
+
+	if( gpio_recalage_done )
+	{
+		gpio_go = 1;
+		setLed(0x23F);
+		systick_start_match_from_isr();
+		higher_priority_task_woken = vTaskSetEventFromISR(EVENT_GO);
+	}
+
+	return higher_priority_task_woken;
 }
 
 void isr_exti0(void)
@@ -234,6 +245,7 @@ void isr_exti15_10(void)
 	{
 		EXTI->PR |= EXTI_PR_PR10;
 		gpio_recaler = 1;
+		gpio_recalage_done = 1;
 	}
 
 	portCLEAR_INTERRUPT_MASK();
