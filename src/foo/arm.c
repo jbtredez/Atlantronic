@@ -567,12 +567,14 @@ int arm_set_tool_way(int8_t tool_way)
 void arm_bridge_on()
 {
 	// pwm "a 50%" car la pompe est en 12V
-	pwm_set(PWM_BRIDGE, (12 * PWM_ARR)/21);
+// Pompe supprimée
+//	pwm_set(PWM_BRIDGE, (12 * PWM_ARR)/21);
 }
 
 void arm_bridge_off()
 {
-	pwm_set(PWM_BRIDGE, 0);
+// Pompe supprimée
+//	pwm_set(PWM_BRIDGE, 0);
 }
 
 static void arm_cmd_bridge(void* arg)
