@@ -18,14 +18,6 @@
 
 #define STRAT_STACK_SIZE       300
 
-enum totem_pos
-{
-	TOTEM_POS_HIGH,
-	TOTEM_POS_LOW,
-	TOTEM_POS_OP_HIGH,
-	TOTEM_POS_OP_LOW,
-};
-
 static int strat_dir;
 static int strat_bouteille1_ok;
 static int strat_bouteille2_ok;
@@ -34,7 +26,6 @@ static int strat_totem1_low;
 static int strat_middle_low_ok;
 
 static void strat_task();
-static int strat_ratissage_totem(enum totem_pos pos);
 static int strat_bouteille(int id);
 //!< on vide le totem avec le robot orienté selon l'axe y
 static int strat_sortie_totem_y(int totem, int high);
@@ -369,109 +360,6 @@ static int strat_middle_low()
 end:
 	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
 	return res;
-}
-
-static int strat_ratissage_totem(enum totem_pos pos)
-{
-	int dir;
-	int high;
-
-	log_format(LOG_INFO, "ratissage_totem %d", pos);
-	switch(pos)
-	{
-		default:
-		case TOTEM_POS_HIGH:
-			high = 1;
-			dir = strat_dir;
-			break;
-		case TOTEM_POS_LOW:
-			high = -1;
-			dir = strat_dir;
-			break;
-		case TOTEM_POS_OP_HIGH:
-			high = 1;
-			dir = -strat_dir;
-			break;
-		case TOTEM_POS_OP_LOW:
-			high = -1;
-			dir = -strat_dir;
-			break;
-	}
-
-	// on anticipe sur le servo
-	arm_set_tool_way(0);
-
-	trajectory_goto_near_xy(0, high * mm2fx(310), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	// TODO voir les pinces
-	// pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
-	int32_t alpha =  -0.02f*(1<<26);
-	if( dir == 1)
-	{
-		alpha = (1<<25) - alpha;
-	}
-
-	trajectory_goto_near(dir * mm2fx(-75), high * mm2fx(310), alpha, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	// prise du lingo
-	arm_ventouse_goto(3000 << 16, 140<<16, 0, 140<<16, 120<<16, dir);
-	vTaskDelay(ms_to_tick(1000));
-	arm_bridge_on();
-	arm_ventouse_goto( 3000 << 16, 65<<16, 0, 65<<16, 120<<16, dir);
-	vTaskDelay(ms_to_tick(1000));
-
-	// retour vers le centre du robot
-	arm_goto_xyz(200<<16, 0, 120<<16, ARM_CMD_XYZ_LOC);
-	vTaskDelay(ms_to_tick(500));
-
-	// on débute la marche arrière
-	trajectory_goto_near_xy(0, mm2fx(310), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-	arm_bridge_off();
-	arm_set_tool_way(-dir);
-	vTaskDelay(ms_to_tick(500));
-	// préparation de l'outil à la bonne hauteur
-	arm_goto_xyz(200<<16, 0, 220<<16, ARM_CMD_XYZ_LOC);
-	vTaskDelay(ms_to_tick(1500));
-
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	arm_hook_goto( 3000 << 16, 110<<16, 0, 110<<16, 220<<16, -dir);
-	vTaskDelay(ms_to_tick(2000));
-
-	trajectory_goto_near_xy(strat_dir * mm2fx(-760), mm2fx(310), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	trajectory_goto_near_xy(strat_dir * mm2fx(-1250), mm2fx(150), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		return -1;
-	}
-
-	return 0;
 }
 
 static int strat_bouteille(int id)
