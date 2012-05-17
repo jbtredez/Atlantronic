@@ -31,7 +31,7 @@ static int strat_bouteille(int id);
 static int strat_sortie_totem_y(int totem, int high);
 static int strat_middle_low();
 static int strat_cale(int high);
-static int strat_totem(int totem, int high);
+static int strat_totem(int high);
 
 static void strat_cmd(void* arg);
 
@@ -94,7 +94,7 @@ static void strat_task()
 
 //	while(strat_bouteille1_ok < 0 && strat_totem1_low < 0 && strat_bouteille2_ok < 0)
 	{
-		strat_totem(1,1);
+		strat_totem(1);
 /*		if(strat_bouteille1_ok < 0)
 		{
 			strat_bouteille1_ok = strat_bouteille(0);
@@ -214,11 +214,11 @@ end:
 	return res;
 }
 
-static int strat_totem(int totem, int high)
+static int strat_totem(int high)
 {
 	int res = 0;
 
-	log_format(LOG_INFO, "strat_totem %d high %d", totem, high);
+	log_format(LOG_INFO, "high %d", high);
 
 	// on se met en face du totem
 	int32_t y;
@@ -231,7 +231,7 @@ static int strat_totem(int totem, int high)
 		y = mm2fx(-600);
 	}
 
-	trajectory_goto_near_xy( totem * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -242,7 +242,7 @@ static int strat_totem(int totem, int high)
 
 	// on va vers le palmier
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
-	trajectory_goto_near_xy( totem * mm2fx(0), mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(0), mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(1000));
 	if(strat_dir == 1)
 	{
