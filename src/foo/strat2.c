@@ -25,13 +25,13 @@ static int strat_totem2_high;
 static int strat_totem1_low;
 static int strat_middle_low_ok;
 
+
 static void strat_task();
 static int strat_bouteille(int id);
-//!< on vide le totem avec le robot orienté selon l'axe y
-static int strat_sortie_totem_y(int totem, int high);
 static int strat_middle_low();
 static int strat_cale(int high);
 static int strat_totem(int high);
+static int strat_clenup_bottle_way();
 
 static void strat_cmd(void* arg);
 
@@ -81,35 +81,31 @@ static void strat_task()
 	strat_totem1_low = -1;
 	strat_middle_low_ok = -1;
 
-	if(strat_dir == 1)
-	{
-		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
-	}
-	else
-	{
-		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
-	}
-
 //	int res = strat_sortie_totem_y(strat_dir, 1);
 
 //	while(strat_bouteille1_ok < 0 && strat_totem1_low < 0 && strat_bouteille2_ok < 0)
 	{
 		strat_totem(1);
-/*		if(strat_bouteille1_ok < 0)
+
+		strat_clenup_bottle_way();
+
+		if(strat_bouteille1_ok < 0)
 		{
 			strat_bouteille1_ok = strat_bouteille(0);
 		}
 
+		strat_totem(-1);
+/*
 		if( strat_totem1_low < 0)
 		{
 			strat_totem1_low = strat_sortie_totem_y(strat_dir, -1);
 		}
-
+*/
 		if( strat_bouteille2_ok < 0)
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
 		}
-*/
+
 		vTaskDelay(ms_to_tick(100));
 	}
 /*
@@ -143,7 +139,7 @@ static void strat_cmd(void* arg)
 
 int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
-	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(5000));
+	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(8000));
 	if( !( ev & EVENT_TRAJECTORY_END) )
 	{
 		log(LOG_ERROR, "timeout");
@@ -214,13 +210,48 @@ end:
 	return res;
 }
 
+static int strat_clenup_bottle_way()
+{
+	int res = 0;
+
+	if(strat_dir == 1)
+	{
+		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
+	}
+	else
+	{
+		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);	
+	}
+
+	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-700), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+/*
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		res = -1;
+	}
+*/
+	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+
+	return res;
+}
+
 static int strat_totem(int high)
 {
 	int res = 0;
 
 	log_format(LOG_INFO, "high %d", high);
 
-	// on se met en face du totem
+	if(strat_dir*high == 1)
+	{
+		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
+	}
+	else
+	{
+		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
+	}
+
+	// on se met en face du palmier
 	int32_t y;
 	if( high == 1)
 	{
@@ -231,8 +262,12 @@ static int strat_totem(int high)
 		y = mm2fx(-600);
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	int i = 0;
+	do
+	{
+		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		i++;
+	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -242,9 +277,9 @@ static int strat_totem(int high)
 
 	// on va vers le palmier
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
-	trajectory_goto_near_xy( strat_dir * mm2fx(0), mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskDelay(ms_to_tick(1000));
-	if(strat_dir == 1)
+	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskDelay(ms_to_tick(2000));
+	if(strat_dir*high == 1)
 	{
 		pince_set_position(PINCE_CLOSE, PINCE_OPEN);
 	}
@@ -260,9 +295,9 @@ static int strat_totem(int high)
 		goto end;
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-600), mm2fx(360), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(360), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(300));
-	if(strat_dir == 1)
+	if(strat_dir*high == 1)
 	{
 		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
 	}
@@ -275,6 +310,7 @@ static int strat_totem(int high)
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
+		strat_cale(high);
 		res = -1;
 		goto end;
 	}
@@ -286,97 +322,123 @@ end:
 	return res;
 }
 
-static int strat_sortie_totem_y(int totem, int high)
+static int strat_steal_coins_inside()
 {
-	int res = 0;
-	log_format(LOG_INFO, "strat_sortie_totem_y %d", totem);
-
-	// on se met en face du totem
-	arm_set_tool_way(-1);
-
-	int32_t y;
-	if( high == 1)
+	log_format(LOG_INFO, " En mode voleur (inside) ");
+	int32_t alpha;
+	
+	if(strat_dir == 1)
 	{
-		y = mm2fx(775);
+		alpha = 0;
 	}
 	else
 	{
-		y = mm2fx(-600);
+		alpha = 1 << 25;
 	}
-
-	trajectory_goto_near_xy( - totem * mm2fx(400), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	
+	// prépositionnement
+	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
-		res = -1;
-		goto end;
+		return -1;
 	}
 
- 	pince_set_position(PINCE_OPEN, PINCE_OPEN);
+	// on ouvre les pinces
+	pince_set_position(PINCE_OPEN,PINCE_OPEN);
+	vTaskDelay(ms_to_tick(500));
 
- 	// on va vers le totem
-	trajectory_goto_near_xy( -totem * mm2fx(400), high*mm2fx(410), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskDelay(ms_to_tick(500));
-	pince_set_position(PINCE_OPEN, PINCE_OPEN);
-
-	// bras visible
-	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + ARM_L1 + ARM_L2);
-	vTaskDelay(ms_to_tick(500));
-	arm_goto_xyz(300<<16, 0, 110<<16, 1);
-	vTaskDelay(ms_to_tick(500));
-	arm_bridge_on();
+	trajectory_disable_static_check ();
+	control_set_max_speed( (1 << 16) / 3, 1 << 16);
+	
+	// on avance
+	trajectory_straight (mm2fx(250));
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
- 	arm_goto_xyz(200<<16, 0, 110<<16, 1);
- 	vTaskDelay(ms_to_tick(1000));
-
-	if(strat_dir == -1)
-	{
-		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
-	}
-	else
-	{
-		pince_set_position(PINCE_MIDDLE, PINCE_OPEN );
-	}
-
-	arm_goto_xyz(200<<16, 0, 110<<16, 1);
-	vTaskDelay(ms_to_tick(1000));
-	arm_bridge_off();
-
- 	arm_goto_xyz(200<<16, 0, 150<<16, 1);
- 	vTaskDelay(ms_to_tick(500));
-	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
-
-	// on s'éloigne du totem
-	trajectory_goto_near_xy( -totem * mm2fx(400), high*mm2fx(500), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
-
-	// on part vers la zone de dépot
-	res = strat_cale(high);
-
-end:
- 	arm_goto_xyz(200<<16, 0, 150<<16, 1);
-	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
-	arm_bridge_off();
-	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+	control_set_max_speed( (1 << 16), 1 << 16);
 	trajectory_enable_static_check();
 
-	return res;
+	// on ferme les pinces
+	pince_set_position(PINCE_STRAT,PINCE_STRAT);
+	vTaskDelay(ms_to_tick(500));
+
+	if(strat_dir == 1)
+	{
+		alpha = 1 << 25;
+	}
+	else
+	{
+		alpha = 0;
+	}	
+
+	// on sort
+	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		return -1;
+	}
+
+	return 1;
+}	
+
+static int strat_return_coins_inside()
+{
+	log_format(LOG_INFO, " En mode retour tresor ");
+	int32_t alpha;
+	
+	if(strat_dir == 1)
+	{
+		alpha = 1 << 25;
+	}
+	else
+	{
+		alpha = 0;
+	}
+	
+	// prépositionnement
+	trajectory_goto_near(strat_dir * mm2fx(-900), mm2fx(150), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		return -1;
+	}
+
+	trajectory_disable_static_check ();
+	control_set_max_speed( (1 << 16) / 3, 1 << 16);
+
+	// on ouvre les pinces
+	pince_set_position(PINCE_OPEN,PINCE_OPEN);
+	vTaskDelay(ms_to_tick(500));
+	
+	// on avance
+	trajectory_straight (mm2fx(250));
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	control_set_max_speed( (1 << 16), 1 << 16);
+	trajectory_enable_static_check();
+
+		
+	if(strat_dir == 1)
+	{
+		alpha = 0;
+	}
+	else
+	{
+		alpha = 1 << 25;
+	}	
+
+	// on sort
+	trajectory_goto_near(strat_dir * mm2fx(-900), mm2fx(170), alpha, 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		return -1;
+	}
+
+	// on ferme les pinces
+	pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
+	vTaskDelay(ms_to_tick(500));
+
+	return 1;
 }
 
 //!< 4cd + lingo du milieu
