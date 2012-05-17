@@ -27,13 +27,17 @@ enum totem_pos
 };
 
 static int strat_dir;
+static int strat_bouteille1_ok;
+static int strat_bouteille2_ok;
+static int strat_totem2_high;
+static int strat_totem1_low;
 
 static void strat_task();
 static void strat_sortie();
 static int strat_ratissage_totem(enum totem_pos pos);
 static int strat_bouteille(int id);
 //!< on vide le totem avec le robot orienté selon l'axe y
-int strat_sortie_totem_y(int totem);
+int strat_sortie_totem_y(int totem, int high);
 
 static void strat_cmd(void* arg);
 
@@ -77,30 +81,32 @@ static void strat_task()
 		strat_dir = -1;
 	}
 
-//	trajectory_disable_hokuyo();
+	strat_bouteille1_ok = -1;
+	strat_bouteille2_ok = -1;
+	strat_totem2_high = -1;
+	strat_totem1_low = -1;
 
-	int res = strat_sortie_totem_y(strat_dir);
+	int res = strat_sortie_totem_y(strat_dir, 1);
 
-//	strat_ratissage_totem(TOTEM_POS_OP_HIGH);
-//	strat_ratissage_totem(TOTEM_POS_HIGH);
-
-	strat_bouteille(0);
-
-	strat_bouteille(1);
-#if 0
-	strat_bouteille(0);
-
-	int i = 0;
-	do
+	while(1)
 	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(-600), mm2fx(-400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		vTaskDelay(ms_to_tick(50));
-		i++;
-	}while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 3);
+		if(strat_bouteille1_ok < 0)
+		{
+			strat_bouteille1_ok = strat_bouteille(0);
+		}
 
-	strat_bouteille(1);
-#endif
+		if( strat_totem1_low < 0)
+		{
+			strat_totem1_low = strat_sortie_totem_y(strat_dir, -1);
+		}
+
+		if( strat_bouteille2_ok < 0)
+		{
+			strat_bouteille2_ok = strat_bouteille(1);
+		}
+
+		vTaskDelay(ms_to_tick(100));
+	}
 
 	vTaskDelete(NULL);
 }
@@ -140,7 +146,7 @@ int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 	return 0;
 }
 
-int strat_sortie_totem_y(int totem)
+int strat_sortie_totem_y(int totem, int high)
 {
 	int res = 0;
 	log_format(LOG_INFO, "strat_sortie_totem_y %d", totem);
@@ -148,7 +154,17 @@ int strat_sortie_totem_y(int totem)
 	// on se met en face du totem
 	arm_set_tool_way(-1);
 
-	trajectory_goto_near_xy( - totem * mm2fx(400), mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	int32_t y;
+	if( high == 1)
+	{
+		y = mm2fx(775);
+	}
+	else
+	{
+		y = mm2fx(-600);
+	}
+
+	trajectory_goto_near_xy( - totem * mm2fx(400), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -160,7 +176,7 @@ int strat_sortie_totem_y(int totem)
  	pince_set_position(PINCE_OPEN, PINCE_OPEN);
 
  	// on va vers le totem
-	trajectory_goto_near_xy( -totem * mm2fx(400), mm2fx(420), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( -totem * mm2fx(400), high*mm2fx(420), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(500));
 	pince_set_position(PINCE_OPEN, PINCE_OPEN);
 
@@ -196,7 +212,7 @@ int strat_sortie_totem_y(int totem)
 	arm_bridge_off();
 
 	// on s'éloigne du totem
-	trajectory_goto_near_xy( -totem * mm2fx(400), mm2fx(480), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( -totem * mm2fx(400), high*mm2fx(500), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -208,7 +224,17 @@ int strat_sortie_totem_y(int totem)
 	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
 
 	// on part vers la zone de dépot
-	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), mm2fx(170), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_disable_static_check();
+	if(high == 1)
+	{
+		y = mm2fx(170);
+	}
+	else
+	{
+		y = 0;
+	}
+
+	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -217,8 +243,11 @@ int strat_sortie_totem_y(int totem)
 		goto end;
 	}
 
+	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
+	vTaskDelay(ms_to_tick(500));
+
 	// on recule
-	trajectory_goto_near_xy( strat_dir * mm2fx(-762), mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-762), high*mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -228,7 +257,11 @@ int strat_sortie_totem_y(int totem)
 	}
 
 end:
+ 	arm_goto_xyz(200<<16, 0, 150<<16, 1);
+	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
+	arm_bridge_off();
 	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+	trajectory_enable_static_check();
 
 	return res;
 }
@@ -350,6 +383,8 @@ static int strat_ratissage_totem(enum totem_pos pos)
 
 static int strat_bouteille(int id)
 {
+	int res = 0;
+
 	log_format(LOG_INFO, "bouteille %d", id);
 
 	// bouteille sur la ligne noir
@@ -360,7 +395,7 @@ static int strat_bouteille(int id)
 		x = strat_dir * mm2fx(383);
 	}
 
-	trajectory_goto_near(x, mm2fx(-400), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
+	trajectory_goto_near(x, mm2fx(-700), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -371,20 +406,22 @@ static int strat_bouteille(int id)
 	control_disable_sick();
 	trajectory_disable_static_check();
 
-	trajectory_goto_near_xy(x, mm2fx(-1000), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+	trajectory_goto_near_xy(x, mm2fx(-1000), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_NOT_REACHED && trajectory_get_state() != TRAJECTORY_STATE_COLISION)
 	{
-		return -1;
+		res = -1;
+		goto end;
 	}
 
 	vTaskDelay(ms_to_tick(200));
 	trajectory_straight( mm2fx(300));
 	start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
 
+end:
 	trajectory_enable_static_check();
 	control_enable_sick();
 
-	return 0;
+	return res;
 }
