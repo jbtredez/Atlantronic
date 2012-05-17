@@ -423,7 +423,7 @@ static void trajectory_compute()
 			if(res)
 			{
 				log_format(LOG_INFO, "aucun chemin trouvé");
-				// TODO erreur
+				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
 			}
 			else
 			{
