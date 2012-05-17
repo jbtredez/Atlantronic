@@ -7,6 +7,9 @@
 
 #include <stdint.h>
 
+#define ARM_L1     (int32_t)(118 << 16)
+#define ARM_L2     (int32_t)(120 << 16)
+
 enum arm_cmd_type
 {
 	ARM_CMD_ART,

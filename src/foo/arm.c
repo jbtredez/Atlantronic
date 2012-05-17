@@ -26,7 +26,7 @@
 #define ARM_HZ               500
 #define ARM_ZMIN        (65<<16)
 #define ARM_ZMAX     (265 << 16)
-#define ARM_ZINIT    (110 << 16)  //!< hauteur au lancement
+#define ARM_ZINIT    (150 << 16)  //!< hauteur au lancement
 #define ARM_ZMIN_ARM_CENTER      (80<<16) //!< hauteur minimale avant laquelle on doit centrer le bras
 
 static xSemaphoreHandle arm_mutex;
@@ -79,9 +79,6 @@ struct fx_vect_pos HOOK = {
 	.ca = 759250125,
 	.sa = -759250125
 };
-
-static const int32_t ARM_L1 = 118 << 16;
-static const int32_t ARM_L2 = 120 << 16;
 
 //!< modèle géométrique inverse du bras
 //!< way : sens du coude du bras
