@@ -23,6 +23,6 @@ enum detection_type
 //!< attention, prise de mutex sur l'ensemble des segments
 //!<
 //!< @return distance maximale d'avance avant collision
-int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b);
+int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min);
 
 #endif

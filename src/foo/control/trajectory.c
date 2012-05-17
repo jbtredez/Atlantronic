@@ -24,6 +24,7 @@ void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
 static void trajectory_compute();
 static int trajectory_find_way_to_graph(struct fx_vect_pos pos);
+static int32_t trajectory_detect_dist_min;
 
 // requete pour la tache trajectory + mutex
 struct trajectory_cmd_arg trajectory_request;
@@ -67,6 +68,7 @@ static int trajectory_module_init()
 	trajectory_state = TRAJECTORY_STATE_NONE;
 	trajectory_hokuyo_enable_check = 1;
 	trajectory_static_check_enable = 1;
+	trajectory_detect_dist_min = PARAM_RIGHT_CORNER_X;
 
 	return 0;
 }
@@ -169,7 +171,7 @@ static void trajectory_update()
 		pos.ca = fx_cos(pos.alpha);
 		pos.sa = fx_sin(pos.alpha);
 
-		int32_t xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, &pos, &a_table, &b_table) >> 16;
+		int32_t xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, &pos, &a_table, &b_table, trajectory_detect_dist_min) >> 16;
 
 		// passage en mm pour faire les calculs sur 32bits
 		dx = dx >> 16;
@@ -278,13 +280,20 @@ static void trajectory_task(void* arg)
 			vTaskClearEvent(EVENT_DETECTION_UPDATED);
 
 			struct fx_vect2 a = {1 << 30, 1 << 30};
+			struct fx_vect2 c = {1 << 30, 1 << 30};
 			if( trajectory_hokuyo_enable_check )
 			{
 				struct fx_vect2 b;
-				detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &trajectory_pos, &a, &b);
+				detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &trajectory_pos, &a, &b, trajectory_detect_dist_min);
+				struct fx_vect_pos pos_ar = trajectory_pos;
+				pos_ar.alpha += 1<<25;
+				pos_ar.ca = - pos_ar.ca;
+				pos_ar.sa = - pos_ar.sa; 
+				//detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &pos_ar, &c, &b);
 			}
 
 			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
+			control_set_back_object(&c, TRAJECTORY_APPROX_DIST);
 		}
 	}
 }
@@ -328,7 +337,7 @@ static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 		pos.alpha = fx_atan2(dy, dx);
 		pos.ca = fx_cos(pos.alpha);
 		pos.sa = fx_sin(pos.alpha);
-		xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table);
+		xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table, trajectory_detect_dist_min);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
@@ -395,7 +404,7 @@ static void trajectory_compute()
 					pos.alpha = graph_link[i].alpha;
 					pos.ca = fx_cos(pos.alpha);
 					pos.sa = fx_sin(pos.alpha);
-					xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table) >> 16;
+					xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table, trajectory_detect_dist_min) >> 16;
 					if(graph_link[i].dist < xmin)
 					{
 						trajectory_graph_valid_links[i] = 1;
@@ -618,4 +627,9 @@ void trajectory_disable_hokuyo()
 void trajectory_enable_hokuyo()
 {
 	trajectory_hokuyo_enable_check = 1;
+}
+
+void trajectory_set_detection_dist_min(int32_t dist_min)
+{
+	trajectory_detect_dist_min = dist_min;
 }

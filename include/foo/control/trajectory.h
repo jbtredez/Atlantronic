@@ -82,4 +82,6 @@ void trajectory_disable_static_check();
 
 enum trajectory_state trajectory_get_state();
 
+void trajectory_set_detection_dist_min(int32_t dist_min);
+
 #endif

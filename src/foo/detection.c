@@ -181,11 +181,11 @@ static void detection_task()
 	vTaskDelete(NULL);
 }
 
-static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b)
+static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
 {
-	struct fx_vect2 a1 = { 0,  PARAM_LEFT_CORNER_Y };
+	struct fx_vect2 a1 = { dist_min,  PARAM_LEFT_CORNER_Y };
 	struct fx_vect2 b1 = { 1 << 30,  PARAM_LEFT_CORNER_Y };
-	struct fx_vect2 a2 = { 0, PARAM_RIGHT_CORNER_Y };
+	struct fx_vect2 a2 = { dist_min, PARAM_RIGHT_CORNER_Y };
 	struct fx_vect2 b2 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
 
 	struct fx_vect2 c;
@@ -206,7 +206,7 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 			vect2_abs_to_loc(pos, &polyline[i].pt[j], &d);
 
 			// point c devant le robot et dans le tube
-			if( c.x > 0 && c.y > a1.y && c.y < a2.y)
+			if( c.x > dist_min && c.y > a1.y && c.y < a2.y)
 			{
 				if( c.x < x_min)
 				{
@@ -217,7 +217,7 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 			}
 
 			// point d devant le robot et dans le tube
-			if( d.x > 0 && d.y > a1.y && d.y < a2.y)
+			if( d.x > dist_min && d.y > a1.y && d.y < a2.y)
 			{
 				if( d.x < x_min)
 				{
@@ -277,7 +277,7 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 	return x_min;
 }
 
-int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b)
+int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
 {
 	int32_t x_min = 1 << 30;
 	int32_t x_min_table = 1 << 30;
@@ -287,7 +287,7 @@ int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_
 	if(type == DETECTION_FULL || type == DETECTION_DYNAMIC_OBJ)
 	{
 		xSemaphoreTake(detection_mutex, portMAX_DELAY);
-		x_min = detection_compute_object_on_trajectory(pos, detection_object, detection_num_obj, a, b);
+		x_min = detection_compute_object_on_trajectory(pos, detection_object, detection_num_obj, a, b, dist_min);
 		xSemaphoreGive(detection_mutex);
 	}
 	else
@@ -304,7 +304,7 @@ int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_
 
 	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
 	{
-		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
+		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d, dist_min);
 
 		if(x_min_table < x_min)
 		{
