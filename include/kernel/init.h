@@ -55,4 +55,6 @@
 // init de l'ordonanceur en DERNIER !
 #define INIT_SYSTICK                  "51"
 
+#define EXIT_PWM                      "1"
+
 #endif

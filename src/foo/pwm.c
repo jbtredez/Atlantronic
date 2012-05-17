@@ -82,6 +82,8 @@ static int pwm_module_init()
 
 module_init(pwm_module_init, INIT_PWM);
 
+module_exit(isr_pwm_reset, EXIT_PWM);
+
 void pwm_set(const unsigned int num, int16_t val)
 {
 	int dir = 1;
