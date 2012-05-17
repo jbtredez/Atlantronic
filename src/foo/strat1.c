@@ -39,6 +39,7 @@ static int strat_bouteille(int id);
 //!< on vide le totem avec le robot orienté selon l'axe y
 static int strat_sortie_totem_y(int totem, int high);
 static int strat_middle_low();
+static int strat_cale(int high);
 
 static void strat_cmd(void* arg);
 
@@ -90,7 +91,7 @@ static void strat_task()
 
 	int res = strat_sortie_totem_y(strat_dir, 1);
 
-	while(1)
+	while(strat_bouteille1_ok < 0 && strat_totem1_low < 0 && strat_bouteille2_ok < 0)
 	{
 		if(strat_bouteille1_ok < 0)
 		{
@@ -113,6 +114,17 @@ static void strat_task()
 		}
 
 		vTaskDelay(ms_to_tick(100));
+	}
+
+	struct fx_vect_pos pos = location_get_position();
+
+	if( pos.y > 0)
+	{
+		strat_cale(1);
+	}
+	else
+	{
+		strat_cale(-1);
 	}
 
 	vTaskDelete(NULL);
@@ -169,7 +181,7 @@ static int strat_cale(int high)
 		y = 0;
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -181,9 +193,14 @@ static int strat_cale(int high)
 	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
 	vTaskDelay(ms_to_tick(500));
 
-	// on recule
-	trajectory_goto_near_xy( strat_dir * mm2fx(-762), high*mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	// on recule. On se le tente plusieurs fois pour ne pas fermer les pinces dans la cale
+	int i = 0;
+	for( ; i < 5; i++)
+	{
+		trajectory_goto_near_xy( strat_dir * mm2fx(-762), high*mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	}
+	while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -236,7 +253,7 @@ static int strat_sortie_totem_y(int totem, int high)
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + ARM_L1 + ARM_L2);
 	vTaskDelay(ms_to_tick(500));
 	arm_goto_xyz(300<<16, 0, 110<<16, 1);
-	vTaskDelay(ms_to_tick(200));
+	vTaskDelay(ms_to_tick(500));
 	arm_bridge_on();
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
@@ -258,10 +275,13 @@ static int strat_sortie_totem_y(int totem, int high)
 		pince_set_position(PINCE_MIDDLE, PINCE_OPEN );
 	}
 
+	arm_goto_xyz(200<<16, 0, 110<<16, 1);
+	vTaskDelay(ms_to_tick(1000));
+	arm_bridge_off();
+
  	arm_goto_xyz(200<<16, 0, 150<<16, 1);
  	vTaskDelay(ms_to_tick(500));
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
-	arm_bridge_off();
 
 	// on s'éloigne du totem
 	trajectory_goto_near_xy( -totem * mm2fx(400), high*mm2fx(500), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
@@ -468,7 +488,7 @@ static int strat_bouteille(int id)
 		x = strat_dir * mm2fx(383);
 	}
 
-	trajectory_goto_near(x, mm2fx(-700), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
+	trajectory_goto_near(x, mm2fx(-550), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
