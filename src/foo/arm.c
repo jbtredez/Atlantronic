@@ -34,7 +34,10 @@ static int32_t arm_a_cmd;     //!< commande du bras (angle a)
 static int32_t arm_b_cmd;     //!< commande du bras (angle b)
 static uint32_t arm_x_cmd;    //!< commande du bras (selon x)
 static uint32_t arm_y_cmd;    //!< commande du bras (selon y)
+// suppression du levage
+#if 0
 static uint32_t arm_z_cmd;    //!< commande en hauteur du bras
+#endif
 static uint32_t arm_x1_cmd;   //!< commande de la ventouse
 static uint32_t arm_y1_cmd;   //!< commande de la ventouse
 static uint32_t arm_x2_cmd;   //!< commande de la ventouse
@@ -42,9 +45,12 @@ static uint32_t arm_y2_cmd;   //!< commande de la ventouse
 static int8_t arm_tool_way_cmd;  //!< commande du sens de la ventouse ou du crochet
 static uint32_t arm_cmd_type; //!< type de commande
 
+// suppression du levage
+#if 0
 static int32_t arm_z;
 static int32_t arm_vz;
 static int32_t arm_z_step;
+#endif
 
 //!< vitesse max du moteur pas à pas
 const int32_t ARM_VMAX = (100 << 16) / ARM_HZ;
@@ -124,12 +130,14 @@ module_init(arm_module_init, INIT_ARM);
 
 static void arm_task()
 {
+// suppression du levage
+#if 0
 	int32_t count = 0;
 	struct ax12_error err1;
 	struct ax12_error err2;
 	struct ax12_error err3;
 	struct ax12_error err4;
-
+#endif
 	// configuration des ax12
 	ax12_auto_update(AX12_ARM_1, 1);
 	ax12_auto_update(AX12_ARM_2, 1);
@@ -143,6 +151,8 @@ static void arm_task()
 	ax12_set_torque_enable(AX12_ARM_1, 1);
 	ax12_set_torque_enable(AX12_ARM_2, 1);
 
+// suppression du levage
+#if 0
 	// puissance
 	GPIOB->ODR |= GPIO_ODR_ODR12;
 
@@ -167,14 +177,19 @@ static void arm_task()
 	arm_z = ARM_ZMIN;
 	arm_vz = 0;
 	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
-
+#endif
 	// on va monter au début
 	arm_goto_xyz(200<<16, 0, ARM_ZINIT, ARM_CMD_XYZ_LOC);
 
 	while(1)
 	{
+// suppression du levage
+#if 0
 		count++;
+#endif
 		xSemaphoreTake(arm_mutex, portMAX_DELAY);
+// suppression du levage
+#if 0
 		arm_vz = trapeze_speed_filter(arm_vz, arm_z_cmd - arm_z, ARM_AMAX, ARM_DMAX, ARM_VMAX);
 		arm_z += arm_vz;
 
@@ -219,7 +234,7 @@ static void arm_task()
 		if( count == 5)
 		{
 			count = 0;
-
+#endif
 			switch( arm_cmd_type)
 			{
 				default:
@@ -238,6 +253,8 @@ static void arm_task()
 					arm_compute_tool_abs(HOOK);
 					break;
 			}
+// suppression du levage
+#if 0
 			if( arm_z > ARM_ZMIN_ARM_CENTER )
 			{
 				ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
@@ -251,10 +268,14 @@ static void arm_task()
 
 			servo_set(SERVO_ARM, 127 - arm_tool_way_cmd * 127);
 		}
-
+#endif
 		xSemaphoreGive(arm_mutex);
-
+// suppression du levage
+#if 0
 		vTaskDelay(ms_to_tick(2));
+#else
+		vTaskDelay(ms_to_tick(10));
+#endif
 	}
 }
 
@@ -465,7 +486,10 @@ int arm_goto_abz(int32_t a, int32_t b, uint32_t z)
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
 	arm_a_cmd = a;
 	arm_b_cmd = b;
+	// suppression du levage
+#if 0
 	arm_z_cmd = z;
+#endif
 	arm_cmd_type = ARM_CMD_ART;
 	xSemaphoreGive(arm_mutex);
 
@@ -506,7 +530,10 @@ int arm_goto_xyz(int32_t x, int32_t y, uint32_t z, enum arm_cmd_type type)
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
 	arm_x_cmd = x;
 	arm_y_cmd = y;
+// suppression du levage
+#if 0
 	arm_z_cmd = z;
+#endif
 	arm_cmd_type = type;
 	xSemaphoreGive(arm_mutex);
 
@@ -525,7 +552,10 @@ int arm_ventouse_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z
 	arm_y1_cmd = y1;
 	arm_x2_cmd = x2;
 	arm_y2_cmd = y2;
+	// suppression du levage
+#if 0
 	arm_z_cmd = z;
+#endif
 	arm_tool_way_cmd = tool_way;
 	arm_cmd_type = ARM_CMD_VENTOUSE_ABS;
 	xSemaphoreGive(arm_mutex);
@@ -545,7 +575,10 @@ int arm_hook_goto(int32_t x1, int32_t y1, int32_t x2, int32_t y2, uint32_t z, in
 	arm_y1_cmd = y1;
 	arm_x2_cmd = x2;
 	arm_y2_cmd = y2;
+// suppression du levage
+#if 0
 	arm_z_cmd = z;
+#endif
 	arm_tool_way_cmd = tool_way;
 	arm_cmd_type = ARM_CMD_HOOK_ABS;
 	xSemaphoreGive(arm_mutex);
