@@ -55,7 +55,7 @@ struct robot_interface
 
 	// calculs
 	struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];
-	struct fx_vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX];
+	struct fx_vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
 	int detection_reg_num[HOKUYO_MAX];
 };
 
