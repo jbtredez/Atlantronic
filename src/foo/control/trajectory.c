@@ -253,7 +253,7 @@ static void trajectory_task(void* arg)
 					trajectory_compute();
 					break;
 				case TRAJECTORY_STATE_USING_GRAPH:
-					trajectory_compute();
+					trajectory_continue();
 					break;
 			}
 		}
@@ -371,10 +371,12 @@ static void trajectory_compute()
 		trajectory_last_graph_id = trajectory_find_way_to_graph(trajectory_dest);
 		if(trajectory_current_graph_id == trajectory_last_graph_id)
 		{
+			// on est au point du graphe le plus proche de notre destination 
 			trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 		}
 		else
 		{
+			// on utilise le graphe, et on a un event traj echouée, ou ennemi sur le chemin
 			int i = 0;
 			struct fx_vect_pos pos;
 			struct fx_vect2 a_table;
@@ -421,7 +423,7 @@ static void trajectory_compute()
 			if(res)
 			{
 				log_format(LOG_INFO, "aucun chemin trouvé");
-				// TODO erreur
+				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
 			}
 			else
 			{
@@ -432,7 +434,6 @@ static void trajectory_compute()
 					i = trajectory_dijkstra_info[i].prev_node;
 				}
 				log_format(LOG_INFO, "chemin - graph : %d <- %d", i, trajectory_dijkstra_info[i].prev_node);
-				trajectory_current_graph_id = i;
 				control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
 			}
 		}
@@ -463,6 +464,30 @@ static void trajectory_compute()
 		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
 	}
 }
+
+
+static void trajectory_continue()
+{
+	trajectory_last_graph_id = trajectory_find_way_to_graph(trajectory_dest);
+	if(trajectory_current_graph_id == trajectory_last_graph_id.prev_node)
+	{
+		// on est au point du graphe le plus proche de notre destination 
+		trajectory_current_graph_id = trajectory_last_graph_id;
+		trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
+	}
+	else
+	{
+		// on utilise le graphe, et on a un event traj finie
+		int i = trajectory_last_graph_id;
+		log("trajectory getting next node");
+		while(trajectory_dijkstra_info[trajectory_dijkstra_info[i].prev_node].prev_node != trajectory_current_graph_id)
+		{
+			i = trajectory_dijkstra_info[i].prev_node;
+		}
+		trajectory_current_graph_id = trajectory_dijkstra_info[i].prev_node;
+		log_format(LOG_INFO, "going from - to : %d -> %d", trajectory_current_graph_id, i);
+		control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
+	}
 
 void trajectory_cmd(void* arg)
 {
