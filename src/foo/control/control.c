@@ -60,6 +60,10 @@ static struct fx_vect_pos control_dest;
 
 static struct fx_vect2 control_front_object;    //!< objet devant le robot
 static int32_t control_front_object_approx;     //!< distance d'approche de l'objet
+static struct fx_vect2 control_back_object;    //!< objet derrière le robot
+static int32_t control_back_object_approx;     //!< distance d'approche de l'objet
+
+static int disable_sick;
 
 static struct adc_an control_an;
 
@@ -108,9 +112,9 @@ static int control_module_init()
 	pid_init(&control_pid_av, 100000000, 10000000, 0, PWM_ARR, 32);
 	pid_init(&control_pid_rot, 2000000, 300000, 0, PWM_ARR, 26);
 
-	control_kx = 0;
-	control_ky = 1000;
-	control_kalpha = 0;
+	control_kx = 1000;
+	control_ky = 100;
+	control_kalpha = 2000;
 
 	control_vmax_av = CONTROL_VMAX_AV;
 	control_amax_av = CONTROL_AMAX_AV;
@@ -125,6 +129,8 @@ static int control_module_init()
 	control_front_object_approx = 0;
 	control_front_object.x = 1 << 30;
 	control_front_object.y = 1 << 30;
+	control_back_object.x = 1 << 30;
+	control_back_object.y = 1 << 30;
 
 	control_speed_check_error_count = 0;
 
@@ -386,6 +392,7 @@ static void control_compute_trajectory()
 	// on s'oriente correctement
 	if(control_alpha_align != control_kinematics_cons.alpha || control_kinematics_cons.w != 0)
 	{
+		control_speed_check_error_count = 0; // TODO pas de check pour la rotation
 		control_kinematics_cons.v = 0;
 		control_kinematics_cons.w = trapeze_speed_filter(control_kinematics_cons.w, control_alpha_align - control_kinematics_cons.alpha, control_amax_rot, control_dmax_rot, control_vmax_rot);
 		control_kinematics_cons.alpha += control_kinematics_cons.w;
@@ -428,6 +435,34 @@ static void control_compute_trajectory()
 					ex_cons = dist;
 				}
 			}
+		}
+		else
+		{
+			// TODO : pour l'homologation, a corriger
+			int sick_state = get_sick(SICK_RIGHT | SICK_LEFT);
+			if(sick_state && ! disable_sick)
+			{
+				collision = 1;
+				ex_cons = 0;
+			}
+			/*struct fx_vect2 obj_robot;
+			vect2_abs_to_loc((struct fx_vect_pos*)&control_kinematics_cons, &control_back_object, &obj_robot);
+			int32_t dmin = obj_robot.x - PARAM_NP_X;
+			int32_t dist = dmin + control_back_object_approx;
+			// on ignore les objets du robot ou devant
+			if( dmin <= 0)
+			{
+				if(dist > (10<<16))
+				{
+					dist = 0;
+					collision = 1;
+				}
+
+				if(dist < ex_cons)
+				{
+					ex_cons = dist;
+				}
+			}*/
 		}
 
 		control_kinematics_cons.v = trapeze_speed_filter(control_kinematics_cons.v, ex_cons, control_amax_av, control_dmax_av, control_vmax_av);
@@ -619,4 +654,22 @@ void control_set_front_object(struct fx_vect2* a, int32_t approx_dist)
 	control_front_object = *a;
 	control_front_object_approx = approx_dist;
 	xSemaphoreGive(control_mutex);
+}
+
+void control_set_back_object(struct fx_vect2* a, int32_t approx_dist)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	control_back_object = *a;
+	control_back_object_approx = approx_dist;
+	xSemaphoreGive(control_mutex);
+}
+
+void control_disable_sick()
+{
+	disable_sick = 1;
+}
+
+void control_enable_sick()
+{
+	disable_sick = 0;
 }

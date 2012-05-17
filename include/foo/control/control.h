@@ -101,8 +101,15 @@ int32_t control_get_state();
 //!< permet d'indiquer un obstacle sur la trajectoire, en cours de mouvement, et la distance d'approche souhaitée
 void control_set_front_object(struct fx_vect2* a, int32_t approx_dist);
 
+//!< permet d'indiquer un obstacle sur la trajectoire, en cours de mouvement, et la distance d'approche souhaitée
+void control_set_back_object(struct fx_vect2* a, int32_t approx_dist);
+
 //!< limitation de la vitesse.
 //!< vitesse en % de la vmax de configuration
 void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot);
+
+void control_disable_sick();
+
+void control_enable_sick();
 
 #endif
