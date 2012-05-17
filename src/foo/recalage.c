@@ -8,6 +8,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/driver/usb.h"
 #include "gpio.h"
+#include "foo/arm.h"
 #include "location/location.h"
 #include "pince.h"
 #include "control/trajectory.h"
@@ -63,6 +64,7 @@ void recalage()
 	control_set_max_speed( (1 << 16) / 3, 1 << 16);
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
+	control_disable_sick();
 
 	trajectory_straight_to_wall();
 	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_COLISION ) )
@@ -122,7 +124,7 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(10));
 
-	trajectory_straight(210 << 16);
+	trajectory_straight(200 << 16);
 	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) )
 	{
 		goto free;
@@ -130,11 +132,14 @@ void recalage()
 
 	vTaskDelay(ms_to_tick(200));
 
+	arm_set_tool_way(0);
+
 	log(LOG_INFO, "recalage termine");
 
 free:
 	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();
+	control_enable_sick();
 	control_set_max_speed(1 << 16, 1 << 16);
 }
