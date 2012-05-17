@@ -96,12 +96,12 @@ static void strat_task()
 		{
 			strat_bouteille1_ok = strat_bouteille(0);
 		}
-
+#if 0
 		if(strat_middle_low_ok < 0)
 		{
 			strat_middle_low_ok = strat_middle_low();
 		}
-
+#endif
 		if( strat_totem1_low < 0)
 		{
 			strat_totem1_low = strat_sortie_totem_y(strat_dir, -1);
