@@ -23,6 +23,7 @@
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
 static void trajectory_compute();
+static void trajectory_continue();
 static int trajectory_find_way_to_graph(struct fx_vect_pos pos);
 static int32_t trajectory_detect_dist_min;
 
@@ -469,7 +470,7 @@ static void trajectory_compute()
 static void trajectory_continue()
 {
 	trajectory_last_graph_id = trajectory_find_way_to_graph(trajectory_dest);
-	if(trajectory_current_graph_id == trajectory_last_graph_id.prev_node)
+	if(trajectory_current_graph_id == trajectory_dijkstra_info[trajectory_last_graph_id].prev_node)
 	{
 		// on est au point du graphe le plus proche de notre destination 
 		trajectory_current_graph_id = trajectory_last_graph_id;
@@ -479,7 +480,7 @@ static void trajectory_continue()
 	{
 		// on utilise le graphe, et on a un event traj finie
 		int i = trajectory_last_graph_id;
-		log("trajectory getting next node");
+		log(LOG_INFO, "trajectory getting next node");
 		while(trajectory_dijkstra_info[trajectory_dijkstra_info[i].prev_node].prev_node != trajectory_current_graph_id)
 		{
 			i = trajectory_dijkstra_info[i].prev_node;
@@ -488,6 +489,7 @@ static void trajectory_continue()
 		log_format(LOG_INFO, "going from - to : %d -> %d", trajectory_current_graph_id, i);
 		control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
 	}
+}
 
 void trajectory_cmd(void* arg)
 {
