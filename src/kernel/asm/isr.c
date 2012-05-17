@@ -191,6 +191,13 @@ void isr_reset(void)
 		"        blt     zero_loop                 "
 	);
 
+	// on va attendre que les tensions soient ok sur les pin
+	int i = 100000;
+	for( ; i--; )
+	{
+		nop();
+	}
+
 	if( check_card_number() )
 	{
 		while(1)
