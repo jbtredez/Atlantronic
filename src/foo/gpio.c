@@ -10,7 +10,7 @@
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
-static uint8_t gpio_recalage_done;
+uint8_t gpio_recalage_done;
 
 static void gpio_cmd_go();
 static void gpio_cmd_color(void* arg);
@@ -103,6 +103,8 @@ static int gpio_module_init(void)
 
 	// on allume les led de la balise
 	GPIOC->ODR |= GPIO_ODR_ODR4;
+
+	gpio_recalage_done = 0;
 
 	return 0;
 }

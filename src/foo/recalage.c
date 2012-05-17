@@ -48,6 +48,10 @@ void recalage()
 {
 	log(LOG_INFO, "recalage...");
 
+	// TODO faire un truc propre
+	extern uint8_t gpio_recalage_done;
+	gpio_recalage_done = 1;
+
 	struct fx_vect_pos pos;
 
 	pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
