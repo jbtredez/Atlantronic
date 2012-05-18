@@ -339,7 +339,7 @@ static void detection_compute()
 	xSemaphoreGive(detection_mutex);
 }
 
-#define SIMILARITY_ACCEPTANCE (150 << 16)
+#define SIMILARITY_ACCEPTANCE (200 << 16)
 
 static void detection_remove_static_elements_from_dynamic_list()
 {

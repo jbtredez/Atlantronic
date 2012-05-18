@@ -87,7 +87,7 @@ static void strat_task()
 	{
 		if( strat_totem1_high_ok < 0)
 		{
-			strat_totem1_high_ok = strat_totem(1);		
+			strat_totem1_high_ok = strat_totem(1);
 		}
 
 		if( cleanu_bottle_ok < 0)
@@ -295,7 +295,7 @@ static int strat_totem(int high)
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
-		goto end;
+//		goto end;
 	}
 
 	// on va vers le palmier
@@ -328,7 +328,7 @@ static int strat_totem(int high)
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
-		goto end;
+//		goto end;
 	}
 
 	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(355), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
@@ -348,14 +348,14 @@ static int strat_totem(int high)
 	{
 		strat_cale(high);
 		res = -1;
-		goto end;
+//		goto end;
 	}
 
 	arm_close();
 	res = strat_cale(high);
 
-end:
-	arm_close();
+/*end:
+	arm_close();*/
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
 	return res;
 }
