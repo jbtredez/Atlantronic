@@ -48,6 +48,12 @@ const struct fx_vect2 table_palm[5] =
 	{ -75 << 16, -75 << 16 }, { 75 << 16, -75 << 16 }, { 75 << 16, 75 << 16 }, { -75 << 16, 75 << 16 }, { -75 << 16, -75 << 16 }
 };
 
+//!< totem coté rouge
+const struct fx_vect2 table_map[2] =
+{
+	{ -300 << 16, 990 << 16 }, { 300 << 16, 990 << 16 }
+};
+
 const struct polyline table_obj[TABLE_OBJ_SIZE] =
 {
 	{ (struct fx_vect2*) table_contour, 5 },
@@ -58,4 +64,5 @@ const struct polyline table_obj[TABLE_OBJ_SIZE] =
 	{ (struct fx_vect2*) table_start_border_red, 4 },
 	{ (struct fx_vect2*) table_totem_red, 5 },
 	{ (struct fx_vect2*) table_palm, 5},
+	{ (struct fx_vect2*) table_map, 2}
 };

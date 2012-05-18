@@ -9,7 +9,7 @@
 #include "kernel/math/vect2.h"
 #include "kernel/math/polyline.h"
 
-#define TABLE_OBJ_SIZE                      8
+#define TABLE_OBJ_SIZE                      9
 
 extern const struct polyline table_obj[TABLE_OBJ_SIZE];
 
