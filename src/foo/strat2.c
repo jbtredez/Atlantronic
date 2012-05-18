@@ -31,7 +31,7 @@ static int strat_bouteille(int id);
 static int strat_middle_low();
 static int strat_cale(int high);
 static int strat_totem(int high);
-static int strat_clenup_bottle_way();
+static int strat_cleanup_bottle_way();
 
 static void strat_cmd(void* arg);
 
@@ -87,7 +87,7 @@ static void strat_task()
 	{
 		strat_totem(1);
 
-		strat_clenup_bottle_way();
+		strat_cleanup_bottle_way();
 
 		if(strat_bouteille1_ok < 0)
 		{
@@ -210,7 +210,7 @@ end:
 	return res;
 }
 
-static int strat_clenup_bottle_way()
+static int strat_cleanup_bottle_way()
 {
 	int res = 0;
 
@@ -223,7 +223,7 @@ static int strat_clenup_bottle_way()
 		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);	
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-700), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-600), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 /*
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -232,6 +232,7 @@ static int strat_clenup_bottle_way()
 	}
 */
 	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+	vTaskDelay(ms_to_tick(1000));
 
 	return res;
 }
@@ -279,6 +280,15 @@ static int strat_totem(int high)
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
 	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(2000));
+	if(high)
+	{
+		arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
+	}
+	else
+	{
+		arm_hook_goto(0<<16, 100<<16, 300<<16, 100<<16, 0, 1);
+	}
+
 	if(strat_dir*high == 1)
 	{
 		pince_set_position(PINCE_CLOSE, PINCE_OPEN);
@@ -315,6 +325,7 @@ static int strat_totem(int high)
 		goto end;
 	}
 
+	arm_close();
 	res = strat_cale(high);
 
 end:
