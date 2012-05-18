@@ -321,7 +321,7 @@ static int strat_totem(int high)
 
 	if(strat_dir*high == 1)
 	{
-		pince_set_position(PINCE_CLOSE, PINCE_OPEN);
+		pince_set_position(PINCE_STRAT, PINCE_OPEN);
 	}
 	else
 	{
