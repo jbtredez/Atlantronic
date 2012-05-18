@@ -489,7 +489,33 @@ static void trajectory_continue()
 		log_format(LOG_INFO, "going from - to : %d -> %d", trajectory_current_graph_id, i);
 		control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
 	}
+
+	if(trajectory_state == TRAJECTORY_STATE_MOVING_TO_DEST)
+	{
+		enum control_type control_type = CONTROL_LINE_XYA;
+		switch(trajectory_type)
+		{
+			case TRAJECTORY_FREE:
+				break;
+			case TRAJECTORY_STRAIGHT:
+			case TRAJECTORY_STRAIGHT_TO_WALL:
+			case TRAJECTORY_GOTO_XY:
+			case TRAJECTORY_GOTO_GRAPH:
+				control_type = CONTROL_LINE_XY;
+				break;
+			case TRAJECTORY_ROTATE:
+			case TRAJECTORY_ROTATE_TO:
+				control_type = CONTROL_LINE_A;
+				break;
+			default:
+			case TRAJECTORY_GOTO_XYA:
+				control_type = CONTROL_LINE_XYA;
+				break;
+		};
+		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
+	}
 }
+
 
 void trajectory_cmd(void* arg)
 {
