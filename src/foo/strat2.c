@@ -28,7 +28,6 @@ static int strat_totem2_low_ok;
 
 static void strat_task();
 static int strat_bouteille(int id);
-static int strat_middle_low();
 static int strat_cale(int high);
 static int strat_totem(int high);
 static int strat_cleanup_bottle_way();
@@ -302,14 +301,87 @@ static int strat_totem(int high)
 
 	vTaskDelay(ms_to_tick(1500));
 
-	if(high)
+	if(high == 1)
 	{
-		arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
+		arm_hook_goto(300<<16, 90<<16, 0, 90<<16, 0, 1);
 	}
 	else
 	{
-		arm_hook_goto(0<<16, 100<<16, 300<<16, 100<<16, 0, 1);
+		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
 	}
+
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		res = -1;
+		goto end;
+	}
+
+	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(355), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskDelay(ms_to_tick(300));
+	if(strat_dir*high == 1)
+	{
+		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
+	}
+	else
+	{
+		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
+	}
+
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		strat_cale(high);
+		res = -1;
+		goto end;
+	}
+
+	arm_close();
+	res = strat_cale(high);
+
+end:
+	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
+	return res;
+}
+
+static int strat_oponent_totem(int high)
+{
+	int res = 0;
+
+	log_format(LOG_INFO, "high %d", high);
+
+	// on se met en face
+	int i = 0;
+	do
+	{
+		trajectory_goto_near_xy( strat_dir * mm2fx(750), high * mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		i++;
+	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
+
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		res = -1;
+		goto end;
+	}
+
+	// on va vers le palmier
+	trajectory_goto_near_xy( strat_dir * mm2fx(750), high * mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskDelay(ms_to_tick(2000));
+
+	if(-strat_dir*high == 1)
+	{
+		pince_set_position(PINCE_CLOSE, PINCE_OPEN);
+	}
+	else
+	{
+		pince_set_position(PINCE_OPEN, PINCE_CLOSE);
+	}
+
+	vTaskDelay(ms_to_tick(1500));
+
+	arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
@@ -464,69 +536,6 @@ static int strat_return_coins_inside()
 	vTaskDelay(ms_to_tick(500));
 
 	return 1;
-}
-
-//!< 4cd + lingo du milieu
-static int strat_middle_low()
-{
-	int res = 0;
-
-	trajectory_goto_near(strat_dir * mm2fx(-400), mm2fx(-700), 1 << 24, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
-
-	trajectory_goto_near(strat_dir * mm2fx(200), mm2fx(-700), 1 << 24, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
-
-	trajectory_goto_near(strat_dir * mm2fx(200), mm2fx(-400), 1 << 24, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	if(strat_dir == 1)
-	{
-		pince_set_position(PINCE_CLOSE, PINCE_OPEN);
-	}
-	else
-	{
-		pince_set_position(PINCE_OPEN, PINCE_CLOSE);
-	}
-
-	trajectory_goto_near(strat_dir * mm2fx(-400), mm2fx(-400), 1 << 24, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
-
-	strat_cale(-1);
-
-end:
-	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
-	return res;
 }
 
 static int strat_bouteille(int id)
