@@ -31,6 +31,7 @@ static int strat_bouteille(int id);
 static int strat_cale(int high);
 static int strat_totem(int high);
 static int strat_cleanup_bottle_way();
+static int strat_oponent_totem(int high);
 
 static void strat_cmd(void* arg);
 
@@ -108,6 +109,18 @@ static void strat_task()
 		if( strat_bouteille2_ok < 0)
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
+		}
+
+		if( strat_totem2_low_ok < 0)
+		{
+			strat_oponent_totem(-1);
+			strat_totem2_low_ok = 0;
+		}
+
+		if( strat_totem2_high_ok < 0)
+		{
+			strat_oponent_totem(1);
+			strat_totem2_high_ok = 0;
 		}
 
 		vTaskDelay(ms_to_tick(100));
@@ -275,7 +288,7 @@ static int strat_totem(int high)
 	int i = 0;
 	do
 	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
 		i++;
 	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
 
@@ -342,6 +355,7 @@ static int strat_totem(int high)
 	res = strat_cale(high);
 
 end:
+	arm_close();
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
 	return res;
 }
@@ -353,12 +367,8 @@ static int strat_oponent_totem(int high)
 	log_format(LOG_INFO, "high %d", high);
 
 	// on se met en face
-	int i = 0;
-	do
-	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(750), high * mm2fx(775), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-		i++;
-	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
+	trajectory_goto_near_xy( strat_dir * mm2fx(600), high * mm2fx(650), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -381,7 +391,14 @@ static int strat_oponent_totem(int high)
 
 	vTaskDelay(ms_to_tick(1500));
 
-	arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
+	if(high == 1)
+	{
+		arm_hook_goto(300<<16, 90<<16, 0, 90<<16, 0, 1);
+	}
+	else
+	{
+		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
+	}
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
@@ -415,6 +432,7 @@ static int strat_oponent_totem(int high)
 	res = strat_cale(high);
 
 end:
+	arm_close();
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
 	return res;
 }
