@@ -316,7 +316,7 @@ static int strat_totem(int high)
 
 	// on va vers le palmier
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
-	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(390), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(395), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(2000));
 
 	if(strat_dir*high == 1)
@@ -325,7 +325,7 @@ static int strat_totem(int high)
 	}
 	else
 	{
-		pince_set_position(PINCE_OPEN, PINCE_CLOSE);
+		pince_set_position(PINCE_OPEN, PINCE_STRAT);
 	}
 
 	vTaskDelay(ms_to_tick(1500));
