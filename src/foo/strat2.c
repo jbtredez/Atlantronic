@@ -21,10 +21,10 @@
 static int strat_dir;
 static int strat_bouteille1_ok;
 static int strat_bouteille2_ok;
-static int strat_totem2_high;
-static int strat_totem1_low;
-static int strat_middle_low_ok;
-
+static int strat_totem1_high_ok;
+static int strat_totem1_low_ok;
+static int strat_totem2_high_ok;
+static int strat_totem2_low_ok;
 
 static void strat_task();
 static int strat_bouteille(int id);
@@ -77,30 +77,35 @@ static void strat_task()
 
 	strat_bouteille1_ok = -1;
 	strat_bouteille2_ok = -1;
-	strat_totem2_high = -1;
-	strat_totem1_low = -1;
-	strat_middle_low_ok = -1;
+	strat_totem1_high_ok = -1;
+	strat_totem1_low_ok = -1;
+	strat_totem2_high_ok = -1;
+	strat_totem2_low_ok = -1;
+	int cleanu_bottle_ok = -1;
 
-//	int res = strat_sortie_totem_y(strat_dir, 1);
-
-//	while(strat_bouteille1_ok < 0 && strat_totem1_low < 0 && strat_bouteille2_ok < 0)
+	while(1)
 	{
-		strat_totem(1);
+		if( strat_totem1_high_ok < 0)
+		{
+			strat_totem1_high_ok = strat_totem(1);		
+		}
 
-		strat_cleanup_bottle_way();
+		if( cleanu_bottle_ok < 0)
+		{
+			strat_cleanup_bottle_way();
+			cleanu_bottle_ok = 0;
+		}
 
 		if(strat_bouteille1_ok < 0)
 		{
 			strat_bouteille1_ok = strat_bouteille(0);
 		}
 
-		strat_totem(-1);
-/*
-		if( strat_totem1_low < 0)
+		if( strat_totem1_low_ok < 0)
 		{
-			strat_totem1_low = strat_sortie_totem_y(strat_dir, -1);
+			strat_totem1_low_ok = strat_totem(-1);
 		}
-*/
+
 		if( strat_bouteille2_ok < 0)
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
@@ -192,10 +197,15 @@ static int strat_cale(int high)
 	{
 		trajectory_goto_near_xy( strat_dir * mm2fx(-762), high*mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
 		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-		i++;
 		vTaskDelay(ms_to_tick(100));
+		if( i > 3000)
+		{
+			trajectory_straight(-300<<16);
+			vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+			goto end;
+		}
 	}
-	while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED && i < 5);
+	while(trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -280,14 +290,6 @@ static int strat_totem(int high)
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
 	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(2000));
-	if(high)
-	{
-		arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
-	}
-	else
-	{
-		arm_hook_goto(0<<16, 100<<16, 300<<16, 100<<16, 0, 1);
-	}
 
 	if(strat_dir*high == 1)
 	{
@@ -297,6 +299,18 @@ static int strat_totem(int high)
 	{
 		pince_set_position(PINCE_OPEN, PINCE_CLOSE);
 	}
+
+	vTaskDelay(ms_to_tick(1500));
+
+	if(high)
+	{
+		arm_hook_goto(300<<16, 100<<16, 0<<16, 100<<16, 0, 1);
+	}
+	else
+	{
+		arm_hook_goto(0<<16, 100<<16, 300<<16, 100<<16, 0, 1);
+	}
+
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
