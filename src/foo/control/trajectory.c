@@ -22,7 +22,7 @@
 
 void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
-static void trajectory_compute();
+static void trajectory_compute(uint32_t event);
 static void trajectory_continue();
 static int trajectory_find_way_to_graph(struct fx_vect_pos pos);
 static int32_t trajectory_detect_dist_min;
@@ -187,7 +187,7 @@ static void trajectory_update()
 		}
 	}
 
-	trajectory_compute();
+	trajectory_compute(0);
 }
 
 static void trajectory_task(void* arg)
@@ -227,7 +227,7 @@ static void trajectory_task(void* arg)
 					{
 						trajectory_state = TRAJECTORY_STATE_MOVING_TO_GRAPH;
 					}
-					trajectory_compute();
+					trajectory_compute(ev);
 					break;
 			}
 		}
@@ -251,7 +251,7 @@ static void trajectory_task(void* arg)
 					break;
 				case TRAJECTORY_STATE_MOVING_TO_GRAPH:
 					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
-					trajectory_compute();
+					trajectory_compute(ev);
 					break;
 				case TRAJECTORY_STATE_USING_GRAPH:
 					trajectory_continue();
@@ -272,7 +272,7 @@ static void trajectory_task(void* arg)
 			else
 			{
 				// on continue sur le graph
-				trajectory_compute();
+				trajectory_compute(ev);
 			}
 		}
 
@@ -358,7 +358,7 @@ static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 	return id;
 }
 
-static void trajectory_compute()
+static void trajectory_compute(uint32_t event)
 {
 	if( trajectory_state == TRAJECTORY_STATE_MOVING_TO_GRAPH)
 	{
@@ -418,6 +418,27 @@ static void trajectory_compute()
 					}
 				}
 			}
+
+
+			if((event & EVENT_CONTROL_COLSISION)&&(trajectory_state == TRAJECTORY_STATE_USING_GRAPH))
+			{
+				//si on recompute la position en cours de parcours du graph pour collision
+				//on supprime l'arc courant pour le calcul
+				int i = trajectory_last_graph_id;
+				int j;
+				while(trajectory_dijkstra_info[i].prev_node != trajectory_current_graph_id)
+				{
+					i = trajectory_dijkstra_info[i].prev_node;
+				}
+				for (j=0;j<GRAPH_NUM_LINK; j++)
+				{
+					if((graph_link[j].a == trajectory_current_graph_id)&&(graph_link[j].b == i))
+					{
+						trajectory_graph_valid_links[j]=0;
+					}
+				}
+			}
+				
 
 			log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_current_graph_id, trajectory_last_graph_id);
 			int res = graph_dijkstra(trajectory_current_graph_id, trajectory_last_graph_id, trajectory_dijkstra_info, trajectory_graph_valid_links);
