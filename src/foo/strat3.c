@@ -32,6 +32,7 @@ static int strat_cale(int high);
 static int strat_totem(int high);
 static int strat_cleanup_bottle_way();
 static int strat_oponent_totem(int high);
+static int strat_steal_coins_inside();
 
 static void strat_cmd(void* arg);
 
@@ -110,7 +111,7 @@ static void strat_task()
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
 		}
-
+#if 0
 		if( strat_totem2_low_ok < 0)
 		{
 			strat_oponent_totem(-1);
@@ -121,6 +122,18 @@ static void strat_task()
 		{
 			strat_oponent_totem(1);
 			strat_totem2_high_ok = 0;
+		}
+#endif
+		if(strat_totem2_low_ok<0)
+		{
+			strat_steal_coins_inside();
+
+			// prépositionnement
+			trajectory_goto_near_xy(strat_dir * mm2fx(-760), mm2fx(320), 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
+			vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+			strat_cale(1);
+
+			strat_totem2_low_ok = 0;
 		}
 
 		vTaskDelay(ms_to_tick(100));
@@ -288,7 +301,7 @@ static int strat_totem(int high)
 	int i = 0;
 	do
 	{
-		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
+		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 		i++;
 	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
 
@@ -452,7 +465,7 @@ static int strat_steal_coins_inside()
 	}
 	
 	// prépositionnement
-	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
