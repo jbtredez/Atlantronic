@@ -79,11 +79,11 @@ struct fx_vect_pos VENTOUSE = {
 
 //!< position du crochet par rapport au servo du bout du bras
 struct fx_vect_pos HOOK = {
-	.x = (25 << 16),
-	.y = (35 << 16),
-	.alpha = -(1<<23), // crochet à -45 degrés
-	.ca = 759250125,
-	.sa = -759250125
+	.x = (0 << 16),
+	.y = (0 << 16),
+	.alpha = 0, // crochet à 0 degrés
+	.ca = 1<<30,
+	.sa = 0
 };
 
 //!< modèle géométrique inverse du bras
@@ -130,14 +130,6 @@ module_init(arm_module_init, INIT_ARM);
 
 static void arm_task()
 {
-// suppression du levage
-#if 0
-	int32_t count = 0;
-	struct ax12_error err1;
-	struct ax12_error err2;
-	struct ax12_error err3;
-	struct ax12_error err4;
-#endif
 	// configuration des ax12
 	ax12_auto_update(AX12_ARM_1, 1);
 	ax12_auto_update(AX12_ARM_2, 1);
@@ -151,131 +143,39 @@ static void arm_task()
 	ax12_set_torque_enable(AX12_ARM_1, 1);
 	ax12_set_torque_enable(AX12_ARM_2, 1);
 
-// suppression du levage
-#if 0
-	// puissance
-	GPIOB->ODR |= GPIO_ODR_ODR12;
-
-	// on va descendre jusqu'au capteur
-	GPIOB->ODR &= ~GPIO_ODR_ODR13;
-	while(!(GPIOA->IDR & GPIO_IDR_IDR4))
-	{
-		ax12_set_goal_position(AX12_ARM_1, 0);
-		ax12_set_goal_position(AX12_ARM_2, 0);
-		int32_t a = ax12_get_position(AX12_ARM_1, &err1);
-		int32_t b = ax12_get_position(AX12_ARM_2, &err2);
-		// on ne descend pas si le bras n'est pas environ au milieu (pour ne pas écraser les hokuyos par exemple)
-		// 10 degrés => 1864135
-		if( !err1.transmit_error && ! err2.transmit_error && abs(a) < 1864135 && abs(b) < 1864135)
-		{
-			GPIOB->ODR &= ~GPIO_ODR_ODR14;
-			GPIOB->ODR |= GPIO_ODR_ODR14;
-		}
-		vTaskDelay(ms_to_tick(5));
-	}
-
-	arm_z = ARM_ZMIN;
-	arm_vz = 0;
-	arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
-#endif
 	// on va monter au début
-	arm_goto_xyz(200<<16, 0, ARM_ZINIT, ARM_CMD_XYZ_LOC);
+	//arm_goto_xyz(200<<16, 0, ARM_ZINIT, ARM_CMD_XYZ_LOC);
+	// rangement du bras
+	arm_close();
 
 	while(1)
 	{
-// suppression du levage
-#if 0
-		count++;
-#endif
 		xSemaphoreTake(arm_mutex, portMAX_DELAY);
-// suppression du levage
-#if 0
-		arm_vz = trapeze_speed_filter(arm_vz, arm_z_cmd - arm_z, ARM_AMAX, ARM_DMAX, ARM_VMAX);
-		arm_z += arm_vz;
 
-		int32_t delta = ((arm_z * ARM_STEP_BY_MM) >> 16) - arm_z_step;
-		if( delta > 0 )
+		switch( arm_cmd_type)
 		{
-			GPIOB->ODR |= GPIO_ODR_ODR13;
-			GPIOB->ODR &= ~GPIO_ODR_ODR14;
-			GPIOB->ODR |= GPIO_ODR_ODR14;
-			arm_z_step++;
-		}
-		else if( delta < 0)
-		{
-			if( !(GPIOA->IDR & GPIO_IDR_IDR4) )
-			{
-				int32_t a = ax12_get_position(AX12_ARM_1, &err1);
-				int32_t b = ax12_get_position(AX12_ARM_2, &err2);
-				int32_t pince_right = ax12_get_position(AX12_PINCE_RIGHT, &err3);
-				int32_t pince_left = ax12_get_position(AX12_PINCE_LEFT, &err4);
-
-				// on ne descend pas si le bras n'est pas environ au milieu (pour ne pas écraser les hokuyos par exemple)
-				// 10 degrés => 1864135
-				if( arm_z > ARM_ZMIN_ARM_CENTER ||
-				   (!err1.transmit_error && ! err2.transmit_error && ! err3.transmit_error && !err4.transmit_error && abs(a) < 1864135 && abs(b) < 1864135 && pince_left < 4800000 && pince_right > -4800000))
-				{
-					// on souhaite descendre et on ne touche pas le capteur de fin de course du bas
-					GPIOB->ODR &= ~GPIO_ODR_ODR13;
-					GPIOB->ODR &= ~GPIO_ODR_ODR14;
-					GPIOB->ODR |= GPIO_ODR_ODR14;
-					arm_z_step--;
-				}
-			}
-			else
-			{
-				arm_z = ARM_ZMIN;
-				arm_vz = 0;
-				arm_z_step = (ARM_ZMIN >> 16) * ARM_STEP_BY_MM;
-			}
+			default:
+			case ARM_CMD_ART:
+				break;
+			case ARM_CMD_XYZ_ABS:
+				arm_compute_xyz_abs();
+				break;
+			case ARM_CMD_XYZ_LOC:
+				arm_compute_xyz_loc();
+				break;
+			case ARM_CMD_VENTOUSE_ABS:
+				arm_compute_tool_abs(VENTOUSE);
+				break;
+			case ARM_CMD_HOOK_ABS:
+				arm_compute_tool_abs(HOOK);
+				break;
 		}
 
-		// toutes les 10ms on s'occupe des axes x et y
-		if( count == 5)
-		{
-			count = 0;
-#endif
-			switch( arm_cmd_type)
-			{
-				default:
-				case ARM_CMD_ART:
-					break;
-				case ARM_CMD_XYZ_ABS:
-					arm_compute_xyz_abs();
-					break;
-				case ARM_CMD_XYZ_LOC:
-					arm_compute_xyz_loc();
-					break;
-				case ARM_CMD_VENTOUSE_ABS:
-					arm_compute_tool_abs(VENTOUSE);
-					break;
-				case ARM_CMD_HOOK_ABS:
-					arm_compute_tool_abs(HOOK);
-					break;
-			}
-// suppression du levage
-#if 0
-			if( arm_z > ARM_ZMIN_ARM_CENTER )
-			{
-				ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
-				ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
-			}
-			else
-			{
-				ax12_set_goal_position(AX12_ARM_1, 0);
-				ax12_set_goal_position(AX12_ARM_2, 0);
-			}
+		ax12_set_goal_position(AX12_ARM_1, arm_a_cmd);
+		ax12_set_goal_position(AX12_ARM_2, arm_b_cmd);
 
-			servo_set(SERVO_ARM, 127 - arm_tool_way_cmd * 127);
-		}
-#endif
 		xSemaphoreGive(arm_mutex);
-// suppression du levage
-#if 0
-		vTaskDelay(ms_to_tick(2));
-#else
-		vTaskDelay(ms_to_tick(10));
-#endif
+		vTaskDelay(ms_to_tick(50));
 	}
 }
 
@@ -622,4 +522,9 @@ static void arm_cmd_bridge(void* arg)
 	{
 		arm_bridge_off();
 	}
+}
+
+void arm_close()
+{
+	arm_goto_abz(-10680707, 32042122, 0);
 }

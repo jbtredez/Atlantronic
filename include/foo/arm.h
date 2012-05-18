@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #define ARM_L1     (int32_t)(118 << 16)
-#define ARM_L2     (int32_t)(120 << 16)
+#define ARM_L2     (int32_t)(225 << 16)
 
 enum arm_cmd_type
 {
@@ -47,6 +47,9 @@ void arm_bridge_on();
 
 //!< arrêt de la pompe
 void arm_bridge_off();
+
+//!< mise du bras en position de replis
+void arm_close();
 
 struct arm_cmd_goto_param
 {
