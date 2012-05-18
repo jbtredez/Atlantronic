@@ -254,25 +254,23 @@ static int strat_cleanup_bottle_way()
 {
 	int res = 0;
 
-	if(strat_dir == 1)
-	{
-		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
-	}
-	else
-	{
-		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);	
-	}
+	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
 
 	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-600), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-/*
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-	}
-*/
-	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
-	vTaskDelay(ms_to_tick(1000));
+
+	// calage contre le mur avec les pinces
+	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-900), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	trajectory_straight(mm2fx(-40));
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+
+	pince_set_position(PINCE_STRAT, PINCE_STRAT);
+	vTaskDelay(ms_to_tick(500));
+
+	trajectory_rotate(1<<25);
+	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	return res;
 }
@@ -343,6 +341,9 @@ static int strat_totem(int high)
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
+	// TODO desactiver sur une zone
+	trajectory_disable_hokuyo();
+
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
@@ -361,6 +362,8 @@ static int strat_totem(int high)
 	}
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	// TODO...
+	trajectory_enable_hokuyo();
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
