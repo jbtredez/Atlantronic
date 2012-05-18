@@ -285,7 +285,7 @@ static void control_compute()
 			control_speed_check_error_count = 0;
 		}
 
-		if(control_speed_check_error_count > 40 )
+		if(control_speed_check_error_count > 50 )
 		{
 			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_kinematics_cons.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
 			control_state = CONTROL_READY_FREE;
