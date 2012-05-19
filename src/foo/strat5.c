@@ -342,7 +342,7 @@ static int strat_totem(int high)
 		pince_set_position(PINCE_OPEN, PINCE_STRAT);
 	}
 
-	vTaskDelay(ms_to_tick(1000));
+	vTaskDelay(ms_to_tick(1500));
 
 	if(high == 1)
 	{
@@ -352,8 +352,6 @@ static int strat_totem(int high)
 	{
 		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
 	}
-
-	vTaskDelay(ms_to_tick(750));
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
@@ -367,7 +365,7 @@ static int strat_totem(int high)
 //		goto end;
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(385), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(375), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(500));
 	if(strat_dir*high == 1)
 	{
