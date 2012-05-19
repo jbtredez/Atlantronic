@@ -205,10 +205,10 @@ static int strat_cale(int high)
 	}
 	else
 	{
-		y = mm2fx(150);
+		y = mm2fx(130);
 	}
 
-	if(high)
+	if(strat_dir * high == 1)
 	{
 		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
 	}
@@ -269,7 +269,7 @@ static int strat_cleanup_bottle_way()
 
 
 	// calage contre le mur avec les pinces
-	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-900), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-630), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	trajectory_straight(mm2fx(-40));
@@ -278,7 +278,7 @@ static int strat_cleanup_bottle_way()
 	pince_set_position(PINCE_STRAT, PINCE_STRAT);
 	vTaskDelay(ms_to_tick(500));
 
-	trajectory_rotate(1<<25);
+	trajectory_rotate(strat_dir * 1<<25);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 end:
@@ -342,7 +342,7 @@ static int strat_totem(int high)
 		pince_set_position(PINCE_OPEN, PINCE_STRAT);
 	}
 
-	vTaskDelay(ms_to_tick(1500));
+	vTaskDelay(ms_to_tick(1000));
 
 	if(high == 1)
 	{
@@ -352,6 +352,8 @@ static int strat_totem(int high)
 	{
 		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
 	}
+
+	vTaskDelay(ms_to_tick(750));
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
@@ -365,8 +367,8 @@ static int strat_totem(int high)
 //		goto end;
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(360), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskDelay(ms_to_tick(300));
+	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(385), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	vTaskDelay(ms_to_tick(500));
 	if(strat_dir*high == 1)
 	{
 		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
@@ -523,12 +525,12 @@ static int strat_steal_coins_inside()
 	}	
 
 	// on sort
-	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	do
 	{
-		return -1;
+		trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 	}
+	while(trajectory_get_state() == TRAJECTORY_STATE_TARGET_REACHED);
 
 	return 1;
 }	
