@@ -25,6 +25,7 @@ static int strat_totem1_high_ok;
 static int strat_totem1_low_ok;
 static int strat_totem2_high_ok;
 static int strat_totem2_low_ok;
+static int strat_steal_ok;
 
 static void strat_task();
 static int strat_bouteille(int id);
@@ -83,6 +84,7 @@ static void strat_task()
 	strat_totem2_high_ok = -1;
 	strat_totem2_low_ok = -1;
 	int cleanu_bottle_ok = -1;
+	strat_steal_ok = -1;
 
 	while(1)
 	{
@@ -111,6 +113,7 @@ static void strat_task()
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
 		}
+
 /*
 		if( strat_totem2_low_ok < 0)
 		{
@@ -124,24 +127,19 @@ static void strat_task()
 			strat_totem2_high_ok = 0;
 		}
 */
-#if 0
-		if(strat_totem2_low_ok<0)
+		if(strat_steal_ok<0)
 		{
 			strat_steal_coins_inside();
 
 			// prépositionnement
 			trajectory_goto_near_xy(strat_dir * mm2fx(-760), mm2fx(320), 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
 			vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-			if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-			{
-
-			}
 
 			strat_cale(1);
 
-			strat_totem2_low_ok = 0;
+			strat_steal_ok = 0;
 		}
-#endif
+
 		vTaskDelay(ms_to_tick(100));
 	}
 /*
@@ -358,6 +356,7 @@ static int strat_totem(int high)
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	// TODO desactiver sur une zone
+	//trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 300<<16);
 	trajectory_disable_hokuyo();
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -378,8 +377,6 @@ static int strat_totem(int high)
 	}
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	// TODO...
-	trajectory_enable_hokuyo();
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -393,6 +390,7 @@ static int strat_totem(int high)
 
 /*end:
 	arm_close();*/
+	trajectory_enable_hokuyo();
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X);
 	return res;
 }
