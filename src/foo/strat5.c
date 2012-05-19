@@ -114,19 +114,18 @@ static void strat_task()
 			strat_bouteille2_ok = strat_bouteille(1);
 		}
 
-/*
 		if( strat_totem2_low_ok < 0)
 		{
 			strat_oponent_totem(-1);
 			strat_totem2_low_ok = 0;
 		}
 
-		if( strat_totem2_high_ok < 0)
+		/*if( strat_totem2_high_ok < 0)
 		{
 			strat_oponent_totem(1);
 			strat_totem2_high_ok = 0;
-		}
-*/
+		}*/
+
 		if(strat_steal_ok<0)
 		{
 			strat_steal_coins_inside();
@@ -425,7 +424,7 @@ static int strat_oponent_totem(int high)
 	}
 
 	vTaskDelay(ms_to_tick(1500));
-
+/*
 	if(high == 1)
 	{
 		arm_hook_goto(300<<16, 90<<16, 0, 90<<16, 0, 1);
@@ -435,7 +434,7 @@ static int strat_oponent_totem(int high)
 		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
 		vTaskDelay(ms_to_tick(500));
 	}
-
+*/
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 	vTaskDelay(ms_to_tick(300));
 
