@@ -260,6 +260,15 @@ static int strat_cleanup_bottle_way()
 
 	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-600), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	{
+		res = -1;
+		trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(0), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		strat_cale(-1);
+		goto end;
+	}
+
 
 	// calage contre le mur avec les pinces
 	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-900), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
@@ -274,6 +283,7 @@ static int strat_cleanup_bottle_way()
 	trajectory_rotate(1<<25);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
+end:
 	return res;
 }
 
@@ -599,11 +609,14 @@ static int strat_bouteille(int id)
 		x = strat_dir * mm2fx(383);
 	}
 
-	trajectory_goto_near(x, mm2fx(-550), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
+	trajectory_goto_near(x, mm2fx(-550), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
+		trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(0), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		strat_cale(-1);
 		return -1;
 	}
 
