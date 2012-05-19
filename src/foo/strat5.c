@@ -111,7 +111,7 @@ static void strat_task()
 		{
 			strat_bouteille2_ok = strat_bouteille(1);
 		}
-
+/*
 		if( strat_totem2_low_ok < 0)
 		{
 			strat_oponent_totem(-1);
@@ -123,6 +123,7 @@ static void strat_task()
 			strat_oponent_totem(1);
 			strat_totem2_high_ok = 0;
 		}
+*/
 #if 0
 		if(strat_totem2_low_ok<0)
 		{
@@ -206,19 +207,20 @@ static int strat_cale(int high)
 	}
 	else
 	{
-		y = 0;
+		y = mm2fx(150);
 	}
 
+	if(high)
+	{
+		pince_set_position(PINCE_OPEN, PINCE_MIDDLE);
+	}
+	else
+	{
+		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
+	}
 	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
 
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
-	{
-		res = -1;
-		goto end;
-	}
-
-	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
 	vTaskDelay(ms_to_tick(500));
 
 	// on recule. On se le tente plusieurs fois pour ne pas fermer les pinces dans la cale
@@ -316,7 +318,7 @@ static int strat_totem(int high)
 
 	// on va vers le palmier
 	trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 150);
-	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(395), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(0), high * mm2fx(400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(2000));
 
 	if(strat_dir*high == 1)
@@ -398,7 +400,7 @@ static int strat_oponent_totem(int high)
 	}
 
 	// on va vers le palmier
-	trajectory_goto_near_xy( strat_dir * mm2fx(750), high * mm2fx(380), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(750), high * mm2fx(400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(2000));
 
 	if(-strat_dir*high == 1)
@@ -419,9 +421,11 @@ static int strat_oponent_totem(int high)
 	else
 	{
 		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
+		vTaskDelay(ms_to_tick(500));
 	}
 
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	vTaskDelay(ms_to_tick(300));
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
