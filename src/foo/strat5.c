@@ -365,7 +365,7 @@ static int strat_totem(int high)
 //		goto end;
 	}
 
-	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(375), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+	trajectory_goto_near_xy( strat_dir * mm2fx(-600), high * mm2fx(365), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 	vTaskDelay(ms_to_tick(500));
 	if(strat_dir*high == 1)
 	{
