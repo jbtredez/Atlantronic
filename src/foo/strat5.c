@@ -505,7 +505,6 @@ static int strat_steal_coins_inside()
 	// on avance
 	trajectory_straight (mm2fx(250));
 	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
-	control_set_max_speed( (1 << 16), 1 << 16);
 	trajectory_enable_static_check();
 
 	// on ferme les pinces
