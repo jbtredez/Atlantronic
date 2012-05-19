@@ -537,7 +537,7 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	log_format(LOG_INFO, "param %d %d %d %d %d %d", (int)x>>16, (int)y>>16, (int)alpha, (int)dist>>16, type, way);
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
-	if( control_state == CONTROL_READY_FREE)
+//	if( control_state == CONTROL_READY_FREE)
 	{
 		pid_reset(&control_pid_av);
 		pid_reset(&control_pid_rot);
