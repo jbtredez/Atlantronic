@@ -313,6 +313,10 @@ static int strat_totem(int high)
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
+		trajectory_goto_near_xy( strat_dir * mm2fx(-600), mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		strat_cale(high);
+		return -1;
 //		goto end;
 	}
 
