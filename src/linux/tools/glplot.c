@@ -34,6 +34,7 @@ enum
 enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
+	SUBGRAPH_TABLE_STATIC_ELM,
 	SUBGRAPH_TABLE_HOKUYO_FOO,
 	SUBGRAPH_TABLE_HOKUYO_BAR,
 	SUBGRAPH_TABLE_HOKUYO_FOO_SEG,
@@ -133,6 +134,7 @@ int main(int argc, char *argv[])
 
 	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1, 0.5, 0.5, 0);
@@ -490,80 +492,83 @@ void plot_table(struct graphique* graph)
 	glColor3f(0,0,0);
 	glScalef(1/65536.0f, 1/65536.0f, 1);
 
-	// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
-	for(i = 0; i < TABLE_OBJ_SIZE; i++)
+	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
-		glBegin(GL_LINE_STRIP);
-		for(j = 0; j < table_obj[i].size; j++)
+		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
+		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
+			glBegin(GL_LINE_STRIP);
+			for(j = 0; j < table_obj[i].size; j++)
+			{
+				glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
+			}
+			glEnd();
 		}
+
+		// couleurs sur les bords des cases de depart
+		glColor3f(1, 0, 1);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(-1000 * 65536, 1000 * 65536);
+		glVertex2f(-1500 * 65536, 1000 * 65536);
+		glVertex2f(-1500 * 65536,  550 * 65536);
+		glVertex2f(-1000 * 65536,  550 * 65536);
 		glEnd();
+
+		glColor3f(1, 0 ,0);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(1000 * 65536, 1000 * 65536);
+		glVertex2f(1500 * 65536, 1000 * 65536);
+		glVertex2f(1500 * 65536,  550 * 65536);
+		glVertex2f(1000 * 65536,  550 * 65536);
+		glEnd();
+
+		// bouteilles
+		glColor3f(1, 0, 1);
+		glBegin(GL_TRIANGLE_STRIP);
+		glVertex2f(-870 * 65536, -1000 * 65536);
+		glVertex2f(-850 * 65536, -1000 * 65536);
+		glVertex2f(-870 * 65536, -1060 * 65536);
+		glVertex2f(-850 * 65536, -1060 * 65536);
+		glEnd();
+		glBegin(GL_TRIANGLE_STRIP);
+		glVertex2f( 393 * 65536, -1000 * 65536);
+		glVertex2f( 373 * 65536, -1000 * 65536);
+		glVertex2f( 393 * 65536, -1060 * 65536);
+		glVertex2f( 373 * 65536, -1060 * 65536);
+		glEnd();
+
+		glColor3f(1, 0, 0);
+		glBegin(GL_TRIANGLE_STRIP);
+		glVertex2f( 870 * 65536, -1000 * 65536);
+		glVertex2f( 850 * 65536, -1000 * 65536);
+		glVertex2f( 870 * 65536, -1060 * 65536);
+		glVertex2f( 850 * 65536, -1060 * 65536);
+		glEnd();
+		glBegin(GL_TRIANGLE_STRIP);
+		glVertex2f(-393 * 65536, -1000 * 65536);
+		glVertex2f(-373 * 65536, -1000 * 65536);
+		glVertex2f(-393 * 65536, -1060 * 65536);
+		glVertex2f(-373 * 65536, -1060 * 65536);
+		glEnd();
+
+		// ligne de fin / cale
+		glEnable(GL_LINE_STIPPLE);
+		glLineStipple(1, 0xAAAA);
+		glColor3f(0, 0, 0);
+
+		glBegin(GL_LINES);
+		glVertex2f(-1500 * 65536,  -390 * 65536);
+		glVertex2f(-1160 * 65536,  -390 * 65536);
+		glVertex2f( 1500 * 65536,  -390 * 65536);
+		glVertex2f( 1160 * 65536,  -390 * 65536);
+		glVertex2f(-1175 * 65536, -1000 * 65536);
+		glVertex2f(-1100 * 65536,   500 * 65536);
+		glVertex2f( 1175 * 65536, -1000 * 65536);
+		glVertex2f( 1100 * 65536,   500 * 65536);
+		glEnd();
+
+		glDisable(GL_LINE_STIPPLE);
 	}
-
-	// couleurs sur les bords des cases de depart
-	glColor3f(1, 0, 1);
-	glBegin(GL_LINE_STRIP);
-	glVertex2f(-1000 * 65536, 1000 * 65536);
-	glVertex2f(-1500 * 65536, 1000 * 65536);
-	glVertex2f(-1500 * 65536,  550 * 65536);
-	glVertex2f(-1000 * 65536,  550 * 65536);
-	glEnd();
-
-	glColor3f(1, 0 ,0);
-	glBegin(GL_LINE_STRIP);
-	glVertex2f(1000 * 65536, 1000 * 65536);
-	glVertex2f(1500 * 65536, 1000 * 65536);
-	glVertex2f(1500 * 65536,  550 * 65536);
-	glVertex2f(1000 * 65536,  550 * 65536);
-	glEnd();
-
-	// bouteilles
-	glColor3f(1, 0, 1);
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex2f(-870 * 65536, -1000 * 65536);
-	glVertex2f(-850 * 65536, -1000 * 65536);
-	glVertex2f(-870 * 65536, -1060 * 65536);
-	glVertex2f(-850 * 65536, -1060 * 65536);
-	glEnd();
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex2f( 393 * 65536, -1000 * 65536);
-	glVertex2f( 373 * 65536, -1000 * 65536);
-	glVertex2f( 393 * 65536, -1060 * 65536);
-	glVertex2f( 373 * 65536, -1060 * 65536);
-	glEnd();
-
-	glColor3f(1, 0, 0);
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex2f( 870 * 65536, -1000 * 65536);
-	glVertex2f( 850 * 65536, -1000 * 65536);
-	glVertex2f( 870 * 65536, -1060 * 65536);
-	glVertex2f( 850 * 65536, -1060 * 65536);
-	glEnd();
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex2f(-393 * 65536, -1000 * 65536);
-	glVertex2f(-373 * 65536, -1000 * 65536);
-	glVertex2f(-393 * 65536, -1060 * 65536);
-	glVertex2f(-373 * 65536, -1060 * 65536);
-	glEnd();
-
-	// ligne de fin / cale
-	glEnable(GL_LINE_STIPPLE);
-	glLineStipple(1, 0xAAAA);
-	glColor3f(0, 0, 0);
-
-	glBegin(GL_LINES);
-	glVertex2f(-1500 * 65536,  -390 * 65536);
-	glVertex2f(-1160 * 65536,  -390 * 65536);
-	glVertex2f( 1500 * 65536,  -390 * 65536);
-	glVertex2f( 1160 * 65536,  -390 * 65536);
-	glVertex2f(-1175 * 65536, -1000 * 65536);
-	glVertex2f(-1100 * 65536,   500 * 65536);
-	glVertex2f( 1175 * 65536, -1000 * 65536);
-	glVertex2f( 1100 * 65536,   500 * 65536);
-	glEnd();
-
-	glDisable(GL_LINE_STIPPLE);
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG])
 	{
