@@ -150,8 +150,8 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_RIGHT, "PWM droite", 1, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_LEFT, "PWM gauche ", 1, 0, 1, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_RIGHT, "PWM droite", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_LEFT, "PWM gauche ", 0, 0, 1, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_RIGHT, "I droite ", 0, 1, 0.65, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_LEFT, "I gauche ", 0, 1, 0, 0);
 
