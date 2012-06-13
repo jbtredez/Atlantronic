@@ -8,8 +8,8 @@
 #include <stdint.h>
 #include "kernel/vect_pos.h"
 
-#define GRAPH_NUM_NODE           20
-#define GRAPH_NUM_LINK           56
+#define GRAPH_NUM_NODE           25
+#define GRAPH_NUM_LINK          144
 
 struct graph_link
 {
