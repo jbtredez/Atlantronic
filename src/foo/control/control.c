@@ -32,8 +32,8 @@
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
-const int32_t CONTROL_AMAX_AV = ((200 << 16) / (CONTROL_HZ * CONTROL_HZ));
-const int32_t CONTROL_DMAX_AV = ((200 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_AMAX_AV = ((300 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((300 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
 const int32_t CONTROL_VMAX_ROT = 0.7f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
 const int32_t CONTROL_AMAX_ROT = 0.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²

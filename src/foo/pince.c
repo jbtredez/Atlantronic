@@ -138,7 +138,7 @@ static void pince_task(void* arg)
 
 void pince_set_position(enum pince_cmd_type left, enum pince_cmd_type right)
 {
-	log(LOG_INFO, "pince_open");
+	log(LOG_INFO, "pince_set_position");
 	xSemaphoreTake(pince_mutex, portMAX_DELAY);
 
 	switch(left)

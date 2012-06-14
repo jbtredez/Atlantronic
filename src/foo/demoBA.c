@@ -52,6 +52,8 @@ static void strat_task()
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
 	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+	vTaskDelay(ms_to_tick(1000)); // TODO voir bug, premiere tempo qui saute ?
+	vTaskDelay(ms_to_tick(2000));
 
 	while(1)
 	{
@@ -87,7 +89,7 @@ static void strat_task()
 
 static int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
-	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(8000));
+	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(30000));
 	if( !( ev & EVENT_TRAJECTORY_END) )
 	{
 		log(LOG_ERROR, "timeout");

@@ -446,6 +446,8 @@ static void trajectory_compute(uint32_t event)
 			{
 				log_format(LOG_INFO, "aucun chemin trouvé");
 				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+				// TODO à voir - fait à l'arrache
+				vTaskSetEvent(EVENT_TRAJECTORY_END);
 			}
 			else
 			{
