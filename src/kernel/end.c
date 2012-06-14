@@ -12,7 +12,7 @@
 #include "gpio.h"
 
 #define END_STACK_SIZE           100
-uint64_t end_match_tick = 90ULL * 72000000ULL;
+uint64_t end_match_tick = 90000ULL * 72000000ULL;
 
 static void end_cmd_set_time(void* arg);
 static void end_task(void *arg);

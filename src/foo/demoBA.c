@@ -20,6 +20,7 @@
 
 static void strat_task();
 int strat_module_init();
+static int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state);
 
 int strat_module_init()
 {
@@ -42,10 +43,7 @@ static void strat_task()
 	{
 		if( getRecalage() )
 		{
-			// on ne recale pas pour la demo, on indique à l'arrache que le recalage est ok
-			//recalage();
-			extern uint8_t gpio_recalage_done;
-			gpio_recalage_done = 1;
+			recalage();
 			resetRecalage();
 		}
 		vTaskDelay(ms_to_tick(50));
@@ -53,16 +51,41 @@ static void strat_task()
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
 
+	pince_set_position(PINCE_CLOSE, PINCE_CLOSE);
+
 	while(1)
 	{
-		trajectory_goto_near_xy( mm2fx(-400), mm2fx(-400), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
+		trajectory_goto_near_xy( mm2fx(-1000), mm2fx(-1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(1000), mm2fx(-1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(1000), mm2fx(1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(-1000), mm2fx(1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(-1000), mm2fx(-1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(1000), mm2fx(1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(-1000), mm2fx(1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
+		trajectory_goto_near_xy( mm2fx(1000), mm2fx(-1000), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_GRAPH);
+		start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+
 		vTaskDelay(ms_to_tick(100));
 	}
 
 	vTaskDelete(NULL);
 }
 
-int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
+static int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
 	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(8000));
 	if( !( ev & EVENT_TRAJECTORY_END) )

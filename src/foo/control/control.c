@@ -32,12 +32,12 @@
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
 const int32_t CONTROL_VMAX_AV = ((800 << 16) / CONTROL_HZ);
-const int32_t CONTROL_AMAX_AV = ((500 << 16) / (CONTROL_HZ * CONTROL_HZ));
-const int32_t CONTROL_DMAX_AV = ((500 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_AMAX_AV = ((200 << 16) / (CONTROL_HZ * CONTROL_HZ));
+const int32_t CONTROL_DMAX_AV = ((200 << 16) / (CONTROL_HZ * CONTROL_HZ));
 
 const int32_t CONTROL_VMAX_ROT = 0.7f*(1<<26) / CONTROL_HZ; // 0.8 tr/s
-const int32_t CONTROL_AMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
-const int32_t CONTROL_DMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_AMAX_ROT = 0.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
+const int32_t CONTROL_DMAX_ROT = 0.5f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
 
 static void control_task(void *);
 //static int32_t sinc( int32_t x );
@@ -109,8 +109,8 @@ static int control_module_init()
 #error "revoir les gains d'asservissement"
 #endif
 
-	pid_init(&control_pid_av, 100000000, 10000000, 0, PWM_ARR, 32);
-	pid_init(&control_pid_rot, 2000000, 300000, 0, PWM_ARR, 26);
+	pid_init(&control_pid_av, 80000000, 8000000, 0, PWM_ARR, 32);
+	pid_init(&control_pid_rot, 1800000, 280000, 0, PWM_ARR, 26);
 
 	control_kx = 1000;
 	control_ky = 100;

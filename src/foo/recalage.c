@@ -51,7 +51,7 @@ void recalage()
 	// TODO faire un truc propre
 	extern uint8_t gpio_recalage_done;
 	gpio_recalage_done = 1;
-
+#if 0
 	struct fx_vect_pos pos;
 
 	pince_set_position(PINCE_CLOSE,PINCE_CLOSE);
@@ -137,10 +137,11 @@ void recalage()
 	vTaskDelay(ms_to_tick(200));
 
 	arm_set_tool_way(0);
-
+#endif
 	log(LOG_INFO, "recalage termine");
-
+#if 0
 free:
+#endif
 	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();
