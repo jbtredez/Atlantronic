@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/cmd.h"
@@ -116,15 +117,87 @@ int main(int argc, char *argv[])
 
 	const char* file_foo = NULL;
 	const char* file_bar = NULL;
+	int simulation = 0;
+	const char* prog_foo = NULL;
+	int gdb_port = 0;
+	pid_t qemu_foo_pid = 0;
 
-	if( argc > 1)
+	if(argc > 1)
 	{
-		file_foo = argv[1];
+		int option = -1;
+		while( (option = getopt(argc, argv, "s:g")) != -1)
+		{
+			switch(option)
+			{
+				case 's':
+					simulation = 1;
+					prog_foo = optarg;
+					break;
+				case 'g':
+					gdb_port = 1235;
+					break;
+				default:
+					fprintf(stderr, "option %c inconnue", (char)option);
+					return -1;
+					break;
+			}
+		}
 	}
 
-	if(argc > 2)
+	if( argc - optind > 0)
 	{
-		file_bar = argv[2];
+		file_foo = argv[optind];
+	}
+
+	if(argc - optind > 1)
+	{
+		file_bar = argv[optind+1];
+	}
+
+	if(simulation)
+	{
+		file_foo = "/tmp/foo.out";
+		mkfifo("/tmp/foo.out", 0666);
+		mkfifo("/tmp/foo.in", 0666);
+
+		qemu_foo_pid = fork();
+
+		if(qemu_foo_pid == 0)
+		{
+			fclose(stdin);
+
+			char* arg[12];
+			char buf_tcp[64];
+
+			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
+			arg[1] = (char*) "-M";
+			arg[2] = (char*) "atlantronic-foo";
+			arg[3] = (char*) "-nographic";
+			arg[4] = (char*) "-chardev";
+			arg[5] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
+			arg[6] = (char*) "-kernel";
+			arg[7] = (char*) prog_foo;
+			if(gdb_port)
+			{
+				arg[8] = (char*) "-S";
+				arg[9] = (char*) "-gdb";
+				snprintf(buf_tcp, sizeof(buf_tcp), "tcp::%i", gdb_port);
+				arg[10] = buf_tcp;
+				arg[11] = NULL;
+			}
+			else
+			{
+				arg[8] = NULL;
+			}
+
+			execv(arg[0], arg);
+			perror("execv");
+			exit(-1);
+		}
+		else if(qemu_foo_pid < 0)
+		{
+			perror("fork");
+		}
 	}
 
 	if( ! g_thread_supported() )
@@ -264,12 +337,20 @@ int main(int argc, char *argv[])
 	gtk_widget_show_all(main_window);
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
+
 	robot_interface_init(&robot_interface, file_foo, file_bar, read_callback, opengl_window);
+
 	cmd_init(&robot_interface, gtk_end);
 
 	gtk_main();
 
 	gdk_threads_leave();
+
+	// TODO un peu bourrin, faire mieux
+	if(qemu_foo_pid > 0)
+	{
+		kill(qemu_foo_pid, SIGILL);
+	}
 
 	robot_interface_destroy(&robot_interface);
 
