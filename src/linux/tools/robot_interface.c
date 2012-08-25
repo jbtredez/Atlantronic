@@ -147,6 +147,7 @@ static void* robot_interface_task(void* arg)
 
 		// lecture entete
 		res = com_read_header(com, &type, &size);
+
 		if( robot->stop_task)
 		{
 			goto end;
@@ -216,7 +217,7 @@ static void* robot_interface_task(void* arg)
 			if(lost_count >= sizeof(lost)-2)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				log_error("%s unknown data0 (%d) : %s", cartes[args->com_id], lost_count, lost);
 				lost_count = 0;
 			}
 
@@ -225,7 +226,7 @@ static void* robot_interface_task(void* arg)
 			if(byte == 0 || byte == '\n')
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				log_error("%s unknown data1 (%d) : %s", cartes[args->com_id], lost_count, lost);
 				lost_count = 0;
 			}
 
@@ -237,7 +238,7 @@ static void* robot_interface_task(void* arg)
 			if(lost_count)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data : %s", cartes[args->com_id], lost);
+				log_error("%s unknown data2 (%d) : %s", cartes[args->com_id], lost_count, lost);
 				lost_count = 0;
 			}
 
