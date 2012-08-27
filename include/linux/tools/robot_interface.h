@@ -59,7 +59,7 @@ struct robot_interface
 	int detection_reg_num[HOKUYO_MAX];
 };
 
-int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg);
+int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read, const char* file_bar_write, void (*callback)(void*), void* callback_arg);
 
 void robot_interface_destroy(struct robot_interface* data);
 

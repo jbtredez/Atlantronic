@@ -115,8 +115,10 @@ int main(int argc, char *argv[])
 	long i = 0;
 	long j = 0;
 
-	const char* file_foo = NULL;
-	const char* file_bar = NULL;
+	const char* file_foo_read = NULL;
+	const char* file_foo_write = NULL;
+	const char* file_bar_read = NULL;
+	const char* file_bar_write = NULL;
 	int simulation = 0;
 	const char* prog_foo = NULL;
 	int gdb_port = 0;
@@ -146,17 +148,20 @@ int main(int argc, char *argv[])
 
 	if( argc - optind > 0)
 	{
-		file_foo = argv[optind];
+		file_foo_read = argv[optind];
+		file_foo_write = file_foo_read;
 	}
 
 	if(argc - optind > 1)
 	{
-		file_bar = argv[optind+1];
+		file_bar_read = argv[optind+1];
+		file_bar_write = file_bar_read;
 	}
 
 	if(simulation)
 	{
-		file_foo = "/tmp/foo.out";
+		file_foo_read = "/tmp/foo.out";
+		file_foo_write = "/tmp/foo.in";
 		mkfifo("/tmp/foo.out", 0666);
 		mkfifo("/tmp/foo.in", 0666);
 
@@ -172,7 +177,7 @@ int main(int argc, char *argv[])
 			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
 			arg[1] = (char*) "-M";
 			arg[2] = (char*) "atlantronic-foo";
-			arg[3] = (char*) "-nographic";
+			arg[3] = (char*)"-nodefaults";
 			arg[4] = (char*) "-chardev";
 			arg[5] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
 			arg[6] = (char*) "-kernel";
@@ -338,7 +343,7 @@ int main(int argc, char *argv[])
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	robot_interface_init(&robot_interface, file_foo, file_bar, read_callback, opengl_window);
+	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, read_callback, opengl_window);
 
 	cmd_init(&robot_interface, gtk_end);
 

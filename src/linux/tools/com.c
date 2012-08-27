@@ -3,11 +3,14 @@
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 
-void com_init(struct com* com, const char* file)
+void com_init(struct com* com, const char* file_read, const char* file_write)
 {
-	com->fd = -1;
-	com->file = malloc(strlen (file) + 1);
-	strcpy(com->file, file);
+	com->fd_read = -1;
+	com->fd_write = -1;
+	com->file_read = malloc(strlen (file_read) + 1);
+	com->file_write = malloc(strlen (file_write) + 1);
+	strcpy(com->file_read, file_read);
+	strcpy(com->file_write, file_write);
 	com->buffer_end = 0;
 	com->buffer_begin = 0;
 	com->buffer_size = 0;
@@ -15,36 +18,75 @@ void com_init(struct com* com, const char* file)
 
 void com_destroy(struct com* com)
 {
-	if(com->file)
+	if(com->file_read)
 	{
-		free(com->file);
+		free(com->file_read);
 	}
-	com->file = NULL;
+	if(com->file_write)
+	{
+		free(com->file_write);
+	}
+	com->file_read = NULL;
+	com->file_write = NULL;
 }
 
 int com_close(struct com* com)
 {
-	int res = 0;
+	int res = -1;
 
-	if(com->fd == -1)
+	if(com->fd_read == -1 && com->fd_write == -1)
 	{
-		res = -1;
 		goto end;
 	}
 
-	res = close(com->fd);
-	if(res)
+	if(com->fd_read != -1)
 	{
-		log_error_errno("close");
-		if(errno == EBADF)
+		int res2 = close(com->fd_read);
+		if(res2)
 		{
-			com->fd = -1;
+			log_error_errno("close %s", com->file_read);
+			if(errno == EBADF)
+			{
+				if(com->fd_read == com->fd_write)
+				{
+					com->fd_write = -1;
+				}
+				com->fd_read = -1;
+			}
 		}
-		goto end;
+		else
+		{
+			if(com->fd_read == com->fd_write)
+			{
+				com->fd_write = -1;
+			}
+			com->fd_read = -1;
+		}
 	}
 
-	com->fd = -1;
-	log_info("close %s", com->file);
+	if(com->fd_write != -1)
+	{
+		int res2 = close(com->fd_write);
+		if(res2)
+		{
+			log_error_errno("close %s", com->file_write);
+			if(errno == EBADF)
+			{
+				com->fd_write = -1;
+			}
+		}
+		else
+		{
+			com->fd_write = -1;
+		}
+	}
+
+	if(com->fd_write == -1 && com->fd_read == -1)
+	{
+		res = 0;
+	}
+
+	log_info("close %s %s", com->file_read, com->file_write);
 
 end:
 	return res;
@@ -54,7 +96,7 @@ int com_open(struct com* com)
 {
 	int res = com_close(com);
 
-	if(com->fd != -1)
+	if(com->fd_read != -1 || com->fd_write != -1)
 	{
 		goto end;
 	}
@@ -62,19 +104,42 @@ int com_open(struct com* com)
 	com->buffer_end = 0;
 	com->buffer_begin = 0;
 	com->buffer_size = 0;
-	com->fd = open(com->file, O_RDWR);
 
-	if(com->fd <= 0)
+	if(strcmp(com->file_read, com->file_write) == 0)
+	{
+		com->fd_read = open(com->file_read, O_RDWR);
+		com->fd_write = com->fd_read;
+	}
+	else
+	{
+		com->fd_read = open(com->file_read, O_RDONLY);
+		com->fd_write = open(com->file_write, O_WRONLY);
+	}
+
+	if(com->fd_read <= 0)
 	{
 		res = -1;
-		com->fd = -1;
+		com->fd_read = -1;
 		log_error_errno("open");
 		goto end;
 	}
 
-	log_info("open  %s", com->file);
+	if(com->fd_write <= 0)
+	{
+		res = -1;
+		com->fd_write = -1;
+		log_error_errno("open");
+		com_close(com);
+		goto end;
+	}
+
+	log_info("open  %s %s", com->file_read, com->file_write);
 
 end:
+	if(com->fd_write == -1 || com->fd_read == -1)
+	{
+		com_close(com);
+	}
 	return res;
 }
 
@@ -116,7 +181,7 @@ int com_read(struct com* com, int min_buffer_size)
 			max = max2;
 		}
 
-		int size = read(com->fd, com->buffer + com->buffer_end, max);
+		int size = read(com->fd_read, com->buffer + com->buffer_end, max);
 		if(size == 0)
 		{
 			com_close(com);
@@ -186,7 +251,7 @@ void com_skip(struct com* com, int count)
 
 int com_write(struct com* com, const char* buf, int size)
 {
-	int fd = com->fd;
+	int fd = com->fd_write;
 	if(fd == -1)
 	{
 		return -1;

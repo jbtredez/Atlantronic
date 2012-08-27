@@ -10,15 +10,17 @@
 
 struct com
 {
-	int fd;
-	char* file;
+	int fd_read;
+	int fd_write;
+	char* file_read;
+	char* file_write;
 	unsigned char buffer[65536];
 	int buffer_end;
 	int buffer_begin;
 	int buffer_size;
 };
 
-void com_init(struct com* com, const char* file);
+void com_init(struct com* com, const char* file_read, const char* file_write);
 void com_destroy(struct com* com);
 int com_close(struct com* com);
 int com_open(struct com* com);

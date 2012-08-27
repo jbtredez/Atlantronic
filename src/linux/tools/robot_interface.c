@@ -59,7 +59,7 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 
-int robot_interface_init(struct robot_interface* data, const char* file_foo, const char* file_bar, void (*callback)(void*), void* callback_arg)
+int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read, const char* file_bar_write, void (*callback)(void*), void* callback_arg)
 {
 	int i;
 	int err = 0;
@@ -69,22 +69,22 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo, con
 	data->callback_arg = callback_arg;
 	data->stop_task = 1;
 
-	if(file_foo)
+	if(file_foo_read)
 	{
-		com_init(&data->com[COM_FOO], file_foo);
+		com_init(&data->com[COM_FOO], file_foo_read, file_foo_write);
 	}
 	else
 	{
-		com_init(&data->com[COM_FOO], "/dev/foo0");
+		com_init(&data->com[COM_FOO], "/dev/foo0", "/dev/foo0");
 	}
 
-	if(file_bar)
+	if(file_bar_read)
 	{
-		com_init(&data->com[COM_BAR], file_bar);
+		com_init(&data->com[COM_BAR], file_bar_read, file_bar_write);
 	}
 	else
 	{
-		com_init(&data->com[COM_BAR], "/dev/bar0");
+		com_init(&data->com[COM_BAR], "/dev/bar0", "/dev/bar0");
 	}
 
 	data->control_usb_data_count = 0;
