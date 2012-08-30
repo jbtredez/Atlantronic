@@ -10,6 +10,8 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
+// Attention, pour l'envoi de commandes par usb, on suppose que c'est envoyé en une seule trame usb
+
 #define USB_BUFER_SIZE          4096
 #define USB_READ_STACK_SIZE      350
 #define USB_WRITE_STACK_SIZE      50
@@ -251,9 +253,12 @@ void EP1_IN_Callback(void)
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK();
 
-	usb_endpoint_ready = 1;
-	usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_READ);
+	if( ! usb_endpoint_ready )
+	{
+		usb_endpoint_ready = 1;
+		usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
+		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_WRITE);
+	}
 
 	if( xHigherPriorityTaskWoken )
 	{
@@ -301,7 +306,7 @@ void EP2_OUT_Callback(void)
 			usb_rx_waiting = 1;
 		}
 	}
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_WRITE);
+	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_READ);
 
 	if( xHigherPriorityTaskWoken )
 	{
