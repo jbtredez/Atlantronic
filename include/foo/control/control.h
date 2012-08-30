@@ -87,16 +87,16 @@ enum control_type
 void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_type type, enum trajectory_way way);
 
 //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
-void control_back_to_wall();
+void control_back_to_wall(void);
 
 //!< arrêt de l'asservissement des moteurs
-void control_free();
+void control_free(void);
 
 //!< donne la rotation a effecter pour aller de l'angle debut à l'angle fin
 int32_t control_find_rotate(int32_t debut, int32_t fin);
 
 //!< etat de control
-int32_t control_get_state();
+int32_t control_get_state(void);
 
 //!< permet d'indiquer un obstacle sur la trajectoire, en cours de mouvement, et la distance d'approche souhaitée
 void control_set_front_object(struct fx_vect2* a, int32_t approx_dist);
@@ -108,8 +108,8 @@ void control_set_back_object(struct fx_vect2* a, int32_t approx_dist);
 //!< vitesse en % de la vmax de configuration
 void control_set_max_speed(uint32_t v_max_dist, uint32_t v_max_rot);
 
-void control_disable_sick();
+void control_disable_sick(void);
 
-void control_enable_sick();
+void control_enable_sick(void);
 
 #endif
