@@ -169,30 +169,29 @@ int main(int argc, char *argv[])
 
 		if(qemu_foo_pid == 0)
 		{
-			fclose(stdin);
-
-			char* arg[12];
+			char* arg[13];
 			char buf_tcp[64];
 
 			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
 			arg[1] = (char*) "-M";
 			arg[2] = (char*) "atlantronic-foo";
 			arg[3] = (char*)"-nodefaults";
-			arg[4] = (char*) "-chardev";
-			arg[5] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
-			arg[6] = (char*) "-kernel";
-			arg[7] = (char*) prog_foo;
+			arg[4] = (char*)"-nographic";
+			arg[5] = (char*) "-chardev";
+			arg[6] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
+			arg[7] = (char*) "-kernel";
+			arg[8] = (char*) prog_foo;
 			if(gdb_port)
 			{
-				arg[8] = (char*) "-S";
-				arg[9] = (char*) "-gdb";
+				arg[9] = (char*) "-S";
+				arg[10] = (char*) "-gdb";
 				snprintf(buf_tcp, sizeof(buf_tcp), "tcp::%i", gdb_port);
-				arg[10] = buf_tcp;
-				arg[11] = NULL;
+				arg[11] = buf_tcp;
+				arg[12] = NULL;
 			}
 			else
 			{
-				arg[8] = NULL;
+				arg[9] = NULL;
 			}
 
 			execv(arg[0], arg);
@@ -829,7 +828,7 @@ void plot_speed_dist(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_CONS]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_cons*1000.0f * CONTROL_HZ/16777216.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_cons*1000.0f * CONTROL_HZ/67108864.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -847,7 +846,7 @@ void plot_speed_dist(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_MES]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_mes*1000.0f * CONTROL_HZ/16777216.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_mes*1000.0f * CONTROL_HZ/67108864.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
