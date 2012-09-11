@@ -108,7 +108,6 @@ static int control_module_init()
 #if( PWM_ARR != 2879)
 #error "revoir les gains d'asservissement"
 #endif
-
 	pid_init(&control_pid_av, 100000000, 10000000, 0, PWM_ARR, 32);
 	pid_init(&control_pid_rot, 2000000, 300000, 0, PWM_ARR, 26);
 
@@ -338,24 +337,17 @@ static void control_compute()
 	int32_t v_c = (((int64_t)control_kinematics_cons.v * (int64_t)fx_cos(ealpha)) >> 30) + (((int64_t)control_kx * (int64_t)ex) >> 16);
 	int32_t w_c = (int32_t)control_kinematics_cons.w + (((int64_t)control_kalpha * (int64_t)ealpha) >> 16) + (((((int64_t)control_ky * (int64_t)control_kinematics_cons.v) >> 16) * (int64_t)ey) >> 16);
 
+	// TODO pid : saturation integrale
 	// régulation en vitesse
 	int32_t u_rot = pid_apply(&control_pid_rot, w_c - control_kinematics.w);
-	int32_t u_av = 0;
+	int32_t u_av = pid_apply(&control_pid_av, v_c - control_kinematics.v);
 
-	// on prefere l'angle à l'avance en cas de saturation
-	if( abs(u_rot) != PWM_ARR)
+	int32_t umax = abs(u_av) + abs(u_rot);
+	if( umax > PWM_ARR )
 	{
-		// la rotation ne prend pas toute la pwm
-		u_av = pid_apply(&control_pid_av, v_c - control_kinematics.v);
-		int32_t max = PWM_ARR - abs(u_rot);
-		if( u_av > max)
-		{
-			u_av = max;
-		}
-		else if( u_av < -max)
-		{
-			u_av = -max;
-		}
+		// saturation, on garde la courbure de la trajectoire
+		u_av = (u_av * PWM_ARR) / umax;
+		u_rot = (u_rot * PWM_ARR) / umax;
 	}
 
 	u1 = u_av + u_rot;
