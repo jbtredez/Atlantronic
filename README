@@ -12,24 +12,22 @@ doc :
 	- doxygen >= 1.6.3
 		- graphviz >= 2.26.3
 
-simu :
-	- irrlicht 1.7.1
-	- newton 2.29
-
-tests :
-	- gnuplot / kst
-
 jtag :
 	- openocd 0.5.0
 	- libftdi 0.19
 
-
-Arch :
+---------------------------------------------------------
+Organisation des dossiers :
 src/kernel : Code générique ou commun aux cartes
 src/foo : Code de la carte Foo.
 src/bar : Code de la carte bar
 src/linux : Code utilitaire pour linux
 	- src/linux/modules : module usb pour les cartes foo et bar
-	- src/linux/simulation : simulation
 	- src/linu/test : tests unitaires réalisables sous linux
 	- src/linux/tools : outils
+qemu : qemu modifié pour la simulation
+
+--------------------------------------------------------
+exemple simulation avec le binaire arm strat5 :
+cd Atlantronic
+./bin/linux/glplot -s ./bin/foo/strat5
