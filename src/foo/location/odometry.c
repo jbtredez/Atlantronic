@@ -21,11 +21,12 @@ static int odometry_module_init()
 	encoders_right = encoders_get(ENCODERS_MOT_RIGHT);
 	encoders_left = encoders_get(ENCODERS_MOT_LEFT);
 
+	// position par defaut
 	odometry_kinematics.x = 0;
-	odometry_kinematics.y = 0;
-	odometry_kinematics.alpha = 0;
-	odometry_kinematics.ca = 1 << 30;
-	odometry_kinematics.sa = 0;
+	odometry_kinematics.y = 700 << 16;
+	odometry_kinematics.alpha = -1 << 24;
+	odometry_kinematics.ca = fx_cos(odometry_kinematics.alpha);
+	odometry_kinematics.sa = fx_sin(odometry_kinematics.alpha);
 	odometry_kinematics.v = 0;
 	odometry_kinematics.w = 0;
 
