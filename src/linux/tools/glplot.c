@@ -377,7 +377,8 @@ void read_callback(GtkWidget* widget)
 
 	clock_gettime(CLOCK_MONOTONIC, &current);
 	double delta = (current.tv_sec - last_plot.tv_sec) + (current.tv_nsec - last_plot.tv_nsec) / ((double)1000000000.0f);
-	if(delta >= 1.0f/MAX_FPS)
+	if((delta >= 1.0f/MAX_FPS && (current_graph == GRAPH_TABLE || current_graph == GRAPH_HOKUYO_HIST) )
+		|| delta >= 1.0f/5)
 	{
 		gdk_threads_enter();
 		if(widget->window)
