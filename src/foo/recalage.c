@@ -27,7 +27,7 @@ module_init(recalage_module_init, INIT_STRATEGY);
 
 int recalage_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
-	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(5000));
+	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(10000));
 	if( !( ev & EVENT_TRAJECTORY_END) )
 	{
 		log(LOG_ERROR, "timeout");
@@ -102,7 +102,7 @@ void recalage()
 		goto free;
 	}
 
-	trajectory_straight(-1000 << 16);
+	trajectory_straight(-2000 << 16);
 	if( recalage_wait_and_check_trajectory_result( TRAJECTORY_STATE_COLISION ) )
 	{
 		goto free;
