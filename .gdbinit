@@ -136,20 +136,17 @@ define pTcb
 	end
 end
 
-define plot_hokuyo
-	shell rm log/log_target_hokuyo
-	set logging file log/log_target_hokuyo
-	set logging redirect on
-	set logging on
-
+# arg0 : adresse tcb
+# arg1 : taille a afficher
+define pstack
+	set $stack = ((tskTCB*)$arg0)->pxTopOfStack
 	set $i = 0
-	while $i <= 682
-		printf "%f\t%f\t%f\n", hokuyo_distance[$i], hokuyo_x[$i], -hokuyo_y[$i]
+	while $i < $arg1
+		if $stack[$i] > 0x8000000 && $stack[$i] < &__text_end__
+			list *($stack[$i]),1
+		else
+			printf "%10x\n",  $stack[$i]
+		end
 		set $i++
 	end
-
-	shell ./scripts/plot_hokuyo
-
-	set logging redirect off
-	set logging off
 end
