@@ -7,17 +7,20 @@
 //!
 //! idle task priority : 0
 
-#define PRIORITY_TASK_FAULT           1
-#define PRIORITY_TASK_USB             2
-#define PRIORITY_TASK_CAN_US          3
-#define PRIORITY_TASK_HOKUYO          4
-#define PRIORITY_TASK_HOKUYO_TO_CAN   4
-#define PRIORITY_TASK_CAN             5
-#define PRIORITY_TASK_TEST_US         5
-#define PRIORITY_TASK_END             6
-
-// priority : 0 ... configMAX_PRIORITIES-1
-#define configMAX_PRIORITIES		  7
+//! une priorite differente par tache pour eviter les pb
+enum
+{
+	PRIORITY_IDLE,
+	PRIORITY_TASK_FAULT,
+	PRIORITY_TASK_USB,
+	PRIORITY_TASK_CAN_US,
+	PRIORITY_TASK_HOKUYO,
+	PRIORITY_TASK_HOKUYO_TO_CAN,
+	PRIORITY_TASK_CAN,
+	PRIORITY_TASK_TEST_US,
+	PRIORITY_TASK_END,
+	configMAX_PRIORITIES
+};
 
 // attention, les priorités sont codées sur 4 bits (les bits de poids fort).
 // La fonction setpriority s'occupe de mettre la priorité comme il faut.
