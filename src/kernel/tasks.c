@@ -1998,9 +1998,11 @@ uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout)
 	portTickType xTimeToWake;
 
 	portENTER_CRITICAL();
-	pxCurrentTCB->eventMask = mask;
+
 	if(! (pxCurrentTCB->event & mask) )
 	{
+		pxCurrentTCB->eventMask = mask;
+
 		// We must remove ourselves from the ready list before adding ourselves
 		// to the blocked list as the same list item is used for both lists.  We have
 		// exclusive access to the ready lists as the scheduler is locked.
@@ -2028,6 +2030,8 @@ uint32_t vTaskWaitEvent(uint32_t mask, portTickType timeout)
 	}
 
 	portEXIT_CRITICAL();
+
+	pxCurrentTCB->eventMask = 0;
 
 	// lecture de event atomique
 	return pxCurrentTCB->event;
@@ -2057,10 +2061,9 @@ unsigned portBASE_TYPE xTaskUpdateEvent(xList* pxTaskList, uint32_t mask, int wa
 				{
 					xHigherPriorityTaskWoken |= 1;
 				}
+				pxTcb->eventMask = 0;
 				vListRemove( &( pxTcb->xGenericListItem ) );
 				prvAddTaskToReadyQueue( pxTcb );
-
-				pxTcb->eventMask = 0;
 			}
 
 			pxListItem = next;
