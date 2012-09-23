@@ -121,8 +121,6 @@ static inline void scan_AN()
 
 void isr_dma1_channel1(void)
 {
-//	portSET_INTERRUPT_MASK();
-
 	if( DMA1->ISR | DMA_ISR_TCIF1)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF1;
@@ -130,10 +128,7 @@ void isr_dma1_channel1(void)
 		struct adc_an* tmp = adc_dma;
 		adc_dma = adc_current;
 		adc_current = tmp;
-//		vTaskSetEventFromISR(EVENT_ADC_READY);
 	}
-
-//	portCLEAR_INTERRUPT_MASK();
 }
 
 static void adc_task(void* arg)
@@ -144,9 +139,8 @@ static void adc_task(void* arg)
 
 	while(1)
 	{
-//		vTaskClearEvent(EVENT_ADC_READY);
 		scan_AN();
-//		vTaskWaitEvent(EVENT_ADC_READY, ms_to_tick(5));
+
 
 		// TODO val + bateries
 		//if(adc_dma.vBatAru == 0)
