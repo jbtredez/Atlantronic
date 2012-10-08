@@ -358,6 +358,12 @@ static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* d
 	data->detection_dynamic_object_pt_tmp_size = 0;
 	memcpy(&data->detection_dynamic_object_size_tmp, msg, sizeof(data->detection_dynamic_object_size_tmp));
 
+	// pas d'objets a attendre
+	if( data->detection_dynamic_object_size_tmp == 0)
+	{
+		data->detection_dynamic_object_size = 0;
+	}
+
 	pthread_mutex_unlock(&data->mutex);
 
 end:
