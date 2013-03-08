@@ -24,7 +24,7 @@ doc := doc
 # ajout de la configuration perso si elle existe
 -include .cfg
 
-INCLUDES:=-I. -Iinclude
+INCLUDES:=-I. -Iinclude -Isrc
 
 DEBUG ?= 0
 VERBOSE ?= 0

@@ -47,5 +47,5 @@ endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
 
-INCLUDES+=-Iinclude/foo
+INCLUDES+=-Isrc/foo
 
