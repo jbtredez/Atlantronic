@@ -204,11 +204,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if( ! g_thread_supported() )
-	{
-		g_thread_init(NULL);
-	}
-
 	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 1, 1, 0);
