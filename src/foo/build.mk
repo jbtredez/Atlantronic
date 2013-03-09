@@ -1,6 +1,6 @@
 obj-foo-strat0 += kernel/main.o
 obj-foo-strat0 += kernel/asm/isr.o
-obj-foo-strat0 += kernel/tasks.o
+obj-foo-strat0 += kernel/task.o
 obj-foo-strat0 += kernel/list.o
 obj-foo-strat0 += kernel/queue.o
 obj-foo-strat0 += kernel/port.o
@@ -60,7 +60,7 @@ bin-foo += strat0
 
 obj-foo-strat1 += kernel/main.o
 obj-foo-strat1 += kernel/asm/isr.o
-obj-foo-strat1 += kernel/tasks.o
+obj-foo-strat1 += kernel/task.o
 obj-foo-strat1 += kernel/list.o
 obj-foo-strat1 += kernel/queue.o
 obj-foo-strat1 += kernel/port.o
@@ -120,7 +120,7 @@ bin-foo += strat1
 
 obj-foo-strat2 += kernel/main.o
 obj-foo-strat2 += kernel/asm/isr.o
-obj-foo-strat2 += kernel/tasks.o
+obj-foo-strat2 += kernel/task.o
 obj-foo-strat2 += kernel/list.o
 obj-foo-strat2 += kernel/queue.o
 obj-foo-strat2 += kernel/port.o
@@ -180,7 +180,7 @@ bin-foo += strat2
 
 obj-foo-strat3 += kernel/main.o
 obj-foo-strat3 += kernel/asm/isr.o
-obj-foo-strat3 += kernel/tasks.o
+obj-foo-strat3 += kernel/task.o
 obj-foo-strat3 += kernel/list.o
 obj-foo-strat3 += kernel/queue.o
 obj-foo-strat3 += kernel/port.o
@@ -240,7 +240,7 @@ bin-foo += strat3
 
 obj-foo-strat4 += kernel/main.o
 obj-foo-strat4 += kernel/asm/isr.o
-obj-foo-strat4 += kernel/tasks.o
+obj-foo-strat4 += kernel/task.o
 obj-foo-strat4 += kernel/list.o
 obj-foo-strat4 += kernel/queue.o
 obj-foo-strat4 += kernel/port.o
@@ -300,7 +300,7 @@ bin-foo += strat4
 
 obj-foo-strat5 += kernel/main.o
 obj-foo-strat5 += kernel/asm/isr.o
-obj-foo-strat5 += kernel/tasks.o
+obj-foo-strat5 += kernel/task.o
 obj-foo-strat5 += kernel/list.o
 obj-foo-strat5 += kernel/queue.o
 obj-foo-strat5 += kernel/port.o
@@ -360,7 +360,7 @@ bin-foo += strat5
 
 obj-foo-calib_hokuyo += kernel/main.o
 obj-foo-calib_hokuyo += kernel/asm/isr.o
-obj-foo-calib_hokuyo += kernel/tasks.o
+obj-foo-calib_hokuyo += kernel/task.o
 obj-foo-calib_hokuyo += kernel/list.o
 obj-foo-calib_hokuyo += kernel/queue.o
 obj-foo-calib_hokuyo += kernel/port.o

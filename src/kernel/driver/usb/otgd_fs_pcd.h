@@ -17,7 +17,7 @@
 #ifndef __USB_OTG_PCD_H__
 #define __USB_OTG_PCD_H__
 
-#include "otgd_fs_regs.h"
+#include "kernel/driver/usb/otgd_fs_regs.h"
 
 #define MAX_EP0_SIZE                    0x40
 #define MAX_PACKET_SIZE                 0x400

@@ -1,6 +1,6 @@
 obj-bar-test_can_us += kernel/main.o
 obj-bar-test_can_us += kernel/asm/isr.o
-obj-bar-test_can_us += kernel/tasks.o
+obj-bar-test_can_us += kernel/task.o
 obj-bar-test_can_us += kernel/list.o
 obj-bar-test_can_us += kernel/queue.o
 obj-bar-test_can_us += kernel/port.o
@@ -27,7 +27,7 @@ bin-bar += test_can_us
 
 obj-bar-test_log += kernel/main.o
 obj-bar-test_log += kernel/asm/isr.o
-obj-bar-test_log += kernel/tasks.o
+obj-bar-test_log += kernel/task.o
 obj-bar-test_log += kernel/list.o
 obj-bar-test_log += kernel/queue.o
 obj-bar-test_log += kernel/port.o

@@ -1,6 +1,6 @@
 obj-bar-us_hokuyo += kernel/main.o
 obj-bar-us_hokuyo += kernel/asm/isr.o
-obj-bar-us_hokuyo += kernel/tasks.o
+obj-bar-us_hokuyo += kernel/task.o
 obj-bar-us_hokuyo += kernel/list.o
 obj-bar-us_hokuyo += kernel/queue.o
 obj-bar-us_hokuyo += kernel/port.o

@@ -5,7 +5,7 @@
 //! @brief Time module
 //! @author Atlantronic
 
-#include "cpu/cpu.h"
+#include "kernel/cpu/cpu.h"
 #include <stdint.h>
 
 int systick_reconfigure_from_isr(uint64_t tick) __attribute__(( __warn_unused_result__ ));

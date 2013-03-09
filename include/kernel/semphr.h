@@ -58,7 +58,7 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
-#include "queue.h"
+#include "kernel/queue.h"
 
 typedef xQueueHandle xSemaphoreHandle;
 

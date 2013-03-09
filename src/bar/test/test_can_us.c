@@ -4,7 +4,6 @@
 #include "kernel/systick.h"
 #include "kernel/event.h"
 
-#include "bar/can_us.h"
 #include "gpio.h"
 #include "kernel/rcc.h"
 
