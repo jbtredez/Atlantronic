@@ -16,8 +16,8 @@ static void pince_task(void* arg);
 
 // mutex de protection
 static xSemaphoreHandle pince_mutex;
-static enum pince_cmd_type pince_order_right;
-static enum pince_cmd_type pince_order_left;
+static int32_t pince_order_right;
+static int32_t pince_order_left;
 
 
 static int pince_module_init()
@@ -79,8 +79,8 @@ static void pince_task(void* arg)
 	
 	while(1)
 	{
-		enum pince_cmd_type order_left;
-		enum pince_cmd_type order_right;
+		int32_t order_left;
+		int32_t order_right;
 		xSemaphoreTake(pince_mutex, portMAX_DELAY);
 		order_left = pince_order_left;
 		order_right = pince_order_right;

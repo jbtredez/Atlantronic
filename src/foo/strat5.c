@@ -530,7 +530,7 @@ static int strat_steal_coins_inside()
 
 	return 1;
 }	
-
+#if 0
 static int strat_return_coins_inside()
 {
 	log_format(LOG_INFO, " En mode retour tresor ");
@@ -590,7 +590,7 @@ static int strat_return_coins_inside()
 
 	return 1;
 }
-
+#endif
 static int strat_bouteille(int id)
 {
 	int res = 0;

@@ -18,8 +18,8 @@ int main()
 
 	float a[8];
 	float b[8];
-	float dx = x2 - x1;
-	float dy = y2 - y1;
+//	float dx = x2 - x1;
+//	float dy = y2 - y1;
 	float n = 300;//sqrtf( dx * dx + dy * dy);
 	float u[6] = { n, n, 0, 0, 0, 0};
 	poly7f_full(x1, y1, alpha1, v1, w1, x2, y2, alpha2, v2, w2, a, b, u);

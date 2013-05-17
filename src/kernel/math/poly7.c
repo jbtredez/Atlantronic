@@ -8,7 +8,8 @@ void poly7_simple(struct kinematics* A, struct kinematics* B, int32_t d, int32_t
 
 	a[1] = ((int64_t) d * (int64_t)A->ca) >> 30;
 	b[1] = ((int64_t) d * (int64_t)A->sa) >> 30;
-
+#warning TODO poly7_simple
+	(void) B;
 #if 0
 	a[2] = 0.5 * ( - u[0] * u[0] * k1 * sa1);
 	b[2] = 0.5 * ( u[0] * u[0] * k1 * ca1);
@@ -40,6 +41,10 @@ void poly7_simple(struct kinematics* A, struct kinematics* B, int32_t d, int32_t
 
 void poly7f_full(float x1, float y1, float alpha1, float v1, float w1, float x2, float y2, float alpha2, float v2, float w2, float* a, float* b, float* u)
 {
+	(void) v1;
+	(void) v2;
+	(void) w1;
+	(void) w2;
 	float ca1 = cos(alpha1);
 	float sa1 = sin(alpha1);
 	float k1 = 0;//w1 / v1;
