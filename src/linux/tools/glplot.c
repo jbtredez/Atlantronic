@@ -974,6 +974,20 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		plot_axes(&graph[current_graph]);
 		plot_legende(&graph[current_graph]);
 
+		glColor3f(0,0,0);
+		int id = robot_interface.control_usb_data_count - 1;
+		if( id < 0)
+		{
+			id = 0;
+		}
+
+		glPrintf_xcenter_ycenter(0, graph[current_graph].roi_ymax + 2*font_digit_height * graph->ratio_y, graph[current_graph].ratio_x, graph[current_graph].ratio_y, font_base, "%13.6f", robot_interface.current_time);
+		if( robot_interface.start_time != 0)
+		{
+			glPrintf_xcenter_ycenter(0, graph[current_graph].roi_ymax,
+										 graph[current_graph].ratio_x, graph[current_graph].ratio_y, font_base, "%13.6f", robot_interface.current_time - robot_interface.start_time);
+		}
+
 		switch(current_graph)
 		{
 			default:

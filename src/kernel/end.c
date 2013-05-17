@@ -40,7 +40,7 @@ static void end_cmd_set_time(void* arg)
 	uint64_t time = *((uint32_t*) arg);
 	if( ! (vTaskGetEvent() & EVENT_GO))
 	{
-		end_match_tick = ms_to_tick( time ); 
+		end_match_tick = ms_to_tick( time );
 		log_format(LOG_INFO, "duree du match => %d ms", (int)time);
 	}
 }
@@ -50,7 +50,10 @@ static void end_task(void *arg)
 	(void) arg;
 
 	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-	usb_add(USB_GO, &end_match_tick, sizeof(end_match_tick));
+	uint64_t msg[2];
+	msg[0] = systick_get_time();
+	msg[1] = end_match_tick;
+	usb_add(USB_GO, &msg, sizeof(msg));
 	log(LOG_INFO, "GO");
 	vTaskDelay(end_match_tick);
 	vTaskSetEvent(EVENT_END);

@@ -356,6 +356,7 @@ static void control_compute()
 end_pwm_critical:
 	pwm_set(PWM_RIGHT, u1);
 	pwm_set(PWM_LEFT, u2);
+	control_usb_data.current_time = systick_get_time();
 	control_usb_data.control_state = control_state;
 	control_usb_data.control_cons_x = control_kinematics_cons.x;
 	control_usb_data.control_cons_y = control_kinematics_cons.y;

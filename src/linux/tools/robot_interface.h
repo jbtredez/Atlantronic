@@ -42,6 +42,9 @@ struct robot_interface
 	int control_usb_data_count;
 	struct fault_status fault_status[COM_MAX][FAULT_MAX];
 
+	double current_time;
+	double start_time;
+
 	// tmp (en cours de mise à jour)
 	int detection_dynamic_object_id;
 	int detection_dynamic_object_pt_tmp_size;

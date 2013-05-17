@@ -68,6 +68,8 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo_read
 	data->callback = callback;
 	data->callback_arg = callback_arg;
 	data->stop_task = 1;
+	data->start_time = 0;
+	data->current_time = 0;
 
 	if(file_foo_read)
 	{
@@ -268,6 +270,7 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 
 	uint64_t current_time;
 	memcpy(&current_time, msg, 8);
+	double time = tick_to_us(current_time)/1000000.0f;
 
 	msg[size-1] = 0;
 
@@ -281,11 +284,11 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 
 	if(level < LOG_MAX)
 	{
-		log_info("%4s %12lu %8s   %20s:%5d    %s", cartes[com_id], (unsigned long) tick_to_us(current_time), log_level_description[level], msg+11, line, log);
+		log_info("%4s %13.6f %8s   %20s:%5d    %s", cartes[com_id], time, log_level_description[level], msg+11, line, log);
 	}
 	else
 	{
-		log_info("%4s %12lu %8s   %20s:%5d    %s", cartes[com_id], (unsigned long) tick_to_us(current_time), "unknown", msg+11, line, log);
+		log_info("%4s %13.6f %8s   %20s:%5d    %s", cartes[com_id], time, "unknown", msg+11, line, log);
 	}
 
 end:
@@ -499,6 +502,7 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 	}
 
 	memcpy(data->control_usb_data + data->control_usb_data_count, msg, size);
+	data->current_time = ( (double) tick_to_us(data->control_usb_data[data->control_usb_data_count].current_time)) / 1000000.0f;
 	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
 	pthread_mutex_unlock(&data->mutex);
@@ -512,17 +516,20 @@ static int robot_interface_process_go(struct robot_interface* data, int com_id, 
 	(void) data;
 	(void) com_id;
 	int res = 0;
-	uint64_t match_time;
+	uint64_t time[2];
 
-	if(size != sizeof(match_time))
+	if(size != sizeof(time))
 	{
 		res = -1;
 		goto end;
 	}
 
-	memcpy(&match_time, msg, size);
+	memcpy(time, msg, size);
 
-	log_info("GO - durée du match : %f ms", match_time / 72000.0f);
+	data->current_time = (double) tick_to_us(time[0]) / 1000000.0f;
+	data->start_time = data->current_time;
+
+	log_info("GO - durée du match : %f ms", time[1] / 72000.0f);
 
 end:
 	return res;
