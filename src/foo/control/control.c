@@ -45,7 +45,6 @@ static void control_compute();
 static void control_compute_trajectory();
 
 // interface usb
-void control_cmd_free(void* arg);
 void control_cmd_param(void* arg);
 void control_cmd_print_param(void* arg);
 void control_cmd_set_max_speed(void* arg);
