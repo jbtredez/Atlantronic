@@ -4,9 +4,7 @@ obj
 bin
 doc/doxygen
 
-.*
-!.gitignore
-!.gdbinit
+.cfg
 *.d
 *.o
 *.ko
@@ -28,6 +26,4 @@ Module.markers
 *.mcp
 *.mcs
 *.mcw
-
-*.anjuta
-TODO.tasks
+.metadata

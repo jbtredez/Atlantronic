@@ -114,7 +114,7 @@ install: modules
 	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
 
 qemu:
-	@cd qemu && ./configure --target-list=arm-softmmu
+	@cd qemu && ./configure --target-list=arm-softmmu --disable-docs
 	@+make -C qemu
 
 .PHONY: qemu
