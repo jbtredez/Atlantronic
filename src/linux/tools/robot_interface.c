@@ -40,7 +40,8 @@ const char* log_level_description[LOG_MAX] =
 const char* cartes[COM_MAX] =
 {
 	"foo",
-	"bar"
+	"bar",
+	"qemu"
 };
 
 struct robot_interface_arg
@@ -59,7 +60,8 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 
-int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read, const char* file_bar_write, void (*callback)(void*), void* callback_arg)
+int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read,
+		const char* file_bar_write, const char* file_qemu_model, void (*callback)(void*), void* callback_arg)
 {
 	int i;
 	int err = 0;
@@ -87,6 +89,15 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo_read
 	else
 	{
 		com_init(&data->com[COM_BAR], "/dev/bar0", "/dev/bar0");
+	}
+
+	if(file_qemu_model)
+	{
+		char file_qemu_model_read[64];
+		char file_qemu_model_write[64];
+		snprintf(file_qemu_model_read, sizeof(file_qemu_model_read), "%s.out", file_qemu_model);
+		snprintf(file_qemu_model_write, sizeof(file_qemu_model_write), "%s.in", file_qemu_model);
+		com_init(&data->com[COM_QEMU_MODEL], file_qemu_model_read, file_qemu_model_write);
 	}
 
 	data->control_usb_data_count = 0;
@@ -1014,4 +1025,14 @@ int robot_interface_straight_speed(struct robot_interface* data, float v)
 	}
 
 	return 0;
+}
+
+int robot_interface_qemu_set_clock_factor(struct robot_interface* data, unsigned int factor)
+{
+	struct atlantronic_model_tx_event event;
+
+	event.type = EVENT_CLOCK_FACTOR;
+	event.data32[0] = factor;
+
+	return com_write(&data->com[COM_QEMU_MODEL], (void*) &event, sizeof(event));
 }

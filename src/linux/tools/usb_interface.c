@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 		file_bar = argv[2];
 	}
 
-	robot_interface_init(&robot_interface, file_foo, file_foo, file_bar, file_bar, NULL, NULL);
+	robot_interface_init(&robot_interface, file_foo, file_foo, file_bar, file_bar, NULL, NULL, NULL);
 	cmd_init(&robot_interface, NULL);
 
 	while(1)

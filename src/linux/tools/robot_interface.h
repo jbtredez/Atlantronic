@@ -13,6 +13,8 @@
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 
+#define EVENT_CLOCK_FACTOR     1
+
 enum
 {
 	HOKUYO_FOO,
@@ -24,6 +26,7 @@ enum
 {
 	COM_FOO,
 	COM_BAR,
+	COM_QEMU_MODEL,
 	COM_MAX
 };
 
@@ -62,7 +65,17 @@ struct robot_interface
 	int detection_reg_num[HOKUYO_MAX];
 };
 
-int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read, const char* file_bar_write, void (*callback)(void*), void* callback_arg);
+struct atlantronic_model_tx_event
+{
+	uint32_t type;        //!< type
+	union
+	{
+		uint8_t data[64];     //!< données
+		uint32_t data32[16];  //!< données
+	};
+};
+
+int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read, const char* file_bar_write, const char* file_foo_qemu_model, void (*callback)(void*), void* callback_arg);
 
 void robot_interface_destroy(struct robot_interface* data);
 
@@ -137,5 +150,9 @@ int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, f
 int robot_interface_straight_speed(struct robot_interface* data, float v);
 
 int robot_interface_rotate_speed(struct robot_interface* data, float v);
+
+// ---------- gestion qemu -----------------------------------------------------
+
+int robot_interface_qemu_set_clock_factor(struct robot_interface* data, unsigned int factor);
 
 #endif

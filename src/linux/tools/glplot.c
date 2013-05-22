@@ -119,6 +119,8 @@ int main(int argc, char *argv[])
 	const char* file_foo_write = NULL;
 	const char* file_bar_read = NULL;
 	const char* file_bar_write = NULL;
+	const char* file_qemu_model = NULL;
+
 	int simulation = 0;
 	const char* prog_foo = NULL;
 	int gdb_port = 0;
@@ -162,14 +164,18 @@ int main(int argc, char *argv[])
 	{
 		file_foo_read = "/tmp/foo.out";
 		file_foo_write = "/tmp/foo.in";
+		file_qemu_model = "/tmp/foo_model";
 		mkfifo("/tmp/foo.out", 0666);
 		mkfifo("/tmp/foo.in", 0666);
+
+		mkfifo("/tmp/foo_model.out", 0666);
+		mkfifo("/tmp/foo_model.in", 0666);
 
 		qemu_foo_pid = fork();
 
 		if(qemu_foo_pid == 0)
 		{
-			char* arg[13];
+			char* arg[15];
 			char buf_tcp[64];
 
 			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
@@ -179,19 +185,21 @@ int main(int argc, char *argv[])
 			arg[4] = (char*)"-nographic";
 			arg[5] = (char*) "-chardev";
 			arg[6] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
-			arg[7] = (char*) "-kernel";
-			arg[8] = (char*) prog_foo;
+			arg[7] = (char*) "-chardev";
+			arg[8] = (char*) "pipe,id=foo_model,path=/tmp/foo_model";
+			arg[9] = (char*) "-kernel";
+			arg[10] = (char*) prog_foo;
 			if(gdb_port)
 			{
-				arg[9] = (char*) "-S";
-				arg[10] = (char*) "-gdb";
+				arg[11] = (char*) "-S";
+				arg[12] = (char*) "-gdb";
 				snprintf(buf_tcp, sizeof(buf_tcp), "tcp::%i", gdb_port);
-				arg[11] = buf_tcp;
-				arg[12] = NULL;
+				arg[13] = buf_tcp;
+				arg[14] = NULL;
 			}
 			else
 			{
-				arg[9] = NULL;
+				arg[11] = NULL;
 			}
 
 			execv(arg[0], arg);
@@ -337,7 +345,7 @@ int main(int argc, char *argv[])
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, read_callback, opengl_window);
+	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, file_qemu_model, read_callback, opengl_window);
 
 	cmd_init(&robot_interface, gtk_end);
 

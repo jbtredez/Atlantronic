@@ -22,6 +22,7 @@ int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
 int cmd_ax12_get_position(void* arg);
 int cmd_help();
+int cmd_qemu_set_clock_factor(void* arg);
 int cmd_quit();
 int cmd_go();
 int cmd_goto_graph(void* arg);
@@ -60,6 +61,7 @@ COMMAND usb_commands[] = {
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
 	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
 	{ "help", cmd_help, "Display this text" },
+	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor factor" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
@@ -135,6 +137,20 @@ int cmd_ax12_get_position(void* arg)
 int cmd_help()
 {
 	log_info("Aide\n");
+	return CMD_SUCESS;
+}
+
+int cmd_qemu_set_clock_factor(void* arg)
+{
+	unsigned int id;
+	int count = sscanf(arg, "%u", &id);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_qemu_set_clock_factor(cmd_robot, id);
 	return CMD_SUCESS;
 }
 
