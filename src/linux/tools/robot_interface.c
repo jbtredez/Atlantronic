@@ -58,6 +58,7 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_can_trace(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 
 int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read,
 		const char* file_bar_write, void (*callback)(void*), void* callback_arg)
@@ -208,6 +209,9 @@ static void* robot_interface_task(void* arg)
 				break;
 			case USB_DETECTION_DYNAMIC_OBJECT:
 				res = robot_interface_process_detect_dyn_obj(robot, args->com_id, msg, size);
+				break;
+			case USB_CAN_TRACE:
+				res = robot_interface_can_trace(robot, args->com_id, msg, size);
 				break;
 			default:
 				res = -1;
@@ -413,6 +417,41 @@ static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, 
 	}
 
 	pthread_mutex_unlock(&data->mutex);
+
+end:
+	return res;
+}
+
+static int robot_interface_can_trace(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+{
+	(void) com_id;
+	(void) data;
+	int res = 0;
+	int i = 0;
+
+	struct can_msg* can_msg = (struct can_msg*) msg;
+
+	if( size != sizeof(struct can_msg))
+	{
+		res = -1;
+		goto end;
+	}
+
+	if( can_msg->size > 8 )
+	{
+		can_msg->size = 8;
+	}
+
+	char buffer[1024];
+	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %#6x size %u data", cartes[com_id], tick_to_us(can_msg->time)/1000000.0f,
+			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->size);
+	for(i=0; i < can_msg->size && res > 0; i++)
+	{
+		res += snprintf(buffer + res, sizeof(buffer) - res, " %#4.2x", can_msg->data[i]);
+	}
+	log_info("%s", buffer);
+
+	res = 0;
 
 end:
 	return res;

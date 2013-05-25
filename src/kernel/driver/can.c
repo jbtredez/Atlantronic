@@ -12,22 +12,18 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 
-//!< variable déclarée pour le debug (remplissage message, envoi... depuis gdb)
-struct can_msg can_msg_debug;
-
 static void can_write_mailbox(struct can_msg *msg);
 static void can_cmd_write(void* arg);
 static void can_cmd_set_baudrate(void* arg);
 static void can_set_baudrate(enum can_baudrate speed, int debug);
-//static uint32_t can_set_filter(unsigned int id, unsigned char format);
+static uint32_t can_set_filter(unsigned int id, unsigned char format);
 static unsigned short can_filter_id;
 static void can_write_task(void *arg);
 static void can_read_task(void *arg);
 static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
 
-// TODO reglé au pif
-#define CAN_READ_STACK_SIZE            250
+#define CAN_READ_STACK_SIZE            150
 #define CAN_WRITE_STACK_SIZE           150
 
 #define CAN_WRITE_QUEUE_SIZE     50
@@ -246,9 +242,8 @@ static void can_read_task(void *arg)
 				}
 			}
 
-			// traces CAN
-			log_format(LOG_INFO, "id %#6x size %u data %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x",
-					(unsigned int)msg.id, msg.size, msg.data[0], msg.data[1], msg.data[2], msg.data[3], msg.data[4], msg.data[5], msg.data[6], msg.data[7]);
+			// traces CAN pour le debug
+			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
 		}
 		else
 		{
@@ -328,6 +323,7 @@ void isr_can1_rx0(void)
 		msg.size = (uint8_t)0x0000000F & CAN1->sFIFOMailBox[0].RDTR;
 		msg._data.low = CAN1->sFIFOMailBox[0].RDLR;
 		msg._data.high = CAN1->sFIFOMailBox[0].RDHR;
+		msg.time = systick_get_time_from_isr();
 
 		// attention, la fonction desactive les IT puis les reactive
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)

@@ -162,9 +162,9 @@ int cmd_can_write(void* arg)
 	int size;
 	int data[8];
 	int i = 0;
-	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d %d", &id, &size, &data[0], &data[1], &data[2], &data[3], &data[4], &data[5], &data[6], &data[7]);
+	int count = sscanf(arg, "%x %d %x %x %x %x %x %x %x %x", &id, &size, &data[0], &data[1], &data[2], &data[3], &data[4], &data[5], &data[6], &data[7]);
 
-	if(count != 10 || size < 0 || size > 8)
+	if(count < 2 || count != size + 2 || size < 0 || size > 8)
 	{
 		return CMD_ERROR;
 	}
