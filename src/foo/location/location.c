@@ -33,7 +33,7 @@ void location_update()
 	portENTER_CRITICAL();
 	location_kinematics = odometry_get_kinematics();
 	portEXIT_CRITICAL();
-
+#if 0
 	// envoi sur le can.
 	// pas d'attente car on passe regulierement ici
 	struct can_msg msg;
@@ -52,6 +52,7 @@ void location_update()
 	msg.size = 4;
 	msg._data.low = location_kinematics.w;
 	can_write(&msg, 0);
+#endif
 }
 
 struct fx_vect_pos location_get_position()
