@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 
 #include "linux/tools/robot_interface.h"
+#include "linux/tools/qemu.h"
 #include "linux/tools/cmd.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/joystick.h"
@@ -75,6 +76,7 @@ static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
 static struct robot_interface robot_interface;
+static struct qemu qemu;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
@@ -119,12 +121,10 @@ int main(int argc, char *argv[])
 	const char* file_foo_write = NULL;
 	const char* file_bar_read = NULL;
 	const char* file_bar_write = NULL;
-	const char* file_qemu_model = NULL;
 
 	int simulation = 0;
 	const char* prog_foo = NULL;
 	int gdb_port = 0;
-	pid_t qemu_foo_pid = 0;
 
 	if(argc > 1)
 	{
@@ -162,54 +162,15 @@ int main(int argc, char *argv[])
 
 	if(simulation)
 	{
-		file_foo_read = "/tmp/foo.out";
-		file_foo_write = "/tmp/foo.in";
-		file_qemu_model = "/tmp/foo_model";
-		mkfifo("/tmp/foo.out", 0666);
-		mkfifo("/tmp/foo.in", 0666);
-
-		mkfifo("/tmp/foo_model.out", 0666);
-		mkfifo("/tmp/foo_model.in", 0666);
-
-		qemu_foo_pid = fork();
-
-		if(qemu_foo_pid == 0)
+		int res = qemu_init(&qemu, prog_foo, gdb_port);
+		if( res )
 		{
-			char* arg[15];
-			char buf_tcp[64];
-
-			arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
-			arg[1] = (char*) "-M";
-			arg[2] = (char*) "atlantronic-foo";
-			arg[3] = (char*)"-nodefaults";
-			arg[4] = (char*)"-nographic";
-			arg[5] = (char*) "-chardev";
-			arg[6] = (char*) "pipe,id=foo_usb,path=/tmp/foo";
-			arg[7] = (char*) "-chardev";
-			arg[8] = (char*) "pipe,id=foo_model,path=/tmp/foo_model";
-			arg[9] = (char*) "-kernel";
-			arg[10] = (char*) prog_foo;
-			if(gdb_port)
-			{
-				arg[11] = (char*) "-S";
-				arg[12] = (char*) "-gdb";
-				snprintf(buf_tcp, sizeof(buf_tcp), "tcp::%i", gdb_port);
-				arg[13] = buf_tcp;
-				arg[14] = NULL;
-			}
-			else
-			{
-				arg[11] = NULL;
-			}
-
-			execv(arg[0], arg);
-			perror("execv");
-			exit(-1);
+			fprintf(stderr, "qemu_init : error");
+			return -1;
 		}
-		else if(qemu_foo_pid < 0)
-		{
-			perror("fork");
-		}
+
+		file_foo_read = qemu.file_foo_read;
+		file_foo_write = qemu.file_foo_write;
 	}
 
 	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
@@ -345,19 +306,22 @@ int main(int argc, char *argv[])
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, file_qemu_model, read_callback, opengl_window);
+	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, read_callback, opengl_window);
 
-	cmd_init(&robot_interface, gtk_end);
+	if( simulation )
+	{
+		cmd_init(&robot_interface, &qemu, gtk_end);
+	}
+	else
+	{
+		cmd_init(&robot_interface, NULL, gtk_end);
+	}
 
 	gtk_main();
 
 	gdk_threads_leave();
 
-	// TODO un peu bourrin, faire mieux
-	if(qemu_foo_pid > 0)
-	{
-		kill(qemu_foo_pid, SIGILL);
-	}
+	qemu_destroy(&qemu);
 
 	robot_interface_destroy(&robot_interface);
 

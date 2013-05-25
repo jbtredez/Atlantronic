@@ -10,12 +10,16 @@
 #include "kernel/module.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
+#include "kernel/driver/usb.h"
 
 //!< variable déclarée pour le debug (remplissage message, envoi... depuis gdb)
 struct can_msg can_msg_debug;
 
 static void can_write_mailbox(struct can_msg *msg);
-static uint32_t can_set_filter(unsigned int id, unsigned char format);
+static void can_cmd_write(void* arg);
+static void can_cmd_set_baudrate(void* arg);
+static void can_set_baudrate(enum can_baudrate speed, int debug);
+//static uint32_t can_set_filter(unsigned int id, unsigned char format);
 static unsigned short can_filter_id;
 static void can_write_task(void *arg);
 static void can_read_task(void *arg);
@@ -23,7 +27,7 @@ static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
 
 // TODO reglé au pif
-#define CAN_READ_STACK_SIZE            150
+#define CAN_READ_STACK_SIZE            250
 #define CAN_WRITE_STACK_SIZE           150
 
 #define CAN_WRITE_QUEUE_SIZE     50
@@ -66,37 +70,13 @@ static int can_module_init(void)
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
-	// init mode
-	CAN1->MCR = CAN_MCR_INRQ;
-
-	#if( RCC_PCLK1 != 36000000)
-	#error "remettre RCC_PCLK1 à 36Mhz, sinon c'est le bordel pour recalculer BTR"
-	#endif
-
-	// TBS1 = 12 TQ   
-	// TBS2 =  5 TQ
-	// SJW  =  4 TQ
-	// total bit can (1 + TBS1 + TBS2) = 18 TQ
-	// SP = (1 + TBS1)/total = 72,22 %
-	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 36Mhz
-	// => TQ = PCLK / (18 * 1000000) = 2
-	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
-	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((2-1) & CAN_BTR_BRP);
-
-// test 500k
-//	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
-
-// test 250k
-//	CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((8-1) & CAN_BTR_BRP);
+	can_set_baudrate(CAN_1000, 0);
 
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_SetPriority(CAN1_TX_IRQn, PRIORITY_IRQ_CAN1_TX);
 	NVIC_SetPriority(CAN1_RX0_IRQn, PRIORITY_IRQ_CAN1_RX0);
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
-
-	// mode self-test pour le debug
-//	CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
@@ -131,10 +111,102 @@ static int can_module_init(void)
 		return ERR_INIT_CAN;
 	}
 
+	// mode initialisation des filtres
+	CAN1->FMR  |=  CAN_FMR_FINIT;
+
+	// desactivation du filtre can_filter_id
+	CAN1->FA1R &=  ~(uint32_t)(1 << can_filter_id);
+
+
+	// init du filtre can_filter_id (32 bits scale conf + deux registres 32 bit id list mode)
+	CAN1->FS1R |= (uint32_t)(1 << can_filter_id);
+	CAN1->FM1R &= ~(uint32_t)(1 << can_filter_id);
+
+	CAN1->sFilterRegister[can_filter_id].FR1 = 0;
+	CAN1->sFilterRegister[can_filter_id].FR2 = 0;
+
+	// filtre => FIFO 0 puis activation du filtre
+	CAN1->FFA1R &= ~(uint32_t)(1 << can_filter_id);
+	CAN1->FA1R  |=  (uint32_t)(1 << can_filter_id);
+	can_filter_id++;
+
+
+
+	// sortie du mode init des filtres
+	CAN1->FMR &= ~CAN_FMR_FINIT;
+
+	// commandes can
+	usb_add_cmd(USB_CMD_CAN_SET_BAUDRATE, &can_cmd_set_baudrate);
+	usb_add_cmd(USB_CMD_CAN_WRITE, &can_cmd_write);
+
 	return 0;
 }
 
 module_init(can_module_init, INIT_CAN);
+
+static void can_set_baudrate(enum can_baudrate speed, int debug)
+{
+	#if( RCC_PCLK1 != 36000000)
+	#error "remettre RCC_PCLK1 à 36Mhz, sinon c'est le bordel pour recalculer BTR"
+	#endif
+
+	// init mode
+	CAN1->MCR = CAN_MCR_INRQ;
+
+	// TBS1 = 12 TQ
+	// TBS2 =  5 TQ
+	// SJW  =  4 TQ
+	// total bit can (1 + TBS1 + TBS2) = 18 TQ
+	// SP = (1 + TBS1)/total = 72,22 %
+	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 36Mhz
+	// => TQ = PCLK / (18 * 1000000) = 2
+	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
+
+	switch(speed)
+	{
+		case CAN_1000:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((2-1) & CAN_BTR_BRP);
+			break;
+		case CAN_800:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((3-1) & CAN_BTR_BRP);
+			break;
+		case CAN_500:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
+			break;
+		case CAN_250:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((8-1) & CAN_BTR_BRP);
+			break;
+		case CAN_125:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((16-1) & CAN_BTR_BRP);
+			break;
+		case CAN_50:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((20-1) & CAN_BTR_BRP);
+			break;
+		case CAN_20:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((50-1) & CAN_BTR_BRP);
+			break;
+		case CAN_10:
+			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((100-1) & CAN_BTR_BRP);
+			break;
+		case CAN_RESERVED:
+		default:
+			break;
+	}
+
+	if(debug)
+	{
+		// mode self-test pour le debug
+		CAN1->BTR |= CAN_BTR_SILM | CAN_BTR_LBKM;
+	}
+	else
+	{
+		CAN1->BTR &= ~(CAN_BTR_SILM | CAN_BTR_LBKM);
+	}
+
+	// lancement du CAN
+	CAN1->MCR &= ~CAN_MCR_INRQ;
+	while (CAN1->MSR & CAN_MCR_INRQ) ;
+}
 
 static void can_write_task(void *arg)
 {
@@ -173,6 +245,10 @@ static void can_read_task(void *arg)
 					can_map[i].callback(&msg);
 				}
 			}
+
+			// traces CAN
+			log_format(LOG_INFO, "id %#6x size %u data %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x %#4.2x",
+					(unsigned int)msg.id, msg.size, msg.data[0], msg.data[1], msg.data[2], msg.data[3], msg.data[4], msg.data[5], msg.data[6], msg.data[7]);
 		}
 		else
 		{
@@ -297,6 +373,18 @@ void can_write_mailbox(struct can_msg *msg)
 
 	CAN1->IER |= CAN_IER_TMEIE;
 	CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
+}
+
+static void can_cmd_write(void* arg)
+{
+	struct can_msg* msg = (struct can_msg*) arg;
+	can_write(msg, 0);
+}
+
+static void can_cmd_set_baudrate(void* arg)
+{
+	char* buffer = (char*) arg;
+	can_set_baudrate(buffer[0], buffer[1]);
 }
 
 uint32_t can_set_filter(unsigned int id, unsigned char format)

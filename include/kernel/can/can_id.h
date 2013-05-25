@@ -23,5 +23,7 @@
 //#define CAN_HOKUYO_DATA_RESET     0x13
 //#define CAN_HOKUYO_DATA           0x14
 
+#define CAN_MOTOR1_NODEID         0x20
+
 #endif
 

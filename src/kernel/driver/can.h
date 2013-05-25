@@ -5,8 +5,12 @@
 //! @brief CAN
 //! @author Atlantronic
 
+#ifndef LINUX
 #include "kernel/cpu/cpu.h"
 #include "kernel/portmacro.h"
+#else
+typedef uint64_t portTickType;
+#endif
 
 enum can_format
 {
@@ -18,6 +22,19 @@ enum can_type
 {
 	CAN_DATA_FRAME,
 	CAN_REMOTE_FRAME
+};
+
+enum can_baudrate
+{
+	CAN_1000,
+	CAN_800,
+	CAN_500,
+	CAN_250,
+	CAN_125,
+	CAN_RESERVED,
+	CAN_50,
+	CAN_20,
+	CAN_10
 };
 
 struct can_msg
@@ -35,7 +52,7 @@ struct can_msg
 	unsigned char size; //!< taille
 	unsigned char format; //!< format (standard ou étendu)
 	unsigned char type; //!< type
-};
+} __attribute__((packed));
 
 typedef void (*can_callback)(struct can_msg *msg);
 

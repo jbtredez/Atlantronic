@@ -34,6 +34,8 @@ enum usb_cmd
 	USB_CMD_ARM_GOTO,
 	USB_CMD_ARM_BRIDGE,
 	USB_CMD_STRAT,
+	USB_CMD_CAN_SET_BAUDRATE,
+	USB_CMD_CAN_WRITE,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

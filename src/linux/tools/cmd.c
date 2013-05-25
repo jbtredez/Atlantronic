@@ -11,6 +11,7 @@
 
 static void (*cmd_exit_callback)(void) = NULL;
 static struct robot_interface* cmd_robot = NULL;
+static struct qemu* cmd_qemu = NULL;
 
 int cmd_arm_bridge(void* arg);
 int cmd_arm_xyz(void* arg);
@@ -21,6 +22,8 @@ int cmd_ax12_scan();
 int cmd_ax12_set_id(void* arg);
 int cmd_ax12_set_goal_position(void* arg);
 int cmd_ax12_get_position(void* arg);
+int cmd_can_set_baudrate(void* arg);
+int cmd_can_write(void* arg);
 int cmd_help();
 int cmd_qemu_set_clock_factor(void* arg);
 int cmd_quit();
@@ -52,6 +55,8 @@ COMMAND usb_commands[] = {
 	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
 	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
 	{ "ax12_get_position", cmd_ax12_get_position, "donne ka position actuelle de l'ax12 : ax12_get_position id"},
+	{ "can_set_baudrate", cmd_can_set_baudrate, "can_set_baudrate id debug"},
+	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
 	{ "control_print_param", cmd_control_print_param, "control_print_param"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
@@ -77,9 +82,10 @@ COMMAND usb_commands[] = {
 	{ (char *)NULL, (Function *)NULL, (char *)NULL }
 };
 
-int cmd_init(struct robot_interface* robot, void (*f)(void))
+int cmd_init(struct robot_interface* robot, struct qemu* qemu, void (*f)(void))
 {
 	cmd_robot = robot;
+	cmd_qemu = qemu;
 	cmd_exit_callback = f;
 	return cli_init(usb_commands);
 }
@@ -134,6 +140,48 @@ int cmd_ax12_get_position(void* arg)
 	return CMD_SUCESS;
 }
 
+int cmd_can_set_baudrate(void* arg)
+{
+	unsigned int id;
+	int debug;
+	int count = sscanf(arg, "%u %d", &id, &debug);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_can_set_baudrate(cmd_robot, id, debug);
+	return CMD_SUCESS;
+}
+
+int cmd_can_write(void* arg)
+{
+	struct can_msg msg;
+	int id;
+	int size;
+	int data[8];
+	int i = 0;
+	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d %d", &id, &size, &data[0], &data[1], &data[2], &data[3], &data[4], &data[5], &data[6], &data[7]);
+
+	if(count != 10 || size < 0 || size > 8)
+	{
+		return CMD_ERROR;
+	}
+
+	msg.id = id;
+	msg.size = size;
+	for(i = 0; i < size; i++)
+	{
+		msg.data[i] = data[i];
+	}
+	msg.format = CAN_STANDARD_FORMAT;
+	msg.type = CAN_DATA_FRAME;
+
+	robot_interface_can_write(cmd_robot, &msg);
+	return CMD_SUCESS;
+}
+
 int cmd_help()
 {
 	log_info("Aide\n");
@@ -150,7 +198,11 @@ int cmd_qemu_set_clock_factor(void* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_qemu_set_clock_factor(cmd_robot, id);
+	if( cmd_qemu )
+	{
+		qemu_set_clock_factor(cmd_qemu, id);
+	}
+
 	return CMD_SUCESS;
 }
 
