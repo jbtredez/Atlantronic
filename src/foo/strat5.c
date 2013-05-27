@@ -11,7 +11,6 @@
 #include "kernel/rcc.h"
 #include "pince.h"
 #include "recalage.h"
-#include "us.h"
 #include "control/trajectory.h"
 #include "foo/arm.h"
 #include "foo/strat.h"

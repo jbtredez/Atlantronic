@@ -14,7 +14,6 @@
 #include "kernel/vect_pos.h"
 #include "kernel/driver/usb.h"
 #include "kernel/math/trigo.h"
-#include "foo/servo.h"
 #include "foo/location/location.h"
 #include "foo/pwm.h"
 #include "ax12.h"

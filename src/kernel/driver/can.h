@@ -8,8 +8,9 @@
 #ifndef LINUX
 #include "kernel/cpu/cpu.h"
 #include "kernel/portmacro.h"
-#else
-typedef uint64_t portTickType;
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/queue.h"
 #endif
 
 enum can_format
@@ -55,12 +56,11 @@ struct can_msg
 	unsigned char type; //!< type
 } __attribute__((packed));
 
-typedef void (*can_callback)(struct can_msg *msg);
+#ifndef LINUX
+int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue);
 
 uint32_t can_write(struct can_msg *msg, portTickType timeout);
 
-//! enregistre la fonction pour qu'elle soit appellée si un message avec l'identifiant "id" au format "format" est reçu
-//! le message est démasqué sur le filtre matériel du can
-uint32_t can_register(uint32_t id, enum can_format format, can_callback function);
+#endif
 
 #endif

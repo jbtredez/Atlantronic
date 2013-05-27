@@ -26,11 +26,11 @@
 
 // init de la communication
 #define INIT_CAN                      "05"
-
+#define INIT_CAN_MOTOR                "06"
 // init adc
-#define INIT_ADC                      "06"
+#define INIT_ADC                      "07"
 
-#define INIT_ENCODERS                 "07"
+#define INIT_ENCODERS                 "08"
 #define INIT_PWM                      "09"
 #define INIT_AX12                     "10"
 #define INIT_SERVO                    "10"

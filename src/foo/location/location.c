@@ -6,8 +6,6 @@
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
 #include "kernel/math/trigo.h"
-#include "kernel/driver/can.h"
-#include "kernel/can/can_id.h"
 #include "kernel/driver/usb.h"
 
 static struct kinematics location_kinematics;
@@ -33,26 +31,6 @@ void location_update()
 	portENTER_CRITICAL();
 	location_kinematics = odometry_get_kinematics();
 	portEXIT_CRITICAL();
-#if 0
-	// envoi sur le can.
-	// pas d'attente car on passe regulierement ici
-	struct can_msg msg;
-	msg.format = CAN_STANDARD_FORMAT;
-	msg.type = CAN_DATA_FRAME;
-	msg.size = 8;
-	msg.id = CAN_KINEMATICS_1;
-	msg._data.low = location_kinematics.x;
-	msg._data.high = location_kinematics.y;
-	can_write(&msg, 0);
-	msg.id = CAN_KINEMATICS_2;
-	msg._data.low = location_kinematics.alpha;
-	msg._data.high = location_kinematics.v;
-	can_write(&msg, 0);
-	msg.id = CAN_KINEMATICS_3;
-	msg.size = 4;
-	msg._data.low = location_kinematics.w;
-	can_write(&msg, 0);
-#endif
 }
 
 struct fx_vect_pos location_get_position()

@@ -23,7 +23,7 @@ obj-bar-test_can_us += kernel/driver/usb/otgd_fs_cal.o
 obj-bar-test_can_us += kernel/driver/usb/otgd_fs_int.o
 obj-bar-test_can_us += kernel/driver/usb/otgd_fs_pcd.o
 obj-bar-test_can_us += bar/gpio.o
-bin-bar += test_can_us
+#bin-bar += test_can_us
 
 obj-bar-test_log += kernel/main.o
 obj-bar-test_log += kernel/asm/isr.o
@@ -52,4 +52,4 @@ obj-bar-test_log += kernel/driver/usb/otgd_fs_int.o
 obj-bar-test_log += kernel/driver/usb/otgd_fs_pcd.o
 obj-bar-test_log += bar/gpio.o
 obj-bar-test_log += kernel/test/log/task1.o
-bin-bar += test_log
+#bin-bar += test_log

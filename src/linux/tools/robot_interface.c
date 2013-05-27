@@ -443,11 +443,11 @@ static int robot_interface_can_trace(struct robot_interface* data, int com_id, c
 	}
 
 	char buffer[1024];
-	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %#6x size %u data", cartes[com_id], tick_to_us(can_msg->time)/1000000.0f,
+	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", cartes[com_id], tick_to_us(can_msg->time)/1000000.0f,
 			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->size);
 	for(i=0; i < can_msg->size && res > 0; i++)
 	{
-		res += snprintf(buffer + res, sizeof(buffer) - res, " %#4.2x", can_msg->data[i]);
+		res += snprintf(buffer + res, sizeof(buffer) - res, " %2.2x", can_msg->data[i]);
 	}
 	log_info("%s", buffer);
 

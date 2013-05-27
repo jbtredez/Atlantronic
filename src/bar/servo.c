@@ -7,7 +7,7 @@ static void can_servo(struct can_msg *msg);
 
 int servo_module_init()
 {
-	can_register(CAN_SERVO, CAN_STANDARD_FORMAT, can_servo);
+	//can_register(CAN_SERVO, CAN_STANDARD_FORMAT, can_servo);
 
 	return 0;
 }

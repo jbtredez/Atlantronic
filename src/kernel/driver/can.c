@@ -2,50 +2,27 @@
 //! @brief CAN
 //! @author Atlantronic
 
-#include "kernel/FreeRTOS.h"
-#include "kernel/task.h"
-#include "kernel/queue.h"
 #include "kernel/event.h"
 #include "kernel/driver/can.h"
-#include "kernel/module.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
+#include "kernel/fault.h"
 #include "kernel/driver/usb.h"
 
 static void can_write_mailbox(struct can_msg *msg);
 static void can_cmd_write(void* arg);
 static void can_cmd_set_baudrate(void* arg);
 static void can_set_baudrate(enum can_baudrate speed, int debug);
-static uint32_t can_set_filter(unsigned int id, unsigned char format);
-static unsigned short can_filter_id;
+static int can_set_mask(int id, uint32_t mask);
 static void can_write_task(void *arg);
-static void can_read_task(void *arg);
 static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
 
-#define CAN_READ_STACK_SIZE            150
-#define CAN_WRITE_STACK_SIZE           150
+#define CAN_WRITE_STACK_SIZE     80
+#define CAN_WRITE_QUEUE_SIZE     20
 
-#define CAN_WRITE_QUEUE_SIZE     50
-#define CAN_READ_QUEUE_SIZE      50
-
-#define CAN_MAP_SIZE             20
-
-struct can_map
+int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {
-	uint32_t id;
-	enum can_format format;
-	can_callback callback;
-};
-
-static uint8_t can_map_max;
-static struct can_map can_map[CAN_MAP_SIZE];
-
-static int can_module_init(void)
-{
-	can_filter_id = 0;
-	can_map_max = 0;
-
 	// CAN_RX : PD0
 	// CAN_TX : PD1
 	// => can 1 remap 3
@@ -66,7 +43,7 @@ static int can_module_init(void)
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
-	can_set_baudrate(CAN_1000, 0);
+	can_set_baudrate(baudrate, 0);
 
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_SetPriority(CAN1_TX_IRQn, PRIORITY_IRQ_CAN1_TX);
@@ -78,58 +55,24 @@ static int can_module_init(void)
 	CAN1->MCR &= ~CAN_MCR_INRQ;
 	while (CAN1->MSR & CAN_MCR_INRQ) ;
 
-	can_read_queue = xQueueCreate(CAN_READ_QUEUE_SIZE, sizeof(struct can_msg));
-
-	if(can_read_queue == 0)
-	{
-		return ERR_INIT_CAN;
-	}
+	can_read_queue = _can_read_queue;
 
 	can_write_queue = xQueueCreate(CAN_WRITE_QUEUE_SIZE, sizeof(struct can_msg));
 
 	if(can_write_queue == 0)
 	{
-		return ERR_INIT_CAN;
+		return -1;
 	}
 
 	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(can_read_task, "can_read", CAN_READ_STACK_SIZE, NULL, PRIORITY_TASK_CAN, &xHandle);
+	int err = xTaskCreate(can_write_task, "can_write", CAN_WRITE_STACK_SIZE, NULL, PRIORITY_TASK_CAN, &xHandle);
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_CAN;
+		return -1;
 	}
 
-	err = xTaskCreate(can_write_task, "can_write", CAN_WRITE_STACK_SIZE, NULL, PRIORITY_TASK_CAN, &xHandle);
-
-	if(err != pdPASS)
-	{
-		return ERR_INIT_CAN;
-	}
-
-	// mode initialisation des filtres
-	CAN1->FMR  |=  CAN_FMR_FINIT;
-
-	// desactivation du filtre can_filter_id
-	CAN1->FA1R &=  ~(uint32_t)(1 << can_filter_id);
-
-
-	// init du filtre can_filter_id (32 bits scale conf + deux registres 32 bit id list mode)
-	CAN1->FS1R |= (uint32_t)(1 << can_filter_id);
-	CAN1->FM1R &= ~(uint32_t)(1 << can_filter_id);
-
-	CAN1->sFilterRegister[can_filter_id].FR1 = 0;
-	CAN1->sFilterRegister[can_filter_id].FR2 = 0;
-
-	// filtre => FIFO 0 puis activation du filtre
-	CAN1->FFA1R &= ~(uint32_t)(1 << can_filter_id);
-	CAN1->FA1R  |=  (uint32_t)(1 << can_filter_id);
-	can_filter_id++;
-
-
-
-	// sortie du mode init des filtres
-	CAN1->FMR &= ~CAN_FMR_FINIT;
+	can_set_mask(0, 0x00);
 
 	// commandes can
 	usb_add_cmd(USB_CMD_CAN_SET_BAUDRATE, &can_cmd_set_baudrate);
@@ -138,7 +81,35 @@ static int can_module_init(void)
 	return 0;
 }
 
-module_init(can_module_init, INIT_CAN);
+static int can_set_mask(int id, uint32_t mask)
+{
+	if( id > 27 )
+	{
+		return -1;
+	}
+
+	// mode initialisation des filtres
+	CAN1->FMR  |=  CAN_FMR_FINIT;
+
+	// desactivation du filtre can_filter_id
+	CAN1->FA1R &=  ~(uint32_t)(1 << id);
+
+	// init du filtre can_filter_id (32 bits scale conf + deux registres 32 bit id list mode)
+	CAN1->FS1R |= (uint32_t)(1 << id);
+	CAN1->FM1R &= ~(uint32_t)(1 << id);
+
+	CAN1->sFilterRegister[id].FR1 = mask;
+	CAN1->sFilterRegister[id].FR2 = mask;
+
+	// filtre => FIFO 0 puis activation du filtre
+	CAN1->FFA1R &= ~(uint32_t)(1 << id);
+	CAN1->FA1R  |=  (uint32_t)(1 << id);
+
+	// sortie du mode init des filtres
+	CAN1->FMR &= ~CAN_FMR_FINIT;
+
+	return 0;
+}
 
 static void can_set_baudrate(enum can_baudrate speed, int debug)
 {
@@ -219,36 +190,6 @@ static void can_write_task(void *arg)
 			can_write_mailbox(&req);
 // TODO : check error
 			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
-		}
-	}
-}
-
-static void can_read_task(void *arg)
-{
-	(void) arg;
-
-	struct can_msg msg;
-
-	while(1)
-	{
-		if(xQueueReceive(can_read_queue, &msg, 0))
-		{
-			int i = 0;
-			for( i = 0 ; i < can_map_max ; i++)
-			{
-				if( can_map[i].id == msg.id && can_map[i].format == msg.format)
-				{
-					can_map[i].callback(&msg);
-				}
-			}
-
-			// traces CAN pour le debug
-			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
-		}
-		else
-		{
-			fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
-			vTaskDelay(ms_to_tick(2));
 		}
 	}
 }
@@ -383,54 +324,6 @@ static void can_cmd_set_baudrate(void* arg)
 	can_set_baudrate(buffer[0], buffer[1]);
 }
 
-uint32_t can_set_filter(unsigned int id, unsigned char format)
-{
-	uint32_t msg_id = 0;
-	uint32_t res = 0;
-
-	// on peux mettre jusqu'a 28 filtres (de 0 à 27)
-	if (can_filter_id > 27)
-	{
-		fault(ERR_CAN_FILTER_LIST_FULL, FAULT_ACTIVE);
-		res = ERR_CAN_FILTER_LIST_FULL;
-		goto end;
-	}
-
-	// id du message
-	if (format == CAN_STANDARD_FORMAT)
-	{
-		msg_id  |= (uint32_t)(id << 21);
-	}
-	else
-	{
-		msg_id  |= (uint32_t)(id <<  3) | 0x04;
-	}
-
-	// mode initialisation des filtres
-	CAN1->FMR  |=  CAN_FMR_FINIT;
-	// desactivation du filtre can_filter_id
-	CAN1->FA1R &=  ~(uint32_t)(1 << can_filter_id);
-
-	// init du filtre can_filter_id (32 bits scale conf + deux registres 32 bit id list mode)
-	CAN1->FS1R |= (uint32_t)(1 << can_filter_id);
-	CAN1->FM1R |= (uint32_t)(1 << can_filter_id);
-
-	CAN1->sFilterRegister[can_filter_id].FR1 = msg_id;
-	CAN1->sFilterRegister[can_filter_id].FR2 = msg_id;
-
-	// filtre => FIFO 0 puis activation du filtre
-	CAN1->FFA1R &= ~(uint32_t)(1 << can_filter_id);
-	CAN1->FA1R  |=  (uint32_t)(1 << can_filter_id);
-
-	// sortie du mode init des filtres
-	CAN1->FMR &= ~CAN_FMR_FINIT;
-
-	can_filter_id ++;
-
-end:
-	return res;
-}
-
 uint32_t can_write(struct can_msg *msg, portTickType timeout)
 {
 	uint32_t res = 0;
@@ -439,34 +332,6 @@ uint32_t can_write(struct can_msg *msg, portTickType timeout)
 	{
 		res = -1;
 	}
-	
-	return res;
-}
 
-uint32_t can_register(uint32_t id, enum can_format format, can_callback function)
-{
-	uint32_t res = 0;
-
-	if( can_map_max >= CAN_MAP_SIZE)
-	{
-		res = -1;
-		goto end;
-	}
-
-	can_map[can_map_max].id = id;
-	can_map[can_map_max].format = format;
-	can_map[can_map_max].callback = function;
-
-	res = can_set_filter(id, format);
-	
-	if( res )
-	{
-		// erreur, filtre plein
-		goto end;
-	}
-	
-	can_map_max++;
-
-end:
 	return res;
 }
