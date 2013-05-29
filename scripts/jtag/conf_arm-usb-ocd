@@ -2,5 +2,5 @@ telnet_port 4444
 gdb_port 3333
 tcl_port 6666
 
-source [find interface/arm-usb-ocd.cfg]
-source [find target/stm32.cfg]
+source [find interface/olimex-arm-usb-ocd.cfg]
+source [find target/stm32f1x.cfg]

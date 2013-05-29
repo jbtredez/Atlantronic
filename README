@@ -3,9 +3,9 @@ Site : http://www.atlantronic.fr/
 
 Requirements :
 "arm-elf" toolchaine (thumb2, cortex m3) :
-	- binutils-2.22
-	- gcc-4.5.3
-	- gdb-7.3.1
+	- binutils-2.23.1
+	- gcc-4.7.3
+	- gdb-7.6
 	- newlib-1.19 (--disable-newlib-supplied-syscalls --disable-newlib-mb --disable-newlib-hw-fp --disable-newlib-io-float)
 
 doc : 
@@ -13,8 +13,8 @@ doc :
 		- graphviz >= 2.26.3
 
 jtag :
-	- openocd 0.5.0
-	- libftdi 0.19
+	- openocd 0.6.1
+	- libftdi 1.0
 
 ---------------------------------------------------------
 Organisation des dossiers :

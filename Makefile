@@ -26,8 +26,18 @@ doc := doc
 
 INCLUDES:=-I. -Iinclude -Isrc
 
+MAKEFLAGS += -rR --no-print-directory
+
 DEBUG ?= 0
 VERBOSE ?= 0
+
+ifeq ($(VERBOSE),0)
+MAKEFLAGS += --quiet
+endif
+
+ifeq ($(MAKECMDGOALS),discovery)
+ARCH=discovery
+endif
 
 ifeq ($(MAKECMDGOALS),foo)
 ARCH=foo
@@ -39,10 +49,6 @@ endif
 
 ifeq ($(MAKECMDGOALS),linux)
 ARCH=linux
-endif
-
-ifeq ($(VERBOSE),0)
-V:=@
 endif
 
 -include src/$(ARCH)/Makefile
@@ -66,18 +72,18 @@ BIN_DOC=$(SRC_DOC:.dot=.png)
 $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 
 $(obj)/$(ARCH)/%.o: $(src)/%.c
-	@echo [CC] $@
-	@mkdir -p `dirname $@`
-	$(V)$(CC) $(CFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	@echo "    CC    " $@
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
-	@echo [CXX] $@
-	@mkdir -p `dirname $@`
-	$(V)@$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	@echo "   CXX    " $@
+	mkdir -p $(dir $@)
+	@$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@
-	$(V)@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
+	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 %.pdf: %.tex
 	pdflatex -output-directory doc $<
@@ -92,30 +98,31 @@ $(ARCH): $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
 endif
 
 all:
-	@+make --no-print-directory ARCH=foo
-	@+make --no-print-directory ARCH=bar
-	@+make --no-print-directory ARCH=linux
+	$(MAKE) ARCH=discovery
+	$(MAKE) ARCH=foo
+	$(MAKE) ARCH=bar
+	$(MAKE) ARCH=linux
 
 .PHONY: all
 
 modules:
-	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules
+	+make MAKEFLAGS=--no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules
 
 .PHONY: modules
 
 clean_modules:
-	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules clean
+	+make MAKEFLAGS=--no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules clean
 
 .PHONY: clean_modules
 
 install: modules
 	@echo "  INSTALL $(shell pwd)/scripts/udev/65-atlantronic.rules"
-	@+install -D -m 644 -o root -g root -p scripts/udev/65-atlantronic.rules $(DESTDIR)/etc/udev/rules.d/65-atlantronic.rules
-	@+make --no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
+	+install -D -m 644 -o root -g root -p scripts/udev/65-atlantronic.rules $(DESTDIR)/etc/udev/rules.d/65-atlantronic.rules
+	+make MAKEFLAGS=--no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
 
 qemu:
-	@cd qemu && ./configure --target-list=arm-softmmu --disable-docs
-	@+make -C qemu
+	cd qemu && ./configure --target-list=arm-softmmu --disable-docs
+	+make -C qemu
 
 .PHONY: qemu
 
@@ -127,16 +134,16 @@ ifneq ($(MAKECMDGOALS),clean)
 endif
 
 $(bin)/$(ARCH)/%:
-	@echo [LD] $@
-	@mkdir -p `dirname $@`
-	$(V)$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
-	$(V)$(OBJCOPY) --only-keep-debug $@ $@.debug
-	$(V)$(OBJCOPY) --add-gnu-debuglink $@.debug $@
-	$(V)$(STRIP) $@
+	@echo "    LD    " $@
+	mkdir -p $(dir $@)
+	$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
+	$(OBJCOPY) --only-keep-debug $@ $@.debug
+	$(OBJCOPY) --add-gnu-debuglink $@.debug $@
+	$(STRIP) $@
 
 %.png: %.dot
 	@echo [DOT] $@
-	$(V)$(DOT) $< -Tpng -o $@
+	$(DOT) $< -Tpng -o $@
 
 dot: $(BIN_DOC)
 
@@ -152,21 +159,19 @@ doc/atlantronic.pdf: $(TEXSRC)
 
 doc: dot pdf
 	@mkdir -p $(doc)/doxygen
-	@doxygen Doxyfile > /dev/null
+	doxygen Doxyfile > /dev/null
 
 .PHONY: doc
 
 clean:
-	@rm -frv $(obj)
-	@rm -frv $(bin)
-	@rm -frv $(doc)/doxygen
-	@rm -fv $(doc)/*.pdf
-	@rm -fv $(doc)/*.dvi
-	@rm -fv $(doc)/*.aux
-	@rm -fv $(doc)/*.ps
-	@rm -fv $(doc)/*.log
-	@rm -fv $(doc)/*.toc
-
-	@find . -name \*~ -exec rm \-fv {} \;
+	rm -frv $(obj)
+	rm -frv $(bin)
+	rm -frv $(doc)/doxygen
+	rm -fv $(doc)/*.pdf
+	rm -fv $(doc)/*.dvi
+	rm -fv $(doc)/*.aux
+	rm -fv $(doc)/*.ps
+	rm -fv $(doc)/*.log
+	rm -fv $(doc)/*.toc
 
 .PHONY: clean

@@ -1,7 +1,6 @@
 CROSSCOMPILE:=arm-elf-
 
 MCPU:=cortex-m3
-MTUNE:=cortex-m3
 
 LDSCRIPT:=scripts/ld/arm-elf.ld
 
@@ -47,5 +46,5 @@ endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
 
-INCLUDES+=-Iinclude/bar -Isrc/bar
+INCLUDES+=-Iinclude/$(ARCH) -Isrc/$(ARCH)
 
