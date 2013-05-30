@@ -9,7 +9,9 @@
 #include "kernel/math/regression.h"
 #include "kernel/log_level.h"
 #include "kernel/driver/usb.h"
+#define STM32F10X_CL
 #include "kernel/rcc.h"
+#undef STM32F10X_CL
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
 #include "foo/ax12.h"

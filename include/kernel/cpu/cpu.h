@@ -1,10 +1,14 @@
 #ifndef CPU_H
 #define CPU_H
 
+#ifdef STM32F10X_CL
 //STM32F10X_CL definie dans le makefile
 #include "kernel/cpu/stm32f10x.h"
+#include "kernel/asm/asm_base_func.h"
+#endif
 
-#ifndef LINUX
+#ifdef STM32F4XX
+#include "kernel/cpu/stm32f4xx.h"
 #include "kernel/asm/asm_base_func.h"
 #endif
 

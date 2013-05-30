@@ -6,32 +6,61 @@
 #include "kernel/module.h"
 #include "kernel/cpu/cpu.h"
 
+#ifdef STM32F4XX
+// PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N 
+#define PLL_M      8
+#define PLL_N      336
+// SYSCLK = PLL_VCO / PLL_P
+#define PLL_P      2
+// USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ
+#define PLL_Q      7
+#endif
+
 static int rcc_module_init()
 {
 	// reset de la configuration pour éviter tout problème
 	// HSION
 	RCC->CR |= (uint32_t)0x00000001;
 
-	// Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits
+#ifdef STM32F10X_CL
+	// reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits
 	RCC->CFGR &= (uint32_t)0xF0FF0000;
 
-	// Reset HSEON, CSSON and PLLON bits
+	// reset HSEON, CSSON and PLLON bits
 	RCC->CR &= (uint32_t)0xFEF6FFFF;
 
-	// Reset HSEBYP bit
+	// reset HSEBYP bit
 	RCC->CR &= (uint32_t)0xFFFBFFFF;
 
-	// Reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits
+	// reset PLLSRC, PLLXTPRE, PLLMUL and USBPRE/OTGFSPRE bits
 	RCC->CFGR &= (uint32_t)0xFF80FFFF;
 
-	// Reset PLL2ON and PLL3ON bits
+	// reset PLL2ON and PLL3ON bits
 	RCC->CR &= (uint32_t)0xEBFFFFFF;
 
-	// Disable all interrupts and clear pending bits
+	// disable all interrupts and clear pending bits
 	RCC->CIR = (uint32_t)0x00FF0000;
 
-	// Reset CFGR2 register
+	// reset CFGR2 register
 	RCC->CFGR2 = (uint32_t)0x00000000;
+#endif
+
+#ifdef STM32F4XX
+	// reset CFGR
+	RCC->CFGR = 0x00;
+
+	// reset HSEON, CSSON and PLLON bits
+	RCC->CR &= (uint32_t)0xFEF6FFFF;
+
+	// reset PLLCFGR
+	RCC->PLLCFGR = 0x24003010;
+
+	// reset HSEBYP bit
+	RCC->CR &= (uint32_t)0xFFFBFFFF;
+
+	// disable all interrupts
+	RCC->CIR = 0x00;
+#endif
 
 	// configuration
 
@@ -42,6 +71,7 @@ static int rcc_module_init()
 
 	}
 
+#ifdef STM32F10X_CL
 	// Utilisation du Prefetch Buffer obligatoire à 72Hz
 	FLASH->ACR |= FLASH_ACR_PRFTBE;
 
@@ -105,6 +135,41 @@ static int rcc_module_init()
 	// SYSCLK = PLLCLK = 72 MHz
 	RCC->CFGR &= ~RCC_CFGR_SW;
 	RCC->CFGR |= RCC_CFGR_SW_PLL;
+#endif
+
+#ifdef STM32F4XX
+	// Mode haute performances pour le passage a 168 MHz
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN;
+	PWR->CR |= PWR_CR_PMODE;
+
+	// HCLK = SYSCLK / 1
+	RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
+
+	// PCLK2 = HCLK / 2
+	RCC->CFGR |= RCC_CFGR_PPRE2_DIV2;
+
+	// PCLK1 = HCLK / 4
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV4;
+
+	// PLL
+	RCC->PLLCFGR = PLL_M | (PLL_N << 6) | (((PLL_P >> 1) -1) << 16) | (RCC_PLLCFGR_PLLSRC_HSE) | (PLL_Q << 24);
+
+	// activation PLL
+	RCC->CR |= RCC_CR_PLLON;
+
+	// attente PLL
+	while((RCC->CR & RCC_CR_PLLRDY) == 0)
+	{
+
+	}
+
+	// flash : utilisation du Prefetch
+	FLASH->ACR = FLASH_ACR_ICEN |FLASH_ACR_DCEN |FLASH_ACR_LATENCY_5WS;
+
+	// SYSCLK = PLL
+	RCC->CFGR &= ~RCC_CFGR_SW;
+	RCC->CFGR |= RCC_CFGR_SW_PLL;
+#endif
 
 	// Attente de SYSCLK = PLLCLK
 	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL)
@@ -119,7 +184,7 @@ module_init(rcc_module_init, INIT_RCC);
 
 void wait_active(uint32_t tick)
 {
-	tick >>= 1;
+	tick >>= 2;
 	for( ; tick-- ; )
 	{
 		nop();

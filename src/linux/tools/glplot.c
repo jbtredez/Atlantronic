@@ -10,6 +10,7 @@
 #include <math.h>
 #include <sys/stat.h>
 
+#define STM32F10X_CL
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
 #include "linux/tools/cmd.h"

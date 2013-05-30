@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#ifdef STM32F10X_CL
 // configuration une fois le module rcc initialisé (attention, il faut modifier le code de rcc.c si on veut changer les valeurs) :
 #define RCC_HSI           8000000LL
 #define RCC_HSE          25000000LL
@@ -23,6 +24,7 @@
 #define us_to_tick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
 #define tick_to_ms(a)    ((uint64_t)(a)/(RCC_SYSCLK/1000))
 #define tick_to_us(a)    ((uint64_t)(a)/(RCC_SYSCLK/1000000))
+#endif
 
 void wait_active(uint32_t tick);
 

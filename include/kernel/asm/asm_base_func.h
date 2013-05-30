@@ -21,6 +21,7 @@ static inline void nop_function(void)
 
 }
 
+#ifdef STM32F10X_CL
 static inline uint32_t get_BASEPRI(void)
 {
 	uint32_t result = 0;
@@ -72,5 +73,6 @@ static inline void set_CONTROL(uint32_t control)
 {
 	__asm volatile ("msr control, %0" : : "r" (control) );
 }
+#endif
 
 #endif
