@@ -3,6 +3,8 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 
+#define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
+
 enum can_motor_mode
 {
 	CAN_MOTOR_POSITION = 0x01,
@@ -10,12 +12,24 @@ enum can_motor_mode
 	CAN_MOTOR_HOMING   = 0x06
 };
 
-const struct canopen_configuration can_motor_configuration[] =
+const struct canopen_configuration can_motor_driving_configuration[] =
 {
-		{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
-		{0x6060, 0, 1, CAN_MOTOR_SPEED}, // mode vitesse
-		{0x6083, 0, 4, 1500},            // acceleration
-		{0x6084, 0, 4, 1500},            // deceleration
+	{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
+	{0x2303, 1, 1, 0xc8},            // pdo 3 - position en parametre 1
+	{0x2303, 2, 1, 4},               // pdo 3 - courant en parametre 2
+	{0x6060, 0, 1, CAN_MOTOR_SPEED}, // mode vitesse
+	{0x6083, 0, 4, 1500},            // acceleration
+	{0x6084, 0, 4, 1500},            // deceleration
+};
+
+const struct canopen_configuration can_motor_steering_configuration[] =
+{
+	{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
+	{0x2303, 1, 1, 0xc8},            // pdo 3 - position en parametre 1
+	{0x2303, 2, 1, 4},               // pdo 3 - courant en parametre 2
+	{0x6060, 0, 1, CAN_MOTOR_SPEED}, // mode vitesse
+	{0x6083, 0, 4, 500},             // acceleration
+	{0x6084, 0, 4, 500},             // deceleration
 };
 
 static void can_motor_callback(struct can_msg *msg, int id, int type);
@@ -30,7 +44,8 @@ static struct can_motor_data can_motor_data[4];
 
 int can_motor_module_init()
 {
-	canopen_register_node(0x20, can_motor_configuration, sizeof(can_motor_configuration)/sizeof(can_motor_configuration[0]), &can_motor_callback);
+	canopen_register_node(0x20, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_callback);
+	canopen_register_node(0x21, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_callback);
 
 	return 0;
 }
@@ -51,26 +66,9 @@ static void can_motor_tx_pdo1(int node, uint16_t control_word)
 	can_write(&msg, 0);
 }
 
-static void can_motor_tx_pdo3(int node)
-{
-	struct can_msg msg;
-
-	msg.id = 0x400 + node;
-	msg.size = 5;
-	msg.format = CAN_STANDARD_FORMAT;
-	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0xc8;
-	msg.data[1] = 4;
-	msg.data[2] = 1;
-	msg.data[3] = 1;
-	msg.data[4] = 1;
-
-	can_write(&msg, 0);
-}
-
 void can_motor_callback(struct can_msg *msg, int id, int type)
 {
-	if( type == CANOPEN_TX_PDO1 )
+	if( type == CANOPEN_RX_PDO1 )
 	{
 		can_motor_data[0].status_word = (msg->data[1] << 8) + msg->data[0];
 
@@ -110,9 +108,6 @@ void can_motor_callback(struct can_msg *msg, int id, int type)
 			// etat switch on disable
 			// on veut aller en ready to switch on
 			can_motor_tx_pdo1(id, 6);
-
-			// on reconfigure le PDO3 au cas ou
-			can_motor_tx_pdo3(id);
 		}
 //		else if( (can_motor_data[0].status_word & 0x4f) == 0x00 )
 //		{

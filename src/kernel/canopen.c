@@ -71,8 +71,9 @@ module_init(canopen_module_init, INIT_CAN);
 
 static void can_update_node(int id, unsigned int nodeid, int type, struct can_msg* msg)
 {
-	if( type == CANOPEN_TX_PDO1 )
+	if( type == CANOPEN_RX_PDO1 || type == CANOPEN_RX_PDO2 || type == CANOPEN_RX_PDO3 )
 	{
+		// gestion des pdo specifique => callback
 		canopen_nodes[id].state = NMT_OPERATIONAL;
 		canopen_nodes[id].callback(msg, nodeid, type);
 	}
@@ -146,11 +147,23 @@ static void can_task(void *arg)
 
 			unsigned int nodeid = 0;
 			int type = 0;
+			if( msg.id > 0x380 && msg.id < 0x300)
+			{
+				// PDO 3
+				nodeid = msg.id - 0x380;
+				type = CANOPEN_RX_PDO3;
+			}
+			if( msg.id > 0x280 && msg.id < 0x200)
+			{
+				// PDO 2
+				nodeid = msg.id - 0x280;
+				type = CANOPEN_RX_PDO2;
+			}
 			if( msg.id > 0x180 && msg.id < 0x200)
 			{
 				// PDO 1
 				nodeid = msg.id - 0x180;
-				type = CANOPEN_TX_PDO1;
+				type = CANOPEN_RX_PDO1;
 			}
 			else if(msg.id > 0x580 && msg.id < 0x600)
 			{
@@ -212,6 +225,18 @@ int canopen_reset_node(int node)
 	msg.type = CAN_DATA_FRAME;
 	msg.data[0] = 0x81;
 	msg.data[1] = node;
+
+	return can_write(&msg, 0);
+}
+
+int canopen_sync()
+{
+	struct can_msg msg;
+
+	msg.id = 0x80;
+	msg.size = 0;
+	msg.format = CAN_STANDARD_FORMAT;
+	msg.type = CAN_DATA_FRAME;
 
 	return can_write(&msg, 0);
 }
