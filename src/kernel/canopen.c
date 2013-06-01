@@ -7,21 +7,38 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-#define CAN_STACK_SIZE  250
-#define CAN_READ_QUEUE_SIZE      50
-#define CAN_MAX_NODE          4
+#define CAN_STACK_SIZE             250
+#define CAN_READ_QUEUE_SIZE         50
+#define CAN_MAX_NODE                 4
+
+#define CANOPEN_BOOTUP           0x700
+#define CANOPEN_SDO_RES          0x580
+
+enum canopen_nmt_state
+{
+	NMT_RESET = 0,
+	NMT_PRE_OPERATIONAL,
+	NMT_OPERATIONAL,
+	NMT_STOP
+};
+
+struct canopen_node
+{
+	uint8_t nodeid;
+	uint8_t state;
+	uint8_t conf_id;
+	uint8_t conf_size;
+	const struct canopen_configuration* static_conf;
+	can_callback callback;
+};
 
 static void can_task(void *arg);
 static xQueueHandle can_read_queue;
 static int can_max_node;
+static struct canopen_node canopen_nodes[CAN_MAX_NODE];
 
-struct canopen_node
-{
-	char id;
-	can_callback callback;
-};
+static int canopen_op_mode(int node);
 
-struct canopen_node canopen_nodes[CAN_MAX_NODE];
 
 static int canopen_module_init(void)
 {
@@ -52,6 +69,62 @@ static int canopen_module_init(void)
 
 module_init(canopen_module_init, INIT_CAN);
 
+static void can_update_node(int id, unsigned int nodeid, int type, struct can_msg* msg)
+{
+	if( type == CANOPEN_TX_PDO1 )
+	{
+		canopen_nodes[id].state = NMT_OPERATIONAL;
+		canopen_nodes[id].callback(msg, nodeid, type);
+	}
+	else if( type == CANOPEN_SDO_RES)
+	{
+		uint16_t index = msg->data[1] + (msg->data[2] << 8);
+		uint8_t subindex = msg->data[3];
+
+		// on fait de la conf
+		if( msg->data[0] == 0x60 )
+		{
+			// reponse "OK" a un SDO write
+		}
+		else if( msg->data[0] == 0x80 )
+		{
+			// reponse d'erreur a un SDO (read ou write)
+			log_format(LOG_ERROR, "SDO write failed node %x index %x subindex %x error 0x%x%x%x%x",
+					nodeid, index, subindex, msg->data[7], msg->data[6], msg->data[5], msg->data[4]);
+		}
+
+		if( canopen_nodes[id].state == NMT_PRE_OPERATIONAL )
+		{
+			if( canopen_nodes[id].conf_id < canopen_nodes[id].conf_size )
+			{
+				const struct canopen_configuration* conf = &canopen_nodes[id].static_conf[canopen_nodes[id].conf_id];
+				if( conf->index == index && conf->subindex == subindex )
+				{
+					// on passe au suivant
+					canopen_nodes[id].conf_id++;
+					if( canopen_nodes[id].conf_id < canopen_nodes[id].conf_size )
+					{
+						conf = &canopen_nodes[id].static_conf[canopen_nodes[id].conf_id];
+						canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
+					}
+					else
+					{
+						log_format(LOG_INFO, "configuration %x end", nodeid);
+						canopen_op_mode(nodeid);
+					}
+				}
+			}
+		}
+	}
+	else if( type == CANOPEN_BOOTUP)
+	{
+		canopen_nodes[id].state = NMT_PRE_OPERATIONAL;
+		canopen_nodes[id].conf_id = 0;
+		const struct canopen_configuration* conf = &canopen_nodes[id].static_conf[0];
+		canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
+	}
+}
+
 static void can_task(void *arg)
 {
 	(void) arg;
@@ -71,33 +144,38 @@ static void can_task(void *arg)
 			// TODO a voir / defauts
 			//fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
 
-			int id = 0;
+			unsigned int nodeid = 0;
 			int type = 0;
 			if( msg.id > 0x180 && msg.id < 0x200)
 			{
 				// PDO 1
-				id = msg.id - 0x180;
+				nodeid = msg.id - 0x180;
 				type = CANOPEN_TX_PDO1;
+			}
+			else if(msg.id > 0x580 && msg.id < 0x600)
+			{
+				// SDO
+				nodeid = msg.id - 0x580;
+				type = CANOPEN_SDO_RES;
 			}
 			else if(msg.id > 0x700 && msg.id < 0x780)
 			{
 				// bootup
-				id = msg.id - 0x700;
+				nodeid = msg.id - 0x700;
 				type = CANOPEN_BOOTUP;
-				log_format(LOG_INFO, "boot up %x", (unsigned int) id);
+				log_format(LOG_INFO, "boot up %x", nodeid);
 			}
 
-			// on a trouve l'id
-			if( id > 0 )
+			int i = 0;
+			while( i < can_max_node && canopen_nodes[i].nodeid != nodeid )
 			{
-				int i = 0;
-				for( ; i < can_max_node ; i++)
-				{
-					if( canopen_nodes[i].id == id)
-					{
-						canopen_nodes[i].callback(&msg, id, type);
-					}
-				}
+				i++;
+			}
+
+			if( i < can_max_node )
+			{
+				// c'est un noeud can enregistre
+				can_update_node(i, nodeid, type, &msg);
 			}
 		}
 	}
@@ -105,13 +183,17 @@ static void can_task(void *arg)
 
 //! enregistrement d'un noeud can
 //! fonction non protegee - utiliser dans la phase d'init uniquement
-int canopen_register_node(int node, can_callback callback)
+int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, can_callback callback)
 {
 	int res = -1;
 
 	if( can_max_node < CAN_MAX_NODE )
 	{
-		canopen_nodes[can_max_node].id = node;
+		canopen_nodes[can_max_node].nodeid = node;
+		canopen_nodes[can_max_node].state = NMT_RESET;
+		canopen_nodes[can_max_node].conf_id = 0;
+		canopen_nodes[can_max_node].conf_size = conf_size;
+		canopen_nodes[can_max_node].static_conf = static_conf;
 		canopen_nodes[can_max_node].callback = callback;
 		can_max_node++;
 		res = 0;
@@ -134,7 +216,7 @@ int canopen_reset_node(int node)
 	return can_write(&msg, 0);
 }
 
-int canopen_op_mode(int node)
+static int canopen_op_mode(int node)
 {
 	struct can_msg msg;
 
@@ -148,22 +230,44 @@ int canopen_op_mode(int node)
 	return can_write(&msg, 0);
 }
 
-#if 0
-uint32_t canopen_sdo_read(int node, int index, int subindex)
+int canopen_sdo_write(int node, int size, int index, int subindex, uint32_t data)
 {
 	struct can_msg msg;
 
 	msg.id = 0x600 + node;
-	msg.size = 4;
+	msg.size = 4 + size;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0x40;
 	msg.data[1] = index & 0xff;
 	msg.data[2] = (index >> 8) & 0xff;
 	msg.data[3] = subindex;
+	msg.data[4] = data & 0xff;
+
+	switch(size)
+	{
+		case 1:
+			msg.data[0] = 0x2f;
+			break;
+		case 2:
+			msg.data[0] = 0x2b;
+			msg.data[5] = (data >> 8) & 0xff;
+			break;
+		case 3:
+			msg.data[0] = 0x27;
+			msg.data[5] = (data >> 8) & 0xff;
+			msg.data[6] = (data >> 16) & 0xff;
+			break;
+		case 4:
+			msg.data[0] = 0x23;
+			msg.data[5] = (data >> 8) & 0xff;
+			msg.data[6] = (data >> 16) & 0xff;
+			msg.data[7] = (data >> 24) & 0xff;
+			break;
+		default:
+			return -1;
+	}
 
 	can_write(&msg, 0);
 
 	return 0;
 }
-#endif
