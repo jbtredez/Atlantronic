@@ -3,7 +3,6 @@
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "priority.h"
-#include "kernel/event.h"
 #include "kernel/driver/usb/usb_lib.h"
 #include "kernel/driver/usb/usb_istr.h"
 #include "kernel/driver/usb/usb_pwr.h"
@@ -34,6 +33,9 @@ static void (*usb_cmd[USB_CMD_NUM])(void*);
 void usb_read_task(void *);
 void usb_write_task(void *);
 
+
+static xSemaphoreHandle usb_write_sem;
+static xSemaphoreHandle usb_read_sem;
 static volatile unsigned int usb_endpoint_ready;
 
 static int usb_module_init(void)
@@ -54,6 +56,20 @@ static int usb_module_init(void)
 
 	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
+
+	vSemaphoreCreateBinary(usb_write_sem);
+
+	if( usb_write_sem == NULL )
+	{
+		return ERR_INIT_USB;
+	}
+
+	vSemaphoreCreateBinary(usb_read_sem);
+
+	if( usb_read_sem == NULL )
+	{
+		return ERR_INIT_USB;
+	}
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(usb_read_task, "usb_r", USB_READ_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);
@@ -112,9 +128,9 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		usb_write_byte(*((unsigned char*)msg));
 		msg++;
 	}
-	vTaskSetEvent(EVENT_USB_WRITE);
-
 	xSemaphoreGive(usb_mutex);
+
+	xSemaphoreGive(usb_write_sem);
 }
 
 void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
@@ -180,8 +196,7 @@ void usb_read_task(void * arg)
 			*read_size = USB_SIL_Read(EP2_OUT, rx_buffer);
 		}
 
-		vTaskWaitEvent(EVENT_USB_READ, portMAX_DELAY);
-		vTaskClearEvent(EVENT_USB_READ);
+		xSemaphoreTake(usb_read_sem, portMAX_DELAY);
 	}
 }
 
@@ -216,8 +231,7 @@ void usb_write_task(void * arg)
 			xSemaphoreGive(usb_mutex);
 		}
 
-		vTaskWaitEvent(EVENT_USB_WRITE, portMAX_DELAY);
-		vTaskClearEvent(EVENT_USB_WRITE);
+		xSemaphoreTake(usb_write_sem, portMAX_DELAY);
 	}
 }
 
@@ -257,7 +271,7 @@ void EP1_IN_Callback(void)
 	{
 		usb_endpoint_ready = 1;
 		usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_WRITE);
+		xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
 	}
 
 	if( xHigherPriorityTaskWoken )
@@ -306,7 +320,7 @@ void EP2_OUT_Callback(void)
 			usb_rx_waiting = 1;
 		}
 	}
-	xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USB_READ);
+	xSemaphoreGiveFromISR(usb_read_sem, &xHigherPriorityTaskWoken);
 
 	if( xHigherPriorityTaskWoken )
 	{
