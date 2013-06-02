@@ -187,7 +187,8 @@ static int rcc_module_init()
 
 module_init(rcc_module_init, INIT_RCC);
 
-void wait_active(uint32_t tick)
+// on doit la compiler en O2 pour avoir le bon nombre de cycles
+__attribute__((optimize("-O2"))) void wait_active(uint32_t tick)
 {
 	tick >>= 2;
 	for( ; tick-- ; )
