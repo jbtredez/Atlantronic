@@ -140,20 +140,20 @@ static void can_task(void *arg)
 		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
 		{
 			// traces CAN pour le debug
-			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
+			//usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
 
 			// TODO a voir / defauts
 			//fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
 
 			unsigned int nodeid = 0;
 			int type = 0;
-			if( msg.id > 0x380 && msg.id < 0x300)
+			if( msg.id > 0x380 && msg.id < 0x400)
 			{
 				// PDO 3
 				nodeid = msg.id - 0x380;
 				type = CANOPEN_RX_PDO3;
 			}
-			if( msg.id > 0x280 && msg.id < 0x200)
+			if( msg.id > 0x280 && msg.id < 0x300)
 			{
 				// PDO 2
 				nodeid = msg.id - 0x280;

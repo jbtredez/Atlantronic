@@ -19,7 +19,7 @@ static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
 
 #define CAN_WRITE_STACK_SIZE     80
-#define CAN_WRITE_QUEUE_SIZE     20
+#define CAN_WRITE_QUEUE_SIZE     80
 
 int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {

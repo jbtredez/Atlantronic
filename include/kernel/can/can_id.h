@@ -5,7 +5,8 @@
 //! @brief Can - message id
 //! @author Atlantronic
 
-#define CAN_MOTOR1_NODEID         0x20
+#define CAN_MOTOR_DRIVING_NODEID      0x20
+#define CAN_MOTOR_STEERING_NODEID     0x21
 
 #endif
 

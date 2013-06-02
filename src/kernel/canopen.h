@@ -3,7 +3,7 @@
 
 #include "kernel/driver/can.h"
 
-typedef void (*can_callback)(struct can_msg *msg, int id, int type);
+typedef void (*can_callback)(struct can_msg *msg, int nodeid, int type);
 
 #define CANOPEN_RX_PDO1          0x180
 #define CANOPEN_RX_PDO2          0x280

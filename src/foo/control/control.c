@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "kernel/trapeze.h"
+#include "kernel/canopen.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
@@ -372,6 +373,8 @@ end_pwm_critical:
 	control_usb_data.control_u_right = u1;
 	control_usb_data.control_u_left = u2;
 	xSemaphoreGive(control_mutex);
+
+	canopen_sync();
 
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }

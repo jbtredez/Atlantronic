@@ -5,19 +5,20 @@
 
 #define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
 
-enum can_motor_mode
-{
-	CAN_MOTOR_POSITION = 0x01,
-	CAN_MOTOR_SPEED    = 0x03,
-	CAN_MOTOR_HOMING   = 0x06
-};
+#define CAN_MOTOR_CMD_DI   0x08      //!< enable
+#define CAN_MOTOR_CMD_EN   0x0f      //!< disable
+#define CAN_MOTOR_CMD_M    0x3c      //!< debut du mouvement
+#define CAN_MOTOR_CMD_LCC  0x80      //!< limitation courant continu
+#define CAN_MOTOR_CMD_LPC  0x81      //!< limitation courant max
+#define CAN_MOTOR_CMD_V    0x93      //!< commande de vitesse
+#define CAN_MOTOR_CMD_LA   0xb4      //!< commande de position
 
 const struct canopen_configuration can_motor_driving_configuration[] =
 {
 	{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
 	{0x2303, 1, 1, 0xc8},            // pdo 3 - position en parametre 1
 	{0x2303, 2, 1, 4},               // pdo 3 - courant en parametre 2
-	{0x6060, 0, 1, CAN_MOTOR_SPEED}, // mode vitesse
+	{0x6060, 0, 1, -1},              // mode faulhaber
 	{0x6083, 0, 4, 1500},            // acceleration
 	{0x6084, 0, 4, 1500},            // deceleration
 };
@@ -27,7 +28,7 @@ const struct canopen_configuration can_motor_steering_configuration[] =
 	{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
 	{0x2303, 1, 1, 0xc8},            // pdo 3 - position en parametre 1
 	{0x2303, 2, 1, 4},               // pdo 3 - courant en parametre 2
-	{0x6060, 0, 1, CAN_MOTOR_SPEED}, // mode vitesse
+	{0x6060, 0, 1, -1},              // mode faulhaber
 	{0x6083, 0, 4, 500},             // acceleration
 	{0x6084, 0, 4, 500},             // deceleration
 };
@@ -37,15 +38,17 @@ static void can_motor_callback(struct can_msg *msg, int id, int type);
 struct can_motor_data
 {
 	uint16_t status_word;
-	uint16_t configureStep;
+	uint32_t position;
+	uint16_t current;
+	int speed;
 };
 
-static struct can_motor_data can_motor_data[4];
+static struct can_motor_data can_motor_data[2];
 
 int can_motor_module_init()
 {
-	canopen_register_node(0x20, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_callback);
-	canopen_register_node(0x21, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_DRIVING_NODEID, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_STEERING_NODEID, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_callback);
 
 	return 0;
 }
@@ -66,59 +69,101 @@ static void can_motor_tx_pdo1(int node, uint16_t control_word)
 	can_write(&msg, 0);
 }
 
-void can_motor_callback(struct can_msg *msg, int id, int type)
+static void can_motor_tx_pdo2(int node, uint8_t cmd, uint32_t param)
 {
-	if( type == CANOPEN_RX_PDO1 )
+	struct can_msg msg;
+
+	msg.id = 0x300 + node;
+	msg.size = 5;
+	msg.format = CAN_STANDARD_FORMAT;
+	msg.type = CAN_DATA_FRAME;
+	msg.data[0] = cmd;
+	msg.data[1] = param & 0xff;
+	msg.data[2] = (param >> 8) & 0xff;
+	msg.data[3] = (param >> 16) & 0xff;
+	msg.data[4] = (param >> 24) & 0xff;
+
+	can_write(&msg, 0);
+}
+
+void can_motor_callback(struct can_msg *msg, int nodeid, int type)
+{
+	struct can_motor_data* motor;
+	if( nodeid == CAN_MOTOR_DRIVING_NODEID )
 	{
-		can_motor_data[0].status_word = (msg->data[1] << 8) + msg->data[0];
+		motor = &can_motor_data[0];
+	}
+	else if( nodeid == CAN_MOTOR_STEERING_NODEID )
+	{
+		motor = &can_motor_data[1];
+	}
+
+	if( type == CANOPEN_RX_PDO3 )
+	{
+		uint32_t pos = msg->data[0] + (msg->data[1] << 8) + (msg->data[2] << 16) + (msg->data[3] << 24);
+		motor->speed = ((int)(pos - motor->position)) * 1000 / msg->data[6];
+		motor->position = pos;
+		motor->current = msg->data[4] + (msg->data[5] << 8);
+	}
+	else if( type == CANOPEN_RX_PDO1 )
+	{
+		motor->status_word = (msg->data[1] << 8) + msg->data[0];
 
 		// le status word a change
 		// gestion machine a etat du moteur
-		if( (can_motor_data[0].status_word & 0x6f) == 0x27 )
+		if( (motor->status_word & 0x6f) == 0x27 )
 		{
 			// etat op enable
 			// rien a faire, on souhaite y rester
 		}
-		else if( (can_motor_data[0].status_word & 0x6f) == 0x07 )
+		else if( (motor->status_word & 0x6f) == 0x07 )
 		{
 			// etat quick stop active
 			// TODO : a voir, pour repasser en op enable:
-			//can_motor_rx_pdo1(id, 0x0f);
+			//can_motor_rx_pdo1(nodeid, 0x0f);
 		}
-		else if( (can_motor_data[0].status_word & 0x4f) == 0x08 )
+		else if( (motor->status_word & 0x4f) == 0x08 )
 		{
 			// etat fault
 			// TODO notifier un probleme. Pour aller en switch on disable :
-			//can_motor_rx_pdo1(id, 0x80);
+			//can_motor_rx_pdo1(nodeid, 0x80);
 		}
-		else if( (can_motor_data[0].status_word & 0x6f) == 0x23 )
+		else if( (motor->status_word & 0x6f) == 0x23 )
 		{
 			// etat switch on
 			// on veut aller en op enable
-			can_motor_tx_pdo1(id, 0x0f);
+			can_motor_tx_pdo1(nodeid, 0x0f);
 		}
-		else if( (can_motor_data[0].status_word & 0x6f) == 0x21 )
+		else if( (motor->status_word & 0x6f) == 0x21 )
 		{
 			// etat ready to switch on
 			// on veut aller en switch on
-			can_motor_tx_pdo1(id, 7);
+			can_motor_tx_pdo1(nodeid, 7);
 		}
-		else if( (can_motor_data[0].status_word & 0x4f) == 0x40 )
+		else if( (motor->status_word & 0x4f) == 0x40 )
 		{
 			// etat switch on disable
 			// on veut aller en ready to switch on
-			can_motor_tx_pdo1(id, 6);
+			//can_motor_tx_pdo1(nodeid, 6);
+
+			// command faulhaber qui va direct en OP ENABLE
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
 		}
-//		else if( (can_motor_data[0].status_word & 0x4f) == 0x00 )
+//		else if( (motor->status_word & 0x4f) == 0x00 )
 //		{
 			// etat not ready to switch on
 			// rien a faire, le moteur va passer en switch on disable automatiquement
 //		}
-//		else if( (can_motor_data[0].status_word & 0x4f) == 0x0f )
+//		else if( (motor->status_word & 0x4f) == 0x0f )
 //		{
 			// etat fault reaction active
 			// rien a faire, on va passer en fault automatiquement
 //		}
 
 	}
+}
+
+void can_motor_set_speed(uint8_t nodeid, int32_t speed)
+{
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_V, speed);
 }
