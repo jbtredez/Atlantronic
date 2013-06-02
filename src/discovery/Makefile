@@ -28,7 +28,6 @@ LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
-#LDFLAGS+=-lnosys
 LDFLAGS+=-lg
 LDFLAGS+=-g3
 

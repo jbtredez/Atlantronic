@@ -173,5 +173,33 @@ size_t xPortGetFreeHeapSize( void )
 	return ( configADJUSTED_HEAP_SIZE - xNextFreeByte );
 }
 
+// surcharge des fonctions de la libc pour passer par l'implementation de malloc du dessus
+void* _realloc_r(struct _reent *re, void* oldAddr, size_t newSize)
+{
+	(void) re;
+	(void) oldAddr;
+	(void) newSize;
+	// on ne fait pas de realloc
+	vPortFree(oldAddr);
 
+	return 0;
+}
+
+void* _calloc_r(struct _reent *re, size_t num, size_t size)
+{
+	(void) re;
+	return pvPortMalloc(num*size);
+}
+
+void* _malloc_r(struct _reent *re, size_t size)
+{
+	(void) re;
+	return pvPortMalloc(size);
+}
+
+void _free_r(struct _reent *re, void* ptr)
+{
+	(void) re;
+	vPortFree(ptr);
+}
 

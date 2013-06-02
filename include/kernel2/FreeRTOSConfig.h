@@ -5,6 +5,7 @@
 // configKERNEL_INTERRUPT_PRIORITY in priority.h
 // configMAX_SYSCALL_INTERRUPT_PRIORITY in priority.h
 #include "priority.h"
+#include "kernel/systick.h"
 #include <stdint.h>
 
 #define configUSE_PREEMPTION			1
@@ -25,7 +26,7 @@
 #define configUSE_MALLOC_FAILED_HOOK	1
 #define configUSE_APPLICATION_TASK_TAG	0
 #define configUSE_COUNTING_SEMAPHORES	1
-#define configGENERATE_RUN_TIME_STATS	0
+#define configGENERATE_RUN_TIME_STATS	1
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
@@ -53,6 +54,9 @@ to exclude the API function. */
 #else
 	#define configPRIO_BITS       		4        /* 15 priority levels */
 #endif
+
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS()
+#define portGET_RUN_TIME_COUNTER_VALUE() systick_get_time_from_isr()
 
 /* The lowest interrupt priority that can be used in a call to a "set priority"
 function. */
