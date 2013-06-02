@@ -177,6 +177,11 @@ static int rcc_module_init()
 
 	}
 
+#ifdef STM32F4XX
+	// activation du FPU
+	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+#endif
+
 	return 0;
 }
 
