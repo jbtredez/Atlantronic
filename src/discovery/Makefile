@@ -21,8 +21,8 @@ CFLAGS+=-g3
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-nostartfiles
-LDFLAGS+=-msoft-float
-LDFLAGS+=-mfpu=vfp
+LDFLAGS+=-mfloat-abi=hard
+LDFLAGS+=-mfpu=fpv4-sp-d16
 LDFLAGS+=-mthumb
 LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lgcc
@@ -35,10 +35,7 @@ LDFLAGS+=-g3
 DEF+=__$(ARCH)__
 DEF+=STM32F4XX
 
-DEBUG=0
-ifeq ($(DEBUG),1)
-
-else
+ifneq ($(DEBUG),1)
 DEF+= NDEBUG
 CFLAGS+=-O2
 LDFLAGS+=-O2

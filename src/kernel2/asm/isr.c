@@ -2,8 +2,7 @@
 //! @brief isr
 //! @author Atlantronic
 
-#define BAR_NUMBER       0x00
-#define FOO_NUMBER       0x03
+#include "kernel2/FreeRTOS.h"
 
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi
@@ -18,6 +17,8 @@ static void isr_context_switch( void ) __attribute__ ((naked)); //!< changement 
 void isr_systick(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption systick
 
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
+
+extern void xPortSysTickHandler( void );
 
 extern unsigned long _sidata;
 extern unsigned long _sdata; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
@@ -45,7 +46,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_debug_monitor,
 	0,                                      // Reserved
 	isr_context_switch,
-	isr_systick,
+	xPortSysTickHandler, //isr_systick,
 
 	// périphériques
 	isr_unexpected,
@@ -165,23 +166,65 @@ void isr_reset(void)
 	__main();
 }
 
-//! doc utile : 0xfffffff1 : retour handler mode
-//!             0xfffffffd : retour thread mode, et utilisation de process stack
-//!             0xfffffff9 : retour thread mode, et utilisation de main stack
 void isr_svc( void )
 {
-	while( 1 )
-	{
-
-	}
+	__asm volatile
+	(
+		"	ldr	r3, pxCurrentTCBConst2		\n" /* Restore the context. */
+		"	ldr r1, [r3]					\n" /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
+		"	ldr r0, [r1]					\n" /* The first item in pxCurrentTCB is the task top of stack. */
+		"	ldmia r0!, {r4-r11, r14}		\n" /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
+		"	msr psp, r0						\n" /* Restore the task stack pointer. */
+		"	mov r0, #0 						\n"
+		"	msr	basepri, r0					\n"
+		"	bx r14							\n"
+		"									\n"
+		"	.align 2						\n"
+		"pxCurrentTCBConst2: .word pxCurrentTCB				\n"
+	);
 }
 
 void isr_context_switch( void )
 {
-	while( 1 )
-	{
-
-	}
+	__asm volatile
+	(
+		"	mrs r0, psp							\n"
+		"										\n"
+		"	ldr	r3, pxCurrentTCBConst			\n" /* Get the location of the current TCB. */
+		"	ldr	r2, [r3]						\n"
+		"										\n"
+		"	tst r14, #0x10						\n" /* Is the task using the FPU context?  If so, push high vfp registers. */
+		"	it eq								\n"
+		"	vstmdbeq r0!, {s16-s31}				\n"
+		"										\n"
+		"	stmdb r0!, {r4-r11, r14}			\n" /* Save the core registers. */
+		"										\n"
+		"	str r0, [r2]						\n" /* Save the new top of stack into the first member of the TCB. */
+		"										\n"
+		"	stmdb sp!, {r3, r14}				\n"
+		"	mov r0, %0 							\n"
+		"	msr basepri, r0						\n"
+		"	bl vTaskSwitchContext				\n"
+		"	mov r0, #0							\n"
+		"	msr basepri, r0						\n"
+		"	ldmia sp!, {r3, r14}				\n"
+		"										\n"
+		"	ldr r1, [r3]						\n" /* The first item in pxCurrentTCB is the task top of stack. */
+		"	ldr r0, [r1]						\n"
+		"										\n"
+		"	ldmia r0!, {r4-r11, r14}			\n" /* Pop the core registers. */
+		"										\n"
+		"	tst r14, #0x10						\n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
+		"	it eq								\n"
+		"	vldmiaeq r0!, {s16-s31}				\n"
+		"										\n"
+		"	msr psp, r0							\n"
+		"	bx r14								\n"
+		"										\n"
+		"	.align 2							\n"
+		"pxCurrentTCBConst: .word pxCurrentTCB	\n"
+		::"i"(configMAX_SYSCALL_INTERRUPT_PRIORITY)
+	);
 }
 
 static void isr_nmi(void)

@@ -31,7 +31,7 @@ enum gpio_pupd
 	GPIO_PUPD_DOWN   = 0x02
 };
 
-static void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd);
+void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd);
 
 static int gpio_module_init(void)
 {
@@ -49,7 +49,7 @@ static int gpio_module_init(void)
 
 module_init(gpio_module_init, INIT_GPIO);
 
-static void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd)
+void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd)
 {
 	GPIOx->MODER &= ~(GPIO_MODER_MODER0 << (2 * pin));
 	GPIOx->MODER |= ((uint32_t)mode) << (2 * pin);
