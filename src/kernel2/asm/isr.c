@@ -18,8 +18,6 @@ void isr_systick(void) __attribute__((weak, alias("isr_unexpected") )); //!< int
 
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
-extern void xPortSysTickHandler( void );
-
 extern unsigned long _sidata;
 extern unsigned long _sdata; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
 extern unsigned long _edata; //!< fin du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
@@ -46,7 +44,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_debug_monitor,
 	0,                                      // Reserved
 	isr_context_switch,
-	xPortSysTickHandler, //isr_systick,
+	isr_systick,
 
 	// périphériques
 	isr_unexpected,

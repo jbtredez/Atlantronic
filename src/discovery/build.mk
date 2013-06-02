@@ -1,6 +1,7 @@
 obj-discovery-test += kernel2/main.o
 obj-discovery-test += kernel2/asm/isr.o
 obj-discovery-test += kernel/rcc.o
+obj-discovery-test += kernel/systick.o
 obj-discovery-test += kernel2/tasks.o
 obj-discovery-test += kernel2/queue.o
 obj-discovery-test += kernel2/port.o
