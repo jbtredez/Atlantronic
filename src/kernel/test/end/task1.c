@@ -7,6 +7,7 @@
 #include "kernel/task.h"
 #include <math.h>
 #include "gpio.h"
+#include "kernel/end.h"
 #include "kernel/event.h"
 
 #define TASK1_STACK_SIZE          100
@@ -14,10 +15,10 @@
 
 static void task1_task(void *arg);
 
-
 static int task1_module_init()
 {
 	xTaskHandle xHandle;
+
 	portBASE_TYPE err = xTaskCreate(task1_task, "task1", TASK1_STACK_SIZE, NULL, PRIORITY_TEST_TASK1, &xHandle);
 
 	if(err != pdPASS)
@@ -38,49 +39,49 @@ static void task1_task(void* arg)
 
 	while(1)
 	{
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_WARNING);
 		}
 
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_0);
 		}
 		
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_1);
 		}
 		
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_2);
 		}
 		
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_3);
 		}
 		
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_4);
 		}
 		
 		vTaskDelay(72000000);
 		
-		if(! (vTaskGetEvent() & EVENT_END))
+		if(! end_match)
 		{
 			setLed(LED_5);
 		}

@@ -12,6 +12,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/semphr.h"
+#include "kernel/end.h"
 #include <stdlib.h>
 
 #define AX12_INSTRUCTION_PING             0x01
@@ -621,7 +622,7 @@ struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 
 struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
 {
-	if( vTaskGetEvent() & EVENT_END )
+	if( end_match )
 	{
 		torque_limit = 0x00;
 	}

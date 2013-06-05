@@ -16,9 +16,12 @@ uint64_t end_match_tick = 90ULL * 72000000ULL;
 
 static void end_cmd_set_time(void* arg);
 static void end_task(void *arg);
+volatile int end_match;
 
 static int end_module_init()
 {
+	end_match = 0;
+
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(end_task, "end", END_STACK_SIZE, NULL, PRIORITY_TASK_END, &xHandle);
 
@@ -56,7 +59,7 @@ static void end_task(void *arg)
 	usb_add(USB_GO, &msg, sizeof(msg));
 	log(LOG_INFO, "GO");
 	vTaskDelay(end_match_tick);
-	vTaskSetEvent(EVENT_END);
+	end_match = 1;
 	log(LOG_INFO, "Fin du match");
 
 	exitModules();

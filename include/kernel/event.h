@@ -6,7 +6,6 @@
 //! @author Atlantronic
 
 #define EVENT_GO                          0x01    //!< évènement go
-#define EVENT_END                         0x02    //!< évènement fin de match
 #define EVENT_CONTROL_TARGET_REACHED      0x04    //!< évènement levé lors de l'arrivée au point voulu
 #define EVENT_CONTROL_TARGET_NOT_REACHED  0x08    //!< évènement levé lorsque l'asservissement n'arrive pas à atteindre l'objectif
 #define EVENT_CONTROL_COLSISION           0x10

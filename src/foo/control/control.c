@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "kernel/trapeze.h"
 #include "kernel/canopen.h"
+#include "kernel/end.h"
 
 //! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
@@ -236,7 +237,7 @@ static void control_compute()
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
 	// gestion de la fin de la partie : arrêt complet des moteurs quoi qu'il arrive
-	if(vTaskGetEvent() & EVENT_END)
+	if( end_match )
 	{
 		control_state = CONTROL_END;
 		goto end_pwm_critical;
