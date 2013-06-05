@@ -2,6 +2,7 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/queue.h"
 #include "kernel/event.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
@@ -11,6 +12,7 @@ volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
 uint8_t gpio_recalage_done;
+static xQueueHandle gpio_queue_go;
 
 static void gpio_cmd_go();
 static void gpio_cmd_color(void* arg);
@@ -20,6 +22,7 @@ static int gpio_module_init(void)
 	color = COLOR_BLUE;
 	gpio_go = 0;
 	gpio_recaler = 0;
+	gpio_queue_go = xQueueCreate(1, 0);
 
 	// activation de GPIOA
 	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
@@ -111,6 +114,11 @@ static int gpio_module_init(void)
 
 module_init(gpio_module_init, INIT_GPIO);
 
+void gpio_wait_go()
+{
+	xQueuePeek(gpio_queue_go, NULL, portMAX_DELAY);
+}
+
 static void gpio_cmd_go()
 {
 	if(gpio_recalage_done)
@@ -118,7 +126,7 @@ static void gpio_cmd_go()
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match();
-		vTaskSetEvent(EVENT_GO);
+		xQueueSend(gpio_queue_go, NULL, 0);
 	}
 }
 
@@ -151,7 +159,7 @@ static portBASE_TYPE gpio_go_from_isr()
 		gpio_go = 1;
 		setLed(0x23F);
 		systick_start_match_from_isr();
-		higher_priority_task_woken = vTaskSetEventFromISR(EVENT_GO);
+		xQueueSendFromISR(gpio_queue_go, NULL, &higher_priority_task_woken);
 	}
 
 	return higher_priority_task_woken;

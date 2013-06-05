@@ -31,8 +31,6 @@ module_init(test_can_module_init, INIT_TEST_DEPLACEMENT);
 
 static void test_can_task()
 {
-//	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
-
 	uint8_t i = 0;
 
 	

@@ -5,7 +5,6 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "kernel/event.h"
 #include "kernel/rcc.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
@@ -41,7 +40,7 @@ static void end_cmd_set_time(void* arg)
 {
 	// temps passé en ms
 	uint64_t time = *((uint32_t*) arg);
-	if( ! (vTaskGetEvent() & EVENT_GO))
+	if( ! getGo() )
 	{
 		end_match_tick = ms_to_tick( time );
 		log_format(LOG_INFO, "duree du match => %d ms", (int)time);
@@ -52,7 +51,7 @@ static void end_task(void *arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	gpio_wait_go();
 	uint64_t msg[2];
 	msg[0] = systick_get_time();
 	msg[1] = end_match_tick;

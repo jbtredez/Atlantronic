@@ -34,7 +34,7 @@ module_init(test_deplacement_module_init, INIT_TEST_DEPLACEMENT);
 
 static void test_deplacement_task()
 {
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	gpio_wait_go();
 
 	if(getcolor() == COLOR_BLUE)
 	{

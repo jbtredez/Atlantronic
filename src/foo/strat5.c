@@ -69,7 +69,7 @@ static void strat_task()
 		vTaskDelay(ms_to_tick(50));
 	}
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	gpio_wait_go();
 
 	if(getcolor() != COLOR_BLUE)
 	{

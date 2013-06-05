@@ -35,7 +35,7 @@ static void task1_task(void* arg)
 {
 	(void) arg;
 
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	gpio_wait_go();
 
 	while(1)
 	{

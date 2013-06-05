@@ -5,6 +5,7 @@
 #include "kernel/systick.h"
 #include "kernel/event.h"
 #include "kernel/rcc.h"
+#include "gpio.h"
 #include "pince.h"
 
 //! @todo réglage au pif
@@ -30,7 +31,7 @@ module_init(test_pince_module_init, INIT_TEST_PINCE);
 
 static void test_pince_task()
 {
-	vTaskWaitEvent(EVENT_GO, portMAX_DELAY);
+	gpio_wait_go();
 
 	pince_set_position(PINCE_OPEN,PINCE_OPEN);
 	vTaskDelay(ms_to_tick(1000));

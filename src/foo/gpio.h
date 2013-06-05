@@ -45,6 +45,8 @@ static inline void resetRecalage()
 	gpio_recaler = 0;
 }
 
+void gpio_wait_go();
+
 void setLed(uint32_t mask);
 
 static inline uint8_t get_sick()
