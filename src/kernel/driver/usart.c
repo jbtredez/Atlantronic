@@ -1,6 +1,7 @@
 #include "kernel/driver/usart.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/rcc.h"
 #include "kernel/fault.h"
 #include "gpio.h"
@@ -11,14 +12,14 @@ struct usart_device
 	USART_TypeDef* const usart;
 	DMA_Channel_TypeDef * const dma_read;
 	DMA_Channel_TypeDef * const dma_write;
-	const uint32_t event;
+	xSemaphoreHandle sem;
 	uint32_t error;
 };
 
 struct usart_device usart_device[USART_MAX_DEVICE] =
 {
-	{ USART3, DMA1_Channel3, DMA1_Channel2, EVENT_USART3_TC, 0 },
-	{ UART4,  DMA2_Channel3, DMA2_Channel5, EVENT_UART4_TC, 0 }
+	{ USART3, DMA1_Channel3, DMA1_Channel2, 0, 0 },
+	{ UART4,  DMA2_Channel3, DMA2_Channel5, 0, 0 }
 };
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency)
@@ -114,6 +115,11 @@ void usart_open( enum usart_id id, uint32_t frequency)
 	usart_device[id].dma_read->CCR = DMA_CCR1_MINC | DMA_CCR1_TCIE;
 	usart_device[id].dma_read->CPAR = (uint32_t) &usart_device[id].usart->DR;
 
+	if( usart_device[id].sem == 0)
+	{
+		vSemaphoreCreateBinary(usart_device[id].sem);
+		xSemaphoreTake(usart_device[id].sem, 0);
+	}
 	usart_set_frequency(id, frequency);
 
 	// activation usart
@@ -142,7 +148,7 @@ void isr_usart3(void)
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	USART3->DR;
 
-	// on n'envoi pas l'evenement EVENT_USART3_TC pour attendre le timeout
+	// pas de xSemaphoreGiveFromISR(usart_device[id].sem) pour attendre le timeout
 	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
 }
 
@@ -168,7 +174,7 @@ void isr_uart4(void)
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
 	UART4->DR;
 
-	// on n'envoi pas l'evenement EVENT_UART4_TC pour attendre le timeout
+	// pas de xSemaphoreGiveFromISR(usart_device[id].sem) pour attendre le timeout
 	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
 }
 
@@ -190,7 +196,7 @@ void isr_dma1_channel3(void)
 	{
 		DMA1->IFCR |= DMA_IFCR_CTCIF3;
 		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_USART3_TC);
+		xSemaphoreGiveFromISR(usart_device[USART3_FULL_DUPLEX].sem, &xHigherPriorityTaskWoken);
 	}
 
 	if( xHigherPriorityTaskWoken )
@@ -220,7 +226,7 @@ void isr_dma2_channel3(void)
 	{
 		DMA2->IFCR |= DMA_IFCR_CTCIF3;
 		DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_UART4_TC);
+		xSemaphoreGiveFromISR(usart_device[UART4_HALF_DUPLEX].sem, &xHigherPriorityTaskWoken);
 	}
 
 	if( xHigherPriorityTaskWoken )
@@ -239,7 +245,7 @@ void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 {
 	usart_device[id].error = 0;
-	vTaskClearEvent(usart_device[id].event);
+	xSemaphoreTake(usart_device[id].sem, 0); // on met a 0 si ce n'est pas le cas
 	usart_device[id].dma_read->CNDTR = size;
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR |= DMA_CCR1_EN;
@@ -248,19 +254,16 @@ void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 {
 	uint32_t res = 0;
-	uint32_t ev;
 
-	ev = vTaskWaitEvent(usart_device[id].event, timeout);
+	if( xSemaphoreTake(usart_device[id].sem, timeout) == pdFALSE )
+	{
+		res |= ERR_USART_TIMEOUT;;
+	}
 
 	// note : DMA_CCR1_EN == DMA_CCRX_EN
 	usart_device[id].dma_read->CCR &= ~DMA_CCR1_EN;
 
-	res = usart_device[id].error;
-
-	if(! (ev & usart_device[id].event))
-	{
-		res |= ERR_USART_TIMEOUT;
-	}
+	res |= usart_device[id].error;
 
 	return res;
 }
