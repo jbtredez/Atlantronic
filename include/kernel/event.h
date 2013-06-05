@@ -14,7 +14,6 @@
 #define EVENT_USART3_TC                   0x40
 #define EVENT_LOCAL_HOKUYO_UPDATE         0x80
 #define EVENT_TRAJECTORY_UPDATE          0x100    //!< évènement de mise à jour de la trajectoire (usage interne à trajectory)
-#define EVENT_CAN_TX_END                 0x200
 
 #define EVENT_AX12_SEND_COMPLETE         0x800
 #define EVENT_DETECTION_UPDATE          0x1000

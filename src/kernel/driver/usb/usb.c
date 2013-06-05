@@ -58,18 +58,18 @@ static int usb_module_init(void)
 	NVIC_EnableIRQ(OTG_FS_IRQn);
 
 	vSemaphoreCreateBinary(usb_write_sem);
-
 	if( usb_write_sem == NULL )
 	{
 		return ERR_INIT_USB;
 	}
+	xSemaphoreTake(usb_write_sem, 0);
 
 	vSemaphoreCreateBinary(usb_read_sem);
-
 	if( usb_read_sem == NULL )
 	{
 		return ERR_INIT_USB;
 	}
+	xSemaphoreTake(usb_read_sem, 0);
 
 	xTaskHandle xHandle;
 	portBASE_TYPE err = xTaskCreate(usb_read_task, "usb_r", USB_READ_STACK_SIZE, NULL, PRIORITY_TASK_USB, &xHandle);

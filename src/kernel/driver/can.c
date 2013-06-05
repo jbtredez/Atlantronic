@@ -4,6 +4,7 @@
 
 #include "kernel/event.h"
 #include "kernel/driver/can.h"
+#include "kernel/semphr.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/fault.h"
@@ -17,7 +18,7 @@ static int can_set_mask(int id, uint32_t mask);
 static void can_write_task(void *arg);
 static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
-
+static xSemaphoreHandle can_write_sem;
 #define CAN_WRITE_STACK_SIZE     80
 #define CAN_WRITE_QUEUE_SIZE     80
 
@@ -63,6 +64,13 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 	{
 		return -1;
 	}
+
+	vSemaphoreCreateBinary(can_write_sem);
+	if( can_write_sem == NULL )
+	{
+		return ERR_INIT_USB;
+	}
+	xSemaphoreTake(can_write_sem, 0);
 
 	xTaskHandle xHandle;
 	int err = xTaskCreate(can_write_task, "can_write", CAN_WRITE_STACK_SIZE, NULL, PRIORITY_TASK_CAN, &xHandle);
@@ -185,11 +193,9 @@ static void can_write_task(void *arg)
 	{
 		if(xQueueReceive(can_write_queue, &req, portMAX_DELAY))
 		{
-			vTaskClearEvent(EVENT_CAN_TX_END);
-
 			can_write_mailbox(&req);
+			xSemaphoreTake(can_write_sem, portMAX_DELAY);
 // TODO : check error
-			vTaskWaitEvent(EVENT_CAN_TX_END, portMAX_DELAY);
 		}
 	}
 }
@@ -206,7 +212,7 @@ void isr_can1_tx(void)
 		if( CAN1->TSR & CAN_TSR_TXOK0)
 		{
 			CAN1->IER &= ~CAN_IER_TMEIE;
-			xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_CAN_TX_END);
+			xSemaphoreGiveFromISR(can_write_sem, &xHigherPriorityTaskWoken);
 		}
 		else
 		{
