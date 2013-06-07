@@ -265,7 +265,7 @@ void isr_otg_fs(void)
 void EP1_IN_Callback(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( ! usb_endpoint_ready )
 	{
@@ -274,18 +274,14 @@ void EP1_IN_Callback(void)
 		xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void EP2_OUT_Callback(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	// pas de commande en cours de traitement
 	if( usb_rx_buffer_id == 0)
@@ -322,10 +318,6 @@ void EP2_OUT_Callback(void)
 	}
 	xSemaphoreGiveFromISR(usb_read_sem, &xHigherPriorityTaskWoken);
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }

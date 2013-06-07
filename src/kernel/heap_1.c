@@ -72,27 +72,134 @@
     mission critical applications that require provable dependability.
 */
 
-#ifndef PROJDEFS_H
-#define PROJDEFS_H
 
-/* Defines the prototype to which task functions must conform. */
-typedef void (*pdTASK_CODE)( void * );
+/*
+ * The simplest possible implementation of pvPortMalloc().  Note that this
+ * implementation does NOT allow allocated memory to be freed again.
+ *
+ * See heap_2.c, heap_3.c and heap_4.c for alternative implementations, and the
+ * memory management pages of http://www.FreeRTOS.org for more information.
+ */
+#include <stdlib.h>
 
-#define pdTRUE		( 1 )
-#define pdFALSE		( 0 )
+/* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
+all the API functions to use the MPU wrappers.  That should only be done when
+task.h is included from an application file. */
+#define MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
-#define pdPASS									( 1 )
-#define pdFAIL									( 0 )
-#define errQUEUE_EMPTY							( 0 )
-#define errQUEUE_FULL							( 0 )
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 
-/* Error definitions. */
-#define errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY	( -1 )
-#define errNO_TASK_TO_RUN						( -2 )
-#define errQUEUE_BLOCKED						( -4 )
-#define errQUEUE_YIELD							( -5 )
+#undef MPU_WRAPPERS_INCLUDED_FROM_API_FILE
 
-#endif /* PROJDEFS_H */
+/* A few bytes might be lost to byte aligning the heap start address. */
+#define configADJUSTED_HEAP_SIZE	( configTOTAL_HEAP_SIZE - portBYTE_ALIGNMENT )
 
+/* Allocate the memory for the heap. */
+static unsigned char ucHeap[ configTOTAL_HEAP_SIZE ];
+static size_t xNextFreeByte = ( size_t ) 0;
 
+/*-----------------------------------------------------------*/
+
+void *pvPortMalloc( size_t xWantedSize )
+{
+void *pvReturn = NULL;
+static unsigned char *pucAlignedHeap = NULL;
+
+	/* Ensure that blocks are always aligned to the required number of bytes. */
+	#if portBYTE_ALIGNMENT != 1
+		if( xWantedSize & portBYTE_ALIGNMENT_MASK )
+		{
+			/* Byte alignment required. */
+			xWantedSize += ( portBYTE_ALIGNMENT - ( xWantedSize & portBYTE_ALIGNMENT_MASK ) );
+		}
+	#endif
+
+	vTaskSuspendAll();
+	{
+		if( pucAlignedHeap == NULL )
+		{
+			/* Ensure the heap starts on a correctly aligned boundary. */
+			pucAlignedHeap = ( unsigned char * ) ( ( ( portPOINTER_SIZE_TYPE ) &ucHeap[ portBYTE_ALIGNMENT ] ) & ( ( portPOINTER_SIZE_TYPE ) ~portBYTE_ALIGNMENT_MASK ) );
+		}
+
+		/* Check there is enough room left for the allocation. */
+		if( ( ( xNextFreeByte + xWantedSize ) < configADJUSTED_HEAP_SIZE ) &&
+			( ( xNextFreeByte + xWantedSize ) > xNextFreeByte )	)/* Check for overflow. */
+		{
+			/* Return the next free byte then increment the index past this
+			block. */
+			pvReturn = pucAlignedHeap + xNextFreeByte;
+			xNextFreeByte += xWantedSize;
+		}
+	}
+	xTaskResumeAll();
+
+	#if( configUSE_MALLOC_FAILED_HOOK == 1 )
+	{
+		if( pvReturn == NULL )
+		{
+			extern void vApplicationMallocFailedHook( void );
+			vApplicationMallocFailedHook();
+		}
+	}
+	#endif
+
+	return pvReturn;
+}
+/*-----------------------------------------------------------*/
+
+void vPortFree( void *pv )
+{
+	/* Memory cannot be freed using this scheme.  See heap_2.c, heap_3.c and
+	heap_4.c for alternative implementations, and the memory management pages of
+	http://www.FreeRTOS.org for more information. */
+	( void ) pv;
+
+	/* Force an assert as it is invalid to call this function. */
+	configASSERT( pv == NULL );
+}
+/*-----------------------------------------------------------*/
+
+void vPortInitialiseBlocks( void )
+{
+	/* Only required when static memory is not cleared. */
+	xNextFreeByte = ( size_t ) 0;
+}
+/*-----------------------------------------------------------*/
+
+size_t xPortGetFreeHeapSize( void )
+{
+	return ( configADJUSTED_HEAP_SIZE - xNextFreeByte );
+}
+
+// surcharge des fonctions de la libc pour passer par l'implementation de malloc du dessus
+void* _realloc_r(struct _reent *re, void* oldAddr, size_t newSize)
+{
+	(void) re;
+	(void) oldAddr;
+	(void) newSize;
+	// on ne fait pas de realloc
+	vPortFree(oldAddr);
+
+	return 0;
+}
+
+void* _calloc_r(struct _reent *re, size_t num, size_t size)
+{
+	(void) re;
+	return pvPortMalloc(num*size);
+}
+
+void* _malloc_r(struct _reent *re, size_t size)
+{
+	(void) re;
+	return pvPortMalloc(size);
+}
+
+void _free_r(struct _reent *re, void* ptr)
+{
+	(void) re;
+	vPortFree(ptr);
+}
 

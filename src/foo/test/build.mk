@@ -23,7 +23,7 @@ obj-foo-test_led += kernel/driver/usb/otgd_fs_cal.o
 obj-foo-test_led += kernel/driver/usb/otgd_fs_int.o
 obj-foo-test_led += kernel/driver/usb/otgd_fs_pcd.o
 obj-foo-test_led += foo/gpio.o
-bin-foo += test_led
+#bin-foo += test_led
 
 obj-foo-test_task += kernel/main.o
 obj-foo-test_task += kernel/asm/isr.o
@@ -51,7 +51,7 @@ obj-foo-test_task += kernel/driver/usb/otgd_fs_cal.o
 obj-foo-test_task += kernel/driver/usb/otgd_fs_int.o
 obj-foo-test_task += kernel/driver/usb/otgd_fs_pcd.o
 obj-foo-test_task += foo/gpio.o
-bin-foo += test_task
+#bin-foo += test_task
 
 obj-foo-test_end += kernel/main.o
 obj-foo-test_end += kernel/asm/isr.o
@@ -79,7 +79,7 @@ obj-foo-test_end += kernel/driver/usb/otgd_fs_cal.o
 obj-foo-test_end += kernel/driver/usb/otgd_fs_int.o
 obj-foo-test_end += kernel/driver/usb/otgd_fs_pcd.o
 obj-foo-test_end += foo/gpio.o
-bin-foo += test_end
+#bin-foo += test_end
 
 obj-foo-test_deplacement += kernel/main.o
 obj-foo-test_deplacement += kernel/asm/isr.o
@@ -135,7 +135,7 @@ obj-foo-test_deplacement += foo/adc.o
 obj-foo-test_deplacement += foo/pince.o
 obj-foo-test_deplacement += foo/ax12.o
 obj-foo-test_deplacement += foo/table.o
-bin-foo += test_deplacement
+#bin-foo += test_deplacement
 
 obj-foo-test_pince += kernel/main.o
 obj-foo-test_pince += kernel/asm/isr.o
@@ -173,7 +173,7 @@ obj-foo-test_pince += kernel/driver/usb/otgd_fs_dev.o
 obj-foo-test_pince += kernel/driver/usb/otgd_fs_cal.o
 obj-foo-test_pince += kernel/driver/usb/otgd_fs_int.o
 obj-foo-test_pince += kernel/driver/usb/otgd_fs_pcd.o
-bin-foo += test_pince
+#bin-foo += test_pince
 
 obj-foo-test_hokuyo += kernel/main.o
 obj-foo-test_hokuyo += kernel/asm/isr.o
@@ -217,7 +217,7 @@ obj-foo-test_hokuyo += foo/location/location.o
 obj-foo-test_hokuyo += foo/location/beacon.o
 obj-foo-test_hokuyo += foo/encoders.o
 obj-foo-test_hokuyo += foo/table.o
-bin-foo += test_hokuyo
+#bin-foo += test_hokuyo
 
 obj-foo-test_graph += kernel/main.o
 obj-foo-test_graph += kernel/asm/isr.o
@@ -277,4 +277,4 @@ obj-foo-test_graph += foo/test/test_graph.o
 obj-foo-test_graph += foo/recalage.o
 obj-foo-test_graph += foo/table.o
 obj-foo-test_graph += foo/detection.o
-bin-foo += test_graph
+#bin-foo += test_graph

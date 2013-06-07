@@ -2,7 +2,7 @@
 //! @brief isr
 //! @author Atlantronic
 
-#include "kernel2/FreeRTOS.h"
+#include "kernel/FreeRTOS.h"
 
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi

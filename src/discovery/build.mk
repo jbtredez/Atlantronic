@@ -1,11 +1,11 @@
-obj-discovery-test += kernel2/main.o
+obj-discovery-test += kernel/main.o
 obj-discovery-test += kernel2/asm/isr.o
 obj-discovery-test += kernel/rcc.o
 obj-discovery-test += kernel/systick.o
-obj-discovery-test += kernel2/tasks.o
-obj-discovery-test += kernel2/queue.o
-obj-discovery-test += kernel2/port.o
-obj-discovery-test += kernel2/list.o
-obj-discovery-test += kernel2/heap_1.o
+obj-discovery-test += kernel/tasks.o
+obj-discovery-test += kernel/queue.o
+obj-discovery-test += kernel/port.o
+obj-discovery-test += kernel/list.o
+obj-discovery-test += kernel/heap_1.o
 obj-discovery-test += discovery/gpio.o
 bin-discovery += test

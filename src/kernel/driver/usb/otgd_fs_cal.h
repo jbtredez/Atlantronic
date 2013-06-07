@@ -153,8 +153,8 @@ USB_OTG_EP , *PUSB_OTG_EP;
   USB_OTG_WRITE_REG32(reg, (((USB_OTG_READ_REG32(reg)) & ~clear_mask) | set_mask ) )
 
 
-#define uDELAY(usec)  wait_active(us_to_tick(usec))
-#define mDELAY(msec)  wait_active(ms_to_tick(msec))
+#define uDELAY(usec)  wait_active(us_to_systick(usec))
+#define mDELAY(msec)  wait_active(ms_to_systick(msec))
 
 #define _OTGD_FS_GATE_PHYCLK     *(__IO uint32_t*)(0x50000E00) = 0x03
 #define _OTGD_FS_UNGATE_PHYCLK   *(__IO uint32_t*)(0x50000E00) = 0x00

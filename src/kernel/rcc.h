@@ -20,11 +20,16 @@
 #define RCC_PCLK1        36000000LL
 #define RCC_PCLK2        72000000LL
 
-#define ms_to_tick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000)
-#define us_to_tick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
-#define tick_to_ms(a)    ((uint64_t)(a)/(RCC_SYSCLK/1000))
+#define ms_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000)
+#define us_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
 #define tick_to_us(a)    ((uint64_t)(a)/(RCC_SYSCLK/1000000))
 #endif
+
+#ifdef STM32F4XX
+#define RCC_SYSCLK      168000000LL
+#endif
+
+#define ms_to_tick(a)    (a)
 
 void wait_active(uint32_t tick);
 

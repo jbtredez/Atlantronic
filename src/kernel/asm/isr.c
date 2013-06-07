@@ -209,25 +209,21 @@ void isr_reset(void)
 	__main();
 }
 
-//! doc utile : 0xfffffff1 : retour handler mode
-//!             0xfffffffd : retour thread mode, et utilisation de process stack
-//!             0xfffffff9 : retour thread mode, et utilisation de main stack
 void isr_svc( void )
 {
 	__asm volatile
 	(
-		"   ldr r3, pxCurrentTCBConst2          \n" // Restore the context.
-		"   ldr r1, [r3]                        \n" // Use pxCurrentTCBConst to get the pxCurrentTCB address.
-		"   ldr r0, [r1]                        \n" // The first item in pxCurrentTCB is the task top of stack.
-		"   ldmia r0!, {r4-r11}                 \n" // Pop the registers that are not automatically saved on exception entry and the critical nesting count.
-		"   msr psp, r0                         \n" // Restore the task stack pointer.
-		"   mov r0, #0                          \n"
-		"   msr basepri, r0                     \n"
-		"   ldr lr, =0xfffffffd                 \n" // Au branchement sur 0xfffffffd, on retourne en thread mode avec utilisation de la stack process (on a mis le bon pointeur msr psp, r0). On va dépiler automatiquement r0,r1,r2,r3, r12, lr et brancher sur le pc.
-		"   bx lr                               \n"
-		"                                       \n"
-		"   .align 2                            \n"
-		"pxCurrentTCBConst2: .word pxCurrentTCB	\n"
+		"	ldr	r3, pxCurrentTCBConst2		\n" /* Restore the context. */
+		"	ldr r1, [r3]					\n" /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
+		"	ldr r0, [r1]					\n" /* The first item in pxCurrentTCB is the task top of stack. */
+		"	ldmia r0!, {r4-r11, r14}		\n" /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
+		"	msr psp, r0						\n" /* Restore the task stack pointer. */
+		"	mov r0, #0 						\n"
+		"	msr	basepri, r0					\n"
+		"	bx r14							\n"
+		"									\n"
+		"	.align 2						\n"
+		"pxCurrentTCBConst2: .word pxCurrentTCB				\n"
 	);
 }
 
@@ -240,20 +236,20 @@ void isr_context_switch( void )
 		"   ldr r3, pxCurrentTCBConst           \n" // Get the location of the current TCB.
 		"   ldr r2, [r3]                        \n"
 		"                                       \n"
-		"   stmdb r0!, {r4-r11}                 \n" // Save the remaining registers.
+		"   stmdb r0!, {r4-r11, r14}            \n" // Save the remaining registers.
 		"   str r0, [r2]                        \n" // Save the new top of stack into the first member of the TCB.
 		"                                       \n"
-		"   stmdb sp!, {r3, lr}                 \n"
+		"   stmdb sp!, {r3, r14}                \n"
 		"   mov r0, %0                          \n"
 		"   msr basepri, r0                     \n"
 		"   bl vTaskSwitchContext               \n"
 		"   mov r0, #0                          \n"
 		"   msr basepri, r0                     \n"
-		"   ldmia sp!, {r3, lr}                 \n"
+		"   ldmia sp!, {r3, r14}                \n"
 		"                                       \n" // Restore the context, including the critical nesting count.
 		"   ldr r1, [r3]                        \n"
 		"   ldr r0, [r1]                        \n" // The first item in pxCurrentTCB is the task top of stack.
-		"   ldmia r0!, {r4-r11}                 \n" // Pop the registers.
+		"   ldmia r0!, {r4-r11, r14}            \n" // Pop the registers.
 		"   msr psp, r0                         \n"
 		"   bx lr                               \n"
 		"                                       \n"

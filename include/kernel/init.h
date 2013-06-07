@@ -13,8 +13,7 @@
 //! "la première trouvée par l'éditeur de liens sera la première exécutée".
 //!
 //! les #define sont ordonnés pour indiquer le sens d'exécution (croissant pour l'init)
-
-#include "kernel/fault.h"
+#include "kernel/error_codes.h"
 
 // init frequence cpu, bus internes...
 #define INIT_RCC                      "00"

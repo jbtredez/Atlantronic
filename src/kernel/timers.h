@@ -80,8 +80,8 @@
 	#error "include FreeRTOS.h must appear in source files before include timers.h"
 #endif
 
-#include "portable.h"
-#include "list.h"
+#include "kernel/portable.h"
+#include "kernel/list.h"
 #include "task.h"
 
 #ifdef __cplusplus

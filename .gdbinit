@@ -42,11 +42,11 @@ define _ptasks
 		set $match_time = (systick_time - systick_time_start_match + systick_last_load_used - SysTick.VAL)/72000000.0f
 	end
 
-	set $static_alloc = (unsigned int)&end - (unsigned int)&__data_start__
-	set $malloc_pool = (unsigned int)heap_end_for_debug - (unsigned int)&end
+	set $static_alloc = (unsigned int)&__bss_end__ - (unsigned int)&__data_start__ - sizeof(ucHeap)
+	set $malloc_pool = xNextFreeByte / sizeof(ucHeap)
 	set $ram_size = (unsigned int)&_ram_top - (unsigned int)&__data_start__
 	printf "static alloc : %i\nmalloc pool : %i\nmain stack + non utilisée : %i\n", $static_alloc, $malloc_pool, $ram_size - $static_alloc - $malloc_pool
-	printf "uptime %f (%u)   match_time %f\n", (systick_time + systick_last_load_used - SysTick.VAL)/72000000.0f, (systick_time + systick_last_load_used - SysTick.VAL), $match_time
+	printf "uptime %f (%u)   match_time %f\n", (systick_time + SysTick.LOAD - SysTick.VAL)/(1000.0f*SysTick.LOAD), (systick_time + SysTick.LOAD - SysTick.VAL), $match_time
 
 	echo \033[01;32m
 	printf "  R   "
@@ -59,11 +59,11 @@ define _ptasks
 
 	echo \033[01;34m
 	if $arg0
-		printf " etat | delai (ms) |    nom   |   addr     |     ev     |    mask    |  ev & mask |  last wake |  time used |   cpu  | free stack (32 bit)  |\n"
-		printf "      |            |          |            |            |            |            |            |            |    %%   | current  |   min    |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used |   cpu  | free stack (32 bit)  |\n"
+		printf "      |            |          |            |            |    %%   | current   |   min    |\n"
 	else
-		printf " etat | delai (ms) |    nom   |   addr     |     ev     |    mask    |  ev & mask |  last wake |  time used |   cpu  | free stack|\n"
-		printf "      |            |          |            |            |            |            |            |            |    %%   | current  |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used |   cpu  | free stack|\n"
+		printf "      |            |          |            |            |    %%   | current   |\n"
 	end
 
 	echo \033[0m
@@ -96,12 +96,24 @@ define _ptasks
 	end
 	set $i--
 
-	set $n = xDelayedTaskList.uxNumberOfItems
-	set $list_end = &xDelayedTaskList.xListEnd
-	set $list_next = xDelayedTaskList.xListEnd.pxNext
+	set $n = xDelayedTaskList1.uxNumberOfItems
+	set $list_end = &xDelayedTaskList1.xListEnd
+	set $list_next = xDelayedTaskList1.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf "  D   | %10.2f |", ((double)$list_next->xItemValue - (double)systick_time - systick_last_load_used + SysTick.VAL)/((double)72000)
+		printf "  D1  | %10.2f |", ((double)$list_next->xItemValue / 1000)
+		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
+		set $list_next = $list_next.pxNext
+		set $n--
+	end
+	set $i--
+
+	set $n = xDelayedTaskList2.uxNumberOfItems
+	set $list_end = &xDelayedTaskList2.xListEnd
+	set $list_next = xDelayedTaskList2.xListEnd.pxNext
+
+	while $list_next != $list_end && $n > 0
+		printf "  D2  | %10.2f |", ((double)$list_next->xItemValue / 1000)
 		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -123,7 +135,7 @@ define _ptasks
 end
 
 define pTcb
-	printf " %8s | %10p | %10x | %10x | %10x | %10u | %10u | %6.3f | %8i |", $arg0->pcTaskName, $arg0, $arg0->event, $arg0->eventMask, $arg0->event & $arg0->eventMask, $arg0->last_start_tick_count, $arg0->cpu_time_used, $arg0->cpu_time_used/(double)systick_time*100, $arg0->pxTopOfStack - $arg0->pxStack
+	printf " %8s | %10p | %10.3f | %6.3f | %9i |", $arg0->pcTaskName, $arg0, $arg0->ulRunTimeCounter / (1000.0f * SysTick.LOAD), $arg0->ulRunTimeCounter/((double)(systick_time + SysTick.LOAD - SysTick.VAL))*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	if $arg1
 		set $stack_min_free = 0

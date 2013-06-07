@@ -3,7 +3,6 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/queue.h"
-#include "kernel/event.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
@@ -169,47 +168,42 @@ void isr_exti0(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
-	if( EXTI->PR & EXTI_PR_PR0)
+	/*if( EXTI->PR & EXTI_PR_PR0)
 	{
 		EXTI->PR |= EXTI_PR_PR0;
 		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
-	}
+	}*/
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
 
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_exti1(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
-
+	portSET_INTERRUPT_MASK_FROM_ISR();
+/*
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
 		EXTI->PR |= EXTI_PR_PR1;
 		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
 	}
+*/
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_exti9_5(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( EXTI->PR & EXTI_PR_PR8)
 	{
@@ -239,17 +233,14 @@ void isr_exti9_5(void)
 		}
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 
-	portCLEAR_INTERRUPT_MASK();
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_exti15_10(void)
 {
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( EXTI->PR & EXTI_PR_PR10)
 	{
@@ -258,7 +249,7 @@ void isr_exti15_10(void)
 		gpio_recalage_done = 1;
 	}
 
-	portCLEAR_INTERRUPT_MASK();
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void setLed(uint32_t mask)
