@@ -13,7 +13,7 @@ void log_format_and_add(unsigned char level, const char* func, uint16_t line, co
 {
 	char buffer[LOG_SIZE];
 
-	uint64_t current_time = systick_get_time();
+	struct systime current_time = systick_get_time();
 	memcpy(buffer, &current_time, 8);
 	buffer[8] = level;
 	memcpy(buffer+9, &line, 2);
@@ -46,7 +46,7 @@ void log_add(unsigned char level, const char* func, uint16_t line, const char* m
 {
 	char buffer[LOG_SIZE];
 
-	uint64_t current_time = systick_get_time();
+	struct systime current_time = systick_get_time();
 	memcpy(buffer, &current_time, 8);
 	buffer[8] = level;
 	memcpy(buffer+9, &line, 2);

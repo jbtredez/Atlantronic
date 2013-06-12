@@ -37,16 +37,21 @@ end
 define _ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
 	set $match_time = 0
+	set $systime = systick_time.ms / 1000.0f + (999999 - (1000000UL * SysTick->VAL) / SysTick->LOAD) / 1000000000.0f
+	set $start_match_time = systick_time_start_match.ms/1000.0f + systick_time_start_match.ns/1000000000.0f
 
-	if systick_time_start_match > 0
-		set $match_time = (systick_time - systick_time_start_match + systick_last_load_used - SysTick.VAL)/72000000.0f
+	if $start_match_time > 0
+		set $match_time = $systime - $start_match_time 
 	end
 
 	set $static_alloc = (unsigned int)&__bss_end__ - (unsigned int)&__data_start__ - sizeof(ucHeap)
-	set $malloc_pool = xNextFreeByte / sizeof(ucHeap)
+	set $malloc_percent = 100.0f * xNextFreeByte / (float)sizeof(ucHeap)
 	set $ram_size = (unsigned int)&_ram_top - (unsigned int)&__data_start__
-	printf "static alloc : %i\nmalloc pool : %i\nmain stack + non utilisée : %i\n", $static_alloc, $malloc_pool, $ram_size - $static_alloc - $malloc_pool
-	printf "uptime %f (%u)   match_time %f\n", (systick_time + SysTick.LOAD - SysTick.VAL)/(1000.0f*SysTick.LOAD), (systick_time + SysTick.LOAD - SysTick.VAL), $match_time
+	printf "static alloc : %5i\n", $static_alloc
+	printf "malloc       : %5i / %5i (%6.2f%%)\n", xNextFreeByte, sizeof(ucHeap), $malloc_percent
+	printf "main stack   : %5i\n", $ram_size - $static_alloc - sizeof(ucHeap)
+	printf "uptime       : %10.6f\n", $systime
+	printf "match_time   : %10.6f\n", $match_time
 
 	echo \033[01;32m
 	printf "  R   "
@@ -59,11 +64,11 @@ define _ptasks
 
 	echo \033[01;34m
 	if $arg0
-		printf " etat | delai (ms) |    nom   |   addr     |  time used |   cpu  | free stack (32 bit)  |\n"
-		printf "      |            |          |            |            |    %%   | current   |   min    |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu  | free stack (32 bit)  |\n"
+		printf "      |            |          |            |             |    %%   | current   |   min    |\n"
 	else
-		printf " etat | delai (ms) |    nom   |   addr     |  time used |   cpu  | free stack|\n"
-		printf "      |            |          |            |            |    %%   | current   |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu  | free stack|\n"
+		printf "      |            |          |            |             |    %%   | current   |\n"
 	end
 
 	echo \033[0m
@@ -135,7 +140,7 @@ define _ptasks
 end
 
 define pTcb
-	printf " %8s | %10p | %10.3f | %6.3f | %9i |", $arg0->pcTaskName, $arg0, $arg0->ulRunTimeCounter / (1000.0f * SysTick.LOAD), $arg0->ulRunTimeCounter/((double)(systick_time + SysTick.LOAD - SysTick.VAL))*100, $arg0->pxTopOfStack - $arg0->pxStack
+	printf " %8s | %10p | %11.6f | %6.3f | %9i |", $arg0->pcTaskName, $arg0, $arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f, ($arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f)/(ulTotalRunTime.ms/1000.0f + ulTotalRunTime.ns/1000000000.0f)*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	if $arg1
 		set $stack_min_free = 0

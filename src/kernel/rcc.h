@@ -16,6 +16,7 @@
 #define RCC_PREDIV1CLK    8000000LL
 #define RCC_PLLCLK       72000000LL
 #define RCC_SYSCLK       72000000LL
+#define RCC_SYSCLK_MHZ         72
 #define RCC_HCLK         72000000LL
 #define RCC_PCLK1        36000000LL
 #define RCC_PCLK2        72000000LL
@@ -27,6 +28,7 @@
 
 #ifdef STM32F4XX
 #define RCC_SYSCLK      168000000LL
+#define RCC_SYSCLK_MHZ        168
 #endif
 
 #define ms_to_tick(a)    (a)

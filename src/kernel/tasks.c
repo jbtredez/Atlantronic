@@ -143,7 +143,7 @@ typedef struct tskTaskControlBlock
 	#endif
 
 	#if ( configGENERATE_RUN_TIME_STATS == 1 )
-		unsigned long ulRunTimeCounter;			/*< Stores the amount of time the task has spent in the Running state. */
+		struct systime ulRunTimeCounter;			/*< Stores the amount of time the task has spent in the Running state. */
 	#endif
 
 } tskTCB;
@@ -203,8 +203,8 @@ PRIVILEGED_DATA static volatile portTickType xNextTaskUnblockTime				= ( portTic
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
 
 	PRIVILEGED_DATA static char pcStatsString[ 50 ] ;
-	PRIVILEGED_DATA static unsigned long ulTaskSwitchedInTime = 0UL;	/*< Holds the value of a timer/counter the last time a task was switched in. */
-	PRIVILEGED_DATA static unsigned long ulTotalRunTime = 0UL;				/*< Holds the total amount of execution time as defined by the run time counter clock. */
+	PRIVILEGED_DATA static struct systime ulTaskSwitchedInTime;	/*< Holds the value of a timer/counter the last time a task was switched in. */
+	PRIVILEGED_DATA static struct systime ulTotalRunTime;				/*< Holds the total amount of execution time as defined by the run time counter clock. */
 	static void prvGenerateRunTimeStatsForTasksInList( const signed char *pcWriteBuffer, xList *pxList, unsigned long ulTotalRunTimeDiv100 ) PRIVILEGED_FUNCTION;
 
 #endif
@@ -1556,7 +1556,7 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 
 			/* Divide ulTotalRunTime by 100 to make the percentage caluclations
 			simpler in the prvGenerateRunTimeStatsForTasksInList() function. */
-			ulTotalRunTimeDiv100 = ulTotalRunTime / 100UL;
+			ulTotalRunTimeDiv100 = ulTotalRunTime.ms / 100UL;
 
 			/* Run through all the lists that could potentially contain a TCB,
 			generating a table of run timer percentages in the provided
@@ -1825,7 +1825,8 @@ void vTaskSwitchContext( void )
 				ulTaskSwitchedInTime.  Note that there is no overflow protection here
 				so count values are only valid until the timer overflows.  Generally
 				this will be about 1 hour assuming a 1uS timer increment. */
-				pxCurrentTCB->ulRunTimeCounter += ( ulTotalRunTime - ulTaskSwitchedInTime );
+				struct systime delta = timediff(ulTotalRunTime, ulTaskSwitchedInTime);
+				pxCurrentTCB->ulRunTimeCounter = timeadd(pxCurrentTCB->ulRunTimeCounter, delta);
 				ulTaskSwitchedInTime = ulTotalRunTime;
 		}
 		#endif /* configGENERATE_RUN_TIME_STATS */
@@ -2272,7 +2273,8 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const char * const pcName,
 
 	#if ( configGENERATE_RUN_TIME_STATS == 1 )
 	{
-		pxTCB->ulRunTimeCounter = 0UL;
+		pxTCB->ulRunTimeCounter.ms = 0;
+		pxTCB->ulRunTimeCounter.ns = 0;
 	}
 	#endif /* configGENERATE_RUN_TIME_STATS */
 
@@ -2484,7 +2486,7 @@ tskTCB *pxNewTCB;
 			if( ulTotalRunTimeDiv100 > 0UL )
 			{
 				/* Has the task run at all? */
-				if( pxNextTCB->ulRunTimeCounter == 0UL )
+				if( pxNextTCB->ulRunTimeCounter.ms == 0 )
 				{
 					/* The task has used no CPU time at all. */
 					sprintf( pcStatsString, ( char * ) "%s\t\t0\t\t0%%\r\n", pxNextTCB->pcTaskName );
@@ -2494,7 +2496,7 @@ tskTCB *pxNewTCB;
 					/* What percentage of the total run time has the task used?
 					This will always be rounded down to the nearest integer.
 					ulTotalRunTimeDiv100 has already been divided by 100. */
-					ulStatsAsPercentage = pxNextTCB->ulRunTimeCounter / ulTotalRunTimeDiv100;
+					ulStatsAsPercentage = pxNextTCB->ulRunTimeCounter.ms / ulTotalRunTimeDiv100;
 
 					if( ulStatsAsPercentage > 0UL )
 					{
@@ -2506,7 +2508,7 @@ tskTCB *pxNewTCB;
 						{
 							/* sizeof( int ) == sizeof( long ) so a smaller
 							printf() library can be used. */
-							sprintf( pcStatsString, ( char * ) "%s\t\t%u\t\t%u%%\r\n", pxNextTCB->pcTaskName, ( unsigned int ) pxNextTCB->ulRunTimeCounter, ( unsigned int ) ulStatsAsPercentage );
+							sprintf( pcStatsString, ( char * ) "%s\t\t%u\t\t%u%%\r\n", pxNextTCB->pcTaskName, ( unsigned int ) pxNextTCB->ulRunTimeCounter.ms, ( unsigned int ) ulStatsAsPercentage );
 						}
 						#endif
 					}
@@ -2522,7 +2524,7 @@ tskTCB *pxNewTCB;
 						{
 							/* sizeof( int ) == sizeof( long ) so a smaller
 							printf() library can be used. */
-							sprintf( pcStatsString, ( char * ) "%s\t\t%u\t\t<1%%\r\n", pxNextTCB->pcTaskName, ( unsigned int ) pxNextTCB->ulRunTimeCounter );
+							sprintf( pcStatsString, ( char * ) "%s\t\t%u\t\t<1%%\r\n", pxNextTCB->pcTaskName, ( unsigned int ) pxNextTCB->ulRunTimeCounter.ms );
 						}
 						#endif
 					}

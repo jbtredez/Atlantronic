@@ -8,10 +8,8 @@
 #include "kernel/hokuyo_tools.h"
 #include "kernel/math/regression.h"
 #include "kernel/log_level.h"
+#include "kernel/systick.h"
 #include "kernel/driver/usb.h"
-#define STM32F10X_CL
-#include "kernel/rcc.h"
-#undef STM32F10X_CL
 #include "foo/control/control.h"
 #include "foo/control/trajectory.h"
 #include "foo/ax12.h"
@@ -275,9 +273,9 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 		goto end;
 	}
 
-	uint64_t current_time;
+	struct systime current_time;
 	memcpy(&current_time, msg, 8);
-	double time = tick_to_us(current_time)/1000000.0f;
+	double time = current_time.ms/1000.0f + current_time.ns/1000000000.0f;
 
 	msg[size-1] = 0;
 
@@ -328,12 +326,12 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 		if(state != data->fault_status[com_id][i].state)
 		{
 			if( (state & 0x01) == 0)
-			{
-				log_info("\033[32m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state >> 1, state & 0x01);
+			{// TODO
+				log_info("\033[32m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], 0UL/*(unsigned long) tick_to_us(err_list[i].time)*/, err_description[i], i, state >> 1, state & 0x01);
 			}
 			else
-			{
-				log_info("\033[31m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], (unsigned long) tick_to_us(err_list[i].time), err_description[i], i, state >> 1, state & 0x01);
+			{// TODO
+				log_info("\033[31m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], 0UL/*(unsigned long) tick_to_us(err_list[i].time)*/, err_description[i], i, state >> 1, state & 0x01);
 			}
 			data->fault_status[com_id][i] = err_list[i];
 		}
@@ -445,7 +443,7 @@ static int robot_interface_can_trace(struct robot_interface* data, int com_id, c
 	}
 
 	char buffer[1024];
-	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", cartes[com_id], tick_to_us(can_msg->time)/1000000.0f,
+	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", cartes[com_id], can_msg->time.ms/1000.0f + can_msg->time.ns/1000000000.0f,
 			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->size);
 	for(i=0; i < can_msg->size && res > 0; i++)
 	{
@@ -544,7 +542,8 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 	}
 
 	memcpy(data->control_usb_data + data->control_usb_data_count, msg, size);
-	data->current_time = ( (double) tick_to_us(data->control_usb_data[data->control_usb_data_count].current_time)) / 1000000.0f;
+	// TODO
+	//data->current_time = ( (double) tick_to_us(data->control_usb_data[data->control_usb_data_count].current_time)) / 1000000.0f;
 	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
 	pthread_mutex_unlock(&data->mutex);
@@ -568,7 +567,8 @@ static int robot_interface_process_go(struct robot_interface* data, int com_id, 
 
 	memcpy(time, msg, size);
 
-	data->current_time = (double) tick_to_us(time[0]) / 1000000.0f;
+	// TODO
+	//data->current_time = (double) tick_to_us(time[0]) / 1000000.0f;
 	data->start_time = data->current_time;
 
 	log_info("GO - durée du match : %f ms", time[1] / 72000.0f);
