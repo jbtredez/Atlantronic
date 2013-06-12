@@ -7,8 +7,9 @@
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-#include "kernel/fault.h"
+//#include "kernel/fault.h"
 #include "kernel/driver/usb.h"
+#include "kernel/error_codes.h"
 
 static void can_write_mailbox(struct can_msg *msg);
 static void can_cmd_write(void* arg);
@@ -62,13 +63,13 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 
 	if(can_write_queue == 0)
 	{
-		return -1;
+		return ERR_INIT_CAN;
 	}
 
 	vSemaphoreCreateBinary(can_write_sem);
-	if( can_write_sem == NULL )
+	if( can_write_sem == 0 )
 	{
-		return ERR_INIT_USB;
+		return ERR_INIT_CAN;
 	}
 	xSemaphoreTake(can_write_sem, 0);
 
@@ -77,7 +78,7 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 
 	if(err != pdPASS)
 	{
-		return -1;
+		return ERR_INIT_CAN;
 	}
 
 	can_set_mask(0, 0x00);
@@ -203,7 +204,7 @@ static void can_write_task(void *arg)
 void isr_can1_tx(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	// fin de transmission sur la boite 0
 	if(CAN1->TSR & CAN_TSR_RQCP0)
@@ -222,12 +223,8 @@ void isr_can1_tx(void)
 		CAN1->TSR |= CAN_TSR_RQCP0;
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_can1_rx0(void)
@@ -235,11 +232,11 @@ void isr_can1_rx0(void)
 	struct can_msg msg;
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( CAN1->RF0R & CAN_RF0R_FOVR0)
 	{
-		fault_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, FAULT_ACTIVE);
+		//fault_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, FAULT_ACTIVE);
 	}
 
 	// reception sur la FIFO 0
@@ -276,18 +273,14 @@ void isr_can1_rx0(void)
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
-			fault_from_isr(ERR_CAN_READ_QUEUE_FULL, FAULT_ACTIVE);
+			//fault_from_isr(ERR_CAN_READ_QUEUE_FULL, FAULT_ACTIVE);
 		}
 
 		CAN1->RF0R |= CAN_RF0R_RFOM0;
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void can_write_mailbox(struct can_msg *msg)
