@@ -1,4 +1,4 @@
-CROSSCOMPILE:=arm-elf-
+CROSSCOMPILE:=arm-none-eabi-
 
 MCPU:=cortex-m3
 
@@ -30,15 +30,12 @@ LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
-#LDFLAGS+=-lnosys
 LDFLAGS+=-lg 
 LDFLAGS+=-g3
 
 DEF+=__$(ARCH)__
 
-ifeq ($(DEBUG),1)
-
-else
+ifneq ($(DEBUG),1)
 DEF+= NDEBUG
 CFLAGS+=-O2
 LDFLAGS+=-O2
@@ -47,4 +44,3 @@ endif
 CFLAGS+=$(addprefix -D,$(DEF))
 
 INCLUDES+=-Iinclude/$(ARCH) -Isrc/$(ARCH)
-

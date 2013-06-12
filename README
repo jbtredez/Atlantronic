@@ -2,11 +2,11 @@ Programmes du robot d'Atlantronic pour la compétition EUROBOT.
 Site : http://www.atlantronic.fr/
 
 Requirements :
-"arm-elf" toolchaine (thumb2, cortex m3) :
+"arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
 	- binutils-2.23.1
 	- gcc-4.7.3
 	- gdb-7.6
-	- newlib-1.19 (--disable-newlib-supplied-syscalls --disable-newlib-mb --disable-newlib-hw-fp --disable-newlib-io-float)
+	- newlib-2.0.0 (flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
 
 doc : 
 	- doxygen >= 1.6.3
@@ -21,6 +21,7 @@ Organisation des dossiers :
 src/kernel : Code générique ou commun aux cartes
 src/foo : Code de la carte Foo.
 src/bar : Code de la carte bar
+src/discovery : Code pour la carte discovery
 src/linux : Code utilitaire pour linux
 	- src/linux/modules : module usb pour les cartes foo et bar
 	- src/linu/test : tests unitaires réalisables sous linux
