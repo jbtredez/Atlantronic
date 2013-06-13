@@ -46,18 +46,18 @@ void isr_otg_fs(void) __attribute__((weak, alias("isr_unexpected") )); //!< inte
 static int32_t check_card_number(); //!< fonction de vérification du numéro de carte. Retourne 0 si c'est ok
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
-extern unsigned long __text_end__; //!< fin du segment text (flash) = debut du segment data (flash) (cf arm-elf.ld)
-extern unsigned long __data_start__; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
-extern unsigned long __data_end__; //!< fin du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
-extern unsigned long __bss_start__; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
-extern unsigned long __bss_end__; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
-extern unsigned long _stack_top; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
+extern unsigned long _sidata;
+extern unsigned long _sdata; //!< debut du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
+extern unsigned long _edata; //!< fin du segment data en sram (segment à remplir au reset) (cf arm-elf.ld)
+extern unsigned long _sbss; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
+extern unsigned long _ebss; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
+extern unsigned long _estack; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
 {
 	// processeur - cortex-m3
-	(void (*)(void))(&_stack_top),          // Initialisation du pointer de la stack principale
+	(void (*)(void))(&_estack),          // Initialisation du pointer de la stack principale
 	isr_reset, 
 	isr_nmi,
 	isr_hard_fault,
@@ -168,8 +168,8 @@ void isr_reset(void)
 	//
 	// Copy the data segment initializers from flash to SRAM.
 	//
-	pulSrc = &__text_end__;
-	for(pulDest = &__data_start__; pulDest < &__data_end__; )
+	pulSrc = &_sidata;
+	for(pulDest = &_sdata; pulDest < &_edata; )
 	{
 		*pulDest++ = *pulSrc++;
 	}
@@ -180,8 +180,8 @@ void isr_reset(void)
     //
     __asm volatile
     (
-		"    ldr     r0, =__bss_start__          \n"
-		"    ldr     r1, =__bss_end__            \n"
+		"    ldr     r0, =_sbss                  \n"
+		"    ldr     r1, =_ebss                  \n"
 		"    mov     r2, #0                      \n"
 		"    .thumb_func                         \n"
 		"zero_loop:                              \n"

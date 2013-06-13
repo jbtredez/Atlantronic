@@ -59,7 +59,7 @@ struct systime systick_get_time()
 struct systime systick_get_time_from_isr()
 {
 	// formule pour eviter les debordements sur 32 bits
-	systick_time.ns = 999999 - (1000 * SysTick->VAL) / RCC_SYSCLK_MHZ;
+	systick_time.ns = (1000 * (SysTick->LOAD - SysTick->VAL)) / RCC_SYSCLK_MHZ;
 	return systick_time;
 }
 

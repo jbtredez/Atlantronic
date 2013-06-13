@@ -2,7 +2,7 @@
 ENTRY(isr_reset)
 
 /* Highest address of the user mode stack */
-_estack = 0x20020000;    /* end of 128K RAM on AHB bus*/
+_estack = 0x20020000;    /* end of 128K RAM on AHB bus */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */
@@ -39,13 +39,13 @@ SECTIONS
 		*(.glue_7t)        /* glue thumb to arm code */
 		*(.eh_frame)
 
-		/* tableau (trié) des fonctions d'init */
+		/* tableau (trie) des fonctions d'init */
 		__initcall_start = .;
 		*(.initcall.init)
 		*(SORT(.initcall.init.*))
 		__initcall_end = .;
 
-		/* tableau (trié) des fonctions d'exit */
+		/* tableau (trie) des fonctions d'exit */
 		__exitcall_start = .;
 		*(.exitcall.exit)
 		*(SORT(.exitcall.exit.*))

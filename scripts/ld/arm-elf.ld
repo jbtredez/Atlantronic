@@ -1,80 +1,140 @@
-/*
-script d'édition des liens
-
-point d'entrée : isr_reset
-section .text en flash : code
-section .data en flash et en ram : initialisation des constantes en ram à partir de la flash par isr_reset (isr.c)
-section .bss en ram : choses à initialiser à 0 (fait par isr_reset dans isr.c)
-*/
-
-
-/* point d'entrée */
+/* Entry Point */
 ENTRY(isr_reset)
 
+/* Highest address of the user mode stack */
+_estack = 0x20000000 + 64K; /* end of 64K RAM */
+
+/* Generate a link error if heap and stack don't fit into RAM */
+_Min_Heap_Size = 0;      /* required amount of heap  */
+_Min_Stack_Size = 0x400; /* required amount of stack */
+
+/* Specify the memory areas */
 MEMORY
 {
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256K
-    SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
+	FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256K
+	RAM (rwx)  : ORIGIN = 0x20000000, LENGTH = 64K
 }
 
-/* placement du haut de la stack : tout au bout de la SRAM */
-_ram_top = 0x20000000 + 64K;
-
+/* Define output sections */
 SECTIONS
 {
-	/* Section .text
-	   La section débute par le vecteur d'interruption (section .isr_vector, fichier isr.c).
-	   La section doit impérativement débuter en 0x00 pour placer le vecteur au bon endroit
-	*/
-	.text : AT (0x08000000)
+	/* The startup code goes first into FLASH */
+	.isr_vector :
 	{
-		KEEP(*(.isr_vector))
-		*(.text)
-		/* tableau (trié) des fonctions d'init */
+		. = ALIGN(4);
+		KEEP(*(.isr_vector)) /* Startup code */
+		. = ALIGN(4);
+	} >FLASH
+
+	/* The program code and other data goes into FLASH */
+	.text :
+	{
+		. = ALIGN(4);
+		*(.text)           /* .text sections (code) */
+		*(.text*)          /* .text* sections (code) */
+		*(.rodata)         /* .rodata sections (constants, strings, etc.) */
+		*(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+		*(.glue_7)         /* glue arm to thumb code */
+		*(.glue_7t)        /* glue thumb to arm code */
+		*(.eh_frame)
+
+		/* tableau (trie) des fonctions d'init */
 		__initcall_start = .;
 		*(.initcall.init)
 		*(SORT(.initcall.init.*))
 		__initcall_end = .;
 
-		/* tableau (trié) des fonctions d'exit */
+		/* tableau (trie) des fonctions d'exit */
 		__exitcall_start = .;
 		*(.exitcall.exit)
 		*(SORT(.exitcall.exit.*))
 		__exitcall_end = .;
+		KEEP (*(.init))
+		KEEP (*(.fini))
 
-		*(.init)
-		*(.rodata*)
-		*(.fini)
-		*(.eh_frame)
-		__text_end__ = .;
-	} > FLASH
+		. = ALIGN(4);
+		_etext = .;        /* define a global symbols at end of code */
+		_exit = .;
+	} >FLASH
 
-	/* Section .data
-	   Exécution en ram, au début sur la flash. On fait la copie au lancement dans la fonction isr_reset
-	   En SRAM, on va de __data_start__ à __data_end__. Comme la section en FLASH est mise directement après .text,
-	   on débute la copie à partir de __test_end__
-	   Ne pas mettre de section entre la fin de .text et le début de .data
-	 */
-	.data :
+
+	.ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+	.ARM : {
+		__exidx_start = .;
+		*(.ARM.exidx*)
+		__exidx_end = .;
+	} >FLASH
+
+	.preinit_array     :
 	{
-		__data_start__ = .;
-		*(vtable)
-		*(.data)
-		__data_end__ = .;
-	} > SRAM AT > FLASH
+		PROVIDE_HIDDEN (__preinit_array_start = .);
+		KEEP (*(.preinit_array*))
+		PROVIDE_HIDDEN (__preinit_array_end = .);
+	} >FLASH
+	.init_array :
+	{
+		PROVIDE_HIDDEN (__init_array_start = .);
+		KEEP (*(SORT(.init_array.*)))
+		KEEP (*(.init_array*))
+		PROVIDE_HIDDEN (__init_array_end = .);
+	} >FLASH
+	.fini_array :
+	{
+		PROVIDE_HIDDEN (__fini_array_start = .);
+		KEEP (*(.fini_array*))
+		KEEP (*(SORT(.fini_array.*)))
+		PROVIDE_HIDDEN (__fini_array_end = .);
+	} >FLASH
 
-	/* Section .bss :
-	   Données à mettre à zéro. C'est réalisé dans la fonction isr_reset (fichier isr.c)
-	*/
+	/* used by the startup to initialize data */
+	_sidata = .;
+
+	/* Initialized data sections goes into RAM, load LMA copy after code */
+	.data : AT ( _sidata )
+	{
+		. = ALIGN(4);
+		_sdata = .;        /* create a global symbol at data start */
+		*(.data)           /* .data sections */
+		*(.data*)          /* .data* sections */
+
+		. = ALIGN(4);
+		_edata = .;        /* define a global symbol at data end */
+	} >RAM
+
+	/* Uninitialized data section */
+	. = ALIGN(4);
 	.bss :
 	{
-		__bss_start__ = .;
+		/* This is used by the startup in order to initialize the .bss secion */
+		_sbss = .;         /* define a global symbol at bss start */
+		__bss_start__ = _sbss;
 		*(.bss)
+		*(.bss*)
 		*(COMMON)
-		__bss_end__ = .;
-	} > SRAM
 
-	_stack_top = _ram_top - 16;
+		. = ALIGN(4);
+		_ebss = .;         /* define a global symbol at bss end */
+		__bss_end__ = _ebss;
+	} >RAM
 
-	PROVIDE (end = .);
+	/* User_heap_stack section, used to check that there is enough RAM left */
+	._user_heap_stack :
+	{
+		. = ALIGN(4);
+		PROVIDE ( end = . );
+		PROVIDE ( _end = . );
+		. = . + _Min_Heap_Size;
+		. = . + _Min_Stack_Size;
+		. = ALIGN(4);
+	} >RAM
+
+	/* Remove information from the standard libraries */
+	/DISCARD/ :
+	{
+		libc.a ( * )
+		libm.a ( * )
+		libgcc.a ( * )
+	}
+
+	.ARM.attributes 0 : { *(.ARM.attributes) }
 }
