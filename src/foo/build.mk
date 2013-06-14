@@ -81,6 +81,7 @@ obj-foo-strat0 += kernel/driver/usb/otgd_fs_dev.o
 obj-foo-strat0 += kernel/driver/usb/otgd_fs_cal.o
 obj-foo-strat0 += kernel/driver/usb/otgd_fs_int.o
 obj-foo-strat0 += kernel/driver/usb/otgd_fs_pcd.o
+obj-foo-strat0 += kernel/end.o
 obj-foo-strat0 += kernel/driver/can.o
 obj-foo-strat0 += kernel/canopen.o
 obj-foo-strat0 += kernel/can_motor.o
