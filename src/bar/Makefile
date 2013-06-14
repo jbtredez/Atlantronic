@@ -2,7 +2,7 @@ CROSSCOMPILE:=arm-none-eabi-
 
 MCPU:=cortex-m3
 
-LDSCRIPT:=scripts/ld/arm-elf.ld
+LDSCRIPT:=scripts/ld/stm32f10x.ld
 
 DEF+=__ARM_CM3__=1
 DEF+=STM32F10X_CL
