@@ -557,21 +557,22 @@ static int robot_interface_process_go(struct robot_interface* data, int com_id, 
 	(void) data;
 	(void) com_id;
 	int res = 0;
-	uint64_t time[2];
+	struct systime t;
+	uint32_t match_time;
 
-	if(size != sizeof(time))
+	if(size != sizeof(t) + sizeof(match_time))
 	{
 		res = -1;
 		goto end;
 	}
 
-	memcpy(time, msg, size);
+	memcpy(&t, msg, sizeof(t));
+	memcpy(&match_time, msg+sizeof(t), sizeof(match_time));
 
-	// TODO
-	//data->current_time = (double) tick_to_us(time[0]) / 1000000.0f;
+	data->current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	data->start_time = data->current_time;
 
-	log_info("GO - durée du match : %f ms", time[1] / 72000.0f);
+	log_info("%4s %13.6f %8s   GO - durée du match : %u ms", cartes[com_id], data->start_time, log_level_description[LOG_INFO], match_time);
 
 end:
 	return res;

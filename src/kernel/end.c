@@ -5,13 +5,12 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "kernel/rcc.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 #include "gpio.h"
 
 #define END_STACK_SIZE           100
-uint64_t end_match_tick = 90ULL * 72000000ULL;
+uint32_t end_match_time = 90000; //!< duree du match en ms
 
 static void end_cmd_set_time(void* arg);
 static void end_task(void *arg);
@@ -39,11 +38,11 @@ module_init(end_module_init, INIT_END);
 static void end_cmd_set_time(void* arg)
 {
 	// temps passé en ms
-	uint64_t time = *((uint32_t*) arg);
+	uint32_t time = *((uint32_t*) arg);
 	if( ! getGo() )
 	{
-		end_match_tick = ms_to_tick( time );
-		log_format(LOG_INFO, "duree du match => %d ms", (int)time);
+		end_match_time = time;
+		log_format(LOG_INFO, "duree du match => %d ms", (int)end_match_time);
 	}
 }
 
@@ -52,17 +51,18 @@ static void end_task(void *arg)
 	(void) arg;
 
 	gpio_wait_go();
-	uint64_t msg[2];
-	msg[0] = systick_get_time();
-	msg[1] = end_match_tick;
+	uint32_t msg[3];
+	struct systime t = systick_get_time();
+	msg[0] = t.ms;
+	msg[1] = t.ns;
+	msg[2] = end_match_time;
 	usb_add(USB_GO, &msg, sizeof(msg));
-	log(LOG_INFO, "GO");
-	vTaskDelay(end_match_tick);
+	vTaskDelay(end_match_time);
 	end_match = 1;
 	log(LOG_INFO, "Fin du match");
 
 	exitModules();
 	setLed(0x00);
 
-	vTaskDelete(NULL);
+	vTaskSuspend(0);
 }
