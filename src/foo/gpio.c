@@ -170,12 +170,12 @@ void isr_exti0(void)
 
 	portSET_INTERRUPT_MASK_FROM_ISR();
 
-	/*if( EXTI->PR & EXTI_PR_PR0)
+	if( EXTI->PR & EXTI_PR_PR0)
 	{
 		EXTI->PR |= EXTI_PR_PR0;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
-	}*/
-
+		// TODO gestion sick
+//		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
+	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 
@@ -187,13 +187,14 @@ void isr_exti1(void)
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
 	portSET_INTERRUPT_MASK_FROM_ISR();
-/*
+
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
 		EXTI->PR |= EXTI_PR_PR1;
-		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
+		// TODO gestion sick
+//		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
 	}
-*/
+
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
