@@ -3,9 +3,8 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"
-#include "kernel/fault.h"
+//#include "kernel/fault.h"
 #include "gpio.h"
-#include "kernel/event.h"
 
 struct usart_device
 {
@@ -98,7 +97,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 			break;
 		default:
-			fault(ERR_USART_UNKNOWN_DEVICE, FAULT_ACTIVE);
+			//fault(ERR_USART_UNKNOWN_DEVICE, FAULT_ACTIVE);
 			return;
 			break;
 	}
@@ -190,7 +189,7 @@ void isr_dma1_channel2(void)
 void isr_dma1_channel3(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( DMA1->ISR | DMA_ISR_TCIF3)
 	{
@@ -199,12 +198,8 @@ void isr_dma1_channel3(void)
 		xSemaphoreGiveFromISR(usart_device[USART3_FULL_DUPLEX].sem, &xHigherPriorityTaskWoken);
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_dma2_channel5(void)
@@ -220,7 +215,7 @@ void isr_dma2_channel3(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK();
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
 	if( DMA2->ISR | DMA_ISR_TCIF3)
 	{
@@ -229,12 +224,8 @@ void isr_dma2_channel3(void)
 		xSemaphoreGiveFromISR(usart_device[UART4_HALF_DUPLEX].sem, &xHigherPriorityTaskWoken);
 	}
 
-	if( xHigherPriorityTaskWoken )
-	{
-		vPortYieldFromISR();
-	}
-
-	portCLEAR_INTERRUPT_MASK();
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)

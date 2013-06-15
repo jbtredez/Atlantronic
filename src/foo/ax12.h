@@ -55,9 +55,6 @@ struct ax12_error
 	uint8_t internal_error;
 };
 
-//!< affichage d'une erreur ax12
-void ax12_print_error(int id, struct ax12_error err);
-
 //!< configuration des limites d'un ax12 (limites mécaniques par exemple pour ne pas forcer)
 void ax12_set_goal_limit(uint8_t id, uint16_t min, uint16_t max);
 
@@ -80,7 +77,5 @@ struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable);
 int32_t ax12_get_position(uint8_t id, struct ax12_error* error);
 
 struct ax12_error ax12_write8(uint8_t id, uint8_t offset, uint8_t data);
-
-void ax12_auto_update(uint8_t id, uint8_t update);
 
 #endif

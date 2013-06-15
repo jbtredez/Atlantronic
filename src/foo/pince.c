@@ -19,7 +19,6 @@ static xSemaphoreHandle pince_mutex;
 static int32_t pince_order_right;
 static int32_t pince_order_left;
 
-
 static int pince_module_init()
 {
 	xTaskHandle xHandle;
@@ -52,8 +51,8 @@ static void pince_task(void* arg)
 {
 	(void) arg;
 	
-	bool bool_obstruct_left;
-	bool bool_obstruct_right;
+	int obstruct_left;
+	int obstruct_right;
 	int32_t alpha_left = 1500000;
 	int32_t alpha_right = -1500000;
 	int32_t alpha_close_left = 15000000;
@@ -62,6 +61,7 @@ static void pince_task(void* arg)
 	
 	struct ax12_error err_left;
 	struct ax12_error err_right;
+
 	// configuration des pinces
 	ax12_set_moving_speed(AX12_PINCE_RIGHT, 0x3ff);
 	ax12_set_moving_speed(AX12_PINCE_LEFT, 0x3ff);
@@ -71,11 +71,9 @@ static void pince_task(void* arg)
 
 	ax12_set_torque_enable(AX12_PINCE_RIGHT, 1);
 	ax12_set_torque_enable(AX12_PINCE_LEFT, 1);
+
 //	ax12_write8(AX12_PINCE_RIGHT, AX12_ALARM_SHUTDOWN, 0x04);
 //	ax12_write8(AX12_PINCE_LEFT, AX12_ALARM_SHUTDOWN, 0x04);
-
-	ax12_auto_update(AX12_PINCE_RIGHT, 1);
-	ax12_auto_update(AX12_PINCE_LEFT, 1);
 	
 	while(1)
 	{
@@ -87,43 +85,43 @@ static void pince_task(void* arg)
 		xSemaphoreGive(pince_mutex);
 
 		// recupération des positions courantes
-		actual_pos_left=ax12_get_position (AX12_PINCE_LEFT, &err_left);
-		actual_pos_right=ax12_get_position (AX12_PINCE_RIGHT, &err_right);
+		actual_pos_left = ax12_get_position(AX12_PINCE_LEFT, &err_left);
+		actual_pos_right = ax12_get_position(AX12_PINCE_RIGHT, &err_right);
 
 		// si la pince gauche est dans l'intervalle obstruant 
 		if((actual_pos_right < alpha_right) && (order_right != -4821428))
 		{
-			bool_obstruct_right = TRUE;
+			obstruct_right = 1;
 		}
 		else
 		{
-			bool_obstruct_right = FALSE;
+			obstruct_right = 0;
 		}
 
 		// si la pince droite est dans l'intervalle obstruant 
 		if((actual_pos_left > alpha_left) && (actual_pos_left < alpha_close_left) && (order_left != 4800000))
 		{
-			bool_obstruct_left=TRUE;
+			obstruct_left = 1;
 		}
 		else
 		{
-			bool_obstruct_left=FALSE;
+			obstruct_left = 0;
 		}
 
 		// si les deux pinces sont dans l'intervalle obstruant 
-		if((bool_obstruct_right)&&(bool_obstruct_left))
+		if((obstruct_right)&&(obstruct_left))
 		{
 			ax12_set_goal_position(AX12_PINCE_RIGHT, alpha_right);
 		}
 
 		// si la pince gauche peut bouger
-		if(!bool_obstruct_left)
+		if(!obstruct_left)
 		{
 			ax12_set_goal_position(AX12_PINCE_RIGHT, pince_order_right);
 		}
 		
 		// si la pince droite peut bouger
-		if((!bool_obstruct_right)||(!bool_obstruct_left))
+		if((!obstruct_right)||(!obstruct_left))
 		{
 			ax12_set_goal_position(AX12_PINCE_LEFT, pince_order_left);
 		}
