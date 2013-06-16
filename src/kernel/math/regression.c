@@ -98,7 +98,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 		dist_max = -1;
 		ab.x = (pt[b].x - pt[a].x) >> 16; // en mm
 		ab.y = (pt[b].y - pt[a].y) >> 16; // en mm
-		nab = fx_sqrt(ab.x*ab.x+ab.y*ab.y) >> 8; // en mm
+		nab = sqrt32(ab.x*ab.x+ab.y*ab.y); // en mm
 
 		for(c = a + 1; c<b; c++)
 		{

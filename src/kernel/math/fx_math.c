@@ -295,13 +295,111 @@ uint32_t fx_sqrt(uint32_t x)
 		}
 	}
 
-	// Finally, if next bit would have been 1, round the result upwards.
-	if (x > result)
+	return result;
+}
+
+// cela prend plus de place mais cest 30% plus rapide
+__attribute__((optimize("unroll-loops"))) __attribute__((noinline)) uint32_t sqrt32_helper(uint32_t x, uint32_t* rem)
+{
+	uint32_t root = 0;
+	uint32_t one = 1uL << 30;
+
+	while(one != 0)
 	{
-		result++;
+		if(x >= root + one)
+		{
+			x -= root + one;
+			root += 2 * one;
+		}
+		root >>= 1;
+		one >>= 2;
 	}
 
-	return result;
+	if(rem)
+	{
+		*rem = x;
+	}
+	return root;
+}
+
+__attribute__((optimize("unroll-loops"))) __attribute__((noinline)) uint32_t sqrt64(uint64_t x)
+{
+	uint32_t remainder;
+	uint32_t root = sqrt32_helper(x>>32, &remainder);
+
+	// passe sur les 16 bits suivants
+	uint32_t one = 1uLL << 14;
+	root <<= 16;
+	remainder <<= 16;
+	remainder += (x & 0xffffffff)>> 16;
+
+	while(one > 0)
+	{
+		if (remainder >= root + one)
+		{
+			remainder -= root + one;
+			root += 2 * one;
+		}
+		root >>= 1;
+		one >>= 2;
+	}
+
+	// passe sur les 8 bits suivants
+	one = 1uLL << 6;
+	root <<= 8;
+	remainder <<= 8;
+	remainder += (x & 0xffff) >> 8;
+
+	while(one > 0)
+	{
+		if (remainder >= root + one)
+		{
+			remainder -= root + one;
+			root += 2 * one;
+		}
+		root >>= 1;
+		one >>= 2;
+	}
+
+	// passe sur les 4 bits suivants
+	one = 1uLL << 2;
+	root <<= 4;
+	remainder <<= 4;
+	remainder += (x & 0xff) >> 4;
+
+	while(one > 0)
+	{
+		if (remainder >= root + one)
+		{
+			remainder -= root + one;
+			root += 2 * one;
+		}
+		root >>= 1;
+		one >>= 2;
+	}
+
+	root <<= 2;
+	remainder <<= 2;
+	remainder += (x & 0x0f) >> 2;
+	if( remainder >= root + 1 )
+	{
+		remainder -= root + 1;
+		root += 2;
+	}
+
+	remainder <<= 1;
+	remainder += x & 0x03;
+	if( remainder >= root )
+	{
+		root ++;
+	}
+
+	return root;
+}
+
+uint32_t sqrt32(uint32_t x)
+{
+	return sqrt32_helper(x, 0);
 }
 
 int32_t fx_acos(int32_t x)

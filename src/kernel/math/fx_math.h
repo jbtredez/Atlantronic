@@ -28,4 +28,12 @@ int32_t fx_acos(int32_t x);
 //! @retrun sqrt(x) en 2^-16 unite
 uint32_t fx_sqrt(uint32_t x);
 
+//! @param x - 64 bit
+//! @return sqrt(x)
+uint32_t sqrt64(uint64_t x);
+
+//! @param x - 32 bit
+//! @return sqrt(x)
+uint32_t sqrt32(uint32_t x);
+
 #endif

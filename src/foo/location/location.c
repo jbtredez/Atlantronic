@@ -5,7 +5,7 @@
 #include "location/location.h"
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include "kernel/driver/usb.h"
 
 static struct kinematics location_kinematics;

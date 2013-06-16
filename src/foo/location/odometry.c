@@ -9,7 +9,7 @@
 #include "kernel/module.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/portmacro.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 
 static uint16_t encoders_right;
 static uint16_t encoders_left;

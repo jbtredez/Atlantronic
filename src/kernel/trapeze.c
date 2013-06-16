@@ -3,8 +3,10 @@
 //! @author Atlantronic
 
 #include "kernel/trapeze.h"
+#include "kernel/math/fx_math.h"
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 //! @param v vitesse actuelle
 //! @param ds abscisse curviligne qui reste à faire
@@ -14,7 +16,7 @@ int32_t trapeze_speed_filter(int32_t v, int32_t ds, int32_t amax, int32_t dmax, 
 	// formule theorique : vmax_stop = sqrt( 2 * fabs(ds) * d_max);
 	// formule modifiée pour limiter le pic de décélération à la fin
 	int32_t half_dmax = dmax >> 1;
-	int32_t vmax_stop = sqrtf( (int64_t)half_dmax * (int64_t)half_dmax + ( ((int64_t)abs(ds) * (int64_t)dmax) << 1)) - half_dmax;
+	int32_t vmax_stop = sqrt64( (int64_t)half_dmax * (int64_t)half_dmax + ( ((int64_t)abs(ds) * (int64_t)dmax) << 1)) - half_dmax;
 
 	if(vmax_stop < vmax)
 	{
