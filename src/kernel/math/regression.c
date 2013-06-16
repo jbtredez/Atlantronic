@@ -2,12 +2,14 @@
 //! @brief Calcul d'une régression linéaire
 //! @author Atlantronic
 
+#include "kernel/math/fx_math.h"
 #include "kernel/math/regression.h"
 #include "kernel/error_codes.h"
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
+#ifdef LINUX
 //!   | a |     | Somme( wi*xi*xi )    Somme( wi*xi )   |^-1      | Somme( wi*xi*yi )  |
 //!   | b |   = | Somme( wi*xi )       Somme( wi )      |      *  | Somme( wi*yi )     |
 //!
@@ -48,6 +50,7 @@ int regression_linear(float* x, float* y, float* w, int size, float* a, float* b
 end:
 	return err;
 }
+#endif
 
 int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* regression_pt, int reg_size)
 {
@@ -57,7 +60,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 	int id_max = 0;
 	int dist = 0;
 	int dist_max = -1;
-	float nab = 0;
+	int32_t nab = 0;
 	struct fx_vect2 ab;
 	struct fx_vect2 ac;
 
@@ -65,7 +68,9 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 	int pta = 0;
 
 	while( a < size && pt[a].x == 0 && pt[a].y == 0)
+	{
 		a++;
+	}
 
 	if(a >= size)
 	{
@@ -76,7 +81,9 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 	regression_num++;
 
 	while( b > a && pt[b].x == 0 && pt[b].y == 0)
+	{
 		b--;
+	}
 
 	if( a == b)
 	{
@@ -91,7 +98,7 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 		dist_max = -1;
 		ab.x = (pt[b].x - pt[a].x) >> 16; // en mm
 		ab.y = (pt[b].y - pt[a].y) >> 16; // en mm
-		nab = sqrtf(ab.x*ab.x+ab.y*ab.y);
+		nab = fx_sqrt(ab.x*ab.x+ab.y*ab.y) >> 8; // en mm
 
 		for(c = a + 1; c<b; c++)
 		{

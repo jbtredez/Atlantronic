@@ -1,4 +1,4 @@
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include <stdlib.h>
 #include <math.h>
 

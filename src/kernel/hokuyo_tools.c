@@ -7,7 +7,7 @@
 #include "kernel/systick.h"
 #include "kernel/vect_pos.h"
 #include "kernel/error_codes.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 
 #include <stdio.h>
 #include <stdlib.h>

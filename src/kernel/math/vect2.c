@@ -9,7 +9,7 @@
 //!< @param vecteur u
 //!< @param vecteur v
 //!< @return vecteur résultant de u+v
-struct fx_vect2 fx_vect2_sum (const struct fx_vect2* u, const struct fx_vect2* v)
+struct fx_vect2 fx_vect2_add(const struct fx_vect2* u, const struct fx_vect2* v)
 {
 	struct fx_vect2 result = {u->x + v->x, u->y + v->y}; 
 	return result;
@@ -20,7 +20,7 @@ struct fx_vect2 fx_vect2_sum (const struct fx_vect2* u, const struct fx_vect2* v
 //!< @param vecteur u
 //!< @param vecteur v
 //!< @return vecteur résultant de u-v
-struct fx_vect2 fx_vect2_difference (const struct fx_vect2* u, const struct fx_vect2* v)
+struct fx_vect2 fx_vect2_sub(const struct fx_vect2* u, const struct fx_vect2* v)
 {
 	struct fx_vect2 result = {u->x - v->x, u->y - v->y}; 
 	return result;

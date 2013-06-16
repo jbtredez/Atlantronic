@@ -3,7 +3,7 @@
 //! @author Atlantronic
 
 #include "kernel/vect_pos.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 
 //! changement de repere du repère local au repere absolu
 //! origin : origine du repère local dans le repère absolu

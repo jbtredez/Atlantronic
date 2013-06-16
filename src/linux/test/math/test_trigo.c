@@ -2,7 +2,7 @@
 //! @brief Test trigo functions
 //! @author Atlantronic
 
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

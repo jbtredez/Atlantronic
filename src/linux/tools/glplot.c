@@ -17,7 +17,7 @@
 #include "linux/tools/graphique.h"
 #include "linux/tools/joystick.h"
 #include "kernel/robot_parameters.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include "foo/pwm.h"
 #include "foo/graph.h"
 #include "foo/table.h"
