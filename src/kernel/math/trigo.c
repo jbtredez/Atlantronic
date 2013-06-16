@@ -230,6 +230,80 @@ int32_t fx_atan2(int32_t y, int32_t x)
 	return t2 >> 4;
 }
 
+uint32_t fx_sqrt(uint32_t x)
+{
+	uint32_t result = 0;
+	uint32_t bit;
+	uint8_t n;
+
+	// Many numbers will be less than 15, so
+	// this gives a good balance between time spent
+	// in if vs. time spent in the while loop
+	// when searching for the starting value.
+	if (x & 0xFFF00000)
+	{
+		bit = (uint32_t)1 << 30;
+	}
+	else
+	{
+		bit = (uint32_t)1 << 18;
+	}
+
+	while (bit > x) bit >>= 2;
+
+	// The main part is executed twice, in order to avoid
+	// using 64 bit values in computations.
+	for (n = 0; n < 2; n++)
+	{
+		// First we get the top 24 bits of the answer.
+		while (bit)
+		{
+			if (x >= result + bit)
+			{
+				x -= result + bit;
+				result = (result >> 1) + bit;
+			}
+			else
+			{
+				result = (result >> 1);
+			}
+			bit >>= 2;
+		}
+
+		if (n == 0)
+		{
+			// Then process it again to get the lowest 8 bits.
+			if (x > 65535)
+			{
+				// The remainder 'x' is too large to be shifted left
+				// by 16, so we have to add 1 to result manually and
+				// adjust 'x' accordingly.
+				// x = a - (result + 0.5)^2
+				//   = x + result^2 - (result + 0.5)^2
+				//   = x - result - 0.5
+				x -= result;
+				x = (x << 16) - 0x8000;
+				result = (result << 16) + 0x8000;
+			}
+			else
+			{
+				x <<= 16;
+				result <<= 16;
+			}
+
+			bit = 1 << 14;
+		}
+	}
+
+	// Finally, if next bit would have been 1, round the result upwards.
+	if (x > result)
+	{
+		result++;
+	}
+
+	return result;
+}
+
 int32_t fx_acos(int32_t x)
 {
 	int32_t negate = 0;
@@ -250,9 +324,10 @@ int32_t fx_acos(int32_t x)
 	res = (((int64_t)res * (int64_t)x) >> 16) + 12690560;
 	res = (((int64_t)res * (int64_t)x) >> 16) - 36248510;
 	res = (((int64_t)res * (int64_t)x) >> 16) + 268423916;
-	res = ((int64_t)res * (int64_t)sqrtf( ((int64_t)(65536 - x)) << 16)) >> 16;
+	res = ((int64_t)res * (int64_t)fx_sqrt(65536-x)) >> 16;
 	res = res - 2 * negate * res;
 
 end:
 	return negate * 0x2000000 + (res >> 4); // 0.5 tour
 }
+

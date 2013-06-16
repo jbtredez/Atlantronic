@@ -119,6 +119,33 @@ void test_fx_acos()
 	}
 }
 
+void test_fx_sqrt()
+{
+	int32_t val;
+	int32_t max_err = 0;
+	for(val = 0; val < (1 << 26) ; val ++)
+	{
+		int32_t fx = fx_sqrt(val);
+		int32_t fx_real = sqrt((double)val / 65536.0f)*65536;
+		int32_t err = abs(fx - fx_real);
+		if(err > max_err)
+		{
+			max_err = err;
+		}
+	}
+
+	printf("fx_sqrt - erreur max : %d (%g) : ", max_err, max_err / ((float)(1 << 30)));
+	if(max_err < 1e-9 * (1 << 30))
+	{
+		printf("OK\n");
+	}
+	else
+	{
+		error_count++;
+		printf("KO <-----\n");
+	}
+}
+
 int main(int argc, char** argv)
 {
 	error_count = 0;
@@ -147,6 +174,11 @@ int main(int argc, char** argv)
 	if( !test_id || test_id == 4 )
 	{
 		test_fx_acos();
+	}
+
+	if( !test_id || test_id == 5 )
+	{
+		test_fx_sqrt();
 	}
 
 	return error_count;
