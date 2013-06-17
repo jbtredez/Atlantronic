@@ -13,7 +13,7 @@
 #include "kernel/trapeze.h"
 #include "kernel/vect_pos.h"
 #include "kernel/driver/usb.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include "foo/location/location.h"
 #include "foo/pwm.h"
 #include "ax12.h"
@@ -130,9 +130,6 @@ module_init(arm_module_init, INIT_ARM);
 static void arm_task()
 {
 	// configuration des ax12
-	ax12_auto_update(AX12_ARM_1, 1);
-	ax12_auto_update(AX12_ARM_2, 1);
-
 	ax12_set_moving_speed(AX12_ARM_1, 0x3ff);
 	ax12_set_moving_speed(AX12_ARM_2, 0x3ff);
 
@@ -182,8 +179,8 @@ static void arm_task()
 static int arm_compute_ab(int32_t x, int32_t y, int way)
 {
 	// verification que l'objectif est dans l'espace de travail
-	int64_t norm2_xy = (int64_t)x * (int64_t)x + (int64_t)y* (int64_t)y;
-	int32_t norm_xy = sqrtf(norm2_xy);
+	int32_t norm2_xy = (x>>16) * (x>>16) + (y>>16)* (y>>16); // en mm2
+	int32_t norm_xy = fx_sqrt(norm2_xy) << 8;
 
 	// espace accessible, x<0 => dans le robot donc interdit
 	if( x < 0 || norm_xy > ARM_L1 + ARM_L2 || norm_xy < ARM_L1 - ARM_L2 )
@@ -333,7 +330,7 @@ int arm_compute_tool_abs(struct fx_vect_pos tool_pos)
 		return -1;
 	}
 
-	int32_t delta = sqrtf(delta2);
+	int32_t delta = sqrt64(delta2);
 	// ux * x1 + uy * y1
 	int64_t uxx1_uyy1 = (int64_t)ux * (int64_t)X1.x + (int64_t)uy * (int64_t)X1.y;
 	int32_t uxx1_uyy1_over_ux2_uy2 = uxx1_uyy1 / ux2_uy2;
