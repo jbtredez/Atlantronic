@@ -37,7 +37,7 @@ end
 define _ptasks
 	printf "Il y a %i taches\n", uxCurrentNumberOfTasks
 	set $match_time = 0
-	set $systime = systick_time.ms / 1000.0f + (999999 - (1000000UL * SysTick->VAL) / SysTick->LOAD) / 1000000000.0f
+	set $systime = systick_time.ms / 1000.0f + (SysTick->LOAD - SysTick->VAL)/((double)SysTick->LOAD) / 1000.0f
 	set $start_match_time = systick_time_start_match.ms/1000.0f + systick_time_start_match.ns/1000000000.0f
 
 	if $start_match_time > 0
@@ -64,11 +64,11 @@ define _ptasks
 
 	echo \033[01;34m
 	if $arg0
-		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu  | free stack (32 bit)  |\n"
-		printf "      |            |          |            |             |    %%   | current   |   min    |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu   | free stack (32 bit)  |\n"
+		printf "      |            |          |            |             |    %%    | current   |   min    |\n"
 	else
-		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu  | free stack|\n"
-		printf "      |            |          |            |             |    %%   | current   |\n"
+		printf " etat | delai (ms) |    nom   |   addr     |  time used  |   cpu   | free stack|\n"
+		printf "      |            |          |            |             |    %%    | current   |\n"
 	end
 
 	echo \033[0m
@@ -81,7 +81,7 @@ define _ptasks
 		set $list_next = pxReadyTasksLists[$i].xListEnd.pxNext
 
 		while $list_next != $list_end && $n > 0
-			printf "  P%i  |          0 |", $i
+			printf "  P%2i |          0 |", $i
 			pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 			set $list_next = $list_next.pxNext
 			set $n--
@@ -106,7 +106,7 @@ define _ptasks
 	set $list_next = xDelayedTaskList1.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf "  D1  | %10.2f |", ((double)$list_next->xItemValue / 1000)
+		printf "  D1  | %10.2f |", ($list_next->xItemValue - $systime*1000.0f)
 		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -118,7 +118,7 @@ define _ptasks
 	set $list_next = xDelayedTaskList2.xListEnd.pxNext
 
 	while $list_next != $list_end && $n > 0
-		printf "  D2  | %10.2f |", ((double)$list_next->xItemValue / 1000)
+		printf "  D2  | %10.2f |", ($list_next->xItemValue - $systime*1000.0f)
 		pTcb ((tskTCB*)$list_next->pvOwner) $arg0
 		set $list_next = $list_next.pxNext
 		set $n--
@@ -140,7 +140,7 @@ define _ptasks
 end
 
 define pTcb
-	printf " %8s | %10p | %11.6f | %6.3f | %9i |", $arg0->pcTaskName, $arg0, $arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f, ($arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f)/(ulTotalRunTime.ms/1000.0f + ulTotalRunTime.ns/1000000000.0f)*100, $arg0->pxTopOfStack - $arg0->pxStack
+	printf " %8s | %10p | %11.6f | %7.3f | %9i |", $arg0->pcTaskName, $arg0, $arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f, ($arg0->ulRunTimeCounter.ms/1000.0f + $arg0->ulRunTimeCounter.ns/1000000000.0f)/(ulTotalRunTime.ms/1000.0f + ulTotalRunTime.ns/1000000000.0f)*100, $arg0->pxTopOfStack - $arg0->pxStack
 
 	if $arg1
 		set $stack_min_free = 0
