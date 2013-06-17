@@ -5,7 +5,6 @@
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
-#include "kernel/event.h"
 #include "kernel/rcc.h"
 #include "adc.h"
 #include <string.h>
@@ -19,7 +18,6 @@ struct adc_an adc_1;
 struct adc_an adc_2;
 struct adc_an* adc_dma;
 struct adc_an* adc_current;
-
 
 int adc_module_init()
 {
@@ -100,8 +98,7 @@ int adc_module_init()
 	NVIC_SetPriority(DMA1_Channel1_IRQn, PRIORITY_IRQ_DMA1_CHANNEL1);
 	NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(adc_task, "adc", ADC_STACK_SIZE, NULL, PRIORITY_TASK_ADC, &xHandle);
+	portBASE_TYPE err = xTaskCreate(adc_task, "adc", ADC_STACK_SIZE, NULL, PRIORITY_TASK_ADC, NULL);
 
 	if(err != pdPASS)
 	{
@@ -135,12 +132,11 @@ static void adc_task(void* arg)
 {
 	(void) arg;
 
-	portTickType wake_time = systick_get_time();
+	uint32_t wake_time = 0;
 
 	while(1)
 	{
 		scan_AN();
-
 
 		// TODO val + bateries
 		//if(adc_dma.vBatAru == 0)
@@ -148,8 +144,7 @@ static void adc_task(void* arg)
 		//	setLed(ERR_ARU);
 		//}
 
-		wake_time += ms_to_tick(5);
-		vTaskDelayUntil(wake_time);
+		vTaskDelayUntil(&wake_time, 5);
 	}
 }
 
