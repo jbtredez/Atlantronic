@@ -89,9 +89,6 @@
 #endif
 
 /* Constants required to manipulate the core.  Registers first... */
-#define portNVIC_SYSTICK_CTRL_REG			( * ( ( volatile unsigned long * ) 0xe000e010 ) )
-#define portNVIC_SYSTICK_LOAD_REG			( * ( ( volatile unsigned long * ) 0xe000e014 ) )
-#define portNVIC_SYSTICK_CURRENT_VALUE_REG	( * ( ( volatile unsigned long * ) 0xe000e018 ) )
 #define portNVIC_SYSPRI2_REG				( * ( ( volatile unsigned long * ) 0xe000ed20 ) )
 /* ...then bits in the registers. */
 #define portNVIC_SYSTICK_CLK_BIT			( 1UL << 2UL )
@@ -184,8 +181,8 @@ static void prvPortStartFirstTask( void )
 					" ldr r0, [r0] 			\n"
 					" ldr r0, [r0] 			\n"
 					" msr msp, r0			\n" /* Set the msp back to the start of the stack. */
-					" cpsie i				\n" /* Globally enable interrupts. */
 					" svc 0					\n" /* System call to start first task. */
+					" cpsie i				\n" /* Globally enable interrupts. */
 					" nop					\n"
 				);
 }
@@ -303,8 +300,8 @@ __attribute__(( naked )) void vPortClearInterruptMask( unsigned long ulNewMaskVa
 __attribute__(( weak )) void vPortSetupTimerInterrupt( void )
 {
 	/* Configure SysTick to interrupt at the requested rate. */
-	portNVIC_SYSTICK_LOAD_REG = ( configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;;
-	portNVIC_SYSTICK_CTRL_REG = portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT;
+	SysTick->LOAD = ( configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
+	SysTick->CTRL = portNVIC_SYSTICK_CLK_BIT | portNVIC_SYSTICK_INT_BIT | portNVIC_SYSTICK_ENABLE_BIT;
 }
 /*-----------------------------------------------------------*/
 
