@@ -73,8 +73,7 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 	}
 	xSemaphoreTake(can_write_sem, 0);
 
-	xTaskHandle xHandle;
-	int err = xTaskCreate(can_write_task, "can_write", CAN_WRITE_STACK_SIZE, NULL, PRIORITY_TASK_CAN, &xHandle);
+	int err = xTaskCreate(can_write_task, "can_w", CAN_WRITE_STACK_SIZE, 0, PRIORITY_TASK_CAN, 0);
 
 	if(err != pdPASS)
 	{

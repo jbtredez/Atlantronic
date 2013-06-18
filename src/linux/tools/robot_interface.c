@@ -190,13 +190,13 @@ static void* robot_interface_task(void* arg)
 				res = robot_interface_process_err(robot, args->com_id, msg, size);
 				break;
 			case USB_HOKUYO_FOO:
-				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_FOO, msg, size);
+				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO1, msg, size);
 				break;
 			case USB_HOKUYO_BAR:
-				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO_BAR, msg, size);
+				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO2, msg, size);
 				break;
 			case USB_HOKUYO_FOO_SEG:
-				res = robot_interface_process_hokuyo_seg(robot, args->com_id, HOKUYO_FOO, msg, size);
+				res = robot_interface_process_hokuyo_seg(robot, args->com_id, HOKUYO1, msg, size);
 				break;
 			case USB_CONTROL:
 				res = robot_interface_process_control(robot, args->com_id, msg, size);
@@ -542,8 +542,8 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 	}
 
 	memcpy(data->control_usb_data + data->control_usb_data_count, msg, size);
-	// TODO
-	//data->current_time = ( (double) tick_to_us(data->control_usb_data[data->control_usb_data_count].current_time)) / 1000000.0f;
+	struct systime t = data->control_usb_data[data->control_usb_data_count].current_time;
+	data->current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
 	pthread_mutex_unlock(&data->mutex);

@@ -8,12 +8,10 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
-#include "kernel/driver/can.h"
-#include "kernel/can/can_id.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include "kernel/math/polyline.h"
 #include "kernel/math/distance.h"
 #include "location/location.h"
@@ -24,15 +22,22 @@
 //! @todo réglage au pif
 #define DETECTION_STACK_SIZE         400
 #define DETECTION_NUM_OBJECT         100
+#define DETECTION_QUEUE_SIZE          20
 #define HOKUYO_REG_SEG               200
+
+enum
+{
+	DETECTION_EVENT_HOKUYO,
+	DETECTION_EVENT_SICK
+};
 
 static void detection_task();
 static int detection_module_init();
 static void detection_compute();
 static void detection_remove_static_elements_from_dynamic_list();
 static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n);
-//static void can_hokuyo_reset(struct can_msg *msg);
-//static void can_hokuyo_data(struct can_msg *msg);
+static void detection_hokuyo_callback();
+static xQueueHandle detection_queue;
 
 // données privées à la tache detection, ne doit pas être disponible
 // à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
@@ -51,8 +56,7 @@ static struct fx_vect2 detection_sick_seg[2];
 
 int detection_module_init()
 {
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(detection_task, "detect", DETECTION_STACK_SIZE, NULL, PRIORITY_TASK_DETECTION, &xHandle);
+	portBASE_TYPE err = xTaskCreate(detection_task, "detect", DETECTION_STACK_SIZE, NULL, PRIORITY_TASK_DETECTION, NULL);
 
 	if(err != pdPASS)
 	{
@@ -61,10 +65,19 @@ int detection_module_init()
 
 	detection_mutex = xSemaphoreCreateMutex();
 
-	if(detection_mutex == NULL)
+	if( ! detection_mutex )
 	{
 		return ERR_INIT_DETECTION;
 	}
+
+	detection_queue = xQueueCreate(DETECTION_QUEUE_SIZE, 1);
+
+	if( ! detection_queue )
+	{
+		return ERR_INIT_DETECTION;
+	}
+
+	hokuyo_register(HOKUYO1, detection_hokuyo_callback);
 
 	detection_reg_size = 0;
 
@@ -75,9 +88,6 @@ int detection_module_init()
 	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
 
-//	can_register(CAN_HOKUYO_DATA_RESET, CAN_STANDARD_FORMAT, can_hokuyo_reset);
-//	can_register(CAN_HOKUYO_DATA, CAN_STANDARD_FORMAT, can_hokuyo_data);
-
 	return 0;
 }
 
@@ -85,100 +95,105 @@ module_init(detection_module_init, INIT_DETECTION);
 
 static void detection_task()
 {
+	unsigned char event;
+
 	while(1)
 	{
-		// on attend la fin du nouveau scan
-		int32_t ev = vTaskWaitEvent(EVENT_LOCAL_HOKUYO_UPDATE | EVENT_SICK, portMAX_DELAY);
-
-		struct fx_vect_pos pos = location_get_position();
-		xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
-		if( ev & EVENT_LOCAL_HOKUYO_UPDATE)
+		// attente d'un evenement hokuyo ou sick
+		if( xQueueReceive(detection_queue, &event, portMAX_DELAY) )
 		{
-			vTaskClearEvent(EVENT_LOCAL_HOKUYO_UPDATE);
-
-			// position mise en fin de scan
-			//TODO demenager dans hokuyo ?
-			hokuyo_scan.pos_robot = pos;
-
-	//		portTickType last_time = systick_get_time();
-			detection_compute();
-	//		portTickType current_time = systick_get_time();
-	//		log_format(LOG_INFO, "compute_time : %lu us", (long unsigned int) tick_to_us(current_time - last_time));
-		}
-
-		if(ev & EVENT_SICK)
-		{
-			vTaskClearEvent(EVENT_SICK);
-
-			detection_sick_state = get_sick(SICK_RIGHT | SICK_LEFT);
-
-			if(detection_sick_state)
+			struct fx_vect_pos pos = location_get_position();
+			xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
+			if( event == DETECTION_EVENT_HOKUYO )
 			{
-				struct fx_vect2 a = { -200 << 16,  PARAM_LEFT_CORNER_Y };
-				struct fx_vect2 b = { -200 << 16, PARAM_RIGHT_CORNER_Y };
+				// position mise en fin de scan
+				//TODO demenager dans hokuyo ?
+				hokuyo_scan.pos_robot = pos;
 
-				switch(detection_sick_state)
+		//		struct systime last_time = systick_get_time();
+				detection_compute();
+		//		struct systime current_time = systick_get_time();
+		//		struct systime dt = timediff(current_time, last_time);
+		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
+			}
+
+			if( event == DETECTION_EVENT_SICK )
+			{
+				detection_sick_state = get_sick(SICK_RIGHT | SICK_LEFT);
+
+				if(detection_sick_state)
 				{
-					case SICK_RIGHT:
-						a.x = PARAM_NP_X;
-						a.y = -250<<16;
-						b.x = -200<<16;
-						b.y = 0;
-						break;
-					case SICK_LEFT:
-						a.x = PARAM_NP_X;
-						a.y = 250<<16;
-						b.x = -200<<16;
-						b.y = 0;
-						break;
-					default:
-						break;
+					struct fx_vect2 a = { -200 << 16,  PARAM_LEFT_CORNER_Y };
+					struct fx_vect2 b = { -200 << 16, PARAM_RIGHT_CORNER_Y };
+
+					switch(detection_sick_state)
+					{
+						case SICK_RIGHT:
+							a.x = PARAM_NP_X;
+							a.y = -250<<16;
+							b.x = -200<<16;
+							b.y = 0;
+							break;
+						case SICK_LEFT:
+							a.x = PARAM_NP_X;
+							a.y = 250<<16;
+							b.x = -200<<16;
+							b.y = 0;
+							break;
+						default:
+							break;
+					}
+
+					vect2_loc_to_abs(&pos, &a, detection_sick_seg);
+					vect2_loc_to_abs(&pos, &b, detection_sick_seg + 1);
 				}
 
-				vect2_loc_to_abs(&pos, &a, detection_sick_seg);
-				vect2_loc_to_abs(&pos, &b, detection_sick_seg + 1);
+				log_format(LOG_INFO, "sick = %d", detection_sick_state);
 			}
 
-			log_format(LOG_INFO, "sick = %d", detection_sick_state);
-		}
-
-		// ajout d'un segment pour gérer les sick
-		if( detection_sick_state )
-		{
-			// ajout du segment
-			detection_object[detection_num_obj].size = 2;
-			detection_object[detection_num_obj].pt = detection_sick_seg;
-			detection_num_obj++;
-		}
-
-		xSemaphoreGive(hokuyo_scan_mutex);
-
-		// on limite la fréquence de l'envoi au cas ou.
-		if( detection_reg_size && ev & EVENT_LOCAL_HOKUYO_UPDATE)
-		{
-			int i = 0;
-			int16_t detect_size = 0;
-			for(; i < detection_num_obj; i++)
+			// ajout d'un segment pour gérer les sick
+			if( detection_sick_state )
 			{
-				if (detection_object[i].size)
+				// ajout du segment
+				detection_object[detection_num_obj].size = 2;
+				detection_object[detection_num_obj].pt = detection_sick_seg;
+				detection_num_obj++;
+			}
+
+			xSemaphoreGive(hokuyo_scan_mutex);
+
+			// on limite la fréquence de l'envoi au cas ou.
+			//if( detection_reg_size && ev & EVENT_LOCAL_HOKUYO_UPDATE)
+			{
+				int i = 0;
+				int16_t detect_size = 0;
+				for(; i < detection_num_obj; i++)
 				{
-					detect_size++;
+					if (detection_object[i].size)
+					{
+						detect_size++;
+					}
+				}
+
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &detect_size, sizeof(detect_size));
+
+				i = 0;
+				for( ; i < detection_num_obj; i++)
+				{
+					usb_add(USB_DETECTION_DYNAMIC_OBJECT, detection_object[i].pt, sizeof(detection_object[i].pt[0]) * detection_object[i].size);
 				}
 			}
 
-			usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &detect_size, sizeof(detect_size));
-
-			i = 0;
-			for( ; i < detection_num_obj; i++)
-			{
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT, detection_object[i].pt, sizeof(detection_object[i].pt[0]) * detection_object[i].size);
-			}
+			// TODO
+			//vTaskSetEvent(EVENT_DETECTION_UPDATED);
 		}
-
-		vTaskSetEvent(EVENT_DETECTION_UPDATED);
 	}
+}
 
-	vTaskDelete(NULL);
+static void detection_hokuyo_callback()
+{
+	unsigned char event = DETECTION_EVENT_HOKUYO;
+	xQueueSend(detection_queue, &event, 0);
 }
 
 static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
@@ -429,14 +444,3 @@ static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const 
 	return similarity;
 }
 
-/*
-void can_hokuyo_reset(struct can_msg *msg)
-{
-	(void) msg;
-}
-
-void can_hokuyo_data(struct can_msg *msg)
-{
-	(void) msg;
-}
-*/

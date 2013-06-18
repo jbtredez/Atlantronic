@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"
+#include "kernel/systick.h"
 
 //! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
 #define CONTROL_TICK_PERIOD        ms_to_tick(5)
@@ -33,7 +34,7 @@ enum control_speed
 
 struct control_usb_data
 {
-	uint64_t current_time;
+	struct systime current_time;
 	int32_t control_state;
 	int32_t control_cons_x;
 	int32_t control_cons_y;

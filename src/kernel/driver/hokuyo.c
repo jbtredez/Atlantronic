@@ -9,7 +9,6 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/module.h"
-#include "kernel/event.h"
 #include <string.h>
 
 #define ERR_HOKUYO_TIMEOUT              0x01
@@ -43,6 +42,13 @@ const char* hokuyo_hs_cmd = "HS1\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
+struct hokuyo
+{
+	hokuyo_callback callback;
+};
+
+static struct hokuyo hokuyo[HOKUYO_MAX];
+
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
 struct hokuyo_scan hokuyo_scan;
 xSemaphoreHandle hokuyo_scan_mutex;
@@ -61,8 +67,7 @@ static int hokuyo_decode_scan();
 
 int hokuyo_module_init()
 {
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(hokuyo_task, "hokuyo", HOKUYO_STACK_SIZE, NULL, PRIORITY_TASK_HOKUYO, &xHandle);
+	portBASE_TYPE err = xTaskCreate(hokuyo_task, "hokuyo", HOKUYO_STACK_SIZE, NULL, PRIORITY_TASK_HOKUYO, NULL);
 
 	if(err != pdPASS)
 	{
@@ -80,24 +85,36 @@ int hokuyo_module_init()
 
 module_init(hokuyo_module_init, INIT_HOKUYO);
 
+void hokuyo_register(enum hokuyo_id hokuyo_id, hokuyo_callback callback)
+{
+	if( hokuyo_id < HOKUYO_MAX )
+	{
+		hokuyo[hokuyo_id].callback = callback;
+	}
+}
+
 static void hokuyo_fault_update(uint32_t err)
 {
+	// TODO
 	if(err)
 	{
-		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
+		//fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
+		//log(LOG_INFO, "hokuyo disconnected");
 	}
 	else
 	{
-		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
+		//log(LOG_INFO, "hokuyo connected");
+		//fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
 	}
 
 	if( err & (ERR_HOKUYO_USART_FE | ERR_HOKUYO_USART_NE | ERR_HOKUYO_USART_ORE | ERR_HOKUYO_CHECK_CMD | ERR_HOKUYO_CHECKSUM | ERR_HOKUYO_UNKNOWN_STATUS))
 	{
-		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
+		//log(LOG_INFO, "hokuyo data corruption");
+		//fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
 	}
 	else
 	{
-		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
+		//fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
 	}
 }
 
@@ -105,7 +122,7 @@ uint32_t hokuyo_init()
 {
 	uint32_t err = 0;
 
-	log(LOG_INFO, "Initialisation du hokuyo");
+	log(LOG_INFO, "Initialisation du hokuyo ...");
 
 	do
 	{
@@ -176,14 +193,14 @@ uint32_t hokuyo_init()
 static void hokuyo_task()
 {
 	uint32_t err;
-	portTickType last_scan_time;
-	portTickType current_time;
-
+	struct systime last_scan_time;
+	struct systime current_time;
 	hokuyo_init();
 
 	hokuyo_start_scan();
 	// on gruge, le premier scan est plus long
-	last_scan_time = systick_get_time() + ms_to_tick(100);
+	last_scan_time = systick_get_time();
+	last_scan_time.ms += 100;
 
 	while(1)
 	{
@@ -194,16 +211,17 @@ static void hokuyo_task()
 		{
 			hokuyo_init();
 			// on gruge, le premier scan est plus long
-			last_scan_time = systick_get_time() + ms_to_tick(100);
+			last_scan_time = systick_get_time();
+			last_scan_time.ms += 100;
 		}
 		else
 		{
 			// on a un scan toutes les 100ms, ce qui laisse 100ms pour faire le calcul sur l'ancien scan
 			// pendant que le nouveau arrive. Si on depasse les 110ms (10% d'erreur), on met un log
 			current_time = systick_get_time();
-			if( current_time - last_scan_time > ms_to_tick(110) )
+			if( current_time.ms - last_scan_time.ms > 110 )
 			{
-				log_format(LOG_ERROR, "slow cycle : %lu us", (long unsigned int) tick_to_us(current_time - last_scan_time));
+				log_format(LOG_ERROR, "slow cycle : %lu ms", current_time.ms - last_scan_time.ms);
 			}
 			last_scan_time = current_time;
 		}
@@ -211,10 +229,10 @@ static void hokuyo_task()
 		// on lance le prochain scan avant de faire les calculs sur le scan actuel
 		hokuyo_start_scan();
 
-		// si le dernier scan n'a pas echoue on fait les calculs
+		// si le dernier scan n'a pas echoue on reveille la tache detection
 		if( ! err)
 		{
-			vTaskSetEvent(EVENT_LOCAL_HOKUYO_UPDATE);
+			hokuyo[0].callback();
 
 			// on envoi les donnees par usb pour le debug
 #if defined( __foo__ )
@@ -226,8 +244,6 @@ static void hokuyo_task()
 #endif
 		}
 	}
-
-	vTaskDelete(NULL);
 }
 
 //! Vérifie que la commande envoyée est bien renvoyée par le hokuyo

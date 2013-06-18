@@ -645,7 +645,7 @@ void plot_table(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
-		for(i=HOKUYO_FOO*HOKUYO_NUM_POINTS; i < (HOKUYO_FOO+1)*HOKUYO_NUM_POINTS; i++)
+		for(i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
@@ -654,7 +654,7 @@ void plot_table(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
-		for(i=HOKUYO_BAR*HOKUYO_NUM_POINTS; i < (HOKUYO_BAR+1)*HOKUYO_NUM_POINTS; i++)
+		for(i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
@@ -762,7 +762,7 @@ void plot_hokuyo_hist(struct graphique* graph)
 		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_FOO].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO1].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -771,7 +771,7 @@ void plot_hokuyo_hist(struct graphique* graph)
 		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_BAR]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO_BAR].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO2].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 }

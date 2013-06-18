@@ -16,13 +16,6 @@
 
 enum
 {
-	HOKUYO_FOO,
-	HOKUYO_BAR,
-	HOKUYO_MAX,
-};
-
-enum
-{
 	COM_FOO,
 	COM_BAR,
 	COM_MAX
