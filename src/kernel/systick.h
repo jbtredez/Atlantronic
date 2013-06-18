@@ -24,18 +24,18 @@ struct systime timediff(const struct systime t2, const struct systime t1);
 struct systime timeadd(const struct systime t1, const struct systime t2);
 
 //!< recuperation du temps depuis le demarrage
-struct systime systick_get_time();
+struct systime systick_get_time(void);
 
 //!< recuperation du temps depuis le demarrage (depuis une IT)
-struct systime systick_get_time_from_isr();
+struct systime systick_get_time_from_isr(void);
 
 //!< recuperation du temps depuis le debut du match
-struct systime systick_get_match_time();
+struct systime systick_get_match_time(void);
 
 //!< enregistrement du temps du debut du match (si match non débuté)
-void systick_start_match();
+void systick_start_match(void);
 
 //!< enregistrement du temps du debut du match (si match non débuté)
-void systick_start_match_from_isr();
+void systick_start_match_from_isr(void);
 
 #endif
