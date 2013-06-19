@@ -97,6 +97,11 @@ void can_motor_callback(struct can_msg *msg, int nodeid, int type)
 	{
 		motor = &can_motor_data[1];
 	}
+	else
+	{
+		// bug
+		return;
+	}
 
 	if( type == CANOPEN_RX_PDO3 )
 	{

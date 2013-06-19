@@ -9,19 +9,26 @@
 #include "kernel/vect_pos.h"
 #include "kernel/systick.h"
 
-//! période de la tache de propulsion en tick ("fréquence" de l'asservissement)
-#define CONTROL_TICK_PERIOD        ms_to_tick(5)
+//! période de la tache de propulsion en ms ("fréquence" de l'asservissement)
+#define CONTROL_PERIOD               5
 #define CONTROL_HZ                 200
-#define CONTROL_TE                 0.005f
-
 
 enum control_state
 {
+	CONTROL_READY_FREE = 0,       //!< no trajectory ongoing, control off
 	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
-	CONTROL_READY_FREE,           //!< no trajectory ongoing, control off
 	CONTROL_TRAJECTORY,           //!< trajectoire en cours
 	CONTROL_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	CONTROL_END,                  //!< end : halted forever
+};
+
+enum control_status
+{
+	CONTROL_TARGET_REACHED = 0,   //!< cible atteinte
+	CONTROL_TARGET_NOT_REACHED,   //!< cible non atteinte
+	CONTROL_COLSISION,            //!< collision
+	CONTROL_TIMEOUT,              //!< timeout
+	CONTROL_IN_MOTION,            //!< trajectorie en cours
 };
 
 enum control_speed
@@ -84,6 +91,10 @@ enum control_type
 	CONTROL_LINE_XY,    //!< aller a la position x,y en ligne droite (=> rotation puis avance)
 	CONTROL_LINE_XYA,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
 };
+
+typedef void (*control_callback)(enum control_status status);
+
+void control_register_event_callback(control_callback callback);
 
 //!< deplacement vers la position demandée en fonction du type de trajectoire et du sens
 void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum control_type type, enum trajectory_way way);

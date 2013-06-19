@@ -6,7 +6,7 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/module.h"
-#include "kernel/math/trigo.h"
+#include "kernel/math/fx_math.h"
 #include "control/control.h"
 #include "priority.h"
 #include "kernel/log.h"
@@ -26,10 +26,9 @@
 #include "kernel/canopen.h"
 #include "kernel/end.h"
 
-//! @todo réglage au pif
 #define CONTROL_STACK_SIZE       350
 #define TRAJECTORY_POS_REACHED_TOLERANCE_X       (20 << 16)
-#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (0.006f * (1<<26) )
+#define TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA   (int32_t)(0.006f * (1<<26) )
 
 #define CONTROL_SPEED_CHECK_TOLERANCE            ((100 << 16) / CONTROL_HZ)
 
@@ -42,7 +41,6 @@ const int32_t CONTROL_AMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 
 const int32_t CONTROL_DMAX_ROT = 0.8f*(1<<26) / (CONTROL_HZ*CONTROL_HZ); // 1.5 tr/s²
 
 static void control_task(void *);
-//static int32_t sinc( int32_t x );
 static void control_compute();
 static void control_compute_trajectory();
 
@@ -54,6 +52,7 @@ void control_cmd_set_max_speed(void* arg);
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static enum control_state control_state;
+static enum control_status control_status;
 
 static struct kinematics control_kinematics;
 static struct kinematics control_kinematics_cons;
@@ -88,11 +87,11 @@ static int32_t control_dmax_rot;
 
 static struct pid control_pid_av;
 static struct pid control_pid_rot;
+static control_callback control_callback_function = (control_callback)nop_function;
 
 static int control_module_init()
 {
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, &xHandle);
+	portBASE_TYPE err = xTaskCreate(control_task, "control", CONTROL_STACK_SIZE, NULL, PRIORITY_TASK_CONTROL, NULL);
 
 	if(err != pdPASS)
 	{
@@ -123,16 +122,10 @@ static int control_module_init()
 	control_amax_rot = CONTROL_AMAX_ROT;
 	control_dmax_rot = CONTROL_DMAX_ROT;
 
-	control_state = CONTROL_READY_FREE;
-	control_timer = 0;
-	control_timer_stop_mes = 0;
-	control_front_object_approx = 0;
 	control_front_object.x = 1 << 30;
 	control_front_object.y = 1 << 30;
 	control_back_object.x = 1 << 30;
 	control_back_object.y = 1 << 30;
-
-	control_speed_check_error_count = 0;
 
 	usb_add_cmd(USB_CMD_CONTROL_PARAM, &control_cmd_param);
 	usb_add_cmd(USB_CMD_CONTROL_PRINT_PARAM, &control_cmd_print_param);
@@ -147,7 +140,7 @@ static void control_task(void* arg)
 {
 	(void) arg;
 
-	portTickType wake_time = systick_get_time();
+	uint32_t wake_time = 0;
 
 	while(1)
 	{
@@ -159,9 +152,13 @@ static void control_task(void* arg)
 
 		control_compute();
 
-		wake_time += CONTROL_TICK_PERIOD;
-		vTaskDelayUntil(wake_time);
+		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}
+}
+
+void control_register_event_callback(control_callback callback)
+{
+	control_callback_function = callback;
 }
 
 void control_cmd_param(void* arg)
@@ -231,7 +228,7 @@ static void control_compute()
 {
 	int32_t u1 = 0;
 	int32_t u2 = 0;
-
+	enum control_status old_status = control_status;
 	control_kinematics = location_get_kinematics();
 
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
@@ -246,7 +243,7 @@ static void control_compute()
 	// mise a jour du timer "on ne bouge plus" (sur la mesure)
 	if( abs(control_kinematics.v) < 6553 && abs(control_kinematics.w) < 2500)
 	{
-		control_timer_stop_mes += CONTROL_TICK_PERIOD;
+		control_timer_stop_mes += CONTROL_PERIOD;
 	}
 	else
 	{
@@ -257,10 +254,10 @@ static void control_compute()
 	if( control_state == CONTROL_BACK_TO_WALL)
 	{
 		// on ne bouge plus depuis 300ms
-		if( control_timer_stop_mes > ms_to_tick(300) )
+		if( control_timer_stop_mes > 300 )
 		{
+			control_status = CONTROL_COLSISION;
 			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 		}
 		else
 		{
@@ -288,8 +285,8 @@ static void control_compute()
 		if(control_speed_check_error_count > 50 )
 		{
 			log_format(LOG_ERROR, "erreur de suivit mes %d cons %d check %d", (int)(control_kinematics.v * CONTROL_HZ) >> 16, (int) (control_kinematics_cons.v * CONTROL_HZ) >> 16, (speed_check * CONTROL_HZ) >> 16);
+			control_status = CONTROL_COLSISION;
 			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent( EVENT_CONTROL_COLSISION );
 			goto end_pwm_critical;
 		}
 		else
@@ -314,14 +311,14 @@ static void control_compute()
 	if( control_kinematics_cons.w == 0 && control_kinematics_cons.v == 0 )
 	{
 		// on augmente le temps avec consigne nulle
-		control_timer += CONTROL_TICK_PERIOD;
-		if( control_timer > ms_to_tick(2000))
+		control_timer += CONTROL_PERIOD;
+		if( control_timer > 2000)
 		{
 			// ca fait 2 seconde qu'on devrait avoir terminé la trajectoire
 			// il y a un probleme
 			log_format(LOG_INFO, "2 sec sans bouger => CONTROL_READY_FREE");
+			control_status = CONTROL_TIMEOUT;
 			control_state = CONTROL_READY_FREE;
-			vTaskSetEvent( EVENT_CONTROL_TIMEOUT );
 		}
 		goto end_pwm_critical;
 	}
@@ -377,6 +374,10 @@ end_pwm_critical:
 
 	canopen_sync();
 
+	if( old_status != control_status )
+	{
+		control_callback_function(control_status);
+	}
 	usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 }
 
@@ -400,9 +401,9 @@ static void control_compute_trajectory()
 			int da = control_alpha_align - control_kinematics.alpha;
 			if(	abs( da ) > TRAJECTORY_POS_REACHED_TOLERANCE_ALPHA)
 			{
+				control_status = CONTROL_TARGET_NOT_REACHED;
 				control_state = CONTROL_READY_FREE;
 				log_format(LOG_ERROR, "rotation - not reached %d", da);
-				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 			}
 		}
 	}
@@ -482,9 +483,9 @@ static void control_compute_trajectory()
 			int32_t ex = ((int64_t)control_kinematics.ca  * (int64_t)(control_dest.x - control_kinematics.x) + (int64_t)control_kinematics.sa * (int64_t)(control_dest.y - control_kinematics.y)) >> 30;
 			if( abs(ex) > TRAJECTORY_POS_REACHED_TOLERANCE_X)
 			{
+				control_status = CONTROL_TARGET_NOT_REACHED;
 				control_state = CONTROL_READY_FREE;
 				log_format(LOG_ERROR, "avance - not reached %d", (int)ex);
-				vTaskSetEvent(EVENT_CONTROL_TARGET_NOT_REACHED);
 				// TODO voir si on replanifie une traj direct (3 tentatives)
 				//control_dist = ex;
 			}
@@ -494,16 +495,16 @@ static void control_compute_trajectory()
 	{
 		control_kinematics_cons.v = 0;
 		control_kinematics_cons.w = 0;
+		control_status = CONTROL_TARGET_REACHED;
 		control_state = CONTROL_READY_ASSER;
-		vTaskSetEvent(EVENT_CONTROL_TARGET_REACHED);
 	}
 
 	if( collision && abs(control_kinematics_cons.v) < 655 && abs(control_kinematics_cons.w) < 10680)
 	{
 		control_kinematics_cons.v = 0;
 		control_kinematics_cons.w = 0;
+		control_status = CONTROL_COLSISION;
 		control_state = CONTROL_READY_FREE;
-		vTaskSetEvent( EVENT_CONTROL_COLSISION );
 	}
 }
 
@@ -542,13 +543,13 @@ void control_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum c
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_TRAJECTORY;
+		control_status = CONTROL_IN_MOTION;
 	}
-	vTaskClearEvent(EVENT_CONTROL_TARGET_REACHED | EVENT_CONTROL_TARGET_NOT_REACHED | EVENT_CONTROL_COLSISION | EVENT_CONTROL_TIMEOUT);
 
 	int32_t da = 0;
 	int64_t dx = x - control_kinematics.x;
 	int64_t dy = y - control_kinematics.y;
-	control_dist = sqrtf(dx*dx+dy*dy) - dist;
+	control_dist = sqrt64(dx*dx+dy*dy) - dist;
 	control_kinematics_cons = control_kinematics;
 
 	// TODO deplacer le seuil après le calcul de l'angle : si c'est en x : ok, si c'est en y => ko jusqu'à 5mm

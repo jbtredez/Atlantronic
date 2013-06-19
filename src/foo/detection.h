@@ -15,6 +15,10 @@ enum detection_type
 	DETECTION_DYNAMIC_OBJ,
 };
 
+typedef void (*detection_callback)(void);
+
+void detection_register_callback(detection_callback callback);
+
 //!< Calcule en fonction de la position (actuelle ou non) pos du robot le segment [a b] (repère table) tel
 //!< que [a b] soit la projection - sur l'axe Y du repère robot - de l'obstacle le plus proche dans l'axe du robot.
 //!< => dans le repère robot, a.x = b.x = distance avant collision (valeur retournée) et [a.y b.y] largeur de

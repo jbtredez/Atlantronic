@@ -2,7 +2,6 @@
 #include "kernel/task.h"
 #include "kernel/module.h"
 #include "kernel/systick.h"
-#include "kernel/event.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/rcc.h"
@@ -38,6 +37,7 @@ static void detection_remove_static_elements_from_dynamic_list();
 static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n);
 static void detection_hokuyo_callback();
 static xQueueHandle detection_queue;
+static detection_callback detection_callback_function = (detection_callback)nop_function;
 
 // données privées à la tache detection, ne doit pas être disponible
 // à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
@@ -78,6 +78,7 @@ int detection_module_init()
 	}
 
 	hokuyo_register(HOKUYO1, detection_hokuyo_callback);
+	// TODO enregistrer sick
 
 	detection_reg_size = 0;
 
@@ -163,7 +164,7 @@ static void detection_task()
 			xSemaphoreGive(hokuyo_scan_mutex);
 
 			// on limite la fréquence de l'envoi au cas ou.
-			//if( detection_reg_size && ev & EVENT_LOCAL_HOKUYO_UPDATE)
+			//if( detection_reg_size && event == DETECTION_EVENT_HOKUYO)
 			{
 				int i = 0;
 				int16_t detect_size = 0;
@@ -184,10 +185,14 @@ static void detection_task()
 				}
 			}
 
-			// TODO
-			//vTaskSetEvent(EVENT_DETECTION_UPDATED);
+			detection_callback_function();
 		}
 	}
+}
+
+void detection_register_callback(detection_callback callback)
+{
+	detection_callback_function = callback;
 }
 
 static void detection_hokuyo_callback()
@@ -198,10 +203,10 @@ static void detection_hokuyo_callback()
 
 static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
 {
-	struct fx_vect2 a1 = { dist_min,  PARAM_LEFT_CORNER_Y };
-	struct fx_vect2 b1 = { 1 << 30,  PARAM_LEFT_CORNER_Y };
-	struct fx_vect2 a2 = { dist_min, PARAM_RIGHT_CORNER_Y };
-	struct fx_vect2 b2 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
+	struct fx_vect2 a1 = { dist_min, PARAM_RIGHT_CORNER_Y };
+	struct fx_vect2 b1 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
+	struct fx_vect2 a2 = { dist_min, PARAM_LEFT_CORNER_Y };
+	struct fx_vect2 b2 = { 1 << 30, PARAM_LEFT_CORNER_Y };
 
 	struct fx_vect2 c;
 	struct fx_vect2 d;
