@@ -121,7 +121,7 @@ install: modules
 	+make MAKEFLAGS=--no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules modules_install
 
 qemu:
-	cd qemu && ./configure --target-list=arm-softmmu --disable-docs
+	cd qemu && ./configure --target-list=arm-softmmu --disable-docs --disable-werror
 	+make -C qemu
 
 .PHONY: qemu
