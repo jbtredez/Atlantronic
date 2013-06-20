@@ -15,6 +15,8 @@ static xQueueHandle gpio_queue_go;
 
 static void gpio_cmd_go();
 static void gpio_cmd_color(void* arg);
+portBASE_TYPE isr_sick_update() __attribute__((weak, alias("weak_isr_sick_update")));
+static portBASE_TYPE weak_isr_sick_update();
 
 static int gpio_module_init(void)
 {
@@ -164,6 +166,11 @@ static portBASE_TYPE gpio_go_from_isr()
 	return higher_priority_task_woken;
 }
 
+static portBASE_TYPE weak_isr_sick_update()
+{
+	return 0;
+}
+
 void isr_exti0(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
@@ -173,8 +180,7 @@ void isr_exti0(void)
 	if( EXTI->PR & EXTI_PR_PR0)
 	{
 		EXTI->PR |= EXTI_PR_PR0;
-		// TODO gestion sick
-//		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
+		xHigherPriorityTaskWoken = isr_sick_update();
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
@@ -191,8 +197,7 @@ void isr_exti1(void)
 	if( EXTI->PR & EXTI_PR_PR1)
 	{
 		EXTI->PR |= EXTI_PR_PR1;
-		// TODO gestion sick
-//		xHigherPriorityTaskWoken = vTaskSetEventFromISR(EVENT_SICK);
+		xHigherPriorityTaskWoken = isr_sick_update();
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);

@@ -201,6 +201,14 @@ static void detection_hokuyo_callback()
 	xQueueSend(detection_queue, &event, 0);
 }
 
+portBASE_TYPE isr_sick_update()
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	unsigned char event = DETECTION_EVENT_SICK;
+	xQueueSendFromISR(detection_queue, &event, &xHigherPriorityTaskWoken);
+	return xHigherPriorityTaskWoken;
+}
+
 static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
 {
 	struct fx_vect2 a1 = { dist_min, PARAM_RIGHT_CORNER_Y };
