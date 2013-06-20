@@ -620,6 +620,7 @@ void control_back_to_wall()
 	if(control_state != CONTROL_END)
 	{
 		control_state = CONTROL_BACK_TO_WALL;
+		control_status = CONTROL_IN_MOTION;
 	}
 
 	control_timer_stop_mes = 0;

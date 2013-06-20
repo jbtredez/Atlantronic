@@ -2,7 +2,6 @@
 #include "kernel/task.h"
 #include "kernel/module.h"
 #include "kernel/systick.h"
-#include "kernel/event.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
@@ -27,17 +26,20 @@ module_init(recalage_module_init, INIT_STRATEGY);
 
 int recalage_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
 {
-	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(10000));
-	if( !( ev & EVENT_TRAJECTORY_END) )
-	{
-		log(LOG_ERROR, "timeout");
-		return -1;
-	}
-
+	int timeout = 10000;
 	enum trajectory_state state = trajectory_get_state();
-	if(state != wanted_state)
+
+	do
 	{
-		log(LOG_ERROR, "incorrect state");
+		vTaskDelay(50);
+		timeout -= 50;
+		state = trajectory_get_state();
+	}
+	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout > 0);
+
+	if( state != wanted_state )
+	{
+		log_format(LOG_ERROR, "incorrect state : %d", state);
 		return -1;
 	}
 
