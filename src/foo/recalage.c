@@ -24,28 +24,6 @@ int recalage_module_init()
 
 module_init(recalage_module_init, INIT_STRATEGY);
 
-int recalage_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
-{
-	int timeout = 10000;
-	enum trajectory_state state = trajectory_get_state();
-
-	do
-	{
-		vTaskDelay(50);
-		timeout -= 50;
-		state = trajectory_get_state();
-	}
-	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout > 0);
-
-	if( state != wanted_state )
-	{
-		log_format(LOG_ERROR, "incorrect state : %d", state);
-		return -1;
-	}
-
-	return 0;
-}
-
 void recalage()
 {
 	log(LOG_INFO, "recalage...");
@@ -73,7 +51,7 @@ void recalage()
 	control_disable_sick();
 
 	trajectory_straight_to_wall();
-	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_COLISION ) )
+	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
@@ -85,7 +63,7 @@ void recalage()
 	vTaskDelay(ms_to_tick(10));
 
 	trajectory_straight( (225 << 16) + PARAM_NP_X);
-	if( recalage_wait_and_check_trajectory_result( TRAJECTORY_STATE_TARGET_REACHED ) )
+	if( trajectory_wait( TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
@@ -99,19 +77,19 @@ void recalage()
 		trajectory_rotate_to(1 << 25);
 	}
 
-	if( recalage_wait_and_check_trajectory_result( TRAJECTORY_STATE_TARGET_REACHED ) )
+	if( trajectory_wait( TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
 	trajectory_straight(-2000 << 16);
-	if( recalage_wait_and_check_trajectory_result( TRAJECTORY_STATE_COLISION ) )
+	if( trajectory_wait( TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
 
 	trajectory_straight_to_wall();
-	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_COLISION ) )
+	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
@@ -131,7 +109,7 @@ void recalage()
 	vTaskDelay(ms_to_tick(10));
 
 	trajectory_straight(200 << 16);
-	if( recalage_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) )
+	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}

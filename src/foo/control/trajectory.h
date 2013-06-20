@@ -84,4 +84,6 @@ enum trajectory_state trajectory_get_state();
 
 void trajectory_set_detection_dist_min(int32_t dist_min);
 
+int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout);
+
 #endif

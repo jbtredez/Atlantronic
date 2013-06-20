@@ -1,5 +1,4 @@
 obj-foo-strat5 += kernel/fault.o
-obj-foo-strat5 += foo/strat5.o
 #bin-foo += strat5
 
 obj-foo-strat0 += kernel/main.o
@@ -56,4 +55,5 @@ obj-foo-strat0 += foo/location/odometry.o
 obj-foo-strat0 += foo/location/location.o
 obj-foo-strat0 += foo/location/beacon.o
 obj-foo-strat0 += foo/encoders.o
+obj-foo-strat0 += foo/strat5.o
 bin-foo += strat0

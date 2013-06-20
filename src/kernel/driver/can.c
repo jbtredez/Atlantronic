@@ -2,7 +2,6 @@
 //! @brief CAN
 //! @author Atlantronic
 
-#include "kernel/event.h"
 #include "kernel/driver/can.h"
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"

@@ -15,7 +15,6 @@
 #include "pwm.h"
 #include "control/pid.h"
 #include "kernel/robot_parameters.h"
-#include "kernel/event.h"
 #include "kernel/driver/usb.h"
 #include "adc.h"
 #include "gpio.h"

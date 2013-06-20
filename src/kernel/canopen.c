@@ -2,7 +2,6 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/queue.h"
-#include "kernel/event.h"
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"

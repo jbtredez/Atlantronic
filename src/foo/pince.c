@@ -6,7 +6,6 @@
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
-#include "kernel/event.h"
 
 #define AX12_RIGHT_EMPTY_THRESHOLD   0x200
 #define PINCE_STACK_SIZE               300

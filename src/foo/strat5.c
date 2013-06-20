@@ -2,7 +2,6 @@
 #include "kernel/task.h"
 #include "kernel/module.h"
 #include "kernel/systick.h"
-#include "kernel/event.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
@@ -40,8 +39,7 @@ int strat_module_init();
 
 int strat_module_init()
 {
-	xTaskHandle xHandle;
-	portBASE_TYPE err = xTaskCreate(strat_task, "strat0", STRAT_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, &xHandle);
+	portBASE_TYPE err = xTaskCreate(strat_task, "strat0", STRAT_STACK_SIZE, NULL, PRIORITY_TASK_STRATEGY, NULL);
 
 	if(err != pdPASS)
 	{
@@ -66,7 +64,7 @@ static void strat_task()
 			recalage();
 			resetRecalage();
 		}
-		vTaskDelay(ms_to_tick(50));
+		vTaskDelay(50);
 	}
 
 	gpio_wait_go();
@@ -131,7 +129,7 @@ static void strat_task()
 
 			// prépositionnement
 			trajectory_goto_near_xy(strat_dir * mm2fx(-760), mm2fx(320), 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
-			vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+			trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 			strat_cale(1);
 
@@ -169,27 +167,6 @@ static void strat_cmd(void* arg)
 	}
 }
 
-int start_wait_and_check_trajectory_result(enum trajectory_state wanted_state)
-{
-	uint32_t ev = vTaskWaitEvent(EVENT_TRAJECTORY_END, ms_to_tick(8000));
-	if( !( ev & EVENT_TRAJECTORY_END) )
-	{
-		log(LOG_ERROR, "timeout");
-		return -1;
-	}
-
-	enum trajectory_state state = trajectory_get_state();
-	if(state != wanted_state)
-	{
-		// au cas ou, pour mettre la fonction dans un while
-		vTaskDelay(ms_to_tick(50));
-		log(LOG_ERROR, "incorrect state");
-		return -1;
-	}
-
-	return 0;
-}
-
 static int strat_cale(int high)
 {
 	int res;
@@ -215,7 +192,7 @@ static int strat_cale(int high)
 		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
 	}
 	trajectory_goto_near_xy( strat_dir * mm2fx(-1110), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	vTaskDelay(ms_to_tick(500));
 
@@ -224,12 +201,12 @@ static int strat_cale(int high)
 	do
 	{
 		trajectory_goto_near_xy( strat_dir * mm2fx(-762), high*mm2fx(312), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 		vTaskDelay(ms_to_tick(100));
 		if( i > 3000)
 		{
 			trajectory_straight(-300<<16);
-			vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+			trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 			goto end;
 		}
 	}
@@ -255,12 +232,12 @@ static int strat_cleanup_bottle_way()
 	pince_set_position(PINCE_MIDDLE, PINCE_MIDDLE);
 
 	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-600), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
 		trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(0), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 		strat_cale(-1);
 		goto end;
 	}
@@ -268,16 +245,16 @@ static int strat_cleanup_bottle_way()
 
 	// calage contre le mur avec les pinces
 	trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(-630), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	trajectory_straight(mm2fx(-40));
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	pince_set_position(PINCE_STRAT, PINCE_STRAT);
 	vTaskDelay(ms_to_tick(500));
 
 	trajectory_rotate(strat_dir * 1<<25);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 end:
 	return res;
@@ -314,13 +291,13 @@ static int strat_totem(int high)
 	{
 		trajectory_goto_near_xy( strat_dir * mm2fx(0), y, 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
 		i++;
-	}while(start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED) && i < 10);
+	}while(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 8000) && i < 10);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		res = -1;
 		trajectory_goto_near_xy( strat_dir * mm2fx(-600), mm2fx(450), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 		strat_cale(high);
 		return -1;
 //		goto end;
@@ -351,7 +328,7 @@ static int strat_totem(int high)
 		arm_hook_goto(0, -90<<16, 300<<16, -90<<16, 0, 1);
 	}
 
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	// TODO desactiver sur une zone
 	//trajectory_set_detection_dist_min(PARAM_RIGHT_CORNER_X + 300<<16);
@@ -374,7 +351,7 @@ static int strat_totem(int high)
 		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
 	}
 
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -401,9 +378,9 @@ static int strat_oponent_totem(int high)
 
 	// on se met en face
 	trajectory_goto_near_xy( strat_dir * mm2fx(600), high * mm2fx(650), 0, TRAJECTORY_FORWARD, TRAJECTORY_AVOIDANCE_STOP);
-	start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+	res = trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 8000);
 
-	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
+	if( res )
 	{
 		res = -1;
 		goto end;
@@ -434,7 +411,7 @@ static int strat_oponent_totem(int high)
 		vTaskDelay(ms_to_tick(500));
 	}
 */
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	vTaskDelay(ms_to_tick(300));
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
@@ -454,7 +431,7 @@ static int strat_oponent_totem(int high)
 		pince_set_position(PINCE_MIDDLE, PINCE_OPEN);
 	}
 
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
@@ -488,7 +465,7 @@ static int strat_steal_coins_inside()
 	
 	// prépositionnement
 	trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_GRAPH);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		return -1;
@@ -503,7 +480,7 @@ static int strat_steal_coins_inside()
 	
 	// on avance
 	trajectory_straight (mm2fx(250));
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	trajectory_enable_static_check();
 
 	// on ferme les pinces
@@ -523,7 +500,7 @@ static int strat_steal_coins_inside()
 	do
 	{
 		trajectory_goto_near(strat_dir * mm2fx(900), mm2fx(170), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	}
 	while(trajectory_get_state() == TRAJECTORY_STATE_TARGET_REACHED);
 
@@ -546,7 +523,7 @@ static int strat_return_coins_inside()
 	
 	// prépositionnement
 	trajectory_goto_near(strat_dir * mm2fx(-900), mm2fx(150), alpha, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		return -1;
@@ -561,7 +538,7 @@ static int strat_return_coins_inside()
 	
 	// on avance
 	trajectory_straight (mm2fx(250));
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	control_set_max_speed( (1 << 16), 1 << 16);
 	trajectory_enable_static_check();
 
@@ -577,7 +554,7 @@ static int strat_return_coins_inside()
 
 	// on sort
 	trajectory_goto_near(strat_dir * mm2fx(-900), mm2fx(170), alpha, 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		return -1;
@@ -605,12 +582,12 @@ static int strat_bouteille(int id)
 	}
 
 	trajectory_goto_near(x, mm2fx(-550), 1 << 24, 0, TRAJECTORY_ANY_WAY, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_REACHED)
 	{
 		trajectory_goto_near_xy( strat_dir * mm2fx(-860), mm2fx(0), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-		vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+		trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 		strat_cale(-1);
 		return -1;
 	}
@@ -619,7 +596,7 @@ static int strat_bouteille(int id)
 	trajectory_disable_static_check();
 
 	trajectory_goto_near_xy(x, mm2fx(-1000), 0, TRAJECTORY_BACKWARD, TRAJECTORY_AVOIDANCE_STOP);
-	vTaskWaitEvent(EVENT_TRAJECTORY_END, portMAX_DELAY);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, portMAX_DELAY);
 
 	if( trajectory_get_state() != TRAJECTORY_STATE_TARGET_NOT_REACHED && trajectory_get_state() != TRAJECTORY_STATE_COLISION)
 	{
@@ -629,7 +606,7 @@ static int strat_bouteille(int id)
 
 	vTaskDelay(ms_to_tick(200));
 	trajectory_straight( mm2fx(300));
-	start_wait_and_check_trajectory_result(TRAJECTORY_STATE_TARGET_REACHED);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 8000);
 
 end:
 	trajectory_enable_static_check();

@@ -252,8 +252,6 @@ static void trajectory_task(void* arg)
 					// pas d'évitement, fin de la trajectoire
 					log(LOG_INFO, "collision -> stop");
 					trajectory_state = TRAJECTORY_STATE_COLISION;
-					// TODO
-					//vTaskSetEvent(EVENT_TRAJECTORY_END);
 					break;
 				case TRAJECTORY_AVOIDANCE_GRAPH:
 					log(LOG_INFO, "collision -> graph");
@@ -279,8 +277,6 @@ static void trajectory_task(void* arg)
 				case TRAJECTORY_STATE_MOVING_TO_DEST:
 					log(LOG_INFO, "target reached");
 					trajectory_state = TRAJECTORY_STATE_TARGET_REACHED;
-					// TODO
-					// vTaskSetEvent(EVENT_TRAJECTORY_END);
 					break;
 				case TRAJECTORY_STATE_MOVING_TO_GRAPH:
 					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
@@ -297,8 +293,6 @@ static void trajectory_task(void* arg)
 			if( trajectory_state != TRAJECTORY_STATE_USING_GRAPH )
 			{
 				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
-				// TODO
-				//vTaskSetEvent(EVENT_TRAJECTORY_END);
 			}
 			else
 			{
@@ -724,4 +718,26 @@ void trajectory_enable_hokuyo()
 void trajectory_set_detection_dist_min(int32_t dist_min)
 {
 	trajectory_detect_dist_min = dist_min;
+}
+
+// TODO faire mieux pour eviter le polling
+int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout)
+{
+	enum trajectory_state state;
+
+	do
+	{
+		vTaskDelay(1);
+		timeout --;
+		state = trajectory_state;
+	}
+	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout);
+
+	if( state != wanted_state )
+	{
+		log_format(LOG_ERROR, "incorrect state : %d", state);
+		return -1;
+	}
+
+	return 0;
 }
