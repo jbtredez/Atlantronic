@@ -19,7 +19,7 @@
 
 MODULE_AUTHOR("Atlantronic"); //!< auteur du module (visible par modinfo)
 MODULE_DESCRIPTION("Module USB pour communiquer avec les cartes électroniques du robot"); //!< description du module (visible par modinfo)
-MODULE_SUPPORTED_DEVICE("Cartes usb du robot (Foo, Bar)"); //!< appareils supportés (visible par modinfo)
+MODULE_SUPPORTED_DEVICE("Cartes usb du robot (Foo, Bar, Discovery)"); //!< appareils supportés (visible par modinfo)
 MODULE_LICENSE("GPL");		//!< licence "GPL"
 
 #define DEBUG_USB                        0
@@ -28,6 +28,7 @@ MODULE_LICENSE("GPL");		//!< licence "GPL"
 #define ATLANTRONIC_ID              0x1818   //!< id du vendeur
 #define ATLANTRONIC_FOO_ID          0x0001   //!< id de foo
 #define ATLANTRONIC_BAR_ID          0x0002   //!< id de bar
+#define ATLANTRONIC_DISCOVERY_ID    0x0003   //!< id de discovery
 
 #define ATLANTRONIC_SUBCLASS          0x00   //!< interface
 
@@ -72,6 +73,7 @@ static struct usb_device_id atlantronic_device_id [] =
 {
 	{ USB_DEVICE(ATLANTRONIC_ID, ATLANTRONIC_FOO_ID) },
 	{ USB_DEVICE(ATLANTRONIC_ID, ATLANTRONIC_BAR_ID) },
+	{ USB_DEVICE(ATLANTRONIC_ID, ATLANTRONIC_DISCOVERY_ID) },
 	{ }
 };
 
@@ -86,20 +88,21 @@ struct atlantronic_id
 // TODO mutex
 static struct atlantronic_id atlantronic_foo_list;
 static struct atlantronic_id atlantronic_bar_list;
+static struct atlantronic_id atlantronic_discovery_list;
 
 static struct usb_driver atlantronic_driver =
 {
-    .name = "Atlantronic",
-    .id_table = atlantronic_device_id,
-    .probe = atlantronic_probe,
-    .disconnect = atlantronic_disconnect,
+	.name = "Atlantronic",
+	.id_table = atlantronic_device_id,
+	.probe = atlantronic_probe,
+	.disconnect = atlantronic_disconnect,
 	.supports_autosuspend = 1,
 };//!< choix des fonctions à appeler lors de la connexion ou de la déconnexion d'un périphérique usb
 
 struct atlantronic_data
 {
-	struct usb_device*		  udev;                //!< udev
-	struct usb_interface*	  interface;           //!< interface
+	struct usb_device*        udev;                //!< udev
+	struct usb_interface*     interface;           //!< interface
 	unsigned char             interface_subclass;  //!< type d'interface
 	struct atlantronic_id     id;                  //!< id dans la liste foo ou bar
 	struct usb_class_driver   class;               //!< class driver
@@ -526,7 +529,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	int pipe;
 	int i;
 
-    info("atlantronic_probe");
+	info("atlantronic_probe");
 
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if( ! dev )
@@ -559,6 +562,7 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 	dev->interface_subclass = iface_desc->desc.bInterfaceSubClass;
 	if( dev->interface_subclass != ATLANTRONIC_SUBCLASS)
 	{
+		err("wrong subclass : %d", dev->interface_subclass);
 		rep = -ENODEV;
 		goto error;
 	}
@@ -576,6 +580,12 @@ static int atlantronic_probe(struct usb_interface *interface, const struct usb_d
 		dev->id.id = atlantronic_get_min_id(&atlantronic_bar_list);
 		list_add(&dev->id.list, &atlantronic_bar_list.list);
 		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "bar%d", dev->id.id);
+	}
+	else if(id->idProduct == ATLANTRONIC_DISCOVERY_ID)
+	{
+		dev->id.id = atlantronic_get_min_id(&atlantronic_discovery_list);
+		list_add(&dev->id.list, &atlantronic_discovery_list.list);
+		snprintf(dev->class.name, ATLANTRONIC_MAX_PRODUCT_NAME_SIZE - 1, "discovery%d", dev->id.id);
 	}
 	else
 	{
@@ -690,7 +700,7 @@ static void atlantronic_disconnect(struct usb_interface *interface)
 {
 	struct atlantronic_data* dev;
 
-    info("atlantronic_disconnect");
+	info("atlantronic_disconnect");
 
 	dev = usb_get_intfdata(interface);
 
@@ -804,6 +814,9 @@ static int __init atlantronic_init(void)
 
 	INIT_LIST_HEAD(&atlantronic_bar_list.list);
 	atlantronic_bar_list.id = -1;
+
+	INIT_LIST_HEAD(&atlantronic_discovery_list.list);
+	atlantronic_discovery_list.id = -1;
 
 	// enregistrement du pilote
 	rep = usb_register(&atlantronic_driver);
