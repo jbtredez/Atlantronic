@@ -2,37 +2,6 @@
 #include "kernel/module.h"
 #include "kernel/rcc.h"
 
-enum gpio_mode
-{
-	GPIO_MODE_IN   = 0x00,
-	GPIO_MODE_OUT  = 0x01,
-	GPIO_MODE_AF   = 0x02,
-	GPIO_MODE_AN   = 0x03
-};
-
-enum gpio_speed
-{
-	GPIO_SPEED_2MHz   = 0x00,
-	GPIO_SPEED_25MHz  = 0x01,
-	GPIO_SPEED_50MHz  = 0x02,
-	GPIO_SPEED_100MHz = 0x03
-};
-
-enum gpio_otype
-{
-	GPIO_OTYPE_PP = 0x00, // push-pull
-	GPIO_OTYPE_OD = 0x01  // open drain
-};
-
-enum gpio_pupd
-{
-	GPIO_PUPD_NOPULL = 0x00,
-	GPIO_PUPD_UP     = 0x01,
-	GPIO_PUPD_DOWN   = 0x02
-};
-
-void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd);
-
 static int gpio_module_init(void)
 {
 	// LED sur PD12 PD13 PD14 PD15
@@ -65,6 +34,14 @@ void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum 
 
 	GPIOx->PUPDR &= ~(GPIO_PUPDR_PUPDR0 << (pin * 2));
 	GPIOx->PUPDR |= ((uint32_t)pupd) << (pin * 2);
+}
+
+void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af)
+{
+	uint32_t temp = gpio_af << ((pin & 0x07) * 4);
+	GPIOx->AFR[pin >> 0x03] &= ~(0xF << ((pin & 0x07) * 4));
+	uint32_t temp_2 = GPIOx->AFR[pin >> 0x03] | temp;
+	GPIOx->AFR[pin >> 0x03] = temp_2;
 }
 
 void setLed(uint16_t mask)
