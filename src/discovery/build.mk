@@ -1,5 +1,5 @@
 obj-discovery-test += kernel/main.o
-obj-discovery-test += kernel2/asm/isr.o
+obj-discovery-test += kernel/asm/isr_stm32f4xx.o
 obj-discovery-test += kernel/rcc.o
 obj-discovery-test += kernel/systick.o
 obj-discovery-test += kernel/tasks.o

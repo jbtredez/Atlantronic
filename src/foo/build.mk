@@ -2,7 +2,7 @@ obj-foo-strat5 += kernel/fault.o
 #bin-foo += strat5
 
 obj-foo-strat0 += kernel/main.o
-obj-foo-strat0 += kernel/asm/isr.o
+obj-foo-strat0 += kernel/asm/isr_stm32f1xx.o
 obj-foo-strat0 += kernel/tasks.o
 obj-foo-strat0 += kernel/list.o
 obj-foo-strat0 += kernel/queue.o
