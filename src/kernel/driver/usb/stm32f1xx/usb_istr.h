@@ -19,7 +19,7 @@
 #define __USB_ISTR_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "kernel/driver/usb/usb_conf.h"
+#include "kernel/driver/usb/stm32f1xx/usb_conf.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

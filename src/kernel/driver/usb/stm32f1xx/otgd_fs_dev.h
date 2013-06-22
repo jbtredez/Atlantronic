@@ -21,7 +21,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "kernel/cpu/cpu.h"
-#include "kernel/driver/usb/usb_type.h"
+#include "kernel/driver/usb/stm32f1xx/usb_type.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

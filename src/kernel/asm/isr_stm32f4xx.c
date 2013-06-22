@@ -16,6 +16,8 @@ static void isr_unexpected(void); //!< interruption imprévue
 static void isr_context_switch( void ) __attribute__ ((naked)); //!< changement de contexte
 void isr_systick(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption systick
 
+void isr_otg_fs(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
+
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
 extern unsigned long _sidata;
@@ -114,7 +116,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
+	isr_otg_fs,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,

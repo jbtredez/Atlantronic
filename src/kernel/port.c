@@ -134,11 +134,12 @@ void xPortSysTickHandler( void );
  */
 static void prvPortStartFirstTask( void ) __attribute__ (( naked ));
 
+#ifdef STM32F4XX
 /*
  * Function to enable the VFP.
  */
- static void vPortEnableVFP( void ) __attribute__ (( naked ));
-
+static void vPortEnableVFP( void ) __attribute__ (( naked ));
+#endif
 
 /*
  * See header file for description.
@@ -305,6 +306,7 @@ __attribute__(( weak )) void vPortSetupTimerInterrupt( void )
 }
 /*-----------------------------------------------------------*/
 
+#ifdef STM32F4XX
 /* This is a naked function. */
 static void vPortEnableVFP( void )
 {
@@ -318,4 +320,4 @@ static void vPortEnableVFP( void )
 		"	bx r14						"
 	);
 }
-
+#endif

@@ -1,18 +1,8 @@
-//! @file usb_desc.c
-//! @brief USB descriptors
-//! @author Atlantronic
-//!
-//! 1 configuration
-//!   3 interfaces
-//!     - interface log
-//!     - interface hokuyo
-//!     - interface data
-
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/usb_desc.h"
+#include <stdint.h>
+#include "usb_descriptor.h"
 
 // USB Standard Device Descriptor
-const uint8_t usb_device_descriptor[] =
+const uint8_t usb_device_descriptor[USB_DEVICE_DESCRIPTOR_SIZE] __attribute__ ((aligned (4))) =
 {
 	USB_DEVICE_DESCRIPTOR_SIZE,   // bLength
 	USB_DEVICE_DESCRIPTOR_TYPE,   // bDescriptorType
@@ -30,6 +20,9 @@ const uint8_t usb_device_descriptor[] =
 #elif defined( __bar__ )
 	0x02,
 	0x00,   // idProduct = 0x0002
+#elif defined(__discovery__)
+	0x03,                       // idProduct = 0x0003
+	0x00,
 #else
 #error unknown card
 #endif
@@ -42,7 +35,7 @@ const uint8_t usb_device_descriptor[] =
 };
 
 // Configuration Descriptor
-const uint8_t usb_config_descriptor[] =
+const uint8_t usb_config_descriptor[USB_CONFIG_DESCRIPTOR_SIZE] __attribute__ ((aligned (4))) =
 {
 	0x09,                                // bLength: Configuration Descriptor size
 	USB_CONFIGURATION_DESCRIPTOR_TYPE,   // bDescriptorType: Configuration
@@ -81,39 +74,11 @@ const uint8_t usb_config_descriptor[] =
 	0x00,                           // bInterval: ignorée pour les terminaisons de type bloc
 };
 
-/* USB String Descriptors */
-const uint8_t usb_string_langID[USB_STRING_LANG_ID_SIZE] =
+// USB String Descriptors
+const uint8_t usb_string_langID[USB_STRING_LANG_ID_SIZE] __attribute__ ((aligned (4))) =
 {
 	USB_STRING_LANG_ID_SIZE,
 	USB_STRING_DESCRIPTOR_TYPE,
 	0x0c,
 	0x04 // LangID = 0x040c: Fr
-};
-
-const uint8_t usb_string_vendor[USB_STRING_VENDOR_SIZE] =
-{
-	USB_STRING_VENDOR_SIZE,       // Size of Vendor string
-	USB_STRING_DESCRIPTOR_TYPE,   // bDescriptorType
-	'A', 0, 't', 0, 'l', 0, 'a', 0, 'n', 0, 't', 0, 'r', 0, 'o', 0,
-	'n', 0, 'i', 0, 'c', 0
-};
-
-const uint8_t usb_string_product[USB_STRING_PRODUCT_SIZE] =
-{
-	USB_STRING_PRODUCT_SIZE,           // bLength
-	USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
-#if defined( __foo__ )
-	'F', 0, 'o', 0, 'o', 0
-#elif defined( __bar__ )
-	'B', 0, 'a', 0, 'r', 0
-#else
-#error unknown card
-#endif
-};
-
-uint8_t usb_string_serial[USB_STRING_SERIAL_SIZE] =
-{
-	USB_STRING_SERIAL_SIZE,            // bLength
-	USB_STRING_DESCRIPTOR_TYPE,        // bDescriptorType
-	'S', 0, 'T', 0, 'M', 0, '3', 0, '2', 0, '1', 0, '0', 0
 };

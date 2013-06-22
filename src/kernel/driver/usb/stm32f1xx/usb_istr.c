@@ -1,6 +1,6 @@
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/usb_pwr.h"
-#include "kernel/driver/usb/usb_istr.h"
+#include "kernel/driver/usb/stm32f1xx/usb_lib.h"
+#include "kernel/driver/usb/stm32f1xx/usb_pwr.h"
+#include "kernel/driver/usb/stm32f1xx/usb_istr.h"
 #include "kernel/asm/asm_base_func.h"
 
 void EP1_IN_Callback(void) __attribute__((weak, alias("nop_function") ));

@@ -21,8 +21,6 @@
 #define RCC_PCLK1        36000000
 #define RCC_PCLK2        72000000
 
-#define ms_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000)
-#define us_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
 #define tick_to_us(a)    ((uint64_t)(a)/(RCC_SYSCLK/1000000))
 #endif
 
@@ -32,6 +30,8 @@
 #endif
 
 #define ms_to_tick(a)    (a)
+#define ms_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000)
+#define us_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
 
 void wait_active(uint32_t tick);
 

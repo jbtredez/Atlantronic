@@ -18,10 +18,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "kernel/cpu/cpu.h"
 
-#include "kernel/driver/usb/usb_type.h"
-#include "kernel/driver/usb/otgd_fs_int.h"
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/usb_istr.h"
+#include "kernel/driver/usb/stm32f1xx/usb_type.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_int.h"
+#include "kernel/driver/usb/stm32f1xx/usb_lib.h"
+#include "kernel/driver/usb/stm32f1xx/usb_istr.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

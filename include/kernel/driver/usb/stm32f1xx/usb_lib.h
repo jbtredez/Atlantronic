@@ -20,23 +20,23 @@
 /* Includes ------------------------------------------------------------------*/
 #include "kernel/cpu/cpu.h"
 
-#include "kernel/driver/usb/usb_type.h"
-#include "kernel/driver/usb/usb_regs.h"
-#include "kernel/driver/usb/usb_def.h"
-#include "kernel/driver/usb/usb_core.h"
-#include "kernel/driver/usb/usb_init.h"
+#include "kernel/driver/usb/stm32f1xx/usb_type.h"
+#include "kernel/driver/usb/stm32f1xx/usb_regs.h"
+#include "kernel/driver/usb/stm32f1xx/usb_def.h"
+#include "kernel/driver/usb/stm32f1xx/usb_core.h"
+#include "kernel/driver/usb/stm32f1xx/usb_init.h"
 #ifndef STM32F10X_CL
- #include "kernel/driver/usb/usb_mem.h"
- #include "kernel/driver/usb/usb_int.h"
+ #include "kernel/driver/usb/stm32f1xx/usb_mem.h"
+ #include "kernel/driver/usb/stm32f1xx/usb_int.h"
 #endif /* STM32F10X_CL */
 
-#include "kernel/driver/usb/usb_sil.h"
+#include "kernel/driver/usb/stm32f1xx/usb_sil.h"
 
 #ifdef STM32F10X_CL
- #include "kernel/driver/usb/otgd_fs_cal.h"
- #include "kernel/driver/usb/otgd_fs_pcd.h"
- #include "kernel/driver/usb/otgd_fs_dev.h"
- #include "kernel/driver/usb/otgd_fs_int.h"
+ #include "kernel/driver/usb/stm32f1xx/otgd_fs_cal.h"
+ #include "kernel/driver/usb/stm32f1xx/otgd_fs_pcd.h"
+ #include "kernel/driver/usb/stm32f1xx/otgd_fs_dev.h"
+ #include "kernel/driver/usb/stm32f1xx/otgd_fs_int.h"
 #endif /* STM32F10X_CL */
 
 

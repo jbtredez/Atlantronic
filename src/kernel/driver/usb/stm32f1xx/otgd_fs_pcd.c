@@ -15,9 +15,9 @@
 
 #ifdef STM32F10X_CL
 
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/otgd_fs_cal.h"
-#include "kernel/driver/usb/otgd_fs_pcd.h"
+#include "kernel/driver/usb/stm32f1xx/usb_lib.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_cal.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_pcd.h"
 
 USB_OTG_PCD_DEV USB_OTG_PCD_dev;
 

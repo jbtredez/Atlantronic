@@ -16,11 +16,33 @@
 /* Includes ------------------------------------------------------------------*/
 #include "kernel/cpu/cpu.h"
  
-#include "kernel/driver/usb/usb_lib.h"
-#include "kernel/driver/usb/usb_conf.h"
-#include "kernel/driver/usb/usb_pwr.h"
+#include "kernel/driver/usb/stm32f1xx/usb_lib.h"
+#include "kernel/driver/usb/stm32f1xx/usb_conf.h"
+#include "kernel/driver/usb/stm32f1xx/usb_pwr.h"
 void Enter_LowPowerMode(void);
 void Leave_LowPowerMode(void);
+
+void Enter_LowPowerMode(void)
+{
+	// Set the device state to suspend
+	bDeviceState = SUSPENDED;
+}
+
+void Leave_LowPowerMode(void)
+{
+	DEVICE_INFO *pInfo = &Device_Info;
+
+	// Set the device state to the correct state
+	if (pInfo->Current_Configuration != 0)
+	{
+		// Device configured
+		bDeviceState = CONFIGURED;
+	}
+	else
+	{
+		bDeviceState = ATTACHED;
+	}
+}
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

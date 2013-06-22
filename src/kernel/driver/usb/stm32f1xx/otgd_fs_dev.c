@@ -16,10 +16,10 @@
 #ifdef STM32F10X_CL
 
 /* Includes ------------------------------------------------------------------*/
-#include "kernel/driver/usb/otgd_fs_dev.h"
-#include "kernel/driver/usb/usb_regs.h"
-#include "kernel/driver/usb/otgd_fs_cal.h"
-#include "kernel/driver/usb/otgd_fs_pcd.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_dev.h"
+#include "kernel/driver/usb/stm32f1xx/usb_regs.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_cal.h"
+#include "kernel/driver/usb/stm32f1xx/otgd_fs_pcd.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
