@@ -3,8 +3,13 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include "linux/tools/cli.h"
+#include <math.h>
 
-#define EVENT_CLOCK_FACTOR     1
+#define  MIN(a, b)      (((a) < (b)) ? (a) : (b))
+
+#define EVENT_CLOCK_FACTOR         1
+#define EVENT_NEW_OBJECT           2
+#define EVENT_MOVE_OBJECT          3
 
 struct atlantronic_model_tx_event
 {
@@ -107,6 +112,42 @@ int qemu_set_clock_factor(struct qemu* qemu, unsigned int factor)
 
 	event.type = EVENT_CLOCK_FACTOR;
 	event.data32[0] = factor;
+
+	return com_write(&qemu->com, (void*) &event, sizeof(event));
+}
+
+int qemu_add_object(struct qemu* qemu, const struct polyline polyline)
+{
+	struct atlantronic_model_tx_event event;
+	unsigned int i = 0;
+
+	event.type = EVENT_NEW_OBJECT;
+
+	event.data[0] = MIN((unsigned int)polyline.size, (sizeof(event.data) - 1)/8);
+	float* f = (float*)(event.data+1);
+	for(i = 0; i < event.data[0]; i++ )
+	{
+		f[0] = polyline.pt[i].x / 65536.0f;
+		f[1] = polyline.pt[i].y / 65536.0f;
+		f += 2;
+	}
+
+	return com_write(&qemu->com, (void*) &event, sizeof(event));
+}
+
+int qemu_move_object(struct qemu* qemu, int id, struct fx_vect2 origin, struct fx_vect_pos delta)
+{
+	struct atlantronic_model_tx_event event;
+
+	event.type = EVENT_MOVE_OBJECT;
+
+	event.data[0] = id;
+	float* f = (float*)(event.data+1);
+	f[0] = origin.x / 65536.0f;
+	f[1] = origin.y / 65536.0f;
+	f[2] = delta.x / 65536.0f;
+	f[3] = delta.y / 65536.0f;
+	f[4] = delta.alpha / ((float)(1<<26)) * 2 * M_PI;
 
 	return com_write(&qemu->com, (void*) &event, sizeof(event));
 }

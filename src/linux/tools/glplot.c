@@ -25,7 +25,7 @@
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
 #define MAX_FPS    11
-
+#define QEMU_OPPONENT_ID   (TABLE_OBJ_SIZE+1)
 enum
 {
 	GRAPH_TABLE = 0,
@@ -83,6 +83,7 @@ static float mouse_y1 = 0;
 static float mouse_x2 = 0;
 static float mouse_y2 = 0;
 static int drawing_zoom_selection = 0;
+static int move_oponent_robot = 0;
 static int current_graph = GRAPH_TABLE;
 static GtkWidget* opengl_window;
 static GtkWidget* main_window;
@@ -112,6 +113,23 @@ static void glprint(float x, float y, GLuint base, char* buffer, int size);
 void gtk_end();
 
 void read_callback();
+
+struct fx_vect2 oponent_robot_pt[5] =
+{
+	{ 100 << 16, 100 << 16},
+	{ -100 << 16, 100 << 16},
+	{ -100 << 16, -100 << 16},
+	{ 100 << 16, -100 << 16},
+	{ 100 << 16, 100 << 16},
+};
+
+struct polyline oponent_robot =
+{
+		oponent_robot_pt,
+		5
+};
+
+struct fx_vect_pos opponent_robot_pos = {1800 << 16, 800 << 16, 0, 1<<30, 0};
 
 int main(int argc, char *argv[])
 {
@@ -312,6 +330,19 @@ int main(int argc, char *argv[])
 	if( simulation )
 	{
 		cmd_init(&robot_interface, &qemu, gtk_end);
+
+		// ajout de la table dans qemu
+		for(i = 0; i < TABLE_OBJ_SIZE; i++)
+		{
+			qemu_add_object(&qemu, table_obj[i]);
+		}
+
+		// ajout d'un robot adverse
+		qemu_add_object(&qemu, oponent_robot);
+
+		// on le met a sa position de depart
+		struct fx_vect2 origin = {0, 0};
+		qemu_move_object(&qemu, 10, origin, opponent_robot_pos);
 	}
 	else
 	{
@@ -558,6 +589,19 @@ void plot_table(struct graphique* graph)
 			}
 			glEnd();
 		}
+
+		// robot adverse
+		glPushMatrix();
+		glColor3f(1, 0, 0);
+		glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
+		glRotated(opponent_robot_pos.alpha* 360.0f / ((float)(1<<26)), 0, 0, 1);
+		glBegin(GL_LINE_STRIP);
+		for(i = 0; i < oponent_robot.size; i++)
+		{
+			glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
+		}
+		glEnd();
+		glPopMatrix();
 
 		// couleurs sur les bords des cases de depart
 		glColor3f(1, 0, 1);
@@ -1036,6 +1080,28 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 		mouse_x2 = mouse_x1;
 		mouse_y2 = mouse_y1;
 	}
+	else if(event->button == 3)
+	{
+		struct graphique* gr = &graph[current_graph];
+		float xrange = gr->roi_xmax - gr->roi_xmin;
+		float yrange = gr->roi_ymax - gr->roi_ymin;
+
+		float x1 = gr->roi_xmin + (event->x - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
+		float y1 = gr->roi_ymin + (event->y - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+
+		double dx = x1 - opponent_robot_pos.x/65536.0f;
+		double dy = -y1 - opponent_robot_pos.y/65536.0f;
+
+		// on verifie qu'on clic a peu pres sur le robot
+		if( sqrt(dx*dx+dy*dy) < 150 )
+		{
+			move_oponent_robot = 1;
+			mouse_x1 = event->x;
+			mouse_y1 = event->y;
+			mouse_x2 = mouse_x1;
+			mouse_y2 = mouse_y1;
+		}
+	}
 	else
 	{
 		graphique_reset_roi(&graph[current_graph]);
@@ -1059,6 +1125,35 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 		mouse_y2 = 0;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 	}
+	else if(event->button == 3)
+	{
+		if(move_oponent_robot == 1)
+		{
+			struct graphique* gr = &graph[current_graph];
+
+			float xrange = gr->roi_xmax - gr->roi_xmin;
+			float yrange = gr->roi_ymax - gr->roi_ymin;
+
+			float x1 = (mouse_x1 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
+			float x2 = (mouse_x2 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
+			float y1 = (mouse_y1 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+
+			// on le met a sa position de depart
+			struct fx_vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
+			opponent_robot_pos.x += delta.x;
+			opponent_robot_pos.y += delta.y;
+			qemu_move_object(&qemu, 10, origin, delta);
+
+			move_oponent_robot = 0;
+			mouse_x1 = 0;
+			mouse_y1 = 0;
+			mouse_x2 = 0;
+			mouse_y2 = 0;
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
+	}
 }
 
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
@@ -1068,6 +1163,11 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 		mouse_x2 = event->x;
 		mouse_y2 = event->y;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	}
+	else if(event->state & GDK_BUTTON3_MASK)
+	{
+		mouse_x2 = event->x;
+		mouse_y2 = event->y;
 	}
 }
 

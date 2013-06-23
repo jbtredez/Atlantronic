@@ -9,6 +9,7 @@ obj-linux-usb_interface += linux/tools/cli.o
 obj-linux-usb_interface += linux/tools/cmd.o
 obj-linux-usb_interface += linux/tools/robot_interface.o
 obj-linux-usb_interface += linux/tools/qemu.o
+obj-linux-usb_interface += foo/table.o
 lib-linux-usb_interface += -lm -lreadline
 bin-linux += usb_interface
 
