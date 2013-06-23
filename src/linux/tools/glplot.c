@@ -105,6 +105,7 @@ static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void draw_plus(float x, float y, float rx, float ry);
+static void glPrintf(float x, float y, GLuint base, char* s, ...);
 static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glPrintf_xright2_yhigh(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
 static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
@@ -192,7 +193,7 @@ int main(int argc, char *argv[])
 		file_foo_write = qemu.file_foo_write;
 	}
 
-	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
+	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
@@ -998,12 +999,16 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			id = 0;
 		}
 
-		glPrintf_xcenter_ycenter(0, graph[current_graph].roi_ymax + 2*font_digit_height * graph->ratio_y, graph[current_graph].ratio_x, graph[current_graph].ratio_y, font_base, "%13.6f", robot_interface.current_time);
-		if( robot_interface.start_time != 0)
+		glPrintf(1600, 0, font_base, "time  %13.6f", robot_interface.current_time);
+		double match_time = 0;
+		if( robot_interface.start_time )
 		{
-			glPrintf_xcenter_ycenter(0, graph[current_graph].roi_ymax,
-										 graph[current_graph].ratio_x, graph[current_graph].ratio_y, font_base, "%13.6f", robot_interface.current_time - robot_interface.start_time);
+			match_time = robot_interface.current_time - robot_interface.start_time;
 		}
+		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
+		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos %5.0f %5.0f %f",
+				robot_interface.control_usb_data[id].control_pos_x/65536.0f, robot_interface.control_usb_data[id].control_pos_y/65536.0f,
+				robot_interface.control_usb_data[id].control_pos_alpha * M_PI/(float)(1<<25));
 
 		switch(current_graph)
 		{
@@ -1279,6 +1284,17 @@ static void glprint(float x, float y, GLuint base, char* buffer, int size)
 		glCallLists(size, GL_UNSIGNED_BYTE, (GLubyte *)buffer);
 		glPopAttrib();
 	}
+}
+
+static void glPrintf(float x, float y, GLuint base, char* s, ...)
+{
+	va_list arglist;
+	va_start(arglist, s);
+	char buffer[1024];
+	int size = vsnprintf(buffer, sizeof(buffer), s, arglist);
+	va_end(arglist);
+
+	glprint(x, y, base, buffer, size);
 }
 
 static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
