@@ -115,19 +115,25 @@ void gtk_end();
 
 void read_callback();
 
-struct fx_vect2 oponent_robot_pt[5] =
+#define OPPONENT_PERIMETER         128.0f
+
+struct fx_vect2 opponent_robot_pt[] =
 {
-	{ 100 << 16, 100 << 16},
-	{ -100 << 16, 100 << 16},
-	{ -100 << 16, -100 << 16},
-	{ 100 << 16, -100 << 16},
-	{ 100 << 16, 100 << 16},
+	{ OPPONENT_PERIMETER *65536, 0},
+	{ OPPONENT_PERIMETER * 0.707106781 * 65536, OPPONENT_PERIMETER * 0.707106781 * 65536},
+	{ 0, OPPONENT_PERIMETER * 65536},
+	{ -OPPONENT_PERIMETER * 0.707106781 * 65536, OPPONENT_PERIMETER * 0.707106781 * 65536},
+	{ -OPPONENT_PERIMETER *65536, 0},
+	{ -OPPONENT_PERIMETER * 0.707106781 * 65536, -OPPONENT_PERIMETER * 0.707106781 * 65536},
+	{ 0, -OPPONENT_PERIMETER *65536},
+	{ OPPONENT_PERIMETER * 0.707106781 * 65536, -OPPONENT_PERIMETER * 0.707106781 * 65536},
+	{ OPPONENT_PERIMETER *65536, 0},
 };
 
 struct polyline oponent_robot =
 {
-		oponent_robot_pt,
-		5
+		opponent_robot_pt,
+		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
 };
 
 struct fx_vect_pos opponent_robot_pos = {1800 << 16, 800 << 16, 0, 1<<30, 0};
@@ -343,7 +349,7 @@ int main(int argc, char *argv[])
 
 		// on le met a sa position de depart
 		struct fx_vect2 origin = {0, 0};
-		qemu_move_object(&qemu, 10, origin, opponent_robot_pos);
+		qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, opponent_robot_pos);
 	}
 	else
 	{
@@ -1085,7 +1091,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 		mouse_x2 = mouse_x1;
 		mouse_y2 = mouse_y1;
 	}
-	else if(event->button == 3)
+	else if(event->button == 3 && current_graph == GRAPH_TABLE)
 	{
 		struct graphique* gr = &graph[current_graph];
 		float xrange = gr->roi_xmax - gr->roi_xmin;
@@ -1098,13 +1104,18 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 		double dy = -y1 - opponent_robot_pos.y/65536.0f;
 
 		// on verifie qu'on clic a peu pres sur le robot
-		if( sqrt(dx*dx+dy*dy) < 150 )
+		if( sqrt(dx*dx+dy*dy) < OPPONENT_PERIMETER )
 		{
 			move_oponent_robot = 1;
 			mouse_x1 = event->x;
 			mouse_y1 = event->y;
 			mouse_x2 = mouse_x1;
 			mouse_y2 = mouse_y1;
+		}
+		else
+		{
+			// c'est pas un robot, on reset la roi
+			graphique_reset_roi(&graph[current_graph]);
 		}
 	}
 	else
@@ -1132,7 +1143,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	}
 	else if(event->button == 3)
 	{
-		if(move_oponent_robot == 1)
+		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
 		{
 			struct graphique* gr = &graph[current_graph];
 
@@ -1149,7 +1160,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
-			qemu_move_object(&qemu, 10, origin, delta);
+			qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
 
 			move_oponent_robot = 0;
 			mouse_x1 = 0;
@@ -1173,6 +1184,29 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 	{
 		mouse_x2 = event->x;
 		mouse_y2 = event->y;
+
+		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
+		{
+			struct graphique* gr = &graph[current_graph];
+
+			float xrange = gr->roi_xmax - gr->roi_xmin;
+			float yrange = gr->roi_ymax - gr->roi_ymin;
+
+			float x1 = (mouse_x1 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
+			float x2 = (mouse_x2 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
+			float y1 = (mouse_y1 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+
+			// on le met a sa position de depart
+			struct fx_vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
+			opponent_robot_pos.x += delta.x;
+			opponent_robot_pos.y += delta.y;
+			qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+			mouse_x1 = event->x;
+			mouse_y1 = event->y;
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
 	}
 }
 
