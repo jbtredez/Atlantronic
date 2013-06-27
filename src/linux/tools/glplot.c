@@ -87,6 +87,7 @@ static int move_oponent_robot = 0;
 static int current_graph = GRAPH_TABLE;
 static GtkWidget* opengl_window;
 static GtkWidget* main_window;
+static int simulation = 0;
 
 struct graphique graph[GRAPH_NUM];
 struct joystick joystick;
@@ -148,7 +149,6 @@ int main(int argc, char *argv[])
 	const char* file_bar_read = NULL;
 	const char* file_bar_write = NULL;
 
-	int simulation = 0;
 	const char* prog_foo = NULL;
 	int gdb_port = 0;
 
@@ -1160,7 +1160,10 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
-			qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+			if(simulation)
+			{
+				qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+			}
 
 			move_oponent_robot = 0;
 			mouse_x1 = 0;
@@ -1202,7 +1205,10 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
-			qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+			if(simulation)
+			{
+				qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+			}
 			mouse_x1 = event->x;
 			mouse_y1 = event->y;
 			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
