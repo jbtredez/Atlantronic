@@ -42,5 +42,6 @@ LDFLAGS+=-O2
 endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
+CXXFLAGS=$(CFLAGS)
 
 INCLUDES+=-Iinclude/$(ARCH) -Isrc/$(ARCH)
