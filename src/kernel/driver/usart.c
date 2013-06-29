@@ -107,7 +107,7 @@ void usart_open( enum usart_id id, uint32_t frequency)
 	// taille mémoire périph d'une donnée : 8 bits
 	// incrément automatique mémoire périph : 0
 	// transfert (écriture) : mem => mem périph
-	// transfert (lecture) : mem => mem périph
+	// transfert (lecture) : mem périph => mem
 	usart_device[id].dma_write->CCR = DMA_CCR1_DIR | DMA_CCR1_MINC | DMA_CCR1_TCIE;
 	usart_device[id].dma_write->CPAR = (uint32_t) &usart_device[id].usart->DR;
 
