@@ -116,4 +116,14 @@ void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af);
 
 void setLed(uint16_t mask);
 
+static inline void gpio_set_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
+{
+	GPIOx->BSRRL = 1 << pin;
+};
+
+static inline void gpio_reset_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
+{
+	GPIOx->BSRRH = 1 << pin;
+};
+
 #endif

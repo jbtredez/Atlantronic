@@ -23,7 +23,7 @@ void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum 
 	GPIOx->MODER &= ~(GPIO_MODER_MODER0 << (2 * pin));
 	GPIOx->MODER |= ((uint32_t)mode) << (2 * pin);
 
-	if( mode == GPIO_MODE_OUT )
+	if( mode == GPIO_MODE_OUT || mode == GPIO_MODE_AF )
 	{
 		GPIOx->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR0 << (2 * pin));
 		GPIOx->OSPEEDR |= ((uint32_t)speed) << (2 * pin);
