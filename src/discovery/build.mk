@@ -9,7 +9,7 @@ obj-discovery-test += kernel/list.o
 obj-discovery-test += kernel/heap_1.o
 obj-discovery-test += discovery/gpio.o
 obj-discovery-test += kernel/log.o
-
+obj-discovery-test += kernel/driver/spi.o
 obj-discovery-test += kernel/driver/usb/usb.o
 obj-discovery-test += kernel/driver/usb/usb_descriptor.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usb_core.o

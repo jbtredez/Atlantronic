@@ -22,6 +22,7 @@
 #define INIT_GPIO                     "01"
 #define INIT_USB                      "02"
 #define INIT_FAULT                    "03"
+#define INIT_SPI                      "04"
 
 // init de la communication
 #define INIT_CAN                      "05"
