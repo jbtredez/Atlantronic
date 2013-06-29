@@ -17,7 +17,7 @@ CFLAGS+=-Wswitch-enum
 CFLAGS+=-Wunsuffixed-float-constants
 CFLAGS+=-mno-thumb-interwork
 CFLAGS+=-fomit-frame-pointer
-CFLAGS+=-g
+CFLAGS+=-g3
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-nostartfiles
@@ -29,7 +29,7 @@ LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
 LDFLAGS+=-lg
-LDFLAGS+=-g
+LDFLAGS+=-g3
 
 DEF+=__$(ARCH)__
 DEF+=STM32F4XX
