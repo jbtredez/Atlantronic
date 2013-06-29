@@ -79,11 +79,11 @@ $(obj)/$(ARCH)/%.o: $(src)/%.c
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo "   CXX    " $@
 	mkdir -p $(dir $@)
-	@$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@
-	@$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
+	$(AS) $(AFLAGS) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES)
 
 %.pdf: %.tex
 	pdflatex -output-directory doc $<
