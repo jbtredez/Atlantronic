@@ -24,7 +24,7 @@
 
 #define USB_BUFER_SIZE          4096
 #define USB_READ_STACK_SIZE      350
-#define USB_WRITE_STACK_SIZE      50
+#define USB_WRITE_STACK_SIZE      75
 
 // variables statiques => segment bss, initialisation a 0
 
