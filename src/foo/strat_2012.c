@@ -1,3 +1,5 @@
+extern "C"
+{
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -13,7 +15,7 @@
 #include "control/trajectory.h"
 #include "foo/arm.h"
 #include "foo/strat.h"
-
+}
 #define STRAT_STACK_SIZE       300
 
 static int strat_dir;
@@ -25,7 +27,7 @@ static int strat_totem2_high_ok;
 static int strat_totem2_low_ok;
 static int strat_steal_ok;
 
-static void strat_task();
+static void strat_task(void* arg);
 static int strat_bouteille(int id);
 static int strat_cale(int high);
 static int strat_totem(int high);
@@ -55,8 +57,10 @@ int strat_module_init()
 
 module_init(strat_module_init, INIT_STRATEGY);
 
-static void strat_task()
+static void strat_task(void* arg)
 {
+	(void) arg;
+
 	while(getGo() == 0)
 	{
 		if( getRecalage() )
@@ -150,7 +154,7 @@ static void strat_task()
 		strat_cale(-1);
 	}
 */
-	vTaskDelete(NULL);
+
 }
 
 static void strat_cmd(void* arg)
