@@ -52,6 +52,8 @@ extern unsigned long _edata; //!< fin du segment data en sram (segment à rempli
 extern unsigned long _sbss; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _ebss; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _estack; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
+extern void __libc_init_array();
+void _init(){};
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
@@ -206,6 +208,7 @@ void isr_reset(void)
 		}
 	}
 
+	__libc_init_array();
 	__main();
 }
 

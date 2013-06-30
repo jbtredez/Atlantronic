@@ -29,6 +29,8 @@ extern unsigned long _edata; //!< fin du segment data en sram (segment à rempli
 extern unsigned long _sbss; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _ebss; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _estack; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
+extern void __libc_init_array();
+void _init(){};
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
@@ -149,12 +151,12 @@ void isr_reset(void)
 		*pulDest++ = *pulSrc++;
 	}
 
-    //
-    // Zero fill the bss segment.  This is done with inline assembly since this
-    // will clear the value of pulDest if it is not kept in a register.
-    //
-    __asm volatile
-    (
+	//
+	// Zero fill the bss segment.  This is done with inline assembly since this
+	// will clear the value of pulDest if it is not kept in a register.
+	//
+	__asm volatile
+	(
 		"    ldr     r0, =_sbss                  \n"
 		"    ldr     r1, =_ebss                  \n"
 		"    mov     r2, #0                      \n"
@@ -166,6 +168,7 @@ void isr_reset(void)
 		"        blt     zero_loop                 "
 	);
 
+	__libc_init_array();
 	__main();
 }
 
