@@ -29,8 +29,10 @@ extern unsigned long _edata; //!< fin du segment data en sram (segment à rempli
 extern unsigned long _sbss; //!< debut du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _ebss; //!< fin du segment bss en sram (segment à initialiser à zéro) (cf arm-elf.ld)
 extern unsigned long _estack; //!< haut de la ram (-16 par précaution) => début de la stack principale (cf arm-elf.ld)
-extern void __libc_init_array();
-void _init(){};
+extern void (*__preinit_array_start []) (void); //!< debut du tableau de pointeur de fonction preinit (c++)
+extern void (*__preinit_array_end []) (void); //!< fin du tableau de pointeur de fonction preinit (c++)
+extern void (*__init_array_start []) (void); //!< debut du tableau de pointeur de fonction init (c++)
+extern void (*__init_array_end []) (void); //!< fin du tableau de pointeur de fonction init (c++)
 
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) =
@@ -141,7 +143,7 @@ void (* const g_pfnVectors[])(void) =
 void isr_reset(void)
 {
 	unsigned long *pulSrc, *pulDest;
-
+	int i;
 	//
 	// Copy the data segment initializers from flash to SRAM.
 	//
@@ -168,7 +170,19 @@ void isr_reset(void)
 		"        blt     zero_loop                 "
 	);
 
-	__libc_init_array();
+	// appel des constructeurs c++
+	int count = __preinit_array_end - __preinit_array_start;
+	for (i = 0; i < count; i++)
+	{
+		__preinit_array_start[i] ();
+	}
+
+	count = __init_array_end - __init_array_start;
+	for (i = 0; i < count; i++)
+	{
+		__init_array_start[i] ();
+	}
+
 	__main();
 }
 
