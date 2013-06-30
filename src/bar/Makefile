@@ -4,22 +4,30 @@ MCPU:=cortex-m3
 
 LDSCRIPT:=scripts/ld/stm32f10x.ld
 
-DEF+=__ARM_CM3__=1
-DEF+=STM32F10X_CL
-
 CFLAGS:=-mcpu=$(MCPU)
 CFLAGS+=-msoft-float
 CFLAGS+=-mfpu=vfp
 CFLAGS+=-mthumb
-CFLAGS+=-x c
+CFLAGS+=-mno-thumb-interwork
+CFLAGS+=-fomit-frame-pointer
+CFLAGS+=-fno-exceptions
+CFLAGS+=-fno-non-call-exceptions
+CFLAGS+=-fsingle-precision-constant
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wswitch-default
 CFLAGS+=-Wswitch-enum
-CFLAGS+=-Wunsuffixed-float-constants
-CFLAGS+=-mno-thumb-interwork
-CFLAGS+=-fomit-frame-pointer
+CFLAGS+=-DSTM32F10X_CL
+CFLAGS+=-D__$(ARCH)__
 CFLAGS+=-g3
+ifneq ($(DEBUG),1)
+CFLAGS+=-O2
+endif
+
+CXXFLAGS:=$(CFLAGS)
+
+#cflag qu'on ne met pas pour le c++
+CFLAGS+=-Wunsuffixed-float-constants
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-nostartfiles
@@ -30,17 +38,7 @@ LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
-LDFLAGS+=-lg 
+LDFLAGS+=-lg
 LDFLAGS+=-g3
-
-DEF+=__$(ARCH)__
-
-ifneq ($(DEBUG),1)
-DEF+= NDEBUG
-CFLAGS+=-O2
-LDFLAGS+=-O2
-endif
-
-CFLAGS+=$(addprefix -D,$(DEF))
 
 INCLUDES+=-Iinclude/$(ARCH) -Isrc/$(ARCH)

@@ -1,23 +1,33 @@
 CROSSCOMPILE:=arm-none-eabi-
 
-MCPU=cortex-m4
+MCPU:=cortex-m4
 
 LDSCRIPT:=scripts/ld/stm32f407.ld
 
 CFLAGS:=-mcpu=$(MCPU)
 CFLAGS+=-mfloat-abi=hard
-CFLAGS+=-fsingle-precision-constant
 CFLAGS+=-mfpu=fpv4-sp-d16
 CFLAGS+=-mthumb
-CFLAGS+=-x c
+CFLAGS+=-mno-thumb-interwork
+CFLAGS+=-fomit-frame-pointer
+CFLAGS+=-fno-exceptions
+CFLAGS+=-fno-non-call-exceptions
+CFLAGS+=-fsingle-precision-constant
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wswitch-default
 CFLAGS+=-Wswitch-enum
-CFLAGS+=-Wunsuffixed-float-constants
-CFLAGS+=-mno-thumb-interwork
-CFLAGS+=-fomit-frame-pointer
+CFLAGS+=-D__$(ARCH)__
+CFLAGS+=-DSTM32F4XX
 CFLAGS+=-g3
+ifneq ($(DEBUG),1)
+CFLAGS+=-O2
+endif
+
+CXXFLAGS:=$(CFLAGS)
+
+#cflag qu'on ne met pas pour le c++
+CFLAGS+=-Wunsuffixed-float-constants
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-nostartfiles
@@ -30,17 +40,5 @@ LDFLAGS+=-lc
 LDFLAGS+=-lm
 LDFLAGS+=-lg
 LDFLAGS+=-g3
-
-DEF+=__$(ARCH)__
-DEF+=STM32F4XX
-
-ifneq ($(DEBUG),1)
-DEF+= NDEBUG
-CFLAGS+=-O2
-LDFLAGS+=-O2
-endif
-
-CFLAGS+=$(addprefix -D,$(DEF))
-CXXFLAGS=$(CFLAGS)
 
 INCLUDES+=-Iinclude/$(ARCH) -Isrc/$(ARCH)
