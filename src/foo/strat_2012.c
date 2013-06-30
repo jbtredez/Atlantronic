@@ -1,5 +1,3 @@
-extern "C"
-{
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -15,7 +13,7 @@ extern "C"
 #include "control/trajectory.h"
 #include "foo/arm.h"
 #include "foo/strat.h"
-}
+
 #define STRAT_STACK_SIZE       300
 
 static int strat_dir;
