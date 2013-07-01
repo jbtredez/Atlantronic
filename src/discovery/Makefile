@@ -25,6 +25,9 @@ CFLAGS+=-O2
 endif
 
 CXXFLAGS:=$(CFLAGS)
+CXXFLAGS+=-fno-rtti
+CXXFLAGS+=-ftemplate-depth-0
+CXXFLAGS+=-Woverloaded-virtual
 
 #cflag qu'on ne met pas pour le c++
 CFLAGS+=-Wunsuffixed-float-constants
@@ -35,6 +38,7 @@ LDFLAGS+=-mfloat-abi=hard
 LDFLAGS+=-mfpu=fpv4-sp-d16
 LDFLAGS+=-mthumb
 LDFLAGS+=-T $(LDSCRIPT)
+LDFLAGS+=-lsupc++
 LDFLAGS+=-lgcc
 LDFLAGS+=-lc
 LDFLAGS+=-lm
