@@ -13,6 +13,7 @@ CFLAGS+=-fomit-frame-pointer
 CFLAGS+=-fno-exceptions
 CFLAGS+=-fno-non-call-exceptions
 CFLAGS+=-fsingle-precision-constant
+CFLAGS+=-ffast-math
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wswitch-default
