@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define nop()	                      __asm volatile ("nop")
 #define enable_irq()                  __asm volatile ("cpsie i")
 #define disable_irq()                 __asm volatile ("cpsid i")
@@ -72,6 +76,10 @@ static inline uint32_t get_CONTROL(void)
 static inline void set_CONTROL(uint32_t control)
 {
 	__asm volatile ("msr control, %0" : : "r" (control) );
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 
