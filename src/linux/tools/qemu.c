@@ -49,7 +49,7 @@ int qemu_init(struct qemu* qemu, const char* prog_name, int gdb_port)
 
 		arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
 		arg[1] = (char*) "-M";
-		arg[2] = (char*) "atlantronic-foo";
+		arg[2] = (char*) "atlantronic";
 		arg[3] = (char*)"-nodefaults";
 		arg[4] = (char*)"-nographic";
 		arg[5] = (char*) "-chardev";
