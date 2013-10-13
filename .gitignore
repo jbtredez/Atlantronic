@@ -8,6 +8,8 @@ doc/doxygen
 *.d
 *.o
 *.ko
+*.ko.cmd
+*.mod
 *.mod.c
 *.o.*
 *.map
