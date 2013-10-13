@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //! @param alpha en 2^-26 tours
 //! @return sinus en 2^-30 unités
 int32_t fx_sin(int32_t alpha);
@@ -35,5 +39,9 @@ uint32_t sqrt64(uint64_t x);
 //! @param x - 32 bit
 //! @return sqrt(x)
 uint32_t sqrt32(uint32_t x);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

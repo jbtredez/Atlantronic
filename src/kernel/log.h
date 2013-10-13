@@ -14,6 +14,10 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // taille max d'un log (espace qui doit être dispo sur la stack)
 #define LOG_SIZE             100
 
@@ -42,5 +46,9 @@ void log_add(unsigned char level, const char* func, uint16_t line, const char* m
 			log_format_and_add(level, __FUNCTION__, __LINE__, msg, ##arg);\
 		} \
 	}while(0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

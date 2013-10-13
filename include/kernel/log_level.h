@@ -5,6 +5,10 @@
 //! @brief Log level
 //! @author Atlantronic
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum log_level
 {
 	LOG_ERROR,      //!< logs d'erreur
@@ -18,5 +22,8 @@ enum log_level
 //! niveau de log compile
 #define LOG_LEVEL        LOG_INFO
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef STM32F10X_CL
 // configuration une fois le module rcc initialisé (attention, il faut modifier le code de rcc.c si on veut changer les valeurs) :
 #define RCC_HSI           8000000
@@ -37,5 +41,9 @@
 #define us_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000000)
 
 void wait_active(uint32_t tick);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
