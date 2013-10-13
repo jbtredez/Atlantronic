@@ -30,6 +30,7 @@ MAKEFLAGS += -rR --no-print-directory
 
 DEBUG ?= 0
 VERBOSE ?= 0
+SKIP_SIZE_HEADER ?= "+1"
 
 ifeq ($(VERBOSE),0)
 MAKEFLAGS += --quiet
@@ -58,6 +59,7 @@ CC:=$(CROSSCOMPILE)gcc
 CXX:=$(CROSSCOMPILE)g++
 OBJCOPY:=$(CROSSCOMPILE)objcopy
 STRIP:=$(CROSSCOMPILE)strip
+SIZE:=$(CROSSCOMPILE)size
 DOT:=dot
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -92,16 +94,27 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 # cibles
 # cible par defaut :
 ifneq ($(ARCH),)
-$(ARCH): $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
+all: $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
 
 .PHONY: $(ARCH)
-endif
 
+stat: $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
+	$(SIZE) -B $^ | tail -n $(SKIP_SIZE_HEADER)
+
+.PHONY: stat_$(ARCH)
+else
 all:
 	$(MAKE) ARCH=discovery
 	$(MAKE) ARCH=foo
 	$(MAKE) ARCH=bar
 	$(MAKE) ARCH=linux
+	$(MAKE) ARCH=discovery stat
+	$(MAKE) ARCH=foo SKIP_SIZE_HEADER="+2" stat
+
+stat:
+	$(MAKE) ARCH=discovery stat
+	$(MAKE) ARCH=foo SKIP_SIZE_HEADER="+2" stat
+endif
 
 .PHONY: all
 
@@ -140,6 +153,9 @@ $(bin)/$(ARCH)/%:
 	$(OBJCOPY) --only-keep-debug $@ $@.debug
 	$(OBJCOPY) --add-gnu-debuglink $@.debug $@
 	$(STRIP) $@
+
+#$(bin)/$(ARCH)/%.stat:
+#	$(SIZE) -B $(@:.stat=) | tail -n 1 | awk '{ print $$1/1000 "k / " ($$2 + $$3)/1000 "k  : $(@:.stat=)" }'
 
 %.png: %.dot
 	@echo [DOT] $@
