@@ -21,5 +21,8 @@ obj-discovery-test += kernel/driver/usb/stm32f4xx/usbd_req.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usbd_atlantronic_core.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usbd_usr.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usbd_desc.o
+obj-discovery-test += kernel/driver/can.o
+obj-discovery-test += kernel/canopen.o
+obj-discovery-test += kernel/can_motor.o
 
 bin-discovery += test

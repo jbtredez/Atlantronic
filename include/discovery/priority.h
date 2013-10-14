@@ -41,8 +41,8 @@ enum
 //#define PRIORITY_IRQ_EXTI3            9
 //#define PRIORITY_IRQ_EXTI9_5          9
 //#define PRIORITY_IRQ_EXTI15_10        9
-//#define PRIORITY_IRQ_CAN1_RX0        10
-//#define PRIORITY_IRQ_CAN1_TX         11
+#define PRIORITY_IRQ_CAN1_RX0        10
+#define PRIORITY_IRQ_CAN1_TX         11
 //#define PRIORITY_IRQ_USART3          12
 //#define PRIORITY_IRQ_DMA1_CHANNEL1   12
 //#define PRIORITY_IRQ_DMA1_CHANNEL2   12

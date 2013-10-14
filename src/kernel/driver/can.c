@@ -9,6 +9,7 @@
 //#include "kernel/fault.h"
 #include "kernel/driver/usb.h"
 #include "kernel/error_codes.h"
+#include "gpio.h"
 
 static void can_write_mailbox(struct can_msg *msg);
 static void can_cmd_write(void* arg);
@@ -24,6 +25,7 @@ static xSemaphoreHandle can_write_sem;
 
 int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {
+#if defined( STM32F10X_CL )
 	// CAN_RX : PD0
 	// CAN_TX : PD1
 	// => can 1 remap 3
@@ -40,9 +42,22 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 	GPIOD->CRL = (GPIOD->CRL & ~GPIO_CRL_MODE0 & ~ GPIO_CRL_CNF0) | GPIO_CRL_CNF0_1;
 	// TX (PD1) sortie alternate push-pull 50Mhz
 	GPIOD->CRL = (GPIOD->CRL & ~GPIO_CRL_MODE1 & ~ GPIO_CRL_CNF1) | GPIO_CRL_CNF1_1 | GPIO_CRL_MODE1_1 | GPIO_CRL_MODE1_0;
+#elif defined( STM32F4XX )
+	// CAN1 :
+	// CAN_RX : PD0
+	// CAN_TX : PD1
+
+	// activation GPIOD
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
+	gpio_pin_init(GPIOD, 0, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
+	gpio_pin_init(GPIOD, 1, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
+	gpio_af_config(GPIOD, 0, GPIO_AF_CAN1);
+	gpio_af_config(GPIOD, 1, GPIO_AF_CAN1);
+#endif
 
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
+
 
 	can_set_baudrate(baudrate, 0);
 
@@ -118,8 +133,16 @@ static int can_set_mask(int id, uint32_t mask)
 	return 0;
 }
 
+
+static void can_set_btr(int sjw, int tbs1, int tbs2, int tq)
+{
+	CAN1->BTR &= ~ ( CAN_BTR_SJW | CAN_BTR_TS2 | CAN_BTR_TS1 | CAN_BTR_BRP );
+	CAN1->BTR |= (((sjw-1) << 24) & CAN_BTR_SJW) | (((tbs2-1) << 20) & CAN_BTR_TS2) | (((tbs1-1) << 16) & CAN_BTR_TS1) | ((tq-1) & CAN_BTR_BRP);
+}
+
 static void can_set_baudrate(enum can_baudrate speed, int debug)
 {
+#if defined( STM32F10X_CL )
 	#if( RCC_PCLK1 != 36000000)
 	#error "remettre RCC_PCLK1 à 36Mhz, sinon c'est le bordel pour recalculer BTR"
 	#endif
@@ -134,38 +157,82 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 	// SP = (1 + TBS1)/total = 72,22 %
 	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 36Mhz
 	// => TQ = PCLK / (18 * 1000000) = 2
-	CAN1->BTR &= ~ (              CAN_BTR_SJW  |                  CAN_BTR_TS2  |                   CAN_BTR_TS1  |   CAN_BTR_BRP    );
-
 	switch(speed)
 	{
 		case CAN_1000:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((2-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 2);
 			break;
 		case CAN_800:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((3-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 3);
 			break;
 		case CAN_500:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((4-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 4);
 			break;
 		case CAN_250:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((8-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 8);
 			break;
 		case CAN_125:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((16-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 16);
 			break;
 		case CAN_50:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((20-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 20);
 			break;
 		case CAN_20:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((50-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 50);
 			break;
 		case CAN_10:
-			CAN1->BTR |= (((4-1) << 24) & CAN_BTR_SJW) | (((5-1) << 20) & CAN_BTR_TS2) | (((12-1) << 16) & CAN_BTR_TS1) | ((100-1) & CAN_BTR_BRP);
+			can_set_btr(4, 12, 5, 100);
 			break;
 		case CAN_RESERVED:
 		default:
 			break;
 	}
+#elif defined( STM32F4XX )
+	#if( RCC_PCLK1_MHZ != 42)
+	#error "remettre RCC_PCLK1 à 42Mhz, sinon c'est le bordel pour recalculer BTR"
+	#endif
+
+	// init mode
+	CAN1->MCR = CAN_MCR_INRQ;
+
+	// TBS1 = 14 TQ
+	// TBS2 =  6 TQ
+	// SJW  =  4 TQ
+	// total bit can (1 + TBS1 + TBS2) = 21 TQ
+	// SP = (1 + TBS1)/total = 71,43 %
+	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 42Mhz
+	// => TQ = PCLK / (21 * 1000000) = 2
+	switch(speed)
+	{
+		case CAN_1000:
+			can_set_btr(4, 14, 6, 2);
+			break;
+		case CAN_800:
+			can_set_btr(4, 14, 6, 3);
+			break;
+		case CAN_500:
+			can_set_btr(4, 14, 6, 4);
+			break;
+		case CAN_250:
+			can_set_btr(4, 14, 6, 8);
+			break;
+		case CAN_125:
+			can_set_btr(4, 14, 6, 16);
+			break;
+		case CAN_50:
+			can_set_btr(4, 14, 6, 40);
+			break;
+		case CAN_20:
+			can_set_btr(4, 14, 6, 100);
+			break;
+		case CAN_10:
+			can_set_btr(4, 14, 6, 200);
+			break;
+		case CAN_RESERVED:
+		default:
+			break;
+	}
+#endif
 
 	if(debug)
 	{
