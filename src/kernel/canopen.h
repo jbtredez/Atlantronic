@@ -5,9 +5,24 @@
 
 typedef void (*can_callback)(struct can_msg *msg, int nodeid, int type);
 
-#define CANOPEN_RX_PDO1          0x180
-#define CANOPEN_RX_PDO2          0x280
-#define CANOPEN_RX_PDO3          0x380
+enum
+{
+	CANOPEN_NMT = 0,
+	CANOPEN_SYNC,
+	CANOPEN_EMERGENCY,
+	CANOPEN_RX_PDO1,
+	CANOPEN_TX_PDO1,
+	CANOPEN_RX_PDO2,
+	CANOPEN_TX_PDO2,
+	CANOPEN_RX_PDO3,
+	CANOPEN_TX_PDO3,
+	CANOPEN_RX_PDO4,
+	CANOPEN_TX_PDO4,
+	CANOPEN_SDO_RES,
+	CANOPEN_SDO_REQ,
+	CANOPEN_RESERVED_13,
+	CANOPEN_BOOTUP,
+};
 
 struct canopen_configuration
 {

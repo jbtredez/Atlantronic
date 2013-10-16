@@ -10,15 +10,13 @@
 #define CAN_READ_QUEUE_SIZE         50
 #define CAN_MAX_NODE                 4
 
-#define CANOPEN_BOOTUP           0x700
-#define CANOPEN_SDO_RES          0x580
-
-enum canopen_nmt_state
+enum
 {
-	NMT_RESET = 0,
-	NMT_PRE_OPERATIONAL,
-	NMT_OPERATIONAL,
-	NMT_STOP
+	NMT_OPERATIONAL        =  0x01,
+	NMT_STOP               =  0x02,
+	NMT_PRE_OPERATIONAL    =  0x80,
+	NMT_RESET_AP           =  0x81,
+	NMT_RESET_COM          =  0x82,
 };
 
 struct canopen_node
@@ -139,42 +137,17 @@ static void can_task(void *arg)
 		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
 		{
 			// traces CAN pour le debug
-			//usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
+			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
 
 			// TODO a voir / defauts
 			//fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
 
-			unsigned int nodeid = 0;
-			int type = 0;
-			if( msg.id > 0x380 && msg.id < 0x400)
-			{
-				// PDO 3
-				nodeid = msg.id - 0x380;
-				type = CANOPEN_RX_PDO3;
-			}
-			if( msg.id > 0x280 && msg.id < 0x300)
-			{
-				// PDO 2
-				nodeid = msg.id - 0x280;
-				type = CANOPEN_RX_PDO2;
-			}
-			if( msg.id > 0x180 && msg.id < 0x200)
-			{
-				// PDO 1
-				nodeid = msg.id - 0x180;
-				type = CANOPEN_RX_PDO1;
-			}
-			else if(msg.id > 0x580 && msg.id < 0x600)
-			{
-				// SDO
-				nodeid = msg.id - 0x580;
-				type = CANOPEN_SDO_RES;
-			}
-			else if(msg.id > 0x700 && msg.id < 0x780)
+			int type = msg.id >> 7;
+			unsigned int nodeid = msg.id & 0x7f;
+
+			if(type == CANOPEN_BOOTUP)
 			{
 				// bootup
-				nodeid = msg.id - 0x700;
-				type = CANOPEN_BOOTUP;
 				log_format(LOG_INFO, "boot up %x", nodeid);
 			}
 
@@ -202,7 +175,7 @@ int canopen_register_node(int node, const struct canopen_configuration* static_c
 	if( can_max_node < CAN_MAX_NODE )
 	{
 		canopen_nodes[can_max_node].nodeid = node;
-		canopen_nodes[can_max_node].state = NMT_RESET;
+		canopen_nodes[can_max_node].state = NMT_RESET_COM;
 		canopen_nodes[can_max_node].conf_id = 0;
 		canopen_nodes[can_max_node].conf_size = conf_size;
 		canopen_nodes[can_max_node].static_conf = static_conf;
@@ -258,7 +231,7 @@ int canopen_sdo_write(int node, int size, int index, int subindex, uint32_t data
 {
 	struct can_msg msg;
 
-	msg.id = 0x600 + node;
+	msg.id = 0x80 * CANOPEN_SDO_REQ + node;
 	msg.size = 4 + size;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
