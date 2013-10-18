@@ -33,7 +33,7 @@ const struct canopen_configuration can_motor_steering_configuration[] =
 	{0x6084, 0, 4, 500},             // deceleration
 };
 
-static void can_motor_callback(struct can_msg *msg, int id, int type);
+static void can_motor_callback(void* data, struct can_msg *msg, int id, int type);
 
 struct can_motor_data
 {
@@ -43,12 +43,16 @@ struct can_motor_data
 	int speed;
 };
 
-static struct can_motor_data can_motor_data[2];
+static struct can_motor_data can_motor_data[6];
 
 int can_motor_module_init()
 {
-	canopen_register_node(CAN_MOTOR_DRIVING_NODEID, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_callback);
-	canopen_register_node(CAN_MOTOR_STEERING_NODEID, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_DRIVING1_NODEID, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_data[0], &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_STEERING1_NODEID, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_data[1], &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_DRIVING2_NODEID, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_data[2], &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_STEERING2_NODEID, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_data[3], &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_DRIVING3_NODEID, can_motor_driving_configuration, ARRAY_SIZE(can_motor_driving_configuration), &can_motor_data[4], &can_motor_callback);
+	canopen_register_node(CAN_MOTOR_STEERING3_NODEID, can_motor_steering_configuration, ARRAY_SIZE(can_motor_steering_configuration), &can_motor_data[5], &can_motor_callback);
 
 	return 0;
 }
@@ -86,22 +90,9 @@ static void can_motor_tx_pdo2(int node, uint8_t cmd, uint32_t param)
 	can_write(&msg, 0);
 }
 
-void can_motor_callback(struct can_msg *msg, int nodeid, int type)
+void can_motor_callback(void* data, struct can_msg *msg, int nodeid, int type)
 {
-	struct can_motor_data* motor;
-	if( nodeid == CAN_MOTOR_DRIVING_NODEID )
-	{
-		motor = &can_motor_data[0];
-	}
-	else if( nodeid == CAN_MOTOR_STEERING_NODEID )
-	{
-		motor = &can_motor_data[1];
-	}
-	else
-	{
-		// bug
-		return;
-	}
+	struct can_motor_data* motor = data;
 
 	if( type == CANOPEN_RX_PDO3 )
 	{

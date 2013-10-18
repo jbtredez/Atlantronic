@@ -8,7 +8,7 @@
 
 #define CAN_STACK_SIZE             250
 #define CAN_READ_QUEUE_SIZE         50
-#define CAN_MAX_NODE                 4
+#define CAN_MAX_NODE                 6
 
 enum
 {
@@ -27,6 +27,7 @@ struct canopen_node
 	uint8_t conf_size;
 	const struct canopen_configuration* static_conf;
 	can_callback callback;
+	void* data;
 };
 
 static void can_task(void *arg);
@@ -72,7 +73,7 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 	{
 		// gestion des pdo specifique => callback
 		canopen_nodes[id].state = NMT_OPERATIONAL;
-		canopen_nodes[id].callback(msg, nodeid, type);
+		canopen_nodes[id].callback(canopen_nodes[id].data, msg, nodeid, type);
 	}
 	else if( type == CANOPEN_SDO_RES)
 	{
@@ -168,7 +169,7 @@ static void can_task(void *arg)
 
 //! enregistrement d'un noeud can
 //! fonction non protegee - utiliser dans la phase d'init uniquement
-int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, can_callback callback)
+int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, void* data, can_callback callback)
 {
 	int res = -1;
 
@@ -180,6 +181,7 @@ int canopen_register_node(int node, const struct canopen_configuration* static_c
 		canopen_nodes[can_max_node].conf_size = conf_size;
 		canopen_nodes[can_max_node].static_conf = static_conf;
 		canopen_nodes[can_max_node].callback = callback;
+		canopen_nodes[can_max_node].data = data;
 		can_max_node++;
 		res = 0;
 	}

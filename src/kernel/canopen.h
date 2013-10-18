@@ -3,7 +3,7 @@
 
 #include "kernel/driver/can.h"
 
-typedef void (*can_callback)(struct can_msg *msg, int nodeid, int type);
+typedef void (*can_callback)(void* data, struct can_msg *msg, int nodeid, int type);
 
 enum
 {
@@ -32,7 +32,7 @@ struct canopen_configuration
 	uint32_t data;
 };
 
-int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, can_callback callback);
+int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, void* data, can_callback callback);
 
 int canopen_reset_node(int node);
 
