@@ -14,6 +14,10 @@
 #endif
 #include "kernel/systick.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum can_format
 {
 	CAN_STANDARD_FORMAT,
@@ -62,6 +66,10 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue);
 
 uint32_t can_write(struct can_msg *msg, portTickType timeout);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

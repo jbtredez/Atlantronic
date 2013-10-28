@@ -11,5 +11,5 @@
 #define CAN_MOTOR_STEERING2_NODEID     0x23
 #define CAN_MOTOR_DRIVING3_NODEID      0x24
 #define CAN_MOTOR_STEERING3_NODEID     0x25
-#endif
 
+#endif

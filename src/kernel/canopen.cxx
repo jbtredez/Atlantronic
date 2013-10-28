@@ -19,21 +19,10 @@ enum
 	NMT_RESET_COM          =  0x82,
 };
 
-struct canopen_node
-{
-	uint8_t nodeid;
-	uint8_t state;
-	uint8_t conf_id;
-	uint8_t conf_size;
-	const struct canopen_configuration* static_conf;
-	can_callback callback;
-	void* data;
-};
-
 static void can_task(void *arg);
 static xQueueHandle can_read_queue;
 static int can_max_node;
-static struct canopen_node canopen_nodes[CAN_MAX_NODE];
+static struct CanopenNode* canopen_nodes[CAN_MAX_NODE];
 
 static int canopen_op_mode(int node);
 
@@ -69,11 +58,12 @@ module_init(canopen_module_init, INIT_CAN);
 
 static void can_update_node(int id, unsigned int nodeid, int type, struct can_msg* msg)
 {
+	CanopenNode* node = canopen_nodes[id];
 	if( type == CANOPEN_RX_PDO1 || type == CANOPEN_RX_PDO2 || type == CANOPEN_RX_PDO3 )
 	{
 		// gestion des pdo specifique => callback
-		canopen_nodes[id].state = NMT_OPERATIONAL;
-		canopen_nodes[id].callback(canopen_nodes[id].data, msg, nodeid, type);
+		node->state = NMT_OPERATIONAL;
+		node->rx_pdo(msg, type);
 	}
 	else if( type == CANOPEN_SDO_RES)
 	{
@@ -92,18 +82,18 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 					nodeid, index, subindex, msg->data[7], msg->data[6], msg->data[5], msg->data[4]);
 		}
 
-		if( canopen_nodes[id].state == NMT_PRE_OPERATIONAL )
+		if( node->state == NMT_PRE_OPERATIONAL )
 		{
-			if( canopen_nodes[id].conf_id < canopen_nodes[id].conf_size )
+			if( node->conf_id < node->conf_size )
 			{
-				const struct canopen_configuration* conf = &canopen_nodes[id].static_conf[canopen_nodes[id].conf_id];
+				const struct canopen_configuration* conf = &node->static_conf[node->conf_id];
 				if( conf->index == index && conf->subindex == subindex )
 				{
 					// on passe au suivant
-					canopen_nodes[id].conf_id++;
-					if( canopen_nodes[id].conf_id < canopen_nodes[id].conf_size )
+					node->conf_id++;
+					if( node->conf_id < node->conf_size )
 					{
-						conf = &canopen_nodes[id].static_conf[canopen_nodes[id].conf_id];
+						conf = &node->static_conf[node->conf_id];
 						canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
 					}
 					else
@@ -117,9 +107,9 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 	}
 	else if( type == CANOPEN_BOOTUP)
 	{
-		canopen_nodes[id].state = NMT_PRE_OPERATIONAL;
-		canopen_nodes[id].conf_id = 0;
-		const struct canopen_configuration* conf = &canopen_nodes[id].static_conf[0];
+		node->state = NMT_PRE_OPERATIONAL;
+		node->conf_id = 0;
+		const struct canopen_configuration* conf = &node->static_conf[0];
 		canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
 	}
 }
@@ -138,7 +128,7 @@ static void can_task(void *arg)
 		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
 		{
 			// traces CAN pour le debug
-			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
+			//usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
 
 			// TODO a voir / defauts
 			//fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
@@ -153,7 +143,7 @@ static void can_task(void *arg)
 			}
 
 			int i = 0;
-			while( i < can_max_node && canopen_nodes[i].nodeid != nodeid )
+			while( i < can_max_node && canopen_nodes[i]->nodeid != nodeid )
 			{
 				i++;
 			}
@@ -169,19 +159,15 @@ static void can_task(void *arg)
 
 //! enregistrement d'un noeud can
 //! fonction non protegee - utiliser dans la phase d'init uniquement
-int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, void* data, can_callback callback)
+int canopen_register_node(CanopenNode* node)
 {
 	int res = -1;
 
 	if( can_max_node < CAN_MAX_NODE )
 	{
-		canopen_nodes[can_max_node].nodeid = node;
-		canopen_nodes[can_max_node].state = NMT_RESET_COM;
-		canopen_nodes[can_max_node].conf_id = 0;
-		canopen_nodes[can_max_node].conf_size = conf_size;
-		canopen_nodes[can_max_node].static_conf = static_conf;
-		canopen_nodes[can_max_node].callback = callback;
-		canopen_nodes[can_max_node].data = data;
+		canopen_nodes[can_max_node] = node;
+		node->state = NMT_RESET_COM;
+		node->conf_id = 0;
 		can_max_node++;
 		res = 0;
 	}
@@ -269,4 +255,10 @@ int canopen_sdo_write(int node, int size, int index, int subindex, uint32_t data
 	can_write(&msg, 0);
 
 	return 0;
+}
+
+void CanopenNode::rx_pdo(struct can_msg *msg, int type)
+{
+	(void) msg;
+	(void) type;
 }

@@ -5,6 +5,10 @@
 //! @brief USB
 //! @author Atlantronic
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
 	USB_LOG = 1,
@@ -47,5 +51,9 @@ void usb_add(uint16_t type, void* msg, uint16_t size);
 //!< ajout d'une commande
 //!< peut être appelée avant l'initialisation du module usb
 void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

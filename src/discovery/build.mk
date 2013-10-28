@@ -7,7 +7,6 @@ obj-discovery-test += kernel/queue.o
 obj-discovery-test += kernel/port.o
 obj-discovery-test += kernel/list.o
 obj-discovery-test += kernel/heap_1.o
-obj-discovery-test += discovery/gpio.o
 obj-discovery-test += kernel/log.o
 obj-discovery-test += kernel/driver/spi.o
 obj-discovery-test += kernel/driver/usb/usb.o
@@ -24,5 +23,7 @@ obj-discovery-test += kernel/driver/usb/stm32f4xx/usbd_desc.o
 obj-discovery-test += kernel/driver/can.o
 obj-discovery-test += kernel/canopen.o
 obj-discovery-test += kernel/can_motor.o
+obj-discovery-test += discovery/gpio.o
+obj-discovery-test += discovery/control.o
 
 bin-discovery += test

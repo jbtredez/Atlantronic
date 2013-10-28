@@ -3,8 +3,6 @@
 
 #include "kernel/driver/can.h"
 
-typedef void (*can_callback)(void* data, struct can_msg *msg, int nodeid, int type);
-
 enum
 {
 	CANOPEN_NMT = 0,
@@ -32,7 +30,19 @@ struct canopen_configuration
 	uint32_t data;
 };
 
-int canopen_register_node(int node, const struct canopen_configuration* static_conf, uint8_t conf_size, void* data, can_callback callback);
+class CanopenNode
+{
+	public:
+		uint8_t nodeid;
+		uint8_t state;
+		uint8_t conf_id;
+		uint8_t conf_size;
+		const struct canopen_configuration* static_conf;
+
+		virtual void rx_pdo(struct can_msg *msg, int type);
+};
+
+int canopen_register_node(CanopenNode* node);
 
 int canopen_reset_node(int node);
 
