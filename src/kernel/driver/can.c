@@ -25,24 +25,6 @@ static xSemaphoreHandle can_write_sem;
 
 int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {
-#if defined( STM32F10X_CL )
-	// CAN_RX : PD0
-	// CAN_TX : PD1
-	// => can 1 remap 3
-
-	// activation clock sur afio pour remaper le can
-	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-
-	AFIO->MAPR &= ~AFIO_MAPR_CAN_REMAP;
-	AFIO->MAPR |= AFIO_MAPR_CAN_REMAP_REMAP3;
-
-	// activation GPIOD
-	RCC->APB2ENR |= RCC_APB2ENR_IOPDEN;
-	// RX (PD0) entrée pull-up / pull-down
-	GPIOD->CRL = (GPIOD->CRL & ~GPIO_CRL_MODE0 & ~ GPIO_CRL_CNF0) | GPIO_CRL_CNF0_1;
-	// TX (PD1) sortie alternate push-pull 50Mhz
-	GPIOD->CRL = (GPIOD->CRL & ~GPIO_CRL_MODE1 & ~ GPIO_CRL_CNF1) | GPIO_CRL_CNF1_1 | GPIO_CRL_MODE1_1 | GPIO_CRL_MODE1_0;
-#elif defined( STM32F4XX )
 	// CAN1 :
 	// CAN_RX : PD0
 	// CAN_TX : PD1
@@ -53,7 +35,6 @@ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 	gpio_pin_init(GPIOD, 1, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
 	gpio_af_config(GPIOD, 0, GPIO_AF_CAN1);
 	gpio_af_config(GPIOD, 1, GPIO_AF_CAN1);
-#endif
 
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
@@ -142,52 +123,6 @@ static void can_set_btr(int sjw, int tbs1, int tbs2, int tq)
 
 static void can_set_baudrate(enum can_baudrate speed, int debug)
 {
-#if defined( STM32F10X_CL )
-	#if( RCC_PCLK1 != 36000000)
-	#error "remettre RCC_PCLK1 à 36Mhz, sinon c'est le bordel pour recalculer BTR"
-	#endif
-
-	// init mode
-	CAN1->MCR = CAN_MCR_INRQ;
-
-	// TBS1 = 12 TQ
-	// TBS2 =  5 TQ
-	// SJW  =  4 TQ
-	// total bit can (1 + TBS1 + TBS2) = 18 TQ
-	// SP = (1 + TBS1)/total = 72,22 %
-	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 36Mhz
-	// => TQ = PCLK / (18 * 1000000) = 2
-	switch(speed)
-	{
-		case CAN_1000:
-			can_set_btr(4, 12, 5, 2);
-			break;
-		case CAN_800:
-			can_set_btr(4, 12, 5, 3);
-			break;
-		case CAN_500:
-			can_set_btr(4, 12, 5, 4);
-			break;
-		case CAN_250:
-			can_set_btr(4, 12, 5, 8);
-			break;
-		case CAN_125:
-			can_set_btr(4, 12, 5, 16);
-			break;
-		case CAN_50:
-			can_set_btr(4, 12, 5, 20);
-			break;
-		case CAN_20:
-			can_set_btr(4, 12, 5, 50);
-			break;
-		case CAN_10:
-			can_set_btr(4, 12, 5, 100);
-			break;
-		case CAN_RESERVED:
-		default:
-			break;
-	}
-#elif defined( STM32F4XX )
 	#if( RCC_PCLK1_MHZ != 42)
 	#error "remettre RCC_PCLK1 à 42Mhz, sinon c'est le bordel pour recalculer BTR"
 	#endif
@@ -232,7 +167,6 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 		default:
 			break;
 	}
-#endif
 
 	if(debug)
 	{
