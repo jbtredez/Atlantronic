@@ -22,14 +22,21 @@ class CanMotor : public CanopenNode
 {
 	public:
 		CanMotor();
+
+		// donnees brutes
 		uint16_t status_word;
-		uint32_t position;
+		uint32_t raw_position; //!< position brute (en increments encodeurs)
 		uint16_t current;
-		int speed;
-		systime date;
+
+		float position;
+		float speed;
+
+		//systime date;
+		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
+		float outputGain;   //!< gain pour convertir la position en unites robot
 
 		virtual void rx_pdo(struct can_msg *msg, int type);
-		void set_speed(int32_t speed);
+		void set_speed(float v);
 		int wait_update(portTickType timeout);
 
 	protected:

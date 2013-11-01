@@ -2,6 +2,7 @@
 #include "canopen.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
+#include <math.h>
 
 #define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
 
@@ -12,6 +13,17 @@
 #define CAN_MOTOR_CMD_LPC  0x81      //!< limitation courant max
 #define CAN_MOTOR_CMD_V    0x93      //!< commande de vitesse
 #define CAN_MOTOR_CMD_LA   0xb4      //!< commande de position
+
+#define DRIVING1_WHEEL_RADIUS       33
+#define DRIVING2_WHEEL_RADIUS       33
+#define DRIVING3_WHEEL_RADIUS       33
+
+#define MOTOR_DRIVING1_RED          14
+#define MOTOR_DRIVING2_RED          14
+#define MOTOR_DRIVING3_RED          14
+#define MOTOR_STEERING1_RED         14
+#define MOTOR_STEERING2_RED         14
+#define MOTOR_STEERING3_RED         14
 
 const struct canopen_configuration can_motor_driving_configuration[] =
 {
@@ -40,26 +52,38 @@ int can_motor_module_init()
 	can_motor[0].nodeid = CAN_MOTOR_DRIVING1_NODEID;
 	can_motor[0].static_conf = can_motor_driving_configuration;
 	can_motor[0].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
+	can_motor[0].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
+	can_motor[0].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(60 * MOTOR_DRIVING1_RED * 50);
 
 	can_motor[1].nodeid = CAN_MOTOR_STEERING1_NODEID;
 	can_motor[1].static_conf = can_motor_steering_configuration;
 	can_motor[1].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
+	can_motor[1].inputGain = 60 * MOTOR_STEERING1_RED / (float)(2 * M_PI);
+	can_motor[1].outputGain = 2 * M_PI / (float)(60 * MOTOR_STEERING1_RED * 50);
 
 	can_motor[2].nodeid = CAN_MOTOR_DRIVING2_NODEID;
 	can_motor[2].static_conf = can_motor_driving_configuration;
 	can_motor[2].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
+	can_motor[2].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
+	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(60 * MOTOR_DRIVING2_RED * 50);
 
 	can_motor[3].nodeid = CAN_MOTOR_STEERING2_NODEID;
 	can_motor[3].static_conf = can_motor_steering_configuration;
 	can_motor[3].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
+	can_motor[3].inputGain = 60 * MOTOR_STEERING2_RED / (float)(2 * M_PI);
+	can_motor[3].outputGain = 2 * M_PI / (float)(60 * MOTOR_STEERING2_RED * 50);
 
 	can_motor[4].nodeid = CAN_MOTOR_DRIVING3_NODEID;
 	can_motor[4].static_conf = can_motor_driving_configuration;
 	can_motor[4].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
+	can_motor[4].inputGain = 60 * MOTOR_DRIVING3_RED / (float)(2 * M_PI * DRIVING3_WHEEL_RADIUS);
+	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(60 * MOTOR_DRIVING3_RED * 50);
 
 	can_motor[5].nodeid = CAN_MOTOR_STEERING3_NODEID;
 	can_motor[5].static_conf = can_motor_steering_configuration;
 	can_motor[5].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
+	can_motor[5].inputGain = 60 * MOTOR_STEERING3_RED / (float)(2 * M_PI);
+	can_motor[5].outputGain = 2 * M_PI / (float)(60 * MOTOR_STEERING3_RED * 50);
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -106,16 +130,21 @@ CanMotor::CanMotor()
 {
 	vSemaphoreCreateBinary(sem);
 	xSemaphoreTake(sem, 0);
+	inputGain = 1;
+	outputGain = 1;
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
 {
 	if( type == CANOPEN_RX_PDO3 )
 	{
-		uint32_t pos = msg->data[0] + (msg->data[1] << 8) + (msg->data[2] << 16) + (msg->data[3] << 24);
-		speed = ((int)(pos - position)) * 1000 / msg->data[6];
-		position = pos;
+		uint32_t pos;
+		memcpy(&pos, msg->data, 4);
+		speed = ((int)(pos - raw_position)) * 1000 * outputGain / msg->data[6];
+		raw_position = pos;
 		current = msg->data[4] + (msg->data[5] << 8);
+
+		position = raw_position * outputGain;
 		xSemaphoreGive(sem);
 	}
 	else if( type == CANOPEN_RX_PDO1 )
@@ -176,8 +205,9 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 	}
 }
 
-void CanMotor::set_speed(int32_t speed)
+void CanMotor::set_speed(float v)
 {
+	int32_t speed = v * inputGain;
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_V, speed);
 }
 
