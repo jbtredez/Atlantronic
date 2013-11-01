@@ -6,8 +6,8 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/vect_pos.h"
 #include "kernel/systick.h"
+#include "kernel/control/kinematics.h"
 
 //! période de la tache de propulsion en ms ("fréquence" de l'asservissement)
 #define CONTROL_PERIOD               5
