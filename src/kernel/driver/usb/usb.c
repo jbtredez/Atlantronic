@@ -4,19 +4,12 @@
 #include "kernel/module.h"
 #include "priority.h"
 
-#ifdef STM32F10X_CL
-#include "kernel/driver/usb/stm32f1xx/usb_lib.h"
-#include "kernel/driver/usb/stm32f1xx/usb_istr.h"
-#include "kernel/driver/usb/stm32f1xx/usb_pwr.h"
-#endif
-
-#ifdef STM32F4XX
 #include "kernel/driver/usb/stm32f4xx/usbd_atlantronic_core.h"
 #include "kernel/driver/usb/stm32f4xx/usbd_usr.h"
 #include "kernel/driver/usb/stm32f4xx/usbd_desc.h"
 #include "kernel/driver/usb/stm32f4xx/usb_dcd_int.h"
 #include "gpio.h"
-#endif
+
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
@@ -48,10 +41,8 @@ void usb_write_task(void *);
 static xSemaphoreHandle usb_write_sem;
 static xSemaphoreHandle usb_read_sem;
 static volatile unsigned int usb_endpoint_ready;
-#ifdef STM32F4XX
 static __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 void USB_OTG_BSP_mDelay (const uint32_t msec);
-#endif
 
 static int usb_module_init(void)
 {
@@ -64,12 +55,6 @@ static int usb_module_init(void)
 		return ERR_INIT_USB;
 	}
 
-#if defined( STM32F10X_CL )
-	RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
-	RCC->AHBENR |= RCC_AHBENR_OTGFSEN; // USB OTG FS clock enable
-
-	USB_Init();
-#elif defined( STM32F4XX )
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
@@ -84,7 +69,7 @@ static int usb_module_init(void)
 	gpio_af_config(GPIOA, 12, GPIO_AF_OTG_FS);
 	USBD_Init(&USB_OTG_dev, 1, &USR_desc, &USBD_atlantronic_cb, &USR_cb);
 	DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
-#endif
+
 	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
 
@@ -139,12 +124,9 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 	{
 		return;
 	}
-#if defined( STM32F10X_CL )
+
 	// on se reserve le buffer circulaire pour les log s'il n'y a personne sur l'usb
-	if( bDeviceState != CONFIGURED && type != USB_LOG )
-#elif defined( STM32F4XX )
 	if( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED && type != USB_LOG )
-#endif
 	{
 		return;
 	}
@@ -180,11 +162,7 @@ void usb_read_task(void * arg)
 
 	while(1)
 	{
-#if defined( STM32F10X_CL )
-		while( bDeviceState != CONFIGURED )
-#elif defined( STM32F4XX )
 		while( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
-#endif
 		{
 			vTaskDelay( ms_to_tick(100) );
 		}
@@ -229,12 +207,8 @@ void usb_read_task(void * arg)
 		if(usb_rx_waiting)
 		{
 			usb_rx_waiting = 0;
-#if defined( STM32F10X_CL )
-			*read_size = USB_SIL_Read(EP2_OUT, rx_buffer);
-#elif defined( STM32F4XX )
 			DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
 			*read_size = USBD_GetRxCount(&USB_OTG_dev, 0x02);
-#endif
 		}
 
 		xSemaphoreTake(usb_read_sem, portMAX_DELAY);
@@ -248,11 +222,7 @@ void usb_write_task(void * arg)
 
 	while(1)
 	{
-#if defined( STM32F10X_CL )
-		while( bDeviceState != CONFIGURED )
-#elif defined( STM32F4XX )
 		while( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
-#endif
 		{
 			vTaskDelay( ms_to_tick(100) );
 		}
@@ -271,11 +241,7 @@ void usb_write_task(void * arg)
 
 				usb_endpoint_ready = 0;
 				usb_write_size = size;
-#if defined( STM32F10X_CL )
-				USB_SIL_Write(EP1_IN, usb_buffer + usb_buffer_begin, size);
-#elif defined( STM32F4XX )
 				DCD_EP_Tx(&USB_OTG_dev, 0x81, usb_buffer + usb_buffer_begin, size);
-#endif
 			}
 			xSemaphoreGive(usb_mutex);
 		}
@@ -286,11 +252,7 @@ void usb_write_task(void * arg)
 
 void isr_otg_fs(void)
 {
-#if defined( STM32F10X_CL )
-	STM32_PCD_OTG_ISR_Handler(); 
-#elif defined( STM32F4XX )
 	USBD_OTG_ISR_Handler(&USB_OTG_dev);
-#endif
 }
 
 void EP1_IN_Callback(void)
@@ -319,22 +281,14 @@ void EP2_OUT_Callback(void)
 	{
 		if( usb_read_size == 0)
 		{
-#if defined( STM32F10X_CL )
-			usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
-#elif defined( STM32F4XX )
 			usb_read_size = USBD_GetRxCount(&USB_OTG_dev, 0x02);
 			DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer2, sizeof(usb_rx_buffer2));
-#endif
 		}
 		else if( usb_read_size2 == 0)
 		{
 			// perte du message precedent si if( usb_read_size2 == 0)
-#if defined( STM32F10X_CL )
-			usb_read_size2 = USB_SIL_Read(EP2_OUT, usb_rx_buffer2);
-#elif defined( STM32F4XX )
 			usb_read_size2 = USBD_GetRxCount(&USB_OTG_dev, 0x02);
 			DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
-#endif
 		}
 		else
 		{
@@ -345,22 +299,14 @@ void EP2_OUT_Callback(void)
 	{
 		if( usb_read_size2 == 0)
 		{
-#if defined( STM32F10X_CL )
-			usb_read_size2 = USB_SIL_Read(EP2_OUT, usb_rx_buffer2);
-#elif defined( STM32F4XX )
 			usb_read_size2 = USBD_GetRxCount(&USB_OTG_dev, 0x02);
 			DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
-#endif
 		}
 		else if( usb_read_size == 0)
 		{
-#if defined( STM32F10X_CL )
 			// perte du message precedent si if( usb_read_size == 0)
-			usb_read_size = USB_SIL_Read(EP2_OUT, usb_rx_buffer);
-#elif defined( STM32F4XX )
 			usb_read_size = USBD_GetRxCount(&USB_OTG_dev, 0x02);
 			DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer2, sizeof(usb_rx_buffer2));
-#endif
 		}
 		else
 		{
