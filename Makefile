@@ -44,10 +44,6 @@ ifeq ($(MAKECMDGOALS),foo)
 ARCH=foo
 endif
 
-ifeq ($(MAKECMDGOALS),bar)
-ARCH=bar
-endif
-
 ifeq ($(MAKECMDGOALS),linux)
 ARCH=linux
 endif
@@ -106,7 +102,6 @@ else
 all:
 	$(MAKE) ARCH=discovery
 	$(MAKE) ARCH=foo
-	$(MAKE) ARCH=bar
 	$(MAKE) ARCH=linux
 	$(MAKE) ARCH=discovery stat
 	$(MAKE) ARCH=foo SKIP_SIZE_HEADER="+2" stat
