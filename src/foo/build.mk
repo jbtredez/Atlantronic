@@ -64,4 +64,4 @@ STRAT = 2012
 
 obj-foo-strat_$(STRAT) += $(obj-foo-common)
 obj-foo-strat_$(STRAT) += foo/strat_$(STRAT).o
-bin-foo += strat_$(STRAT)
+#bin-foo += strat_$(STRAT)

@@ -101,14 +101,12 @@ stat: $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
 else
 all:
 	$(MAKE) ARCH=discovery
-	$(MAKE) ARCH=foo
 	$(MAKE) ARCH=linux
 	$(MAKE) ARCH=discovery stat
-	$(MAKE) ARCH=foo SKIP_SIZE_HEADER="+2" stat
 
 stat:
 	$(MAKE) ARCH=discovery stat
-	$(MAKE) ARCH=foo SKIP_SIZE_HEADER="+2" stat
+
 endif
 
 .PHONY: all
