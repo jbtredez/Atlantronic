@@ -7,8 +7,6 @@
 
 #include <stdint.h>
 #include "kernel/vect_pos.h"
-#include "location/odometry.h"
-#include "location/beacon.h"
 
 struct location_cmd_arg
 {

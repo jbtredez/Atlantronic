@@ -1,14 +1,14 @@
-#ifndef VECT_POS2_H
-#define VECT_POS2_H
+#ifndef VECT_PLAN_H
+#define VECT_PLAN_H
 
-//! @file vect_pos.h
-//! @brief vect_pos
+//! @file vect_plan.h
+//! @brief vect_plan
 //! @author Atlantronic
 
 #include <stdint.h>
 #include <math.h>
 
-//! @struct VectPos
+//! @struct VectPlan
 //! représentation d'un vecteur sur la table
 class VectPlan
 {

@@ -9,9 +9,9 @@
 #include "kernel/systick.h"
 #include "kernel/control/kinematics.h"
 
-//! période de la tache de propulsion en ms ("fréquence" de l'asservissement)
-#define CONTROL_PERIOD               5
-#define CONTROL_HZ                 200
+//! période de la tache de controle en ms
+#define CONTROL_PERIOD                             5
+#define CONTROL_HZ          (1000.0f/CONTROL_PERIOD)
 
 enum control_state
 {
