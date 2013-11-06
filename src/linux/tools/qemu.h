@@ -3,26 +3,23 @@
 
 #include "linux/tools/com.h"
 #include "foo/table.h"
-#include "kernel/vect_pos.h"
+#include "kernel/math/vect_plan.h"
 
-struct qemu
+class qemu
 {
-	char file_qemu_read[64];
-	char file_qemu_write[64];
-	char file_foo_read[64];
-	char file_foo_write[64];
-	struct com com; //!< communication avec qemu
-	pid_t pid; //!< pid de qemu
+	public:
+		char file_qemu_read[64];
+		char file_qemu_write[64];
+		char file_foo_read[64];
+		char file_foo_write[64];
+		struct com com; //!< communication avec qemu
+		pid_t pid; //!< pid de qemu
+
+		int init(const char* prog_name, int gdb_port);
+		void destroy();
+		int set_clock_factor(unsigned int factor);
+		int add_object(const struct polyline polyline);
+		int move_object(int id, struct vect2 origin, VectPlan delta);
 };
-
-int qemu_init(struct qemu* qemu, const char* prog_name, int gdb_port);
-
-void qemu_destroy(struct qemu* qemu);
-
-int qemu_set_clock_factor(struct qemu* qemu, unsigned int factor);
-
-int qemu_add_object(struct qemu* qemu, const struct polyline polyline);
-
-int qemu_move_object(struct qemu* qemu, int id, struct fx_vect2 origin, struct fx_vect_pos delta);
 
 #endif

@@ -22,21 +22,21 @@
 #define PARAM_ENCODERS_BIT_RES                   12
 #define PARAM_ODO_RED                             1
 
-#define PARAM_LEFT_CORNER_X                    190*65536
-#define PARAM_LEFT_CORNER_Y                    175*65536
-#define PARAM_RIGHT_CORNER_X                   190*65536
-#define PARAM_RIGHT_CORNER_Y                  -175*65536
+#define PARAM_LEFT_CORNER_X                    190
+#define PARAM_LEFT_CORNER_Y                    175
+#define PARAM_RIGHT_CORNER_X                   190
+#define PARAM_RIGHT_CORNER_Y                  -175
 
-#define PARAM_NP_X                            (-63 << 16)
+#define PARAM_NP_X                            -63
 
-#define PARAM_FOO_HOKUYO_X                     105*65536
-#define PARAM_FOO_HOKUYO_Y                     140*65536
-#define PARAM_FOO_HOKUYO_ALPHA                 (1 << 23)
+#define PARAM_FOO_HOKUYO_X                     105
+#define PARAM_FOO_HOKUYO_Y                     140
+#define PARAM_FOO_HOKUYO_ALPHA                 (M_PI/4)
 #define PARAM_FOO_HOKUYO_SENS                          1
 
-#define PARAM_BAR_HOKUYO_X                     105*65536
-#define PARAM_BAR_HOKUYO_Y                    -140*65536
-#define PARAM_BAR_HOKUYO_ALPHA                (-1 << 23)
+#define PARAM_BAR_HOKUYO_X                     105
+#define PARAM_BAR_HOKUYO_Y                    -140
+#define PARAM_BAR_HOKUYO_ALPHA                (-M_PI/4)
 #define PARAM_BAR_HOKUYO_SENS                          1
 
 #endif

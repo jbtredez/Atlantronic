@@ -27,7 +27,7 @@ int main()
 	}
 
 
-	struct fx_vect2 pos = {-350 << 16, -600 << 16};
+	struct vect2 pos = {-350, -600};
 	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
 	graph_compute_node_distance(pos, node_dist);
 

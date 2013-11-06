@@ -17,6 +17,7 @@
 #include "linux/tools/graphique.h"
 #include "linux/tools/joystick.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
 #include "foo/pwm.h"
 #include "foo/graph.h"
@@ -106,29 +107,29 @@ static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
 static void draw_plus(float x, float y, float rx, float ry);
-static void glPrintf(float x, float y, GLuint base, char* s, ...);
-static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
-static void glPrintf_xright2_yhigh(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
-static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
-static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, char* s, ...) __attribute__(( format(printf, 6, 7) ));
-static void glprint(float x, float y, GLuint base, char* buffer, int size);
+static void glPrintf(float x, float y, GLuint base, const char* s, ...);
+static void glPrintf_xright2_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, const char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glPrintf_xright2_yhigh(float x, float y, float x_ratio, float y_ratio, GLuint base, const char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio, float y_ratio, GLuint base, const char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio, float y_ratio, GLuint base, const char* s, ...) __attribute__(( format(printf, 6, 7) ));
+static void glprint(float x, float y, GLuint base, const char* buffer, int size);
 void gtk_end();
 
-void read_callback();
+void read_callback(void* arg);
 
 #define OPPONENT_PERIMETER         128.0f
 
-struct fx_vect2 opponent_robot_pt[] =
+struct vect2 opponent_robot_pt[] =
 {
-	{ OPPONENT_PERIMETER *65536, 0},
-	{ OPPONENT_PERIMETER * 0.707106781 * 65536, OPPONENT_PERIMETER * 0.707106781 * 65536},
-	{ 0, OPPONENT_PERIMETER * 65536},
-	{ -OPPONENT_PERIMETER * 0.707106781 * 65536, OPPONENT_PERIMETER * 0.707106781 * 65536},
-	{ -OPPONENT_PERIMETER *65536, 0},
-	{ -OPPONENT_PERIMETER * 0.707106781 * 65536, -OPPONENT_PERIMETER * 0.707106781 * 65536},
-	{ 0, -OPPONENT_PERIMETER *65536},
-	{ OPPONENT_PERIMETER * 0.707106781 * 65536, -OPPONENT_PERIMETER * 0.707106781 * 65536},
-	{ OPPONENT_PERIMETER *65536, 0},
+	{ OPPONENT_PERIMETER, 0},
+	{ OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781},
+	{ 0, OPPONENT_PERIMETER},
+	{ -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781},
+	{ -OPPONENT_PERIMETER, 0},
+	{ -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781},
+	{ 0, -OPPONENT_PERIMETER},
+	{ OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781},
+	{ OPPONENT_PERIMETER, 0},
 };
 
 struct polyline oponent_robot =
@@ -137,7 +138,7 @@ struct polyline oponent_robot =
 		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
 };
 
-struct fx_vect_pos opponent_robot_pos = {1800 << 16, 800 << 16, 0, 1<<30, 0};
+struct VectPlan opponent_robot_pos(1800, 800, 0);
 
 int main(int argc, char *argv[])
 {
@@ -188,7 +189,7 @@ int main(int argc, char *argv[])
 
 	if(simulation)
 	{
-		int res = qemu_init(&qemu, prog_foo, gdb_port);
+		int res = qemu.init(prog_foo, gdb_port);
 		if( res )
 		{
 			fprintf(stderr, "qemu_init : error");
@@ -341,15 +342,15 @@ int main(int argc, char *argv[])
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			qemu_add_object(&qemu, table_obj[i]);
+			qemu.add_object(table_obj[i]);
 		}
 
 		// ajout d'un robot adverse
-		qemu_add_object(&qemu, oponent_robot);
+		qemu.add_object(oponent_robot);
 
 		// on le met a sa position de depart
-		struct fx_vect2 origin = {0, 0};
-		qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, opponent_robot_pos);
+		struct vect2 origin = {0, 0};
+		qemu.move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
 	}
 	else
 	{
@@ -360,7 +361,7 @@ int main(int argc, char *argv[])
 
 	gdk_threads_leave();
 
-	qemu_destroy(&qemu);
+	qemu.destroy();
 
 	robot_interface_destroy(&robot_interface);
 
@@ -376,8 +377,9 @@ void gtk_end()
 	gdk_threads_leave();
 }
 
-void read_callback(GtkWidget* widget)
+void read_callback(void* arg)
 {
+	GtkWidget* widget = (GtkWidget*)arg;
 	static struct timespec last_plot = {0, 0};
 	struct timespec current;
 
@@ -575,14 +577,13 @@ void plot_table(struct graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
-	float plus_dx = 16384 * font_width * ratio_x;
-	float plus_dy = 16384 * font_width * ratio_y;
+	float plus_dx = 0.25 * font_width * ratio_x;
+	float plus_dy = 0.25 * font_width * ratio_y;
 	int i;
 	int j;
 
 	glPushMatrix();
 	glColor3f(0,0,0);
-	glScalef(1/65536.0f, 1/65536.0f, 1);
 
 	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
@@ -601,7 +602,7 @@ void plot_table(struct graphique* graph)
 		glPushMatrix();
 		glColor3f(1, 0, 0);
 		glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
-		glRotated(opponent_robot_pos.alpha* 360.0f / ((float)(1<<26)), 0, 0, 1);
+		glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
 		glBegin(GL_LINE_STRIP);
 		for(i = 0; i < oponent_robot.size; i++)
 		{
@@ -613,47 +614,47 @@ void plot_table(struct graphique* graph)
 		// couleurs sur les bords des cases de depart
 		glColor3f(1, 0, 1);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(-1000 * 65536, 1000 * 65536);
-		glVertex2f(-1500 * 65536, 1000 * 65536);
-		glVertex2f(-1500 * 65536,  550 * 65536);
-		glVertex2f(-1000 * 65536,  550 * 65536);
+		glVertex2f(-1000, 1000);
+		glVertex2f(-1500, 1000);
+		glVertex2f(-1500,  550);
+		glVertex2f(-1000,  550);
 		glEnd();
 
 		glColor3f(1, 0 ,0);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(1000 * 65536, 1000 * 65536);
-		glVertex2f(1500 * 65536, 1000 * 65536);
-		glVertex2f(1500 * 65536,  550 * 65536);
-		glVertex2f(1000 * 65536,  550 * 65536);
+		glVertex2f(1000, 1000);
+		glVertex2f(1500, 1000);
+		glVertex2f(1500,  550);
+		glVertex2f(1000,  550);
 		glEnd();
 
 		// bouteilles
 		glColor3f(1, 0, 1);
 		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f(-870 * 65536, -1000 * 65536);
-		glVertex2f(-850 * 65536, -1000 * 65536);
-		glVertex2f(-870 * 65536, -1060 * 65536);
-		glVertex2f(-850 * 65536, -1060 * 65536);
+		glVertex2f(-870, -1000);
+		glVertex2f(-850, -1000);
+		glVertex2f(-870, -1060);
+		glVertex2f(-850, -1060);
 		glEnd();
 		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f( 393 * 65536, -1000 * 65536);
-		glVertex2f( 373 * 65536, -1000 * 65536);
-		glVertex2f( 393 * 65536, -1060 * 65536);
-		glVertex2f( 373 * 65536, -1060 * 65536);
+		glVertex2f( 393, -1000);
+		glVertex2f( 373, -1000);
+		glVertex2f( 393, -1060);
+		glVertex2f( 373, -1060);
 		glEnd();
 
 		glColor3f(1, 0, 0);
 		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f( 870 * 65536, -1000 * 65536);
-		glVertex2f( 850 * 65536, -1000 * 65536);
-		glVertex2f( 870 * 65536, -1060 * 65536);
-		glVertex2f( 850 * 65536, -1060 * 65536);
+		glVertex2f( 870, -1000);
+		glVertex2f( 850, -1000);
+		glVertex2f( 870, -1060);
+		glVertex2f( 850, -1060);
 		glEnd();
 		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f(-393 * 65536, -1000 * 65536);
-		glVertex2f(-373 * 65536, -1000 * 65536);
-		glVertex2f(-393 * 65536, -1060 * 65536);
-		glVertex2f(-373 * 65536, -1060 * 65536);
+		glVertex2f(-393, -1000);
+		glVertex2f(-373, -1000);
+		glVertex2f(-393, -1060);
+		glVertex2f(-373, -1060);
 		glEnd();
 
 		// ligne de fin / cale
@@ -662,14 +663,14 @@ void plot_table(struct graphique* graph)
 		glColor3f(0, 0, 0);
 
 		glBegin(GL_LINES);
-		glVertex2f(-1500 * 65536,  -390 * 65536);
-		glVertex2f(-1160 * 65536,  -390 * 65536);
-		glVertex2f( 1500 * 65536,  -390 * 65536);
-		glVertex2f( 1160 * 65536,  -390 * 65536);
-		glVertex2f(-1175 * 65536, -1000 * 65536);
-		glVertex2f(-1100 * 65536,   500 * 65536);
-		glVertex2f( 1175 * 65536, -1000 * 65536);
-		glVertex2f( 1100 * 65536,   500 * 65536);
+		glVertex2f(-1500,  -390);
+		glVertex2f(-1160,  -390);
+		glVertex2f( 1500,  -390);
+		glVertex2f( 1160,  -390);
+		glVertex2f(-1175, -1000);
+		glVertex2f(-1100,   500);
+		glVertex2f( 1175, -1000);
+		glVertex2f( 1100,   500);
 		glEnd();
 
 		glDisable(GL_LINE_STIPPLE);
@@ -685,7 +686,7 @@ void plot_table(struct graphique* graph)
 				glBegin(GL_LINE_STRIP);
 				for(j = 0; j < robot_interface.detection_dynamic_obj[i].size; j++)
 				{
-					struct fx_vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
+					struct vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
 					glVertex2f(pt.x, pt.y);
 				}
 				glEnd();
@@ -754,7 +755,7 @@ void plot_table(struct graphique* graph)
 				glVertex2f(x1, y1);
 				glVertex2f(x2, y2);
 				glEnd();
-				glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x * 65536, ratio_y * 65536, font_base, "%d", graph_link[i].dist);
+				glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, font_base, "%d", graph_link[i].dist);
 			}
 		}
 		glDisable(GL_LINE_STIPPLE);
@@ -766,7 +767,7 @@ void plot_table(struct graphique* graph)
 		for(i=0; i < GRAPH_NUM_NODE; i++)
 		{
 			draw_plus(graph_node[i].pos.x, graph_node[i].pos.y, plus_dx, plus_dy);
-			glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x * 65536, ratio_y * 65536, font_base, "%d", i);
+			glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x, ratio_y, font_base, "%d", i);
 		}
 	}
 
@@ -776,16 +777,16 @@ void plot_table(struct graphique* graph)
 		glColor3f(0, 0, 0);
 		float x_robot = robot_interface.control_usb_data[max-1].control_pos_x;
 		float y_robot = robot_interface.control_usb_data[max-1].control_pos_y;
-		float alpha_robot = robot_interface.control_usb_data[max-1].control_pos_alpha * 360.0f / ((float)(1<<26)); // en degrés
+		float alpha_robot = robot_interface.control_usb_data[max-1].control_pos_alpha * 360.0f / (2*M_PI); // en degrés
 
 		glPushMatrix();
 		glTranslatef(x_robot, y_robot, 0);
 		glRotatef(alpha_robot, 0, 0, 1);
 		glBegin(GL_LINES);
 		glVertex2f(0, 0);
-		glVertex2f(50 * 65536, 0);
+		glVertex2f(50, 0);
 		glVertex2f(0, 0);
-		glVertex2f(0, 50 * 65536);
+		glVertex2f(0, 50);
 		glEnd();
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
@@ -1013,8 +1014,8 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		}
 		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
 		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos %5.0f %5.0f %f",
-				robot_interface.control_usb_data[id].control_pos_x/65536.0f, robot_interface.control_usb_data[id].control_pos_y/65536.0f,
-				robot_interface.control_usb_data[id].control_pos_alpha * M_PI/(float)(1<<25));
+				robot_interface.control_usb_data[id].control_pos_x, robot_interface.control_usb_data[id].control_pos_y,
+				robot_interface.control_usb_data[id].control_pos_alpha);
 
 		switch(current_graph)
 		{
@@ -1100,8 +1101,8 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 		float x1 = gr->roi_xmin + (event->x - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
 		float y1 = gr->roi_ymin + (event->y - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
-		double dx = x1 - opponent_robot_pos.x/65536.0f;
-		double dy = -y1 - opponent_robot_pos.y/65536.0f;
+		double dx = x1 - opponent_robot_pos.x;
+		double dy = -y1 - opponent_robot_pos.y;
 
 		// on verifie qu'on clic a peu pres sur le robot
 		if( sqrt(dx*dx+dy*dy) < OPPONENT_PERIMETER )
@@ -1156,13 +1157,13 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			struct fx_vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
-			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
+			struct vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
 			if(simulation)
 			{
-				qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+				qemu.move_object(QEMU_OPPONENT_ID, origin, delta);
 			}
 
 			move_oponent_robot = 0;
@@ -1201,13 +1202,13 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			struct fx_vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
-			struct fx_vect_pos delta = {65536*(x2 - x1), 65536*(y1 - y2), 0, 1, 0};
+			struct vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
 			if(simulation)
 			{
-				qemu_move_object(&qemu, QEMU_OPPONENT_ID, origin, delta);
+				qemu.move_object(QEMU_OPPONENT_ID, origin, delta);
 			}
 			mouse_x1 = event->x;
 			mouse_y1 = event->y;
@@ -1314,7 +1315,7 @@ static void joystick_event(int event, float val)
 	}
 }
 
-static void glprint(float x, float y, GLuint base, char* buffer, int size)
+static void glprint(float x, float y, GLuint base, const char* buffer, int size)
 {
 	if( size != 0)
 	{
@@ -1326,7 +1327,7 @@ static void glprint(float x, float y, GLuint base, char* buffer, int size)
 	}
 }
 
-static void glPrintf(float x, float y, GLuint base, char* s, ...)
+static void glPrintf(float x, float y, GLuint base, const char* s, ...)
 {
 	va_list arglist;
 	va_start(arglist, s);
@@ -1337,7 +1338,7 @@ static void glPrintf(float x, float y, GLuint base, char* s, ...)
 	glprint(x, y, base, buffer, size);
 }
 
-static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
+static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, const char* s, ...)
 {
 	va_list arglist;
 	va_start(arglist, s);
@@ -1348,7 +1349,7 @@ static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio,float y_rat
 	glprint(x- x_ratio * size/2.0f * font_width, y - font_digit_height / 2.0f * y_ratio, base, buffer, size);
 }
 
-static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
+static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_ratio, GLuint base, const char* s, ...)
 {
 	va_list arglist;
 	va_start(arglist, s);
@@ -1359,7 +1360,7 @@ static void glPrintf_xright2_ycenter(float x, float y, float x_ratio,float y_rat
 	glprint(x - x_ratio * (size+2) * font_width, y - font_digit_height / 2.0f * y_ratio, base, buffer, size);
 }
 
-static void glPrintf_xright2_yhigh(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
+static void glPrintf_xright2_yhigh(float x, float y, float x_ratio,float y_ratio, GLuint base, const char* s, ...)
 {
 	va_list arglist;
 	va_start(arglist, s);
@@ -1370,7 +1371,7 @@ static void glPrintf_xright2_yhigh(float x, float y, float x_ratio,float y_ratio
 	glprint(x - x_ratio * (size+2) * font_width, y - font_digit_height * y_ratio, base, buffer, size);
 }
 
-static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio,float y_ratio, GLuint base, char* s, ...)
+static void glPrintf_xcenter_yhigh2(float x, float y, float x_ratio,float y_ratio, GLuint base, const char* s, ...)
 {
 	va_list arglist;
 	va_start(arglist, s);

@@ -8,28 +8,28 @@
 //!< le but est de générer les données du graph du code du robot
 //!< à partir d'une liste de noeud et des liens bidirectionels
 
-const struct fx_vect2 pt[] =
+const struct vect2 pt[] =
 {
-	{  -600   * 65536,  700   * 65536},
-	{               0,  700   * 65536},
-	{   600   * 65536,  700   * 65536},
-	{  -600   * 65536,  450   * 65536},
-	{               0,  450   * 65536},
-	{   600   * 65536,  450   * 65536},
-	{ -762.5f * 65536, 312.5f * 65536},
-	{  762.5f * 65536, 312.5f * 65536},
-	{ -1250   * 65536,  250   * 65536},
-	{  1250   * 65536,  250   * 65536},
-	{ -1250   * 65536,              0},
-	{  -800   * 65536,              0},
-	{   800   * 65536,              0},
-	{ 1250    * 65536,              0},
-	{ -860    * 65536, -400   * 65536},
-	{               0, -400   * 65536},
-	{  860    * 65536, -400   * 65536},
-	{ -860    * 65536, -700   * 65536},
-	{               0, -700   * 65536},
-	{  860    * 65536, -700   * 65536},
+	{  -600  ,  700  },
+	{     0  ,  700  },
+	{   600  ,  700  },
+	{  -600  ,  450  },
+	{     0  ,  450  },
+	{   600  ,  450  },
+	{ -762.5f,  312.5f},
+	{  762.5f, 312.5f},
+	{ -1250  ,  250  },
+	{  1250  ,  250  },
+	{ -1250  ,      0},
+	{  -800  ,      0},
+	{   800  ,      0},
+	{ 1250   ,      0},
+	{ -860   , -400  },
+	{     0  , -400  },
+	{  860   , -400  },
+	{ -860   , -700  },
+	{     0  , -700  },
+	{  860   , -700  },
 };
 
 struct link
@@ -79,8 +79,8 @@ int main()
 	printf("GRAPH_NUM_NODE %d\n", num_nodes);
 	printf("GRAPH_NUM_LINK %d\n", 2*num_link);
 
-	struct graph_node* gnode = malloc( sizeof(struct graph_node) * num_nodes);
-	struct graph_link* glink = malloc( sizeof(struct graph_link) * 2 * num_link);
+	struct graph_node* gnode = (struct graph_node*)malloc( sizeof(struct graph_node) * num_nodes);
+	struct graph_link* glink = (struct graph_link*)malloc( sizeof(struct graph_link) * 2 * num_link);
 
 	for( i = 0; i < num_nodes; i++)
 	{
@@ -140,10 +140,10 @@ int main()
 	{
 		uint8_t a = glink[i].a;
 		uint8_t b = glink[i].b;
-		uint64_t dx = gnode[b].pos.x - gnode[a].pos.x;
-		uint64_t dy = gnode[b].pos.y - gnode[a].pos.y;
-		glink[i].dist = (uint16_t) rint((sqrt(dx * dx + dy * dy)/65536.0f));
-		glink[i].alpha = fx_atan2(dy, dx);
+		float dx = gnode[b].pos.x - gnode[a].pos.x;
+		float dy = gnode[b].pos.y - gnode[a].pos.y;
+		glink[i].dist = (uint16_t) rint(sqrtf(dx * dx + dy * dy));
+		glink[i].alpha = atan2(dy, dx);
 	}
 
 	for(i = 0; i < 2*num_link; i++)
@@ -159,7 +159,7 @@ int main()
 	printf("const struct graph_node graph_node[GRAPH_NUM_NODE] =\n{\n");
 	for( i = 0; i < num_nodes; i++)
 	{
-		printf("\t{{ %10d, %10d}, %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
+		printf("\t{{ %8.2ff, %8.2ff}, %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
 	}
 	printf("};\n");
 
@@ -167,7 +167,7 @@ int main()
 	printf("const struct graph_link graph_link[GRAPH_NUM_LINK] =\n{\n");
 	for( i = 0; i < 2*num_link; i++)
 	{
-		printf("\t{%2u, %2u, %4u, %10uu},\n", glink[i].a, glink[i].b, glink[i].dist, glink[i].alpha);
+		printf("\t{%2u, %2u, %4u, %9.6ff},\n", glink[i].a, glink[i].b, glink[i].dist, glink[i].alpha);
 	}
 	printf("};\n");
 

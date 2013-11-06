@@ -6,7 +6,6 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/math/vect2.h"
 #include "kernel/math/polyline.h"
 
 #define TABLE_OBJ_SIZE                      9

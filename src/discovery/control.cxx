@@ -9,6 +9,7 @@
 #include "control.h"
 #include "kernel/math/vect_plan.h"
 #include "kernel/location/odometry.h"
+#include "kernel/driver/usb.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -23,6 +24,7 @@ VectPlan loc_pos; // TODO
 
 static void control_task(void* arg);
 static void control_compute();
+static struct control_usb_data control_usb_data;
 
 static int control_module_init()
 {
@@ -98,6 +100,25 @@ static void control_task(void* arg)
 		}
 
 wait:
+		control_usb_data.current_time = systick_get_time();
+		/*control_usb_data.control_state = control_state;
+		control_usb_data.control_cons_x = control_kinematics_cons.x;
+		control_usb_data.control_cons_y = control_kinematics_cons.y;
+		control_usb_data.control_cons_alpha = control_kinematics_cons.alpha;
+		control_usb_data.control_v_dist_cons = control_kinematics_cons.v;
+		control_usb_data.control_v_rot_cons = control_kinematics_cons.w;*/
+		control_usb_data.control_pos_x = loc_pos.x;
+		control_usb_data.control_pos_y = loc_pos.y;
+		control_usb_data.control_pos_alpha = loc_pos.theta;
+		/*control_usb_data.control_v_dist_mes = control_kinematics.v;
+		control_usb_data.control_v_rot_mes = control_kinematics.w;
+		control_usb_data.control_i_right = control_an.i_right;
+		control_usb_data.control_i_left = control_an.i_left;
+		control_usb_data.control_u_right = u1;
+		control_usb_data.control_u_left = u2;*/
+
+		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+
 		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}
 }
@@ -109,7 +130,7 @@ KinematicsParameters paramSteering = {1, 1, 1};
 static void control_compute()
 {
 	// test
-	VectPlan speedCmd(0,0,0);
+	VectPlan speedCmd(50,0,0);
 	VectPlan vOnTurret[3];
 
 	VectPlan cp(0,0,0);

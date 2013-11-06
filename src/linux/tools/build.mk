@@ -28,6 +28,7 @@ obj-linux-glplot += foo/table.o
 obj-linux-glplot += linux/tools/robot_interface.o
 obj-linux-glplot += linux/tools/qemu.o
 cflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
+cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
 lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0) -lreadline -lm
 bin-linux += glplot
 

@@ -10,7 +10,7 @@
 
 struct polyline
 {
-	struct fx_vect2* pt;
+	struct vect2* pt;
 	int16_t size;
 };
 

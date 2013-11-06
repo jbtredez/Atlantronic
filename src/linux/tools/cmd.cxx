@@ -6,44 +6,44 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"
-#include "foo/control/control.h"
+#include "discovery/control.h"
 #include "foo/control/trajectory.h"
 
 static void (*cmd_exit_callback)(void) = NULL;
 static struct robot_interface* cmd_robot = NULL;
 static struct qemu* cmd_qemu = NULL;
 
-int cmd_arm_bridge(void* arg);
-int cmd_arm_xyz(void* arg);
-int cmd_arm_ventouse(void* arg);
-int cmd_arm_hook(void* arg);
-int cmd_arm_abz(void* arg);
-int cmd_ax12_scan();
-int cmd_ax12_set_id(void* arg);
-int cmd_ax12_set_goal_position(void* arg);
-int cmd_ax12_get_position(void* arg);
-int cmd_can_set_baudrate(void* arg);
-int cmd_can_write(void* arg);
-int cmd_help();
-int cmd_qemu_set_clock_factor(void* arg);
-int cmd_quit();
-int cmd_go();
-int cmd_goto_graph(void* arg);
-int cmd_goto_near(void* arg);
-int cmd_goto_near_xy(void* arg);
-int cmd_localization_set_position(void* arg);
-int cmd_max_speed(void* arg);
-int cmd_pince_set_position(void* arg);
-int cmd_set_color(void* arg);
-int cmd_set_match_time(void* arg);
-int cmd_straight(void* arg);
-int cmd_straight_to_wall();
-int cmd_recalage();
-int cmd_rotate(void* arg);
-int cmd_rotate_to(void* arg);
-int cmd_free();
-int cmd_control_param(void*);
-int cmd_control_print_param();
+int cmd_arm_bridge(const char* arg);
+int cmd_arm_xyz(const char* arg);
+int cmd_arm_ventouse(const char* arg);
+int cmd_arm_hook(const char* arg);
+int cmd_arm_abz(const char* arg);
+int cmd_ax12_scan(const char* arg);
+int cmd_ax12_set_id(const char* arg);
+int cmd_ax12_set_goal_position(const char* arg);
+int cmd_ax12_get_position(const char* arg);
+int cmd_can_set_baudrate(const char* arg);
+int cmd_can_write(const char* arg);
+int cmd_help(const char* arg);
+int cmd_qemu_set_clock_factor(const char* arg);
+int cmd_quit(const char* arg);
+int cmd_go(const char* arg);
+int cmd_goto_graph(const char* arg);
+int cmd_goto_near(const char* arg);
+int cmd_goto_near_xy(const char* arg);
+int cmd_localization_set_position(const char* arg);
+int cmd_max_speed(const char* arg);
+int cmd_pince_set_position(const char* arg);
+int cmd_set_color(const char* arg);
+int cmd_set_match_time(const char* arg);
+int cmd_straight(const char* arg);
+int cmd_straight_to_wall(const char* arg);
+int cmd_recalage(const char* arg);
+int cmd_rotate(const char* arg);
+int cmd_rotate_to(const char* arg);
+int cmd_free(const char* arg);
+int cmd_control_param(const char* arg);
+int cmd_control_print_param(const char* arg);
 
 COMMAND usb_commands[] = {
 	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
@@ -79,7 +79,7 @@ COMMAND usb_commands[] = {
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "?", cmd_help, "Synonym for `help'" },
-	{ (char *)NULL, (Function *)NULL, (char *)NULL }
+	{ NULL, NULL, NULL }
 };
 
 int cmd_init(struct robot_interface* robot, struct qemu* qemu, void (*f)(void))
@@ -90,13 +90,14 @@ int cmd_init(struct robot_interface* robot, struct qemu* qemu, void (*f)(void))
 	return cli_init(usb_commands);
 }
 
-int cmd_ax12_scan()
+int cmd_ax12_scan(const char* arg)
 {
+	(void) arg;
 	robot_interface_ax12_scan(cmd_robot);
 	return CMD_SUCESS;
 }
 
-int cmd_ax12_set_id(void* arg)
+int cmd_ax12_set_id(const char* arg)
 {
 	unsigned int id;
 	unsigned int new_id;
@@ -111,7 +112,7 @@ int cmd_ax12_set_id(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_ax12_set_goal_position(void* arg)
+int cmd_ax12_set_goal_position(const char* arg)
 {
 	unsigned int id;
 	float alpha;
@@ -126,7 +127,7 @@ int cmd_ax12_set_goal_position(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_ax12_get_position(void* arg)
+int cmd_ax12_get_position(const char* arg)
 {
 	unsigned int id;
 	int count = sscanf(arg, "%u", &id);
@@ -140,7 +141,7 @@ int cmd_ax12_get_position(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_can_set_baudrate(void* arg)
+int cmd_can_set_baudrate(const char* arg)
 {
 	unsigned int id;
 	int debug;
@@ -151,11 +152,11 @@ int cmd_can_set_baudrate(void* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_can_set_baudrate(cmd_robot, id, debug);
+	robot_interface_can_set_baudrate(cmd_robot, (can_baudrate)id, debug);
 	return CMD_SUCESS;
 }
 
-int cmd_can_write(void* arg)
+int cmd_can_write(const char* arg)
 {
 	struct can_msg msg;
 	int id;
@@ -182,13 +183,14 @@ int cmd_can_write(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_help()
+int cmd_help(const char* arg)
 {
+	(void) arg;
 	log_info("Aide\n");
 	return CMD_SUCESS;
 }
 
-int cmd_qemu_set_clock_factor(void* arg)
+int cmd_qemu_set_clock_factor(const char* arg)
 {
 	unsigned int id;
 	int count = sscanf(arg, "%u", &id);
@@ -200,14 +202,15 @@ int cmd_qemu_set_clock_factor(void* arg)
 
 	if( cmd_qemu )
 	{
-		qemu_set_clock_factor(cmd_qemu, id);
+		cmd_qemu->set_clock_factor(id);
 	}
 
 	return CMD_SUCESS;
 }
 
-int cmd_quit()
+int cmd_quit(const char* arg)
 {
+	(void) arg;
 	if(cmd_exit_callback)
 	{
 		cmd_exit_callback();
@@ -217,7 +220,7 @@ int cmd_quit()
 	return CMD_QUIT;
 }
 
-int cmd_control_param(void* arg)
+int cmd_control_param(const char* arg)
 {
 	int kp_av;
 	int ki_av;
@@ -240,14 +243,15 @@ int cmd_control_param(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_control_print_param()
+int cmd_control_print_param(const char* arg)
 {
+	(void) arg;
 	robot_interface_control_print_param(cmd_robot);
 
 	return CMD_SUCESS;
 }
 
-int cmd_localization_set_position(void* arg)
+int cmd_localization_set_position(const char* arg)
 {
 	float x;
 	float y;
@@ -264,7 +268,7 @@ int cmd_localization_set_position(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_straight(void* arg)
+int cmd_straight(const char* arg)
 {
 	float dist;
 	int count = sscanf(arg, "%f", &dist);
@@ -279,14 +283,15 @@ int cmd_straight(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_straight_to_wall()
+int cmd_straight_to_wall(const char* arg)
 {
+	(void) arg;
 	robot_interface_straight_to_wall(cmd_robot);
 
 	return CMD_SUCESS;
 }
 
-int cmd_rotate(void* arg)
+int cmd_rotate(const char* arg)
 {
 	float alpha;
 	int count = sscanf(arg, "%f", &alpha);
@@ -301,7 +306,7 @@ int cmd_rotate(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_rotate_to(void* arg)
+int cmd_rotate_to(const char* arg)
 {
 	float alpha;
 	int count = sscanf(arg, "%f", &alpha);
@@ -316,14 +321,15 @@ int cmd_rotate_to(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_free()
+int cmd_free(const char* arg)
 {
+	(void) arg;
 	robot_interface_free(cmd_robot);
 
 	return CMD_SUCESS;
 }
 
-int cmd_goto_near(void* arg)
+int cmd_goto_near(const char* arg)
 {
 	float x;
 	float y;
@@ -343,7 +349,7 @@ int cmd_goto_near(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_goto_near_xy(void* arg)
+int cmd_goto_near_xy(const char* arg)
 {
 	float x;
 	float y;
@@ -362,7 +368,7 @@ int cmd_goto_near_xy(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_goto_graph(void* arg)
+int cmd_goto_graph(const char* arg)
 {
 	(void) arg;
 	robot_interface_goto_graph(cmd_robot);
@@ -370,7 +376,7 @@ int cmd_goto_graph(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_max_speed(void* arg)
+int cmd_max_speed(const char* arg)
 {
 	float v_max_av;
 	float v_max_rot;
@@ -386,7 +392,7 @@ int cmd_max_speed(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_pince_set_position (void* arg)
+int cmd_pince_set_position (const char* arg)
 {
 	int pince_left;
 	int pince_right;
@@ -397,23 +403,25 @@ int cmd_pince_set_position (void* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_pince(cmd_robot, pince_left, pince_right);
+	robot_interface_pince(cmd_robot, (pince_cmd_type)pince_left, (pince_cmd_type)pince_right);
 	return CMD_SUCESS;
 }
 
-int cmd_recalage()
+int cmd_recalage(const char* arg)
 {
+	(void) arg;
 	robot_interface_recalage(cmd_robot);
 	return CMD_SUCESS;
 }
 
-int cmd_go()
+int cmd_go(const char* arg)
 {
+	(void) arg;
 	robot_interface_go(cmd_robot);
 	return CMD_SUCESS;
 }
 
-int cmd_set_match_time(void* arg)
+int cmd_set_match_time(const char* arg)
 {
 	int time;
 
@@ -428,7 +436,7 @@ int cmd_set_match_time(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_set_color(void* arg)
+int cmd_set_color(const char* arg)
 {
 	int color;
 
@@ -443,7 +451,7 @@ int cmd_set_color(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_abz(void* arg)
+int cmd_arm_abz(const char* arg)
 {
 	float z;
 	float a;
@@ -460,7 +468,7 @@ int cmd_arm_abz(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_xyz(void* arg)
+int cmd_arm_xyz(const char* arg)
 {
 	float x;
 	float y;
@@ -474,11 +482,11 @@ int cmd_arm_xyz(void* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_xyz(cmd_robot, x, y, z, type);
+	robot_interface_arm_xyz(cmd_robot, x, y, z, (arm_cmd_type)type);
 	return CMD_SUCESS;
 }
 
-int cmd_arm_ventouse(void* arg)
+int cmd_arm_ventouse(const char* arg)
 {
 	float x1;
 	float y1;
@@ -498,7 +506,7 @@ int cmd_arm_ventouse(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_hook(void* arg)
+int cmd_arm_hook(const char* arg)
 {
 	float x1;
 	float y1;
@@ -518,7 +526,7 @@ int cmd_arm_hook(void* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_arm_bridge(void* arg)
+int cmd_arm_bridge(const char* arg)
 {
 	int on;
 

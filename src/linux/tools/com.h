@@ -8,27 +8,28 @@
 #include <stdint.h>
 #include <pthread.h>
 
-struct com
+class com
 {
-	int fd_read;
-	int fd_write;
-	char* file_read;
-	char* file_write;
-	unsigned char buffer[65536];
-	int buffer_end;
-	int buffer_begin;
-	int buffer_size;
-};
+	public:
+		void init(const char* file_read, const char* file_write);
+		void destroy();
+		int close();
+		int open();
+		void open_block();
+		int read(int min_buffer_size);
+		int read_header(uint16_t* type, uint16_t* size);
+		void copy_msg(char* msg, int size);
+		void skip(int count);
+		int write(const void* buf, int size);
 
-void com_init(struct com* com, const char* file_read, const char* file_write);
-void com_destroy(struct com* com);
-int com_close(struct com* com);
-int com_open(struct com* com);
-void com_open_block(struct com* com);
-int com_read(struct com* com, int min_buffer_size);
-int com_read_header(struct com* com, uint16_t* type, uint16_t* size);
-void com_copy_msg(struct com* com, char* msg, int size);
-void com_skip(struct com* com, int count);
-int com_write(struct com* com, const char* buf, int size);
+		int fd_read;
+		int fd_write;
+		char* file_read;
+		char* file_write;
+		unsigned char buffer[65536];
+		int buffer_end;
+		int buffer_begin;
+		int buffer_size;
+};
 
 #endif

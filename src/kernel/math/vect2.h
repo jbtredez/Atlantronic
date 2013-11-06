@@ -13,6 +13,12 @@ struct fx_vect2
 	int32_t y;
 };
 
+struct vect2
+{
+	float x;
+	float y;
+};
+
 //!< @function fx_vect2_sum
 //!< @brief calcule la somme de deux vecteurs u et v
 //!< @param vecteur u

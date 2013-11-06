@@ -53,4 +53,43 @@ enum control_type
 	CONTROL_LINE_XYA,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
 };
 
+struct control_usb_data
+{
+	struct systime current_time;
+	int32_t control_state;
+	int32_t control_cons_x;
+	int32_t control_cons_y;
+	int32_t control_cons_alpha;
+	float control_pos_x;
+	float control_pos_y;
+	float control_pos_alpha;
+	int32_t control_v_dist_cons;
+	int32_t control_v_rot_cons;
+	int32_t control_v_dist_mes;
+	int32_t control_v_rot_mes;
+	uint16_t control_i_right;
+	uint16_t control_i_left;
+	int16_t control_u_right;
+	int16_t control_u_left;
+} __attribute__((packed));
+
+struct control_cmd_param_arg
+{
+	int32_t kp_av;
+	int32_t ki_av;
+	int32_t kd_av;
+	int32_t kp_rot;
+	int32_t ki_rot;
+	int32_t kd_rot;
+	int32_t kx;
+	int32_t ky;
+	int32_t kalpha;
+}  __attribute__((packed));
+
+struct control_cmd_max_speed_arg
+{
+	uint32_t vmax_av;
+	uint32_t vmax_rot;
+}  __attribute__((packed));
+
 #endif

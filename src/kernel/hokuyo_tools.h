@@ -10,8 +10,8 @@
 #include "kernel/vect_pos.h"
 #include "kernel/math/polyline.h"
 
-void hokuyo_compute_xy(struct hokuyo_scan* scan, struct fx_vect2 *pos);
+void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos);
 
-int hokuyo_find_objects(uint16_t* distance, struct fx_vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size);
+int hokuyo_find_objects(uint16_t* distance, struct vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size);
 
 #endif

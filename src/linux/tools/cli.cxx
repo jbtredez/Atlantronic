@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <locale.h>
 
-#include "foo/control/control.h"
+#include "control/control.h"
 #include "linux/tools/cli.h"
 
 void* cli_task(void* arg);
@@ -41,11 +41,11 @@ char * stripwhite(char * string)
 	return s;
 }
 
-char * dupstr (char* s)
+char * dupstr (const char* s)
 {
 	char *r;
 
-	r = malloc (strlen (s) + 1);
+	r = (char*)malloc (strlen (s) + 1);
 	strcpy (r, s);
 	return r;
 }
@@ -53,7 +53,7 @@ char * dupstr (char* s)
 char * cmd_generator(const char* text, int state)
 {
 	static int list_index, len;
-	char *name;
+	const char *name;
 
 	// If this is a new word to complete, initialize now.  This includes
 	// saving the length of TEXT for efficiency, and initializing the index
@@ -77,7 +77,7 @@ char * cmd_generator(const char* text, int state)
 	return NULL;
 }
 
-char **completion(char* text, int start, int end)
+char **completion(const char* text, int start, int end)
 {
 	char **matches = NULL;
 	(void) end;
@@ -191,7 +191,7 @@ void* cli_task(void* arg)
 
 	setlocale(LC_ALL, "C");
 
-	rl_attempted_completion_function = (CPPFunction *)completion;
+	rl_attempted_completion_function = completion;
 
 	// activation auto-complete
 	rl_bind_key('\t',rl_complete);
@@ -228,7 +228,7 @@ end_free:
 	return 0;
 }
 
-void cli_log(char* msg, ...)
+void cli_log(const char* msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);

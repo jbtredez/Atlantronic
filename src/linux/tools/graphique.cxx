@@ -11,7 +11,7 @@ void graphique_init(struct graphique* graph, const char* name, float xmin, float
 {
 	int i = 0;
 
-	graph->name = malloc(strlen(name)+1);
+	graph->name = (char*)malloc(strlen(name)+1);
 	strcpy(graph->name, name);
 
 	for(i = 0; i < MAX_COURBES; i++)
@@ -53,7 +53,7 @@ void graphique_add_courbe(struct graphique* graph, int id, const char* name, int
 	graph->color[3*id+1] = g;
 	graph->color[3*id+2] = b;
 	graph->courbes_activated[id] = activated;
-	graph->courbes_names[id] = malloc(strlen(name)+1);
+	graph->courbes_names[id] = (char*)malloc(strlen(name)+1);
 	strcpy(graph->courbes_names[id], name);
 }
 

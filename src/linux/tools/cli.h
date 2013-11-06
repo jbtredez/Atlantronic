@@ -14,14 +14,14 @@ enum
 
 typedef struct
 {
-	char *name;			// User printable name of the function
-	Function *func;		// Function to call to do the job
-	char *doc;			// Documentation for this function
+	const char *name;     // User printable name of the function
+	int (*func)(const char*);   // Function to call to do the job
+	const char *doc;      // Documentation for this function
 } COMMAND;
 
 int cli_init(COMMAND* cmd);
 
-void cli_log(char* msg, ...) __attribute__(( format(printf, 1, 2) ));
+void cli_log(const char* msg, ...) __attribute__(( format(printf, 1, 2) ));
 
 extern char cli_prompt[];
 
