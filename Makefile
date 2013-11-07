@@ -142,7 +142,7 @@ endif
 $(bin)/$(ARCH)/%:
 	@echo "    LD    " $@
 	mkdir -p $(dir $@)
-	$(CC) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
+	$(CXX) $^ -o $@ $($(patsubst $(bin)/$(ARCH)/%,lib-$(ARCH)-%, $@)) -Wl,-Map="$@.map" $(LDFLAGS)
 	$(OBJCOPY) --only-keep-debug $@ $@.debug
 	$(OBJCOPY) --add-gnu-debuglink $@.debug $@
 	$(STRIP) $@

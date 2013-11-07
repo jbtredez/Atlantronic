@@ -30,10 +30,10 @@ const char* err_description[FAULT_MAX] =
 #endif
 const char* log_level_description[LOG_MAX] =
 {
-	[LOG_ERROR] = "Error",
-	[LOG_INFO] = "Info",
-	[LOG_DEBUG1] = "Debug1",
-	[LOG_DEBUG2] = "Debug2",
+	"Error",
+	"Info",
+	"Debug1",
+	"Debug2",
 };
 
 const char* cartes[COM_MAX] =

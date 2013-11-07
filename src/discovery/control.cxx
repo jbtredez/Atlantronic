@@ -21,6 +21,9 @@ VectPlan Turret[3] =
 };
 
 VectPlan loc_pos; // TODO
+static Kinematics control_kinematics[6];
+static KinematicsParameters paramDriving = {1000, 500, 500};
+static KinematicsParameters paramSteering = {1, 1, 1};
 
 static void control_task(void* arg);
 static void control_compute();
@@ -84,10 +87,6 @@ static void control_task(void* arg)
 			float slippageSpeed = 0;
 			VectPlan cpSpeed = odometry2turret(cp, Turret[0], Turret[1], v[0], v[1], &slippageSpeed);
 			loc_pos = loc_pos + 0.005f * cpSpeed;
-			log_format(LOG_INFO, "pos %d %d %d speed %d %d %d v %d %d %d phi %d %d %d", (int)loc_pos.x, (int)loc_pos.y, (int)(loc_pos.theta*180/M_PI),
-					(int)cpSpeed.x, (int)cpSpeed.y, (int)(cpSpeed.theta*180/M_PI),
-					(int)can_motor[CAN_MOTOR_DRIVING1].speed, (int)can_motor[CAN_MOTOR_DRIVING2].speed, (int)can_motor[CAN_MOTOR_DRIVING3].speed,
-					(int)(phi1 * 180 / M_PI), (int)(phi2 * 180 / M_PI), (int)(phi3 * 180 / M_PI));
 
 			// recuperation des entrées AN
 			//adc_get(&control_an);
@@ -107,9 +106,15 @@ wait:
 		control_usb_data.control_cons_alpha = control_kinematics_cons.alpha;
 		control_usb_data.control_v_dist_cons = control_kinematics_cons.v;
 		control_usb_data.control_v_rot_cons = control_kinematics_cons.w;*/
-		control_usb_data.control_pos_x = loc_pos.x;
-		control_usb_data.control_pos_y = loc_pos.y;
-		control_usb_data.control_pos_alpha = loc_pos.theta;
+		control_usb_data.pos_x = loc_pos.x;
+		control_usb_data.pos_y = loc_pos.y;
+		control_usb_data.pos_alpha = loc_pos.theta;
+		control_usb_data.v1 = control_kinematics[0].v;
+		control_usb_data.v2 = control_kinematics[1].v;
+		control_usb_data.v3 = control_kinematics[2].v;
+		control_usb_data.theta1 = control_kinematics[3].pos;
+		control_usb_data.theta2 = control_kinematics[4].pos;
+		control_usb_data.theta3 = control_kinematics[5].pos;
 		/*control_usb_data.control_v_dist_mes = control_kinematics.v;
 		control_usb_data.control_v_rot_mes = control_kinematics.w;
 		control_usb_data.control_i_right = control_an.i_right;
@@ -122,10 +127,6 @@ wait:
 		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}
 }
-
-Kinematics control_kinematics[6];
-KinematicsParameters paramDriving = {1000, 500, 500};
-KinematicsParameters paramSteering = {1, 1, 1};
 
 static void control_compute()
 {

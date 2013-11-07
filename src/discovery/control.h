@@ -60,9 +60,15 @@ struct control_usb_data
 	int32_t control_cons_x;
 	int32_t control_cons_y;
 	int32_t control_cons_alpha;
-	float control_pos_x;
-	float control_pos_y;
-	float control_pos_alpha;
+	float pos_x;
+	float pos_y;
+	float pos_alpha;
+	float v1;
+	float v2;
+	float v3;
+	float theta1;
+	float theta2;
+	float theta3;
 	int32_t control_v_dist_cons;
 	int32_t control_v_rot_cons;
 	int32_t control_v_dist_mes;
