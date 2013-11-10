@@ -21,9 +21,9 @@
 #define MOTOR_DRIVING1_RED          14
 #define MOTOR_DRIVING2_RED          14
 #define MOTOR_DRIVING3_RED          14
-#define MOTOR_STEERING1_RED         14
-#define MOTOR_STEERING2_RED         14
-#define MOTOR_STEERING3_RED         14
+#define MOTOR_STEERING1_RED         140
+#define MOTOR_STEERING2_RED         140
+#define MOTOR_STEERING3_RED         140
 
 const struct canopen_configuration can_motor_driving_configuration[] =
 {
@@ -144,7 +144,7 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 		raw_position = pos;
 		current = msg->data[4] + (msg->data[5] << 8);
 
-		position = raw_position * outputGain;
+		position = ((int32_t)raw_position) * outputGain;
 		xSemaphoreGive(sem);
 	}
 	else if( type == CANOPEN_RX_PDO1 )
