@@ -19,7 +19,7 @@
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
 #include "foo/graph.h"
-#include "foo/table.h"
+#include "discovery/table.h"
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus

@@ -9,7 +9,7 @@ obj-linux-usb_interface += linux/tools/cli.o
 obj-linux-usb_interface += linux/tools/cmd.o
 obj-linux-usb_interface += linux/tools/robot_interface.o
 obj-linux-usb_interface += linux/tools/qemu.o
-obj-linux-usb_interface += foo/table.o
+obj-linux-usb_interface += discovery/table.o
 lib-linux-usb_interface += -lm -lreadline
 bin-linux += usb_interface
 
@@ -24,7 +24,7 @@ obj-linux-glplot += linux/tools/cmd.o
 obj-linux-glplot += linux/tools/graphique.o
 obj-linux-glplot += linux/tools/joystick.o
 obj-linux-glplot += foo/graph.o
-obj-linux-glplot += foo/table.o
+obj-linux-glplot += discovery/table.o
 obj-linux-glplot += linux/tools/robot_interface.o
 obj-linux-glplot += linux/tools/qemu.o
 cflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
