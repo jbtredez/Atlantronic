@@ -187,7 +187,7 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 	// test
 	VectPlan vOnTurret[3];
 	float v[3];
-	float w[3];
+	float theta[3];
 
 	vOnTurret[0] = transferSpeed(cp, Turret[0], u);
 	vOnTurret[1] = transferSpeed(cp, Turret[1], u);
@@ -211,16 +211,32 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 		v[2] = 0;
 	}
 
-	w[0] = atan2f(vOnTurret[0].y, vOnTurret[0].x);
-	w[1] = atan2f(vOnTurret[1].y, vOnTurret[1].x);
-	w[2] = atan2f(vOnTurret[2].y, vOnTurret[2].x);
+	theta[0] = atan2f(vOnTurret[0].y, vOnTurret[0].x);
+	theta[1] = atan2f(vOnTurret[1].y, vOnTurret[1].x);
+	theta[2] = atan2f(vOnTurret[2].y, vOnTurret[2].x);
+
+	// on minimise la rotation des roues
+	for(int i = 0; i < 3; i++)
+	{
+		float dtheta1 = fmodf(theta[i] - control_kinematics[i+3].pos, 2*M_PI);
+		float dtheta2 = fmodf(theta[i] + M_PI - control_kinematics[i+3].pos, 2*M_PI);
+		if( fabsf(dtheta1) < fabsf(dtheta2) )
+		{
+			theta[i] = control_kinematics[i+3].pos + dtheta1;
+		}
+		else
+		{
+			theta[i] = control_kinematics[i+3].pos + dtheta2;
+			v[i] *= -1;
+		}
+	}
 
 	control_kinematics[0].setSpeed(v[0], paramDriving, CONTROL_DT);
 	control_kinematics[1].setSpeed(v[1], paramDriving, CONTROL_DT);
 	control_kinematics[2].setSpeed(v[2], paramDriving, CONTROL_DT);
-	control_kinematics[3].setPosition(w[0], 0, paramSteering, CONTROL_DT);
-	control_kinematics[4].setPosition(w[1], 0, paramSteering, CONTROL_DT);
-	control_kinematics[5].setPosition(w[2], 0, paramSteering, CONTROL_DT);
+	control_kinematics[3].setPosition(theta[0], 0, paramSteering, CONTROL_DT);
+	control_kinematics[4].setPosition(theta[1], 0, paramSteering, CONTROL_DT);
+	control_kinematics[5].setPosition(theta[2], 0, paramSteering, CONTROL_DT);
 
 	//log_format(LOG_INFO, "pos = %d v = %d", (int)can_motor[CAN_MOTOR_DRIVING1].position, (int)can_motor[CAN_MOTOR_DRIVING1].speed);
 	//log_format(LOG_INFO, "v %5d %5d %5d w %6d %6d %6d", (int)v[0], (int)v[1], (int)v[2], (int)(w[0]*180/3.1415f), (int)(w[1]*180/3.1415f), (int)(w[2]*180/3.1415f));
