@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1, 0.5, 0.5, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH, "Graph", 1, 0, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 1, 0, 1, 1);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH, "Graph", 0, 0, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
 
 	graphique_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1, 1, 0, 0);
@@ -610,22 +610,22 @@ void plot_table(struct graphique* graph)
 		glPopMatrix();
 
 		// couleurs sur les bords des cases de depart
-		glColor3f(1, 0, 1);
+		glLineWidth(3);
+		glColor3f(1, 0, 0);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(-1000, 1000);
+		glVertex2f(-1100, 1000);
 		glVertex2f(-1500, 1000);
-		glVertex2f(-1500,  550);
-		glVertex2f(-1000,  550);
+		glVertex2f(-1500,  310);
 		glEnd();
 
-		glColor3f(1, 0 ,0);
+		glColor3f(1, 0.9 ,0);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(1000, 1000);
+		glVertex2f(1100, 1000);
 		glVertex2f(1500, 1000);
-		glVertex2f(1500,  550);
-		glVertex2f(1000,  550);
+		glVertex2f(1500,  310);
 		glEnd();
-
+		glLineWidth(1);
+/*
 		// bouteilles
 		glColor3f(1, 0, 1);
 		glBegin(GL_TRIANGLE_STRIP);
@@ -671,7 +671,7 @@ void plot_table(struct graphique* graph)
 		glVertex2f( 1100,   500);
 		glEnd();
 
-		glDisable(GL_LINE_STIPPLE);
+		glDisable(GL_LINE_STIPPLE);*/
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG])
@@ -803,7 +803,7 @@ void plot_table(struct graphique* graph)
 		{
 			glPushMatrix();
 			glTranslatef(Turret[i].x, Turret[i].y, 0);
-			glRotatef(Turret[i].theta, 0, 0, 1);
+			glRotatef(Turret[i].theta * 180 / M_PI, 0, 0, 1);
 
 			glBegin(GL_TRIANGLE_STRIP);
 			glVertex2f(-50, -10);
@@ -858,7 +858,8 @@ void plot_hokuyo_hist(struct graphique* graph)
 
 void plot_speed_dist(struct graphique* graph)
 {
-	int i;
+	(void) graph;
+	/*int i;
 
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
@@ -897,7 +898,7 @@ void plot_speed_dist(struct graphique* graph)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_mes*1000.0f * CONTROL_HZ/67108864.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
-	}
+	}*/
 /*
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_PWM_RIGHT] )
 	{
@@ -916,7 +917,7 @@ void plot_speed_dist(struct graphique* graph)
 			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_u_left * 1000.0f / (PWM_ARR + 1), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-*/
+*//*
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_RIGHT] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_RIGHT]);
@@ -934,7 +935,7 @@ void plot_speed_dist(struct graphique* graph)
 			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_i_left, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-
+*/
 #if 0
 	// TODO : precalculer
 	{

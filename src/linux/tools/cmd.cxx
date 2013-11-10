@@ -28,6 +28,7 @@ int cmd_help(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_quit(const char* arg);
 int cmd_go(const char* arg);
+int cmd_goto(const char*arg);
 int cmd_goto_graph(const char* arg);
 int cmd_goto_near(const char* arg);
 int cmd_goto_near_xy(const char* arg);
@@ -62,6 +63,7 @@ COMMAND usb_commands[] = {
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "free", cmd_free, "free()" },
 	{ "go", cmd_go, "go" },
+	{ "goto", cmd_goto, "goto x y theta cpx cpy cptheta" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
 	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
@@ -365,6 +367,25 @@ int cmd_goto_near_xy(const char* arg)
 
 	robot_interface_goto_near_xy(cmd_robot, x, y, dist, way, avoidance_type);
 
+	return CMD_SUCESS;
+}
+
+int cmd_goto(const char* arg)
+{
+	VectPlan dest;
+	VectPlan cp;
+
+	int count = sscanf(arg, "%f %f %f %f %f %f", &dest.x, &dest.y, &dest.theta, &cp.x, &cp.y, &cp.theta);
+
+	if(count != 6)
+	{
+		return CMD_ERROR;
+	}
+
+	KinematicsParameters linearParam = {1000, 1000, 1000}; // TODO
+	KinematicsParameters angularParam = {1, 1, 1}; // TODO
+
+	robot_interface_control_goto(cmd_robot, dest, cp, linearParam, angularParam);
 	return CMD_SUCESS;
 }
 

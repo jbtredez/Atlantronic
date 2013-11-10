@@ -107,6 +107,8 @@ int robot_interface_control_print_param(struct robot_interface* data);
 
 int robot_interface_control_set_param(struct robot_interface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha);
 
+int robot_interface_control_goto(struct robot_interface* data, VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
+
 // ---------- gestion trajectoire ----------------------------------------------
 
 int robot_interface_straight(struct robot_interface* data, float dist);
