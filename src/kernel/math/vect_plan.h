@@ -62,6 +62,11 @@ inline VectPlan operator*(VectPlan a, float k)
 	return VectPlan(k * a.x, k * a.y, k * a.theta);
 }
 
+inline VectPlan operator/(VectPlan a, float k)
+{
+	return VectPlan(a.x / k, a.y / k, a.theta / k);
+}
+
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed);
 
 #endif
