@@ -2,7 +2,7 @@
 #define QEMU_H
 
 #include "linux/tools/com.h"
-#include "discovery/table.h"
+#include "kernel/math/polyline.h"
 #include "kernel/math/vect_plan.h"
 
 class qemu
