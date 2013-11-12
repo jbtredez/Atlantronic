@@ -20,12 +20,13 @@ VectPlan Turret[3] =
 };
 
 VectPlan loc_pos; // TODO
+VectPlan loc_npSpeed; // TODO
 
 static enum control_state control_state;
 static enum control_status control_status;
 static Kinematics control_kinematics[6];
-static KinematicsParameters paramDriving = {1000, 1500, 1500};
-static KinematicsParameters paramSteering = {1, 1, 1};
+static KinematicsParameters paramDriving = {2000, 2000, 2000}; // TODO
+static KinematicsParameters paramSteering = {300, 300, 300}; // TODO
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
@@ -109,10 +110,9 @@ static void control_task(void* arg)
 			v[2].x = can_motor[CAN_MOTOR_DRIVING3].speed * cosf(phi3);
 			v[2].y = can_motor[CAN_MOTOR_DRIVING3].speed * sinf(phi3);
 
-			VectPlan cp;
 			float slippageSpeed = 0;
-			VectPlan cpSpeed = odometry2turret(cp, Turret[0], Turret[1], v[0], v[1], &slippageSpeed);
-			loc_pos = loc_pos + CONTROL_DT * cpSpeed;
+			loc_npSpeed = odometry2turret(VectPlan(0,0,0), Turret[0], Turret[1], v[0], v[1], &slippageSpeed);
+			loc_pos = loc_pos + CONTROL_DT * loc_to_abs_speed(loc_pos.theta, loc_npSpeed);
 
 			// recuperation des entrées AN
 			//adc_get(&control_an);
@@ -127,26 +127,22 @@ static void control_task(void* arg)
 wait:
 		control_usb_data.current_time = systick_get_time();
 		control_usb_data.control_state = control_state;
-		control_usb_data.control_cons_x = control_cp_cmd.x;
-		control_usb_data.control_cons_y = control_cp_cmd.y;
-		control_usb_data.control_cons_alpha = control_cp_cmd.theta;
+		control_usb_data.cons_x = control_cp_cmd.x;
+		control_usb_data.cons_y = control_cp_cmd.y;
+		control_usb_data.cons_theta = control_cp_cmd.theta;
 		control_usb_data.pos_x = loc_pos.x;
 		control_usb_data.pos_y = loc_pos.y;
-		control_usb_data.pos_alpha = loc_pos.theta;
-		control_usb_data.v1 = control_kinematics[0].v;
-		control_usb_data.v2 = control_kinematics[1].v;
-		control_usb_data.v3 = control_kinematics[2].v;
-		control_usb_data.theta1 = control_kinematics[3].pos;
-		control_usb_data.theta2 = control_kinematics[4].pos;
-		control_usb_data.theta3 = control_kinematics[5].pos;
-		/*control_usb_data.control_v_dist_cons = control_kinematics_cons.v;
-		control_usb_data.control_v_rot_cons = control_kinematics_cons.w;
-		control_usb_data.control_v_dist_mes = control_kinematics.v;
-		control_usb_data.control_v_rot_mes = control_kinematics.w;
+		control_usb_data.pos_theta = loc_pos.theta;
+		control_usb_data.cons_v1 = control_kinematics[0].v;
+		control_usb_data.cons_v2 = control_kinematics[1].v;
+		control_usb_data.cons_v3 = control_kinematics[2].v;
+		control_usb_data.cons_theta1 = control_kinematics[3].pos;
+		control_usb_data.cons_theta2 = control_kinematics[4].pos;
+		control_usb_data.cons_theta3 = control_kinematics[5].pos;
+/*
 		control_usb_data.control_i_right = control_an.i_right;
 		control_usb_data.control_i_left = control_an.i_left;
-		control_usb_data.control_u_right = u1;
-		control_usb_data.control_u_left = u2;*/
+*/
 		xSemaphoreGive(control_mutex);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
@@ -193,6 +189,10 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 	vOnTurret[1] = transferSpeed(cp, Turret[1], u);
 	vOnTurret[2] = transferSpeed(cp, Turret[2], u);
 
+	theta[0] = atan2f(vOnTurret[0].y, vOnTurret[0].x);
+	theta[1] = atan2f(vOnTurret[1].y, vOnTurret[1].x);
+	theta[2] = atan2f(vOnTurret[2].y, vOnTurret[2].x);
+
 	if( fabsf(speed) > EPSILON )
 	{
 		vOnTurret[0] = vOnTurret[0] * speed;
@@ -210,10 +210,6 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 		v[1] = 0;
 		v[2] = 0;
 	}
-
-	theta[0] = atan2f(vOnTurret[0].y, vOnTurret[0].x);
-	theta[1] = atan2f(vOnTurret[1].y, vOnTurret[1].x);
-	theta[2] = atan2f(vOnTurret[2].y, vOnTurret[2].x);
 
 	// on minimise la rotation des roues
 	for(int i = 0; i < 3; i++)
@@ -243,7 +239,6 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
 	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
 	can_motor[CAN_MOTOR_DRIVING3].set_speed(control_kinematics[2].v);
-	// TODO calculer vitesse depuis position
 
 	can_motor[CAN_MOTOR_STEERING1].set_speed(control_kinematics[3].v);
 	can_motor[CAN_MOTOR_STEERING2].set_speed(control_kinematics[4].v);
@@ -259,7 +254,9 @@ void control_compute_trajectory()
 
 	control_cp_cmd = control_cp_cmd + CONTROL_DT * control_curvilinearKinematics.v * control_u;
 
-	control_compute_speed(control_cp, control_u, control_curvilinearKinematics.v);
+	VectPlan u_loc = abs_to_loc_speed(loc_pos.theta, control_u);
+//log_format(LOG_INFO, "%d %d", (int)(180/M_PI * (control_cp_cmd.theta - loc_pos.theta)), (int)(1000*(control_curvilinearKinematics.v - loc_npSpeed.norm())));
+	control_compute_speed(control_cp, u_loc, control_curvilinearKinematics.v);
 
 	if( control_status == CONTROL_PREPARING_MOTION )
 	{
@@ -294,7 +291,8 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 {
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
-	VectPlan ab = dest - loc_pos; // TODO prendre en compte le cp
+	control_cp_cmd = loc_to_abs(loc_pos, cp);
+	VectPlan ab = loc_to_abs(dest, cp) - control_cp_cmd;
 	float nab = ab.norm();
 	control_ds = 0;
 	control_cp = cp;
@@ -308,17 +306,17 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 		float sigmaAbs = fabsf(control_u.theta);
 		if( sigmaAbs > EPSILON)
 		{
-			if(control_curvilinearKinematicsParam.vMax < angularParam.vMax / sigmaAbs)
+			if(control_curvilinearKinematicsParam.vMax > angularParam.vMax / sigmaAbs)
 			{
 				control_curvilinearKinematicsParam.vMax = angularParam.vMax / sigmaAbs;
 			}
 
-			if(control_curvilinearKinematicsParam.aMax < angularParam.aMax / sigmaAbs)
+			if(control_curvilinearKinematicsParam.aMax > angularParam.aMax / sigmaAbs)
 			{
 				control_curvilinearKinematicsParam.aMax = angularParam.aMax / sigmaAbs;
 			}
 
-			if(control_curvilinearKinematicsParam.dMax < angularParam.dMax / sigmaAbs)
+			if(control_curvilinearKinematicsParam.dMax > angularParam.dMax / sigmaAbs)
 			{
 				control_curvilinearKinematicsParam.dMax = angularParam.dMax / sigmaAbs;
 			}

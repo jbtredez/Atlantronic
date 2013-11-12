@@ -67,6 +67,22 @@ inline VectPlan operator/(VectPlan a, float k)
 	return VectPlan(a.x / k, a.y / k, a.theta / k);
 }
 
+inline VectPlan operator-(VectPlan a)
+{
+	return VectPlan(-a.x, -a.y, -a.theta);
+}
+
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed);
+
+VectPlan loc_to_abs(const VectPlan& origin, const VectPlan& pos);
+
+VectPlan abs_to_loc(const VectPlan& origin, const VectPlan& pos);
+
+VectPlan loc_to_abs_speed(const double theta, const VectPlan &speed);
+
+inline VectPlan abs_to_loc_speed(const double theta, const VectPlan &speed)
+{
+	return loc_to_abs_speed(-theta, speed);
+}
 
 #endif

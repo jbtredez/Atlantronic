@@ -60,8 +60,9 @@ enum
 	SUBGRAPH_CONTROL_SPEED_DIST_CONS,
 	SUBGRAPH_CONTROL_SPEED_ROT_MES,
 	SUBGRAPH_CONTROL_SPEED_ROT_CONS,
-	SUBGRAPH_CONTROL_PWM_RIGHT,
-	SUBGRAPH_CONTROL_PWM_LEFT,
+	SUBGRAPH_CONTROL_V1,
+	SUBGRAPH_CONTROL_V2,
+	SUBGRAPH_CONTROL_V3,
 	SUBGRAPH_CONTROL_I_RIGHT,
 	SUBGRAPH_CONTROL_I_LEFT,
 	SUBGRAPH_CONTROL_NUM,
@@ -218,8 +219,9 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_RIGHT, "PWM droite", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_PWM_LEFT, "PWM gauche ", 0, 0, 1, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V1, "v1", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V2, "v2", 0, 0.5, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V3, "v3", 0, 0.1, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_RIGHT, "I droite ", 0, 1, 0.65, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_LEFT, "I gauche ", 0, 1, 0, 0);
 
@@ -625,53 +627,6 @@ void plot_table(struct graphique* graph)
 		glVertex2f(1500,  310);
 		glEnd();
 		glLineWidth(1);
-/*
-		// bouteilles
-		glColor3f(1, 0, 1);
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f(-870, -1000);
-		glVertex2f(-850, -1000);
-		glVertex2f(-870, -1060);
-		glVertex2f(-850, -1060);
-		glEnd();
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f( 393, -1000);
-		glVertex2f( 373, -1000);
-		glVertex2f( 393, -1060);
-		glVertex2f( 373, -1060);
-		glEnd();
-
-		glColor3f(1, 0, 0);
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f( 870, -1000);
-		glVertex2f( 850, -1000);
-		glVertex2f( 870, -1060);
-		glVertex2f( 850, -1060);
-		glEnd();
-		glBegin(GL_TRIANGLE_STRIP);
-		glVertex2f(-393, -1000);
-		glVertex2f(-373, -1000);
-		glVertex2f(-393, -1060);
-		glVertex2f(-373, -1060);
-		glEnd();
-
-		// ligne de fin / cale
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(1, 0xAAAA);
-		glColor3f(0, 0, 0);
-
-		glBegin(GL_LINES);
-		glVertex2f(-1500,  -390);
-		glVertex2f(-1160,  -390);
-		glVertex2f( 1500,  -390);
-		glVertex2f( 1160,  -390);
-		glVertex2f(-1175, -1000);
-		glVertex2f(-1100,   500);
-		glVertex2f( 1175, -1000);
-		glVertex2f( 1100,   500);
-		glEnd();
-
-		glDisable(GL_LINE_STIPPLE);*/
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG])
@@ -719,7 +674,7 @@ void plot_table(struct graphique* graph)
 		{
 			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
 			{
-				draw_plus(robot_interface.control_usb_data[i].control_cons_x, robot_interface.control_usb_data[i].control_cons_y, plus_dx, plus_dy);
+				draw_plus(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, plus_dx, plus_dy);
 			}
 		}
 	}
@@ -775,7 +730,7 @@ void plot_table(struct graphique* graph)
 		glColor3f(0, 0, 0);
 		float x_robot = robot_interface.control_usb_data[max-1].pos_x;
 		float y_robot = robot_interface.control_usb_data[max-1].pos_y;
-		float alpha_robot = robot_interface.control_usb_data[max-1].pos_alpha * 360.0f / (2*M_PI); // en degrés
+		float alpha_robot = robot_interface.control_usb_data[max-1].pos_theta * 360.0f / (2*M_PI); // en degrés
 
 		glPushMatrix();
 		glTranslatef(x_robot, y_robot, 0);
@@ -795,9 +750,9 @@ void plot_table(struct graphique* graph)
 			VectPlan(   0, -155, 0),
 			VectPlan(-175,    0, 0)
 		};
-		Turret[0].theta = robot_interface.control_usb_data[max-1].theta1;
-		Turret[1].theta = robot_interface.control_usb_data[max-1].theta2;
-		Turret[2].theta = robot_interface.control_usb_data[max-1].theta3;
+		Turret[0].theta = robot_interface.control_usb_data[max-1].cons_theta1;
+		Turret[1].theta = robot_interface.control_usb_data[max-1].cons_theta2;
+		Turret[2].theta = robot_interface.control_usb_data[max-1].cons_theta3;
 
 		for(int i = 0; i < 3; i++)
 		{
@@ -858,8 +813,7 @@ void plot_hokuyo_hist(struct graphique* graph)
 
 void plot_speed_dist(struct graphique* graph)
 {
-	(void) graph;
-	/*int i;
+	int i;
 
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
@@ -867,57 +821,83 @@ void plot_speed_dist(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_CONS]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		VectPlan old_cons(robot_interface.control_usb_data[0].cons_x, robot_interface.control_usb_data[0].cons_y, robot_interface.control_usb_data[0].cons_theta);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_cons*CONTROL_HZ/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			VectPlan cons(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, robot_interface.control_usb_data[i].cons_theta);
+			VectPlan v = (cons - old_cons) / CONTROL_DT;
+			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			old_cons = cons;
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_CONS]);
+		VectPlan old_cons(robot_interface.control_usb_data[0].cons_x, robot_interface.control_usb_data[0].cons_y, robot_interface.control_usb_data[0].cons_theta);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_cons*1000.0f * CONTROL_HZ/67108864.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			VectPlan cons(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, robot_interface.control_usb_data[i].cons_theta);
+			VectPlan v = (cons - old_cons) / CONTROL_DT;
+			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			old_cons = cons;
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
+		VectPlan old_pos(robot_interface.control_usb_data[0].pos_x, robot_interface.control_usb_data[0].pos_y, robot_interface.control_usb_data[0].pos_theta);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_dist_mes*CONTROL_HZ/65536.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			VectPlan pos(robot_interface.control_usb_data[i].pos_x, robot_interface.control_usb_data[i].pos_y, robot_interface.control_usb_data[i].pos_theta);
+			VectPlan v = (pos - old_pos) / CONTROL_DT;
+			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			old_pos = pos;
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_MES]);
+		VectPlan old_pos(robot_interface.control_usb_data[0].pos_x, robot_interface.control_usb_data[0].pos_y, robot_interface.control_usb_data[0].pos_theta);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].control_v_rot_mes*1000.0f * CONTROL_HZ/67108864.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
-		}
-	}*/
-/*
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_PWM_RIGHT] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_PWM_RIGHT]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
-		{
-			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_u_right * 1000.0f / (PWM_ARR + 1), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			VectPlan pos(robot_interface.control_usb_data[i].pos_x, robot_interface.control_usb_data[i].pos_y, robot_interface.control_usb_data[i].pos_theta);
+			VectPlan v = (pos - old_pos) / CONTROL_DT;
+			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			old_pos = pos;
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_PWM_LEFT] )
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V1] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_PWM_LEFT]);
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V1]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_u_left * 1000.0f / (PWM_ARR + 1), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v1, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-*//*
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V2] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V2]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v2, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V3] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V3]);
+		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		{
+			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v3, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
+
+/*
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_RIGHT] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_RIGHT]);
@@ -1044,14 +1024,15 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
 		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos %6.0f %6.0f %6.2f",
 				robot_interface.control_usb_data[id].pos_x, robot_interface.control_usb_data[id].pos_y,
-				robot_interface.control_usb_data[id].pos_alpha * 180 / M_PI);
+				robot_interface.control_usb_data[id].pos_theta * 180 / M_PI);
 		glPrintf(1600, -6*font_digit_height * graph->ratio_y, font_base, "mot %6.0f %6.0f %6.0f",
-				robot_interface.control_usb_data[id].v1, robot_interface.control_usb_data[id].v2,
-				robot_interface.control_usb_data[id].v3);
+				robot_interface.control_usb_data[id].cons_v1,
+				robot_interface.control_usb_data[id].cons_v2,
+				robot_interface.control_usb_data[id].cons_v3);
 		glPrintf(1600, -8*font_digit_height * graph->ratio_y, font_base, "mot %6.2f %6.2f %6.2f",
-				robot_interface.control_usb_data[id].theta1 * 180 / M_PI,
-				robot_interface.control_usb_data[id].theta2 * 180 / M_PI,
-				robot_interface.control_usb_data[id].theta3 * 180 / M_PI);
+				robot_interface.control_usb_data[id].cons_theta1 * 180 / M_PI,
+				robot_interface.control_usb_data[id].cons_theta2 * 180 / M_PI,
+				robot_interface.control_usb_data[id].cons_theta3 * 180 / M_PI);
 
 		switch(current_graph)
 		{

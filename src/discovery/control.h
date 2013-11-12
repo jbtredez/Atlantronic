@@ -65,26 +65,22 @@ struct control_usb_data
 {
 	struct systime current_time;
 	int32_t control_state;
-	float control_cons_x;
-	float control_cons_y;
-	float control_cons_alpha;
+	float cons_x;
+	float cons_y;
+	float cons_theta;
 	float pos_x;
 	float pos_y;
-	float pos_alpha;
-	float v1;
-	float v2;
-	float v3;
-	float theta1;
-	float theta2;
-	float theta3;
-/*	int32_t control_v_dist_cons;
-	int32_t control_v_rot_cons;
-	int32_t control_v_dist_mes;
-	int32_t control_v_rot_mes;
+	float pos_theta;
+	float cons_v1;
+	float cons_v2;
+	float cons_v3;
+	float cons_theta1;
+	float cons_theta2;
+	float cons_theta3;
+/*
 	uint16_t control_i_right;
 	uint16_t control_i_left;
-	int16_t control_u_right;
-	int16_t control_u_left;*/
+*/
 } __attribute__((packed));
 
 struct control_cmd_param_arg

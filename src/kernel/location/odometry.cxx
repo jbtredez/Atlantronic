@@ -12,7 +12,7 @@ VectPlan odometry2turret(const VectPlan &cp, const VectPlan &A, const VectPlan &
 	float dv = 0;
 
 	// on divise par le plus grand pour eviter les pb numeriques
-	if( fabs(dx) > fabs(dy) )
+	if( fabsf(dx) > fabsf(dy) )
 	{
 		res.theta = (v2.y - v1.y) / dx;
 		dv = fabsf(v1.x - v2.x - dy * res.theta);
