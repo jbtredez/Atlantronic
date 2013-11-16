@@ -377,7 +377,7 @@ int cmd_goto(const char* arg)
 
 	int count = sscanf(arg, "%f %f %f %f %f %f", &dest.x, &dest.y, &dest.theta, &cp.x, &cp.y, &cp.theta);
 
-	if(count != 6)
+	if(count != 6 && count != 3)
 	{
 		return CMD_ERROR;
 	}
