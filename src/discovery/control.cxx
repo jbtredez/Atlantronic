@@ -26,7 +26,7 @@ static enum control_state control_state;
 static enum control_status control_status;
 static Kinematics control_kinematics[6];
 static KinematicsParameters paramDriving = {2000, 2000, 2000}; // TODO
-static KinematicsParameters paramSteering = {300, 300, 300}; // TODO
+static KinematicsParameters paramSteering = {2, 2, 2}; // TODO
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
@@ -180,62 +180,50 @@ static void control_compute()
 
 void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 {
-	// test
-	VectPlan vOnTurret[3];
-	float v[3];
-	float theta[3];
-
-	vOnTurret[0] = transferSpeed(cp, Turret[0], u);
-	vOnTurret[1] = transferSpeed(cp, Turret[1], u);
-	vOnTurret[2] = transferSpeed(cp, Turret[2], u);
-
-	theta[0] = atan2f(vOnTurret[0].y, vOnTurret[0].x);
-	theta[1] = atan2f(vOnTurret[1].y, vOnTurret[1].x);
-	theta[2] = atan2f(vOnTurret[2].y, vOnTurret[2].x);
-
-	if( fabsf(speed) > EPSILON )
-	{
-		vOnTurret[0] = vOnTurret[0] * speed;
-		vOnTurret[1] = vOnTurret[1] * speed;
-		vOnTurret[2] = vOnTurret[2] * speed;
-
-		v[0] = vOnTurret[0].norm();
-		v[1] = vOnTurret[1].norm();
-		v[2] = vOnTurret[2].norm();
-		//log_format(LOG_INFO, "v %5d %5d %5d", (int)v[0], (int)v[1], (int)v[2]);
-	}
-	else
-	{
-		v[0] = 0;
-		v[1] = 0;
-		v[2] = 0;
-	}
-
-	// on minimise la rotation des roues
 	for(int i = 0; i < 3; i++)
 	{
-		float dtheta1 = fmodf(theta[i] - control_kinematics[i+3].pos, 2*M_PI);
-		float dtheta2 = fmodf(theta[i] + M_PI - control_kinematics[i+3].pos, 2*M_PI);
+		VectPlan vOnTurret = transferSpeed(cp, Turret[i], u);
+		float n2 = vOnTurret.norm2();
+		float v = speed * sqrtf(n2);
+		float theta = atan2f(vOnTurret.y, vOnTurret.x);
+		float theta_old = control_kinematics[i+3].pos;
+
+		// on minimise la rotation des roues
+		float dtheta1 = fmodf(theta - theta_old, 2*M_PI);
+		if( dtheta1 > M_PI)
+		{
+			dtheta1 -= 2*M_PI;
+		}
+		else if(dtheta1 < -M_PI)
+		{
+			dtheta1 += 2*M_PI;
+		}
+
+		float dtheta2 = fmodf(theta + M_PI - theta_old, 2*M_PI);
+		if( dtheta2 > M_PI)
+		{
+			dtheta2 -= 2*M_PI;
+		}
+		else if(dtheta2 < -M_PI)
+		{
+			dtheta2 += 2*M_PI;
+		}
+
 		if( fabsf(dtheta1) < fabsf(dtheta2) )
 		{
-			theta[i] = control_kinematics[i+3].pos + dtheta1;
+			theta = theta_old + dtheta1;
 		}
 		else
 		{
-			theta[i] = control_kinematics[i+3].pos + dtheta2;
-			v[i] *= -1;
+			theta = theta_old + dtheta2;
+			v *= -1;
 		}
+
+		control_kinematics[i].setSpeed(v, paramDriving, CONTROL_DT);
+		float w = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
+		control_kinematics[i+3].setPosition(theta, w, paramSteering, CONTROL_DT);
 	}
 
-	control_kinematics[0].setSpeed(v[0], paramDriving, CONTROL_DT);
-	control_kinematics[1].setSpeed(v[1], paramDriving, CONTROL_DT);
-	control_kinematics[2].setSpeed(v[2], paramDriving, CONTROL_DT);
-	control_kinematics[3].setPosition(theta[0], 0, paramSteering, CONTROL_DT);
-	control_kinematics[4].setPosition(theta[1], 0, paramSteering, CONTROL_DT);
-	control_kinematics[5].setPosition(theta[2], 0, paramSteering, CONTROL_DT);
-
-	//log_format(LOG_INFO, "pos = %d v = %d", (int)can_motor[CAN_MOTOR_DRIVING1].position, (int)can_motor[CAN_MOTOR_DRIVING1].speed);
-	//log_format(LOG_INFO, "v %5d %5d %5d w %6d %6d %6d", (int)v[0], (int)v[1], (int)v[2], (int)(w[0]*180/3.1415f), (int)(w[1]*180/3.1415f), (int)(w[2]*180/3.1415f));
 	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
 	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
 	can_motor[CAN_MOTOR_DRIVING3].set_speed(control_kinematics[2].v);
