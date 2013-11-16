@@ -60,7 +60,7 @@ void Kinematics::setPosition(float wantedPos, float wantedSpeed, KinematicsParam
 	float vMaxSlowDown = sqrtf(vc * vc + 2 * fabsf(d) * param.dMax) - corr;
 
 	// on evite de depasser si on peut s'arreter avec 2*dmax (vitesse faible)
-	float dv = fabsf(vMaxSlowDown - wantedSpeed);
+	float dv = fabsf(vMaxSlowDown);
 	if( dv * dt > fabsf(d) && dv / dt <  2 * param.dMax)
 	{
 		vMaxSlowDown = wantedSpeed + fabsf(d) / dt;
@@ -72,7 +72,7 @@ void Kinematics::setPosition(float wantedPos, float wantedSpeed, KinematicsParam
 		vMax = vMaxSlowDown;
 	}
 
-	if( d < 0 && wantedSpeed == 0)
+	if( d < 0 )
 	{
 		vMax = -vMax;
 	}
