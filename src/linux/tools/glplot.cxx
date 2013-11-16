@@ -63,8 +63,9 @@ enum
 	SUBGRAPH_CONTROL_V1,
 	SUBGRAPH_CONTROL_V2,
 	SUBGRAPH_CONTROL_V3,
-	SUBGRAPH_CONTROL_I_RIGHT,
-	SUBGRAPH_CONTROL_I_LEFT,
+	SUBGRAPH_CONTROL_V4,
+	SUBGRAPH_CONTROL_V5,
+	SUBGRAPH_CONTROL_V6,
 	SUBGRAPH_CONTROL_NUM,
 };
 
@@ -222,8 +223,9 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V1, "v1", 0, 1, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V2, "v2", 0, 0.5, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V3, "v3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_RIGHT, "I droite ", 0, 1, 0.65, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I_LEFT, "I gauche ", 0, 1, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V4, "v4", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V5, "v5", 0, 0.5, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V6, "v6", 0, 0.1, 0, 1);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -897,25 +899,35 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-/*
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_RIGHT] )
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V4] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_RIGHT]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V4]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_i_right, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			float w = (robot_interface.control_usb_data[i].cons_theta1 - robot_interface.control_usb_data[i-1].cons_theta1)*CONTROL_HZ;
+			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_I_LEFT] )
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V5] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_I_LEFT]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V5]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			draw_plus(5*i, (float)robot_interface.control_usb_data[i].control_i_left, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			float w = (robot_interface.control_usb_data[i].cons_theta2 - robot_interface.control_usb_data[i-1].cons_theta2)*CONTROL_HZ;
+			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
-*/
+
+	if( graph->courbes_activated[SUBGRAPH_CONTROL_V6] )
+	{
+		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V6]);
+		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		{
+			float w = (robot_interface.control_usb_data[i].cons_theta3 - robot_interface.control_usb_data[i-1].cons_theta3)*CONTROL_HZ;
+			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+		}
+	}
 #if 0
 	// TODO : precalculer
 	{
