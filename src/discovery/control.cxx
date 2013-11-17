@@ -25,8 +25,8 @@ VectPlan loc_npSpeed; // TODO
 static enum control_state control_state;
 static enum control_status control_status;
 static Kinematics control_kinematics[6];
-static KinematicsParameters paramDriving = {2000, 2000, 2000}; // TODO
-static KinematicsParameters paramSteering = {2, 2, 2}; // TODO
+static KinematicsParameters paramDriving = {1500, 1000, 1500};
+static KinematicsParameters paramSteering = {1.5, 1.5, 1.5};
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
@@ -38,7 +38,7 @@ static VectPlan control_cp_cmd;
 
 static void control_task(void* arg);
 static void control_compute();
-static void control_compute_speed(VectPlan cp, VectPlan u, float speed);
+static float control_compute_speed(VectPlan cp, VectPlan u, float speed);
 static void control_compute_trajectory();
 
 // interface usb
@@ -178,18 +178,26 @@ static void control_compute()
 	}
 }
 
-void control_compute_speed(VectPlan cp, VectPlan u, float speed)
+//!< calcul des consignes au niveau des moteurs avec saturations
+//!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
+float control_compute_speed(VectPlan cp, VectPlan u, float speed)
 {
+	float kmin = 1;
+	float theta[3];
+	float v[3];
+	float w[3];
+
+	// saturation liee a la traction
 	for(int i = 0; i < 3; i++)
 	{
 		VectPlan vOnTurret = transferSpeed(cp, Turret[i], u);
 		float n2 = vOnTurret.norm2();
-		float v = speed * sqrtf(n2);
-		float theta = atan2f(vOnTurret.y, vOnTurret.x);
+		v[i] = speed * sqrtf(n2);
+		theta[i] = atan2f(vOnTurret.y, vOnTurret.x);
 		float theta_old = control_kinematics[i+3].pos;
 
 		// on minimise la rotation des roues
-		float dtheta1 = fmodf(theta - theta_old, 2*M_PI);
+		float dtheta1 = fmodf(theta[i] - theta_old, 2*M_PI);
 		if( dtheta1 > M_PI)
 		{
 			dtheta1 -= 2*M_PI;
@@ -199,7 +207,7 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 			dtheta1 += 2*M_PI;
 		}
 
-		float dtheta2 = fmodf(theta + M_PI - theta_old, 2*M_PI);
+		float dtheta2 = fmodf(theta[i] + M_PI - theta_old, 2*M_PI);
 		if( dtheta2 > M_PI)
 		{
 			dtheta2 -= 2*M_PI;
@@ -211,18 +219,45 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 
 		if( fabsf(dtheta1) < fabsf(dtheta2) )
 		{
-			theta = theta_old + dtheta1;
+			theta[i] = theta_old + dtheta1;
 		}
 		else
 		{
-			theta = theta_old + dtheta2;
-			v *= -1;
+			theta[i] = theta_old + dtheta2;
+			v[i] *= -1;
 		}
 
-		control_kinematics[i].setSpeed(v, paramDriving, CONTROL_DT);
-		float w = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
-		control_kinematics[i+3].setPosition(theta, w, paramSteering, CONTROL_DT);
+		Kinematics kinematics = control_kinematics[i];
+		kinematics.setSpeed(v[i], paramDriving, CONTROL_DT);
+		if( fabsf(v[i]) > EPSILON)
+		{
+			float k = fabsf(kinematics.v / v[i]);
+			if( k < kmin )
+			{
+				kmin = k;
+			}
+		}
+
+		w[i] = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
+		// TODO gestion saturation rotation tourelle ko
+		/*kinematics = control_kinematics[i+3];
+		kinematics.setPosition(theta[i], w[i], paramSteering, CONTROL_DT);
+		if( fabsf(w[i]) > EPSILON)
+		{
+			float k = fabsf(kinematics.v / w[i]);
+			if( k < kmin )
+			{
+				kmin = k;
+			}
+		}*/
 	}
+
+	for(int i = 0; i < 3; i++)
+	{
+		control_kinematics[i].setSpeed(v[i] * kmin, paramDriving, CONTROL_DT);
+		control_kinematics[i+3].setPosition(theta[i], w[i] * kmin, paramSteering, CONTROL_DT);
+	}
+	//log_format(LOG_INFO, "v %d %d %d", (int)(1000*control_kinematics[0].v), (int)(1000*control_kinematics[1].v), (int)(1000*control_kinematics[2].v));
 
 	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
 	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
@@ -231,20 +266,25 @@ void control_compute_speed(VectPlan cp, VectPlan u, float speed)
 	can_motor[CAN_MOTOR_STEERING1].set_speed(control_kinematics[3].v);
 	can_motor[CAN_MOTOR_STEERING2].set_speed(control_kinematics[4].v);
 	can_motor[CAN_MOTOR_STEERING3].set_speed(control_kinematics[5].v);
+
+	return kmin;
 }
 
 void control_compute_trajectory()
 {
+	Kinematics kinematics = control_curvilinearKinematics;
 	if( control_status != CONTROL_PREPARING_MOTION )
 	{
-		control_curvilinearKinematics.setPosition(control_ds, 0, control_curvilinearKinematicsParam, CONTROL_DT);
+		kinematics.setPosition(control_ds, 0, control_curvilinearKinematicsParam, CONTROL_DT);
 	}
 
-	control_cp_cmd = control_cp_cmd + CONTROL_DT * control_curvilinearKinematics.v * control_u;
-
 	VectPlan u_loc = abs_to_loc_speed(loc_pos.theta, control_u);
-//log_format(LOG_INFO, "%d %d", (int)(180/M_PI * (control_cp_cmd.theta - loc_pos.theta)), (int)(1000*(control_curvilinearKinematics.v - loc_npSpeed.norm())));
-	control_compute_speed(control_cp, u_loc, control_curvilinearKinematics.v);
+
+	float k = control_compute_speed(control_cp, u_loc, kinematics.v);
+	control_curvilinearKinematics.v = k * kinematics.v;
+	control_curvilinearKinematics.pos += control_curvilinearKinematics.v * CONTROL_DT;
+
+	control_cp_cmd = control_cp_cmd + CONTROL_DT * control_curvilinearKinematics.v * control_u;
 
 	if( control_status == CONTROL_PREPARING_MOTION )
 	{
