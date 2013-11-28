@@ -1034,17 +1034,19 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			match_time = robot_interface.current_time - robot_interface.start_time;
 		}
 		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
-		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos %6.0f %6.0f %6.2f",
+		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos  %6.0f %6.0f %6.2f",
 				robot_interface.control_usb_data[id].pos_x, robot_interface.control_usb_data[id].pos_y,
 				robot_interface.control_usb_data[id].pos_theta * 180 / M_PI);
-		glPrintf(1600, -6*font_digit_height * graph->ratio_y, font_base, "mot %6.0f %6.0f %6.0f",
+		glPrintf(1600, -6*font_digit_height * graph->ratio_y, font_base, "mot  %6.0f %6.0f %6.0f",
 				robot_interface.control_usb_data[id].cons_v1,
 				robot_interface.control_usb_data[id].cons_v2,
 				robot_interface.control_usb_data[id].cons_v3);
-		glPrintf(1600, -8*font_digit_height * graph->ratio_y, font_base, "mot %6.2f %6.2f %6.2f",
+		glPrintf(1600, -8*font_digit_height * graph->ratio_y, font_base, "mot  %6.2f %6.2f %6.2f",
 				robot_interface.control_usb_data[id].cons_theta1 * 180 / M_PI,
 				robot_interface.control_usb_data[id].cons_theta2 * 180 / M_PI,
 				robot_interface.control_usb_data[id].cons_theta3 * 180 / M_PI);
+		glPrintf(1600, -10*font_digit_height * graph->ratio_y, font_base, "gyro %6.2f",
+						robot_interface.control_usb_data[id].pos_theta_gyro * 180 / M_PI);
 
 		switch(current_graph)
 		{

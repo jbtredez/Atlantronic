@@ -9,6 +9,7 @@
 #include "control.h"
 #include "kernel/location/odometry.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/spi.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -133,6 +134,7 @@ wait:
 		control_usb_data.pos_x = loc_pos.x;
 		control_usb_data.pos_y = loc_pos.y;
 		control_usb_data.pos_theta = loc_pos.theta;
+		control_usb_data.pos_theta_gyro = spi_gyro_get_theta();
 		control_usb_data.cons_v1 = control_kinematics[0].v;
 		control_usb_data.cons_v2 = control_kinematics[1].v;
 		control_usb_data.cons_v3 = control_kinematics[2].v;

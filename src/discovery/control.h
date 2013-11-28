@@ -71,6 +71,7 @@ struct control_usb_data
 	float pos_x;
 	float pos_y;
 	float pos_theta;
+	float pos_theta_gyro;
 	float cons_v1;
 	float cons_v2;
 	float cons_v3;

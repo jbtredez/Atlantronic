@@ -6,8 +6,9 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
+#include <math.h>
 
-#define SPI_STACK_SIZE             100
+#define SPI_STACK_SIZE             300
 
 // interface accelero
 #define LIS302DL_READ_CMD             0x80
@@ -20,6 +21,21 @@
 #define LIS302DL_LOWPOWERMODE_ACTIVE  0x40
 #define LIS302DL_XYZ_ENABLE           0x07
 
+// interface gyro
+#define ADXRS453_READ          0x80000000
+#define ADXRS453_WRITE         0x40000000
+#define ADXRS453_SENSOR_DATA   0x20000000
+
+#define ADXRS453_REG_RATE            0x00
+#define ADXRS453_REG_TEM             0x02
+#define ADXRS453_REG_LOCST           0x04
+#define ADXRS453_REG_HICST           0x06
+#define ADXRS453_REG_QUAD            0x08
+#define ADXRS453_REG_FAULT           0x0A
+#define ADXRS453_REG_PID             0x0C
+#define ADXRS453_REG_SN_HIGH         0x0E
+#define ADXRS453_REG_SN_LOW          0x10
+
 struct spi_accel_dma_xyz
 {
 	unsigned char reserved0;
@@ -31,9 +47,14 @@ struct spi_accel_dma_xyz
 } __attribute__((packed));
 
 
-static unsigned char spi_tx_buffer[16];
-static unsigned char spi_rx_buffer[16];
+static unsigned char spi_tx_buffer[8];
+static unsigned char spi_rx_buffer[8];
 static struct spi_accel_dma_xyz spi_accel_dma_xyz;
+
+static float spi_gyro_v;     //!< vitesse angulaire vue par le gyro
+static float spi_gyro_theta; //!< angle vue par le gyro
+
+static xSemaphoreHandle spi_sem;
 
 static void spi_task(void* arg);
 
@@ -55,10 +76,16 @@ int spi_module_init()
 	gpio_pin_init(GPIOA, 6, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MISO
 	gpio_pin_init(GPIOA, 7, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MOSI
 	gpio_pin_init(GPIOE, 3, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS accelero
+	gpio_pin_init(GPIOA, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS gyro
+
+	// on ne selectionne rien
+	gpio_set_pin(GPIOE, 3);
+	gpio_set_pin(GPIOA, 8);
 
 	gpio_af_config(GPIOA, 5, GPIO_AF_SPI1);
 	gpio_af_config(GPIOA, 6, GPIO_AF_SPI1);
 	gpio_af_config(GPIOA, 7, GPIO_AF_SPI1);
+
 
 	// reset SPI1
 	RCC->APB2RSTR |= RCC_APB2RSTR_SPI1;
@@ -106,6 +133,9 @@ int spi_module_init()
 	NVIC_SetPriority(DMA2_Stream0_IRQn, PRIORITY_IRQ_DMA2_STREAM0);
 	NVIC_SetPriority(DMA2_Stream3_IRQn, PRIORITY_IRQ_DMA2_STREAM3);
 
+	vSemaphoreCreateBinary(spi_sem);
+	xSemaphoreTake(spi_sem, 0);
+
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
 
 	return 0;
@@ -115,11 +145,18 @@ module_init(spi_module_init, INIT_SPI);
 
 void isr_dma2_stream0()
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
 	if( DMA2->LISR | DMA_LISR_TCIF0)
 	{
 		DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
 		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
+		xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
 	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_dma2_stream3()
@@ -172,39 +209,106 @@ static void spi_send_dma_buffer(uint16_t size)
 	DMA2_Stream3->CR |= DMA_SxCR_EN;
 }
 
-static void spi_write(uint8_t* buffer, uint8_t size)
+static void spi_transaction(uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
 {
-	spi_set_write_dma_buffer(buffer);
+	xSemaphoreTake(spi_sem, 0);
+	spi_set_read_dma_buffer(rx_buffer);
+	spi_set_read_dma_size(size);
+	spi_set_write_dma_buffer(tx_buffer);
 	spi_send_dma_buffer(size);
+	xSemaphoreTake(spi_sem, 1);
 }
 
 static void spi_init_accelero()
 {
-	spi_set_read_dma_buffer(spi_rx_buffer);
-	spi_set_read_dma_size(2);
-
 	spi_tx_buffer[0] = LIS302DL_CTRL_REG1_ADDR;
 	spi_tx_buffer[1] = LIS302DL_DATARATE_400 | LIS302DL_LOWPOWERMODE_ACTIVE | LIS302DL_XYZ_ENABLE;
+
 	gpio_reset_pin(GPIOE, 3);
-	spi_write(spi_tx_buffer, 2);
-	vTaskDelay(1);
+	spi_transaction(spi_tx_buffer, spi_rx_buffer, 2);
 	gpio_set_pin(GPIOE, 3);
+}
+
+static uint32_t spi_gyro_send_data(uint32_t data)
+{
+	unsigned char txBuffer[4];
+	unsigned char rxBuffer[4];
+	txBuffer[0] = (data >> 24) & 0xff;
+	txBuffer[1] = (data >> 16) & 0xff;
+	txBuffer[2] = (data >> 8) & 0xff;
+	txBuffer[3] = data & 0xff;
+
+	gpio_reset_pin(GPIOA, 8);
+	spi_transaction(txBuffer, rxBuffer, 4);
+	gpio_set_pin(GPIOA, 8);
+
+	return ((rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | (rxBuffer[3] << 0));
+}
+
+static void spi_init_gyro()
+{
+	// 100 ms pour init du gyro apres mise sous tension
+	vTaskDelay(100);
+	spi_gyro_send_data(0x20000003);
+	vTaskDelay(50);
+	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
+	vTaskDelay(50);
+	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
+	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
+}
+
+float spi_gyro_get_theta()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = spi_gyro_theta;
+	portEXIT_CRITICAL();
+
+	return data;
 }
 
 static void spi_task(void* arg)
 {
 	(void) arg;
+	float gyro_dev_lsb = 0;
+	int i = 0;
 
 	spi_init_accelero();
 
+	spi_init_gyro();
+
+	// calibration gyro : estimation deviation
+	for(i = 0; i < 5000; i++)
+	{
+		int data_gyro = spi_gyro_send_data(0x20000000);
+		int v_gyro_lsb = (int)((int16_t)((data_gyro >> 10) & 0xffff));
+		gyro_dev_lsb += v_gyro_lsb;
+
+		vTaskDelay(1);
+	}
+
+	gyro_dev_lsb = gyro_dev_lsb / i;
+
+	log_format(LOG_INFO, "gyro dev %d mLSB/s", (int)(1000*gyro_dev_lsb));
+
 	while(1)
 	{
-		spi_set_read_dma_buffer((void*)&spi_accel_dma_xyz);
-		spi_set_read_dma_size(6);
 		spi_tx_buffer[0] = LIS302DL_OUT_X_ADDR | LIS302DL_READ_CMD | LIS302DL_MULTIPLEBYTE_CMD;
 		gpio_reset_pin(GPIOE, 3);
-		spi_write(spi_tx_buffer, 6);
-		vTaskDelay(1);
+		spi_transaction(spi_tx_buffer, (void*)&spi_accel_dma_xyz, 6);
 		gpio_set_pin(GPIOE, 3);
+
+		int data_gyro = spi_gyro_send_data(0x20000000);
+		float v_gyro_lsb = (float)((int16_t)((data_gyro >> 10) & 0xffff)) - gyro_dev_lsb;
+		spi_gyro_v = v_gyro_lsb * 0.000218166156f;
+
+		portENTER_CRITICAL();
+		spi_gyro_theta += spi_gyro_v * 0.001f;
+		portEXIT_CRITICAL();
+
+		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(theta * 180 / M_PI));
+
+		vTaskDelay(1);
 	}
 }
