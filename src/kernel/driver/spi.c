@@ -51,8 +51,11 @@ static unsigned char spi_tx_buffer[8];
 static unsigned char spi_rx_buffer[8];
 static struct spi_accel_dma_xyz spi_accel_dma_xyz;
 
-static float spi_gyro_v;     //!< vitesse angulaire vue par le gyro
-static float spi_gyro_theta; //!< angle vue par le gyro
+static int16_t spi_gyro_v_lsb;      //!< vitesse brute du gyro (non corrigée)
+static float spi_gyro_v;            //!< vitesse angulaire vue par le gyro
+static float spi_gyro_theta;        //!< angle vue par le gyro
+static float spi_gyro_dev_lsb;      //!< correction deviation du gyro
+static uint32_t spi_gyro_dev_count; //!< nombre de donnees utilisées pour le calcul de la correction
 
 static xSemaphoreHandle spi_sem;
 
@@ -209,14 +212,21 @@ static void spi_send_dma_buffer(uint16_t size)
 	DMA2_Stream3->CR |= DMA_SxCR_EN;
 }
 
-static void spi_transaction(uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
+//! @return -1 si timeout
+//! @return 0 sinon
+static int spi_transaction(uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
 {
 	xSemaphoreTake(spi_sem, 0);
 	spi_set_read_dma_buffer(rx_buffer);
 	spi_set_read_dma_size(size);
 	spi_set_write_dma_buffer(tx_buffer);
 	spi_send_dma_buffer(size);
-	xSemaphoreTake(spi_sem, 1);
+	if( xSemaphoreTake(spi_sem, 1) == pdFALSE )
+	{
+		return -1;
+	}
+
+	return 0;
 }
 
 static void spi_init_accelero()
@@ -229,32 +239,93 @@ static void spi_init_accelero()
 	gpio_set_pin(GPIOE, 3);
 }
 
-static uint32_t spi_gyro_send_data(uint32_t data)
+static int spi_gyro_send_data(uint32_t data, uint32_t* rxdata)
 {
-	unsigned char txBuffer[4];
-	unsigned char rxBuffer[4];
-	txBuffer[0] = (data >> 24) & 0xff;
-	txBuffer[1] = (data >> 16) & 0xff;
-	txBuffer[2] = (data >> 8) & 0xff;
-	txBuffer[3] = data & 0xff;
+	spi_tx_buffer[0] = (data >> 24) & 0xff;
+	spi_tx_buffer[1] = (data >> 16) & 0xff;
+	spi_tx_buffer[2] = (data >> 8) & 0xff;
+	spi_tx_buffer[3] = data & 0xff;
 
 	gpio_reset_pin(GPIOA, 8);
-	spi_transaction(txBuffer, rxBuffer, 4);
+	int res = spi_transaction(spi_tx_buffer, spi_rx_buffer, 4);
 	gpio_set_pin(GPIOA, 8);
 
-	return ((rxBuffer[0] << 24) | (rxBuffer[1] << 16) | (rxBuffer[2] << 8) | (rxBuffer[3] << 0));
+	*rxdata = ((spi_rx_buffer[0] << 24) | (spi_rx_buffer[1] << 16) | (spi_rx_buffer[2] << 8) | (spi_rx_buffer[3] << 0));
+	return res;
 }
 
-static void spi_init_gyro()
+//! @return 0 si ok
+//! @return -1 sinon
+static int spi_init_gyro()
 {
+	int res = 0;
+	uint32_t data_gyro;
+
 	// 100 ms pour init du gyro apres mise sous tension
 	vTaskDelay(100);
-	spi_gyro_send_data(0x20000003);
+	res = spi_gyro_send_data(0x20000003, &data_gyro);
+	if( res )
+	{
+		goto done;
+	}
+
 	vTaskDelay(50);
-	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
+	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
+	if( res )
+	{
+		goto done;
+	}
+
 	vTaskDelay(50);
-	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
-	spi_gyro_send_data(ADXRS453_SENSOR_DATA);
+	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
+	if( res )
+	{
+		goto done;
+	}
+	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
+	if( res )
+	{
+		goto done;
+	}
+
+done:
+	return res;
+}
+
+static int spi_gyro_update(float dt, int calibration)
+{
+	uint32_t data_gyro;
+	int error = 0;
+	int res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
+	if( res == 0 && ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
+	{
+		spi_gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
+	}
+	else
+	{
+		// erreur
+		error = 1;
+	}
+
+	if( ! calibration )
+	{
+		// en cas d'erreur, on utilise l'ancienne valeur de vitesse
+		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
+		portENTER_CRITICAL();
+		spi_gyro_theta += spi_gyro_v * dt;
+		portEXIT_CRITICAL();
+	}
+	else
+	{
+		// en cas d'erreur, on ne fait rien
+		if( ! error )
+		{
+			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
+			spi_gyro_dev_count++;
+		}
+	}
+
+	return res;
 }
 
 float spi_gyro_get_theta()
@@ -271,7 +342,6 @@ float spi_gyro_get_theta()
 static void spi_task(void* arg)
 {
 	(void) arg;
-	float gyro_dev_lsb = 0;
 	int i = 0;
 
 	spi_init_accelero();
@@ -281,16 +351,11 @@ static void spi_task(void* arg)
 	// calibration gyro : estimation deviation
 	for(i = 0; i < 5000; i++)
 	{
-		int data_gyro = spi_gyro_send_data(0x20000000);
-		int v_gyro_lsb = (int)((int16_t)((data_gyro >> 10) & 0xffff));
-		gyro_dev_lsb += v_gyro_lsb;
-
+		spi_gyro_update(0.001f, 1);
 		vTaskDelay(1);
 	}
 
-	gyro_dev_lsb = gyro_dev_lsb / i;
-
-	log_format(LOG_INFO, "gyro dev %d mLSB/s", (int)(1000*gyro_dev_lsb));
+	log_format(LOG_INFO, "gyro dev %d mLSB/s", (int)(1000*spi_gyro_dev_lsb));
 
 	while(1)
 	{
@@ -299,15 +364,9 @@ static void spi_task(void* arg)
 		spi_transaction(spi_tx_buffer, (void*)&spi_accel_dma_xyz, 6);
 		gpio_set_pin(GPIOE, 3);
 
-		int data_gyro = spi_gyro_send_data(0x20000000);
-		float v_gyro_lsb = (float)((int16_t)((data_gyro >> 10) & 0xffff)) - gyro_dev_lsb;
-		spi_gyro_v = v_gyro_lsb * 0.000218166156f;
+		spi_gyro_update(0.001f, 0);
 
-		portENTER_CRITICAL();
-		spi_gyro_theta += spi_gyro_v * 0.001f;
-		portEXIT_CRITICAL();
-
-		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(theta * 180 / M_PI));
+		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(spi_gyro_theta * 180 / M_PI));
 
 		vTaskDelay(1);
 	}
