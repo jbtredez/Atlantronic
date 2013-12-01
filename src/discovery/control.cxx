@@ -81,15 +81,26 @@ static void control_task(void* arg)
 	{
 		//log(LOG_INFO, "sync");
 		//t1 = systick_get_time();
-
+		// TODO regarder l'ensemble des moteurs
 		if((can_motor[CAN_MOTOR_DRIVING1].status_word & 0x6f) != 0x27)
 		{
 			goto wait;
 		}
 
 		can_motor[CAN_MOTOR_DRIVING1].wait_update(0);
+		can_motor[CAN_MOTOR_DRIVING2].wait_update(0);
+		can_motor[CAN_MOTOR_DRIVING3].wait_update(0);
+		can_motor[CAN_MOTOR_STEERING1].wait_update(0);
+		can_motor[CAN_MOTOR_STEERING2].wait_update(0);
+		can_motor[CAN_MOTOR_STEERING3].wait_update(0);
 		canopen_sync();
-		res = can_motor[CAN_MOTOR_DRIVING1].wait_update(ms_to_tick(2));
+		// TODO gestion des tempos avec tempo de 2ms pour l'ensemble des 6 moteurs
+		res = can_motor[CAN_MOTOR_DRIVING1].wait_update(2);
+		res += can_motor[CAN_MOTOR_DRIVING2].wait_update(2);
+		res += can_motor[CAN_MOTOR_DRIVING3].wait_update(2);
+		res += can_motor[CAN_MOTOR_STEERING1].wait_update(2);
+		res += can_motor[CAN_MOTOR_STEERING2].wait_update(2);
+		res += can_motor[CAN_MOTOR_STEERING3].wait_update(2);
 
 		xSemaphoreTake(control_mutex, portMAX_DELAY);
 
@@ -159,9 +170,17 @@ static void control_compute()
 	{
 		case CONTROL_READY_FREE:
 			// TODO
+			for(int i = 0; i <  6; i++)
+			{
+				control_kinematics[i].v = 0;
+			}
 			break;
 		case CONTROL_READY_ASSER:
 			// TODO
+			for(int i = 0; i <  6; i++)
+			{
+				control_kinematics[i].v = 0;
+			}
 			break;
 		case CONTROL_SPEED:
 			//control_compute_speed();
@@ -176,8 +195,20 @@ static void control_compute()
 		default:
 		case CONTROL_END:
 			// TODO : c'est termine, on ne bouge plus
+			for(int i = 0; i <  6; i++)
+			{
+				control_kinematics[i].v = 0;
+			}
 			break;
 	}
+
+	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
+	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
+	can_motor[CAN_MOTOR_DRIVING3].set_speed(control_kinematics[2].v);
+
+	can_motor[CAN_MOTOR_STEERING1].set_speed(control_kinematics[3].v);
+	can_motor[CAN_MOTOR_STEERING2].set_speed(control_kinematics[4].v);
+	can_motor[CAN_MOTOR_STEERING3].set_speed(control_kinematics[5].v);
 }
 
 //!< calcul des consignes au niveau des moteurs avec saturations
@@ -261,14 +292,6 @@ float control_compute_speed(VectPlan cp, VectPlan u, float speed)
 	}
 	//log_format(LOG_INFO, "v %d %d %d", (int)(1000*control_kinematics[0].v), (int)(1000*control_kinematics[1].v), (int)(1000*control_kinematics[2].v));
 
-	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
-	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
-	can_motor[CAN_MOTOR_DRIVING3].set_speed(control_kinematics[2].v);
-
-	can_motor[CAN_MOTOR_STEERING1].set_speed(control_kinematics[3].v);
-	can_motor[CAN_MOTOR_STEERING2].set_speed(control_kinematics[4].v);
-	can_motor[CAN_MOTOR_STEERING3].set_speed(control_kinematics[5].v);
-
 	return kmin;
 }
 
@@ -294,7 +317,22 @@ void control_compute_trajectory()
 			fabsf(control_kinematics[4].v) < EPSILON &&
 			fabsf(control_kinematics[5].v) < EPSILON )
 		{
+			log(LOG_INFO, "IN_MOTION");
 			control_status = CONTROL_IN_MOTION;
+		}
+	}
+
+	if(fabsf(control_curvilinearKinematics.pos - control_ds) < EPSILON && fabsf(control_curvilinearKinematics.v) < EPSILON )
+	{
+		// TODO regarder en fonction des tolerances si c'est reached ou non
+		log(LOG_INFO, "CONTROL_TARGET_REACHED");
+		control_status = CONTROL_TARGET_REACHED;
+		control_state = CONTROL_READY_ASSER;
+		control_curvilinearKinematics.v = 0;
+		control_curvilinearKinematics.a = 0;
+		for(int i = 0; i <  6; i++)
+		{
+			control_kinematics[i].v = 0;
 		}
 	}
 }
@@ -321,9 +359,32 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 {
 	xSemaphoreTake(control_mutex, portMAX_DELAY);
 
-	control_cp_cmd = loc_to_abs(loc_pos, cp);
-	VectPlan ab = loc_to_abs(dest, cp) - control_cp_cmd;
+	VectPlan A = loc_to_abs(loc_pos, cp);
+	VectPlan B = loc_to_abs(dest, cp);
+	VectPlan ab = B - A;
 	float nab = ab.norm();
+
+	if(control_state != CONTROL_READY_FREE && control_state != CONTROL_READY_ASSER)
+	{
+		// on fait deja quelque chose
+		if( control_state != CONTROL_TRAJECTORY)
+		{
+			// on ne peut rien faire
+			goto unlock_mutex;
+		}
+
+		// on a deja une trajectoire en cours
+		if( cp.x != control_cp.x || cp.y != control_cp.y)
+		{
+			// on ne peut pas changer le cp d'un mouvement en cours
+			goto unlock_mutex;
+		}
+
+		// TODO si on reste sur la meme droite, on peut changer la destination
+		// pour le moment, on ne peut pas changer le mouvement en cours
+		goto unlock_mutex;
+	}
+
 	control_ds = 0;
 	control_cp = cp;
 
@@ -364,9 +425,14 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 
 	if(control_state != CONTROL_END)
 	{
+		log_format(LOG_INFO, "goto %d %d %d", (int)dest.x, (int)dest.y, (int)(dest.theta*180/M_PI));
+		control_cp_cmd = A;
 		control_curvilinearKinematics.pos = 0;
 		control_state = CONTROL_TRAJECTORY;
 		control_status = CONTROL_PREPARING_MOTION;
+		log(LOG_INFO, "PREPARING_MOTION");
 	}
+
+unlock_mutex:
 	xSemaphoreGive(control_mutex);
 }
