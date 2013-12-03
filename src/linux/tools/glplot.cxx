@@ -36,6 +36,7 @@ enum
 enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
+	SUBGRAPH_TABLE_TEXTURE,
 	SUBGRAPH_TABLE_STATIC_ELM,
 	SUBGRAPH_TABLE_HOKUYO_FOO,
 	SUBGRAPH_TABLE_HOKUYO_BAR,
@@ -70,6 +71,7 @@ enum
 };
 
 static GLuint font_base;
+static GLuint table_texture;
 static char font_name[] = "fixed";
 static int font_height = 0;
 static int font_digit_height = 0;
@@ -202,6 +204,7 @@ int main(int argc, char *argv[])
 
 	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_TEXTURE, "Texture", 1, 0, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 1, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
@@ -468,6 +471,24 @@ static void init(GtkWidget* widget, gpointer arg)
 		graphique_set_border(&graph[i], 10 * font_width, font_height*3);
 	}
 
+	GError *error = NULL;
+	GdkPixbuf *pix = gdk_pixbuf_new_from_file("img/table_2014.jpg", &error);
+	if( ! pix )
+	{
+		g_printerr ("Error loading file: #%d %s\n", error->code, error->message);
+		g_error_free (error);
+		exit(-1);
+	}
+
+	glEnable(GL_TEXTURE_2D);
+	glGenTextures(1, &table_texture);
+	glBindTexture(GL_TEXTURE_2D, table_texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), 0, GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
+
 	gdk_gl_drawable_gl_end(gldrawable);
 }
 
@@ -587,6 +608,22 @@ void plot_table(struct graphique* graph)
 	glPushMatrix();
 	glColor3f(0,0,0);
 
+	if( graph->courbes_activated[SUBGRAPH_TABLE_TEXTURE] )
+	{
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, table_texture);
+		glBegin(GL_QUADS);
+		glTexCoord2i(1,1); glVertex2f(-1500, -1000);
+		glTexCoord2i(0,1); glVertex2f( 1500, -1000);
+		glTexCoord2i(0,0); glVertex2f( 1500,  1000);
+		glTexCoord2i(1,0); glVertex2f(-1500,  1000);
+		glEnd();
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_LIGHTING);
+	}
+
 	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
 		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
@@ -615,14 +652,14 @@ void plot_table(struct graphique* graph)
 
 		// couleurs sur les bords des cases de depart
 		glLineWidth(3);
-		glColor3f(1, 0, 0);
+		glColor3f(1, 0.9 ,0);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(-1100, 1000);
 		glVertex2f(-1500, 1000);
 		glVertex2f(-1500,  310);
 		glEnd();
 
-		glColor3f(1, 0.9 ,0);
+		glColor3f(1, 0, 0);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(1100, 1000);
 		glVertex2f(1500, 1000);
@@ -981,26 +1018,6 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	glClearColor(1,1,1,1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, screen_width, screen_height, 0, 0, 1);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glColor3f(0,0,0);
-
-	if( drawing_zoom_selection )
-	{
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(mouse_x1, mouse_y1);
-		glVertex2f(mouse_x2, mouse_y1);
-		glVertex2f(mouse_x2, mouse_y2);
-		glVertex2f(mouse_x1, mouse_y2);
-		glVertex2f(mouse_x1, mouse_y1);
-		glEnd();
-	}
-
 	int res = pthread_mutex_lock(&robot_interface.mutex);
 	if(res == 0)
 	{
@@ -1015,6 +1032,20 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+
+		switch(current_graph)
+		{
+			default:
+			case GRAPH_TABLE:
+				plot_table(&graph[current_graph]);
+				break;
+			case GRAPH_HOKUYO_HIST:
+				plot_hokuyo_hist(&graph[current_graph]);
+				break;
+			case GRAPH_SPEED_DIST:
+				plot_speed_dist(&graph[current_graph]);
+				break;
+		}
 
 		glColor3f(0,0,0);
 		plot_axes(&graph[current_graph]);
@@ -1048,20 +1079,27 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		glPrintf(1600, -10*font_digit_height * graph->ratio_y, font_base, "gyro %6.2f",
 						robot_interface.control_usb_data[id].pos_theta_gyro * 180 / M_PI);
 
-		switch(current_graph)
-		{
-			default:
-			case GRAPH_TABLE:
-				plot_table(&graph[current_graph]);
-				break;
-			case GRAPH_HOKUYO_HIST:
-				plot_hokuyo_hist(&graph[current_graph]);
-				break;
-			case GRAPH_SPEED_DIST:
-				plot_speed_dist(&graph[current_graph]);
-				break;
-		}
 		pthread_mutex_unlock(&robot_interface.mutex);
+	}
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, screen_width, screen_height, 0, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glColor3f(0,0,0);
+
+	if( drawing_zoom_selection )
+	{
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(mouse_x1, mouse_y1);
+		glVertex2f(mouse_x2, mouse_y1);
+		glVertex2f(mouse_x2, mouse_y2);
+		glVertex2f(mouse_x1, mouse_y2);
+		glVertex2f(mouse_x1, mouse_y1);
+		glEnd();
 	}
 
 	if(gdk_gl_drawable_is_double_buffered(gldrawable))
