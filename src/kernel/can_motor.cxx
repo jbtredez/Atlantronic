@@ -18,12 +18,13 @@
 #define DRIVING2_WHEEL_RADIUS       33
 #define DRIVING3_WHEEL_RADIUS       33
 
-#define MOTOR_DRIVING1_RED          14  //!< reduction moteur (mettre 676.0 / 49.0 ?)
-#define MOTOR_DRIVING2_RED          14
-#define MOTOR_DRIVING3_RED          14
-#define MOTOR_STEERING1_RED         140
-#define MOTOR_STEERING2_RED         140
-#define MOTOR_STEERING3_RED         140
+#define MOTOR_RED                   14         //!< reducteur moteur (mettre 676.0 / 49.0 ?)
+#define MOTOR_DRIVING1_RED          MOTOR_RED  //!< reduction moteur
+#define MOTOR_DRIVING2_RED          MOTOR_RED
+#define MOTOR_DRIVING3_RED          MOTOR_RED
+#define MOTOR_STEERING1_RED         (4.375f*MOTOR_RED)
+#define MOTOR_STEERING2_RED         (4.375f*MOTOR_RED)
+#define MOTOR_STEERING3_RED         (4.375f*MOTOR_RED)
 
 #define ENCODER_RESOLUTION         3000
 
