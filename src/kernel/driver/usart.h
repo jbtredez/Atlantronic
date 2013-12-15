@@ -9,13 +9,20 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 
-#define USART_MAX_DEVICE      2
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum usart_id
 {
+	USART2_FULL_DUPLEX = 0,
 	USART3_FULL_DUPLEX,
-	UART4_HALF_DUPLEX
+	UART4_FULL_DUPLEX,
+	UART5_FULL_DUPLEX,
+	USART6_HALF_DUPLEX
 };
+
+#define USART_MAX_DEVICE    (USART6_HALF_DUPLEX+1)
 
 #define ERR_USART_TIMEOUT       0x01
 #define ERR_USART_READ_SR_FE    0x02
@@ -23,7 +30,7 @@ enum usart_id
 #define ERR_USART_READ_SR_ORE   0x08
 
 //!< ouverture usart
-void usart_open( enum usart_id id, uint32_t frequency);
+void usart_open(enum usart_id id, uint32_t frequency);
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_set_read_dma_size(enum usart_id id, uint16_t size);
@@ -39,5 +46,9 @@ void usart_set_write_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_send_dma_buffer(enum usart_id id, uint16_t size);
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

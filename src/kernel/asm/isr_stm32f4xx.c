@@ -16,9 +16,29 @@ static void isr_unexpected(void); //!< interruption imprévue
 static void isr_context_switch( void ) __attribute__ ((naked)); //!< changement de contexte
 void isr_systick(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption systick
 
-void isr_spi1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
-void isr_dma2_stream0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
-void isr_dma2_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
+// interruptions dma
+void isr_dma1_stream0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_0
+void isr_dma1_stream1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_1
+void isr_dma1_stream2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_3
+void isr_dma1_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_5
+void isr_dma1_stream4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_4
+void isr_dma1_stream5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_5
+void isr_dma1_stream6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_6
+void isr_dma1_stream7(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma1_7
+
+void isr_dma2_stream0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_0
+void isr_dma2_stream1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_1
+void isr_dma2_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_3
+void isr_dma2_stream6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_6
+
+void isr_spi1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi1
+
+void isr_usart2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart2
+void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
+void isr_uart4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption uart4
+void isr_uart5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption uart5
+void isr_usart6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart6
+
 void isr_otg_fs(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usb otg
 void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption transmission CAN1
 void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption reception CAN1
@@ -69,14 +89,14 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
+	isr_dma1_stream0,
+	isr_dma1_stream1,
+	isr_dma1_stream2,
+	isr_dma1_stream3,
+	isr_dma1_stream4,
+	isr_dma1_stream5,
+	isr_dma1_stream6,
+	isr_dma1_stream7,
 	isr_can1_tx,
 	isr_can1_rx0,
 	isr_unexpected,
@@ -96,6 +116,8 @@ void (* const g_pfnVectors[])(void) =
 	isr_spi1,
 	isr_unexpected,
 	isr_unexpected,
+	isr_usart2,
+	isr_usart3,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
@@ -108,14 +130,12 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
+	isr_uart4,
+	isr_uart5,
 	isr_unexpected,
 	isr_unexpected,
 	isr_dma2_stream0,
-	isr_unexpected,
+	isr_dma2_stream1,
 	isr_unexpected,
 	isr_dma2_stream3,
 	isr_unexpected,
@@ -127,9 +147,9 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_otg_fs,
 	isr_unexpected,
+	isr_dma2_stream6,
 	isr_unexpected,
-	isr_unexpected,
-	isr_unexpected,
+	isr_usart6,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,

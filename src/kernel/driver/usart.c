@@ -3,98 +3,161 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"
-//#include "kernel/fault.h"
 #include "gpio.h"
 
 struct usart_device
 {
 	USART_TypeDef* const usart;
-	DMA_Channel_TypeDef * const dma_read;
-	DMA_Channel_TypeDef * const dma_write;
+	DMA_Stream_TypeDef* const dma_read;
+	DMA_Stream_TypeDef* const dma_write;
 	xSemaphoreHandle sem;
 	uint32_t error;
 };
 
 struct usart_device usart_device[USART_MAX_DEVICE] =
 {
-	{ USART3, DMA1_Channel3, DMA1_Channel2, 0, 0 },
-	{ UART4,  DMA2_Channel3, DMA2_Channel5, 0, 0 }
+	{ USART2, DMA1_Stream5, DMA1_Stream6, 0, 0},
+	{ USART3, DMA1_Stream1, DMA1_Stream3, 0, 0},
+	{ UART4, DMA1_Stream2, DMA1_Stream4, 0, 0},
+	{ UART5, DMA1_Stream0, DMA1_Stream7, 0, 0},
+	{ USART6, DMA2_Stream1, DMA2_Stream6, 0, 0},
 };
 
 void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
-	// TODO : pour USART1 : prendre PCLK2
-	usart_device[id].usart->BRR = ((RCC_PCLK1*2) / (frequency) + 1) / 2;
+	uint32_t pclk;
+	// USART1 et USART6 sur PCLK2
+	// USART2, USART3, UART4, UART5 sur PCLK1
+	switch(id)
+	{
+		case USART2_FULL_DUPLEX:
+		case USART3_FULL_DUPLEX:
+		case UART4_FULL_DUPLEX:
+		case UART5_FULL_DUPLEX:
+			pclk = 1000*RCC_PCLK1_MHZ;
+			break;
+		case USART6_HALF_DUPLEX:
+			pclk = 1000*RCC_PCLK2_MHZ;
+			break;
+		default:
+			// erreur, l'id n'existe pas
+			return;
+	}
+
+	// formule:
+	// USARTDIV = PCLK / (oversampling * baudrate)
+	// BRR = partieEntiere(USARTDIV) << 4 + (partiedecimale(USARTDIV)*oversampling+0.5) &0x07
+
+	uint32_t div100;
+	// div100 = 100 * PCLK / (oversampling * frequency)
+	if( usart_device[id].usart->CR1 & USART_CR1_OVER8)
+	{
+		// oversampling = 8
+		div100  = (pclk * 25) / (2 * frequency);
+	}
+	else
+	{
+		// oversampling = 16
+		div100  = (pclk * 25) / (4 * frequency);
+	}
+
+	uint32_t brr = (div100 / 100) << 4; // on met la partie entiere dans BRR
+	uint32_t frac100 = div100 - 100 * (brr >> 4); // 100 * partie decimale
+	if( usart_device[id].usart->CR1 & USART_CR1_OVER8)
+	{
+		// oversampling = 8
+		brr |= (((frac100 * 8) + 50)/100) & 0x07;
+	}
+	else
+	{
+		// oversampling = 16
+		brr |= (((frac100 * 16) + 50)/100) & 0x07;
+	}
+	usart_device[id].usart->BRR = brr;
 }
 
-void usart_open( enum usart_id id, uint32_t frequency)
+static void usart_init_pin(GPIO_TypeDef* tx_gpio, uint32_t tx_pin, GPIO_TypeDef* rx_gpio, uint32_t rx_pin, uint32_t gpio_af_type)
+{
+	if( tx_gpio )
+	{
+		gpio_pin_init(tx_gpio, tx_pin, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);
+		gpio_af_config(tx_gpio, tx_pin, gpio_af_type);
+	}
+	if( rx_gpio )
+	{
+		gpio_pin_init(rx_gpio, rx_pin, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
+		gpio_af_config(rx_gpio, rx_pin, gpio_af_type);
+	}
+}
+
+void usart_open(enum usart_id id, uint32_t frequency)
 {
 	switch(id)
 	{
+		case USART2_FULL_DUPLEX:
+			// USART2 : Tx = PA2, Rx = PA3
+			// activation USART2
+			RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
+
+			// activation dma1 et GPIOA
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_GPIOAEN;
+			usart_init_pin(GPIOA, 2, GPIOA, 3, GPIO_AF_USART2);
+
+			// reset USART2
+			RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_USART2RST;
+			break;
 		case USART3_FULL_DUPLEX:
-			// USART3 (pas de remap) : TX = PB10, Rx = PB11
-			RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-			AFIO->MAPR = (AFIO->MAPR & ~AFIO_MAPR_USART3_REMAP) | AFIO_MAPR_USART3_REMAP_NOREMAP;
-
-			// GPIOB utilisee, configuration de PB10 et PB11
-			RCC->APB2ENR |=  RCC_APB2ENR_IOPBEN;
-			GPIOB->CRH = ( GPIOB->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10 ) | GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1; // Tx = PB10 : alternate output push-pull, 50MHz
-			GPIOB->CRH = ( GPIOB->CRH & ~GPIO_CRH_MODE11 & ~GPIO_CRH_CNF11 ) | GPIO_CRH_CNF11_0; // Rx = PB11 : alternate floating input
-
-			// DMA1 clock enable
-			RCC->AHBENR |= RCC_AHBENR_DMA1EN;
-
-			// usart3 clock enable
+			// USART3 : Tx = PD8, Rx = PD9
+			// activation USART3
 			RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
 
-			// 1 start bit, 8 bits data, 1 stop bit, pas de parité
-			// activation l'envoi et la reception
-			USART3->CR1 = USART_CR1_RE | USART_CR1_TE;
-			USART3->CR2 = 0x00;
+			// activation dma1 et GPIOD
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_GPIODEN;
+			usart_init_pin(GPIOD, 8, GPIOD, 9, GPIO_AF_USART3);
 
-			// activation des IT d'erreur (nécessaire avec le DMA)
-			// DMA en transmission
-			// DMA en reception
-			USART3->CR3 = USART_CR3_EIE | USART_CR3_DMAT | USART_CR3_DMAR;
-
-			NVIC_SetPriority(USART3_IRQn, PRIORITY_IRQ_USART3);
-			NVIC_SetPriority(DMA1_Channel2_IRQn, PRIORITY_IRQ_DMA1_CHANNEL2);
-			NVIC_SetPriority(DMA1_Channel3_IRQn, PRIORITY_IRQ_DMA1_CHANNEL3);
-			NVIC_EnableIRQ(USART3_IRQn);
-			NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-			NVIC_EnableIRQ(DMA1_Channel3_IRQn);
-
+			// reset USART3
+			RCC->APB1RSTR |= RCC_APB1RSTR_USART3RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_USART3RST;
 			break;
-		case UART4_HALF_DUPLEX:
-			// UART4 Tx = PC10, (Rx = PC11 pas utilisé en half duplex)
-
-			// GPIOC utilisee, configuration de PC10
-			RCC->APB2ENR |=  RCC_APB2ENR_IOPCEN;
-			GPIOC->CRH = ( GPIOC->CRH & ~GPIO_CRH_MODE10 & ~GPIO_CRH_CNF10 ) | GPIO_CRH_CNF10_1 | GPIO_CRH_MODE10_0 | GPIO_CRH_MODE10_1; // Tx = PC10 : alternate output push-pull, 50MHz
-
-			// DMA2 clock enable
-			RCC->AHBENR |= RCC_AHBENR_DMA2EN;
-
-			// uart4 clock enable
+		case UART4_FULL_DUPLEX:
+			// UART4 : Tx = PA0, Rx = PA1
+			// activation UART4
 			RCC->APB1ENR |= RCC_APB1ENR_UART4EN;
-			
-			// 1 start bit, 8 bits data, 1 stop bit, pas de parité
-			// activation l'envoi et la reception
-			UART4->CR1 = USART_CR1_RE | USART_CR1_TE;
-			UART4->CR2 = 0x00;
 
-			// activation des IT d'erreur (nécessaire avec le DMA)
-			// mode half duplex
-			// DMA en transmission
-			// DMA en reception
-			UART4->CR3 = USART_CR3_EIE | USART_CR3_HDSEL | USART_CR3_DMAT | USART_CR3_DMAR;
+			// activation dma1 et GPIOA
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_GPIOAEN;
+			usart_init_pin(GPIOA, 0, GPIOA, 1, GPIO_AF_UART4);
 
-			NVIC_SetPriority(UART4_IRQn, PRIORITY_IRQ_UART4);
-			NVIC_SetPriority(DMA2_Channel3_IRQn, PRIORITY_IRQ_DMA2_CHANNEL3);
-			NVIC_SetPriority(DMA2_Channel5_IRQn, PRIORITY_IRQ_DMA2_CHANNEL5);
-			NVIC_EnableIRQ(UART4_IRQn);
-			NVIC_EnableIRQ(DMA2_Channel3_IRQn);
-			NVIC_EnableIRQ(DMA2_Channel5_IRQn);
+			// reset USART4
+			RCC->APB1RSTR |= RCC_APB1RSTR_UART4RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_UART4RST;
+			break;
+		case UART5_FULL_DUPLEX:
+			// UART5 : Tx = PC12, Rx = PD2
+			// activation USART5
+			RCC->APB1ENR |= RCC_APB1ENR_UART5EN;
+
+			// activation dma1, GPIOC et GPIOD
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN;
+			usart_init_pin(GPIOC, 12, GPIOD, 2, GPIO_AF_UART5);
+
+			// reset USART5
+			RCC->APB1RSTR |= RCC_APB1RSTR_UART5RST;
+			RCC->APB1RSTR &= ~RCC_APB1RSTR_UART5RST;
+			break;
+		case USART6_HALF_DUPLEX:
+			// UART6 Tx = PC6, (Rx pas utilisé en half duplex)
+			// activation USART6
+			RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
+
+			// activation dma2 et GPIOC
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN | RCC_AHB1ENR_GPIOCEN;
+			usart_init_pin(GPIOC, 6, NULL, 0, GPIO_AF_USART6);
+
+			// reset USART6
+			RCC->APB2RSTR |= RCC_APB2RSTR_USART6RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST;
 			break;
 		default:
 			//fault(ERR_USART_UNKNOWN_DEVICE, FAULT_ACTIVE);
@@ -102,17 +165,90 @@ void usart_open( enum usart_id id, uint32_t frequency)
 			break;
 	}
 
+	// 1 start bit, 8 bits data, 1 stop bit, pas de parité
+	// activation l'envoi et la reception
+	usart_device[id].usart->CR1 = USART_CR1_RE | USART_CR1_TE;
+	usart_device[id].usart->CR2 = 0x00;
+
+	// activation des IT d'erreur (nécessaire avec le DMA)
+	// DMA en transmission
+	// DMA en reception
+	uint32_t cr3 = USART_CR3_EIE | USART_CR3_DMAR | USART_CR3_DMAT;
+	if( id == USART6_HALF_DUPLEX)
+	{
+		// mode half duplex
+		cr3 |= USART_CR3_HDSEL;
+	}
+	usart_device[id].usart->CR3 = cr3;
+
 	// taille mémoire d'une donnée : 8 bits
 	// incrément automatique mémoire : 1
 	// taille mémoire périph d'une donnée : 8 bits
 	// incrément automatique mémoire périph : 0
 	// transfert (écriture) : mem => mem périph
 	// transfert (lecture) : mem périph => mem
-	usart_device[id].dma_write->CCR = DMA_CCR1_DIR | DMA_CCR1_MINC | DMA_CCR1_TCIE;
-	usart_device[id].dma_write->CPAR = (uint32_t) &usart_device[id].usart->DR;
+	usart_device[id].dma_write->CR = DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	usart_device[id].dma_write->PAR = (uint32_t) &usart_device[id].usart->DR;
 
-	usart_device[id].dma_read->CCR = DMA_CCR1_MINC | DMA_CCR1_TCIE;
-	usart_device[id].dma_read->CPAR = (uint32_t) &usart_device[id].usart->DR;
+	usart_device[id].dma_read->CR = DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	usart_device[id].dma_read->PAR = (uint32_t) &usart_device[id].usart->DR;
+
+	switch(id)
+	{
+		case USART2_FULL_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
+			NVIC_SetPriority(USART2_IRQn, PRIORITY_IRQ_USART2);
+			NVIC_SetPriority(DMA1_Stream5_IRQn, PRIORITY_IRQ_DMA1_STREAM5);
+			NVIC_SetPriority(DMA1_Stream6_IRQn, PRIORITY_IRQ_DMA1_STREAM6);
+			NVIC_EnableIRQ(USART2_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+			break;
+		case USART3_FULL_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
+			NVIC_SetPriority(USART3_IRQn, PRIORITY_IRQ_USART3);
+			NVIC_SetPriority(DMA1_Stream1_IRQn, PRIORITY_IRQ_DMA1_STREAM1);
+			NVIC_SetPriority(DMA1_Stream3_IRQn, PRIORITY_IRQ_DMA1_STREAM3);
+			NVIC_EnableIRQ(USART3_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+			break;
+		case UART4_FULL_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
+			NVIC_SetPriority(UART4_IRQn, PRIORITY_IRQ_UART4);
+			NVIC_SetPriority(DMA1_Stream2_IRQn, PRIORITY_IRQ_DMA1_STREAM2);
+			NVIC_SetPriority(DMA1_Stream4_IRQn, PRIORITY_IRQ_DMA1_STREAM4);
+			NVIC_EnableIRQ(UART4_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+			break;
+		case UART5_FULL_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
+			NVIC_SetPriority(UART5_IRQn, PRIORITY_IRQ_UART5);
+			NVIC_SetPriority(DMA1_Stream0_IRQn, PRIORITY_IRQ_DMA1_STREAM0);
+			NVIC_SetPriority(DMA1_Stream7_IRQn, PRIORITY_IRQ_DMA1_STREAM7);
+			NVIC_EnableIRQ(UART5_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+			NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+			break;
+		case USART6_HALF_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
+			NVIC_SetPriority(USART6_IRQn, PRIORITY_IRQ_USART6);
+			NVIC_SetPriority(DMA2_Stream1_IRQn, PRIORITY_IRQ_DMA2_STREAM1);
+			NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
+			NVIC_EnableIRQ(USART6_IRQn);
+			NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+			NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+			break;
+		default:
+			return;
+			break;
+	}
 
 	if( usart_device[id].sem == 0)
 	{
@@ -125,59 +261,96 @@ void usart_open( enum usart_id id, uint32_t frequency)
 	usart_device[id].usart->CR1 |= USART_CR1_UE;
 }
 
-void isr_usart3(void)
+static void isr_usart_generic(enum usart_id id)
 {
 	// affichage de l'erreur
-	if( USART3->SR & USART_SR_FE)
+	if( usart_device[id].usart->SR & USART_SR_FE)
 	{
-		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_FE;
+		usart_device[id].error |= ERR_USART_READ_SR_FE;
 	}
 
-	if( USART3->SR & USART_SR_ORE)
+	if( usart_device[id].usart->SR & USART_SR_ORE)
 	{
-		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_ORE;
+		usart_device[id].error |= ERR_USART_READ_SR_ORE;
 	}
 
-	if( USART3->SR & USART_SR_NE)
+	if( usart_device[id].usart->SR & USART_SR_NE)
 	{
-		usart_device[USART3_FULL_DUPLEX].error |= ERR_USART_READ_SR_NE;
+		usart_device[id].error |= ERR_USART_READ_SR_NE;
 	}
 
-	DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+	// on desactive le DMA de reception
+	usart_device[id].dma_read->CR &= ~DMA_SxCR_EN;
 	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
-	USART3->DR;
+	usart_device[id].usart->DR;
 
 	// pas de xSemaphoreGiveFromISR(usart_device[id].sem) pour attendre le timeout
 	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
+}
+
+void isr_usart2(void)
+{
+	isr_usart_generic(USART2_FULL_DUPLEX);
+}
+
+void isr_usart3(void)
+{
+	isr_usart_generic(USART3_FULL_DUPLEX);
 }
 
 void isr_uart4(void)
 {
-	// affichage de l'erreur
-	if( UART4->SR & USART_SR_FE)
-	{
-		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_FE;
-	}
-
-	if( UART4->SR & USART_SR_ORE)
-	{
-		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_ORE;
-	}
-
-	if( UART4->SR & USART_SR_NE)
-	{
-		usart_device[UART4_HALF_DUPLEX].error |= ERR_USART_READ_SR_NE;
-	}
-
-	DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
-	// lecture de DR pour effacer les flag d'erreurs (fait en hard si on lis SR puis DR)
-	UART4->DR;
-
-	// pas de xSemaphoreGiveFromISR(usart_device[id].sem) pour attendre le timeout
-	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
+	isr_usart_generic(UART4_FULL_DUPLEX);
 }
 
-void isr_dma1_channel2(void)
+void isr_uart5(void)
+{
+	isr_usart_generic(UART5_FULL_DUPLEX);
+}
+
+void isr_usart6(void)
+{
+	isr_usart_generic(USART6_HALF_DUPLEX);
+}
+
+#if 0
+// TODO
+void isr_usart_generic_dma_read(enum usart_id id, uint32_t dma_chan)
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
+	if( DMA1->LISR | DMA_ISR_TCIF3)
+	{
+		DMA1->IFCR |= DMA_IFCR_CTCIF3;
+		usart_device[id].dma_readDMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+		xSemaphoreGiveFromISR(usart_device[id].sem, &xHigherPriorityTaskWoken);
+	}
+/*
+ * 	if( DMA2->LISR | DMA_LISR_TCIF0)
+	{
+		DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
+		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
+		xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
+	}
+ */
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+#endif
+/*
+void isr_dma1_stream0(void)
+void isr_dma1_stream1(void)
+void isr_dma1_stream2(void)
+void isr_dma1_stream3(void)
+void isr_dma1_stream4(void)
+void isr_dma1_stream5(void)
+void isr_dma1_stream6(void)
+void isr_dma1_stream7(void)
+void isr_dma2_stream1(void)
+void isr_dma2_stream6(void)
+
+void isr_dma1_stream2(void)-> TX
 {
 	if( DMA1->ISR | DMA_ISR_TCIF2)
 	{
@@ -186,7 +359,7 @@ void isr_dma1_channel2(void)
 	}
 }
 
-void isr_dma1_channel3(void)
+void isr_dma1_channel3(void) -> RX
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK_FROM_ISR();
@@ -227,19 +400,18 @@ void isr_dma2_channel3(void)
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
-
+*/
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 {
-	usart_device[id].dma_read->CMAR = (uint32_t) buf;
+	usart_device[id].dma_read->M0AR = (uint32_t) buf;
 }
 
 void usart_set_read_dma_size(enum usart_id id, uint16_t size)
 {
 	usart_device[id].error = 0;
 	xSemaphoreTake(usart_device[id].sem, 0); // on met a 0 si ce n'est pas le cas
-	usart_device[id].dma_read->CNDTR = size;
-	// note : DMA_CCR1_EN == DMA_CCRX_EN
-	usart_device[id].dma_read->CCR |= DMA_CCR1_EN;
+	usart_device[id].dma_read->NDTR = size;
+	usart_device[id].dma_read->CR |= DMA_SxCR_EN;
 }
 
 uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
@@ -251,8 +423,7 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 		res |= ERR_USART_TIMEOUT;;
 	}
 
-	// note : DMA_CCR1_EN == DMA_CCRX_EN
-	usart_device[id].dma_read->CCR &= ~DMA_CCR1_EN;
+	usart_device[id].dma_read->CR &= ~DMA_SxCR_EN;
 
 	res |= usart_device[id].error;
 
@@ -261,13 +432,12 @@ uint32_t usart_wait_read(enum usart_id id, portTickType timeout)
 
 void usart_set_write_dma_buffer(enum usart_id id, unsigned char* buf)
 {
-	usart_device[id].dma_write->CMAR = (uint32_t) buf;
+	usart_device[id].dma_write->M0AR = (uint32_t) buf;
 }
 
 void usart_send_dma_buffer(enum usart_id id, uint16_t size)
 {
-	usart_device[id].dma_write->CNDTR = size;
+	usart_device[id].dma_write->NDTR = size;
 	usart_device[id].usart->SR &= ~USART_SR_TC;
-	// note : DMA_CCR1_EN == DMA_CCRX_EN
-	usart_device[id].dma_write->CCR |= DMA_CCR2_EN;
+	usart_device[id].dma_write->CR |= DMA_SxCR_EN;
 }
