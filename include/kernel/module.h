@@ -15,6 +15,9 @@
 
 #include "init.h"
 
+// macro pour optimiser les fonctions d'init en fonction de la taille
+#define __OPTIMIZE_SIZE__ __attribute__((optimize("-Os")))
+
 typedef int (*initcall_t)();
 typedef void (*exitcall_t)();
 

@@ -1,3 +1,4 @@
+#include "kernel/module.h"
 #include "kernel/driver/usart.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
@@ -23,7 +24,7 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 	{ USART6, DMA2_Stream1, DMA2_Stream6, 0, 0},
 };
 
-void usart_set_frequency(enum usart_id id, uint32_t frequency)
+__OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
 	uint32_t pclk;
 	// USART1 et USART6 sur PCLK2
@@ -76,7 +77,7 @@ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 	usart_device[id].usart->BRR = brr;
 }
 
-static void usart_init_pin(GPIO_TypeDef* tx_gpio, uint32_t tx_pin, GPIO_TypeDef* rx_gpio, uint32_t rx_pin, uint32_t gpio_af_type)
+__OPTIMIZE_SIZE__ static void usart_init_pin(GPIO_TypeDef* tx_gpio, uint32_t tx_pin, GPIO_TypeDef* rx_gpio, uint32_t rx_pin, uint32_t gpio_af_type)
 {
 	if( tx_gpio )
 	{
@@ -90,7 +91,7 @@ static void usart_init_pin(GPIO_TypeDef* tx_gpio, uint32_t tx_pin, GPIO_TypeDef*
 	}
 }
 
-void usart_open(enum usart_id id, uint32_t frequency)
+__OPTIMIZE_SIZE__ void usart_open(enum usart_id id, uint32_t frequency)
 {
 	switch(id)
 	{
@@ -313,94 +314,92 @@ void isr_usart6(void)
 	isr_usart_generic(USART6_HALF_DUPLEX);
 }
 
-#if 0
-// TODO
-void isr_usart_generic_dma_read(enum usart_id id, uint32_t dma_chan)
+static void isr_usart_generic_dma_read(enum usart_id id, volatile uint32_t* dma_xISR, volatile uint32_t* dma_xIFCR, uint32_t dma_chan_tcif)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK_FROM_ISR();
 
-	if( DMA1->LISR | DMA_ISR_TCIF3)
+	if( *dma_xISR | dma_chan_tcif)
 	{
-		DMA1->IFCR |= DMA_IFCR_CTCIF3;
-		usart_device[id].dma_readDMA1_Channel3->CCR &= ~DMA_CCR3_EN;
+		*dma_xIFCR |= dma_chan_tcif; // note : DMA_xIFCR_CTCIFx = DMA_xISR_TCIFx
+		usart_device[id].dma_read->CR &= ~DMA_SxCR_EN;
 		xSemaphoreGiveFromISR(usart_device[id].sem, &xHigherPriorityTaskWoken);
 	}
-/*
- * 	if( DMA2->LISR | DMA_LISR_TCIF0)
-	{
-		DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
-		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-		xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
-	}
- */
+
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
-#endif
-/*
+
 void isr_dma1_stream0(void)
+{
+	isr_usart_generic_dma_read(UART5_FULL_DUPLEX, &DMA1->LISR, &DMA1->LIFCR, DMA_LISR_TCIF0);
+}
+
 void isr_dma1_stream1(void)
+{
+	isr_usart_generic_dma_read(USART3_FULL_DUPLEX, &DMA1->LISR, &DMA1->LIFCR, DMA_LISR_TCIF1);
+}
+
 void isr_dma1_stream2(void)
+{
+	isr_usart_generic_dma_read(UART4_FULL_DUPLEX, &DMA1->LISR, &DMA1->LIFCR, DMA_LISR_TCIF2);
+}
+
 void isr_dma1_stream3(void)
+{
+	if( DMA1->LISR | DMA_LISR_TCIF3)
+	{
+		DMA1->LIFCR |= DMA_LIFCR_CTCIF3;
+		DMA1_Stream3->CR &= ~DMA_SxCR_EN;
+	}
+}
+
 void isr_dma1_stream4(void)
+{
+	if( DMA1->HISR | DMA_HISR_TCIF4)
+	{
+		DMA1->HIFCR |= DMA_HIFCR_CTCIF4;
+		DMA1_Stream4->CR &= ~DMA_SxCR_EN;
+	}
+}
+
 void isr_dma1_stream5(void)
-void isr_dma1_stream6(void)
-void isr_dma1_stream7(void)
+{
+	isr_usart_generic_dma_read(USART2_FULL_DUPLEX, &DMA1->HISR, &DMA1->HIFCR, DMA_HISR_TCIF5);
+}
+
 void isr_dma2_stream1(void)
+{
+	isr_usart_generic_dma_read(USART6_HALF_DUPLEX, &DMA2->LISR, &DMA2->LIFCR, DMA_LISR_TCIF1);
+}
+
+void isr_dma1_stream6(void)
+{
+	if( DMA1->HISR | DMA_HISR_TCIF6)
+	{
+		DMA1->HIFCR |= DMA_HIFCR_CTCIF6;
+		DMA1_Stream6->CR &= ~DMA_SxCR_EN;
+	}
+}
+
+void isr_dma1_stream7(void)
+{
+	if( DMA1->HISR | DMA_HISR_TCIF7)
+	{
+		DMA1->HIFCR |= DMA_HIFCR_CTCIF7;
+		DMA1_Stream7->CR &= ~DMA_SxCR_EN;
+	}
+}
+
 void isr_dma2_stream6(void)
-
-void isr_dma1_stream2(void)-> TX
 {
-	if( DMA1->ISR | DMA_ISR_TCIF2)
+	if( DMA2->HISR | DMA_HISR_TCIF6)
 	{
-		DMA1->IFCR |= DMA_IFCR_CTCIF2;
-		DMA1_Channel2->CCR &= ~DMA_CCR2_EN;
+		DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
+		DMA2_Stream6->CR &= ~DMA_SxCR_EN;
 	}
 }
 
-void isr_dma1_channel3(void) -> RX
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( DMA1->ISR | DMA_ISR_TCIF3)
-	{
-		DMA1->IFCR |= DMA_IFCR_CTCIF3;
-		DMA1_Channel3->CCR &= ~DMA_CCR3_EN;
-		xSemaphoreGiveFromISR(usart_device[USART3_FULL_DUPLEX].sem, &xHigherPriorityTaskWoken);
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-
-void isr_dma2_channel5(void)
-{
-	if( DMA2->ISR | DMA_ISR_TCIF5)
-	{
-		DMA2->IFCR |= DMA_IFCR_CTCIF5;
-		DMA2_Channel5->CCR &= ~DMA_CCR5_EN;
-	}
-}
-
-void isr_dma2_channel3(void)
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( DMA2->ISR | DMA_ISR_TCIF3)
-	{
-		DMA2->IFCR |= DMA_IFCR_CTCIF3;
-		DMA2_Channel3->CCR &= ~DMA_CCR3_EN;
-		xSemaphoreGiveFromISR(usart_device[UART4_HALF_DUPLEX].sem, &xHigherPriorityTaskWoken);
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-*/
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf)
 {
 	usart_device[id].dma_read->M0AR = (uint32_t) buf;
