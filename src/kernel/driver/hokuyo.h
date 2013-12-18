@@ -19,8 +19,9 @@ enum hokuyo_id
 {
 	HOKUYO1,
 	HOKUYO2,
-	HOKUYO_MAX
 };
+
+#define HOKUYO_MAX   (HOKUYO2+1)
 
 struct hokuyo_scan
 {

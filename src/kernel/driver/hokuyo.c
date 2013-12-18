@@ -32,22 +32,22 @@
 
 const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
-#if defined( __foo__ )
 const char* hokuyo_hs_cmd = "HS0\n";
-#elif defined( __bar__ )
-const char* hokuyo_hs_cmd = "HS1\n";
-#else
-#error unknown card
-#endif
+//const char* hokuyo_hs_cmd = "HS1\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
 struct hokuyo
 {
 	hokuyo_callback callback;
+	uint32_t usartId;
 };
 
-static struct hokuyo hokuyo[HOKUYO_MAX];
+static struct hokuyo hokuyo[HOKUYO_MAX] =
+{
+		{NULL, UART4_FULL_DUPLEX},
+		{NULL, USART2_FULL_DUPLEX},
+};
 
 static uint8_t hokuyo_read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
 struct hokuyo_scan hokuyo_scan;
@@ -127,14 +127,14 @@ uint32_t hokuyo_init()
 	do
 	{
 		// tentative a la vitesse d'utilisation (hokuyo déjà configuré)
-		usart_open(USART3_FULL_DUPLEX, HOKUYO_SPEED);
-		usart_set_read_dma_buffer(USART3_FULL_DUPLEX, hokuyo_read_dma_buffer);
+		usart_open(hokuyo[0].usartId, HOKUYO_SPEED);
+		usart_set_read_dma_buffer(hokuyo[0].usartId, hokuyo_read_dma_buffer);
 
 		// on vide tout ce qui traine sur la ligne de reception
 		while(err != ERR_USART_TIMEOUT)
 		{
-			usart_set_read_dma_size(USART3_FULL_DUPLEX, HOKUYO_SCAN_BUFFER_SIZE);
-			err = usart_wait_read(USART3_FULL_DUPLEX, ms_to_tick(100));
+			usart_set_read_dma_size(hokuyo[0].usartId, HOKUYO_SCAN_BUFFER_SIZE);
+			err = usart_wait_read(hokuyo[0].usartId, ms_to_tick(100));
 		}
 
 		err = hokuyo_scip2();
@@ -142,7 +142,7 @@ uint32_t hokuyo_init()
 		{
 			// pas de réponse à HOKUYO_SPEED, le hokuyo n'est peut être pas configuré
 			// => on tente à la vitesse de base 19200
-			usart_set_frequency(USART3_FULL_DUPLEX, 19200);
+			usart_set_frequency(hokuyo[0].usartId, 19200);
 
 			err = hokuyo_scip2();
 
@@ -162,7 +162,7 @@ uint32_t hokuyo_init()
 				continue;
 			}
 
-			usart_set_frequency(USART3_FULL_DUPLEX, HOKUYO_SPEED);
+			usart_set_frequency(hokuyo[0].usartId, HOKUYO_SPEED);
 		}
 
 		if(err)
@@ -235,13 +235,7 @@ static void hokuyo_task()
 			hokuyo[0].callback();
 
 			// on envoi les donnees par usb pour le debug
-#if defined( __foo__ )
-			usb_add(USB_HOKUYO_FOO, &hokuyo_scan, sizeof(hokuyo_scan));
-#elif defined( __bar__ )
-			usb_add(USB_HOKUYO_BAR, &hokuyo_scan, sizeof(hokuyo_scan));
-#else
-#error unknown card
-#endif
+			usb_add(USB_HOKUYO_FOO, &hokuyo_scan, sizeof(hokuyo_scan)); // TODO id selon hokuyo
 		}
 	}
 }
@@ -294,11 +288,11 @@ static uint32_t hokuyo_transaction(unsigned char* buf, uint32_t write_size, uint
 {
 	uint32_t err = 0;
 
-	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, buf);
+	usart_set_write_dma_buffer(hokuyo[0].usartId, buf);
 
-	usart_set_read_dma_size(USART3_FULL_DUPLEX, read_size);
-	usart_send_dma_buffer(USART3_FULL_DUPLEX, write_size);
-	err = usart_wait_read(USART3_FULL_DUPLEX, timeout);
+	usart_set_read_dma_size(hokuyo[0].usartId, read_size);
+	usart_send_dma_buffer(hokuyo[0].usartId, write_size);
+	err = usart_wait_read(hokuyo[0].usartId, timeout);
 
 	if(err)
 	{
@@ -461,14 +455,14 @@ end:
 
 void hokuyo_start_scan()
 {
-	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, (unsigned char*)hokuyo_scan_all);
-	usart_set_read_dma_size(USART3_FULL_DUPLEX, HOKUYO_SCAN_BUFFER_SIZE);
-	usart_send_dma_buffer(USART3_FULL_DUPLEX, 13);
+	usart_set_write_dma_buffer(hokuyo[0].usartId, (unsigned char*)hokuyo_scan_all);
+	usart_set_read_dma_size(hokuyo[0].usartId, HOKUYO_SCAN_BUFFER_SIZE);
+	usart_send_dma_buffer(hokuyo[0].usartId, 13);
 }
 
 uint32_t hokuto_wait_decode_scan()
 {
-	uint32_t err = usart_wait_read(USART3_FULL_DUPLEX, ms_to_tick(150));
+	uint32_t err = usart_wait_read(hokuyo[0].usartId, ms_to_tick(150));
 
 	if(err)
 	{
