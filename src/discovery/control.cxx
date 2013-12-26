@@ -8,6 +8,7 @@
 #include "kernel/canopen.h"
 #include "control.h"
 #include "kernel/location/odometry.h"
+#include "kernel/location/location.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/spi.h"
 
@@ -125,7 +126,7 @@ static void control_task(void* arg)
 			float slippageSpeed = 0;
 			loc_npSpeed = odometry2turret(VectPlan(0,0,0), Turret[0], Turret[1], v[0], v[1], &slippageSpeed);
 			loc_pos = loc_pos + CONTROL_DT * loc_to_abs_speed(loc_pos.theta, loc_npSpeed);
-
+			location_set_position(loc_pos); // TODO a virer apres demenagement code ci-dessus dans location_update
 			// recuperation des entrées AN
 			//adc_get(&control_an);
 
@@ -259,6 +260,9 @@ float control_compute_speed(VectPlan cp, VectPlan u, float speed)
 			theta[i] = theta_old + dtheta2;
 			v[i] *= -1;
 		}
+
+		// TODO couplage traction direction
+		//v[i] += rayonRoue * k * w[i]; avec k = 0.25
 
 		Kinematics kinematics = control_kinematics[i];
 		kinematics.setSpeed(v[i], paramDriving, CONTROL_DT);

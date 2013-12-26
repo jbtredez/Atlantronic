@@ -99,7 +99,7 @@ int robot_interface_set_match_time(struct robot_interface* data, uint32_t time);
 
 // ---------- localisation -----------------------------------------------------
 
-int robot_interface_set_position(struct robot_interface* data, float x, float y, float alpha);
+int robot_interface_set_position(struct robot_interface* data, VectPlan pos);
 
 // ---------- gestion control --------------------------------------------------
 

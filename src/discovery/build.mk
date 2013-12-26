@@ -28,6 +28,7 @@ obj-discovery-test += kernel/can_motor.o
 obj-discovery-test += kernel/math/vect_plan.o
 obj-discovery-test += kernel/control/kinematics.o
 obj-discovery-test += kernel/location/odometry.o
+obj-discovery-test += kernel/location/location.o
 obj-discovery-test += discovery/gpio.o
 obj-discovery-test += discovery/control.o
 

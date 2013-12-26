@@ -38,9 +38,9 @@ enum
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
 	SUBGRAPH_TABLE_TEXTURE,
 	SUBGRAPH_TABLE_STATIC_ELM,
-	SUBGRAPH_TABLE_HOKUYO_FOO,
-	SUBGRAPH_TABLE_HOKUYO_BAR,
-	SUBGRAPH_TABLE_HOKUYO_FOO_SEG,
+	SUBGRAPH_TABLE_HOKUYO1,
+	SUBGRAPH_TABLE_HOKUYO2,
+	SUBGRAPH_TABLE_HOKUYO1_SEG,
 	SUBGRAPH_TABLE_POS_CONS,
 	SUBGRAPH_TABLE_POS_MES,
 	SUBGRAPH_TABLE_GRAPH,
@@ -206,17 +206,17 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_TEXTURE, "Texture", 1, 0, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 1, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO, "Hokuyo foo", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_FOO_SEG, "Hokuyo foo - poly", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO_BAR, "Hokuyo bar", 1, 0.5, 0.5, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO1, "Hokuyo 1", 1, 1, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO1_SEG, "Hokuyo 1 - poly", 1, 0, 1, 0);
+	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH, "Graph", 0, 0, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
 
 	graphique_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo foo", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo bar", 1, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo 1", 1, 1, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo 2", 1, 0, 0, 1);
 
 	graphique_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
@@ -668,9 +668,9 @@ void plot_table(struct graphique* graph)
 		glLineWidth(1);
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO_SEG])
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO_SEG]);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
 		for(i = 0; i < robot_interface.detection_dynamic_object_size; i++)
 		{
 			if(robot_interface.detection_dynamic_obj[i].size > 1)
@@ -686,18 +686,18 @@ void plot_table(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_FOO] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_FOO]);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
 		for(i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO_BAR] )
+	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO2] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO_BAR]);
+		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
 		for(i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);

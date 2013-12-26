@@ -6,21 +6,21 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/vect_pos.h"
+#include "kernel/math/vect_plan.h"
 
 struct location_cmd_arg
 {
-	int32_t x;
-	int32_t y;
-	int32_t alpha;
+	float x;
+	float y;
+	float theta;
 };
 
-void location_update();
+//void location_update();
 
-struct kinematics location_get_kinematics();
+//struct kinematics location_get_kinematics();
 
-struct fx_vect_pos location_get_position();
+VectPlan location_get_position();
 
-void location_set_position(int32_t x, int32_t y, int32_t alpha);
+void location_set_position(VectPlan pos);
 
 #endif

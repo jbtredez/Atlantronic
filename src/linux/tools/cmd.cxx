@@ -255,17 +255,15 @@ int cmd_control_print_param(const char* arg)
 
 int cmd_localization_set_position(const char* arg)
 {
-	float x;
-	float y;
-	float alpha;
-	int count = sscanf(arg, "%f %f %f", &x, &y, &alpha);
+	VectPlan pos;
+	int count = sscanf(arg, "%f %f %f", &pos.x, &pos.y, &pos.theta);
 
 	if(count != 3)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_set_position(cmd_robot, x, y, alpha);
+	robot_interface_set_position(cmd_robot, pos);
 
 	return CMD_SUCESS;
 }

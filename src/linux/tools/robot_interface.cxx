@@ -188,10 +188,10 @@ static void* robot_interface_task(void* arg)
 			case USB_ERR:
 				res = robot_interface_process_err(robot, args->com_id, msg, size);
 				break;
-			case USB_HOKUYO_FOO:
+			case USB_HOKUYO1:
 				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO1, msg, size);
 				break;
-			case USB_HOKUYO_BAR:
+			case USB_HOKUYO2:
 				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO2, msg, size);
 				break;
 			case USB_HOKUYO_FOO_SEG:
@@ -816,13 +816,13 @@ int robot_interface_goto_graph(struct robot_interface* data)
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_position(struct robot_interface* data, float x, float y, float alpha)
+int robot_interface_set_position(struct robot_interface* data, VectPlan pos)
 {
 	struct location_cmd_arg cmd_arg;
 
-	cmd_arg.x = x * 65536.0f;
-	cmd_arg.y = y * 65536.0f;
-	cmd_arg.alpha = alpha  * (1 << 26) / (2 * M_PI);
+	cmd_arg.x = pos.x;
+	cmd_arg.y = pos.y;
+	cmd_arg.theta = pos.theta;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_LOCATION_SET_POSITION;

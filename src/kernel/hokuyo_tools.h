@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include "kernel/driver/hokuyo.h"
-#include "kernel/vect_pos.h"
 #include "kernel/math/polyline.h"
 
 void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos);
