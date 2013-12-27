@@ -14,7 +14,7 @@
 
 #define GAP 90 //150
 
-#define HOKUYO_DTHETA         	              (270 * M_PI /(180.0f * 768))
+#define HOKUYO_DTHETA         	              (M_PI / 512.0f)
 #define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
 
 

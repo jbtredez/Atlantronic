@@ -11,6 +11,7 @@ obj-discovery-test += kernel/log.o
 obj-discovery-test += kernel/driver/spi.o
 obj-discovery-test += kernel/driver/usart.o
 obj-discovery-test += kernel/driver/hokuyo.o
+obj-discovery-test += kernel/driver/ax12.o
 obj-discovery-test += kernel/driver/usb/usb.o
 obj-discovery-test += kernel/driver/usb/usb_descriptor.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usb_core.o
@@ -31,5 +32,6 @@ obj-discovery-test += kernel/location/odometry.o
 obj-discovery-test += kernel/location/location.o
 obj-discovery-test += discovery/gpio.o
 obj-discovery-test += discovery/control.o
+obj-discovery-test += kernel/end.o
 
 bin-discovery += test

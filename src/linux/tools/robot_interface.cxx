@@ -11,7 +11,7 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/trajectory.h"
-#include "foo/ax12.h"
+#include "kernel/driver/ax12.h"
 #if 0
 const char* err_description[FAULT_MAX] =
 {

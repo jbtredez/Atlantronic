@@ -78,7 +78,7 @@ static struct ax12_device ax12_device[AX12_MAX_ID-1];
 
 static int ax12_module_init()
 {
-	usart_open(UART4_HALF_DUPLEX, 1000000);
+	usart_open(USART6_HALF_DUPLEX, 1000000);
 
 	portBASE_TYPE err = xTaskCreate(ax12_task, "ax12", AX12_STACK_SIZE, NULL, PRIORITY_TASK_AX12, NULL);
 
@@ -101,8 +101,8 @@ static int ax12_module_init()
 		return ERR_INIT_AX12;
 	}
 
-	usart_set_write_dma_buffer(UART4_HALF_DUPLEX, ax12_write_dma_buffer);
-	usart_set_read_dma_buffer(UART4_HALF_DUPLEX, ax12_read_dma_buffer);
+	usart_set_write_dma_buffer(USART6_HALF_DUPLEX, ax12_write_dma_buffer);
+	usart_set_read_dma_buffer(USART6_HALF_DUPLEX, ax12_read_dma_buffer);
 
 	usb_add_cmd(USB_CMD_AX12, &ax12_cmd);
 
@@ -130,7 +130,7 @@ static void ax12_task(void* arg)
 	{
 		// lecture de la position de l'ax12
 		req.instruction = AX12_INSTRUCTION_READ_DATA;
-		req.arg[0] = AX12_PRESENT_POSITION;
+		req.arg[0] = DYNAMIXEL_PRESENT_POSITION_L;
 		req.arg[1] = 0x02;
 		req.argc = 2;
 		req.id = id + 1;
@@ -147,7 +147,7 @@ static void ax12_task(void* arg)
 			{
 				// on va envoyer la position désirée
 				req.instruction = AX12_INSTRUCTION_WRITE_DATA;
-				req.arg[0] = AX12_GOAL_POSITION;
+				req.arg[0] = DYNAMIXEL_GOAL_POSITION_L;
 				req.arg[1] = (uint8_t) (goal_pos & 0xFF);
 				req.arg[2] = (uint8_t) ((goal_pos >> 8) & 0xFF);
 				req.argc = 3;
@@ -204,10 +204,10 @@ void ax12_send(struct ax12_request *req)
 		}
 	}
 
-	usart_set_read_dma_size(UART4_HALF_DUPLEX, read_size);
-	usart_send_dma_buffer(UART4_HALF_DUPLEX, write_size);
+	usart_set_read_dma_size(USART6_HALF_DUPLEX, read_size);
+	usart_send_dma_buffer(USART6_HALF_DUPLEX, write_size);
 
-	res = usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
+	res = usart_wait_read(USART6_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	if( res )
 	{
 		goto end;
@@ -260,8 +260,8 @@ end:
 	if(res && ! (res & ERR_USART_TIMEOUT) )
 	{
 		// on vide tout ce qui traine dans le buffer de reception
-		usart_set_read_dma_size(UART4_HALF_DUPLEX, sizeof(ax12_read_dma_buffer));
-		usart_wait_read(UART4_HALF_DUPLEX, AX12_READ_TIMEOUT);
+		usart_set_read_dma_size(USART6_HALF_DUPLEX, sizeof(ax12_read_dma_buffer));
+		usart_wait_read(USART6_HALF_DUPLEX, AX12_READ_TIMEOUT);
 	}
 	xSemaphoreGive(ax12_usart_mutex);
 	req->status.error.transmit_error = res;
@@ -446,12 +446,12 @@ static uint8_t ax12_checksum(uint8_t* buffer, uint8_t size)
 
 struct ax12_error ax12_set_led(uint8_t id, uint8_t on)
 {
-	return ax12_write8(id, AX12_LED, on);
+	return ax12_write8(id, DYNAMIXEL_LED, on);
 }
 
 struct ax12_error ax12_set_moving_speed(uint8_t id, uint16_t speed)
 {
-	return ax12_write16(id, AX12_MOVING_SPEED, speed & AX12_MAX_MOVING_SPEED);
+	return ax12_write16(id, DYNAMIXEL_MOVING_SPEED_L, speed & AX12_MAX_MOVING_SPEED);
 }
 
 struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
@@ -512,7 +512,7 @@ struct ax12_error ax12_set_goal_position(uint8_t id, int32_t alpha)
 	else
 	{
 		// envoi simple
-		err = ax12_write16(id, AX12_GOAL_POSITION, (uint16_t) alpha);
+		err = ax12_write16(id, DYNAMIXEL_GOAL_POSITION_L, (uint16_t) alpha);
 	}
 
 	return err;
@@ -525,17 +525,17 @@ struct ax12_error ax12_set_torque_limit(uint8_t id, uint16_t torque_limit)
 		torque_limit = 0x00;
 	}
 
-	return ax12_write16(id, AX12_TORQUE_LIMIT, torque_limit & AX12_MAX_TORQUE_LIMIT);
+	return ax12_write16(id, DYNAMIXEL_TORQUE_LIMIT_L, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 
 struct ax12_error ax12_set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
 {
-	return ax12_write16(id, AX12_TORQUE_LIMIT_EEPROM, torque_limit & AX12_MAX_TORQUE_LIMIT);
+	return ax12_write16(id, DYNAMIXEL_MAX_TORQUE_L, torque_limit & AX12_MAX_TORQUE_LIMIT);
 }
 
 struct ax12_error ax12_set_torque_enable(uint8_t id, uint8_t enable)
 {
-	return ax12_write8(id, AX12_TORQUE_ENABLE, enable & 0x01);
+	return ax12_write8(id, DYNAMIXEL_TORQUE_ENABLE, enable & 0x01);
 }
 
 int32_t ax12_get_position(uint8_t id, struct ax12_error* error)
@@ -552,7 +552,7 @@ int32_t ax12_get_position(uint8_t id, struct ax12_error* error)
 	}
 	else
 	{
-		alpha = ax12_read16(id, AX12_PRESENT_POSITION, error);
+		alpha = ax12_read16(id, DYNAMIXEL_PRESENT_POSITION_L, error);
 	}
 
 	// passage en unité fx
@@ -615,7 +615,7 @@ static void ax12_cmd_set_id(uint8_t old_id, uint8_t id)
 
 	if(id <= 0xfd)
 	{
-		error = ax12_write8(old_id, AX12_ID, id);
+		error = ax12_write8(old_id, DYNAMIXEL_ID, id);
 		if( error.transmit_error)
 		{
 			log(LOG_ERROR, "erreur de transmission");

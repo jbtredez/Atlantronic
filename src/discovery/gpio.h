@@ -12,6 +12,9 @@
 #define LED_RED      0x4000
 #define LED_BLUE     0x8000
 
+#define COLOR_RED         0
+#define COLOR_BLUE        1
+
 enum gpio_mode
 {
 	GPIO_MODE_IN   = 0x00,
@@ -125,5 +128,31 @@ static inline void gpio_reset_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 {
 	GPIOx->BSRRH = 1 << pin;
 };
+
+static inline uint32_t getcolor()
+{
+	extern volatile uint32_t color;
+	return color;
+}
+
+static inline uint8_t getGo()
+{
+	extern volatile uint8_t gpio_go;
+	return gpio_go;
+}
+
+static inline uint8_t getRecalage()
+{
+	extern volatile uint8_t gpio_recaler;
+	return gpio_recaler;
+}
+
+static inline void resetRecalage()
+{
+	extern volatile uint8_t gpio_recaler;
+	gpio_recaler = 0;
+}
+
+void gpio_wait_go();
 
 #endif
