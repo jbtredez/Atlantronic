@@ -26,7 +26,7 @@
 #define MOTOR_STEERING2_RED         (4.375f*MOTOR_RED)
 #define MOTOR_STEERING3_RED         (4.375f*MOTOR_RED)
 
-#define ENCODER_RESOLUTION         3000
+#define MOTOR_ENCODER_RESOLUTION         3000
 
 const struct canopen_configuration can_motor_driving_configuration[] =
 {
@@ -56,37 +56,37 @@ int can_motor_module_init()
 	can_motor[0].static_conf = can_motor_driving_configuration;
 	can_motor[0].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[0].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
-	can_motor[0].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
+	can_motor[0].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
 
 	can_motor[1].nodeid = CAN_MOTOR_STEERING1_NODEID;
 	can_motor[1].static_conf = can_motor_steering_configuration;
 	can_motor[1].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[1].inputGain = 60 * MOTOR_STEERING1_RED / (float)(2 * M_PI);
-	can_motor[1].outputGain = 2 * M_PI / (float)(MOTOR_STEERING1_RED * ENCODER_RESOLUTION);
+	can_motor[1].outputGain = 2 * M_PI / (float)(MOTOR_STEERING1_RED * MOTOR_ENCODER_RESOLUTION);
 
 	can_motor[2].nodeid = CAN_MOTOR_DRIVING2_NODEID;
 	can_motor[2].static_conf = can_motor_driving_configuration;
 	can_motor[2].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[2].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
-	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * ENCODER_RESOLUTION);
+	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * MOTOR_ENCODER_RESOLUTION);
 
 	can_motor[3].nodeid = CAN_MOTOR_STEERING2_NODEID;
 	can_motor[3].static_conf = can_motor_steering_configuration;
 	can_motor[3].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[3].inputGain = 60 * MOTOR_STEERING2_RED / (float)(2 * M_PI);
-	can_motor[3].outputGain = 2 * M_PI / (float)(MOTOR_STEERING2_RED * ENCODER_RESOLUTION);
+	can_motor[3].outputGain = 2 * M_PI / (float)(MOTOR_STEERING2_RED * MOTOR_ENCODER_RESOLUTION);
 
 	can_motor[4].nodeid = CAN_MOTOR_DRIVING3_NODEID;
 	can_motor[4].static_conf = can_motor_driving_configuration;
 	can_motor[4].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[4].inputGain = 60 * MOTOR_DRIVING3_RED / (float)(2 * M_PI * DRIVING3_WHEEL_RADIUS);
-	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(MOTOR_DRIVING3_RED * ENCODER_RESOLUTION);
+	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(MOTOR_DRIVING3_RED * MOTOR_ENCODER_RESOLUTION);
 
 	can_motor[5].nodeid = CAN_MOTOR_STEERING3_NODEID;
 	can_motor[5].static_conf = can_motor_steering_configuration;
 	can_motor[5].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[5].inputGain = 60 * MOTOR_STEERING3_RED / (float)(2 * M_PI);
-	can_motor[5].outputGain = 2 * M_PI / (float)(MOTOR_STEERING3_RED * ENCODER_RESOLUTION);
+	can_motor[5].outputGain = 2 * M_PI / (float)(MOTOR_STEERING3_RED * MOTOR_ENCODER_RESOLUTION);
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -219,6 +219,27 @@ void CanMotor::set_speed(float v)
 int CanMotor::wait_update(portTickType timeout)
 {
 	int res = 0;
+
+	if( xSemaphoreTake(sem, timeout) == pdFALSE )
+	{
+		res = -1;
+	}
+
+	return res;
+}
+
+//! attente de la mise a jour du moteur
+//! @return 0 si c'est bon -1 si timeout
+int CanMotor::wait_update_until(portTickType t)
+{
+	int res = 0;
+
+	systime currentTime = systick_get_time();
+	int timeout = t - currentTime.ms;
+	if( timeout < 0)
+	{
+		timeout = 0;
+	}
 
 	if( xSemaphoreTake(sem, timeout) == pdFALSE )
 	{

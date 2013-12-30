@@ -74,14 +74,18 @@ static void control_task(void* arg)
 	(void) arg;
 	//systime t1;
 	//systime t2;
+	//systime dt;
 	int res;
 
 	uint32_t wake_time = 0;
 
 	while(1)
 	{
+		int motor_update_max_abstime = wake_time + 2;
+
 		//log(LOG_INFO, "sync");
 		//t1 = systick_get_time();
+
 		// TODO regarder l'ensemble des moteurs
 		if((can_motor[CAN_MOTOR_DRIVING1].status_word & 0x6f) != 0x27)
 		{
@@ -95,13 +99,13 @@ static void control_task(void* arg)
 		can_motor[CAN_MOTOR_STEERING2].wait_update(0);
 		can_motor[CAN_MOTOR_STEERING3].wait_update(0);
 		canopen_sync();
-		// TODO gestion des tempos avec tempo de 2ms pour l'ensemble des 6 moteurs
-		res = can_motor[CAN_MOTOR_DRIVING1].wait_update(2);
-		res += can_motor[CAN_MOTOR_DRIVING2].wait_update(2);
-		res += can_motor[CAN_MOTOR_DRIVING3].wait_update(2);
-		res += can_motor[CAN_MOTOR_STEERING1].wait_update(2);
-		res += can_motor[CAN_MOTOR_STEERING2].wait_update(2);
-		res += can_motor[CAN_MOTOR_STEERING3].wait_update(2);
+
+		res = can_motor[CAN_MOTOR_DRIVING1].wait_update_until(motor_update_max_abstime);
+		res += can_motor[CAN_MOTOR_DRIVING2].wait_update_until(motor_update_max_abstime);
+		res += can_motor[CAN_MOTOR_DRIVING3].wait_update_until(motor_update_max_abstime);
+		res += can_motor[CAN_MOTOR_STEERING1].wait_update_until(motor_update_max_abstime);
+		res += can_motor[CAN_MOTOR_STEERING2].wait_update_until(motor_update_max_abstime);
+		res += can_motor[CAN_MOTOR_STEERING3].wait_update_until(motor_update_max_abstime);
 
 		xSemaphoreTake(control_mutex, portMAX_DELAY);
 
@@ -131,12 +135,7 @@ static void control_task(void* arg)
 			//adc_get(&control_an);
 
 			control_compute();
-
-			//t2 = systick_get_time();
-			//systime dt = t2 - t1;
-			//log_format(LOG_INFO, "dt %d us", (int)(dt.ms*1000 + dt.ns/1000));
 		}
-
 wait:
 		control_usb_data.current_time = systick_get_time();
 		control_usb_data.control_state = control_state;
@@ -160,6 +159,10 @@ wait:
 		xSemaphoreGive(control_mutex);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+
+		//t2 = systick_get_time();
+		//dt = t2 - t1;
+		//log_format(LOG_INFO, "dt %d us", (int)(dt.ms*1000 + dt.ns/1000));
 
 		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}

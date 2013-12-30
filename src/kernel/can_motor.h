@@ -38,6 +38,7 @@ class CanMotor : public CanopenNode
 		virtual void rx_pdo(struct can_msg *msg, int type);
 		void set_speed(float v);
 		int wait_update(portTickType timeout);
+		int wait_update_until(portTickType t);
 
 	protected:
 		xSemaphoreHandle sem;
