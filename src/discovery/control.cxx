@@ -7,28 +7,19 @@
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
 #include "control.h"
-#include "kernel/location/odometry.h"
 #include "kernel/location/location.h"
+#include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/spi.h"
 
 #define CONTROL_STACK_SIZE       350
 
-VectPlan Turret[3] =
-{
-	VectPlan(   0,  155, 0),
-	VectPlan(   0, -155, 0),
-	VectPlan(-175,    0, 0)
-};
-
-VectPlan loc_pos; // TODO
-VectPlan loc_npSpeed; // TODO
+VectPlan loc_pos;
 
 static enum control_state control_state;
 static enum control_status control_status;
 static Kinematics control_kinematics[6];
-static KinematicsParameters paramDriving = {1500, 1000, 1500};
-static KinematicsParameters paramSteering = {1.5, 1.5, 1.5};
+static Kinematics control_kinematics_mes[6];
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
@@ -40,7 +31,6 @@ static VectPlan control_cp_cmd;
 
 static void control_task(void* arg);
 static void control_compute();
-static float control_compute_speed(VectPlan cp, VectPlan u, float speed);
 static void control_compute_trajectory();
 
 // interface usb
@@ -75,7 +65,8 @@ static void control_task(void* arg)
 	//systime t1;
 	//systime t2;
 	//systime dt;
-	int res;
+	int motorKo;
+	int i = 0;
 
 	uint32_t wake_time = 0;
 
@@ -86,51 +77,39 @@ static void control_task(void* arg)
 		//log(LOG_INFO, "sync");
 		//t1 = systick_get_time();
 
-		// TODO regarder l'ensemble des moteurs
-		if((can_motor[CAN_MOTOR_DRIVING1].status_word & 0x6f) != 0x27)
+		for(i = 0; i < CAN_MOTOR_MAX; i++)
 		{
-			goto wait;
+			if((can_motor[i].status_word & 0x6f) != 0x27)
+			{
+				goto wait;
+			}
+			can_motor[i].wait_update(0);
 		}
 
-		can_motor[CAN_MOTOR_DRIVING1].wait_update(0);
-		can_motor[CAN_MOTOR_DRIVING2].wait_update(0);
-		can_motor[CAN_MOTOR_DRIVING3].wait_update(0);
-		can_motor[CAN_MOTOR_STEERING1].wait_update(0);
-		can_motor[CAN_MOTOR_STEERING2].wait_update(0);
-		can_motor[CAN_MOTOR_STEERING3].wait_update(0);
 		canopen_sync();
 
-		res = can_motor[CAN_MOTOR_DRIVING1].wait_update_until(motor_update_max_abstime);
-		res += can_motor[CAN_MOTOR_DRIVING2].wait_update_until(motor_update_max_abstime);
-		res += can_motor[CAN_MOTOR_DRIVING3].wait_update_until(motor_update_max_abstime);
-		res += can_motor[CAN_MOTOR_STEERING1].wait_update_until(motor_update_max_abstime);
-		res += can_motor[CAN_MOTOR_STEERING2].wait_update_until(motor_update_max_abstime);
-		res += can_motor[CAN_MOTOR_STEERING3].wait_update_until(motor_update_max_abstime);
+		motorKo = 0;
+		for(i = 0; i < CAN_MOTOR_MAX; i++)
+		{
+			int res = can_motor[i].wait_update_until(motor_update_max_abstime);
+			if( res )
+			{
+				// TODO defaut, moteur ne repond pas
+				motorKo++;
+
+			}
+			control_kinematics_mes[i] = can_motor[i].kinematics;
+		}
 
 		xSemaphoreTake(control_mutex, portMAX_DELAY);
 
-		if( ! res )
+		if( ! motorKo )
 		{
 			// mise à jour de la position
-			//location_update();
-			// TODO mettre odometrie au bon endroit
-			float phi1 = can_motor[CAN_MOTOR_STEERING1].position;
-			float phi2 = can_motor[CAN_MOTOR_STEERING2].position;
-			float phi3 = can_motor[CAN_MOTOR_STEERING3].position;
+			location_update(control_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
 
-			//log_format(LOG_INFO, "%d %d %d", (int)(phi1 * 180 / M_PI), (int)(phi2 * 180 / M_PI), (int)(phi3 * 180 / M_PI));
-			VectPlan v[3];
-			v[0].x = can_motor[CAN_MOTOR_DRIVING1].speed * cosf(phi1);
-			v[0].y = can_motor[CAN_MOTOR_DRIVING1].speed * sinf(phi1);
-			v[1].x = can_motor[CAN_MOTOR_DRIVING2].speed * cosf(phi2);
-			v[1].y = can_motor[CAN_MOTOR_DRIVING2].speed * sinf(phi2);
-			v[2].x = can_motor[CAN_MOTOR_DRIVING3].speed * cosf(phi3);
-			v[2].y = can_motor[CAN_MOTOR_DRIVING3].speed * sinf(phi3);
+			loc_pos = location_get_position();
 
-			float slippageSpeed = 0;
-			loc_npSpeed = odometry2turret(VectPlan(0,0,0), Turret[0], Turret[1], v[0], v[1], &slippageSpeed);
-			loc_pos = loc_pos + CONTROL_DT * loc_to_abs_speed(loc_pos.theta, loc_npSpeed);
-			location_set_position(loc_pos); // TODO a virer apres demenagement code ci-dessus dans location_update
 			// recuperation des entrées AN
 			//adc_get(&control_an);
 
@@ -215,93 +194,6 @@ static void control_compute()
 	can_motor[CAN_MOTOR_STEERING3].set_speed(control_kinematics[5].v);
 }
 
-//!< calcul des consignes au niveau des moteurs avec saturations
-//!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float control_compute_speed(VectPlan cp, VectPlan u, float speed)
-{
-	float kmin = 1;
-	float theta[3];
-	float v[3];
-	float w[3];
-
-	// saturation liee a la traction
-	for(int i = 0; i < 3; i++)
-	{
-		VectPlan vOnTurret = transferSpeed(cp, Turret[i], u);
-		float n2 = vOnTurret.norm2();
-		v[i] = speed * sqrtf(n2);
-		theta[i] = atan2f(vOnTurret.y, vOnTurret.x);
-		float theta_old = control_kinematics[i+3].pos;
-
-		// on minimise la rotation des roues
-		float dtheta1 = fmodf(theta[i] - theta_old, 2*M_PI);
-		if( dtheta1 > M_PI)
-		{
-			dtheta1 -= 2*M_PI;
-		}
-		else if(dtheta1 < -M_PI)
-		{
-			dtheta1 += 2*M_PI;
-		}
-
-		float dtheta2 = fmodf(theta[i] + M_PI - theta_old, 2*M_PI);
-		if( dtheta2 > M_PI)
-		{
-			dtheta2 -= 2*M_PI;
-		}
-		else if(dtheta2 < -M_PI)
-		{
-			dtheta2 += 2*M_PI;
-		}
-
-		if( fabsf(dtheta1) < fabsf(dtheta2) )
-		{
-			theta[i] = theta_old + dtheta1;
-		}
-		else
-		{
-			theta[i] = theta_old + dtheta2;
-			v[i] *= -1;
-		}
-
-		// TODO couplage traction direction
-		//v[i] += rayonRoue * k * w[i]; avec k = 0.25
-
-		Kinematics kinematics = control_kinematics[i];
-		kinematics.setSpeed(v[i], paramDriving, CONTROL_DT);
-		if( fabsf(v[i]) > EPSILON)
-		{
-			float k = fabsf(kinematics.v / v[i]);
-			if( k < kmin )
-			{
-				kmin = k;
-			}
-		}
-
-		w[i] = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
-		// TODO gestion saturation rotation tourelle ko
-		/*kinematics = control_kinematics[i+3];
-		kinematics.setPosition(theta[i], w[i], paramSteering, CONTROL_DT);
-		if( fabsf(w[i]) > EPSILON)
-		{
-			float k = fabsf(kinematics.v / w[i]);
-			if( k < kmin )
-			{
-				kmin = k;
-			}
-		}*/
-	}
-
-	for(int i = 0; i < 3; i++)
-	{
-		control_kinematics[i].setSpeed(v[i] * kmin, paramDriving, CONTROL_DT);
-		control_kinematics[i+3].setPosition(theta[i], w[i] * kmin, paramSteering, CONTROL_DT);
-	}
-	//log_format(LOG_INFO, "v %d %d %d", (int)(1000*control_kinematics[0].v), (int)(1000*control_kinematics[1].v), (int)(1000*control_kinematics[2].v));
-
-	return kmin;
-}
-
 void control_compute_trajectory()
 {
 	Kinematics kinematics = control_curvilinearKinematics;
@@ -312,7 +204,7 @@ void control_compute_trajectory()
 
 	VectPlan u_loc = abs_to_loc_speed(loc_pos.theta, control_u);
 
-	float k = control_compute_speed(control_cp, u_loc, kinematics.v);
+	float k = geometric_model_compute_actuator_cmd(control_cp, u_loc, kinematics.v, CONTROL_DT, control_kinematics);
 	control_curvilinearKinematics.v = k * kinematics.v;
 	control_curvilinearKinematics.pos += control_curvilinearKinematics.v * CONTROL_DT;
 

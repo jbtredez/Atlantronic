@@ -48,7 +48,7 @@ const struct canopen_configuration can_motor_steering_configuration[] =
 	{0x6084, 0, 4, 500},             // deceleration
 };
 
-CanMotor can_motor[6];
+CanMotor can_motor[CAN_MOTOR_MAX];
 
 int can_motor_module_init()
 {
@@ -135,6 +135,9 @@ CanMotor::CanMotor()
 	xSemaphoreTake(sem, 0);
 	inputGain = 1;
 	outputGain = 1;
+	kinematics.pos = 0;
+	kinematics.v = 0;
+	kinematics.a = 0;
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
@@ -143,11 +146,14 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 	{
 		uint32_t pos;
 		memcpy(&pos, msg->data, 4);
-		speed = ((int)(pos - raw_position)) * 1000 * outputGain / msg->data[6];
+		float dt = msg->data[6] / 1000.0f;
+		float v = ((int)(pos - raw_position)) * outputGain / dt;
 		raw_position = pos;
 		current = msg->data[4] + (msg->data[5] << 8);
 
-		position = ((int32_t)raw_position) * outputGain;
+		kinematics.a = (v - kinematics.v) / dt;
+		kinematics.v = v;
+		kinematics.pos = ((int32_t)raw_position) * outputGain;
 		xSemaphoreGive(sem);
 	}
 	else if( type == CANOPEN_RX_PDO1 )

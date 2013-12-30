@@ -7,6 +7,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
+#include "kernel/control/kinematics.h"
 
 enum
 {
@@ -16,6 +17,7 @@ enum
 	CAN_MOTOR_STEERING2,
 	CAN_MOTOR_DRIVING3,
 	CAN_MOTOR_STEERING3,
+	CAN_MOTOR_MAX,
 };
 
 class CanMotor : public CanopenNode
@@ -28,8 +30,7 @@ class CanMotor : public CanopenNode
 		uint32_t raw_position; //!< position brute (en increments encodeurs)
 		uint16_t current;
 
-		float position;
-		float speed;
+		Kinematics kinematics;
 
 		//systime date;
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
@@ -44,6 +45,6 @@ class CanMotor : public CanopenNode
 		xSemaphoreHandle sem;
 };
 
-extern CanMotor can_motor[6];
+extern CanMotor can_motor[CAN_MOTOR_MAX];
 
 #endif

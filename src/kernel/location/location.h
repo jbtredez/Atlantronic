@@ -7,19 +7,13 @@
 
 #include <stdint.h>
 #include "kernel/math/vect_plan.h"
+#include "kernel/control/kinematics.h"
 
-struct location_cmd_arg
-{
-	float x;
-	float y;
-	float theta;
-};
-
-//void location_update();
-
-//struct kinematics location_get_kinematics();
+void location_update(Kinematics* kinematics_mes, int motorNum, float dt);
 
 VectPlan location_get_position();
+
+VectPlan location_get_speed();
 
 void location_set_position(VectPlan pos);
 

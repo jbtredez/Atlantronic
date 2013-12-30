@@ -40,7 +40,7 @@ class VectPlan
 		float x;          //!< coordonnée selon l'axe x en mm
 		float y;          //!< coordonnée selon l'axe y en mm
 		float theta;      //!< orientation en rd
-};
+}__attribute__((packed));
 
 inline VectPlan operator+(VectPlan a, VectPlan b)
 {

@@ -818,15 +818,9 @@ int robot_interface_goto_graph(struct robot_interface* data)
 
 int robot_interface_set_position(struct robot_interface* data, VectPlan pos)
 {
-	struct location_cmd_arg cmd_arg;
-
-	cmd_arg.x = pos.x;
-	cmd_arg.y = pos.y;
-	cmd_arg.theta = pos.theta;
-
-	char buffer[1+sizeof(cmd_arg)];
+	char buffer[1+sizeof(pos)];
 	buffer[0] = USB_CMD_LOCATION_SET_POSITION;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+	memcpy(buffer+1, &pos, sizeof(pos));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
 }
