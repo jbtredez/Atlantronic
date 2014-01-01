@@ -6,13 +6,20 @@
 
 #define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
 
-#define CAN_MOTOR_CMD_DI   0x08      //!< disable
-#define CAN_MOTOR_CMD_EN   0x0f      //!< enable
-#define CAN_MOTOR_CMD_M    0x3c      //!< debut du mouvement
-#define CAN_MOTOR_CMD_LCC  0x80      //!< limitation courant continu
-#define CAN_MOTOR_CMD_LPC  0x81      //!< limitation courant max
-#define CAN_MOTOR_CMD_V    0x93      //!< commande de vitesse
-#define CAN_MOTOR_CMD_LA   0xb4      //!< commande de position
+#define CAN_MOTOR_CMD_DI       0x08    //!< disable
+#define CAN_MOTOR_CMD_EN       0x0f    //!< enable
+#define CAN_MOTOR_CMD_GOHOSEQ  0x2f    //!< lancement homing
+#define CAN_MOTOR_CMD_M        0x3c    //!< debut du mouvement
+#define CAN_MOTOR_CMD_HOSP     0x78    //!< vitesse du homing
+#define CAN_MOTOR_CMD_HP       0x79    //!< hard polarity   // TODO : dans la conf, SDO sur 0x2310:5 ?
+#define CAN_MOTOR_CMD_LCC      0x80    //!< limitation courant continu
+#define CAN_MOTOR_CMD_LPC      0x81    //!< limitation courant max
+#define CAN_MOTOR_CMD_SHA      0x8a    //!< mise a 0 de la position encodeur lors de la detection du switch (homing)
+#define CAN_MOTOR_CMD_SHL      0x90    //!< arret du moteur lors de la detection du switch (homing)
+#define CAN_MOTOR_CMD_V        0x93    //!< commande de vitesse
+#define CAN_MOTOR_CMD_SHN      0x9a    //!< notification (via status word) lors de la detection du switch (homing) // TODO dans la conf sdo sur 0x2310:4 ?
+#define CAN_MOTOR_CMD_LA       0xb4    //!< commande de position
+
 
 #define DRIVING1_WHEEL_RADIUS       33
 #define DRIVING2_WHEEL_RADIUS       33
@@ -57,36 +64,42 @@ int can_motor_module_init()
 	can_motor[0].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[0].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
 	can_motor[0].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
+	can_motor[0].name = "driving 1";
 
 	can_motor[1].nodeid = CAN_MOTOR_STEERING1_NODEID;
 	can_motor[1].static_conf = can_motor_steering_configuration;
 	can_motor[1].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[1].inputGain = 60 * MOTOR_STEERING1_RED / (float)(2 * M_PI);
 	can_motor[1].outputGain = 2 * M_PI / (float)(MOTOR_STEERING1_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[1].name = "steering 1";
 
 	can_motor[2].nodeid = CAN_MOTOR_DRIVING2_NODEID;
 	can_motor[2].static_conf = can_motor_driving_configuration;
 	can_motor[2].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[2].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
 	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[2].name = "driving 2";
 
 	can_motor[3].nodeid = CAN_MOTOR_STEERING2_NODEID;
 	can_motor[3].static_conf = can_motor_steering_configuration;
 	can_motor[3].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[3].inputGain = 60 * MOTOR_STEERING2_RED / (float)(2 * M_PI);
 	can_motor[3].outputGain = 2 * M_PI / (float)(MOTOR_STEERING2_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[3].name = "steering 2";
 
 	can_motor[4].nodeid = CAN_MOTOR_DRIVING3_NODEID;
 	can_motor[4].static_conf = can_motor_driving_configuration;
 	can_motor[4].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[4].inputGain = 60 * MOTOR_DRIVING3_RED / (float)(2 * M_PI * DRIVING3_WHEEL_RADIUS);
 	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(MOTOR_DRIVING3_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[4].name = "driving 3";
 
 	can_motor[5].nodeid = CAN_MOTOR_STEERING3_NODEID;
 	can_motor[5].static_conf = can_motor_steering_configuration;
 	can_motor[5].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[5].inputGain = 60 * MOTOR_STEERING3_RED / (float)(2 * M_PI);
 	can_motor[5].outputGain = 2 * M_PI / (float)(MOTOR_STEERING3_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[5].name = "steering 3";
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -138,6 +151,7 @@ CanMotor::CanMotor()
 	kinematics.pos = 0;
 	kinematics.v = 0;
 	kinematics.a = 0;
+	homingStatus = CAN_MOTOR_HOMING_NONE;
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
@@ -162,7 +176,7 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 
 		// le status word a change
 		// gestion machine a etat du moteur
-		if( (status_word & 0x6f) == 0x27 )
+		if( is_op_enable() )
 		{
 			// etat op enable
 			// rien a faire, on souhaite y rester
@@ -211,6 +225,14 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 			// rien a faire, on va passer en fault automatiquement
 //		}
 
+		if( status_word & 0x4000 )
+		{
+			if( homingStatus != CAN_MOTOR_HOMING_DONE)
+			{
+				log_format(LOG_INFO, "homing end %s", name);
+				homingStatus = CAN_MOTOR_HOMING_DONE;
+			}
+		}
 	}
 }
 
@@ -218,6 +240,23 @@ void CanMotor::set_speed(float v)
 {
 	int32_t speed = v * inputGain;
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_V, speed);
+}
+
+void CanMotor::start_homing(float v)
+{
+	int32_t speed = v * inputGain;
+
+	homingStatus = CAN_MOTOR_HOMING_RUNNING;
+
+	log_format(LOG_INFO, "start homing %s", name);
+
+	// utilisation de l'entree AN (TODO passer en 5V TTL), front descendant
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HP, 0); // polarite : front descendant
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHL, 0x01); // arret moteur sur front descendant pin AN
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHA, 0x01); // notifier dans status word sur front descendant pin AN
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHN, 0x01); // mise a 0 de l'encodeur sur front descendant pin AN
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HOSP, speed); // mise a 0 de l'encodeur sur front descendant pin AN
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_GOHOSEQ, speed); // lancement homing
 }
 
 //! attente de la mise a jour du moteur

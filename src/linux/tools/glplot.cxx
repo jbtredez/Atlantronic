@@ -713,7 +713,7 @@ void plot_table(struct graphique* graph)
 		{
 			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
 			{
-				draw_plus(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, plus_dx, plus_dy);
+				draw_plus(robot_interface.control_usb_data[i].cons.x, robot_interface.control_usb_data[i].cons.y, plus_dx, plus_dy);
 			}
 		}
 	}
@@ -723,7 +723,7 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(i=0; i < max; i++)
 		{
-			draw_plus(robot_interface.control_usb_data[i].pos_x, robot_interface.control_usb_data[i].pos_y, plus_dx, plus_dy);
+			draw_plus(robot_interface.control_usb_data[i].pos.x, robot_interface.control_usb_data[i].pos.y, plus_dx, plus_dy);
 		}
 	}
 
@@ -767,13 +767,11 @@ void plot_table(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
 		glColor3f(0, 0, 0);
-		float x_robot = robot_interface.control_usb_data[max-1].pos_x;
-		float y_robot = robot_interface.control_usb_data[max-1].pos_y;
-		float alpha_robot = robot_interface.control_usb_data[max-1].pos_theta * 360.0f / (2*M_PI); // en degrés
+		VectPlan pos_robot = robot_interface.control_usb_data[max-1].pos;
 
 		glPushMatrix();
-		glTranslatef(x_robot, y_robot, 0);
-		glRotatef(alpha_robot, 0, 0, 1);
+		glTranslatef(pos_robot.x, pos_robot.y, 0);
+		glRotatef(pos_robot.theta * 180 / M_PI, 0, 0, 1);
 		glBegin(GL_LINES);
 		glVertex2f(0, 0);
 		glVertex2f(50, 0);
@@ -860,10 +858,10 @@ void plot_speed_dist(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_CONS]);
-		VectPlan old_cons(robot_interface.control_usb_data[0].cons_x, robot_interface.control_usb_data[0].cons_y, robot_interface.control_usb_data[0].cons_theta);
+		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			VectPlan cons(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, robot_interface.control_usb_data[i].cons_theta);
+			VectPlan cons = robot_interface.control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
 			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_cons = cons;
@@ -873,10 +871,10 @@ void plot_speed_dist(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_CONS]);
-		VectPlan old_cons(robot_interface.control_usb_data[0].cons_x, robot_interface.control_usb_data[0].cons_y, robot_interface.control_usb_data[0].cons_theta);
+		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			VectPlan cons(robot_interface.control_usb_data[i].cons_x, robot_interface.control_usb_data[i].cons_y, robot_interface.control_usb_data[i].cons_theta);
+			VectPlan cons = robot_interface.control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
 			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_cons = cons;
@@ -886,10 +884,10 @@ void plot_speed_dist(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
-		VectPlan old_pos(robot_interface.control_usb_data[0].pos_x, robot_interface.control_usb_data[0].pos_y, robot_interface.control_usb_data[0].pos_theta);
+		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			VectPlan pos(robot_interface.control_usb_data[i].pos_x, robot_interface.control_usb_data[i].pos_y, robot_interface.control_usb_data[i].pos_theta);
+			VectPlan pos = robot_interface.control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
 			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_pos = pos;
@@ -899,10 +897,10 @@ void plot_speed_dist(struct graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_MES]);
-		VectPlan old_pos(robot_interface.control_usb_data[0].pos_x, robot_interface.control_usb_data[0].pos_y, robot_interface.control_usb_data[0].pos_theta);
+		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			VectPlan pos(robot_interface.control_usb_data[i].pos_x, robot_interface.control_usb_data[i].pos_y, robot_interface.control_usb_data[i].pos_theta);
+			VectPlan pos = robot_interface.control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
 			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_pos = pos;
@@ -1066,8 +1064,8 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		}
 		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
 		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos  %6.0f %6.0f %6.2f",
-				robot_interface.control_usb_data[id].pos_x, robot_interface.control_usb_data[id].pos_y,
-				robot_interface.control_usb_data[id].pos_theta * 180 / M_PI);
+				robot_interface.control_usb_data[id].pos.x, robot_interface.control_usb_data[id].pos.y,
+				robot_interface.control_usb_data[id].pos.theta * 180 / M_PI);
 		glPrintf(1600, -6*font_digit_height * graph->ratio_y, font_base, "mot  %6.0f %6.0f %6.0f",
 				robot_interface.control_usb_data[id].cons_v1,
 				robot_interface.control_usb_data[id].cons_v2,

@@ -65,12 +65,8 @@ struct control_usb_data
 {
 	struct systime current_time;
 	int32_t control_state;
-	float cons_x;
-	float cons_y;
-	float cons_theta;
-	float pos_x;
-	float pos_y;
-	float pos_theta;
+	VectPlan cons;
+	VectPlan pos;
 	float pos_theta_gyro;
 	float cons_v1;
 	float cons_v2;

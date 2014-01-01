@@ -65,7 +65,7 @@ static void control_task(void* arg)
 	//systime t1;
 	//systime t2;
 	//systime dt;
-	int motorKo;
+	int motorNotReady;
 	int i = 0;
 
 	uint32_t wake_time = 0;
@@ -73,57 +73,77 @@ static void control_task(void* arg)
 	while(1)
 	{
 		int motor_update_max_abstime = wake_time + 2;
+		motorNotReady = 0;
 
 		//log(LOG_INFO, "sync");
 		//t1 = systick_get_time();
 
 		for(i = 0; i < CAN_MOTOR_MAX; i++)
 		{
-			if((can_motor[i].status_word & 0x6f) != 0x27)
-			{
-				goto wait;
-			}
 			can_motor[i].wait_update(0);
 		}
 
 		canopen_sync();
 
-		motorKo = 0;
 		for(i = 0; i < CAN_MOTOR_MAX; i++)
 		{
 			int res = can_motor[i].wait_update_until(motor_update_max_abstime);
 			if( res )
 			{
 				// TODO defaut, moteur ne repond pas
-				motorKo++;
+				motorNotReady = 1;
 
+			}
+			else if( ! can_motor[i].is_op_enable() )
+			{
+				// TODO defaut, moteur pas op_enable
+				motorNotReady = 1;
 			}
 			control_kinematics_mes[i] = can_motor[i].kinematics;
 		}
 
+		// homing
+		if( ! motorNotReady )
+		{
+			for(int i = 0; i < 3; i++)
+			{
+				switch(can_motor[2*i+1].homingStatus)
+				{
+					case CAN_MOTOR_HOMING_NONE:
+						can_motor[2*i+1].start_homing(10);
+						break;
+					case CAN_MOTOR_HOMING_RUNNING:
+						motorNotReady = 1;
+						break;
+					default:
+					case CAN_MOTOR_HOMING_DONE:
+						break;
+				}
+			}
+		}
+
 		xSemaphoreTake(control_mutex, portMAX_DELAY);
 
-		if( ! motorKo )
+		if( ! motorNotReady )
 		{
 			// mise à jour de la position
 			location_update(control_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
+		}
 
-			loc_pos = location_get_position();
+		loc_pos = location_get_position();
 
-			// recuperation des entrées AN
-			//adc_get(&control_an);
+		// recuperation des entrées AN
+		//adc_get(&control_an);
 
+		if( ! motorNotReady )
+		{
 			control_compute();
 		}
-wait:
+
 		control_usb_data.current_time = systick_get_time();
 		control_usb_data.control_state = control_state;
-		control_usb_data.cons_x = control_cp_cmd.x;
-		control_usb_data.cons_y = control_cp_cmd.y;
-		control_usb_data.cons_theta = control_cp_cmd.theta;
-		control_usb_data.pos_x = loc_pos.x;
-		control_usb_data.pos_y = loc_pos.y;
-		control_usb_data.pos_theta = loc_pos.theta;
+		control_usb_data.cons = control_cp_cmd;
+		control_usb_data.pos = loc_pos;
 		control_usb_data.pos_theta_gyro = spi_gyro_get_theta();
 		control_usb_data.cons_v1 = control_kinematics[0].v;
 		control_usb_data.cons_v2 = control_kinematics[1].v;
