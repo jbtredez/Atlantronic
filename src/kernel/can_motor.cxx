@@ -33,6 +33,10 @@
 #define MOTOR_STEERING2_RED         (4.375f*MOTOR_RED)
 #define MOTOR_STEERING3_RED         (4.375f*MOTOR_RED)
 
+#define MOTOR_STEERING1_OFFSET       (5.8471f/4.375f)
+#define MOTOR_STEERING2_OFFSET          (7.0f/4.375f)
+#define MOTOR_STEERING3_OFFSET         (-4.5f/4.375f)
+
 #define MOTOR_ENCODER_RESOLUTION         3000
 
 const struct canopen_configuration can_motor_driving_configuration[] =
@@ -64,42 +68,45 @@ int can_motor_module_init()
 	can_motor[0].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[0].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
 	can_motor[0].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
-	can_motor[0].name = "driving 1";
+	can_motor[0].name = "driving 1 (gauche)";
 
 	can_motor[1].nodeid = CAN_MOTOR_STEERING1_NODEID;
 	can_motor[1].static_conf = can_motor_steering_configuration;
 	can_motor[1].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[1].inputGain = 60 * MOTOR_STEERING1_RED / (float)(2 * M_PI);
 	can_motor[1].outputGain = 2 * M_PI / (float)(MOTOR_STEERING1_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[1].name = "steering 1";
+	can_motor[1].positionOffset = MOTOR_STEERING1_OFFSET;
+	can_motor[1].name = "steering 1 (gauche)";
 
 	can_motor[2].nodeid = CAN_MOTOR_DRIVING2_NODEID;
 	can_motor[2].static_conf = can_motor_driving_configuration;
 	can_motor[2].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[2].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
 	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[2].name = "driving 2";
+	can_motor[2].name = "driving 2 (droite)";
 
 	can_motor[3].nodeid = CAN_MOTOR_STEERING2_NODEID;
 	can_motor[3].static_conf = can_motor_steering_configuration;
 	can_motor[3].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[3].inputGain = 60 * MOTOR_STEERING2_RED / (float)(2 * M_PI);
 	can_motor[3].outputGain = 2 * M_PI / (float)(MOTOR_STEERING2_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[3].name = "steering 2";
+	can_motor[3].positionOffset = MOTOR_STEERING2_OFFSET;
+	can_motor[3].name = "steering 2 (droite)";
 
 	can_motor[4].nodeid = CAN_MOTOR_DRIVING3_NODEID;
 	can_motor[4].static_conf = can_motor_driving_configuration;
 	can_motor[4].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
 	can_motor[4].inputGain = 60 * MOTOR_DRIVING3_RED / (float)(2 * M_PI * DRIVING3_WHEEL_RADIUS);
 	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(MOTOR_DRIVING3_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[4].name = "driving 3";
+	can_motor[4].name = "driving 3 (arriere)";
 
 	can_motor[5].nodeid = CAN_MOTOR_STEERING3_NODEID;
 	can_motor[5].static_conf = can_motor_steering_configuration;
 	can_motor[5].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
 	can_motor[5].inputGain = 60 * MOTOR_STEERING3_RED / (float)(2 * M_PI);
 	can_motor[5].outputGain = 2 * M_PI / (float)(MOTOR_STEERING3_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[5].name = "steering 3";
+	can_motor[5].positionOffset = MOTOR_STEERING3_OFFSET;
+	can_motor[5].name = "steering 3 (arriere)";
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -152,6 +159,7 @@ CanMotor::CanMotor()
 	kinematics.v = 0;
 	kinematics.a = 0;
 	homingStatus = CAN_MOTOR_HOMING_NONE;
+	positionOffset = 0;
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
@@ -167,7 +175,7 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 
 		kinematics.a = (v - kinematics.v) / dt;
 		kinematics.v = v;
-		kinematics.pos = ((int32_t)raw_position) * outputGain;
+		kinematics.pos = positionOffset + ((int32_t)raw_position) * outputGain;
 		xSemaphoreGive(sem);
 	}
 	else if( type == CANOPEN_RX_PDO1 )

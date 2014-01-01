@@ -44,6 +44,7 @@ class CanMotor : public CanopenNode
 		//systime date;
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
 		float outputGain;   //!< gain pour convertir la position en unites robot
+		float positionOffset; //!< offset sur la position
 
 		void start_homing(float v);
 		void set_speed(float v);

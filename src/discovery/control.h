@@ -74,6 +74,12 @@ struct control_usb_data
 	float cons_theta1;
 	float cons_theta2;
 	float cons_theta3;
+	float mes_v1;
+	float mes_v2;
+	float mes_v3;
+	float mes_theta1;
+	float mes_theta2;
+	float mes_theta3;
 /*
 	uint16_t control_i_right;
 	uint16_t control_i_left;

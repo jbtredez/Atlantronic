@@ -34,7 +34,7 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 		float n2 = vOnTurret.norm2();
 		v[i] = speed * sqrtf(n2);
 		theta[i] = atan2f(vOnTurret.y, vOnTurret.x);
-		float theta_old = kinematics_cmd[i+3].pos;
+		float theta_old = kinematics_cmd[2*i+1].pos;
 
 		// on minimise la rotation des roues
 		float dtheta1 = fmodf(theta[i] - theta_old, 2*M_PI);
@@ -70,7 +70,7 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 		// TODO couplage traction direction
 		//v[i] += rayonRoue * k * w[i]; avec k = 0.25
 
-		Kinematics kinematics = kinematics_cmd[i];
+		Kinematics kinematics = kinematics_cmd[2*i];
 		kinematics.setSpeed(v[i], paramDriving, dt);
 		if( fabsf(v[i]) > EPSILON)
 		{
@@ -97,8 +97,8 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 
 	for(int i = 0; i < 3; i++)
 	{
-		kinematics_cmd[i].setSpeed(v[i] * kmin, paramDriving, dt);
-		kinematics_cmd[i+3].setPosition(theta[i], w[i] * kmin, paramSteering, dt);
+		kinematics_cmd[2*i].setSpeed(v[i] * kmin, paramDriving, dt);
+		kinematics_cmd[2*i+1].setPosition(theta[i], w[i] * kmin, paramSteering, dt);
 	}
 	//log_format(LOG_INFO, "v %d %d %d", (int)(1000*control_kinematics[0].v), (int)(1000*control_kinematics[1].v), (int)(1000*control_kinematics[2].v));
 

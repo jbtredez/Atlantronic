@@ -18,8 +18,8 @@ VectPlan loc_pos;
 
 static enum control_state control_state;
 static enum control_status control_status;
-static Kinematics control_kinematics[6];
-static Kinematics control_kinematics_mes[6];
+static Kinematics control_kinematics[CAN_MOTOR_MAX];
+static Kinematics control_kinematics_mes[CAN_MOTOR_MAX];
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
@@ -145,12 +145,18 @@ static void control_task(void* arg)
 		control_usb_data.cons = control_cp_cmd;
 		control_usb_data.pos = loc_pos;
 		control_usb_data.pos_theta_gyro = spi_gyro_get_theta();
-		control_usb_data.cons_v1 = control_kinematics[0].v;
-		control_usb_data.cons_v2 = control_kinematics[1].v;
-		control_usb_data.cons_v3 = control_kinematics[2].v;
-		control_usb_data.cons_theta1 = control_kinematics[3].pos;
-		control_usb_data.cons_theta2 = control_kinematics[4].pos;
-		control_usb_data.cons_theta3 = control_kinematics[5].pos;
+		control_usb_data.cons_v1 = control_kinematics[CAN_MOTOR_DRIVING1].v;
+		control_usb_data.cons_v2 = control_kinematics[CAN_MOTOR_DRIVING2].v;
+		control_usb_data.cons_v3 = control_kinematics[CAN_MOTOR_DRIVING3].v;
+		control_usb_data.cons_theta1 = control_kinematics[CAN_MOTOR_STEERING1].pos;
+		control_usb_data.cons_theta2 = control_kinematics[CAN_MOTOR_STEERING2].pos;
+		control_usb_data.cons_theta3 = control_kinematics[CAN_MOTOR_STEERING3].pos;
+		control_usb_data.mes_v1 = control_kinematics_mes[CAN_MOTOR_DRIVING1].v;
+		control_usb_data.mes_v2 = control_kinematics_mes[CAN_MOTOR_DRIVING2].v;
+		control_usb_data.mes_v3 = control_kinematics_mes[CAN_MOTOR_DRIVING3].v;
+		control_usb_data.mes_theta1 = control_kinematics_mes[CAN_MOTOR_STEERING1].pos;
+		control_usb_data.mes_theta2 = control_kinematics_mes[CAN_MOTOR_STEERING2].pos;
+		control_usb_data.mes_theta3 = control_kinematics_mes[CAN_MOTOR_STEERING3].pos;
 /*
 		control_usb_data.control_i_right = control_an.i_right;
 		control_usb_data.control_i_left = control_an.i_left;
@@ -173,14 +179,15 @@ static void control_compute()
 	{
 		case CONTROL_READY_FREE:
 			// TODO
-			for(int i = 0; i <  6; i++)
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
+				control_kinematics[i].pos = control_kinematics_mes[i].pos;
 				control_kinematics[i].v = 0;
 			}
 			break;
 		case CONTROL_READY_ASSER:
 			// TODO
-			for(int i = 0; i <  6; i++)
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				control_kinematics[i].v = 0;
 			}
@@ -198,20 +205,17 @@ static void control_compute()
 		default:
 		case CONTROL_END:
 			// TODO : c'est termine, on ne bouge plus
-			for(int i = 0; i <  6; i++)
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				control_kinematics[i].v = 0;
 			}
 			break;
 	}
 
-	can_motor[CAN_MOTOR_DRIVING1].set_speed(control_kinematics[0].v);
-	can_motor[CAN_MOTOR_DRIVING2].set_speed(control_kinematics[1].v);
-	can_motor[CAN_MOTOR_DRIVING3].set_speed(control_kinematics[2].v);
-
-	can_motor[CAN_MOTOR_STEERING1].set_speed(control_kinematics[3].v);
-	can_motor[CAN_MOTOR_STEERING2].set_speed(control_kinematics[4].v);
-	can_motor[CAN_MOTOR_STEERING3].set_speed(control_kinematics[5].v);
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		can_motor[i].set_speed(control_kinematics[i].v);
+	}
 }
 
 void control_compute_trajectory()
@@ -232,9 +236,9 @@ void control_compute_trajectory()
 
 	if( control_status == CONTROL_PREPARING_MOTION )
 	{
-		if( fabsf(control_kinematics[3].v) < EPSILON &&
-			fabsf(control_kinematics[4].v) < EPSILON &&
-			fabsf(control_kinematics[5].v) < EPSILON )
+		if( fabsf(control_kinematics[CAN_MOTOR_STEERING1].v) < EPSILON &&
+			fabsf(control_kinematics[CAN_MOTOR_STEERING2].v) < EPSILON &&
+			fabsf(control_kinematics[CAN_MOTOR_STEERING3].v) < EPSILON )
 		{
 			log(LOG_INFO, "IN_MOTION");
 			control_status = CONTROL_IN_MOTION;
@@ -249,7 +253,7 @@ void control_compute_trajectory()
 		control_state = CONTROL_READY_ASSER;
 		control_curvilinearKinematics.v = 0;
 		control_curvilinearKinematics.a = 0;
-		for(int i = 0; i <  6; i++)
+		for(int i = 0; i <  CAN_MOTOR_MAX; i++)
 		{
 			control_kinematics[i].v = 0;
 		}
@@ -349,6 +353,10 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 		control_curvilinearKinematics.pos = 0;
 		control_state = CONTROL_TRAJECTORY;
 		control_status = CONTROL_PREPARING_MOTION;
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		{
+			control_kinematics[i] = control_kinematics_mes[i];
+		}
 		log(LOG_INFO, "PREPARING_MOTION");
 	}
 
