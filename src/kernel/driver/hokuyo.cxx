@@ -161,7 +161,7 @@ uint32_t hokuyo::init_com()
 {
 	uint32_t err = 0;
 
-	log(LOG_INFO, "Initialisation du hokuyo ...");
+	log_format(LOG_INFO, "Initialisation %s ...", pcTaskGetTaskName(NULL));
 
 	do
 	{
@@ -191,7 +191,7 @@ uint32_t hokuyo::init_com()
 				continue;
 			}
 
-			log(LOG_INFO, "hokuyo - set speed");
+			log_format(LOG_INFO, "%s - set speed", pcTaskGetTaskName(NULL));
 			// mise a la bonne vitesse
 			err = set_speed();
 
@@ -224,7 +224,7 @@ uint32_t hokuyo::init_com()
 	}
 	while(err);
 
-	log(LOG_INFO, "Hokuyo initialisé");
+	log_format(LOG_INFO, "%s initialisé", pcTaskGetTaskName(NULL));
 
 	return 0;
 }
