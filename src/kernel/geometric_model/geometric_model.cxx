@@ -3,6 +3,8 @@
 //! @author Atlantronic
 
 #include "geometric_model.h"
+#include "kernel/robot_parameters.h"
+
 #include <math.h>
 
 #define EPSILON                                 1e-4
@@ -10,7 +12,8 @@
 static KinematicsParameters paramDriving = {1500, 1000, 1500};
 static KinematicsParameters paramSteering = {1.5, 1.5, 1.5};
 
-// TODO turret[3] en doublon avec control.cxx
+static const float steering_coupling[3] = { DRIVING1_WHEEL_RADIUS, DRIVING2_WHEEL_RADIUS, DRIVING3_WHEEL_RADIUS};
+
 static VectPlan Turret[3] =
 {
 	VectPlan(   0,  155, 0),
@@ -67,10 +70,24 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 			v[i] *= -1;
 		}
 
-		// TODO couplage traction direction
-		//v[i] += rayonRoue * k * w[i]; avec k = 0.25
+		w[i] = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
+		Kinematics kinematics = kinematics_cmd[2*i+1];
+		kinematics.setPosition(theta[i], w[i], paramSteering, dt);
 
-		Kinematics kinematics = kinematics_cmd[2*i];
+		// TODO gestion saturation rotation tourelle ko
+		/*if( fabsf(w[i]) > EPSILON)
+		{
+			float k = fabsf(kinematics.v / w[i]);
+			if( k < kmin )
+			{
+				kmin = k;
+			}
+		}*/
+
+		// couplage traction direction
+		v[i] += steering_coupling[i] * kinematics.v;
+
+		kinematics = kinematics_cmd[2*i];
 		kinematics.setSpeed(v[i], paramDriving, dt);
 		if( fabsf(v[i]) > EPSILON)
 		{
@@ -81,18 +98,7 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 			}
 		}
 
-		w[i] = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
-		// TODO gestion saturation rotation tourelle ko
-		/*kinematics = control_kinematics[i+3];
-		kinematics.setPosition(theta[i], w[i], paramSteering, dt);
-		if( fabsf(w[i]) > EPSILON)
-		{
-			float k = fabsf(kinematics.v / w[i]);
-			if( k < kmin )
-			{
-				kmin = k;
-			}
-		}*/
+
 	}
 
 	for(int i = 0; i < 3; i++)
@@ -148,8 +154,9 @@ VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes, float* slippa
 	for(int i = 0; i < 3; i++)
 	{
 		float phi = kinematics_mes[2*i+1].pos;
-		v[i].x = kinematics_mes[2*i].v * cosf(phi);
-		v[i].y = kinematics_mes[2*i].v * sinf(phi);
+		float speed = kinematics_mes[2*i].v - steering_coupling[i] * kinematics_mes[2*i+1].v;
+		v[i].x = speed * cosf(phi);
+		v[i].y = speed * sinf(phi);
 		//log_format(LOG_INFO, "%d %d %d %d", i, (int)(1000*v[i].x), (int)(1000*v[i].y), (int)(phi * 180 / M_PI));
 	}
 

@@ -253,7 +253,7 @@ void control_compute_trajectory()
 		control_state = CONTROL_READY_ASSER;
 		control_curvilinearKinematics.v = 0;
 		control_curvilinearKinematics.a = 0;
-		for(int i = 0; i <  CAN_MOTOR_MAX; i++)
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
 		{
 			control_kinematics[i].v = 0;
 		}

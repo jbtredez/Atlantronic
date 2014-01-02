@@ -2,6 +2,8 @@
 #include "canopen.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
+#include "kernel/robot_parameters.h"
+
 #include <math.h>
 
 #define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
@@ -19,25 +21,6 @@
 #define CAN_MOTOR_CMD_V        0x93    //!< commande de vitesse
 #define CAN_MOTOR_CMD_SHN      0x9a    //!< notification (via status word) lors de la detection du switch (homing) // TODO dans la conf sdo sur 0x2310:4 ?
 #define CAN_MOTOR_CMD_LA       0xb4    //!< commande de position
-
-
-#define DRIVING1_WHEEL_RADIUS       33
-#define DRIVING2_WHEEL_RADIUS       33
-#define DRIVING3_WHEEL_RADIUS       33
-
-#define MOTOR_RED                   14         //!< reducteur moteur (mettre 676.0 / 49.0 ?)
-#define MOTOR_DRIVING1_RED          MOTOR_RED  //!< reduction moteur
-#define MOTOR_DRIVING2_RED          MOTOR_RED
-#define MOTOR_DRIVING3_RED          MOTOR_RED
-#define MOTOR_STEERING1_RED         (4.375f*MOTOR_RED)
-#define MOTOR_STEERING2_RED         (4.375f*MOTOR_RED)
-#define MOTOR_STEERING3_RED         (4.375f*MOTOR_RED)
-
-#define MOTOR_STEERING1_OFFSET       (5.8471f/4.375f)
-#define MOTOR_STEERING2_OFFSET          (7.0f/4.375f)
-#define MOTOR_STEERING3_OFFSET         (-4.5f/4.375f)
-
-#define MOTOR_ENCODER_RESOLUTION         3000
 
 const struct canopen_configuration can_motor_driving_configuration[] =
 {
