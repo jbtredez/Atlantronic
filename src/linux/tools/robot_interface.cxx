@@ -672,18 +672,11 @@ int robot_interface_control_goto(struct robot_interface* data, VectPlan dest, Ve
 {
 	struct control_cmd_goto_arg cmd_arg;
 
-	cmd_arg.dest_x = dest.x;
-	cmd_arg.dest_y = dest.y;
-	cmd_arg.dest_theta = dest.theta;
-	cmd_arg.cp_x = cp.x;
-	cmd_arg.cp_y = cp.y;
-	cmd_arg.cp_theta = cp.theta;
-	cmd_arg.linearParam_vMax = linearParam.vMax;
-	cmd_arg.linearParam_dMax = linearParam.dMax;
-	cmd_arg.linearParam_aMax = linearParam.aMax;
-	cmd_arg.angularParam_vMax = angularParam.vMax;
-	cmd_arg.angularParam_dMax = angularParam.dMax;
-	cmd_arg.angularParam_aMax = angularParam.aMax;
+	cmd_arg.type = CONTROL_GOTO;
+	cmd_arg.dest = dest;
+	cmd_arg.cp = cp;
+	cmd_arg.linearParam = linearParam;
+	cmd_arg.angularParam = angularParam;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
@@ -753,13 +746,12 @@ int robot_interface_rotate_to(struct robot_interface* data, float alpha)
 
 int robot_interface_free(struct robot_interface* data)
 {
-	struct trajectory_cmd_arg cmd_arg;
+	struct control_cmd_goto_arg cmd_arg;
 
-	cmd_arg.type = TRAJECTORY_FREE;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.type = CONTROL_FREE;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
+	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));

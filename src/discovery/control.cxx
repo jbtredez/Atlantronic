@@ -178,7 +178,6 @@ static void control_compute()
 	switch(control_state)
 	{
 		case CONTROL_READY_FREE:
-			// TODO
 			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				control_kinematics[i].pos = control_kinematics_mes[i].pos;
@@ -259,19 +258,36 @@ void control_compute_trajectory()
 void control_cmd_goto(void* arg)
 {
 	struct control_cmd_goto_arg* cmd = (struct control_cmd_goto_arg*) arg;
-	VectPlan dest(cmd->dest_x, cmd->dest_y, cmd->dest_theta);
-	VectPlan cp(cmd->cp_x, cmd->cp_y, cmd->cp_theta);
-	KinematicsParameters linearParam;
-	linearParam.vMax = cmd->linearParam_vMax;
-	linearParam.dMax = cmd->linearParam_dMax;
-	linearParam.aMax = cmd->linearParam_aMax;
 
-	KinematicsParameters angularParam;
-	angularParam.vMax = cmd->angularParam_vMax;
-	angularParam.dMax = cmd->angularParam_dMax;
-	angularParam.aMax = cmd->angularParam_aMax;
+	switch(cmd->type)
+	{
+		default:
+		case CONTROL_FREE:
+			control_stop(false);
+			break;
+		case CONTROL_GOTO:
+			control_goto(cmd->dest, cmd->cp, cmd->linearParam, cmd->angularParam);
+			break;
+	}
+}
 
-	control_goto(dest, cp, linearParam, angularParam);
+void control_stop(bool asser)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+	if(control_state != CONTROL_END)
+	{
+		if( asser)
+		{
+			control_state = CONTROL_READY_ASSER;
+			log(LOG_INFO, "CONTROL_READY_ASSER");
+		}
+		else
+		{
+			control_state = CONTROL_READY_FREE;
+			log(LOG_INFO, "CONTROL_READY_FREE");
+		}
+	}
+	xSemaphoreGive(control_mutex);
 }
 
 void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
