@@ -67,6 +67,7 @@ struct control_usb_data
 	int32_t control_state;
 	VectPlan cons;
 	VectPlan pos;
+	VectPlan wanted_pos;
 	float pos_theta_gyro;
 	float cons_v1;
 	float cons_v2;

@@ -221,6 +221,7 @@ static void control_compute()
 void control_compute_trajectory()
 {
 	Kinematics kinematics = control_curvilinearKinematics;
+	int wheelReady = 0;
 	if( control_status != CONTROL_PREPARING_MOTION )
 	{
 		kinematics.setPosition(control_ds, 0, control_curvilinearKinematicsParam, CONTROL_DT);
@@ -228,21 +229,16 @@ void control_compute_trajectory()
 
 	VectPlan u_loc = abs_to_loc_speed(loc_pos.theta, control_u);
 
-	float k = geometric_model_compute_actuator_cmd(control_cp, u_loc, kinematics.v, CONTROL_DT, control_kinematics);
+	float k = geometric_model_compute_actuator_cmd(control_cp, u_loc, kinematics.v, CONTROL_DT, control_kinematics, &wheelReady);
 	control_curvilinearKinematics.v = k * kinematics.v;
 	control_curvilinearKinematics.pos += control_curvilinearKinematics.v * CONTROL_DT;
 
 	control_cp_cmd = control_cp_cmd + CONTROL_DT * control_curvilinearKinematics.v * control_u;
 
-	if( control_status == CONTROL_PREPARING_MOTION )
+	if( control_status == CONTROL_PREPARING_MOTION && wheelReady)
 	{
-		if( fabsf(control_kinematics[CAN_MOTOR_STEERING1].v) < EPSILON &&
-			fabsf(control_kinematics[CAN_MOTOR_STEERING2].v) < EPSILON &&
-			fabsf(control_kinematics[CAN_MOTOR_STEERING3].v) < EPSILON )
-		{
-			log(LOG_INFO, "IN_MOTION");
-			control_status = CONTROL_IN_MOTION;
-		}
+		log(LOG_INFO, "IN_MOTION");
+		control_status = CONTROL_IN_MOTION;
 	}
 
 	if(fabsf(control_curvilinearKinematics.pos - control_ds) < EPSILON && fabsf(control_curvilinearKinematics.v) < EPSILON )
@@ -357,6 +353,8 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 		{
 			control_kinematics[i] = control_kinematics_mes[i];
 		}
+
+		control_usb_data.wanted_pos = dest;
 		log(LOG_INFO, "PREPARING_MOTION");
 	}
 

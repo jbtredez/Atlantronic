@@ -13,7 +13,7 @@ VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes, float* slippa
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd);
+float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, int* wheelReady);
 
 
 #endif

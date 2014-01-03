@@ -226,9 +226,9 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V1, "v1", 0, 1, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V2, "v2", 0, 0.5, 0, 1);
 	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V3, "v3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V4, "v4", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V5, "v5", 0, 0.5, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V6, "v6", 0, 0.1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V4, "w1", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V5, "w2", 0, 0.5, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V6, "w3", 0, 0.1, 0, 1);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -1056,30 +1056,48 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			id = 0;
 		}
 
-		glPrintf(1600, 0, font_base, "time  %13.6f", robot_interface.current_time);
-		double match_time = 0;
-		if( robot_interface.start_time )
+		if( current_graph == GRAPH_TABLE )
 		{
-			match_time = robot_interface.current_time - robot_interface.start_time;
+			int lineHeight = -2*font_digit_height * graph->ratio_y;
+			int lineId = 0;
+			glPrintf(1600, lineId*lineHeight, font_base, "time  %13.6f", robot_interface.current_time);
+			lineId++;
+			double match_time = 0;
+			if( robot_interface.start_time )
+			{
+				match_time = robot_interface.current_time - robot_interface.start_time;
+			}
+			glPrintf(1600, lineId*lineHeight, font_base, "match %13.6f", match_time);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
+					robot_interface.control_usb_data[id].pos.x, robot_interface.control_usb_data[id].pos.y,
+					robot_interface.control_usb_data[id].pos.theta * 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "wpos %6.0f %6.0f %6.2f",
+					robot_interface.control_usb_data[id].wanted_pos.x, robot_interface.control_usb_data[id].wanted_pos.y,
+					robot_interface.control_usb_data[id].wanted_pos.theta * 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
+					robot_interface.control_usb_data[id].mes_v1, robot_interface.control_usb_data[id].cons_v1);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
+							robot_interface.control_usb_data[id].mes_v2, robot_interface.control_usb_data[id].cons_v2);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
+							robot_interface.control_usb_data[id].mes_v3, robot_interface.control_usb_data[id].cons_v3);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
+					robot_interface.control_usb_data[id].mes_theta1* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta1* 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
+							robot_interface.control_usb_data[id].mes_theta2* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta2* 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
+							robot_interface.control_usb_data[id].mes_theta3* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta3* 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "gyro %6.2f",
+							robot_interface.control_usb_data[id].pos_theta_gyro * 180 / M_PI);
 		}
-		glPrintf(1600, -2*font_digit_height * graph->ratio_y, font_base, "match %13.6f", match_time);
-		glPrintf(1600, -4*font_digit_height * graph->ratio_y, font_base, "pos  %6.0f %6.0f %6.2f",
-				robot_interface.control_usb_data[id].pos.x, robot_interface.control_usb_data[id].pos.y,
-				robot_interface.control_usb_data[id].pos.theta * 180 / M_PI);
-		glPrintf(1600, -6*font_digit_height * graph->ratio_y, font_base, "drv1 %7.0f (wanted %7.0f)",
-				robot_interface.control_usb_data[id].mes_v1, robot_interface.control_usb_data[id].cons_v1);
-		glPrintf(1600, -8*font_digit_height * graph->ratio_y, font_base, "drv2 %7.0f (wanted %7.0f)",
-						robot_interface.control_usb_data[id].mes_v2, robot_interface.control_usb_data[id].cons_v2);
-		glPrintf(1600, -10*font_digit_height * graph->ratio_y, font_base, "drv3 %7.0f (wanted %7.0f)",
-						robot_interface.control_usb_data[id].mes_v3, robot_interface.control_usb_data[id].cons_v3);
-		glPrintf(1600, -12*font_digit_height * graph->ratio_y, font_base, "str1 %7.2f (wanted %7.2f)",
-				robot_interface.control_usb_data[id].mes_theta1* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta1* 180 / M_PI);
-		glPrintf(1600, -14*font_digit_height * graph->ratio_y, font_base, "str2 %7.2f (wanted %7.2f)",
-						robot_interface.control_usb_data[id].mes_theta2* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta2* 180 / M_PI);
-		glPrintf(1600, -16*font_digit_height * graph->ratio_y, font_base, "str3 %7.2f (wanted %7.2f)",
-						robot_interface.control_usb_data[id].mes_theta3* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta3* 180 / M_PI);
-		glPrintf(1600, -18*font_digit_height * graph->ratio_y, font_base, "gyro %6.2f",
-						robot_interface.control_usb_data[id].pos_theta_gyro * 180 / M_PI);
 
 		pthread_mutex_unlock(&robot_interface.mutex);
 	}

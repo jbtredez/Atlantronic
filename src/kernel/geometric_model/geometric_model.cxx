@@ -4,6 +4,7 @@
 
 #include "geometric_model.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/log.h"
 
 #include <math.h>
 
@@ -23,7 +24,7 @@ static VectPlan Turret[3] =
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
+float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, int* wheelReady)
 {
 	float kmin = 1;
 	float theta[3];
@@ -71,22 +72,24 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 		}
 
 		w[i] = - u.theta * speed * (u.x * vOnTurret.x + vOnTurret.y * u.y) / n2;
-		Kinematics kinematics = kinematics_cmd[2*i+1];
-		kinematics.setPosition(theta[i], w[i], paramSteering, dt);
 
-		// TODO gestion saturation rotation tourelle ko
-		/*if( fabsf(w[i]) > EPSILON)
+		// saturation rotation tourelle (fait sur la vitesse theorique et
+		// non la position : on regarde si on a la capacite d'aller a la bonne vitesse
+		Kinematics kinematics = kinematics_cmd[2*i+1];
+		kinematics.setSpeed(w[i], paramSteering, dt);
+		if( fabsf(w[i]) > EPSILON && fabsf(kinematics.pos - theta[i]) > EPSILON)
 		{
 			float k = fabsf(kinematics.v / w[i]);
 			if( k < kmin )
 			{
 				kmin = k;
 			}
-		}*/
+		}
 
 		// couplage traction direction
 		v[i] += steering_coupling[i] * kinematics.v;
 
+		// saturation traction
 		kinematics = kinematics_cmd[2*i];
 		kinematics.setSpeed(v[i], paramDriving, dt);
 		if( fabsf(v[i]) > EPSILON)
@@ -97,14 +100,17 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 				kmin = k;
 			}
 		}
-
-
 	}
 
+	*wheelReady = 1;
 	for(int i = 0; i < 3; i++)
 	{
 		kinematics_cmd[2*i].setSpeed(v[i] * kmin, paramDriving, dt);
 		kinematics_cmd[2*i+1].setPosition(theta[i], w[i] * kmin, paramSteering, dt);
+		if( fabsf(kinematics_cmd[2*i+1].pos - theta[i]) > EPSILON )
+		{
+			*wheelReady = 0;
+		}
 	}
 	//log_format(LOG_INFO, "v %d %d %d", (int)(1000*control_kinematics[0].v), (int)(1000*control_kinematics[1].v), (int)(1000*control_kinematics[2].v));
 
