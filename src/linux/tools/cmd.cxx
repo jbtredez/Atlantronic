@@ -18,12 +18,12 @@ int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
 int cmd_arm_hook(const char* arg);
 int cmd_arm_abz(const char* arg);
-int cmd_ax12_scan(const char* arg);
-int cmd_ax12_set_id(const char* arg);
-int cmd_ax12_set_goal_position(const char* arg);
-int cmd_ax12_get_position(const char* arg);
 int cmd_can_set_baudrate(const char* arg);
 int cmd_can_write(const char* arg);
+int cmd_dynamixel_scan(const char* arg);
+int cmd_dynamixel_set_id(const char* arg);
+int cmd_dynamixel_set_goal_position(const char* arg);
+int cmd_dynamixel_get_position(const char* arg);
 int cmd_help(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_quit(const char* arg);
@@ -52,10 +52,10 @@ COMMAND usb_commands[] = {
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
 	{ "arm_hook", cmd_arm_hook, "deplacement du crochet perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_hook x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
-	{ "ax12_scan", cmd_ax12_scan, "scan ax12 id : ax12_scan id"},
-	{ "ax12_set_id", cmd_ax12_set_id, "changement d'id des ax12 : ax12_set_id id newid"},
-	{ "ax12_set_goal_position", cmd_ax12_set_goal_position, "position cible de l'ax12 : ax12_set_goal_position id alpha"},
-	{ "ax12_get_position", cmd_ax12_get_position, "donne ka position actuelle de l'ax12 : ax12_get_position id"},
+	{ "dynamixel_scan", cmd_dynamixel_scan, "scan dynamixel id : dynamixel_scan type id"},
+	{ "dynamixel_set_id", cmd_dynamixel_set_id, "changement d'id des dynamixels : dynamixel_set_id type id newid"},
+	{ "dynamixel_set_goal_position", cmd_dynamixel_set_goal_position, "position cible du dynamixel : dynamixel_set_goal_position type id alpha"},
+	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
 	{ "can_set_baudrate", cmd_can_set_baudrate, "can_set_baudrate id debug"},
 	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
@@ -92,54 +92,64 @@ int cmd_init(struct robot_interface* robot, struct qemu* qemu, void (*f)(void))
 	return cli_init(usb_commands);
 }
 
-int cmd_ax12_scan(const char* arg)
+int cmd_dynamixel_scan(const char* arg)
 {
-	(void) arg;
-	robot_interface_ax12_scan(cmd_robot);
-	return CMD_SUCESS;
-}
-
-int cmd_ax12_set_id(const char* arg)
-{
-	unsigned int id;
-	unsigned int new_id;
-	int count = sscanf(arg, "%u %u", &id, &new_id);
-
-	if(count != 2)
-	{
-		return CMD_ERROR;
-	}
-
-	robot_interface_ax12_set_id(cmd_robot, id, new_id);
-	return CMD_SUCESS;
-}
-
-int cmd_ax12_set_goal_position(const char* arg)
-{
-	unsigned int id;
-	float alpha;
-	int count = sscanf(arg, "%u %f", &id, &alpha);
-
-	if(count != 2)
-	{
-		return CMD_ERROR;
-	}
-
-	robot_interface_ax12_set_goal_position(cmd_robot, id, alpha);
-	return CMD_SUCESS;
-}
-
-int cmd_ax12_get_position(const char* arg)
-{
-	unsigned int id;
-	int count = sscanf(arg, "%u", &id);
+	int type;
+	int count = sscanf(arg, "%d", &type);
 
 	if(count != 1)
 	{
 		return CMD_ERROR;
 	}
 
-	robot_interface_ax12_get_position(cmd_robot, id);
+	robot_interface_dynamixel_scan(cmd_robot, type);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_id(const char* arg)
+{
+	unsigned int id;
+	unsigned int new_id;
+	int type;
+	int count = sscanf(arg, "%d %u %u", &type, &id, &new_id);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_dynamixel_set_id(cmd_robot, type, id, new_id);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_goal_position(const char* arg)
+{
+	int type;
+	unsigned int id;
+	float alpha;
+	int count = sscanf(arg, "%d %u %f", &type, &id, &alpha);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_dynamixel_set_goal_position(cmd_robot, type, id, alpha);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_get_position(const char* arg)
+{
+	int type;
+	unsigned int id;
+	int count = sscanf(arg, "%d %u", &type, &id);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	robot_interface_dynamixel_get_position(cmd_robot, type, id);
 	return CMD_SUCESS;
 }
 

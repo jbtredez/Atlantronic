@@ -62,13 +62,13 @@ void robot_interface_destroy(struct robot_interface* data);
 
 // ---------- gestion des ax12 -------------------------------------------------
 
-int robot_interface_ax12_scan(struct robot_interface* data);
+int robot_interface_dynamixel_scan(struct robot_interface* data, int dynamixel_type);
 
-int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_t new_id);
+int robot_interface_dynamixel_set_id(struct robot_interface* data, int dynamixel_type, uint8_t id, uint8_t new_id);
 
-int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, float alpha);
+int robot_interface_dynamixel_set_goal_position(struct robot_interface* data, int dynamixel_type, uint8_t id, float alpha);
 
-int robot_interface_ax12_get_position(struct robot_interface* data, uint8_t id);
+int robot_interface_dynamixel_get_position(struct robot_interface* data, int dynamixel_type, uint8_t id);
 
 // ---------- gestion des pinces -----------------------------------------------
 

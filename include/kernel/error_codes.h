@@ -42,7 +42,7 @@ enum fault
 
 #define ERR_SYSTICK             0x208
 #define ERR_INIT_USB            0x209
-#define ERR_INIT_AX12           0x20a
+#define ERR_INIT_DYNAMIXEL      0x20a
 #define ERR_INIT_CONTROL        0x20b
 #define ERR_INIT_DETECTION      0x20c
 #define ERR_INIT_END            0x20d

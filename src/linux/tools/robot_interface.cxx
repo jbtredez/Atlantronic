@@ -11,7 +11,7 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "foo/control/trajectory.h"
-#include "kernel/driver/ax12.h"
+#include "kernel/driver/dynamixel.h"
 #if 0
 const char* err_description[FAULT_MAX] =
 {
@@ -582,58 +582,62 @@ end:
 	return res;
 }
 
-int robot_interface_ax12_scan(struct robot_interface* data)
+int robot_interface_dynamixel_scan(struct robot_interface* data, int dynamixel_type)
 {
-	struct ax12_cmd_param cmd_arg;
+	struct dynamixel_cmd_param cmd_arg;
 
-	cmd_arg.cmd_id = AX12_CMD_SCAN;
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_SCAN;
+	cmd_arg.type = dynamixel_type;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_AX12;
+	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
 }
 
-int robot_interface_ax12_set_id(struct robot_interface* data, uint8_t id, uint8_t new_id)
+int robot_interface_dynamixel_set_id(struct robot_interface* data, int dynamixel_type, uint8_t id, uint8_t new_id)
 {
-	struct ax12_cmd_param cmd_arg;
+	struct dynamixel_cmd_param cmd_arg;
 
-	cmd_arg.cmd_id = AX12_CMD_SET_ID;
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_ID;
+	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
 	cmd_arg.param = new_id;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_AX12;
+	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
 }
 
-int robot_interface_ax12_set_goal_position(struct robot_interface* data, uint8_t id, float alpha)
+int robot_interface_dynamixel_set_goal_position(struct robot_interface* data, int dynamixel_type, uint8_t id, float alpha)
 {
-	struct ax12_cmd_param cmd_arg;
+	struct dynamixel_cmd_param cmd_arg;
 
-	cmd_arg.cmd_id = AX12_CMD_SET_GOAL_POSITION;
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_GOAL_POSITION;
+	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
 	cmd_arg.param = alpha * (1 << 26) / (2 * M_PI);
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_AX12;
+	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
 }
 
-int robot_interface_ax12_get_position(struct robot_interface* data, uint8_t id)
+int robot_interface_dynamixel_get_position(struct robot_interface* data, int dynamixel_type, uint8_t id)
 {
-	struct ax12_cmd_param cmd_arg;
+	struct dynamixel_cmd_param cmd_arg;
 
-	cmd_arg.cmd_id = AX12_CMD_GET_POSITION;
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_GET_POSITION;
+	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_AX12;
+	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return data->com[COM_FOO].write(buffer, sizeof(buffer));
