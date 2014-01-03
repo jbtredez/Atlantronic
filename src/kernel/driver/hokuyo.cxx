@@ -66,7 +66,8 @@ class hokuyo
 		enum usart_id usartId;
 		int usb_id;
 		xSemaphoreHandle scan_mutex;
-		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE];
+		// variable alignee pour le dma
+		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
 		struct hokuyo_scan scan;
 };
 
