@@ -102,8 +102,8 @@ struct dynamixel_cmd_param
 
 struct dynamixel_error
 {
-	//!< bit 7 à 1 : ERR_DYNAMIXEL_SEND_CHECK, ERR_DYNAMIXEL_PROTO ou ERR_DYNAMIXEL_CHECKSUM
-	//!< bit 7 à 0 : erreur usart sur les 4 bits de poids faible
+	//!< bit 7 à 4 : ERR_DYNAMIXEL_SEND_CHECK, ERR_DYNAMIXEL_PROTO ou ERR_DYNAMIXEL_CHECKSUM
+	//!< bit 4 à 0 : erreur usart sur les 4 bits de poids faible
 	uint8_t transmit_error;
 	//!< erreur interne dynamixel (champ de bit)
 	uint8_t internal_error;
@@ -179,5 +179,8 @@ class DynamixelManager
 		int max_devices_id;
 		Dynamixel* devices;
 };
+
+extern DynamixelManager ax12;
+extern DynamixelManager rx24;
 
 #endif
