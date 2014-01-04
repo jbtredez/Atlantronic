@@ -6,7 +6,6 @@
 #include "kernel/task.h"
 #include "kernel/queue.h"
 #include "kernel/semphr.h"
-#include "kernel/event.h"
 #include "kernel/log.h"
 #include "kernel/module.h"
 #include "kernel/fault.h"
@@ -74,6 +73,8 @@ void fault(enum fault id, unsigned char new_state)
 {
 	int updated = 0;
 
+	new_state &= 0x01;
+
 	portENTER_CRITICAL();
 	if( (fault_status[id].state & 0x01) != new_state)
 	{
@@ -88,7 +89,7 @@ void fault(enum fault id, unsigned char new_state)
 			fault_status[id].state &= 0xFFFFFFFE;
 		}
 
-		fault_status[id].time = systick_get_time();
+		fault_status[id].time = systick_get_time().ms;
 		updated = 1;
 	}
 	portEXIT_CRITICAL();
@@ -106,7 +107,7 @@ long fault_from_isr(enum fault id, unsigned char new_state)
 	if(fault_status[id].state != new_state)
 	{
 		fault_status[id].state = new_state;
-		fault_status[id].time = systick_get_time_from_isr();
+		fault_status[id].time = systick_get_time_from_isr().ms;
 		xSemaphoreGiveFromISR(fault_barrier, &xHigherPriorityTaskWoken);
 	}
 

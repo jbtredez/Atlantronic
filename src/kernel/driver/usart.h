@@ -30,7 +30,7 @@ enum usart_id
 #define ERR_USART_READ_SR_ORE   0x08
 
 //!< ouverture usart
-void usart_open(enum usart_id id, uint32_t frequency);
+int usart_open(enum usart_id id, uint32_t frequency);
 
 void usart_set_read_dma_buffer(enum usart_id id, unsigned char* buf);
 void usart_set_read_dma_size(enum usart_id id, uint16_t size);

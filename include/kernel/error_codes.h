@@ -10,21 +10,13 @@
 //! ne pas oublier de mettre a jour la description dans foo_interface
 enum fault
 {
-	ERR_SUCCESS,
-	// CAN
-	ERR_CAN_READ_QUEUE_FULL,
-	ERR_CAN_READ_FIFO_OVERFLOW,
-	ERR_CAN_FILTER_LIST_FULL,
-
-	// USART
-	ERR_USART_UNKNOWN_DEVICE,
-
 	// HOKUYO
 	FAULT_HOKUYO_DISCONNECTED,
 	FAULT_HOKUYO_DATA_CORRUPTION, // erreur FE/NE/ORE sur usart, check_cmd, unknown status, checksum
 
-	// math
-	ERR_LINEAR_REG_NULL_DET,
+	// CAN
+	FAULT_CAN_READ_QUEUE_FULL,
+	FAULT_CAN_READ_FIFO_OVERFLOW,
 
 	FAULT_MAX,
 };

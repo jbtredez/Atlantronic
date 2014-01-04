@@ -8,6 +8,7 @@ obj-discovery-test += kernel/port.o
 obj-discovery-test += kernel/list.o
 obj-discovery-test += kernel/heap_1.o
 obj-discovery-test += kernel/log.o
+obj-discovery-test += kernel/fault.o
 obj-discovery-test += kernel/driver/spi.o
 obj-discovery-test += kernel/driver/usart.o
 obj-discovery-test += kernel/driver/hokuyo.o

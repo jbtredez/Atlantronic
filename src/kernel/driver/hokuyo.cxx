@@ -10,6 +10,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/module.h"
 #include "kernel/location/location.h"
+#include "kernel/fault.h"
 #include <string.h>
 
 #define ERR_HOKUYO_TIMEOUT              0x01
@@ -41,7 +42,7 @@ const char* hokuyo_scan_all = "GS0044072500\n";
 class hokuyo
 {
 	public:
-		int init(enum usart_id id, const char* name, int usb_id);
+		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int usb_id);
 		void setPosition(VectPlan pos, int sens);
 		hokuyo_callback callback;
 
@@ -49,7 +50,7 @@ class hokuyo
 		static void task_wrapper(void* arg);
 		void task();
 		uint32_t wait_decode_scan();
-		uint32_t init_com();
+		__OPTIMIZE_SIZE__ uint32_t init_com();
 		uint32_t scip2();
 		uint32_t transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout);
 		uint32_t check_cmd(unsigned char* cmd, uint32_t size);
@@ -63,6 +64,7 @@ class hokuyo
 
 		static uint16_t decode16(const unsigned char* data);
 
+		uint32_t last_error;
 		enum usart_id usartId;
 		int usb_id;
 		xSemaphoreHandle scan_mutex;
@@ -102,6 +104,7 @@ int hokuyo::init(enum usart_id id, const char* name, int usbId)
 	usartId = id;
 	usb_id = usbId;
 	callback = NULL;
+	last_error = 0;
 
 	portBASE_TYPE err = xTaskCreate(task_wrapper, name, HOKUYO_STACK_SIZE, this, PRIORITY_TASK_HOKUYO, NULL);
 
@@ -135,27 +138,28 @@ void hokuyo_register(enum hokuyo_id hokuyo_id, hokuyo_callback callback)
 
 void hokuyo::fault_update(uint32_t err)
 {
-	// TODO
-	if(err)
+	if(err && ! last_error)
 	{
-		//fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
-		//log(LOG_INFO, "hokuyo disconnected");
+		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
+		log_format(LOG_ERROR, "%s disconnected", pcTaskGetTaskName(NULL));
 	}
-	else
+	else if( !err && last_error)
 	{
-		//log(LOG_INFO, "hokuyo connected");
-		//fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
+		log_format(LOG_ERROR, "%s connected", pcTaskGetTaskName(NULL));
+		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
 	}
 
 	if( err & (ERR_HOKUYO_USART_FE | ERR_HOKUYO_USART_NE | ERR_HOKUYO_USART_ORE | ERR_HOKUYO_CHECK_CMD | ERR_HOKUYO_CHECKSUM | ERR_HOKUYO_UNKNOWN_STATUS))
 	{
-		//log(LOG_INFO, "hokuyo data corruption");
-		//fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
+		log_format(LOG_ERROR, "%s data corruption", pcTaskGetTaskName(NULL));
+		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
 	}
 	else
 	{
-		//fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
+		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
 	}
+
+	last_error = err;
 }
 
 uint32_t hokuyo::init_com()
@@ -188,8 +192,7 @@ uint32_t hokuyo::init_com()
 
 			if(err)
 			{
-				fault_update(err);
-				continue;
+				goto retry;
 			}
 
 			log_format(LOG_INFO, "%s - set speed", pcTaskGetTaskName(NULL));
@@ -198,8 +201,7 @@ uint32_t hokuyo::init_com()
 
 			if(err)
 			{
-				fault_update(err);
-				continue;
+				goto retry;
 			}
 
 			usart_set_frequency(usartId, HOKUYO_SPEED);
@@ -207,20 +209,18 @@ uint32_t hokuyo::init_com()
 
 		if(err)
 		{
-			fault_update(err);
-			continue;
+			goto retry;
 		}
 
 		err = laser_on();
 
 		if(err)
 		{
-			fault_update(err);
-			continue;
+			goto retry;
 		}
 
 		err = hs();
-
+retry:
 		fault_update(err);
 	}
 	while(err);

@@ -11,8 +11,8 @@
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_PENDSVSET			0x10000000
 
-static struct systime systick_time; //!< en ms
-static struct systime systick_time_start_match; //!< en ms
+static struct systime systick_time;
+static struct systime systick_time_start_match;
 void isr_systick( void );
 extern void vTaskIncrementTick( );
 

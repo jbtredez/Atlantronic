@@ -6,7 +6,7 @@
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-//#include "kernel/fault.h"
+#include "kernel/fault.h"
 #include "kernel/driver/usb.h"
 #include "kernel/error_codes.h"
 #include "gpio.h"
@@ -235,7 +235,7 @@ void isr_can1_rx0(void)
 
 	if( CAN1->RF0R & CAN_RF0R_FOVR0)
 	{
-		//fault_from_isr(ERR_CAN_READ_FIFO_OVERFLOW, FAULT_ACTIVE);
+		fault_from_isr(FAULT_CAN_READ_FIFO_OVERFLOW, FAULT_ACTIVE);
 	}
 
 	// reception sur la FIFO 0
@@ -272,7 +272,7 @@ void isr_can1_rx0(void)
 		if( xQueueSendToBackFromISR(can_read_queue, &msg, &xHigherPriorityTaskWoken) != pdPASS)
 		{
 			// erreur, file pleine : message perdu
-			//fault_from_isr(ERR_CAN_READ_QUEUE_FULL, FAULT_ACTIVE);
+			fault_from_isr(FAULT_CAN_READ_QUEUE_FULL, FAULT_ACTIVE);
 		}
 
 		CAN1->RF0R |= CAN_RF0R_RFOM0;

@@ -48,7 +48,11 @@ int DynamixelManager::init(const char* name, enum usart_id usart_id, int half_du
 {
 	usart_half_duplex = half_duplex;
 	usart = usart_id;
-	usart_open(usart, frequency);
+	int res = usart_open(usart, frequency);
+	if( res )
+	{
+		return -1;
+	}
 
 	portBASE_TYPE err = xTaskCreate(task_wrapper, name, DYNAMIXEL_STACK_SIZE, this, PRIORITY_TASK_DYNAMIXEL, NULL);
 

@@ -12,28 +12,40 @@
 #include "kernel/driver/usb.h"
 #include "foo/control/trajectory.h"
 #include "kernel/driver/dynamixel.h"
-#if 0
-const char* err_description[FAULT_MAX] =
+
+const char* fault_description[FAULT_MAX] =
 {
-	// CAN
-	[ERR_CAN_READ_QUEUE_FULL] = "can : queue de lecture pleine",
-	[ERR_CAN_READ_FIFO_OVERFLOW] = "can : fifo de lecture qui deborde - perte de messages",
-	[ERR_CAN_FILTER_LIST_FULL] = "can : filtre plein",
-
-	// USART
-	[ERR_USART_UNKNOWN_DEVICE] = "usart : id invalide",
-
 	// HOKUYO
-	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo débranché",
-	[FAULT_HOKUYO_DATA_CORRUPTION] = "hokuyo : erreur de transmission",
+	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo disconnected",
+	[FAULT_HOKUYO_DATA_CORRUPTION] = "hokuyo - data corruption",
+
+	// CAN
+	[FAULT_CAN_READ_QUEUE_FULL] = "can : queue de lecture pleine",
+	[FAULT_CAN_READ_FIFO_OVERFLOW] = "can : fifo de lecture qui deborde - perte de messages",
 };
-#endif
+
 const char* log_level_description[LOG_MAX] =
 {
 	"Error",
 	"Info",
 	"Debug1",
 	"Debug2",
+};
+
+const char* log_level_color_start[LOG_MAX] =
+{
+		"\033[31m",       // erreurs en rouge
+		"",
+		"",
+		""
+};
+
+const char* log_level_color_end[LOG_MAX] =
+{
+		"\033[0m",       // fin erreurs en rouge
+		"",
+		"",
+		""
 };
 
 const char* cartes[COM_MAX] =
@@ -54,7 +66,7 @@ static int robot_interface_process_go(struct robot_interface* data, int com_id, 
 static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
 static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size);
+static int robot_interface_process_fault(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
 static int robot_interface_can_trace(struct robot_interface* data, int com_id, char* msg, uint16_t size);
@@ -186,7 +198,7 @@ static void* robot_interface_task(void* arg)
 				res = robot_interface_process_log(robot, args->com_id, msg, size);
 				break;
 			case USB_ERR:
-				res = robot_interface_process_err(robot, args->com_id, msg, size);
+				res = robot_interface_process_fault(robot, args->com_id, msg, size);
 				break;
 			case USB_HOKUYO1:
 				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO1, msg, size);
@@ -291,7 +303,7 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 
 	if(level < LOG_MAX)
 	{
-		log_info("%4s %13.6f %8s   %20s:%5d    %s", cartes[com_id], time, log_level_description[level], msg+11, line, log);
+		log_info("%s%4s %13.6f %8s   %20s:%5d    %s%s", log_level_color_start[level], cartes[com_id], time, log_level_description[level], msg+11, line, log, log_level_color_end[level]);
 	}
 	else
 	{
@@ -302,12 +314,17 @@ end:
 	return res;
 }
 
-static int robot_interface_process_err(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+static int robot_interface_process_fault(struct robot_interface* data, int com_id, char* msg, uint16_t size)
 {
 	int res = 0;
 	int i = 0;
-	struct fault_status* err_list = (struct fault_status*) msg;
+	struct fault_status* fault_list = (struct fault_status*) msg;
 
+	const char* fault_color[] =
+	{
+		"\033[32m",
+		"\033[31m"
+	};
 	if(size != sizeof(struct fault_status) * FAULT_MAX)
 	{
 		res = -1;
@@ -324,18 +341,11 @@ static int robot_interface_process_err(struct robot_interface* data, int com_id,
 
 	for(i=0; i< FAULT_MAX; i++)
 	{
-		unsigned char state = err_list[i].state;
+		unsigned char state = fault_list[i].state;
 		if(state != data->fault_status[com_id][i].state)
 		{
-			if( (state & 0x01) == 0)
-			{// TODO
-			//	log_info("\033[32m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], 0UL/*(unsigned long) tick_to_us(err_list[i].time)*/, err_description[i], i, state >> 1, state & 0x01);
-			}
-			else
-			{// TODO
-			//	log_info("\033[31m%4s %12lu    Fault\t%s (%d), num %d status %d\033[0m", cartes[com_id], 0UL/*(unsigned long) tick_to_us(err_list[i].time)*/, err_description[i], i, state >> 1, state & 0x01);
-			}
-			data->fault_status[com_id][i] = err_list[i];
+			log_info("%s%4s %13.6f    Fault\t%s (%d), num %d status %d\033[0m", fault_color[state & 0x01], cartes[com_id], fault_list[i].time / 1000.0f, fault_description[i], i, state >> 1, state & 0x01);
+			data->fault_status[com_id][i] = fault_list[i];
 		}
 	}
 

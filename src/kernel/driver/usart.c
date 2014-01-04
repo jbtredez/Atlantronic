@@ -4,6 +4,7 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/rcc.h"
+#include "kernel/log.h"
 #include "gpio.h"
 
 struct usart_device
@@ -91,7 +92,7 @@ __OPTIMIZE_SIZE__ static void usart_init_pin(GPIO_TypeDef* tx_gpio, uint32_t tx_
 	}
 }
 
-__OPTIMIZE_SIZE__ void usart_open(enum usart_id id, uint32_t frequency)
+__OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 {
 	switch(id)
 	{
@@ -161,8 +162,8 @@ __OPTIMIZE_SIZE__ void usart_open(enum usart_id id, uint32_t frequency)
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST;
 			break;
 		default:
-			//fault(ERR_USART_UNKNOWN_DEVICE, FAULT_ACTIVE);
-			return;
+			log_format(LOG_ERROR, "unknown usart id %d", id);
+			return -1;
 			break;
 	}
 
@@ -247,7 +248,8 @@ __OPTIMIZE_SIZE__ void usart_open(enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 			break;
 		default:
-			return;
+			// pas de log, deja verifie dans le switch du dessus
+			return -1;
 			break;
 	}
 
@@ -260,6 +262,8 @@ __OPTIMIZE_SIZE__ void usart_open(enum usart_id id, uint32_t frequency)
 
 	// activation usart
 	usart_device[id].usart->CR1 |= USART_CR1_UE;
+
+	return 0;
 }
 
 static void isr_usart_generic(enum usart_id id)

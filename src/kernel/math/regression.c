@@ -40,7 +40,7 @@ int regression_linear(float* x, float* y, float* w, int size, float* a, float* b
 	float det = swx2 * sw - swx * swx;
 	if(det == 0)
 	{
-		err = ERR_LINEAR_REG_NULL_DET;
+		err = -1;
 		goto end;
 	}
 
