@@ -48,75 +48,40 @@ const char* log_level_color_end[LOG_MAX] =
 		""
 };
 
-const char* cartes[COM_MAX] =
-{
-	"foo",
-	"bar",
-};
-
-struct robot_interface_arg
-{
-	struct robot_interface* robot;
-	int com_id;
-};
-
-static void* robot_interface_task(void* arg);
-static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_go(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
-static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size);
-static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_fault(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-static int robot_interface_can_trace(struct robot_interface* data, int com_id, char* msg, uint16_t size);
-
-int robot_interface_init(struct robot_interface* data, const char* file_foo_read, const char* file_foo_write, const char* file_bar_read,
-		const char* file_bar_write, void (*callback)(void*), void* callback_arg)
+int RobotInterface::init(const char* _name, const char* file_read, const char* file_write, void (*_callback)(void*), void* _callback_arg)
 {
 	int i;
 	int err = 0;
 	int res = 0;
 
-	data->callback = callback;
-	data->callback_arg = callback_arg;
-	data->stop_task = 1;
-	data->start_time = 0;
-	data->current_time = 0;
+	strncpy(name, _name, sizeof(name));
+	callback = _callback;
+	callback_arg = _callback_arg;
+	stop_task = 1;
+	start_time = 0;
+	current_time = 0;
 
-	if(file_foo_read)
+	if(file_read)
 	{
-		data->com[COM_FOO].init(file_foo_read, file_foo_write);
+		com.init(file_read, file_write);
 	}
 	else
 	{
-		data->com[COM_FOO].init("/dev/discovery0", "/dev/discovery0");
+		com.init("/dev/discovery0", "/dev/discovery0");
 	}
 
-	if(file_bar_read)
-	{
-		data->com[COM_BAR].init(file_bar_read, file_bar_write);
-	}
-	else
-	{
-		data->com[COM_BAR].init("/dev/bar0", "/dev/bar0");
-	}
-
-	data->control_usb_data_count = 0;
-	memset(data->fault_status, 0x00, sizeof(data->fault_status));
+	control_usb_data_count = 0;
+	memset(fault_status, 0x00, sizeof(fault_status));
 
 	for(i = 0; i < HOKUYO_MAX ; i++)
 	{
-		data->detection_reg_num[i] = 0;
+		detection_reg_num[i] = 0;
 	}
 
 	for( i = 0; i < COM_MAX ; i++)
 	{
-		struct robot_interface_arg* args = (struct robot_interface_arg*) malloc(sizeof(struct robot_interface_arg));
-		args->robot = data;
-		args->com_id = i;
-		data->stop_task = 0;
-		res = pthread_create(&data->tid, NULL, robot_interface_task, args);
+		stop_task = 0;
+		res = pthread_create(&tid, NULL, RobotInterface::task_wrapper, this);
 		if(res)
 		{
 			err = res;
@@ -127,102 +92,101 @@ int robot_interface_init(struct robot_interface* data, const char* file_foo_read
 	return err;
 }
 
-void robot_interface_destroy(struct robot_interface* data)
+void RobotInterface::destroy()
 {
-	int i;
-
-	data->stop_task = 1;
+	stop_task = 1;
 	usleep(100000);
-	pthread_cancel(data->tid);
+	pthread_cancel(tid);
 
-	for( i = 0; i < COM_MAX; i++)
-	{
-		data->com[i].close();
-		data->com[i].destroy();
-	}
+	com.close();
+	com.destroy();
+
 	rl_free_line_state();
 	rl_cleanup_after_signal();
 }
 
-static void* robot_interface_task(void* arg)
+void* RobotInterface::task_wrapper(void* arg)
 {
-	struct robot_interface_arg* args = (struct robot_interface_arg*) arg;
-	struct robot_interface* robot = args->robot;
-	struct com* com = &robot->com[args->com_id];
+	RobotInterface* robot = (RobotInterface*) arg;
+	return robot->task();
+}
+
+void* RobotInterface::task()
+{
 	int res;
 	unsigned char lost[1024];
 	unsigned int lost_count = 0;
 
-	com->open_block();
+	com.open_block();
 
-	while( !robot->stop_task)
+	while( !stop_task)
 	{
 		uint16_t type;
 		uint16_t size;
 
 		// lecture entete
-		res = com->read_header(&type, &size);
+		res = com.read_header(&type, &size);
 
-		if( robot->stop_task)
+		if( stop_task)
 		{
 			goto end;
 		}
 
 		if( res )
 		{
-			com->open_block();
+			com.open_block();
 			continue;
 		}
 
 		// lecture du message
-		res = com->read(size + 4);
-		if( robot->stop_task)
+		res = com.read(size + 4);
+		if( stop_task)
 		{
 			goto end;
 		}
 
 		if( res )
 		{
-			com->open_block();
+			com.open_block();
 			continue;
 		}
 
 		// copie du message (vers un buffer non circulaire)
 		char msg[size+1];
-		com->copy_msg(msg, size+1);
+		com.copy_msg(msg, size+1);
 
 		// traitement du message
 		switch( type )
 		{
 			case USB_LOG:
-				res = robot_interface_process_log(robot, args->com_id, msg, size);
+				res = process_log(msg, size);
 				break;
 			case USB_ERR:
-				res = robot_interface_process_fault(robot, args->com_id, msg, size);
+				res = process_fault(msg, size);
 				break;
 			case USB_HOKUYO1:
-				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO1, msg, size);
+				res = process_hokuyo(HOKUYO1, msg, size);
 				break;
 			case USB_HOKUYO2:
-				res = robot_interface_process_hokuyo(robot, args->com_id, HOKUYO2, msg, size);
+				res = process_hokuyo(HOKUYO2, msg, size);
 				break;
 			case USB_HOKUYO_FOO_SEG:
-				res = robot_interface_process_hokuyo_seg(robot, args->com_id, HOKUYO1, msg, size);
+				res = process_hokuyo_seg(HOKUYO1, msg, size);
 				break;
 			case USB_CONTROL:
-				res = robot_interface_process_control(robot, args->com_id, msg, size);
+				res = process_control(msg, size);
 				break;
 			case USB_GO:
-				res = robot_interface_process_go(robot, args->com_id, msg, size);
+				res = process_go(msg, size);
 				break;
 			case USB_DETECTION_DYNAMIC_OBJECT_SIZE:
-				res = robot_interface_process_detect_dyn_obj_size(robot, args->com_id, msg, size);
+				res = process_detect_dyn_obj_size(msg, size);
 				break;
 			case USB_DETECTION_DYNAMIC_OBJECT:
-				res = robot_interface_process_detect_dyn_obj(robot, args->com_id, msg, size);
+				res = process_detect_dyn_obj(msg, size);
 				break;
 			case USB_CAN_TRACE:
-				res = robot_interface_can_trace(robot, args->com_id, msg, size);
+				res = can_trace(msg, size);
 				break;
 			default:
 				res = -1;
@@ -231,11 +195,11 @@ static void* robot_interface_task(void* arg)
 
 		if( res )
 		{
-			unsigned char byte = com->buffer[com->buffer_begin];
+			unsigned char byte = com.buffer[com.buffer_begin];
 			if(lost_count >= sizeof(lost)-2)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data0 (%d) : %s", cartes[args->com_id], lost_count, lost);
+				log_error("%s unknown data0 (%d) : %s", name, lost_count, lost);
 				lost_count = 0;
 			}
 
@@ -244,27 +208,27 @@ static void* robot_interface_task(void* arg)
 			if(byte == 0 || byte == '\n')
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data1 (%d) : %s", cartes[args->com_id], lost_count, lost);
+				log_error("%s unknown data1 (%d) : %s", name, lost_count, lost);
 				lost_count = 0;
 			}
 
 			//printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, com->buffer[com->buffer_begin], com->buffer[com->buffer_begin]);
-			com->skip(1);
+			com.skip(1);
 		}
 		else
 		{
 			if(lost_count)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data2 (%d) : %s", cartes[args->com_id], lost_count, lost);
+				log_error("%s unknown data2 (%d) : %s", name, lost_count, lost);
 				lost_count = 0;
 			}
 
 			size += 4;
-			com->skip(size);
-			if(robot->callback)
+			com.skip(size);
+			if(callback)
 			{
-				robot->callback(robot->callback_arg);
+				callback(callback_arg);
 			}
 		}
 	}
@@ -273,10 +237,9 @@ end:
 	return NULL;
 }
 
-static int robot_interface_process_log(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_log(char* msg, uint16_t size)
 {
 	int res = 0;
-	(void) data;
 	struct systime current_time;
 	double time;
 	unsigned char level;
@@ -303,18 +266,18 @@ static int robot_interface_process_log(struct robot_interface* data, int com_id,
 
 	if(level < LOG_MAX)
 	{
-		log_info("%s%4s %13.6f %8s   %20s:%5d    %s%s", log_level_color_start[level], cartes[com_id], time, log_level_description[level], msg+11, line, log, log_level_color_end[level]);
+		log_info("%s%4s %13.6f %8s   %20s:%5d    %s%s", log_level_color_start[level], name, time, log_level_description[level], msg+11, line, log, log_level_color_end[level]);
 	}
 	else
 	{
-		log_info("%4s %13.6f %8s   %20s:%5d    %s", cartes[com_id], time, "unknown", msg+11, line, log);
+		log_info("%4s %13.6f %8s   %20s:%5d    %s", name, time, "unknown", msg+11, line, log);
 	}
 
 end:
 	return res;
 }
 
-static int robot_interface_process_fault(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_fault(char* msg, uint16_t size)
 {
 	int res = 0;
 	int i = 0;
@@ -331,7 +294,7 @@ static int robot_interface_process_fault(struct robot_interface* data, int com_i
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -342,31 +305,30 @@ static int robot_interface_process_fault(struct robot_interface* data, int com_i
 	for(i=0; i< FAULT_MAX; i++)
 	{
 		unsigned char state = fault_list[i].state;
-		if(state != data->fault_status[com_id][i].state)
+		if(state != fault_status[i].state)
 		{
-			log_info("%s%4s %13.6f    Fault\t%s (%d), num %d status %d\033[0m", fault_color[state & 0x01], cartes[com_id], fault_list[i].time / 1000.0f, fault_description[i], i, state >> 1, state & 0x01);
-			data->fault_status[com_id][i] = fault_list[i];
+			log_info("%s%4s %13.6f    Fault\t%s (%d), num %d status %d\033[0m", fault_color[state & 0x01], name, fault_list[i].time / 1000.0f, fault_description[i], i, state >> 1, state & 0x01);
+			fault_status[i] = fault_list[i];
 		}
 	}
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_detect_dyn_obj_size(char* msg, uint16_t size)
 {
-	(void) com_id;
 	int res = 0;
 
-	if(size != sizeof(data->detection_dynamic_object_size_tmp))
+	if(size != sizeof(detection_dynamic_object_size_tmp))
 	{
 		res = -1;
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -374,36 +336,35 @@ static int robot_interface_process_detect_dyn_obj_size(struct robot_interface* d
 		goto end;
 	}
 
-	data->detection_dynamic_object_id = 0;
-	data->detection_dynamic_object_pt_tmp_size = 0;
-	memcpy(&data->detection_dynamic_object_size_tmp, msg, sizeof(data->detection_dynamic_object_size_tmp));
+	detection_dynamic_object_id = 0;
+	detection_dynamic_object_pt_tmp_size = 0;
+	memcpy(&detection_dynamic_object_size_tmp, msg, sizeof(detection_dynamic_object_size_tmp));
 
 	// pas d'objets a attendre
-	if( data->detection_dynamic_object_size_tmp == 0)
+	if( detection_dynamic_object_size_tmp == 0)
 	{
-		data->detection_dynamic_object_size = 0;
+		detection_dynamic_object_size = 0;
 	}
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_detect_dyn_obj(char* msg, uint16_t size)
 {
-	(void) com_id;
 	int res = 0;
 	int obj_id;
 
-	unsigned int num = size / sizeof(data->detection_dynamic_object_pt[0]);
-	if(size != num * sizeof(data->detection_dynamic_object_pt[0]) )
+	unsigned int num = size / sizeof(detection_dynamic_object_pt[0]);
+	if(size != num * sizeof(detection_dynamic_object_pt[0]) )
 	{
 		res = -1;
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -411,34 +372,32 @@ static int robot_interface_process_detect_dyn_obj(struct robot_interface* data, 
 		goto end;
 	}
 
-	obj_id = data->detection_dynamic_object_id;
+	obj_id = detection_dynamic_object_id;
 
-	if(obj_id < data->detection_dynamic_object_size_tmp)
+	if(obj_id < detection_dynamic_object_size_tmp)
 	{
-		memcpy(&data->detection_dynamic_object_pt_tmp[data->detection_dynamic_object_pt_tmp_size], msg, size);
-		data->detection_dynamic_obj_tmp[obj_id].pt = &data->detection_dynamic_object_pt_tmp[data->detection_dynamic_object_pt_tmp_size];
-		data->detection_dynamic_obj_tmp[obj_id].size = num;
-		data->detection_dynamic_object_pt_tmp_size += num;
+		memcpy(&detection_dynamic_object_pt_tmp[detection_dynamic_object_pt_tmp_size], msg, size);
+		detection_dynamic_obj_tmp[obj_id].pt = &detection_dynamic_object_pt_tmp[detection_dynamic_object_pt_tmp_size];
+		detection_dynamic_obj_tmp[obj_id].size = num;
+		detection_dynamic_object_pt_tmp_size += num;
 
-		data->detection_dynamic_object_id++;
+		detection_dynamic_object_id++;
 	}
-	if(obj_id == data->detection_dynamic_object_size_tmp - 1)
+	if(obj_id == detection_dynamic_object_size_tmp - 1)
 	{
-		memcpy(data->detection_dynamic_object_pt, data->detection_dynamic_object_pt_tmp, data->detection_dynamic_object_pt_tmp_size * sizeof(data->detection_dynamic_object_pt[0]));
-		memcpy(data->detection_dynamic_obj, data->detection_dynamic_obj_tmp, data->detection_dynamic_object_size * sizeof(data->detection_dynamic_obj[0]));
-		data->detection_dynamic_object_size = data->detection_dynamic_object_size_tmp;
+		memcpy(detection_dynamic_object_pt, detection_dynamic_object_pt_tmp, detection_dynamic_object_pt_tmp_size * sizeof(detection_dynamic_object_pt[0]));
+		memcpy(detection_dynamic_obj, detection_dynamic_obj_tmp, detection_dynamic_object_size * sizeof(detection_dynamic_obj[0]));
+		detection_dynamic_object_size = detection_dynamic_object_size_tmp;
 	}
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_can_trace(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::can_trace(char* msg, uint16_t size)
 {
-	(void) com_id;
-	(void) data;
 	int res = 0;
 	int i = 0;
 
@@ -456,7 +415,7 @@ static int robot_interface_can_trace(struct robot_interface* data, int com_id, c
 	}
 
 	char buffer[1024];
-	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", cartes[com_id], can_msg->time.ms/1000.0f + can_msg->time.ns/1000000000.0f,
+	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", name, can_msg->time.ms/1000.0f + can_msg->time.ns/1000000000.0f,
 			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->size);
 	for(i=0; i < can_msg->size && res > 0; i++)
 	{
@@ -470,9 +429,8 @@ end:
 	return res;
 }
 
-static int robot_interface_process_hokuyo(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size)
+int RobotInterface::process_hokuyo(int id, char* msg, uint16_t size)
 {
-	(void) com_id;
 	int res = 0;
 
 	if(size != sizeof(struct hokuyo_scan))
@@ -481,7 +439,7 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -489,24 +447,22 @@ static int robot_interface_process_hokuyo(struct robot_interface* data, int com_
 		goto end;
 	}
 
-	memcpy(&data->hokuyo_scan[id], msg, size);
+	memcpy(&hokuyo_scan[id], msg, size);
 
-	hokuyo_compute_xy(&data->hokuyo_scan[id], data->detection_hokuyo_pos + HOKUYO_NUM_POINTS * id);
+	hokuyo_compute_xy(&hokuyo_scan[id], detection_hokuyo_pos + HOKUYO_NUM_POINTS * id);
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int com_id, int id, char* msg, uint16_t size)
+int RobotInterface::process_hokuyo_seg(int id, char* msg, uint16_t size)
 {
 	int res = 0;
 
-	(void) com_id;
-
-	unsigned int num = size / sizeof(data->detection_hokuyo_reg[0]);
-	if(size != num * sizeof(data->detection_hokuyo_reg[0]) )
+	unsigned int num = size / sizeof(detection_hokuyo_reg[0]);
+	if(size != num * sizeof(detection_hokuyo_reg[0]) )
 	{
 		res = -1;
 		goto end;
@@ -518,7 +474,7 @@ static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int 
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -526,19 +482,18 @@ static int robot_interface_process_hokuyo_seg(struct robot_interface* data, int 
 		goto end;
 	}
 
-	data->detection_reg_num[id] = num;
-	memcpy(data->detection_hokuyo_reg + HOKUYO_NUM_POINTS * id, msg, size);
+	detection_reg_num[id] = num;
+	memcpy(detection_hokuyo_reg + HOKUYO_NUM_POINTS * id, msg, size);
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_process_control(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_control(char* msg, uint16_t size)
 {
 	int res = 0;
-	(void) com_id;
 	systime t;
 
 	if(size != sizeof(struct control_usb_data) )
@@ -547,7 +502,7 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 		goto end;
 	}
 
-	res = pthread_mutex_lock(&data->mutex);
+	res = pthread_mutex_lock(&mutex);
 
 	if(res)
 	{
@@ -555,21 +510,19 @@ static int robot_interface_process_control(struct robot_interface* data, int com
 		goto end;
 	}
 
-	memcpy(data->control_usb_data + data->control_usb_data_count, msg, size);
-	t = data->control_usb_data[data->control_usb_data_count].current_time;
-	data->current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
-	data->control_usb_data_count = (data->control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
+	memcpy(control_usb_data + control_usb_data_count, msg, size);
+	t = control_usb_data[control_usb_data_count].current_time;
+	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
+	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
-	pthread_mutex_unlock(&data->mutex);
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;
 }
 
-static int robot_interface_process_go(struct robot_interface* data, int com_id, char* msg, uint16_t size)
+int RobotInterface::process_go(char* msg, uint16_t size)
 {
-	(void) data;
-	(void) com_id;
 	int res = 0;
 	struct systime t;
 	uint32_t match_time;
@@ -583,16 +536,16 @@ static int robot_interface_process_go(struct robot_interface* data, int com_id, 
 	memcpy(&t, msg, sizeof(t));
 	memcpy(&match_time, msg+sizeof(t), sizeof(match_time));
 
-	data->current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
-	data->start_time = data->current_time;
+	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
+	start_time = current_time;
 
-	log_info("%4s %13.6f %8s   GO - durée du match : %u ms", cartes[com_id], data->start_time, log_level_description[LOG_INFO], match_time);
+	log_info("%4s %13.6f %8s   GO - durée du match : %u ms", name, start_time, log_level_description[LOG_INFO], match_time);
 
 end:
 	return res;
 }
 
-int robot_interface_dynamixel_scan(struct robot_interface* data, int dynamixel_type)
+int RobotInterface::dynamixel_scan(int dynamixel_type)
 {
 	struct dynamixel_cmd_param cmd_arg;
 
@@ -603,10 +556,10 @@ int robot_interface_dynamixel_scan(struct robot_interface* data, int dynamixel_t
 	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_dynamixel_set_id(struct robot_interface* data, int dynamixel_type, uint8_t id, uint8_t new_id)
+int RobotInterface::dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id)
 {
 	struct dynamixel_cmd_param cmd_arg;
 
@@ -619,10 +572,10 @@ int robot_interface_dynamixel_set_id(struct robot_interface* data, int dynamixel
 	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_dynamixel_set_goal_position(struct robot_interface* data, int dynamixel_type, uint8_t id, float alpha)
+int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha)
 {
 	struct dynamixel_cmd_param cmd_arg;
 
@@ -635,10 +588,10 @@ int robot_interface_dynamixel_set_goal_position(struct robot_interface* data, in
 	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_dynamixel_get_position(struct robot_interface* data, int dynamixel_type, uint8_t id)
+int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 {
 	struct dynamixel_cmd_param cmd_arg;
 
@@ -650,18 +603,18 @@ int robot_interface_dynamixel_get_position(struct robot_interface* data, int dyn
 	buffer[0] = USB_CMD_DYNAMIXEL;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_print_param(struct robot_interface* data)
+int robot_interface_control_print_param(RobotInterface* data)
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_set_param(struct robot_interface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
+int robot_interface_control_set_param(RobotInterface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
 {
 	struct control_cmd_param_arg cmd_arg;
 
@@ -679,10 +632,10 @@ int robot_interface_control_set_param(struct robot_interface* data, int kp_av, i
 	buffer[0] = USB_CMD_CONTROL_PARAM;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_goto(struct robot_interface* data, VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
+int robot_interface_control_goto(RobotInterface* data, VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	struct control_cmd_goto_arg cmd_arg;
 
@@ -696,10 +649,10 @@ int robot_interface_control_goto(struct robot_interface* data, VectPlan dest, Ve
 	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_straight(struct robot_interface* data, float dist)
+int robot_interface_straight(RobotInterface* data, float dist)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -711,10 +664,10 @@ int robot_interface_straight(struct robot_interface* data, float dist)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_straight_to_wall(struct robot_interface* data)
+int robot_interface_straight_to_wall(RobotInterface* data)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -725,10 +678,10 @@ int robot_interface_straight_to_wall(struct robot_interface* data)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate(struct robot_interface* data, float alpha)
+int robot_interface_rotate(RobotInterface* data, float alpha)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -740,10 +693,10 @@ int robot_interface_rotate(struct robot_interface* data, float alpha)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate_to(struct robot_interface* data, float alpha)
+int robot_interface_rotate_to(RobotInterface* data, float alpha)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -755,10 +708,10 @@ int robot_interface_rotate_to(struct robot_interface* data, float alpha)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_free(struct robot_interface* data)
+int robot_interface_free(RobotInterface* data)
 {
 	struct control_cmd_goto_arg cmd_arg;
 
@@ -768,10 +721,10 @@ int robot_interface_free(struct robot_interface* data)
 	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_near_xy(struct robot_interface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
+int robot_interface_goto_near_xy(RobotInterface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -786,10 +739,10 @@ int robot_interface_goto_near_xy(struct robot_interface* data, float x, float y,
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_near(struct robot_interface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
+int robot_interface_goto_near(RobotInterface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -805,10 +758,10 @@ int robot_interface_goto_near(struct robot_interface* data, float x, float y, fl
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_graph(struct robot_interface* data)
+int robot_interface_goto_graph(RobotInterface* data)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -819,19 +772,19 @@ int robot_interface_goto_graph(struct robot_interface* data)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_position(struct robot_interface* data, VectPlan pos)
+int robot_interface_set_position(RobotInterface* data, VectPlan pos)
 {
 	char buffer[1+sizeof(pos)];
 	buffer[0] = USB_CMD_LOCATION_SET_POSITION;
 	memcpy(buffer+1, &pos, sizeof(pos));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
+int robot_interface_pince(RobotInterface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
 {
 	struct pince_cmd_arg cmd_arg;
 
@@ -842,10 +795,10 @@ int robot_interface_pince(struct robot_interface* data, enum pince_cmd_type cmd_
 	buffer[0] = USB_CMD_PINCE;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, float z, enum arm_cmd_type type)
+int robot_interface_arm_xyz(RobotInterface* data, float x, float y, float z, enum arm_cmd_type type)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -863,10 +816,10 @@ int robot_interface_arm_xyz(struct robot_interface* data, float x, float y, floa
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_ventouse(struct robot_interface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
+int robot_interface_arm_ventouse(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -882,10 +835,10 @@ int robot_interface_arm_ventouse(struct robot_interface* data, float x1, float y
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_hook(struct robot_interface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
+int robot_interface_arm_hook(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -901,10 +854,10 @@ int robot_interface_arm_hook(struct robot_interface* data, float x1, float y1, f
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_abz(struct robot_interface* data, float a, float b, float z)
+int robot_interface_arm_abz(RobotInterface* data, float a, float b, float z)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -917,72 +870,72 @@ int robot_interface_arm_abz(struct robot_interface* data, float a, float b, floa
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_bridge(struct robot_interface* data, uint8_t on)
+int robot_interface_arm_bridge(RobotInterface* data, uint8_t on)
 {
 	char buffer[2];
 	buffer[0] = USB_CMD_ARM_BRIDGE;
 	buffer[1] = on;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_recalage(struct robot_interface* data)
+int RobotInterface::recalage()
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_RECALAGE;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_go(struct robot_interface* data)
+int RobotInterface::go()
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_GO;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_color(struct robot_interface* data, uint8_t color)
+int RobotInterface::color(uint8_t color)
 {
 	char buffer[2];
 	buffer[0] = USB_CMD_COLOR;
 	buffer[1] = color;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_match_time(struct robot_interface* data, uint32_t time)
+int RobotInterface::set_match_time(uint32_t time)
 {
 	char buffer[5];
 	buffer[0] = USB_CMD_MATCH_TIME;
 	memcpy(buffer + 1, &time, 4);
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_can_set_baudrate(struct robot_interface* data, enum can_baudrate baudrate, int debug)
+int RobotInterface::can_set_baudrate(enum can_baudrate baudrate, int debug)
 {
 	char buffer[3];
 	buffer[0] = USB_CMD_CAN_SET_BAUDRATE;
 	buffer[1] = baudrate;
 	buffer[2] = debug;
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_can_write(struct robot_interface* data, struct can_msg* msg)
+int RobotInterface::can_write(struct can_msg* msg)
 {
 	char buffer[sizeof(struct can_msg) + 1];
 	buffer[0] = USB_CMD_CAN_WRITE;
 	memcpy(buffer + 1, msg, sizeof(struct can_msg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, float vmax_rot)
+int robot_interface_set_max_speed(RobotInterface* data, float vmax_av, float vmax_rot)
 {
 	struct control_cmd_max_speed_arg cmd_arg;
 
@@ -993,10 +946,10 @@ int robot_interface_set_max_speed(struct robot_interface* data, float vmax_av, f
 	buffer[0] = USB_CMD_CONTROL_MAX_SPEED;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com[COM_FOO].write(buffer, sizeof(buffer));
+	return data->com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate_speed(struct robot_interface* data, float v)
+int robot_interface_rotate_speed(RobotInterface* data, float v)
 {
 	(void) data;
 	(void) v;
@@ -1053,7 +1006,7 @@ int robot_interface_rotate_speed(struct robot_interface* data, float v)
 	return 0;
 }
 
-int robot_interface_straight_speed(struct robot_interface* data, float v)
+int robot_interface_straight_speed(RobotInterface* data, float v)
 {
 	(void) data;
 	(void) v;

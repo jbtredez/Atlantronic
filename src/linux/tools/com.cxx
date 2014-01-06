@@ -3,7 +3,7 @@
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 
-void com::init(const char* File_read, const char* File_write)
+void Com::init(const char* File_read, const char* File_write)
 {
 	fd_read = -1;
 	fd_write = -1;
@@ -16,7 +16,7 @@ void com::init(const char* File_read, const char* File_write)
 	buffer_size = 0;
 }
 
-void com::destroy()
+void Com::destroy()
 {
 	if(file_read)
 	{
@@ -30,7 +30,7 @@ void com::destroy()
 	file_write = NULL;
 }
 
-int com::close()
+int Com::close()
 {
 	int res = -1;
 
@@ -92,7 +92,7 @@ end:
 	return res;
 }
 
-int com::open()
+int Com::open()
 {
 	int res = close();
 
@@ -143,7 +143,7 @@ end:
 	return res;
 }
 
-void com::open_block()
+void Com::open_block()
 {
 	struct timespec req;
 	struct timespec rem;
@@ -159,7 +159,7 @@ void com::open_block()
 	}
 }
 
-int com::read(int min_buffer_size)
+int Com::read(int min_buffer_size)
 {
 	int res = 0;
 
@@ -204,7 +204,7 @@ end:
 	return res;
 }
 
-int com::read_header(uint16_t* type, uint16_t* size)
+int Com::read_header(uint16_t* type, uint16_t* size)
 {
 	int res = 0;
 	unsigned char a, b, c, d;
@@ -227,7 +227,7 @@ end:
 	return res;
 }
 
-void com::copy_msg(char* msg, int size)
+void Com::copy_msg(char* msg, int size)
 {
 	int i, j;
 	if(size > 1)
@@ -243,13 +243,13 @@ void com::copy_msg(char* msg, int size)
 	}
 }
 
-void com::skip(int count)
+void Com::skip(int count)
 {
 	buffer_size -= count;
 	buffer_begin = (buffer_begin + count) % sizeof(buffer);
 }
 
-int com::write(const void* buf, int size)
+int Com::write(const void* buf, int size)
 {
 	if(fd_write == -1)
 	{

@@ -6,24 +6,18 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/robot_interface.h"
 
-static struct robot_interface robot_interface;
+static RobotInterface robot_interface;
 
 int main(int argc, char** argv)
 {
-	const char* file_foo = NULL;
-	const char* file_bar = NULL;
+	const char* file = NULL;
 
 	if( argc > 1)
 	{
-		file_foo = argv[1];
+		file = argv[1];
 	}
 
-	if(argc > 2)
-	{
-		file_bar = argv[2];
-	}
-
-	robot_interface_init(&robot_interface, file_foo, file_foo, file_bar, file_bar, NULL, NULL);
+	robot_interface.init("discovery", file, file, NULL, NULL);
 	cmd_init(&robot_interface, NULL, NULL);
 
 	while(1)
@@ -31,7 +25,7 @@ int main(int argc, char** argv)
 		pause();
 	}
 
-	robot_interface_destroy(&robot_interface);
+	robot_interface.destroy();
 
 	return 0;
 }

@@ -79,7 +79,7 @@ static int font_width = 0;
 static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
-static struct robot_interface robot_interface;
+static RobotInterface robot_interface;
 static struct qemu qemu;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
@@ -149,8 +149,6 @@ int main(int argc, char *argv[])
 
 	const char* file_foo_read = NULL;
 	const char* file_foo_write = NULL;
-	const char* file_bar_read = NULL;
-	const char* file_bar_write = NULL;
 
 	const char* prog_foo = NULL;
 	int gdb_port = 0;
@@ -181,12 +179,6 @@ int main(int argc, char *argv[])
 	{
 		file_foo_read = argv[optind];
 		file_foo_write = file_foo_read;
-	}
-
-	if(argc - optind > 1)
-	{
-		file_bar_read = argv[optind+1];
-		file_bar_write = file_bar_read;
 	}
 
 	if(simulation)
@@ -338,7 +330,7 @@ int main(int argc, char *argv[])
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	robot_interface_init(&robot_interface, file_foo_read, file_foo_write, file_bar_read, file_bar_write, read_callback, opengl_window);
+	robot_interface.init("discovery", file_foo_read, file_foo_write, read_callback, opengl_window);
 
 	if( simulation )
 	{
@@ -368,7 +360,7 @@ int main(int argc, char *argv[])
 
 	qemu.destroy();
 
-	robot_interface_destroy(&robot_interface);
+	robot_interface.destroy();
 
 	joystick_destroy(&joystick);
 

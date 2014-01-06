@@ -12,7 +12,7 @@ class qemu
 		char file_qemu_write[64];
 		char file_foo_read[64];
 		char file_foo_write[64];
-		struct com com; //!< communication avec qemu
+		Com com; //!< communication avec qemu
 		pid_t pid; //!< pid de qemu
 
 		int init(const char* prog_name, int gdb_port);

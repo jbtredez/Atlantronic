@@ -10,7 +10,7 @@
 #include "foo/control/trajectory.h"
 
 static void (*cmd_exit_callback)(void) = NULL;
-static struct robot_interface* cmd_robot = NULL;
+static RobotInterface* cmd_robot = NULL;
 static struct qemu* cmd_qemu = NULL;
 
 int cmd_arm_bridge(const char* arg);
@@ -84,7 +84,7 @@ COMMAND usb_commands[] = {
 	{ NULL, NULL, NULL }
 };
 
-int cmd_init(struct robot_interface* robot, struct qemu* qemu, void (*f)(void))
+int cmd_init(RobotInterface* robot, struct qemu* qemu, void (*f)(void))
 {
 	cmd_robot = robot;
 	cmd_qemu = qemu;
@@ -102,7 +102,7 @@ int cmd_dynamixel_scan(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_dynamixel_scan(cmd_robot, type);
+	cmd_robot->dynamixel_scan(type);
 	return CMD_SUCESS;
 }
 
@@ -118,7 +118,7 @@ int cmd_dynamixel_set_id(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_dynamixel_set_id(cmd_robot, type, id, new_id);
+	cmd_robot->dynamixel_set_id(type, id, new_id);
 	return CMD_SUCESS;
 }
 
@@ -134,7 +134,7 @@ int cmd_dynamixel_set_goal_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_dynamixel_set_goal_position(cmd_robot, type, id, alpha);
+	cmd_robot->dynamixel_set_goal_position(type, id, alpha);
 	return CMD_SUCESS;
 }
 
@@ -149,7 +149,7 @@ int cmd_dynamixel_get_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_dynamixel_get_position(cmd_robot, type, id);
+	cmd_robot->dynamixel_get_position(type, id);
 	return CMD_SUCESS;
 }
 
@@ -164,7 +164,7 @@ int cmd_can_set_baudrate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_can_set_baudrate(cmd_robot, (can_baudrate)id, debug);
+	cmd_robot->can_set_baudrate((can_baudrate)id, debug);
 	return CMD_SUCESS;
 }
 
@@ -191,7 +191,7 @@ int cmd_can_write(const char* arg)
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
 
-	robot_interface_can_write(cmd_robot, &msg);
+	cmd_robot->can_write(&msg);
 	return CMD_SUCESS;
 }
 
@@ -439,14 +439,14 @@ int cmd_pince_set_position (const char* arg)
 int cmd_recalage(const char* arg)
 {
 	(void) arg;
-	robot_interface_recalage(cmd_robot);
+	cmd_robot->recalage();
 	return CMD_SUCESS;
 }
 
 int cmd_go(const char* arg)
 {
 	(void) arg;
-	robot_interface_go(cmd_robot);
+	cmd_robot->go();
 	return CMD_SUCESS;
 }
 
@@ -461,7 +461,7 @@ int cmd_set_match_time(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_set_match_time(cmd_robot, time);
+	cmd_robot->set_match_time(time);
 	return CMD_SUCESS;
 }
 
@@ -476,7 +476,7 @@ int cmd_set_color(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_color(cmd_robot, (uint8_t) color);
+	cmd_robot->color((uint8_t) color);
 	return CMD_SUCESS;
 }
 

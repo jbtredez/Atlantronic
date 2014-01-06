@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <pthread.h>
 
-class com
+class Com
 {
 	public:
 		void init(const char* file_read, const char* file_write);
