@@ -9,13 +9,14 @@
 #include "kernel/fault.h"
 #include "kernel/driver/usb.h"
 #include "kernel/error_codes.h"
+#include "kernel/module.h"
 #include "gpio.h"
 
 static void can_write_mailbox(struct can_msg *msg);
 static void can_cmd_write(void* arg);
-static void can_cmd_set_baudrate(void* arg);
-static void can_set_baudrate(enum can_baudrate speed, int debug);
-static int can_set_mask(int id, uint32_t mask);
+__OPTIMIZE_SIZE__ static void can_cmd_set_baudrate(void* arg);
+__OPTIMIZE_SIZE__ static void can_set_baudrate(enum can_baudrate speed, int debug);
+__OPTIMIZE_SIZE__ static int can_set_mask(int id, uint32_t mask);
 static void can_write_task(void *arg);
 static xQueueHandle can_write_queue;
 static xQueueHandle can_read_queue;
@@ -23,7 +24,7 @@ static xSemaphoreHandle can_write_sem;
 #define CAN_WRITE_STACK_SIZE     80
 #define CAN_WRITE_QUEUE_SIZE     80
 
-int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
+__OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {
 	// CAN1 :
 	// CAN_RX : PD0

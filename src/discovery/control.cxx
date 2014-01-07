@@ -11,6 +11,7 @@
 #include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/spi.h"
+#include "kernel/fault.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -90,14 +91,19 @@ static void control_task(void* arg)
 			int res = can_motor[i].wait_update_until(motor_update_max_abstime);
 			if( res )
 			{
-				// TODO defaut, moteur ne repond pas
+				// defaut, moteur ne repond pas
+				fault((enum fault)(FAULT_CAN_MOTOR_DISCONNECTED_0 + i), FAULT_ACTIVE);
 				motorNotReady = 1;
 
 			}
-			else if( ! can_motor[i].is_op_enable() )
+			else
 			{
-				// TODO defaut, moteur pas op_enable
-				motorNotReady = 1;
+				fault((enum fault)(FAULT_CAN_MOTOR_DISCONNECTED_0 + i), FAULT_CLEAR);
+				if( ! can_motor[i].is_op_enable() )
+				{
+					// TODO defaut, moteur pas op_enable
+					motorNotReady = 1;
+				}
 			}
 			control_kinematics_mes[i] = can_motor[i].kinematics;
 		}

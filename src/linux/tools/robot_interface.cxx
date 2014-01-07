@@ -22,6 +22,13 @@ const char* fault_description[FAULT_MAX] =
 	// CAN
 	[FAULT_CAN_READ_QUEUE_FULL] = "can : queue de lecture pleine",
 	[FAULT_CAN_READ_FIFO_OVERFLOW] = "can : fifo de lecture qui deborde - perte de messages",
+
+	[FAULT_CAN_MOTOR_DISCONNECTED_0] = "can motor 0 disconnected",
+	[FAULT_CAN_MOTOR_DISCONNECTED_1] = "can motor 1 disconnected",
+	[FAULT_CAN_MOTOR_DISCONNECTED_2] = "can motor 2 disconnected",
+	[FAULT_CAN_MOTOR_DISCONNECTED_3] = "can motor 3 disconnected",
+	[FAULT_CAN_MOTOR_DISCONNECTED_4] = "can motor 4 disconnected",
+	[FAULT_CAN_MOTOR_DISCONNECTED_5] = "can motor 5 disconnected",
 };
 
 const char* log_level_description[LOG_MAX] =

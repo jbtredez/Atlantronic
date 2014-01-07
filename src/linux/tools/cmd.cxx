@@ -26,6 +26,7 @@ int cmd_dynamixel_set_goal_position(const char* arg);
 int cmd_dynamixel_get_position(const char* arg);
 int cmd_help(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
+int cmd_qemu_manage_canopen_connexion(const char* arg);
 int cmd_quit(const char* arg);
 int cmd_go(const char* arg);
 int cmd_goto(const char*arg);
@@ -68,11 +69,12 @@ COMMAND usb_commands[] = {
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
 	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
 	{ "help", cmd_help, "Display this text" },
-	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor factor" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "q", cmd_quit, "Quit" },
+	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor factor" },
+	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
@@ -215,6 +217,25 @@ int cmd_qemu_set_clock_factor(const char* arg)
 	if( cmd_qemu )
 	{
 		cmd_qemu->set_clock_factor(id);
+	}
+
+	return CMD_SUCESS;
+}
+
+int cmd_qemu_manage_canopen_connexion(const char* arg)
+{
+	unsigned int nodeid;
+	int connected;
+	int count = sscanf(arg, "%u %u", &nodeid, &connected);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	if( cmd_qemu )
+	{
+		cmd_qemu->manage_canopen_connexion(nodeid, connected);
 	}
 
 	return CMD_SUCESS;

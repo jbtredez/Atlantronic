@@ -7,9 +7,19 @@
 
 #define  MIN(a, b)      (((a) < (b)) ? (a) : (b))
 
-#define EVENT_CLOCK_FACTOR         1
-#define EVENT_NEW_OBJECT           2
-#define EVENT_MOVE_OBJECT          3
+enum
+{
+	EVENT_CLOCK_FACTOR = 1,
+	EVENT_NEW_OBJECT,
+	EVENT_MOVE_OBJECT,
+	EVENT_MANAGE_CAN_MOTOR,
+};
+
+enum
+{
+	EVENT_MANAGE_CAN_MOTOR_CONNECT,
+	EVENT_MANAGE_CAN_MOTOR_DISCONNECT,
+};
 
 struct atlantronic_model_tx_event
 {
@@ -148,6 +158,25 @@ int qemu::move_object(int id, struct vect2 origin, VectPlan delta)
 	f[2] = delta.x;
 	f[3] = delta.y;
 	f[4] = delta.theta;
+
+	return com.write((void*) &event, sizeof(event));
+}
+
+//! @param nodeId : nodeId ou 0 pour tous
+int qemu::manage_canopen_connexion(int nodeId, bool connected)
+{
+	struct atlantronic_model_tx_event event;
+
+	event.type = EVENT_MANAGE_CAN_MOTOR;
+	event.data32[0] = nodeId;
+	if(connected)
+	{
+		event.data32[1] = EVENT_MANAGE_CAN_MOTOR_CONNECT;
+	}
+	else
+	{
+		event.data32[1] = EVENT_MANAGE_CAN_MOTOR_DISCONNECT;
+	}
 
 	return com.write((void*) &event, sizeof(event));
 }
