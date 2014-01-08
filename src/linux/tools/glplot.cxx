@@ -1353,13 +1353,13 @@ static void joystick_event(int event, float val)
 			case 0: // A (xbox)
 				if( v )
 				{
-					robot_interface_pince(&robot_interface, PINCE_OPEN, PINCE_OPEN);
+					robot_interface.pince(PINCE_OPEN, PINCE_OPEN);
 				}
 				break;
 			case 1: // B (xbox)
 				if( v )
 				{
-					robot_interface_pince(&robot_interface, PINCE_CLOSE, PINCE_CLOSE);
+					robot_interface.pince(PINCE_CLOSE, PINCE_CLOSE);
 				}
 				break;
 			case 2: // X (xbox)
@@ -1381,13 +1381,13 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 0: // joystick gauche (xbox)
-				robot_interface_rotate_speed(&robot_interface, val);
+				robot_interface.rotate_speed(val);
 				break;
 			case 2: // gachette gauche (xbox)
-				robot_interface_straight_speed(&robot_interface, val);
+				robot_interface.straight_speed(val);
 				break;
 			case 5: // gachette droite (xbox)
-				robot_interface_straight_speed(&robot_interface, -val);
+				robot_interface.straight_speed(-val);
 				break;
 			default:
 				break;

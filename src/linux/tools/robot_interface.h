@@ -43,7 +43,41 @@ class RobotInterface
 		//!< time : temps en ms
 		int set_match_time(uint32_t time);
 
-		Com com; //!< communication
+		// ---------- gestion control --------------------------------------------------
+		int control_print_param();
+		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour
+		int control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
+		int control_free();
+
+/////////////////// TODO a mettre a jour
+		// ---------- gestion des pinces -----------------------------------------------
+		int pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);
+
+		// ---------- gestion du bras --------------------------------------------------
+		int arm_xyz(float x, float y, float z, enum arm_cmd_type type);
+		int arm_abz(float a, float b, float z);
+		int arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
+		int arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
+		int arm_bridge(uint8_t on);
+
+		// ---------- localisation -----------------------------------------------------
+		int set_position(VectPlan pos);
+
+		// ---------- gestion trajectoire ----------------------------------------------
+		int straight(float dist);
+		int straight_to_wall();
+		int rotate(float alpha);
+		int rotate_to(float alpha);
+		int goto_graph();
+		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
+		int goto_near(float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type);
+
+		//!< vitesse en % de vmax de configuration du robot
+		int set_max_speed(float vmax_av, float vmax_rot);
+		int straight_speed(float v);
+		int rotate_speed(float v);
+//////////////////// FIN TODO
+
 		pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 
 		// données brutes
@@ -77,6 +111,7 @@ class RobotInterface
 		volatile int stop_task;
 		void (*callback)(void*);
 		void* callback_arg;
+		Com com; //!< communication
 
 		static void* task_wrapper(void* arg);
 		void* task();
@@ -90,58 +125,5 @@ class RobotInterface
 		int process_detect_dyn_obj(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
 };
-
-// ---------- gestion des pinces -----------------------------------------------
-
-int robot_interface_pince(RobotInterface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);
-
-// ---------- gestion du bras --------------------------------------------------
-
-int robot_interface_arm_xyz(RobotInterface* data, float x, float y, float z, enum arm_cmd_type type);
-
-int robot_interface_arm_abz(RobotInterface* data, float a, float b, float z);
-
-int robot_interface_arm_ventouse(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way);
-
-int robot_interface_arm_hook(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way);
-
-int robot_interface_arm_bridge(RobotInterface* data, uint8_t on);
-
-// ---------- localisation -----------------------------------------------------
-
-int robot_interface_set_position(RobotInterface* data, VectPlan pos);
-
-// ---------- gestion control --------------------------------------------------
-
-int robot_interface_control_print_param(RobotInterface* data);
-
-int robot_interface_control_set_param(RobotInterface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha);
-
-int robot_interface_control_goto(RobotInterface* data, VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
-
-// ---------- gestion trajectoire ----------------------------------------------
-
-int robot_interface_straight(RobotInterface* data, float dist);
-
-int robot_interface_straight_to_wall(RobotInterface* data);
-
-int robot_interface_rotate(RobotInterface* data, float alpha);
-
-int robot_interface_rotate_to(RobotInterface* data, float alpha);
-
-int robot_interface_free(RobotInterface* data);
-
-int robot_interface_goto_graph(RobotInterface* data);
-
-int robot_interface_goto_near_xy(RobotInterface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
-
-int robot_interface_goto_near(RobotInterface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type);
-
-//!< vitesse en % de vmax de configuration du robot
-int robot_interface_set_max_speed(RobotInterface* data, float vmax_av, float vmax_rot);
-
-int robot_interface_straight_speed(RobotInterface* data, float v);
-
-int robot_interface_rotate_speed(RobotInterface* data, float v);
 
 #endif

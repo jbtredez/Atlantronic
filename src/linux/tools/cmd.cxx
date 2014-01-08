@@ -271,7 +271,7 @@ int cmd_control_param(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_control_set_param(cmd_robot, kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha);
+	cmd_robot->control_set_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha);
 
 	return CMD_SUCESS;
 }
@@ -279,7 +279,7 @@ int cmd_control_param(const char* arg)
 int cmd_control_print_param(const char* arg)
 {
 	(void) arg;
-	robot_interface_control_print_param(cmd_robot);
+	cmd_robot->control_print_param();
 
 	return CMD_SUCESS;
 }
@@ -294,7 +294,7 @@ int cmd_localization_set_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_set_position(cmd_robot, pos);
+	cmd_robot->set_position(pos);
 
 	return CMD_SUCESS;
 }
@@ -309,7 +309,7 @@ int cmd_straight(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_straight(cmd_robot, dist);
+	cmd_robot->straight(dist);
 
 	return CMD_SUCESS;
 }
@@ -317,7 +317,7 @@ int cmd_straight(const char* arg)
 int cmd_straight_to_wall(const char* arg)
 {
 	(void) arg;
-	robot_interface_straight_to_wall(cmd_robot);
+	cmd_robot->straight_to_wall();
 
 	return CMD_SUCESS;
 }
@@ -332,7 +332,7 @@ int cmd_rotate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_rotate(cmd_robot, alpha);
+	cmd_robot->rotate(alpha);
 
 	return CMD_SUCESS;
 }
@@ -347,7 +347,7 @@ int cmd_rotate_to(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_rotate_to(cmd_robot, alpha);
+	cmd_robot->rotate_to(alpha);
 
 	return CMD_SUCESS;
 }
@@ -355,7 +355,7 @@ int cmd_rotate_to(const char* arg)
 int cmd_free(const char* arg)
 {
 	(void) arg;
-	robot_interface_free(cmd_robot);
+	cmd_robot->control_free();
 
 	return CMD_SUCESS;
 }
@@ -375,7 +375,7 @@ int cmd_goto_near(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_goto_near(cmd_robot, x, y, alpha, dist, way, avoidance_type);
+	cmd_robot->goto_near(x, y, alpha, dist, way, avoidance_type);
 
 	return CMD_SUCESS;
 }
@@ -394,7 +394,7 @@ int cmd_goto_near_xy(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_goto_near_xy(cmd_robot, x, y, dist, way, avoidance_type);
+	cmd_robot->goto_near_xy(x, y, dist, way, avoidance_type);
 
 	return CMD_SUCESS;
 }
@@ -414,14 +414,14 @@ int cmd_goto(const char* arg)
 	KinematicsParameters linearParam = {1000, 1000, 1000}; // TODO
 	KinematicsParameters angularParam = {1, 1, 1}; // TODO
 
-	robot_interface_control_goto(cmd_robot, dest, cp, linearParam, angularParam);
+	cmd_robot->control_goto(dest, cp, linearParam, angularParam);
 	return CMD_SUCESS;
 }
 
 int cmd_goto_graph(const char* arg)
 {
 	(void) arg;
-	robot_interface_goto_graph(cmd_robot);
+	cmd_robot->goto_graph();
 
 	return CMD_SUCESS;
 }
@@ -437,7 +437,7 @@ int cmd_max_speed(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_set_max_speed(cmd_robot, v_max_av, v_max_rot);
+	cmd_robot->set_max_speed(v_max_av, v_max_rot);
 
 	return CMD_SUCESS;
 }
@@ -453,7 +453,7 @@ int cmd_pince_set_position (const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_pince(cmd_robot, (pince_cmd_type)pince_left, (pince_cmd_type)pince_right);
+	cmd_robot->pince((pince_cmd_type)pince_left, (pince_cmd_type)pince_right);
 	return CMD_SUCESS;
 }
 
@@ -514,7 +514,7 @@ int cmd_arm_abz(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_abz(cmd_robot, a, b, z);
+	cmd_robot->arm_abz(a, b, z);
 	return CMD_SUCESS;
 }
 
@@ -532,7 +532,7 @@ int cmd_arm_xyz(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_xyz(cmd_robot, x, y, z, (arm_cmd_type)type);
+	cmd_robot->arm_xyz(x, y, z, (arm_cmd_type)type);
 	return CMD_SUCESS;
 }
 
@@ -552,7 +552,7 @@ int cmd_arm_ventouse(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_ventouse(cmd_robot, x1, y1, x2, y2, z, tool_way);
+	cmd_robot->arm_ventouse(x1, y1, x2, y2, z, tool_way);
 	return CMD_SUCESS;
 }
 
@@ -572,7 +572,7 @@ int cmd_arm_hook(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_hook(cmd_robot, x1, y1, x2, y2, z, tool_way);
+	cmd_robot->arm_hook(x1, y1, x2, y2, z, tool_way);
 	return CMD_SUCESS;
 }
 
@@ -587,6 +587,6 @@ int cmd_arm_bridge(const char* arg)
 		return CMD_ERROR;
 	}
 
-	robot_interface_arm_bridge(cmd_robot, (uint8_t) on);
+	cmd_robot->arm_bridge((uint8_t) on);
 	return CMD_SUCESS;
 }

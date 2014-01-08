@@ -613,15 +613,15 @@ int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_print_param(RobotInterface* data)
+int RobotInterface::control_print_param()
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_set_param(RobotInterface* data, int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
+int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
 {
 	struct control_cmd_param_arg cmd_arg;
 
@@ -639,10 +639,10 @@ int robot_interface_control_set_param(RobotInterface* data, int kp_av, int ki_av
 	buffer[0] = USB_CMD_CONTROL_PARAM;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_control_goto(RobotInterface* data, VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
+int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	struct control_cmd_goto_arg cmd_arg;
 
@@ -656,10 +656,10 @@ int robot_interface_control_goto(RobotInterface* data, VectPlan dest, VectPlan c
 	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_straight(RobotInterface* data, float dist)
+int RobotInterface::straight(float dist)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -671,10 +671,10 @@ int robot_interface_straight(RobotInterface* data, float dist)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_straight_to_wall(RobotInterface* data)
+int RobotInterface::straight_to_wall()
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -685,10 +685,10 @@ int robot_interface_straight_to_wall(RobotInterface* data)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate(RobotInterface* data, float alpha)
+int RobotInterface::rotate(float alpha)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -700,10 +700,10 @@ int robot_interface_rotate(RobotInterface* data, float alpha)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate_to(RobotInterface* data, float alpha)
+int RobotInterface::rotate_to(float alpha)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -715,10 +715,10 @@ int robot_interface_rotate_to(RobotInterface* data, float alpha)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_free(RobotInterface* data)
+int RobotInterface::control_free()
 {
 	struct control_cmd_goto_arg cmd_arg;
 
@@ -728,10 +728,10 @@ int robot_interface_free(RobotInterface* data)
 	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_near_xy(RobotInterface* data, float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
+int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -746,10 +746,10 @@ int robot_interface_goto_near_xy(RobotInterface* data, float x, float y, float d
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_near(RobotInterface* data, float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
+int RobotInterface::goto_near(float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -765,10 +765,10 @@ int robot_interface_goto_near(RobotInterface* data, float x, float y, float alph
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_goto_graph(RobotInterface* data)
+int RobotInterface::goto_graph()
 {
 	struct trajectory_cmd_arg cmd_arg;
 
@@ -779,19 +779,19 @@ int robot_interface_goto_graph(RobotInterface* data)
 	buffer[0] = USB_CMD_TRAJECTORY;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_position(RobotInterface* data, VectPlan pos)
+int RobotInterface::set_position(VectPlan pos)
 {
 	char buffer[1+sizeof(pos)];
 	buffer[0] = USB_CMD_LOCATION_SET_POSITION;
 	memcpy(buffer+1, &pos, sizeof(pos));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_pince(RobotInterface* data, enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
+int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
 {
 	struct pince_cmd_arg cmd_arg;
 
@@ -802,10 +802,10 @@ int robot_interface_pince(RobotInterface* data, enum pince_cmd_type cmd_type_lef
 	buffer[0] = USB_CMD_PINCE;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_xyz(RobotInterface* data, float x, float y, float z, enum arm_cmd_type type)
+int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -823,10 +823,10 @@ int robot_interface_arm_xyz(RobotInterface* data, float x, float y, float z, enu
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_ventouse(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
+int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -842,10 +842,10 @@ int robot_interface_arm_ventouse(RobotInterface* data, float x1, float y1, float
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_hook(RobotInterface* data, float x1, float y1, float x2, float y2, float z, int8_t tool_way)
+int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -861,10 +861,10 @@ int robot_interface_arm_hook(RobotInterface* data, float x1, float y1, float x2,
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_abz(RobotInterface* data, float a, float b, float z)
+int RobotInterface::arm_abz(float a, float b, float z)
 {
 	struct arm_cmd_goto_param cmd_arg;
 
@@ -877,16 +877,16 @@ int robot_interface_arm_abz(RobotInterface* data, float a, float b, float z)
 	buffer[0] = USB_CMD_ARM_GOTO;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_arm_bridge(RobotInterface* data, uint8_t on)
+int RobotInterface::arm_bridge(uint8_t on)
 {
 	char buffer[2];
 	buffer[0] = USB_CMD_ARM_BRIDGE;
 	buffer[1] = on;
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
 int RobotInterface::recalage()
@@ -942,7 +942,7 @@ int RobotInterface::can_write(struct can_msg* msg)
 	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_set_max_speed(RobotInterface* data, float vmax_av, float vmax_rot)
+int RobotInterface::set_max_speed(float vmax_av, float vmax_rot)
 {
 	struct control_cmd_max_speed_arg cmd_arg;
 
@@ -953,12 +953,11 @@ int robot_interface_set_max_speed(RobotInterface* data, float vmax_av, float vma
 	buffer[0] = USB_CMD_CONTROL_MAX_SPEED;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
-	return data->com.write(buffer, sizeof(buffer));
+	return com.write(buffer, sizeof(buffer));
 }
 
-int robot_interface_rotate_speed(RobotInterface* data, float v)
+int RobotInterface::rotate_speed(float v)
 {
-	(void) data;
 	(void) v;
 /*	enum control_state control_state = CONTROL_READY_FREE;
 	int control_v_rot_cons = 0;
@@ -1013,9 +1012,8 @@ int robot_interface_rotate_speed(RobotInterface* data, float v)
 	return 0;
 }
 
-int robot_interface_straight_speed(RobotInterface* data, float v)
+int RobotInterface::straight_speed(float v)
 {
-	(void) data;
 	(void) v;
 /*	enum control_state control_state = CONTROL_READY_FREE;
 	int control_v_dist_cons = 0;
