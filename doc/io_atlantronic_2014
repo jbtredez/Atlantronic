@@ -1,67 +1,67 @@
 Sur discovery :
-PA0  : (bouton 1 carte CPU, résistence SB20 à virer sous la carte cpu, c'est prévu pour) USART4_TX (hokuyo 1)
-PA1  : USART4_RX (hokuyo 1)
+PA0  : (bouton 1 carte CPU, résistence SB20 à virer sous la carte cpu, c'est prévu pour) UART4_TX (hokuyo 1)
+PA1  : UART4_RX (hokuyo 1)
 PA2  : USART2_TX (hokuyo 2)
 PA3  : USART2_RX (hokuyo 2)
 PA4  : LRCK/AIN1x (CS43L22 - audio - carte cpu)
-PA5  : SCL/SPC (LIS302DL - accéléro - carte cpu)
+PA5  : SCLK/SCL/SPC (LIS302DL - accéléro - carte cpu)
 PA6  : MISO / SDO (LIS302DL - accéléro - carte cpu)
 PA7  : MOSI / SDA/SDI/SDO (LIS302DL - accéléro - carte cpu)
-PA8  : CS1_SPI (gyro)
+PA8  : CS2_SPI
 PA9  : VBUS (USB - carte cpu)
 PA10 : ID (USB - carte cpu)
 PA11 : DM (USB - carte cpu)
 PA12 : DP (USB - carte cpu)
 PA13 : SWDIO (connecteur debug / jtag carte cpu)
 PA14 : SWCLK (connecteur debug / jtag carte cpu)
-PA15 : 
+PA15 : CS1_SPI (gyro)
 
-PB0  : AN8
-PB1  : AN9
-PB2  : 
+PB0  : AN8 - AN_MOT4
+PB1  : AN9 - AN_MOT1
+PB2  : ENABLE (activation des alim puissance)
 PB3  : SWO (connecteur debug / jtag carte cpu)
 PB4  : TIM3_CH1 (encodeur 1)
 PB5  : TIM3_CH2 (encodeur 1)
 PB6  : SCL (CS43L22 - audio - carte cpu)
-PB7  :
-PB8  :
+PB7  : BTN2
+PB8  : LED5
 PB9  : SDA (CS43L22 - audio - carte cpu)
 PB10 : CLK (MP45DT02 - audio - carte cpu)
-PB11 :
-PB12 : CAN2_RX (option second can ?)
-PB13 : CAN2_TX (option second can ?)
+PB11 : OUT_3
+PB12 : IN_2
+PB13 : OUT_1
 PB14 : TIM12_CH1 (encodeur 2)
 PB15 : TIM12_CH2 (encodeur 2)
 
 PC0  : powerOn (USB - carte cpu)
-PC1  : AN11
-PC2  : AN12
+PC1  : AN11 - AN_MOT2
+PC2  : AN12 - AN_MOT3
 PC3  : DOUT/AIN4x (MP45DT02 - audio - carte cpu)
 PC4  : (CS43L22 - audio - carte cpu)
-PC5  : AN15
+PC5  : AN15 - tension BAT
 PC6  : USART6_TX (=> AX12 en half duplex)
 PC7  : MCLK (CS43L22 - audio - carte cpu)
-PC8  :
-PC9  :
+PC8  : OUT_5
+PC9  : IN_5
 PC10 : SCLK (CS43L22 - audio - carte cpu)
-PC11 :
+PC11 : IN_4
 PC12 : SDIN (CS43L22 - audio - carte cpu). UART5_TX (RX24F), on n'utilise pas la puce audio
-PC13 :
-PC14 : (osc32_in si on en met un ? a priori, pas utile)
-PC15 : (osc32_out si on en met un ? a priori, pas utile)
+PC13 : LED2
+PC14 : (osc32_in si on en met un ? a priori, pas utile) => BTN1
+PC15 : (osc32_out si on en met un ? a priori, pas utile) => LED1
 
 PD0  : CAN1_RX
 PD1  : CAN1_TX
 PD2  : UART5_RX (RX24F)
-PD3  :
+PD3  : GO
 PD4  : RESET (CS43L22 - audio - carte cpu)
 PD5  : led rouge overcurrent (USB - carte cpu)
-PD6  :
-PD7  :
+PD6  : OUT_4
+PD7  : IN_3
 PD8  : USART3_TX (xbee)
 PD9  : USART3_RX (xbee)
-PD10 :
-PD11 :
+PD10 : OUT_2
+PD11 : IN_1
 PD12 : led verte (carte cpu)
 PD13 : led orange (carte cpu)
 PD14 : led rouge (carte cpu)
@@ -69,20 +69,20 @@ PD15 : led bleue (carte cpu)
 
 PE0  : INT1 (LIS302DL - accéléro - carte cpu)
 PE1  : INT2 (LIS302DL - accéléro - carte cpu)
-PE2  :
+PE2  : LED4
 PE3  : CS_I2C/SPI (LIS302DL - accéléro - carte cpu)
-PE4  :
+PE4  : LED3
 PE5  : TIM9_CH1 (encodeur 3)
 PE6  : TIM9_CH2 (encodeur 3)
-PE7  :
-PE8  :
+PE7  : 
+PE8  : sens pwm1
 PE9  : TIM1_CH1 (pwm1)
-PE10 :
+PE10 : sens pwm2
 PE11 : TIM1_CH2 (pwm2)
-PE12 :
+PE12 : sens pwm3
 PE13 : TIM1_CH3 (pwm3)
 PE14 : TIM1_CH4 (pwm4)
-PE15 :
+PE15 : sens pwm4
 
 
 2 connecteurs hokuyos 4 pin (0, 5V, RS232_RX, RS232_TX)
@@ -91,3 +91,5 @@ PE15 :
 1 connecteur CAN
 4 connecteurs "moteurs"
 3 connecteurs encodeurs
+5 connecteurs io generiques : 0, 5V, 12V, in, in
+
