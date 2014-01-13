@@ -23,7 +23,10 @@ static int pwm_module_init()
 	gpio_af_config(GPIOE, 13, GPIO_AF_TIM1);
 	gpio_af_config(GPIOE, 14, GPIO_AF_TIM1);
 
-	// TODO + 4 pin "sens pwm" output push-pull 50MHz
+	gpio_pin_init(GPIOE, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 1
+	gpio_pin_init(GPIOE, 10, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 2
+	gpio_pin_init(GPIOE, 12, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 3
+	gpio_pin_init(GPIOE, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 4
 
 	// activation clock sur le timer 1
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
@@ -80,52 +83,44 @@ void pwm_set(const unsigned int num, int16_t val)
 		case 0:
 			if(dir > 0)
 			{
-				// TODO
-				//gpio_set_pin(, );
+				gpio_set_pin(GPIOE, 8);
 			}
 			else
 			{
-				// TODO
-				//gpio_reset_pin()
+				gpio_reset_pin(GPIOE, 8);
 			}
 			TIM1->CCR1 = val;
 			break;
 		case 1:
 			if(dir > 0)
 			{
-				// TODO
-				//gpio_set_pin(, );
+				gpio_set_pin(GPIOE, 10);
 			}
 			else
 			{
-				// TODO
-				//gpio_reset_pin()
+				gpio_reset_pin(GPIOE, 10);
 			}
 			TIM1->CCR2 = val;
 			break;
 		case 2:
 			if(dir > 0)
 			{
-				// TODO
-				//gpio_set_pin(, );
+				gpio_set_pin(GPIOE, 12);
 			}
 			else
 			{
-				// TODO
-				//gpio_reset_pin()
+				gpio_reset_pin(GPIOE, 12);
 			}
 			TIM1->CCR3 = val;
 			break;
 		case 3:
 			if(dir > 0)
 			{
-				// TODO
-				//gpio_set_pin(, );
+				gpio_set_pin(GPIOE, 15);
 			}
 			else
 			{
-				// TODO
-				//gpio_reset_pin()
+				gpio_reset_pin(GPIOE, 15);
 			}
 			TIM1->CCR4 = val;
 			break;
