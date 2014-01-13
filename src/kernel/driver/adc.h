@@ -9,11 +9,7 @@
 
 struct adc_an
 {
-	uint16_t i_right;
-	uint16_t i_left;
-	uint16_t i3;
-	uint16_t i4;
-	uint16_t vBat1;
+	uint16_t i[4];
 	uint16_t vBatAru;
 };
 

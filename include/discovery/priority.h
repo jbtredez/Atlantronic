@@ -61,6 +61,7 @@ enum
 #define PRIORITY_IRQ_SPI             12
 #define PRIORITY_IRQ_DMA2_STREAM0    12
 #define PRIORITY_IRQ_DMA2_STREAM3    12
+#define PRIORITY_IRQ_DMA2_STREAM4    12
 #define PRIORITY_IRQ_USB             14
 #define PRIORITY_IRQ_KERNEL          15
 #define PRIORITY_IRQ_PENDSV          PRIORITY_IRQ_KERNEL

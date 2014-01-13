@@ -28,6 +28,7 @@ void isr_dma1_stream7(void) __attribute__((weak, alias("isr_unexpected") )); //!
 
 void isr_dma2_stream0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_0
 void isr_dma2_stream1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_1
+void isr_dma2_stream4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_4
 void isr_dma2_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_3
 void isr_dma2_stream6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_6
 
@@ -138,7 +139,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_dma2_stream1,
 	isr_unexpected,
 	isr_dma2_stream3,
-	isr_unexpected,
+	isr_dma2_stream4,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
