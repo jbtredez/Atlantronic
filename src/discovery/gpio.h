@@ -129,6 +129,16 @@ static inline void gpio_reset_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 	GPIOx->BSRRH = 1 << pin;
 };
 
+static inline void gpio_power_on()
+{
+	gpio_reset_pin(GPIOB, 2);
+}
+
+static inline void gpio_power_off()
+{
+	gpio_set_pin(GPIOB, 2);
+}
+
 static inline uint32_t getcolor()
 {
 	extern volatile uint32_t color;
