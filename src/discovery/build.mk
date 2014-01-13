@@ -14,6 +14,7 @@ obj-discovery-test += kernel/driver/usart.o
 obj-discovery-test += kernel/driver/hokuyo.o
 obj-discovery-test += kernel/driver/dynamixel.o
 obj-discovery-test += kernel/driver/pwm.o
+obj-discovery-test += kernel/driver/encoder.o
 obj-discovery-test += kernel/driver/adc.o
 obj-discovery-test += kernel/driver/usb/usb.o
 obj-discovery-test += kernel/driver/usb/usb_descriptor.o
