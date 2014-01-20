@@ -41,13 +41,13 @@ int main()
 
 	srand(2.3657);
 
-	float* x_real = malloc(sizeof(float) * total_size);
-	float* y_real = malloc(sizeof(float) * total_size);
-	float* x = malloc(sizeof(float) * total_size);
-	float* y = malloc(sizeof(float) * total_size);
-	float* w = malloc(sizeof(float) * total_size);
-	struct fx_vect2* points = malloc(sizeof(struct fx_vect2) * total_size);
-	struct fx_vect2 * reg = malloc(sizeof(struct fx_vect2) * total_size);
+	float* x_real = new float[total_size];
+	float* y_real = new float[total_size];
+	float* x = new float[total_size];
+	float* y = new float[total_size];
+	float* w = new float[total_size];
+	vect2* points = new vect2[total_size];
+	vect2* reg = new vect2[total_size];
 	float epsilon;
 
 	int id = 0;
@@ -60,8 +60,8 @@ int main()
 			y_real[id] = pt_y[i] + j*pas[i] * (pt_y[i+1] - pt_y[i])/d[i];
 			x[id] = x_real[id];
 			y[id] = y_real[id] + epsilon;
-			points[id].x = x_real[id] * 65536;
-			points[id].y = (y_real[id] + epsilon) * 65536;
+			points[id].x = x_real[id];
+			points[id].y = (y_real[id] + epsilon);
 			w[id] = 1;
 		}
 	}
@@ -75,8 +75,8 @@ int main()
 		return 0;
 	}
 
-	float* a_reg = malloc(sizeof(float) * (reg_size-1));
-	float* b_reg = malloc(sizeof(float) * (reg_size-1));
+	float* a_reg = new float[reg_size-1];
+	float* b_reg = new float[reg_size-1];
 
 	int seg = 0;
 	int a = 0;
@@ -115,14 +115,14 @@ int main()
 
 	for(i = 0; i < reg_size; i++)
 	{
-		fprintf(p, "%f %f\n", reg[i].x / 65536.0f, reg[i].y / 65536.0f);
+		fprintf(p, "%f %f\n", reg[i].x, reg[i].y);
 	}
 	fprintf(p, "e\n");
 
 	for(i = 0; i < reg_size - 1; i++)
 	{
-		fprintf(p, "%f %f\n", reg[i].x / 65536.0f, a_reg[i] * reg[i].x/65536.0f + b_reg[i]);
-		fprintf(p, "%f %f\n", reg[i+1].x / 65536.0f, a_reg[i] * reg[i+1].x/65536.0f + b_reg[i]);
+		fprintf(p, "%f %f\n", reg[i].x, a_reg[i] * reg[i].x + b_reg[i]);
+		fprintf(p, "%f %f\n", reg[i+1].x, a_reg[i] * reg[i+1].x + b_reg[i]);
 	}
 	fprintf(p, "e\n");
 
@@ -131,11 +131,16 @@ int main()
 	// on ne ferme pas le programme tout de suite pour permettre de zoomer par exemple
 	getchar();
 
-	free( x_real );
-	free( y_real );
-	free( x );
-	free( y );
-	free( w );
+	delete [] x_real;
+	delete [] y_real;
+	delete [] x;
+	delete [] y;
+	delete [] w;
+	delete [] points;
+	delete [] reg;
+	delete [] a_reg;
+	delete [] b_reg;
+
 	fclose(p);
 
 	return 0;

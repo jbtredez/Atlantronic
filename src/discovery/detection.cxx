@@ -10,10 +10,8 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
-#include "kernel/math/fx_math.h"
 #include "kernel/math/polyline.h"
-#include "kernel/math/distance.h"
-#include "location/location.h"
+#include "kernel/location/location.h"
 #include "gpio.h"
 #include "table.h"
 #include "detection.h"
@@ -23,18 +21,20 @@
 #define DETECTION_NUM_OBJECT         100
 #define DETECTION_QUEUE_SIZE          20
 #define HOKUYO_REG_SEG               200
+#define SIMILARITY_ACCEPTANCE        200
 
 enum
 {
-	DETECTION_EVENT_HOKUYO,
+	DETECTION_EVENT_HOKUYO_1,
+	DETECTION_EVENT_HOKUYO_2,
 	DETECTION_EVENT_SICK
 };
 
-static void detection_task();
+static void detection_task(void* arg);
 static int detection_module_init();
 static void detection_compute();
 static void detection_remove_static_elements_from_dynamic_list();
-static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n);
+static float detection_get_segment_similarity(const vect2* a, const vect2* b, const vect2* m, const vect2* n);
 static void detection_hokuyo_callback();
 static xQueueHandle detection_queue;
 static detection_callback detection_callback_function = (detection_callback)nop_function;
@@ -42,12 +42,12 @@ static detection_callback detection_callback_function = (detection_callback)nop_
 // données privées à la tache detection, ne doit pas être disponible
 // à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
 // Les méthodes de calculs doivent utiliser les objets et segments
-static struct fx_vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
+static vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 static int detection_reg_ecart = 25;
 
 // données partagées par la tache et des méthodes d'accés
 static xSemaphoreHandle detection_mutex;
-static struct fx_vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
+static vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
 static struct polyline detection_object[DETECTION_NUM_OBJECT];
 static int32_t detection_num_obj;
@@ -77,25 +77,27 @@ int detection_module_init()
 		return ERR_INIT_DETECTION;
 	}
 
-	hokuyo_register(HOKUYO1, detection_hokuyo_callback);
+	hokuyo[HOKUYO1].register_callback(detection_hokuyo_callback);
+
 	// TODO enregistrer sick
 
 	detection_reg_size = 0;
-
+/*
 	hokuyo_scan.sens = PARAM_FOO_HOKUYO_SENS;
 	hokuyo_scan.pos_hokuyo.x = PARAM_FOO_HOKUYO_X;
 	hokuyo_scan.pos_hokuyo.y = PARAM_FOO_HOKUYO_Y;
 	hokuyo_scan.pos_hokuyo.alpha = PARAM_FOO_HOKUYO_ALPHA;
 	hokuyo_scan.pos_hokuyo.ca = fx_cos(hokuyo_scan.pos_hokuyo.alpha);
 	hokuyo_scan.pos_hokuyo.sa = fx_sin(hokuyo_scan.pos_hokuyo.alpha);
-
+*/
 	return 0;
 }
 
 module_init(detection_module_init, INIT_DETECTION);
 
-static void detection_task()
+static void detection_task(void* arg)
 {
+	(void) arg;
 	unsigned char event;
 
 	while(1)
@@ -103,21 +105,16 @@ static void detection_task()
 		// attente d'un evenement hokuyo ou sick
 		if( xQueueReceive(detection_queue, &event, portMAX_DELAY) )
 		{
-			struct fx_vect_pos pos = location_get_position();
-			xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
-			if( event == DETECTION_EVENT_HOKUYO )
+			//xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
+			if( event == DETECTION_EVENT_HOKUYO_1 )
 			{
-				// position mise en fin de scan
-				//TODO demenager dans hokuyo ?
-				hokuyo_scan.pos_robot = pos;
-
 		//		struct systime last_time = systick_get_time();
 				detection_compute();
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
 			}
-
+#if 0
 			if( event == DETECTION_EVENT_SICK )
 			{
 				detection_sick_state = get_sick(SICK_RIGHT | SICK_LEFT);
@@ -160,8 +157,8 @@ static void detection_task()
 				detection_object[detection_num_obj].pt = detection_sick_seg;
 				detection_num_obj++;
 			}
-
-			xSemaphoreGive(hokuyo_scan_mutex);
+#endif
+			//TODOxSemaphoreGive(hokuyo_scan_mutex);
 
 			// on limite la fréquence de l'envoi au cas ou.
 			//if( detection_reg_size && event == DETECTION_EVENT_HOKUYO)
@@ -197,7 +194,7 @@ void detection_register_callback(detection_callback callback)
 
 static void detection_hokuyo_callback()
 {
-	unsigned char event = DETECTION_EVENT_HOKUYO;
+	unsigned char event = DETECTION_EVENT_HOKUYO_1;
 	xQueueSend(detection_queue, &event, 0);
 }
 
@@ -208,23 +205,23 @@ portBASE_TYPE isr_sick_update()
 	xQueueSendFromISR(detection_queue, &event, &xHigherPriorityTaskWoken);
 	return xHigherPriorityTaskWoken;
 }
-
-static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, const struct polyline* polyline, int size, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
+#if 0
+static int32_t detection_compute_object_on_trajectory(VectPlan* pos, const struct polyline* polyline, int size, vect2* a, vect2* b, float dist_min)
 {
-	struct fx_vect2 a1 = { dist_min, PARAM_RIGHT_CORNER_Y };
-	struct fx_vect2 b1 = { 1 << 30, PARAM_RIGHT_CORNER_Y };
-	struct fx_vect2 a2 = { dist_min, PARAM_LEFT_CORNER_Y };
-	struct fx_vect2 b2 = { 1 << 30, PARAM_LEFT_CORNER_Y };
+	vect2 a1 = { dist_min, PARAM_RIGHT_CORNER_Y };
+	vect2 b1 = { 1e30, PARAM_RIGHT_CORNER_Y };
+	vect2 a2 = { dist_min, PARAM_LEFT_CORNER_Y };
+	vect2 b2 = { 1e30, PARAM_LEFT_CORNER_Y };
 
-	struct fx_vect2 c;
-	struct fx_vect2 d;
-	struct fx_vect2 h;
+	vect2 c;
+	vect2 d;
+	vect2 h;
 
 	int i;
 	int j;
-	int32_t x_min = 1 << 30;
-	int32_t y_c = 0;
-	int32_t y_d = 0;
+	float x_min = 1e30;
+	float y_c = 0;
+	float y_d = 0;
 
 	for(i = 0; i < size; i++)
 	{
@@ -304,11 +301,12 @@ static int32_t detection_compute_object_on_trajectory(struct fx_vect_pos* pos, c
 
 	return x_min;
 }
-
-int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_pos* pos, struct fx_vect2* a, struct fx_vect2* b, int32_t dist_min)
+#endif
+float detection_compute_front_object(enum detection_type type, const VectPlan* pos, const vect2* a, const vect2* b, float dist_min)
 {
-	int32_t x_min = 1 << 30;
-	int32_t x_min_table = 1 << 30;
+	float x_min = 1e30;
+#if 0
+	float x_min_table = 1e30;
 	struct fx_vect2 c;
 	struct fx_vect2 d;
 
@@ -341,7 +339,7 @@ int32_t detection_compute_front_object(enum detection_type type, struct fx_vect_
 			*b = d;
 		}
 	}
-
+#endif
 	return x_min;
 }
 
@@ -350,11 +348,11 @@ static void detection_compute()
 	int i;
 
 	// scan et position des points en x,y privé à la tache hokuyo
-	hokuyo_compute_xy(&hokuyo_scan, detection_hokuyo_pos);
+	hokuyo_compute_xy(&hokuyo[HOKUYO1].scan, detection_hokuyo_pos);
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	detection_num_obj = hokuyo_find_objects(hokuyo_scan.distance, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
+	detection_num_obj = hokuyo_find_objects(hokuyo[HOKUYO1].scan.distance, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object, DETECTION_NUM_OBJECT);
 	detection_reg_size = 0;
 
 	for( i = 0 ; i < detection_num_obj ; i++)
@@ -367,8 +365,6 @@ static void detection_compute()
 	xSemaphoreGive(detection_mutex);
 }
 
-#define SIMILARITY_ACCEPTANCE (200 << 16)
-
 static void detection_remove_static_elements_from_dynamic_list()
 {
 	int32_t nb_objects_to_test = detection_num_obj;
@@ -378,25 +374,23 @@ static void detection_remove_static_elements_from_dynamic_list()
 	for(i=0; i<nb_objects_to_test; i++)
 	{
 		struct polyline* current_dyn_object=&detection_object[i];
-		int8_t dynamic_segment_in_object=0;
+		int8_t dynamic_segment_in_object = 0;
 		//tester chaque segment (itération sur second point du segment)
 		for(j=1; j< current_dyn_object->size; j++)
 		{
-			int8_t similar_static_segment_found =0;
+			int8_t similar_static_segment_found = 0;
 			//comparer aux segments statiques
 			for(k=0; (k< TABLE_OBJ_SIZE)&&(!similar_static_segment_found); k++)
 			{
 				for(l=1; (l<table_obj[k].size)&&(!similar_static_segment_found); l++)
 				{
 					int32_t similarity = detection_get_segment_similarity(
-						current_dyn_object->pt +j-1,
-						current_dyn_object->pt +j,
-						table_obj[k].pt +l-1,
-						table_obj[k].pt +l);
+						current_dyn_object->pt +j-1, current_dyn_object->pt +j,
+						table_obj[k].pt +l-1, table_obj[k].pt +l);
 
 					if ( similarity < SIMILARITY_ACCEPTANCE)
 					{
-						similar_static_segment_found=1;
+						similar_static_segment_found = 1;
 					}
 				}
 			}
@@ -420,14 +414,14 @@ static void detection_remove_static_elements_from_dynamic_list()
 					current_dyn_object->size=j;
 					current_dyn_object=&(detection_object[detection_num_obj]);
 					detection_num_obj++;
-					j=0;
-					dynamic_segment_in_object=0;
+					j = 0;
+					dynamic_segment_in_object = 0;
 				}
 			}
 			else
 			{
 				//le vecteur n'appartient pas à un objet statique
-				dynamic_segment_in_object=1;
+				dynamic_segment_in_object = 1;
 			}
 
 		}
@@ -445,15 +439,14 @@ static void detection_remove_static_elements_from_dynamic_list()
 }
 
 //méthode heuristique pour estimer une resemblance entre deux segments
-static int32_t detection_get_segment_similarity(const struct fx_vect2* a, const struct fx_vect2* b, const struct fx_vect2* m, const struct fx_vect2* n)
+static float detection_get_segment_similarity(const vect2* a, const vect2* b, const vect2* m, const vect2* n)
 {
-	int32_t similarity = 0;
-//	struct fx_vect2 ab = fx_vect2_difference(b, a);
-//	struct fx_vect2 mn = fx_vect2_difference(n, m);
-	similarity += distance_point_to_segment(a, m, n);
-	similarity += distance_point_to_segment(b, m, n);
-//	similarity += fx_vect2_vector_product_z(&ab, &mn)/distance_point_to_point_squared(m,n);
+	float similarity = 0;
+//	vect2 ab = b - a;
+//	vect2 mn = n - m;
+	similarity += distance_point_to_segment(*a, *m, *n);
+	similarity += distance_point_to_segment(*b, *m, *n);
+//	similarity += cross_product_z(ab, mn)/mn.norm2();
 
 	return similarity;
 }
-

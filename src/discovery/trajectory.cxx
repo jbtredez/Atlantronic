@@ -10,8 +10,7 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
-#include "kernel/math/fx_math.h"
-#include "control/trajectory.h"
+#include "trajectory.h"
 #include "detection.h"
 #include "graph.h"
 #include <stdlib.h>
@@ -36,11 +35,12 @@ void trajectory_cmd(void* arg);
 static void trajectory_task(void* arg);
 static void trajectory_compute(uint32_t event);
 static void trajectory_continue();
-static int trajectory_find_way_to_graph(struct fx_vect_pos pos);
+static int trajectory_find_way_to_graph(VectPlan pos);
 static void trajectory_control_callback(enum control_status status);
 static void trajectory_detection_callback();
+static float trajectory_find_rotate(float debut, float fin);
 
-static int32_t trajectory_detect_dist_min;
+static float trajectory_detect_dist_min;
 static xQueueHandle trajectory_queue;
 
 // requete pour la tache trajectory + mutex
@@ -48,8 +48,8 @@ struct trajectory_cmd_arg trajectory_request;
 static xSemaphoreHandle trajectory_mutex;
 
 // donnees privees a la tache
-static struct fx_vect_pos trajectory_pos; //!< position du robot au moment du reveil de la tache
-static struct fx_vect_pos trajectory_dest;
+static VectPlan trajectory_pos; //!< position du robot au moment du reveil de la tache
+static VectPlan trajectory_dest;
 static int32_t trajectory_approx_dist;
 static enum trajectory_way trajectory_way;
 static enum trajectory_cmd_type trajectory_type;
@@ -58,9 +58,12 @@ static enum trajectory_state trajectory_state;
 static int32_t trajectory_hokuyo_enable_check; //!< utilisation ou non des hokuyos
 static int32_t trajectory_static_check_enable; //!< verification des éléments statiques
 static struct graph_dijkstra_info trajectory_dijkstra_info[GRAPH_NUM_NODE];
-static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
+//static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
 static uint8_t trajectory_current_graph_id;
 static uint8_t trajectory_last_graph_id;
+// TODO rendre parametrable
+KinematicsParameters trajectory_linear_param = {1000, 1000, 1000};
+KinematicsParameters trajectory_angular_param = {1, 1, 1};
 
 static int trajectory_module_init()
 {
@@ -93,14 +96,31 @@ static int trajectory_module_init()
 	trajectory_hokuyo_enable_check = 1;
 	trajectory_static_check_enable = 1;
 	trajectory_detect_dist_min = PARAM_RIGHT_CORNER_X;
-
-	control_register_event_callback(trajectory_control_callback);
+// TODO
+//	control_register_event_callback(trajectory_control_callback);
 	detection_register_callback(trajectory_detection_callback);
 
 	return 0;
 }
 
 module_init(trajectory_module_init, INIT_TRAJECTORY);
+
+static float trajectory_find_rotate(float debut, float fin)
+{
+	float theta = fmodf(fin - debut, 2*M_PI);
+
+	// retour dans [ -M_PI ; M_PI ]
+	if(theta < M_PI)
+	{
+		theta += 2*M_PI;
+	}
+	else if(theta > M_PI)
+	{
+		theta -= 2*M_PI;
+	}
+
+	return theta;
+}
 
 static void trajectory_update()
 {
@@ -116,17 +136,17 @@ static void trajectory_update()
 	trajectory_dest = trajectory_pos;
 	trajectory_approx_dist = 0;
 	trajectory_way = TRAJECTORY_ANY_WAY;
-	trajectory_avoidance_type = cmd_arg.avoidance_type;
-	trajectory_type = cmd_arg.type;
+	trajectory_avoidance_type = (enum trajectory_avoidance_type)cmd_arg.avoidance_type;
+	trajectory_type = (enum trajectory_cmd_type)cmd_arg.type;
 
-	switch(cmd_arg.type)
+	switch(trajectory_type)
 	{
 		case TRAJECTORY_STRAIGHT_TO_WALL:
-			control_back_to_wall();
+			//control_back_to_wall(); // TODO
 			return;
 		case TRAJECTORY_STRAIGHT:
-			trajectory_dest.x += ((int64_t)trajectory_dest.ca * (int64_t)cmd_arg.dist) >> 30;
-			trajectory_dest.y += ((int64_t)trajectory_dest.sa * (int64_t)cmd_arg.dist) >> 30;
+			trajectory_dest.x += cosf(trajectory_dest.theta) * cmd_arg.dist;
+			trajectory_dest.y += sinf(trajectory_dest.theta) * cmd_arg.dist;
 			if(cmd_arg.dist > 0)
 			{
 				trajectory_way = TRAJECTORY_FORWARD;
@@ -137,29 +157,21 @@ static void trajectory_update()
 			}
 			break;
 		case TRAJECTORY_ROTATE:
-			trajectory_dest.alpha += cmd_arg.alpha;
-			trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
-			trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
+			trajectory_dest.theta += cmd_arg.dest.theta;
 			break;
 		case TRAJECTORY_ROTATE_TO:
-			trajectory_dest.alpha += control_find_rotate(trajectory_dest.alpha, cmd_arg.alpha);
-			trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
-			trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
+			trajectory_dest.theta += trajectory_find_rotate(trajectory_dest.theta, cmd_arg.dest.theta);
 			break;
 		case TRAJECTORY_GOTO_XY:
-			trajectory_dest.x = cmd_arg.x;
-			trajectory_dest.y = cmd_arg.y;
+			trajectory_dest.x = cmd_arg.dest.x;
+			trajectory_dest.y = cmd_arg.dest.y;
 			trajectory_approx_dist = cmd_arg.dist;
-			trajectory_way = cmd_arg.way;
+			trajectory_way = (enum trajectory_way)cmd_arg.way;
 			break;
 		case TRAJECTORY_GOTO_XYA:
-			trajectory_dest.x = cmd_arg.x;
-			trajectory_dest.y = cmd_arg.y;
-			trajectory_dest.alpha = cmd_arg.alpha;
-			trajectory_dest.ca = fx_cos(trajectory_dest.alpha);
-			trajectory_dest.sa = fx_sin(trajectory_dest.alpha);
+			trajectory_dest = cmd_arg.dest;
 			trajectory_approx_dist = cmd_arg.dist;
-			trajectory_way = cmd_arg.way;
+			trajectory_way = (enum trajectory_way)cmd_arg.way;
 			break;
 		case TRAJECTORY_GOTO_GRAPH:
 			id = trajectory_find_way_to_graph(trajectory_pos);
@@ -167,14 +179,12 @@ static void trajectory_update()
 
 			trajectory_dest.x = graph_node[id].pos.x;
 			trajectory_dest.y = graph_node[id].pos.y;
-			trajectory_dest.alpha = 0;
-			trajectory_dest.ca = 1;
-			trajectory_dest.sa = 0;
+			trajectory_dest.theta = 0;
 			break;
 		case TRAJECTORY_FREE:
 		default:
 			trajectory_type = TRAJECTORY_FREE;
-			control_free();
+			control_stop(false);
 			return;
 	}
 
@@ -186,24 +196,20 @@ static void trajectory_update()
 		// TODO : check fait pour la marche avant, tolérance plus grande si on le fait en marche arrière ?
 		// on regarde si c'est possible / objets statiques de la table
 		// si c'est pas possible, on passe par le graph
-		struct fx_vect2 a_table;
-		struct fx_vect2 b_table;
+		vect2 a_table;
+		vect2 b_table;
 
 		// position actuelle avec alignement (marche avant) avec la destination
-		struct fx_vect_pos pos = trajectory_pos;
-		int32_t dx = trajectory_dest.x - trajectory_pos.x;
-		int32_t dy = trajectory_dest.y - trajectory_pos.y;
-		pos.alpha = fx_atan2(dy, dx);
-		pos.ca = fx_cos(pos.alpha);
-		pos.sa = fx_sin(pos.alpha);
+		VectPlan pos = trajectory_pos;
+		float dx = trajectory_dest.x - trajectory_pos.x;
+		float dy = trajectory_dest.y - trajectory_pos.y;
+		pos.theta = atan2f(dy, dx);
 
-		int32_t xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, &pos, &a_table, &b_table, trajectory_detect_dist_min) >> 16;
+		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, &pos, &a_table, &b_table, trajectory_detect_dist_min);
 
 		// passage en mm pour faire les calculs sur 32bits
-		dx = dx >> 16;
-		dy = dy >> 16;
-		int32_t dist2 = dx * dx +  dy * dy;
-		int32_t xmin2 = xmin * xmin;
+		float dist2 = dx * dx +  dy * dy;
+		float xmin2 = xmin * xmin;
 		if( xmin2 < dist2)
 		{
 			// trajectoire impossible, on passe par le graph
@@ -214,13 +220,13 @@ static void trajectory_update()
 
 	trajectory_compute(0);
 }
-
+#if 0
 static void trajectory_control_callback(enum control_status status)
 {
 	unsigned char event = status;
 	xQueueSend(trajectory_queue, &event, 0);
 }
-
+#endif
 static void trajectory_detection_callback()
 {
 	unsigned char event = TRAJECTORY_DETECTION_UPDATE;
@@ -302,40 +308,38 @@ static void trajectory_task(void* arg)
 		}
 		else if( event == TRAJECTORY_DETECTION_UPDATE)
 		{
-			struct fx_vect2 a = {1 << 30, 1 << 30};
-			struct fx_vect2 c = {1 << 30, 1 << 30};
+			vect2 a(1e30, 1e30);
 			if( trajectory_hokuyo_enable_check )
 			{
-				struct fx_vect2 b;
+				vect2 b;
 				detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &trajectory_pos, &a, &b, trajectory_detect_dist_min);
-				struct fx_vect_pos pos_ar = trajectory_pos;
-				pos_ar.alpha += 1<<25;
-				pos_ar.ca = - pos_ar.ca;
-				pos_ar.sa = - pos_ar.sa; 
+				VectPlan pos_ar = trajectory_pos;
+				pos_ar.theta += M_PI;
 				//detection_compute_front_object(DETECTION_DYNAMIC_OBJ, &pos_ar, &c, &b);
 			}
 
-			control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
-			control_set_back_object(&c, TRAJECTORY_APPROX_DIST);
+			// TODO
+			//control_set_front_object(&a, TRAJECTORY_APPROX_DIST);
+			//control_set_back_object(&c, TRAJECTORY_APPROX_DIST);
 		}
 		// TODO voir / CONTROL_TIMEOUT
 	}
 }
 
-static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
+static int trajectory_find_way_to_graph(VectPlan pos)
 {
 	// passe en stack, pas trop de noeuds
 	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
-	struct fx_vect2 p = {pos.x, pos.y};
+	struct vect2 p(pos.x, pos.y);
 
 	graph_compute_node_distance(p, node_dist);
 
-	struct fx_vect2 a_table;
-	struct fx_vect2 b_table;
-	int32_t xmin;
+	vect2 a_table;
+	vect2 b_table;
+	float xmin;
 	int i;
 	int id = 0;
-	int32_t dist;
+	float dist;
 	enum detection_type detect_type = DETECTION_FULL;
 
 	if(!trajectory_static_check_enable && !trajectory_hokuyo_enable_check)
@@ -356,16 +360,13 @@ static int trajectory_find_way_to_graph(struct fx_vect_pos pos)
 	for( i = 0 ; i < GRAPH_NUM_NODE; i++)
 	{
 		id = node_dist[i].id;
-		int32_t dx = graph_node[id].pos.x - pos.x;
-		int32_t dy = graph_node[id].pos.y - pos.y;
-		pos.alpha = fx_atan2(dy, dx);
-		pos.ca = fx_cos(pos.alpha);
-		pos.sa = fx_sin(pos.alpha);
+		float dx = graph_node[id].pos.x - pos.x;
+		float dy = graph_node[id].pos.y - pos.y;
+		pos.theta = atan2f(dy, dx);
 		xmin = detection_compute_front_object(detect_type, &pos, &a_table, &b_table, trajectory_detect_dist_min);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
-		dist <<= 16;
 		if( dist < xmin - PARAM_LEFT_CORNER_X - TRAJECTORY_APPROX_DIST - (10<<16))
 		{
 			break;
@@ -388,8 +389,12 @@ static void trajectory_compute(uint32_t event)
 		trajectory_current_graph_id = trajectory_find_way_to_graph(trajectory_pos);
 		log_format(LOG_INFO, "point entrée graph : %d", trajectory_current_graph_id);
 
-		control_goto_near(graph_node[trajectory_current_graph_id].pos.x, graph_node[trajectory_current_graph_id].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_ANY_WAY);
+		VectPlan dest(graph_node[trajectory_current_graph_id].pos.x, graph_node[trajectory_current_graph_id].pos.y, 0);
+		control_goto(dest, VectPlan(), trajectory_linear_param, trajectory_angular_param);
+		// TODO goto_near
+		//control_goto_near(graph_node[trajectory_current_graph_id].pos.x, graph_node[trajectory_current_graph_id].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_ANY_WAY);
 	}
+#if 0
 	else if( trajectory_state == TRAJECTORY_STATE_USING_GRAPH)
 	{
 		trajectory_last_graph_id = trajectory_find_way_to_graph(trajectory_dest);
@@ -483,10 +488,10 @@ static void trajectory_compute(uint32_t event)
 			}
 		}
 	}
-
+#endif
 	if(trajectory_state == TRAJECTORY_STATE_MOVING_TO_DEST)
 	{
-		enum control_type control_type = CONTROL_LINE_XYA;
+		/*enum control_type control_type = CONTROL_LINE_XYA;
 		switch(trajectory_type)
 		{
 			case TRAJECTORY_FREE:
@@ -505,8 +510,10 @@ static void trajectory_compute(uint32_t event)
 			case TRAJECTORY_GOTO_XYA:
 				control_type = CONTROL_LINE_XYA;
 				break;
-		};
-		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
+		};*/
+		control_goto(trajectory_dest, VectPlan(), trajectory_linear_param, trajectory_angular_param);
+		// TODO goto_near
+		//control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
 	}
 }
 
@@ -530,12 +537,14 @@ static void trajectory_continue()
 		}
 		trajectory_current_graph_id = trajectory_dijkstra_info[i].prev_node;
 		log_format(LOG_INFO, "going from - to : %d -> %d", trajectory_current_graph_id, i);
-		control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
+		control_goto(VectPlan(graph_node[i].pos.x, graph_node[i].pos.y, 0), VectPlan(), trajectory_linear_param, trajectory_angular_param);
+		// TODO goto_near
+		//control_goto_near(graph_node[i].pos.x, graph_node[i].pos.y, 0, 0, CONTROL_LINE_XY, TRAJECTORY_FORWARD);
 	}
 
 	if(trajectory_state == TRAJECTORY_STATE_MOVING_TO_DEST)
 	{
-		enum control_type control_type = CONTROL_LINE_XYA;
+		/*enum control_type control_type = CONTROL_LINE_XYA;
 		switch(trajectory_type)
 		{
 			case TRAJECTORY_FREE:
@@ -554,8 +563,10 @@ static void trajectory_continue()
 			case TRAJECTORY_GOTO_XYA:
 				control_type = CONTROL_LINE_XYA;
 				break;
-		};
-		control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
+		};*/
+		control_goto(trajectory_dest, VectPlan(), trajectory_linear_param, trajectory_angular_param);
+		// TODO goto_near
+		//control_goto_near(trajectory_dest.x, trajectory_dest.y, trajectory_dest.alpha, trajectory_approx_dist, control_type, trajectory_way);
 	}
 }
 
@@ -591,31 +602,31 @@ void trajectory_straight_to_wall()
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_rotate(int32_t angle)
+void trajectory_rotate(float theta)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_ROTATE;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
-	trajectory_request.alpha = angle;
+	trajectory_request.dest.theta = theta;
 	xSemaphoreGive(trajectory_mutex);
 
 	unsigned char event = TRAJECTORY_UPDATE;
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_rotate_to(int32_t angle)
+void trajectory_rotate_to(float theta)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_ROTATE_TO;
 	trajectory_request.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
-	trajectory_request.alpha = angle;
+	trajectory_request.dest.theta = theta;
 	xSemaphoreGive(trajectory_mutex);
 
 	unsigned char event = TRAJECTORY_UPDATE;
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_straight(int32_t dist)
+void trajectory_straight(float dist)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_STRAIGHT;
@@ -627,13 +638,13 @@ void trajectory_straight(int32_t dist)
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
+void trajectory_goto_near_xy(float x, float y, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_GOTO_XY;
 	trajectory_request.avoidance_type = avoidance_type;
-	trajectory_request.x = x;
-	trajectory_request.y = y;
+	trajectory_request.dest.x = x;
+	trajectory_request.dest.y = y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
 	xSemaphoreGive(trajectory_mutex);
@@ -642,14 +653,12 @@ void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
+void trajectory_goto_near(VectPlan dest, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_GOTO_XYA;
 	trajectory_request.avoidance_type = avoidance_type;
-	trajectory_request.x = x;
-	trajectory_request.y = y;
-	trajectory_request.alpha = alpha;
+	trajectory_request.dest = dest;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
 	xSemaphoreGive(trajectory_mutex);
@@ -658,7 +667,7 @@ void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enu
 	xQueueSend(trajectory_queue, &event, 50);
 }
 
-void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
+void trajectory_goto_graph_node(uint32_t node_id, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type)
 {
 	if( node_id >= GRAPH_NUM_NODE)
 	{
@@ -669,8 +678,8 @@ void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_GOTO_XY;
 	trajectory_request.avoidance_type = avoidance_type;
-	trajectory_request.x = graph_node[node_id].pos.x;
-	trajectory_request.y = graph_node[node_id].pos.y;
+	trajectory_request.dest.x = graph_node[node_id].pos.x;
+	trajectory_request.dest.y = graph_node[node_id].pos.y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
 	xSemaphoreGive(trajectory_mutex);
@@ -694,7 +703,7 @@ enum trajectory_state trajectory_get_state()
 {
 	return trajectory_state;
 }
-
+#if 0
 void trajectory_disable_static_check()
 {
 	trajectory_static_check_enable = 0;
@@ -741,3 +750,4 @@ int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout)
 
 	return 0;
 }
+#endif

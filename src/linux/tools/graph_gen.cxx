@@ -3,33 +3,33 @@
 #include <math.h>
 #include "kernel/math/vect2.h"
 #include "kernel/math/fx_math.h"
-#include "foo/graph.h"
+#include "discovery/graph.h"
 
 //!< le but est de générer les données du graph du code du robot
 //!< à partir d'une liste de noeud et des liens bidirectionels
 
 const struct vect2 pt[] =
 {
-	{  -600  ,  700  },
-	{     0  ,  700  },
-	{   600  ,  700  },
-	{  -600  ,  450  },
-	{     0  ,  450  },
-	{   600  ,  450  },
-	{ -762.5f,  312.5f},
-	{  762.5f, 312.5f},
-	{ -1250  ,  250  },
-	{  1250  ,  250  },
-	{ -1250  ,      0},
-	{  -800  ,      0},
-	{   800  ,      0},
-	{ 1250   ,      0},
-	{ -860   , -400  },
-	{     0  , -400  },
-	{  860   , -400  },
-	{ -860   , -700  },
-	{     0  , -700  },
-	{  860   , -700  },
+	vect2(  -600  ,  700  ),
+	vect2(     0  ,  700  ),
+	vect2(   600  ,  700  ),
+	vect2(  -600  ,  450  ),
+	vect2(     0  ,  450  ),
+	vect2(   600  ,  450  ),
+	vect2( -762.5f,  312.5f),
+	vect2(  762.5f, 312.5f),
+	vect2( -1250  ,  250  ),
+	vect2(  1250  ,  250  ),
+	vect2( -1250  ,      0),
+	vect2(  -800  ,      0),
+	vect2(   800  ,      0),
+	vect2( 1250   ,      0),
+	vect2( -860   , -400  ),
+	vect2(     0  , -400  ),
+	vect2(  860   , -400  ),
+	vect2( -860   , -700  ),
+	vect2(     0  , -700  ),
+	vect2(  860   , -700  ),
 };
 
 struct link

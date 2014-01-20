@@ -10,7 +10,7 @@
 #include "kernel/log_level.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
-#include "foo/control/trajectory.h"
+#include "discovery/trajectory.h"
 #include "kernel/driver/dynamixel.h"
 
 const char* fault_description[FAULT_MAX] =
@@ -663,7 +663,7 @@ int RobotInterface::straight(float dist)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.dist = dist;
 	cmd_arg.type = TRAJECTORY_STRAIGHT;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
@@ -688,11 +688,11 @@ int RobotInterface::straight_to_wall()
 	return com.write(buffer, sizeof(buffer));
 }
 
-int RobotInterface::rotate(float alpha)
+int RobotInterface::rotate(float theta)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.dest.theta = theta;
 	cmd_arg.type = TRAJECTORY_ROTATE;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
@@ -703,11 +703,11 @@ int RobotInterface::rotate(float alpha)
 	return com.write(buffer, sizeof(buffer));
 }
 
-int RobotInterface::rotate_to(float alpha)
+int RobotInterface::rotate_to(float theta)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.dest.theta = theta;
 	cmd_arg.type = TRAJECTORY_ROTATE_TO;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
@@ -735,9 +735,9 @@ int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way,
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.x = x * 65536.0f;
-	cmd_arg.y = y * 65536.0f;
-	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.dest.x = x;
+	cmd_arg.dest.y = y;
+	cmd_arg.dist = dist;
 	cmd_arg.type = TRAJECTORY_GOTO_XY;
 	cmd_arg.avoidance_type = avoidance_type;
 	cmd_arg.way = way;
@@ -749,14 +749,12 @@ int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way,
 	return com.write(buffer, sizeof(buffer));
 }
 
-int RobotInterface::goto_near(float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type)
+int RobotInterface::goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type)
 {
 	struct trajectory_cmd_arg cmd_arg;
 
-	cmd_arg.x = x * 65536.0f;
-	cmd_arg.y = y * 65536.0f;
-	cmd_arg.alpha = alpha * (1 << 26) / (2 * M_PI);
-	cmd_arg.dist = dist * 65536.0f;
+	cmd_arg.dest = dest;
+	cmd_arg.dist = dist;
 	cmd_arg.type = TRAJECTORY_GOTO_XYA;
 	cmd_arg.avoidance_type = avoidance_type;
 	cmd_arg.way = way;

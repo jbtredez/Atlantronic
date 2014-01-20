@@ -44,6 +44,7 @@ enum control_speed
 	CONTROL_WRONG_WAY,
 };
 
+// TODO
 enum trajectory_way
 {
 	TRAJECTORY_ANY_WAY,
@@ -51,6 +52,7 @@ enum trajectory_way
 	TRAJECTORY_BACKWARD
 };
 
+// TODO
 enum control_type
 {
 	CONTROL_LINE_A,     //!< rotation sur place

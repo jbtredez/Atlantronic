@@ -7,7 +7,7 @@
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"
 #include "discovery/control.h"
-#include "foo/control/trajectory.h"
+#include "discovery/trajectory.h"
 
 static void (*cmd_exit_callback)(void) = NULL;
 static RobotInterface* cmd_robot = NULL;
@@ -362,20 +362,18 @@ int cmd_free(const char* arg)
 
 int cmd_goto_near(const char* arg)
 {
-	float x;
-	float y;
-	float alpha;
+	VectPlan dest;
 	float dist;
 	unsigned int way;
 	unsigned int avoidance_type;
-	int count = sscanf(arg, "%f %f %f %f %u %u", &x, &y, &alpha, &dist, &way, &avoidance_type);
+	int count = sscanf(arg, "%f %f %f %f %u %u", &dest.x, &dest.y, &dest.theta, &dist, &way, &avoidance_type);
 
 	if(count != 6)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->goto_near(x, y, alpha, dist, way, avoidance_type);
+	cmd_robot->goto_near(dest, dist, way, avoidance_type);
 
 	return CMD_SUCESS;
 }

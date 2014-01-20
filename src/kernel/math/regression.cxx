@@ -2,7 +2,6 @@
 //! @brief Calcul d'une régression linéaire
 //! @author Atlantronic
 
-#include "kernel/math/fx_math.h"
 #include "kernel/math/regression.h"
 #include "kernel/error_codes.h"
 #include <string.h>
@@ -52,17 +51,17 @@ end:
 }
 #endif
 
-int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* regression_pt, int reg_size)
+int regression_poly(struct vect2* pt, int size, int seuil, struct vect2* regression_pt, int reg_size)
 {
 	int a = 0;
 	int b = size-1;
 	int c = 0;
 	int id_max = 0;
-	int dist = 0;
-	int dist_max = -1;
-	int32_t nab = 0;
-	struct fx_vect2 ab;
-	struct fx_vect2 ac;
+	float dist = 0;
+	float dist_max = -1;
+	float nab = 0;
+	vect2 ab;
+	vect2 ac;
 
 	int regression_num = 0;
 	int pta = 0;
@@ -96,15 +95,13 @@ int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* r
 	while(regression_num < reg_size)
 	{
 		dist_max = -1;
-		ab.x = (pt[b].x - pt[a].x) >> 16; // en mm
-		ab.y = (pt[b].y - pt[a].y) >> 16; // en mm
-		nab = sqrt32(ab.x*ab.x+ab.y*ab.y); // en mm
+		ab = pt[b] - pt[a];
+		nab = ab.norm();
 
 		for(c = a + 1; c<b; c++)
 		{
-			ac.x = (pt[c].x - pt[a].x) >> 16; // en mm
-			ac.y = (pt[c].y - pt[a].y) >> 16; // en mm
-			dist = abs(ab.x * ac.y - ab.y * ac.x);
+			ac = pt[c] - pt[a];
+			dist = fabsf(ab.x * ac.y - ab.y * ac.x);
 			if(dist > dist_max && (pt[c].x != 0 || pt[c].y != 0))
 			{
 				dist_max = dist;

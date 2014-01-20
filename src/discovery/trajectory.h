@@ -5,8 +5,8 @@
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
-#include "control/control.h"
-#include "location/location.h"
+#include "control.h"
+#include "kernel/location/location.h"
 
 enum trajectory_cmd_type
 {
@@ -42,10 +42,11 @@ struct trajectory_cmd_arg
 	uint16_t type;             //!< type de trajectoire
 	uint16_t avoidance_type;   //!< type d'évitement
 	uint16_t way;              //!< sens
-	int32_t x;
-	int32_t y;
-	int32_t alpha;
-	int32_t dist;
+	VectPlan dest;
+	VectPlan cp;
+	KinematicsParameters linearParam;
+	KinematicsParameters angularParam;
+	float dist;
 } __attribute__ (( packed ));
 
 //!< roue libre
@@ -54,17 +55,17 @@ void trajectory_free();
 //!< rejoindre le graph
 void trajectory_goto_graph();
 
-void trajectory_goto_graph_node(uint32_t node_id, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_graph_node(uint32_t node_id, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
-void trajectory_goto_near_xy(int32_t x, int32_t y, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_near_xy(float x, float y, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
-void trajectory_goto_near(int32_t x, int32_t y, int32_t alpha, int32_t dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_near(VectPlan dest, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
 
-void trajectory_rotate(int32_t angle);
+void trajectory_rotate(float theta);
 
-void trajectory_rotate_to(int32_t angle);
+void trajectory_rotate_to(float theta);
 
-void trajectory_straight(int32_t dist);
+void trajectory_straight(float dist);
 
 void trajectory_straight_to_wall();
 

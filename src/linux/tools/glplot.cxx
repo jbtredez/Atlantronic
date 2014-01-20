@@ -18,7 +18,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
-#include "foo/graph.h"
+#include "discovery/graph.h"
 #include "discovery/table.h"
 
 // limitation du rafraichissement
@@ -123,15 +123,15 @@ void read_callback(void* arg);
 
 struct vect2 opponent_robot_pt[] =
 {
-	{ OPPONENT_PERIMETER, 0},
-	{ OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781},
-	{ 0, OPPONENT_PERIMETER},
-	{ -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781},
-	{ -OPPONENT_PERIMETER, 0},
-	{ -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781},
-	{ 0, -OPPONENT_PERIMETER},
-	{ OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781},
-	{ OPPONENT_PERIMETER, 0},
+	vect2( OPPONENT_PERIMETER, 0),
+	vect2( OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
+	vect2( 0, OPPONENT_PERIMETER),
+	vect2( -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
+	vect2( -OPPONENT_PERIMETER, 0),
+	vect2( -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
+	vect2( 0, -OPPONENT_PERIMETER),
+	vect2( OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
+	vect2( OPPONENT_PERIMETER, 0),
 };
 
 struct polyline oponent_robot =
@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
 		qemu.add_object(oponent_robot);
 
 		// on le met a sa position de depart
-		struct vect2 origin = {0, 0};
+		vect2 origin(0, 0);
 		qemu.move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
 	}
 	else
@@ -1238,7 +1238,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			struct vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
 			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
@@ -1283,7 +1283,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			struct vect2 origin = {opponent_robot_pos.x, opponent_robot_pos.y};
+			vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
 			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;

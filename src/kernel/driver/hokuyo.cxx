@@ -3,12 +3,10 @@
 //! @author Atlantronic
 
 #include "kernel/driver/hokuyo.h"
-#include "kernel/driver/usart.h"
 #include "kernel/rcc.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
-#include "kernel/module.h"
 #include "kernel/location/location.h"
 #include "kernel/fault.h"
 #include <string.h>
@@ -24,11 +22,6 @@
 #define ERR_HOKUYO_BAUD_RATE            0x80
 #define ERR_HOKUYO_LASER_MALFUNCTION   0x100
 
-//!< taille de la réponse maxi avec hokuyo_scan_all :
-//!< 682 points => 1364 data
-//!< 1364 data = 21 * 64 + 20 data
-//!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
-#define HOKUYO_SCAN_BUFFER_SIZE       1432
 #define HOKUYO_STACK_SIZE              400
 #define HOKUYO_SPEED                750000
 
@@ -39,41 +32,7 @@ const char* hokuyo_hs_cmd = "HS0\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
-class hokuyo
-{
-	public:
-		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int usb_id);
-		void setPosition(VectPlan pos, int sens);
-		hokuyo_callback callback;
-
-	protected:
-		static void task_wrapper(void* arg);
-		void task();
-		uint32_t wait_decode_scan();
-		__OPTIMIZE_SIZE__ uint32_t init_com();
-		uint32_t scip2();
-		uint32_t transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout);
-		uint32_t check_cmd(unsigned char* cmd, uint32_t size);
-		uint32_t check_sum(uint32_t start, uint32_t end);
-		uint32_t set_speed();
-		uint32_t hs();
-		uint32_t laser_on();
-		int decode_scan();
-		void fault_update(uint32_t err);
-		void start_scan();
-
-		static uint16_t decode16(const unsigned char* data);
-
-		uint32_t last_error;
-		enum usart_id usartId;
-		int usb_id;
-		xSemaphoreHandle scan_mutex;
-		// variable alignee pour le dma
-		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
-		struct hokuyo_scan scan;
-};
-
-static struct hokuyo hokuyo[HOKUYO_MAX];
+struct hokuyo hokuyo[HOKUYO_MAX];
 
 int hokuyo_module_init()
 {
@@ -128,12 +87,9 @@ void hokuyo::setPosition(VectPlan pos, int sens)
 	scan.sens = sens;
 }
 
-void hokuyo_register(enum hokuyo_id hokuyo_id, hokuyo_callback callback)
+void hokuyo::register_callback(hokuyo_callback _callback)
 {
-	if( hokuyo_id < HOKUYO_MAX )
-	{
-		hokuyo[hokuyo_id].callback = callback;
-	}
+	callback = _callback;
 }
 
 void hokuyo::fault_update(uint32_t err)
@@ -252,7 +208,7 @@ void hokuyo::task()
 	{
 		// on attend la fin du nouveau scan
 		err = wait_decode_scan();
-		scan.pos_robot = location_get_position(); // TODO voir si meilleur m oment
+		scan.pos_robot = location_get_position(); // TODO voir si meilleur moment
 		fault_update(err);
 		if(err)
 		{

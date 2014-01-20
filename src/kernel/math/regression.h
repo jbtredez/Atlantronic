@@ -14,6 +14,6 @@
 int regression_linear(float* x, float* y, float* w, int size, float* a, float* b);
 #endif
 
-int regression_poly(struct fx_vect2* pt, int size, int seuil, struct fx_vect2* regression_pt, int reg_size);
+int regression_poly(struct vect2* pt, int size, int seuil, struct vect2* regression_pt, int reg_size);
 
 #endif

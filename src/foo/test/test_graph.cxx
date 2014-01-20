@@ -10,7 +10,7 @@
 #include "kernel/rcc.h"
 #include "pince.h"
 #include "recalage.h"
-#include "control/trajectory.h"
+#include "trajectory.h"
 
 #define STRAT_STACK_SIZE       300
 

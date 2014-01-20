@@ -5,15 +5,22 @@
 //! @brief Hokuyo module
 //! @author Atlantronic
 
+
 #include <stdint.h>
 #include "kernel/math/vect_plan.h"
-
 #ifndef LINUX
+#include "kernel/module.h"
+#include "kernel/driver/usart.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/semphr.h"
 #endif
 
 #define HOKUYO_NUM_POINTS            682
+//!< taille de la réponse maxi avec hokuyo_scan_all :
+//!< 682 points => 1364 data
+//!< 1364 data = 21 * 64 + 20 data
+//!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
+#define HOKUYO_SCAN_BUFFER_SIZE       1432
 
 enum hokuyo_id
 {
@@ -30,9 +37,50 @@ struct hokuyo_scan
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
 };
 
-typedef void (*hokuyo_callback)(void);
+#ifndef LINUX
 
-//!< enregistrement d'un hokyuo
-void hokuyo_register(enum hokuyo_id hokuyo_id, hokuyo_callback callback);
+typedef void (*hokuyo_callback)();
+
+class hokuyo
+{
+	public:
+		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int usb_id);
+		void setPosition(VectPlan pos, int sens);
+
+		//!< enregistrement d'une callback
+		void register_callback(hokuyo_callback callback);
+
+		xSemaphoreHandle scan_mutex;
+		struct hokuyo_scan scan;
+
+	protected:
+		static void task_wrapper(void* arg);
+		void task();
+		uint32_t wait_decode_scan();
+		__OPTIMIZE_SIZE__ uint32_t init_com();
+		uint32_t scip2();
+		uint32_t transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout);
+		uint32_t check_cmd(unsigned char* cmd, uint32_t size);
+		uint32_t check_sum(uint32_t start, uint32_t end);
+		uint32_t set_speed();
+		uint32_t hs();
+		uint32_t laser_on();
+		int decode_scan();
+		void fault_update(uint32_t err);
+		void start_scan();
+
+		static uint16_t decode16(const unsigned char* data);
+
+		hokuyo_callback callback;
+		uint32_t last_error;
+		enum usart_id usartId;
+		int usb_id;
+		// variable alignee pour le dma
+		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
+};
+
+extern struct hokuyo hokuyo[HOKUYO_MAX];
+
+#endif
 
 #endif

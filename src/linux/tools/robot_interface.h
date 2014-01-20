@@ -66,11 +66,11 @@ class RobotInterface
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);
 		int straight_to_wall();
-		int rotate(float alpha);
-		int rotate_to(float alpha);
+		int rotate(float theta);
+		int rotate_to(float theta);
 		int goto_graph();
 		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
-		int goto_near(float x, float y, float alpha, float dist, unsigned int way, unsigned int avoidance_type);
+		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
 
 		//!< vitesse en % de vmax de configuration du robot
 		int set_max_speed(float vmax_av, float vmax_rot);

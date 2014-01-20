@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "foo/graph.h"
+#include "discovery/graph.h"
 
 int main()
 {
@@ -27,7 +27,7 @@ int main()
 	}
 
 
-	struct vect2 pos = {-350, -600};
+	vect2 pos(-350, -600);
 	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
 	graph_compute_node_distance(pos, node_dist);
 
