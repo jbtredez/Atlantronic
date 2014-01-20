@@ -10,12 +10,6 @@ obj-discovery-test += kernel/heap_1.o
 obj-discovery-test += kernel/log.o
 obj-discovery-test += kernel/fault.o
 obj-discovery-test += kernel/driver/spi.o
-obj-discovery-test += kernel/driver/usart.o
-obj-discovery-test += kernel/driver/hokuyo.o
-obj-discovery-test += kernel/driver/dynamixel.o
-obj-discovery-test += kernel/driver/pwm.o
-obj-discovery-test += kernel/driver/encoder.o
-obj-discovery-test += kernel/driver/adc.o
 obj-discovery-test += kernel/driver/usb/usb.o
 obj-discovery-test += kernel/driver/usb/usb_descriptor.o
 obj-discovery-test += kernel/driver/usb/stm32f4xx/usb_core.o
@@ -39,3 +33,13 @@ obj-discovery-test += discovery/control.o
 obj-discovery-test += kernel/end.o
 
 bin-discovery += test
+
+obj-discovery-baz = $(obj-discovery-test)
+obj-discovery-baz += kernel/driver/usart.o
+obj-discovery-baz += kernel/driver/hokuyo.o
+obj-discovery-baz += kernel/driver/dynamixel.o
+obj-discovery-baz += kernel/driver/pwm.o
+obj-discovery-baz += kernel/driver/encoder.o
+obj-discovery-baz += kernel/driver/adc.o
+
+bin-discovery += baz
