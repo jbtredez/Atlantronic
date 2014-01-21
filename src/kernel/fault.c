@@ -60,12 +60,11 @@ static void fault_task(void* arg)
 	while(1)
 	{
 		// timeout pour envoi de temps en temps (programme externe qui est relancé par ex)
-		if(xSemaphoreTake(fault_barrier, ms_to_tick(1000)))
-		{
-			// pas de mutex, on envoi pour le debug, s'il y a une modif en cours, on va renvoyer juste apres
-			// remarque : un defaut peut avoir eu le temps de monter et de descendre entre 2 envois
-			usb_add(USB_ERR, fault_status, sizeof(fault_status));
-		}
+		xSemaphoreTake(fault_barrier, ms_to_tick(1000));
+
+		// pas de mutex, on envoi pour le debug, s'il y a une modif en cours, on va renvoyer juste apres
+		// remarque : un defaut peut avoir eu le temps de monter et de descendre entre 2 envois
+		usb_add(USB_ERR, fault_status, sizeof(fault_status));
 	}
 }
 
