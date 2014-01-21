@@ -116,7 +116,8 @@ static void control_task(void* arg)
 				switch(can_motor[2*i+1].homingStatus)
 				{
 					case CAN_MOTOR_HOMING_NONE:
-						can_motor[2*i+1].start_homing(10);
+						can_motor[2*i+1].start_homing(1);
+						motorNotReady = 1;
 						break;
 					case CAN_MOTOR_HOMING_RUNNING:
 						motorNotReady = 1;
