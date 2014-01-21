@@ -40,18 +40,17 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
-
-	can_set_baudrate(baudrate, 0);
-
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_SetPriority(CAN1_TX_IRQn, PRIORITY_IRQ_CAN1_TX);
 	NVIC_SetPriority(CAN1_RX0_IRQn, PRIORITY_IRQ_CAN1_RX0);
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
 
-	// lancement du CAN
-	CAN1->MCR &= ~CAN_MCR_INRQ;
-	while (CAN1->MSR & CAN_MCR_INRQ) ;
+	//sortie du mode sleep
+	CAN1->MCR &= ~CAN_MCR_SLEEP;
+
+	// configuration
+	can_set_baudrate(baudrate, 0);
 
 	can_read_queue = _can_read_queue;
 
@@ -129,7 +128,11 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 	#endif
 
 	// init mode
-	CAN1->MCR = CAN_MCR_INRQ;
+	CAN1->MCR |= CAN_MCR_INRQ;
+
+	// attente fin init
+	// TODO timeout a ajouter
+	while( ! (CAN1->MSR & CAN_MSR_INAK) ) ;
 
 	// TBS1 = 14 TQ
 	// TBS2 =  6 TQ
@@ -181,7 +184,8 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
-	while (CAN1->MSR & CAN_MCR_INRQ) ;
+	// TODO imeout
+	while (CAN1->MSR & CAN_MSR_INAK) ;
 }
 
 static void can_write_task(void *arg)
