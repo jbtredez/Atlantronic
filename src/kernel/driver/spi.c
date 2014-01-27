@@ -350,7 +350,7 @@ static void spi_task(void* arg)
 	spi_init_gyro();
 
 	// calibration gyro : estimation deviation
-	for(i = 0; i < 5000; i++)
+	for(i = 0; i < 15000; i++)
 	{
 		spi_gyro_update(0.001f, 1);
 		vTaskDelay(1);
