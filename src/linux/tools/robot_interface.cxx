@@ -16,19 +16,26 @@
 const char* fault_description[FAULT_MAX] =
 {
 	// HOKUYO
-	[FAULT_HOKUYO_DISCONNECTED] = "hokuyo disconnected",
-	[FAULT_HOKUYO_DATA_CORRUPTION] = "hokuyo - data corruption",
+	"hokuyo disconnected",
+	"hokuyo - data corruption",
 
 	// CAN
-	[FAULT_CAN_READ_QUEUE_FULL] = "can : queue de lecture pleine",
-	[FAULT_CAN_READ_FIFO_OVERFLOW] = "can : fifo de lecture qui deborde - perte de messages",
+	"can : queue de lecture pleine",
+	"can : fifo de lecture qui deborde - perte de messages",
 
-	[FAULT_CAN_MOTOR_DISCONNECTED_0] = "can motor 0 disconnected",
-	[FAULT_CAN_MOTOR_DISCONNECTED_1] = "can motor 1 disconnected",
-	[FAULT_CAN_MOTOR_DISCONNECTED_2] = "can motor 2 disconnected",
-	[FAULT_CAN_MOTOR_DISCONNECTED_3] = "can motor 3 disconnected",
-	[FAULT_CAN_MOTOR_DISCONNECTED_4] = "can motor 4 disconnected",
-	[FAULT_CAN_MOTOR_DISCONNECTED_5] = "can motor 5 disconnected",
+	"can motor 0 disconnected",
+	"can motor 1 disconnected",
+	"can motor 2 disconnected",
+	"can motor 3 disconnected",
+	"can motor 4 disconnected",
+	"can motor 5 disconnected",
+
+	"can motor 0 not in op enable",
+	"can motor 1 not in op enable",
+	"can motor 2 not in op enable",
+	"can motor 3 not in op enable",
+	"can motor 4 not in op enable",
+	"can motor 5 not in op enable",
 };
 
 const char* log_level_description[LOG_MAX] =
