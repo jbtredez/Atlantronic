@@ -7,13 +7,12 @@
 #include <stdarg.h>
 #include <locale.h>
 
-#include "control/control.h"
 #include "linux/tools/cli.h"
 
 void* cli_task(void* arg);
 
 static COMMAND *cli_commands = NULL;
-char cli_prompt[] = "foo $ ";
+char cli_prompt[] = "discovery $ ";
 int cli_last_error = 0;
 
 char * stripwhite(char * string)
