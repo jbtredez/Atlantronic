@@ -15,6 +15,7 @@ enum fault
 	FAULT_HOKUYO_DATA_CORRUPTION, // erreur FE/NE/ORE sur usart, check_cmd, unknown status, checksum
 
 	// CAN
+	FAULT_CAN_NOT_CONNECTED,
 	FAULT_CAN_READ_QUEUE_FULL,
 	FAULT_CAN_READ_FIFO_OVERFLOW,
 

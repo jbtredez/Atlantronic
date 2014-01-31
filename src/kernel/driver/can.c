@@ -184,8 +184,20 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 
 	// lancement du CAN
 	CAN1->MCR &= ~CAN_MCR_INRQ;
-	// TODO imeout
-	while (CAN1->MSR & CAN_MSR_INAK) ;
+
+	int i = 0;
+	while (CAN1->MSR & CAN_MSR_INAK && i < 1000000)
+	{
+		i++;
+	}
+	if( CAN1->MSR & CAN_MSR_INAK )
+	{
+		fault(FAULT_CAN_NOT_CONNECTED, FAULT_ACTIVE);
+	}
+	else
+	{
+		fault(FAULT_CAN_NOT_CONNECTED, FAULT_CLEAR);
+	}
 }
 
 static void can_write_task(void *arg)

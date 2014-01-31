@@ -20,6 +20,7 @@ const char* fault_description[FAULT_MAX] =
 	"hokuyo - data corruption",
 
 	// CAN
+	"can : not connected - init failed",
 	"can : queue de lecture pleine",
 	"can : fifo de lecture qui deborde - perte de messages",
 
