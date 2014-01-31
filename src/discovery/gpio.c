@@ -10,7 +10,7 @@
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_recaler;
-uint8_t gpio_recalage_done;
+//uint8_t gpio_recalage_done;
 static xQueueHandle gpio_queue_go;
 
 static void gpio_cmd_go();
@@ -33,7 +33,7 @@ static int gpio_module_init(void)
 	gpio_go = 0;
 	gpio_recaler = 0;
 	gpio_queue_go = xQueueCreate(1, 0);
-	gpio_recalage_done = 0;
+//	gpio_recalage_done = 0;
 
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
@@ -84,7 +84,7 @@ void gpio_wait_go()
 
 static void gpio_cmd_go()
 {
-	if(gpio_recalage_done)
+//	if(gpio_recalage_done)
 	{
 		gpio_go = 1;
 		//setLed(LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
