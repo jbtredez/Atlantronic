@@ -2,6 +2,7 @@
 #include "kernel/module.h"
 #include "kernel/cpu/cpu.h"
 #include "kernel/log.h"
+#include "kernel/driver/usb.h"
 #include "gpio.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
@@ -56,10 +57,13 @@ static float spi_gyro_v;            //!< vitesse angulaire vue par le gyro
 static float spi_gyro_theta;        //!< angle vue par le gyro
 static float spi_gyro_dev_lsb;      //!< correction deviation du gyro
 static uint32_t spi_gyro_dev_count; //!< nombre de donnees utilisées pour le calcul de la correction
+static int spi_gyro_calib_mode;
 
 static xSemaphoreHandle spi_sem;
 
 static void spi_task(void* arg);
+
+void spi_gyro_calibration(void* arg);
 
 int spi_module_init()
 {
@@ -141,6 +145,7 @@ int spi_module_init()
 	xSemaphoreTake(spi_sem, 0);
 
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
+	usb_add_cmd(USB_CMD_GYRO_CALIB, &spi_gyro_calibration);
 
 	return 0;
 }
@@ -289,6 +294,8 @@ static int spi_init_gyro()
 		goto done;
 	}
 
+	spi_gyro_calib_mode = 1;
+
 done:
 	return res;
 }
@@ -343,20 +350,10 @@ float spi_gyro_get_theta()
 static void spi_task(void* arg)
 {
 	(void) arg;
-	int i = 0;
 
 	spi_init_accelero();
 
 	spi_init_gyro();
-
-	// calibration gyro : estimation deviation
-	for(i = 0; i < 15000; i++)
-	{
-		spi_gyro_update(0.001f, 1);
-		vTaskDelay(1);
-	}
-
-	log_format(LOG_INFO, "gyro dev %d mLSB/s", (int)(1000*spi_gyro_dev_lsb));
 
 	while(1)
 	{
@@ -365,10 +362,38 @@ static void spi_task(void* arg)
 		spi_transaction(spi_tx_buffer, (void*)&spi_accel_dma_xyz, 6);
 		gpio_set_pin(GPIOE, 3);
 
-		spi_gyro_update(0.001f, 0);
+		spi_gyro_update(0.001f, spi_gyro_calib_mode);
 
 		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(spi_gyro_theta * 180 / M_PI));
 
 		vTaskDelay(1);
 	}
+}
+
+void spi_gyro_calib(int cmd)
+{
+	switch(cmd)
+	{
+		case GYRO_CALIBRATION_RESET:
+			spi_gyro_dev_count = 0;
+			spi_gyro_dev_lsb = 0;
+			log(LOG_INFO, "gyro reset calibration");
+			break;
+		case GYRO_CALIBRATION_START:
+			spi_gyro_calib_mode = 1;
+			log(LOG_INFO, "gyro start calibration");
+			break;
+		case GYRO_CALIBRATION_STOP:
+			spi_gyro_calib_mode = 0;
+			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_dev_lsb));
+			break;
+		default:
+			break;
+	}
+}
+
+void spi_gyro_calibration(void* arg)
+{
+	int* cmd = (int*) arg;
+	spi_gyro_calib(*cmd);
 }

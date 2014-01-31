@@ -5,6 +5,7 @@
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/can.h"
+#include "kernel/driver/spi.h"
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
@@ -48,6 +49,9 @@ class RobotInterface
 		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour
 		int control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
 		int control_free();
+
+		// ---------- gestion control --------------------------------------------------
+		int gyro_calibration(enum spi_calibration_cmd cmd);
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------

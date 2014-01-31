@@ -789,6 +789,17 @@ int RobotInterface::set_position(VectPlan pos)
 	return com.write(buffer, sizeof(buffer));
 }
 
+int RobotInterface::gyro_calibration(enum spi_calibration_cmd cmd)
+{
+	int32_t cmd_arg = cmd;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_GYRO_CALIB;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com.write(buffer, sizeof(buffer));
+}
+
 int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
 {
 	struct pince_cmd_arg cmd_arg;
