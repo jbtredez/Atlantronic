@@ -44,6 +44,7 @@ int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
 int cmd_set_speed(const char* arg);
+int cmd_set_actuator_speed(const char* arg);
 int cmd_recalage(const char* arg);
 int cmd_rotate(const char* arg);
 int cmd_rotate_to(const char* arg);
@@ -88,6 +89,7 @@ COMMAND usb_commands[] = {
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "set_speed", cmd_set_speed, "set speed direction valeur"},
+	{ "set_actuator_speed", cmd_set_actuator_speed, "set actuators speed"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "?", cmd_help, "Synonym for `help'" },
@@ -542,6 +544,21 @@ int cmd_set_speed(const char* arg)
 	}
 
 	cmd_robot->control_set_speed(cp, u, v);
+	return CMD_SUCESS;
+}
+
+int cmd_set_actuator_speed(const char* arg)
+{
+	float v[6];
+
+	int count = sscanf(arg, "%f %f %f %f %f %f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+
+	if(count != 6)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->control_set_actuator_speed(v);
 	return CMD_SUCESS;
 }
 

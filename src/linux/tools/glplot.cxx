@@ -1381,13 +1381,13 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 0: // joystick gauche (xbox)
-				robot_interface.rotate_speed(val);
+				robot_interface.control_set_speed(VectPlan(), VectPlan(0,0,1), val);
 				break;
 			case 2: // gachette gauche (xbox)
-				robot_interface.straight_speed(val);
+				robot_interface.control_set_speed(VectPlan(), VectPlan(1,0,0), val*1000);
 				break;
 			case 5: // gachette droite (xbox)
-				robot_interface.straight_speed(-val);
+				robot_interface.control_set_speed(VectPlan(), VectPlan(0,1,0), val*1000);
 				break;
 			default:
 				break;

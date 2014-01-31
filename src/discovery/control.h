@@ -21,6 +21,7 @@ enum control_state
 	CONTROL_READY_FREE = 0,       //!< no trajectory ongoing, control off
 	CONTROL_READY_ASSER,          //!< no trajectory ongoing, control on
 	CONTROL_SPEED,                //!< robot pilote en vitesse (mode manuel)
+	CONTROL_ACTUATOR_SPEED,       //!< pilotage des vitesses des moteurs (debug)
 	CONTROL_TRAJECTORY,           //!< trajectoire en cours
 	CONTROL_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	CONTROL_END,                  //!< end : halted forever
@@ -65,7 +66,11 @@ void control_stop(bool asser);
 //!< demande de trajectoire
 void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
 
+//!< demande de vitesse
 void control_set_cp_speed(VectPlan cp, VectPlan u, float v);
+
+//!< demande de vitesse actionneur (debug)
+void control_set_actuator_speed(float v[6]);
 
 struct control_usb_data
 {
@@ -129,6 +134,11 @@ struct control_cmd_set_speed_arg
 	VectPlan cp;
 	VectPlan u;
 	float v;
+}  __attribute__((packed));
+
+struct control_cmd_set_actuator_speed_arg
+{
+	float v[6];
 }  __attribute__((packed));
 
 #endif

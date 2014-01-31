@@ -674,6 +674,22 @@ int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
 	return com.write(buffer, sizeof(buffer));
 }
 
+int RobotInterface::control_set_actuator_speed(float v[6])
+{
+	struct control_cmd_set_actuator_speed_arg cmd_arg;
+
+	for(int i = 0; i < 6; i++)
+	{
+		cmd_arg.v[i] = v[i];
+	}
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_CONTROL_SET_ACTUATOR_SPEED;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com.write(buffer, sizeof(buffer));
+}
+
 int RobotInterface::straight(float dist)
 {
 	struct trajectory_cmd_arg cmd_arg;
@@ -972,116 +988,4 @@ int RobotInterface::set_max_speed(float vmax_av, float vmax_rot)
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return com.write(buffer, sizeof(buffer));
-}
-
-int RobotInterface::rotate_speed(float v)
-{
-	(void) v;
-/*	enum control_state control_state = CONTROL_READY_FREE;
-	int control_v_rot_cons = 0;
-	int control_v_dist_cons = 0;
-	int dir = 1;
-	if(v < 0)
-	{
-		v = -v;
-		dir = -1;
-	}
-
-	int res = pthread_mutex_lock(&data->mutex);
-	if(res == 0)
-	{
-		if(data->control_usb_data_count > 0)
-		{
-			control_state = (enum control_state)data->control_usb_data[data->control_usb_data_count-1].control_state;
-			control_v_dist_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_dist_cons;
-			control_v_rot_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_rot_cons;
-		}
-
-		pthread_mutex_unlock(&data->mutex);
-	}
-	else
-	{
-		v = 0;
-	}
-
-	// on avance déjà, pas de rotation
-	if( control_v_dist_cons != 0)
-	{
-		return 0;
-	}
-
-	if( v < 0.2f)
-	{
-		if( fabsf(control_v_rot_cons) > 0)
-		{
-			robot_interface_set_max_speed(data, 0, 0);
-		}
-	}
-	else
-	{
-		robot_interface_set_max_speed(data, v, v);
-		if(control_state != CONTROL_TRAJECTORY || dir * control_v_rot_cons < 0 || (control_v_dist_cons == 0 && control_v_rot_cons == 0))
-		{
-			robot_interface_rotate(data, 60*dir);
-			usleep(50000);
-		}
-	}
-*/
-	return 0;
-}
-
-int RobotInterface::straight_speed(float v)
-{
-	(void) v;
-/*	enum control_state control_state = CONTROL_READY_FREE;
-	int control_v_dist_cons = 0;
-	int control_v_rot_cons = 0;
-	int dir = 1;
-	if(v < 0)
-	{
-		v = -v;
-		dir = -1;
-	}
-
-	int res = pthread_mutex_lock(&data->mutex);
-	if(res == 0)
-	{
-		if(data->control_usb_data_count > 0)
-		{
-			control_state = (enum control_state)data->control_usb_data[data->control_usb_data_count-1].control_state;
-			control_v_dist_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_dist_cons;
-			control_v_rot_cons = data->control_usb_data[data->control_usb_data_count-1].control_v_rot_cons;
-		}
-
-		pthread_mutex_unlock(&data->mutex);
-	}
-	else
-	{
-		v = 0;
-	}
-
-	// rotation deja en cours
-	if( control_v_rot_cons != 0)
-	{
-		return 0;
-	}
-
-	if( v < 0.1f)
-	{
-		if( fabsf(control_v_dist_cons) > 0)
-		{
-			robot_interface_set_max_speed(data, 0, 0);
-		}
-	}
-	else
-	{
-		robot_interface_set_max_speed(data, v, v);
-		if(control_state != CONTROL_TRAJECTORY || dir * control_v_dist_cons < 0 || (control_v_dist_cons == 0 && control_v_rot_cons == 0))
-		{
-			robot_interface_straight(data, dir*30000);
-			usleep(50000);
-		}
-	}
-*/
-	return 0;
 }

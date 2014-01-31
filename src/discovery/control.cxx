@@ -40,6 +40,7 @@ static void control_compute_speed();
 void control_cmd_goto(void* arg);
 void control_cmd_set_speed(void* arg);
 void control_cmd_free(void* arg);
+void control_cmd_set_actuator_speed(void* arg);
 
 static int control_module_init()
 {
@@ -60,6 +61,7 @@ static int control_module_init()
 	usb_add_cmd(USB_CMD_CONTROL_GOTO, &control_cmd_goto);
 	usb_add_cmd(USB_CMD_CONTROL_SET_SPEED, &control_cmd_set_speed);
 	usb_add_cmd(USB_CMD_CONTROL_FREE, &control_cmd_free);
+	usb_add_cmd(USB_CMD_CONTROL_SET_ACTUATOR_SPEED, &control_cmd_set_actuator_speed);
 
 	return 0;
 }
@@ -190,6 +192,8 @@ static void control_compute()
 		case CONTROL_SPEED:
 			control_compute_speed();
 			break;
+		case CONTROL_ACTUATOR_SPEED:
+			break;
 		case CONTROL_TRAJECTORY:
 			control_compute_trajectory();
 			break;
@@ -284,6 +288,12 @@ void control_cmd_free(void* arg)
 {
 	(void) arg;
 	control_stop(false);
+}
+
+void control_cmd_set_actuator_speed(void* arg)
+{
+	struct control_cmd_set_actuator_speed_arg* cmd = (struct control_cmd_set_actuator_speed_arg*) arg;
+	control_set_actuator_speed(cmd->v);
 }
 
 void control_stop(bool asser)
@@ -411,6 +421,23 @@ void control_set_cp_speed(VectPlan cp, VectPlan u, float v)
 		}
 
 		log(LOG_INFO, "PREPARING_MOTION");
+	}
+
+	xSemaphoreGive(control_mutex);
+}
+
+void control_set_actuator_speed(float v[6])
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+
+	if(control_state != CONTROL_END)
+	{
+		log(LOG_INFO, "set actuators speed");
+		control_state = CONTROL_ACTUATOR_SPEED;
+		for(int i = 0; i < 6; i++)
+		{
+			control_kinematics[i].v = v[i];
+		}
 	}
 
 	xSemaphoreGive(control_mutex);

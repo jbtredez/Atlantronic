@@ -49,6 +49,7 @@ class RobotInterface
 		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour
 		int control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
 		int control_set_speed(VectPlan cp, VectPlan u, float v);
+		int control_set_actuator_speed(float v[6]);
 		int control_free();
 
 		// ---------- gestion control --------------------------------------------------
@@ -79,8 +80,6 @@ class RobotInterface
 
 		//!< vitesse en % de vmax de configuration du robot
 		int set_max_speed(float vmax_av, float vmax_rot);
-		int straight_speed(float v);
-		int rotate_speed(float v);
 //////////////////// FIN TODO
 
 		pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
