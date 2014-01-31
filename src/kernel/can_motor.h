@@ -4,9 +4,6 @@
 #include <stdint.h>
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
-#include "kernel/FreeRTOS.h"
-#include "kernel/task.h"
-#include "kernel/semphr.h"
 #include "kernel/control/kinematics.h"
 
 enum
@@ -23,7 +20,13 @@ enum
 enum homing_status
 {
 	CAN_MOTOR_HOMING_NONE,
-	CAN_MOTOR_HOMING_RUNNING,
+	CAN_MOTOR_HOMING_RUN_HP,
+	CAN_MOTOR_HOMING_RUN_SHL,
+	CAN_MOTOR_HOMING_RUN_SHA,
+	CAN_MOTOR_HOMING_RUN_SHN,
+	CAN_MOTOR_HOMING_RUN_HOSP,
+	CAN_MOTOR_HOMING_RUN_GOHOSEQ,
+	CAN_MOTOR_HOMING_RUNING_GOHOSEQ,
 	CAN_MOTOR_HOMING_DONE,
 };
 
@@ -46,10 +49,10 @@ class CanMotor : public CanopenNode
 		float outputGain;   //!< gain pour convertir la position en unites robot
 		float positionOffset; //!< offset sur la position
 
-		void start_homing(float v);
+		void update();
+		void update_homing(float v);
+		void update_state();
 		void set_speed(float v);
-		int wait_update(portTickType timeout);
-		int wait_update_until(portTickType t);
 
 		inline bool is_op_enable()
 		{
@@ -57,7 +60,6 @@ class CanMotor : public CanopenNode
 		}
 	protected:
 		virtual void rx_pdo(struct can_msg *msg, int type);
-		xSemaphoreHandle sem;
 };
 
 extern CanMotor can_motor[CAN_MOTOR_MAX];

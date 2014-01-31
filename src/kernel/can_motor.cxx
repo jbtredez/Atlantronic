@@ -134,8 +134,6 @@ static void can_motor_tx_pdo2(int node, uint8_t cmd, uint32_t param)
 
 CanMotor::CanMotor()
 {
-	vSemaphoreCreateBinary(sem);
-	xSemaphoreTake(sem, 0);
 	inputGain = 1;
 	outputGain = 1;
 	kinematics.pos = 0;
@@ -143,6 +141,82 @@ CanMotor::CanMotor()
 	kinematics.a = 0;
 	homingStatus = CAN_MOTOR_HOMING_NONE;
 	positionOffset = 0;
+}
+
+void CanMotor::update()
+{
+	CanopenNode::update();
+
+	// TODO / update_state
+}
+
+void CanMotor::update_state()
+{
+	if( state == NMT_OPERATIONAL )
+	{
+		// gestion machine a etat du moteur
+		if( is_op_enable() )
+		{
+			// etat op enable
+			// rien a faire, on souhaite y rester
+			log_format(LOG_INFO, "op enable %x", nodeid);
+		}
+		else if( (status_word & 0x6f) == 0x07 )
+		{
+			// etat quick stop active
+			// TODO : a voir, pour repasser en op enable:
+			//can_motor_rx_pdo1(nodeid, 0x0f);
+		}
+		else if( (status_word & 0x4f) == 0x08 )
+		{
+			// etat fault
+			// TODO notifier un probleme. Pour aller en switch on disable :
+			//can_motor_rx_pdo1(nodeid, 0x80);
+		}
+		else if( (status_word & 0x6f) == 0x23 )
+		{
+			// etat switch on
+			// on veut aller en op enable
+			log_format(LOG_INFO, "switch on %x", nodeid);
+			can_motor_tx_pdo1(nodeid, 0x0f);
+		}
+		else if( (status_word & 0x6f) == 0x21 )
+		{
+			// etat ready to switch on
+			// on veut aller en switch on
+			log_format(LOG_INFO, "ready to switch on %x", nodeid);
+			can_motor_tx_pdo1(nodeid, 7);
+		}
+		else if( (status_word & 0x4f) == 0x40 )
+		{
+			// etat switch on disable
+			// on veut aller en ready to switch on
+			//can_motor_tx_pdo1(nodeid, 6);
+
+			log_format(LOG_INFO, "switch on disable %x", nodeid);
+			// command faulhaber qui va direct en OP ENABLE
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
+		}
+//		else if( (motor->status_word & 0x4f) == 0x00 )
+//		{
+		// etat not ready to switch on
+		// rien a faire, le moteur va passer en switch on disable automatiquement
+//		}
+//		else if( (motor->status_word & 0x4f) == 0x0f )
+//		{
+		// etat fault reaction active
+		// rien a faire, on va passer en fault automatiquement
+//		}
+	}
+
+	if( status_word & 0x4000 )
+	{
+		if( homingStatus != CAN_MOTOR_HOMING_DONE)
+		{
+			log_format(LOG_INFO, "homing end %s", name);
+			homingStatus = CAN_MOTOR_HOMING_DONE;
+		}
+	}
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
@@ -164,66 +238,7 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 	else if( type == CANOPEN_RX_PDO1 )
 	{
 		status_word = (msg->data[1] << 8) + msg->data[0];
-
-		// le status word a change
-		// gestion machine a etat du moteur
-		if( is_op_enable() )
-		{
-			// etat op enable
-			// rien a faire, on souhaite y rester
-		}
-		else if( (status_word & 0x6f) == 0x07 )
-		{
-			// etat quick stop active
-			// TODO : a voir, pour repasser en op enable:
-			//can_motor_rx_pdo1(nodeid, 0x0f);
-		}
-		else if( (status_word & 0x4f) == 0x08 )
-		{
-			// etat fault
-			// TODO notifier un probleme. Pour aller en switch on disable :
-			//can_motor_rx_pdo1(nodeid, 0x80);
-		}
-		else if( (status_word & 0x6f) == 0x23 )
-		{
-			// etat switch on
-			// on veut aller en op enable
-			can_motor_tx_pdo1(nodeid, 0x0f);
-		}
-		else if( (status_word & 0x6f) == 0x21 )
-		{
-			// etat ready to switch on
-			// on veut aller en switch on
-			can_motor_tx_pdo1(nodeid, 7);
-		}
-		else if( (status_word & 0x4f) == 0x40 )
-		{
-			// etat switch on disable
-			// on veut aller en ready to switch on
-			//can_motor_tx_pdo1(nodeid, 6);
-
-			// command faulhaber qui va direct en OP ENABLE
-			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
-		}
-//		else if( (motor->status_word & 0x4f) == 0x00 )
-//		{
-			// etat not ready to switch on
-			// rien a faire, le moteur va passer en switch on disable automatiquement
-//		}
-//		else if( (motor->status_word & 0x4f) == 0x0f )
-//		{
-			// etat fault reaction active
-			// rien a faire, on va passer en fault automatiquement
-//		}
-
-		if( status_word & 0x4000 )
-		{
-			if( homingStatus != CAN_MOTOR_HOMING_DONE)
-			{
-				log_format(LOG_INFO, "homing end %s", name);
-				homingStatus = CAN_MOTOR_HOMING_DONE;
-			}
-		}
+		update_state();
 	}
 }
 
@@ -233,54 +248,43 @@ void CanMotor::set_speed(float v)
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_V, speed);
 }
 
-void CanMotor::start_homing(float v)
+void CanMotor::update_homing(float v)
 {
 	int32_t speed = v * inputGain;
 
-	homingStatus = CAN_MOTOR_HOMING_RUNNING;
+	// utilisation de l'entree AN (TODO passer en 5V TTL), front descendant ?
 
-	log_format(LOG_INFO, "start homing %s", name);
-
-	// utilisation de l'entree AN (TODO passer en 5V TTL), front descendant
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HP, 0); // polarite : front descendant
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHL, 0x01); // arret moteur sur front descendant pin AN
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHA, 0x01); // notifier dans status word sur front descendant pin AN
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHN, 0x01); // mise a 0 de l'encodeur sur front descendant pin AN
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HOSP, speed); // mise a 0 de l'encodeur sur front descendant pin AN
-	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_GOHOSEQ, speed); // lancement homing
-}
-
-//! attente de la mise a jour du moteur
-//! @return 0 si c'est bon -1 si timeout
-int CanMotor::wait_update(portTickType timeout)
-{
-	int res = 0;
-
-	if( xSemaphoreTake(sem, timeout) == pdFALSE )
+	switch(homingStatus)
 	{
-		res = -1;
+		case CAN_MOTOR_HOMING_NONE:
+			log_format(LOG_INFO, "start homing %s", name);
+		case CAN_MOTOR_HOMING_RUN_HP:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HP, 0); // polarite : front descendant
+			homingStatus = CAN_MOTOR_HOMING_RUN_SHL;
+			break;
+		case CAN_MOTOR_HOMING_RUN_SHL:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHL, 0x01); // arret moteur sur front descendant pin AN
+			homingStatus = CAN_MOTOR_HOMING_RUN_SHA;
+			break;
+		case CAN_MOTOR_HOMING_RUN_SHA:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHA, 0x01); // notifier dans status word sur front descendant pin AN
+			homingStatus = CAN_MOTOR_HOMING_RUN_SHN;
+			break;
+		case CAN_MOTOR_HOMING_RUN_SHN:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SHN, 0x01); // mise a 0 de l'encodeur sur front descendant pin AN
+			homingStatus = CAN_MOTOR_HOMING_RUN_HOSP;
+			break;
+		case CAN_MOTOR_HOMING_RUN_HOSP:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HOSP, speed); // mise a 0 de l'encodeur sur front descendant pin AN
+			homingStatus = CAN_MOTOR_HOMING_RUN_GOHOSEQ;
+			break;
+		case CAN_MOTOR_HOMING_RUN_GOHOSEQ:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_GOHOSEQ, speed); // lancement homing
+			homingStatus = CAN_MOTOR_HOMING_RUNING_GOHOSEQ;
+			break;
+		case CAN_MOTOR_HOMING_RUNING_GOHOSEQ:
+		default:
+		case CAN_MOTOR_HOMING_DONE:
+			break;
 	}
-
-	return res;
-}
-
-//! attente de la mise a jour du moteur
-//! @return 0 si c'est bon -1 si timeout
-int CanMotor::wait_update_until(portTickType t)
-{
-	int res = 0;
-
-	systime currentTime = systick_get_time();
-	int timeout = t - currentTime.ms;
-	if( timeout < 0)
-	{
-		timeout = 0;
-	}
-
-	if( xSemaphoreTake(sem, timeout) == pdFALSE )
-	{
-		res = -1;
-	}
-
-	return res;
 }

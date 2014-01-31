@@ -2,6 +2,9 @@
 #define CAN_OPEN_H
 
 #include "kernel/driver/can.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/semphr.h"
 
 enum
 {
@@ -22,6 +25,15 @@ enum
 	CANOPEN_BOOTUP,
 };
 
+enum
+{
+	NMT_OPERATIONAL        =  0x01,
+	NMT_STOP               =  0x02,
+	NMT_PRE_OPERATIONAL    =  0x80,
+	NMT_RESET_AP           =  0x81,
+	NMT_RESET_COM          =  0x82,
+};
+
 struct canopen_configuration
 {
 	uint16_t index;
@@ -33,14 +45,22 @@ struct canopen_configuration
 class CanopenNode
 {
 	public:
+		CanopenNode();
+
 		uint8_t nodeid;
 		uint8_t state;
 		uint8_t conf_id;
 		uint8_t conf_size;
 		const struct canopen_configuration* static_conf;
+		xSemaphoreHandle sem;
 
 		virtual void rx_pdo(struct can_msg *msg, int type);
+
+		virtual void update();
+		int wait_update_until(portTickType t);
 };
+
+void canopen_update();
 
 int canopen_register_node(CanopenNode* node);
 

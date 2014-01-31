@@ -217,7 +217,6 @@ void isr_can1_tx(void)
 		if( CAN1->TSR & CAN_TSR_TXOK0)
 		{
 			CAN1->IER &= ~CAN_IER_TMEIE;
-			xSemaphoreGiveFromISR(can_write_sem, &xHigherPriorityTaskWoken);
 		}
 		else
 		{
@@ -225,6 +224,7 @@ void isr_can1_tx(void)
 			nop();
 		}
 		CAN1->TSR |= CAN_TSR_RQCP0;
+		xSemaphoreGiveFromISR(can_write_sem, &xHigherPriorityTaskWoken);
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
@@ -289,30 +289,38 @@ void isr_can1_rx0(void)
 
 void can_write_mailbox(struct can_msg *msg)
 {
-	CAN1->sTxMailBox[0].TIR  = 0;
-
-	if (msg->format == CAN_STANDARD_FORMAT)
+	if( CAN1->TSR & CAN_TSR_TME0 )
 	{
-		CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id << 21);
+		CAN1->sTxMailBox[0].TIR  = 0;
+
+		if (msg->format == CAN_STANDARD_FORMAT)
+		{
+			CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id << 21);
+		}
+		else
+		{
+			CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id <<  3) | 0x04;
+		}
+
+		if (msg->type == CAN_REMOTE_FRAME)
+		{
+			CAN1->sTxMailBox[0].TIR |= 0x02;
+		}
+
+		CAN1->sTxMailBox[0].TDLR = msg->_data.low;
+		CAN1->sTxMailBox[0].TDHR = msg->_data.high;
+
+		CAN1->sTxMailBox[0].TDTR &= ~CAN_TDT0R_DLC;
+		CAN1->sTxMailBox[0].TDTR |= msg->size & CAN_TDT0R_DLC;
+
+		CAN1->IER |= CAN_IER_TMEIE;
+		CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
 	}
 	else
 	{
-		CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id <<  3) | 0x04;
+		// TODO
+		nop();
 	}
-
-	if (msg->type == CAN_REMOTE_FRAME)
-	{
-		CAN1->sTxMailBox[0].TIR |= 0x02;
-	}
-
-	CAN1->sTxMailBox[0].TDLR = msg->_data.low;
-	CAN1->sTxMailBox[0].TDHR = msg->_data.high;
-
-	CAN1->sTxMailBox[0].TDTR &= ~CAN_TDT0R_DLC;
-	CAN1->sTxMailBox[0].TDTR |= msg->size & CAN_TDT0R_DLC;
-
-	CAN1->IER |= CAN_IER_TMEIE;
-	CAN1->sTxMailBox[0].TIR |= CAN_TI0R_TXRQ;
 }
 
 static void can_cmd_write(void* arg)

@@ -29,13 +29,6 @@ const char* fault_description[FAULT_MAX] =
 	"can motor 3 disconnected",
 	"can motor 4 disconnected",
 	"can motor 5 disconnected",
-
-	"can motor 0 not in op enable",
-	"can motor 1 not in op enable",
-	"can motor 2 not in op enable",
-	"can motor 3 not in op enable",
-	"can motor 4 not in op enable",
-	"can motor 5 not in op enable",
 };
 
 const char* log_level_description[LOG_MAX] =

@@ -9,20 +9,21 @@
 #define CAN_STACK_SIZE             250
 #define CAN_READ_QUEUE_SIZE         50
 #define CAN_MAX_NODE                 6
+#define CANOPEN_SDO_TIMEOUT         20 // en ms
 
 enum
 {
-	NMT_OPERATIONAL        =  0x01,
-	NMT_STOP               =  0x02,
-	NMT_PRE_OPERATIONAL    =  0x80,
-	NMT_RESET_AP           =  0x81,
-	NMT_RESET_COM          =  0x82,
+	SDO_OK = 0,
+	SDO_KO,
+	SDO_TRANSMITING,
 };
 
 static void can_task(void *arg);
 static xQueueHandle can_read_queue;
 static int can_max_node;
 static struct CanopenNode* canopen_nodes[CAN_MAX_NODE];
+static systime canopen_last_sdo_time;
+static uint8_t canopen_sdoStatus = SDO_OK;
 
 static int canopen_op_mode(int node);
 
@@ -56,13 +57,37 @@ static int canopen_module_init(void)
 
 module_init(canopen_module_init, INIT_CAN);
 
+void canopen_update()
+{
+	bool all_nmt_op = true;
+	for(int i = 0; i < can_max_node; i++)
+	{
+		if( canopen_nodes[i]->state != NMT_OPERATIONAL )
+		{
+			all_nmt_op = false;
+		}
+		// mise a 0 de la semaphore avant le sync
+		xSemaphoreTake(canopen_nodes[i]->sem, 0);
+	}
+
+	if( all_nmt_op )
+	{
+		//log(LOG_INFO, "sync");
+		canopen_sync();
+	}
+
+	for(int i = 0; i < can_max_node; i++)
+	{
+		canopen_nodes[i]->update();
+	}
+}
+
 static void can_update_node(int id, unsigned int nodeid, int type, struct can_msg* msg)
 {
 	CanopenNode* node = canopen_nodes[id];
 	if( type == CANOPEN_RX_PDO1 || type == CANOPEN_RX_PDO2 || type == CANOPEN_RX_PDO3 )
 	{
 		// gestion des pdo specifique => callback
-		node->state = NMT_OPERATIONAL;
 		node->rx_pdo(msg, type);
 	}
 	else if( type == CANOPEN_SDO_RES)
@@ -74,43 +99,22 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 		if( msg->data[0] == 0x60 )
 		{
 			// reponse "OK" a un SDO write
+			const struct canopen_configuration* conf = &node->static_conf[node->conf_id];
+			log_format(LOG_INFO, "SDO %x %x:%x OK", nodeid, conf->index, conf->subindex);
+			canopen_sdoStatus = SDO_KO;
 		}
 		else if( msg->data[0] == 0x80 )
 		{
 			// reponse d'erreur a un SDO (read ou write)
 			log_format(LOG_ERROR, "SDO write failed node %x index %x subindex %x error 0x%x%x%x%x",
 					nodeid, index, subindex, msg->data[7], msg->data[6], msg->data[5], msg->data[4]);
-		}
-
-		if( node->state == NMT_PRE_OPERATIONAL )
-		{
-			if( node->conf_id < node->conf_size )
-			{
-				const struct canopen_configuration* conf = &node->static_conf[node->conf_id];
-				if( conf->index == index && conf->subindex == subindex )
-				{
-					// on passe au suivant
-					node->conf_id++;
-					if( node->conf_id < node->conf_size )
-					{
-						conf = &node->static_conf[node->conf_id];
-						canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
-					}
-					else
-					{
-						log_format(LOG_INFO, "configuration %x end", nodeid);
-						canopen_op_mode(nodeid);
-					}
-				}
-			}
+			canopen_sdoStatus = SDO_KO;
 		}
 	}
 	else if( type == CANOPEN_BOOTUP)
 	{
 		node->state = NMT_PRE_OPERATIONAL;
 		node->conf_id = 0;
-		const struct canopen_configuration* conf = &node->static_conf[0];
-		canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
 	}
 }
 
@@ -135,7 +139,6 @@ static void can_task(void *arg)
 
 			int type = msg.id >> 7;
 			unsigned int nodeid = msg.id & 0x7f;
-
 			if(type == CANOPEN_BOOTUP)
 			{
 				// bootup
@@ -219,6 +222,8 @@ int canopen_sdo_write(int node, int size, int index, int subindex, uint32_t data
 {
 	struct can_msg msg;
 
+	//log_format(LOG_INFO, "SDO %x %x:%x = %x", nodeid, index, subindex, (unsigned int)data);
+
 	msg.id = 0x80 * CANOPEN_SDO_REQ + node;
 	msg.size = 4 + size;
 	msg.format = CAN_STANDARD_FORMAT;
@@ -257,8 +262,94 @@ int canopen_sdo_write(int node, int size, int index, int subindex, uint32_t data
 	return 0;
 }
 
+CanopenNode::CanopenNode()
+{
+	nodeid = 0;
+	state = 0;
+	conf_id = 0;
+	conf_size = 0;
+	static_conf = 0;
+	vSemaphoreCreateBinary(sem);
+	xSemaphoreTake(sem, 0);
+}
+
+void CanopenNode::update()
+{
+	if( state == NMT_PRE_OPERATIONAL )
+	{
+		// etat pre op : on regarde si on a des SDO de conf a envoyer
+		if( conf_id < conf_size )
+		{
+			if( canopen_sdoStatus == SDO_TRANSMITING )
+			{
+				// SDO envoye mais pas encore de reponse
+				systime t = systick_get_time();
+				systime dt = t - canopen_last_sdo_time;
+
+				if(dt.ms < CANOPEN_SDO_TIMEOUT)
+				{
+					// rien a faire
+					return;
+				}
+				// sinon, on garde conf_id pour retenter l'envoi
+			}
+			else
+			{
+				// SDO_OK ou SDO_KO
+				// on passe au sdo suivant
+				// TODO rententer 3 fois si KO ?
+				conf_id++;
+			}
+
+			if( conf_id < conf_size )
+			{
+				// envoi du sdo
+				const struct canopen_configuration* conf = &static_conf[conf_id];
+				canopen_last_sdo_time = systick_get_time();
+				canopen_sdoStatus = SDO_TRANSMITING;
+				canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
+			}
+			else
+			{
+				log_format(LOG_INFO, "configuration %x end", nodeid);
+				// TODO affecter le OP apres confirmation ?
+				state = NMT_OPERATIONAL;
+				canopen_op_mode(nodeid);
+			}
+		}
+		else
+		{
+			// TODO affecter le OP apres confirmation ?
+			state = NMT_OPERATIONAL;
+			// on passe en op si pas de conf ou si cela n'a pas marche plus tot
+			canopen_op_mode(nodeid);
+		}
+	}
+}
+
 void CanopenNode::rx_pdo(struct can_msg *msg, int type)
 {
 	(void) msg;
 	(void) type;
+}
+
+//! attente de la mise a jour du noeud
+//! @return 0 si c'est bon -1 si timeout
+int CanopenNode::wait_update_until(portTickType t)
+{
+	int res = 0;
+
+	systime currentTime = systick_get_time();
+	int timeout = t - currentTime.ms;
+	if( timeout < 0)
+	{
+		timeout = 0;
+	}
+
+	if( xSemaphoreTake(sem, timeout) == pdFALSE )
+	{
+		res = -1;
+	}
+
+	return res;
 }

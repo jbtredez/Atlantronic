@@ -76,15 +76,8 @@ static void control_task(void* arg)
 		int motor_update_max_abstime = wake_time + 2;
 		motorNotReady = 0;
 
-		//log(LOG_INFO, "sync");
 		//t1 = systick_get_time();
-
-		for(i = 0; i < CAN_MOTOR_MAX; i++)
-		{
-			can_motor[i].wait_update(0);
-		}
-
-		canopen_sync();
+		canopen_update();
 
 		for(i = 0; i < CAN_MOTOR_MAX; i++)
 		{
@@ -101,7 +94,6 @@ static void control_task(void* arg)
 				fault((enum fault)(FAULT_CAN_MOTOR_DISCONNECTED_0 + i), FAULT_CLEAR);
 				if( ! can_motor[i].is_op_enable() )
 				{
-					// TODO defaut, moteur pas op_enable
 					motorNotReady = 1;
 				}
 			}
@@ -113,18 +105,9 @@ static void control_task(void* arg)
 		{
 			for(int i = 0; i < 3; i++)
 			{
-				switch(can_motor[2*i+1].homingStatus)
+				if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE)
 				{
-					case CAN_MOTOR_HOMING_NONE:
-						can_motor[2*i+1].start_homing(1);
-						motorNotReady = 1;
-						break;
-					case CAN_MOTOR_HOMING_RUNNING:
-						motorNotReady = 1;
-						break;
-					default:
-					case CAN_MOTOR_HOMING_DONE:
-						break;
+					can_motor[2*i+1].update_homing(1);
 				}
 			}
 		}
