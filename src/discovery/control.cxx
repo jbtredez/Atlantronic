@@ -24,6 +24,7 @@ static Kinematics control_kinematics_mes[CAN_MOTOR_MAX];
 static struct control_usb_data control_usb_data;
 static xSemaphoreHandle control_mutex;
 static float control_ds;
+static float control_v;
 static VectPlan control_u;
 static VectPlan control_cp;
 static KinematicsParameters control_curvilinearKinematicsParam;
@@ -33,9 +34,12 @@ static VectPlan control_cp_cmd;
 static void control_task(void* arg);
 static void control_compute();
 static void control_compute_trajectory();
+static void control_compute_speed();
 
 // interface usb
 void control_cmd_goto(void* arg);
+void control_cmd_set_speed(void* arg);
+void control_cmd_free(void* arg);
 
 static int control_module_init()
 {
@@ -53,7 +57,9 @@ static int control_module_init()
 		return ERR_INIT_CONTROL;
 	}
 
-	usb_add_cmd(USB_CMD_CONTROL_SET_TRAJECTORY, &control_cmd_goto);
+	usb_add_cmd(USB_CMD_CONTROL_GOTO, &control_cmd_goto);
+	usb_add_cmd(USB_CMD_CONTROL_SET_SPEED, &control_cmd_set_speed);
+	usb_add_cmd(USB_CMD_CONTROL_FREE, &control_cmd_free);
 
 	return 0;
 }
@@ -182,8 +188,7 @@ static void control_compute()
 			}
 			break;
 		case CONTROL_SPEED:
-			//control_compute_speed();
-			// TODO
+			control_compute_speed();
 			break;
 		case CONTROL_TRAJECTORY:
 			control_compute_trajectory();
@@ -245,20 +250,40 @@ void control_compute_trajectory()
 	}
 }
 
+void control_compute_speed()
+{
+	int wheelReady = 0;
+	float v = 0;
+	if( control_status != CONTROL_PREPARING_MOTION )
+	{
+		v = control_v;
+	}
+
+	geometric_model_compute_actuator_cmd(control_cp, control_u, v, CONTROL_DT, control_kinematics, &wheelReady);
+
+	if( control_status == CONTROL_PREPARING_MOTION && wheelReady)
+	{
+		log(LOG_INFO, "IN_MOTION");
+		control_status = CONTROL_IN_MOTION;
+	}
+}
+
 void control_cmd_goto(void* arg)
 {
 	struct control_cmd_goto_arg* cmd = (struct control_cmd_goto_arg*) arg;
+	control_goto(cmd->dest, cmd->cp, cmd->linearParam, cmd->angularParam);
+}
 
-	switch(cmd->type)
-	{
-		default:
-		case CONTROL_FREE:
-			control_stop(false);
-			break;
-		case CONTROL_GOTO:
-			control_goto(cmd->dest, cmd->cp, cmd->linearParam, cmd->angularParam);
-			break;
-	}
+void control_cmd_set_speed(void* arg)
+{
+	struct control_cmd_set_speed_arg* cmd = (struct control_cmd_set_speed_arg*) arg;
+	control_set_cp_speed(cmd->cp, cmd->u, cmd->v);
+}
+
+void control_cmd_free(void* arg)
+{
+	(void) arg;
+	control_stop(false);
 }
 
 void control_stop(bool asser)
@@ -365,5 +390,28 @@ void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linear
 	}
 
 unlock_mutex:
+	xSemaphoreGive(control_mutex);
+}
+
+void control_set_cp_speed(VectPlan cp, VectPlan u, float v)
+{
+	xSemaphoreTake(control_mutex, portMAX_DELAY);
+
+	if(control_state != CONTROL_END)
+	{
+		log(LOG_INFO, "set cp speed");
+		control_cp = cp;
+		control_u = u;
+		control_v = v;
+		control_state = CONTROL_SPEED;
+		control_status = CONTROL_PREPARING_MOTION;
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		{
+			control_kinematics[i] = control_kinematics_mes[i];
+		}
+
+		log(LOG_INFO, "PREPARING_MOTION");
+	}
+
 	xSemaphoreGive(control_mutex);
 }

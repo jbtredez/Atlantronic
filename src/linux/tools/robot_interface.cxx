@@ -647,14 +647,28 @@ int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameter
 {
 	struct control_cmd_goto_arg cmd_arg;
 
-	cmd_arg.type = CONTROL_GOTO;
 	cmd_arg.dest = dest;
 	cmd_arg.cp = cp;
 	cmd_arg.linearParam = linearParam;
 	cmd_arg.angularParam = angularParam;
 
 	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
+	buffer[0] = USB_CMD_CONTROL_GOTO;
+	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+
+	return com.write(buffer, sizeof(buffer));
+}
+
+int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
+{
+	struct control_cmd_set_speed_arg cmd_arg;
+
+	cmd_arg.cp = cp;
+	cmd_arg.v = v;
+	cmd_arg.u = u;
+
+	char buffer[1+sizeof(cmd_arg)];
+	buffer[0] = USB_CMD_CONTROL_SET_SPEED;
 	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
 
 	return com.write(buffer, sizeof(buffer));
@@ -721,14 +735,8 @@ int RobotInterface::rotate_to(float theta)
 
 int RobotInterface::control_free()
 {
-	struct control_cmd_goto_arg cmd_arg;
-
-	cmd_arg.type = CONTROL_FREE;
-
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_SET_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
+	char buffer[1];
+	buffer[0] = USB_CMD_CONTROL_FREE;
 	return com.write(buffer, sizeof(buffer));
 }
 

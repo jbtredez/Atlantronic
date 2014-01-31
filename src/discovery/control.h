@@ -60,16 +60,12 @@ enum control_type
 	CONTROL_LINE_XYA,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
 };
 
-enum trajectory_type
-{
-	CONTROL_FREE,
-	CONTROL_GOTO,
-};
-
 void control_stop(bool asser);
 
 //!< demande de trajectoire
 void control_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
+
+void control_set_cp_speed(VectPlan cp, VectPlan u, float v);
 
 struct control_usb_data
 {
@@ -114,11 +110,25 @@ struct control_cmd_max_speed_arg
 
 struct control_cmd_goto_arg
 {
-	int type;
 	VectPlan dest;
 	VectPlan cp;
 	KinematicsParameters linearParam;
 	KinematicsParameters angularParam;
+}  __attribute__((packed));
+
+struct control_cmd_speed_arg
+{
+	VectPlan dest;
+	VectPlan cp;
+	KinematicsParameters linearParam;
+	KinematicsParameters angularParam;
+}  __attribute__((packed));
+
+struct control_cmd_set_speed_arg
+{
+	VectPlan cp;
+	VectPlan u;
+	float v;
 }  __attribute__((packed));
 
 #endif
