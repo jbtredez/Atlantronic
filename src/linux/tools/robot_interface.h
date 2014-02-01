@@ -52,8 +52,11 @@ class RobotInterface
 		int control_set_actuator_speed(float v[6]);
 		int control_free();
 
-		// ---------- gestion control --------------------------------------------------
+		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum spi_calibration_cmd cmd);
+
+		// ---------- localisation -----------------------------------------------------
+		int set_position(VectPlan pos);
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------
@@ -65,9 +68,6 @@ class RobotInterface
 		int arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
 		int arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
 		int arm_bridge(uint8_t on);
-
-		// ---------- localisation -----------------------------------------------------
-		int set_position(VectPlan pos);
 
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);
