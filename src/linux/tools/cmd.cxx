@@ -81,7 +81,7 @@ COMMAND usb_commands[] = {
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "q", cmd_quit, "Quit" },
-	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor factor" },
+	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
 	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
@@ -216,17 +216,18 @@ int cmd_help(const char* arg)
 
 int cmd_qemu_set_clock_factor(const char* arg)
 {
-	unsigned int id;
-	int count = sscanf(arg, "%u", &id);
+	unsigned int system_clock_factor;
+	unsigned int icount =0;
+	int count = sscanf(arg, "%u %u", &system_clock_factor, &icount);
 
-	if(count != 1)
+	if(count != 1 && count != 2)
 	{
 		return CMD_ERROR;
 	}
 
 	if( cmd_qemu )
 	{
-		cmd_qemu->set_clock_factor(id);
+		cmd_qemu->set_clock_factor(system_clock_factor, icount);
 	}
 
 	return CMD_SUCESS;

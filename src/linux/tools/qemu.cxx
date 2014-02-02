@@ -116,12 +116,13 @@ void qemu::destroy()
 	unlink(file_foo_write);
 }
 
-int qemu::set_clock_factor(unsigned int factor)
+int qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 {
 	struct atlantronic_model_tx_event event;
 
 	event.type = EVENT_CLOCK_FACTOR;
 	event.data32[0] = factor;
+	event.data32[1] = icount;
 
 	return com.write((void*) &event, sizeof(event));
 }

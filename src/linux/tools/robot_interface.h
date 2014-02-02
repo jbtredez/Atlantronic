@@ -27,7 +27,7 @@ class RobotInterface
 		int init(const char* name, const char* file_read, const char* file_write, void (*callback)(void*), void* callback_arg);
 		void destroy();
 
-		// ---------- gestion des ax12 -------------------------------------------------
+		// ---------- gestion des dynamixel---------------------------------------------
 		int dynamixel_scan(int dynamixel_type);
 		int dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id);
 		int dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha);
