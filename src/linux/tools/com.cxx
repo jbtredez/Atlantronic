@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
+#include "kernel/driver/usb.h"
 
 void Com::init(const char* File_read, const char* File_write)
 {
@@ -207,21 +208,18 @@ end:
 int Com::read_header(uint16_t* type, uint16_t* size)
 {
 	int res = 0;
-	unsigned char a, b, c, d;
+	struct usb_header header;
 
-	int err = read(4);
+	int err = read(sizeof(header));
 	if(err)
 	{
 		res = err;
 		goto end;
 	}
 
-	a = buffer[buffer_begin];
-	b = buffer[(buffer_begin + 1) % sizeof(buffer)];
-	c = buffer[(buffer_begin + 2) % sizeof(buffer)];
-	d = buffer[(buffer_begin + 3) % sizeof(buffer)];
-	*type = ( a << 8 ) + b;
-	*size = ( c << 8 ) + d;
+	memcpy(&header, &buffer[buffer_begin], sizeof(header));
+	*type = header.type;
+	*size = header.size;
 
 end:
 	return res;

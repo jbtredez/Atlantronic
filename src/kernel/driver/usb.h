@@ -50,6 +50,12 @@ enum usb_cmd
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 
+struct usb_header
+{
+	uint16_t type;
+	uint16_t size;
+} __attribute__((packed));
+
 //!< ajout de log
 //!< le module usb doit être initialisé
 void usb_add(uint16_t type, void* msg, uint16_t size);

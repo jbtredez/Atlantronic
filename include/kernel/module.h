@@ -17,6 +17,8 @@
 
 // macro pour optimiser les fonctions d'init en fonction de la taille
 #define __OPTIMIZE_SIZE__ __attribute__((optimize("-Os")))
+#define likely(x)   __builtin_expect(!!(x), 1)
+#define unlikely(x)   __builtin_expect(!!(x), 0)
 
 typedef int (*initcall_t)();
 typedef void (*exitcall_t)();

@@ -24,6 +24,7 @@
 static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
+static int usb_buffer_size;
 static unsigned int usb_write_size;
 static unsigned char usb_rx_buffer[64]; //!< buffer usb de reception
 static unsigned char usb_rx_buffer2[64]; //!< buffer usb de reception (second)
@@ -112,11 +113,38 @@ void usb_write_byte(unsigned char byte)
 {
 	usb_buffer[usb_buffer_end] = byte;
 	usb_buffer_end = (usb_buffer_end + 1) % USB_BUFER_SIZE;
-	if( usb_buffer_end == usb_buffer_begin )
+	usb_buffer_size++;
+
+	if( usb_buffer_size > USB_BUFER_SIZE)
 	{
-		// buffer circulaire plein, on ecrase les vieux trucs
-		// FIXME Attention à la synchro de l'autre coté
-		usb_buffer_begin = (usb_buffer_begin + 1) % USB_BUFER_SIZE;
+		usb_buffer_size = USB_BUFER_SIZE;
+		usb_buffer_begin = usb_buffer_end;
+	}
+}
+
+void usb_write(const void* buffer, int size)
+{
+	int nMax = USB_BUFER_SIZE - usb_buffer_end;
+
+	usb_buffer_size += size;
+
+	if( likely(size <= nMax) )
+	{
+		memcpy(&usb_buffer[usb_buffer_end], buffer, size);
+		usb_buffer_end = (usb_buffer_end + size) % USB_BUFER_SIZE;
+	}
+	else
+	{
+		memcpy(&usb_buffer[usb_buffer_end], buffer, nMax);
+		size -= nMax;
+		memcpy(&usb_buffer[0], buffer + nMax, size);
+		usb_buffer_end = size;
+	}
+
+	if( usb_buffer_size > USB_BUFER_SIZE)
+	{
+		usb_buffer_size = USB_BUFER_SIZE;
+		usb_buffer_begin = usb_buffer_end;
 	}
 }
 
@@ -128,23 +156,17 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 	}
 
 	// on se reserve le buffer circulaire pour les log s'il n'y a personne sur l'usb
-	if( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED && type != USB_LOG )
+	if( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
 	{
 		return;
 	}
+	struct usb_header header = {type, size};
 
 	xSemaphoreTake(usb_mutex, portMAX_DELAY);
 
-	usb_write_byte( type >> 8 );
-	usb_write_byte( type & 0xff );
-	usb_write_byte( size >> 8 );
-	usb_write_byte( size & 0xff );
+	usb_write(&header, sizeof(header));
+	usb_write(msg, size);
 
-	for( ; size--; )
-	{
-		usb_write_byte(*((unsigned char*)msg));
-		msg++;
-	}
 	xSemaphoreGive(usb_mutex);
 
 	xSemaphoreGive(usb_write_sem);
@@ -153,7 +175,7 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 void usb_add_log(unsigned char level, const char* func, uint16_t line, const char* msg)
 {
 	uint16_t msg_size = strlen(msg);
-	char header[32];
+	char log_header[32];
 
 	if(msg_size == 0)
 	{
@@ -161,9 +183,9 @@ void usb_add_log(unsigned char level, const char* func, uint16_t line, const cha
 	}
 
 	struct systime current_time = systick_get_time();
-	memcpy(header, &current_time, 8);
-	header[8] = level;
-	memcpy(header+9, &line, 2);
+	memcpy(log_header, &current_time, 8);
+	log_header[8] = level;
+	memcpy(log_header+9, &line, 2);
 
 	int len = strlen(func);
 
@@ -172,33 +194,19 @@ void usb_add_log(unsigned char level, const char* func, uint16_t line, const cha
 		len = 20;
 	}
 
-	memcpy(header + 11, func, len);
+	memcpy(log_header + 11, func, len);
 	len += 11;
-	header[len] = ':';
+	log_header[len] = ':';
 	len++;
 
 	uint16_t size = msg_size + len + 1;
+	struct usb_header usb_header = {USB_LOG, size};
 
 	xSemaphoreTake(usb_mutex, portMAX_DELAY);
 
-	usb_write_byte( USB_LOG >> 8 );
-	usb_write_byte( USB_LOG & 0xff );
-	usb_write_byte( size >> 8 );
-	usb_write_byte( size & 0xff );
-
-	char* head = header;
-	for( ; len--; )
-	{
-		usb_write_byte(*((unsigned char*)head));
-		head++;
-	}
-
-	for( ; msg_size--; )
-	{
-		usb_write_byte(*((unsigned char*)msg));
-		msg++;
-	}
-
+	usb_write(&usb_header, sizeof(usb_header));
+	usb_write(log_header, len);
+	usb_write(msg, msg_size);
 	usb_write_byte((unsigned  char)'\n');
 
 	xSemaphoreGive(usb_mutex);
@@ -288,18 +296,17 @@ void usb_write_task(void * arg)
 		if( usb_endpoint_ready )
 		{
 			xSemaphoreTake(usb_mutex, portMAX_DELAY);
-			if(usb_buffer_begin != usb_buffer_end)
+			if(usb_buffer_size)
 			{
-				int size = usb_buffer_end - usb_buffer_begin;
-				if(size < 0)
+				int sizeMax = USB_BUFER_SIZE - usb_buffer_begin;
+				if(usb_buffer_size < sizeMax )
 				{
-					// on envoi juste la fin du buffer sur ce cycle
-					size = USB_BUFER_SIZE - usb_buffer_begin;
+					sizeMax = usb_buffer_size;
 				}
 
 				usb_endpoint_ready = 0;
-				usb_write_size = size;
-				DCD_EP_Tx(&USB_OTG_dev, 0x81, usb_buffer + usb_buffer_begin, size);
+				usb_write_size = sizeMax;
+				DCD_EP_Tx(&USB_OTG_dev, 0x81, usb_buffer + usb_buffer_begin, sizeMax);
 			}
 			xSemaphoreGive(usb_mutex);
 		}
@@ -321,6 +328,7 @@ void EP1_IN_Callback(void)
 	if( ! usb_endpoint_ready )
 	{
 		usb_endpoint_ready = 1;
+		usb_buffer_size -= usb_write_size;
 		usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
 		xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
 	}
@@ -380,7 +388,7 @@ void EP2_OUT_Callback(void)
 void usb_cmd_ptask(void* arg)
 {
 	(void) arg;
-	char usb_ptask_buffer[512];
+	char usb_ptask_buffer[400];
 	vTaskGetRunTimeStats(usb_ptask_buffer, sizeof(usb_ptask_buffer));
 	log(LOG_INFO, usb_ptask_buffer);
 }
