@@ -142,6 +142,7 @@ void* RobotInterface::task()
 
 		if( res )
 		{
+			fault_reset();
 			com.open_block();
 			continue;
 		}
@@ -155,6 +156,7 @@ void* RobotInterface::task()
 
 		if( res )
 		{
+			fault_reset();
 			com.open_block();
 			continue;
 		}
@@ -573,6 +575,15 @@ int RobotInterface::process_go(char* msg, uint16_t size)
 
 end:
 	return res;
+}
+
+void RobotInterface::fault_reset()
+{
+	for(int i = 0; i < FAULT_MAX; i++)
+	{
+		fault_status[i].state = 0;
+		fault_status[i].time = 0;
+	}
 }
 
 int RobotInterface::ptask()

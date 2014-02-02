@@ -119,6 +119,7 @@ class RobotInterface
 		void* callback_arg;
 		Com com; //!< communication
 
+		void fault_reset();
 		static void* task_wrapper(void* arg);
 		void* task();
 		int process_log(char* msg, uint16_t size);
