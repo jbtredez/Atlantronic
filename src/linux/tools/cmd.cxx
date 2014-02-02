@@ -39,6 +39,7 @@ int cmd_gyro_calib_reset(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_pince_set_position(const char* arg);
+int cmd_ptask(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
@@ -80,6 +81,7 @@ COMMAND usb_commands[] = {
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
+	{ "ptask", cmd_ptask, "print tasks"},
 	{ "q", cmd_quit, "Quit" },
 	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
 	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
@@ -487,16 +489,20 @@ int cmd_pince_set_position (const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_recalage(const char* arg)
+int cmd_ptask(const char*)
 {
-	(void) arg;
+	cmd_robot->ptask();
+	return CMD_SUCESS;
+}
+
+int cmd_recalage(const char*)
+{
 	cmd_robot->recalage();
 	return CMD_SUCESS;
 }
 
-int cmd_go(const char* arg)
+int cmd_go(const char*)
 {
-	(void) arg;
 	cmd_robot->go();
 	return CMD_SUCESS;
 }

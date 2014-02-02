@@ -10,6 +10,7 @@
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/rcc.h"
 #include "kernel/log_level.h"
+#include "kernel/driver/usb.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -18,7 +19,7 @@
 extern "C" {
 #endif
 
-// taille max d'un log (espace qui doit être dispo sur la stack)
+// taille max d'un log formate (espace qui doit être dispo sur la stack)
 #define LOG_SIZE             100
 
 #ifndef NO_WEAK_LOG

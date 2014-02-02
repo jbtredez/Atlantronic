@@ -27,6 +27,8 @@ class RobotInterface
 		int init(const char* name, const char* file_read, const char* file_write, void (*callback)(void*), void* callback_arg);
 		void destroy();
 
+		int ptask();
+
 		// ---------- gestion des dynamixel---------------------------------------------
 		int dynamixel_scan(int dynamixel_type);
 		int dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id);

@@ -117,6 +117,7 @@ typedef struct tskTaskControlBlock
 
 	xListItem				xGenericListItem;		/*< The list that the state list item of a task is reference from denotes the state of that task (Ready, Blocked, Suspended ). */
 	xListItem				xEventListItem;		/*< Used to reference a task from an event list. */
+	xListItem				allTaskListItem;
 	unsigned portBASE_TYPE	uxPriority;			/*< The priority of the task.  0 is the lowest priority. */
 	portSTACK_TYPE			*pxStack;			/*< Points to the start of the stack. */
 	signed char				pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */
@@ -167,6 +168,7 @@ PRIVILEGED_DATA static xList xDelayedTaskList2;							/*< Delayed tasks (two lis
 PRIVILEGED_DATA static xList * volatile pxDelayedTaskList ;				/*< Points to the delayed task list currently being used. */
 PRIVILEGED_DATA static xList * volatile pxOverflowDelayedTaskList;		/*< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
 PRIVILEGED_DATA static xList xPendingReadyList;							/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready queue when the scheduler is resumed. */
+PRIVILEGED_DATA static xList xAllTasksLists;                           //!< liste de toute les tackes
 
 #if ( INCLUDE_vTaskDelete == 1 )
 
@@ -202,10 +204,10 @@ PRIVILEGED_DATA static volatile portTickType xNextTaskUnblockTime				= ( portTic
 
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
 
-	PRIVILEGED_DATA static char pcStatsString[ 50 ] ;
+//	PRIVILEGED_DATA static char pcStatsString[ 50 ] ;
 	PRIVILEGED_DATA static struct systime ulTaskSwitchedInTime;	/*< Holds the value of a timer/counter the last time a task was switched in. */
 	PRIVILEGED_DATA static struct systime ulTotalRunTime;				/*< Holds the total amount of execution time as defined by the run time counter clock. */
-	static void prvGenerateRunTimeStatsForTasksInList( const signed char *pcWriteBuffer, xList *pxList, unsigned long ulTotalRunTimeDiv100 ) PRIVILEGED_FUNCTION;
+//	static void prvGenerateRunTimeStatsForTasksInList( const signed char *pcWriteBuffer, xList *pxList, unsigned long ulTotalRunTimeDiv100 ) PRIVILEGED_FUNCTION;
 
 #endif
 
@@ -626,6 +628,7 @@ tskTCB * pxNewTCB;
 			traceTASK_CREATE( pxNewTCB );
 
 			prvAddTaskToReadyQueue( pxNewTCB );
+			vListInsertEnd( &xAllTasksLists, &pxNewTCB->allTaskListItem);
 
 			xReturn = pdPASS;
 			portSETUP_TCB( pxNewTCB );
@@ -1537,7 +1540,45 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 /*----------------------------------------------------------*/
 
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
+	void vTaskGetRunTimeStats( char* buffer, int size )
+	{
+		int res = snprintf(buffer, size, "il y a %u taches", (unsigned int)xAllTasksLists.uxNumberOfItems);
+		if( res > 0)
+		{
+			buffer += res;
+			size -= res;
+		}
 
+		if( xAllTasksLists.uxNumberOfItems )
+		{
+			volatile tskTCB *pxNextTCB, *pxFirstTCB;
+			xAllTasksLists.pxIndex = (void*)&xAllTasksLists.xListEnd;
+			pxFirstTCB = listGET_OWNER_OF_HEAD_ENTRY( &xAllTasksLists );
+			listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xAllTasksLists );
+
+			do
+			{
+				float t = ulTotalRunTime.ms + ulTotalRunTime.ns / 1000000;
+				float t2 = pxNextTCB->ulRunTimeCounter.ms + pxNextTCB->ulRunTimeCounter.ns / 1000000;
+				float task_load = 0;
+				int ent = 0;
+				if( t > 0)
+				{
+					task_load = 100*t2 / t;
+					ent = (int) task_load;
+				}
+				res = snprintf(buffer, size, "\n%8s | %3d.%3.3d", pxNextTCB->pcTaskName, ent, (int)(1000*(task_load-ent)));
+				if( res > 0)
+				{
+					buffer += res;
+					size -= res;
+				}
+				listGET_OWNER_OF_NEXT_ENTRY( pxNextTCB, &xAllTasksLists );
+			}
+			while( pxNextTCB != pxFirstTCB );
+		}
+	}
+#if 0
 	void vTaskGetRunTimeStats( signed char *pcWriteBuffer )
 	{
 	unsigned portBASE_TYPE uxQueue;
@@ -1607,8 +1648,9 @@ unsigned portBASE_TYPE uxTaskGetNumberOfTasks( void )
 		}
 		xTaskResumeAll();
 	}
-
+#endif
 #endif /* configGENERATE_RUN_TIME_STATS */
+
 /*----------------------------------------------------------*/
 
 #if ( INCLUDE_xTaskGetIdleTaskHandle == 1 )
@@ -2250,6 +2292,7 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const char * const pcName,
 
 	vListInitialiseItem( &( pxTCB->xGenericListItem ) );
 	vListInitialiseItem( &( pxTCB->xEventListItem ) );
+	vListInitialiseItem( &( pxTCB->allTaskListItem ) );
 
 	/* Set the pxTCB as a link back from the xListItem.  This is so we can get
 	back to	the containing TCB from a generic item in a list. */
@@ -2258,6 +2301,7 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const char * const pcName,
 	/* Event lists are always in priority order. */
 	listSET_LIST_ITEM_VALUE( &( pxTCB->xEventListItem ), configMAX_PRIORITIES - ( portTickType ) uxPriority );
 	listSET_LIST_ITEM_OWNER( &( pxTCB->xEventListItem ), pxTCB );
+	listSET_LIST_ITEM_OWNER( &( pxTCB->allTaskListItem ), pxTCB );
 
 	#if ( portCRITICAL_NESTING_IN_TCB == 1 )
 	{
@@ -2323,6 +2367,7 @@ unsigned portBASE_TYPE uxPriority;
 	vListInitialise( ( xList * ) &xDelayedTaskList1 );
 	vListInitialise( ( xList * ) &xDelayedTaskList2 );
 	vListInitialise( ( xList * ) &xPendingReadyList );
+	vListInitialise( ( xList * ) &xAllTasksLists );
 
 	#if ( INCLUDE_vTaskDelete == 1 )
 	{
@@ -2467,7 +2512,7 @@ tskTCB *pxNewTCB;
 
 #endif /* configUSE_TRACE_FACILITY */
 /*-----------------------------------------------------------*/
-
+#if 0
 #if ( configGENERATE_RUN_TIME_STATS == 1 )
 
 	static void prvGenerateRunTimeStatsForTasksInList( const signed char *pcWriteBuffer, xList *pxList, unsigned long ulTotalRunTimeDiv100 )
@@ -2537,6 +2582,7 @@ tskTCB *pxNewTCB;
 	}
 
 #endif /* configGENERATE_RUN_TIME_STATS */
+#endif
 /*-----------------------------------------------------------*/
 
 #if ( ( configUSE_TRACE_FACILITY == 1 ) || ( INCLUDE_uxTaskGetStackHighWaterMark == 1 ) )

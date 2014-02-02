@@ -553,6 +553,13 @@ end:
 	return res;
 }
 
+int RobotInterface::ptask()
+{
+	char buffer[1];
+	buffer[0] = USB_CMD_PTASK;
+	return com.write(buffer, sizeof(buffer));
+}
+
 int RobotInterface::dynamixel_scan(int dynamixel_type)
 {
 	struct dynamixel_cmd_param cmd_arg;

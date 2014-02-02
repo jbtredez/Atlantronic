@@ -16,7 +16,7 @@
 // Attention, pour l'envoi de commandes par usb, on suppose que c'est envoyé en une seule trame usb
 
 #define USB_BUFER_SIZE          4096
-#define USB_READ_STACK_SIZE      350
+#define USB_READ_STACK_SIZE      400
 #define USB_WRITE_STACK_SIZE      75
 
 // variables statiques => segment bss, initialisation a 0
@@ -36,7 +36,7 @@ static void (*usb_cmd[USB_CMD_NUM])(void*);
 
 void usb_read_task(void *);
 void usb_write_task(void *);
-
+void usb_cmd_ptask(void*);
 
 static xSemaphoreHandle usb_write_sem;
 static xSemaphoreHandle usb_read_sem;
@@ -101,6 +101,8 @@ static int usb_module_init(void)
 		return ERR_INIT_USB;
 	}
 
+	usb_add_cmd(USB_CMD_PTASK, usb_cmd_ptask);
+
 	return 0;
 }
 
@@ -143,6 +145,62 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 		usb_write_byte(*((unsigned char*)msg));
 		msg++;
 	}
+	xSemaphoreGive(usb_mutex);
+
+	xSemaphoreGive(usb_write_sem);
+}
+
+void usb_add_log(unsigned char level, const char* func, uint16_t line, const char* msg)
+{
+	uint16_t msg_size = strlen(msg);
+	char header[32];
+
+	if(msg_size == 0)
+	{
+		return;
+	}
+
+	struct systime current_time = systick_get_time();
+	memcpy(header, &current_time, 8);
+	header[8] = level;
+	memcpy(header+9, &line, 2);
+
+	int len = strlen(func);
+
+	if(len > 20)
+	{
+		len = 20;
+	}
+
+	memcpy(header + 11, func, len);
+	len += 11;
+	header[len] = ':';
+	len++;
+
+	uint16_t size = msg_size + len + 1;
+
+	xSemaphoreTake(usb_mutex, portMAX_DELAY);
+
+	usb_write_byte( USB_LOG >> 8 );
+	usb_write_byte( USB_LOG & 0xff );
+	usb_write_byte( size >> 8 );
+	usb_write_byte( size & 0xff );
+
+	char* head = header;
+	for( ; len--; )
+	{
+		usb_write_byte(*((unsigned char*)head));
+		head++;
+	}
+
+	for( ; msg_size--; )
+	{
+		usb_write_byte(*((unsigned char*)msg));
+		msg++;
+	}
+
+	usb_write_byte((unsigned  char)'\n');
+
 	xSemaphoreGive(usb_mutex);
 
 	xSemaphoreGive(usb_write_sem);
@@ -317,4 +375,12 @@ void EP2_OUT_Callback(void)
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
+void usb_cmd_ptask(void* arg)
+{
+	(void) arg;
+	char usb_ptask_buffer[512];
+	vTaskGetRunTimeStats(usb_ptask_buffer, sizeof(usb_ptask_buffer));
+	log(LOG_INFO, usb_ptask_buffer);
 }
