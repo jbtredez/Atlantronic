@@ -161,7 +161,8 @@ void* RobotInterface::task()
 
 		// copie du message (vers un buffer non circulaire)
 		char msg[size+1];
-		com.copy_msg(msg, size+1);
+		com.copy(msg, 4, size);
+		msg[size] = 0;
 
 		// traitement du message
 		switch( type )
@@ -203,22 +204,32 @@ void* RobotInterface::task()
 
 		if( res )
 		{
+			if( lost_count == 0)
+			{
+				// premiere perte : log header
+				log_error("com error, header = %d %d", type, size);
+			}
 			unsigned char byte = com.buffer[com.buffer_begin];
 			if(lost_count >= sizeof(lost)-2)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data0 (%d) : %s", name, lost_count, lost);
+				char buffer[10240];
+				int offset = 0;
+				for(int i = 0; i < (int)lost_count; i++)
+				{
+					int res = snprintf(buffer + offset, sizeof(buffer) - offset, "0x%.2x ", lost[i]);
+					if( res > 0)
+					{
+						offset += res;
+					}
+					snprintf(buffer + offset, sizeof(buffer) - offset, "\n");
+				}
+				log_error("%s unknown data2 (%d) : %s", name, lost_count, buffer);
 				lost_count = 0;
 			}
 
 			lost[lost_count] = byte;
 			lost_count ++;
-			if(byte == 0 || byte == '\n')
-			{
-				lost[lost_count+1] = 0;
-				log_error("%s unknown data1 (%d) : %s", name, lost_count, lost);
-				lost_count = 0;
-			}
 
 			//printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, com->buffer[com->buffer_begin], com->buffer[com->buffer_begin]);
 			com.skip(1);
@@ -228,7 +239,18 @@ void* RobotInterface::task()
 			if(lost_count)
 			{
 				lost[lost_count+1] = 0;
-				log_error("%s unknown data2 (%d) : %s", name, lost_count, lost);
+				char buffer[10240];
+				int offset = 0;
+				for(int i = 0; i < (int)lost_count; i++)
+				{
+					int res = snprintf(buffer + offset, sizeof(buffer) - offset, "0x%.2x ", lost[i]);
+					if( res > 0)
+					{
+						offset += res;
+					}
+					snprintf(buffer + offset, sizeof(buffer) - offset, "\n");
+				}
+				log_error("%s unknown data2 (%d) : %s", name, lost_count, buffer);
 				lost_count = 0;
 			}
 

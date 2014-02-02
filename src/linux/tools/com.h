@@ -18,7 +18,7 @@ class Com
 		void open_block();
 		int read(int min_buffer_size);
 		int read_header(uint16_t* type, uint16_t* size);
-		void copy_msg(char* msg, int size);
+		void copy(void* data, int offset, int size);
 		void skip(int count);
 		int write(const void* buf, int size);
 

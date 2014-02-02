@@ -217,7 +217,7 @@ int Com::read_header(uint16_t* type, uint16_t* size)
 		goto end;
 	}
 
-	memcpy(&header, &buffer[buffer_begin], sizeof(header));
+	copy(&header, 0, sizeof(header));
 	*type = header.type;
 	*size = header.size;
 
@@ -225,19 +225,15 @@ end:
 	return res;
 }
 
-void Com::copy_msg(char* msg, int size)
+void Com::copy(void* data, int offset, int size)
 {
 	int i, j;
-	if(size > 1)
+	// copie du message vers un buffer non circulaire
+	i = (buffer_begin + offset) % sizeof(buffer);
+	for(j = 0; j < size ; j++)
 	{
-		// copie du message (vers un buffer non circulaire)
-		i = (buffer_begin + 4) % sizeof(buffer);
-		for(j = 0; j < size-1 ; j++)
-		{
-			msg[j] = buffer[i];
-			i = (i + 1) % sizeof(buffer);
-		}
-		msg[size-1] = 0;
+		((unsigned char*)data)[j] = buffer[i];
+		i = (i + 1) % sizeof(buffer);
 	}
 }
 

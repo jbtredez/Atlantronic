@@ -25,7 +25,6 @@ static unsigned char usb_buffer[USB_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
 static int usb_buffer_size;
-static unsigned int usb_write_size;
 static unsigned char usb_rx_buffer[64]; //!< buffer usb de reception
 static unsigned char usb_rx_buffer2[64]; //!< buffer usb de reception (second)
 static unsigned int usb_read_size; //!< taille du buffer usb de reception
@@ -296,7 +295,7 @@ void usb_write_task(void * arg)
 		if( usb_endpoint_ready )
 		{
 			xSemaphoreTake(usb_mutex, portMAX_DELAY);
-			if(usb_buffer_size)
+			if(usb_buffer_size > 0)
 			{
 				int sizeMax = USB_BUFER_SIZE - usb_buffer_begin;
 				if(usb_buffer_size < sizeMax )
@@ -305,8 +304,9 @@ void usb_write_task(void * arg)
 				}
 
 				usb_endpoint_ready = 0;
-				usb_write_size = sizeMax;
 				DCD_EP_Tx(&USB_OTG_dev, 0x81, usb_buffer + usb_buffer_begin, sizeMax);
+				usb_buffer_size -= sizeMax;
+				usb_buffer_begin = (usb_buffer_begin + sizeMax) % USB_BUFER_SIZE;
 			}
 			xSemaphoreGive(usb_mutex);
 		}
@@ -328,8 +328,6 @@ void EP1_IN_Callback(void)
 	if( ! usb_endpoint_ready )
 	{
 		usb_endpoint_ready = 1;
-		usb_buffer_size -= usb_write_size;
-		usb_buffer_begin = (usb_buffer_begin + usb_write_size) % USB_BUFER_SIZE;
 		xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
 	}
 
