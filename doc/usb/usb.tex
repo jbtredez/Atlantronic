@@ -11,7 +11,7 @@ Une grande partie des fonctions implémentées sont utilisables depuis l'usb (vi
 \end{itemize}
 
 \section{Interfaces}
-Les cartes foo et bar sont en mode device et ne présentent qu'une seule interface.
+La carte est en mode device et ne présentent qu'une seule interface.
 Endpoints :
 \begin{itemize}
 \item 0 : contrôle
@@ -27,6 +27,14 @@ Les messages qui transitent sur les endpoints bulk sont composés d'une entête 
 \item taille (16 bit)
 \item type (16 bits)
 \item data
+\end{itemize}
+
+\cline
+
+Taille maximale d'un message :
+\begin{itemize}
+\item sens carte -> pc : 65536 octets
+\item sens pc -> carte : 64 octets (limitation actuelle de l'implémentation "simple" 1 message = 1 trame usb).
 \end{itemize}
 
 \clearpage
