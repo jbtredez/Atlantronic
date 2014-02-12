@@ -11,6 +11,7 @@
 #include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/spi.h"
+#include "kernel/driver/adc.h"
 #include "kernel/fault.h"
 
 #define CONTROL_STACK_SIZE       350
@@ -130,9 +131,6 @@ static void control_task(void* arg)
 
 		loc_pos = location_get_position();
 
-		// recuperation des entrées AN
-		//adc_get(&control_an);
-
 		if( ! motorNotReady )
 		{
 			control_compute();
@@ -155,6 +153,7 @@ static void control_task(void* arg)
 		control_usb_data.mes_theta1 = control_kinematics_mes[CAN_MOTOR_STEERING1].pos;
 		control_usb_data.mes_theta2 = control_kinematics_mes[CAN_MOTOR_STEERING2].pos;
 		control_usb_data.mes_theta3 = control_kinematics_mes[CAN_MOTOR_STEERING3].pos;
+		control_usb_data.vBat = (float)adc_data.vBat * (float)VBAT_GAIN;
 /*
 		control_usb_data.control_i_right = control_an.i_right;
 		control_usb_data.control_i_left = control_an.i_left;

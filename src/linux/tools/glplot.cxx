@@ -1089,6 +1089,9 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "gyro %6.2f",
 							robot_interface.control_usb_data[id].pos_theta_gyro * 180 / M_PI);
+			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robot_interface.control_usb_data[id].vBat);
+			lineId++;
 		}
 
 		pthread_mutex_unlock(&robot_interface.mutex);

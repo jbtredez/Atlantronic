@@ -10,9 +10,13 @@
 struct adc_an
 {
 	uint16_t i[4];
-	uint16_t vBatAru;
+	uint16_t vBat;
 };
 
-void adc_get(struct adc_an* an);
+//! facteur multiplicatif pour compenser l'erreur entre la pratique et le gain theorique
+#define VBAT_CALIBRATION              0.985f
+#define VBAT_GAIN            (VBAT_CALIBRATION*13*3/4096.0f)
+
+extern volatile struct adc_an adc_data;
 
 #endif

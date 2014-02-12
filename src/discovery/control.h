@@ -92,6 +92,7 @@ struct control_usb_data
 	float mes_theta1;
 	float mes_theta2;
 	float mes_theta3;
+	float vBat;
 } __attribute__((packed));
 
 struct control_cmd_param_arg
