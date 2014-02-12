@@ -39,6 +39,9 @@ static int gpio_module_init(void)
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
 
 	// TODO configurer IT sur go et recalage
+
+	gpio_power_on();
+
 	return 0;
 }
 

@@ -61,6 +61,7 @@ static void end_task(void *arg)
 	end_match = 1;
 	log(LOG_INFO, "Fin du match");
 
+	gpio_power_off();
 	exitModules();
 	setLed(0x00);
 
