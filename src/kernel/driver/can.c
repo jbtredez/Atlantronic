@@ -40,11 +40,17 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
 
+	// interruptions rx, tx
 	CAN1->IER = CAN_IER_FMPIE0 | CAN_IER_TMEIE;
 	NVIC_SetPriority(CAN1_TX_IRQn, PRIORITY_IRQ_CAN1_TX);
 	NVIC_SetPriority(CAN1_RX0_IRQn, PRIORITY_IRQ_CAN1_RX0);
+//	NVIC_SetPriority(CAN1_SCE_IRQn, PRIORITY_IRQ_CAN1_SCE);
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
+//	NVIC_EnableIRQ(CAN1_SCE_IRQn);
+
+	// sortie automatique de bus off
+	CAN1->MCR |= CAN_MCR_ABOM;
 
 	//sortie du mode sleep
 	CAN1->MCR &= ~CAN_MCR_SLEEP;

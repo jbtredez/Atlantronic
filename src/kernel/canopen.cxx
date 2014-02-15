@@ -9,7 +9,7 @@
 #define CAN_STACK_SIZE             250
 #define CAN_READ_QUEUE_SIZE         50
 #define CAN_MAX_NODE                 6
-#define CANOPEN_SDO_TIMEOUT         20 // en ms
+#define CANOPEN_SDO_TIMEOUT        400 // en ms
 
 enum
 {
