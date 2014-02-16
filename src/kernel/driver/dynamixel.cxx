@@ -34,8 +34,8 @@ DynamixelManager rx24;
 
 static int dynamixel_module_init()
 {
-	ax12.init("ax12", USART6_HALF_DUPLEX, 1, 1000000, AX12_MAX_ID);
-	rx24.init("rx24", UART5_FULL_DUPLEX, 0, 1000000, RX24_MAX_ID);
+	ax12.init("ax12", USART6_HALF_DUPLEX, 1000000, AX12_MAX_ID);
+	rx24.init("rx24", UART5_FULL_DUPLEX, 1000000, RX24_MAX_ID);
 
 	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd);
 
@@ -44,9 +44,8 @@ static int dynamixel_module_init()
 
 module_init(dynamixel_module_init, INIT_DYNAMIXEL);
 
-int DynamixelManager::init(const char* name, enum usart_id usart_id, int half_duplex, uint32_t frequency, int Max_devices_id)
+int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t frequency, int Max_devices_id)
 {
-	usart_half_duplex = half_duplex;
 	usart = usart_id;
 	int res = usart_open(usart, frequency);
 	if( res )
@@ -167,10 +166,7 @@ void DynamixelManager::send(struct dynamixel_request *req)
 	}
 	write_dma_buffer[write_size-1] = dynamixel_checksum(write_dma_buffer, write_size);
 
-	if( usart_half_duplex )
-	{
-		read_size = write_size;
-	}
+	read_size = write_size;
 
 	if(req->id != 0xFE)
 	{
@@ -194,30 +190,23 @@ void DynamixelManager::send(struct dynamixel_request *req)
 	}
 
 	buffer = read_dma_buffer;
-	if( usart_half_duplex )
+	// verification des données envoyées
+	for(i = 0; i< write_size ; i++)
 	{
-		// verification des données envoyées
-		for(i = 0; i< write_size ; i++)
+		if( write_dma_buffer[i] != read_dma_buffer[i] )
 		{
-			if( write_dma_buffer[i] != read_dma_buffer[i] )
-			{
-				// erreur, on n'a pas lus ce qui a été envoyé
-				res = ERR_DYNAMIXEL_SEND_CHECK;
-				goto end;
-			}
+			// erreur, on n'a pas lus ce qui a été envoyé
+			res = ERR_DYNAMIXEL_SEND_CHECK;
+			goto end;
 		}
-
-		buffer += write_size;
 	}
+
+	buffer += write_size;
 
 	// pas de broadcast => réponse attendue
 	if(req->id != 0xFE)
 	{
-		int size = read_size;
-		if( usart_half_duplex )
-		{
-			size -= write_size;
-		}
+		int size = read_size - write_size;
 		if(buffer[0] != 0xFF || buffer[1] != 0xFF || buffer[2] != req->id || buffer[3] != size - 4)
 		{
 			// erreur protocole

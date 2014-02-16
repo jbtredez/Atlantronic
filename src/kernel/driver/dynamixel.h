@@ -137,7 +137,7 @@ struct dynamixel_request
 class DynamixelManager
 {
 	public:
-		int init(const char* name, enum usart_id usart_id, int half_duplex, uint32_t frequency, int max_devices_id);
+		int init(const char* name, enum usart_id usart_id, uint32_t frequency, int max_devices_id);
 
 		//!< affichage d'une erreur
 		void print_error(int id, struct dynamixel_error err);
@@ -170,7 +170,6 @@ class DynamixelManager
 		// variables alignees pour le dma
 		uint8_t write_dma_buffer[6 + DYNAMIXEL_ARG_MAX] __attribute__ ((aligned (16)));
 		uint8_t read_dma_buffer[2*(6 + DYNAMIXEL_ARG_MAX)] __attribute__ ((aligned (16)));
-		int usart_half_duplex;
 		enum usart_id usart;
 		xSemaphoreHandle mutex;
 		xSemaphoreHandle usart_mutex;
