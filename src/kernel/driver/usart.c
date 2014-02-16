@@ -36,10 +36,10 @@ __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 		case USART3_FULL_DUPLEX:
 		case UART4_FULL_DUPLEX:
 		case UART5_FULL_DUPLEX:
-			pclk = 1000*RCC_PCLK1_MHZ;
+			pclk = 1000000*RCC_PCLK1_MHZ;
 			break;
 		case USART6_HALF_DUPLEX:
-			pclk = 1000*RCC_PCLK2_MHZ;
+			pclk = 1000000*RCC_PCLK2_MHZ;
 			break;
 		default:
 			// erreur, l'id n'existe pas
