@@ -69,13 +69,19 @@ module_init(pwm_module_init, INIT_PWM);
 
 module_exit(isr_pwm_reset, EXIT_PWM);
 
-void pwm_set(const unsigned int num, int16_t val)
+void pwm_set16(const unsigned int num, int16_t val)
 {
 	int dir = 1;
 	if(val < 0)
 	{
 		val = -val;
 		dir = -1;
+	}
+
+	// saturation
+	if( val > PWM_ARR )
+	{
+		val = PWM_ARR;
 	}
 
 	switch(num)
@@ -128,6 +134,11 @@ void pwm_set(const unsigned int num, int16_t val)
 			// TODO : log erreur
 			break;
 	}
+}
+
+void pwm_set(const unsigned int num, float val)
+{
+	pwm_set16(num, val * PWM_ARR);
 }
 
 void isr_pwm_reset(void)

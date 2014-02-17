@@ -35,7 +35,15 @@ extern "C" {
 //!
 //! @param num pwm id
 //! @param val new value ([-PWM_ARR ; PWM_ARR])
-void pwm_set(const unsigned int num, int16_t val);
+void pwm_set16(const unsigned int num, int16_t val);
+
+
+//! set a pwm
+//!
+//! @param num pwm id
+//! @param val new value ([-1 ; 1])
+void pwm_set(const unsigned int num, float val);
+
 
 #ifdef __cplusplus
 }
