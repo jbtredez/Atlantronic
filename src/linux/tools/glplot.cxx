@@ -1092,6 +1092,11 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robot_interface.control_usb_data[id].vBat);
 			lineId++;
+			for(int i = 0; i < 4; i++)
+			{
+				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robot_interface.control_usb_data[id].iPwm[i]);
+				lineId++;
+			}
 		}
 
 		pthread_mutex_unlock(&robot_interface.mutex);

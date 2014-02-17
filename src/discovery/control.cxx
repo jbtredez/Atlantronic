@@ -154,10 +154,11 @@ static void control_task(void* arg)
 		control_usb_data.mes_theta2 = control_kinematics_mes[CAN_MOTOR_STEERING2].pos;
 		control_usb_data.mes_theta3 = control_kinematics_mes[CAN_MOTOR_STEERING3].pos;
 		control_usb_data.vBat = (float)adc_data.vBat * (float)VBAT_GAIN;
-/*
-		control_usb_data.control_i_right = control_an.i_right;
-		control_usb_data.control_i_left = control_an.i_left;
-*/
+		control_usb_data.iPwm[0] = (float)adc_data.i[0] * (float)IPWM_GAIN;
+		control_usb_data.iPwm[1] = (float)adc_data.i[1] * (float)IPWM_GAIN;
+		control_usb_data.iPwm[2] = (float)adc_data.i[2] * (float)IPWM_GAIN;
+		control_usb_data.iPwm[3] = (float)adc_data.i[3] * (float)IPWM_GAIN;
+
 		xSemaphoreGive(control_mutex);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
