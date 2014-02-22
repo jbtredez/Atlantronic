@@ -7,17 +7,25 @@
 
 #include <stdint.h>
 
-struct adc_an
+#define ADC_CURRENT_MAX                 4
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct adc_anf
 {
-	uint16_t i[4];
-	uint16_t vBat;
+	float i[ADC_CURRENT_MAX];
+	float vBat;
 };
 
-//! facteur multiplicatif pour compenser l'erreur entre la pratique et le gain theorique
-#define VBAT_CALIBRATION              0.985f
-#define VBAT_GAIN            (VBAT_CALIBRATION*13*3/4096.0f)
-#define IPWM_GAIN            (3/(4096.0f * 0.377))
+void adc_update();
 
-extern volatile struct adc_an adc_data;
+extern struct adc_anf adc_filtered_data;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

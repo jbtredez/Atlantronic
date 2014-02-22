@@ -82,6 +82,7 @@ static void control_task(void* arg)
 
 	while(1)
 	{
+		adc_update();
 		int motor_update_max_abstime = wake_time + 2;
 		motorNotReady = 0;
 
@@ -153,11 +154,11 @@ static void control_task(void* arg)
 		control_usb_data.mes_theta1 = control_kinematics_mes[CAN_MOTOR_STEERING1].pos;
 		control_usb_data.mes_theta2 = control_kinematics_mes[CAN_MOTOR_STEERING2].pos;
 		control_usb_data.mes_theta3 = control_kinematics_mes[CAN_MOTOR_STEERING3].pos;
-		control_usb_data.vBat = (float)adc_data.vBat * (float)VBAT_GAIN;
-		control_usb_data.iPwm[0] = (float)adc_data.i[0] * (float)IPWM_GAIN;
-		control_usb_data.iPwm[1] = (float)adc_data.i[1] * (float)IPWM_GAIN;
-		control_usb_data.iPwm[2] = (float)adc_data.i[2] * (float)IPWM_GAIN;
-		control_usb_data.iPwm[3] = (float)adc_data.i[3] * (float)IPWM_GAIN;
+		control_usb_data.vBat = adc_filtered_data.vBat;
+		control_usb_data.iPwm[0] = adc_filtered_data.i[0];
+		control_usb_data.iPwm[1] = adc_filtered_data.i[1];
+		control_usb_data.iPwm[2] = adc_filtered_data.i[2];
+		control_usb_data.iPwm[3] = adc_filtered_data.i[3];
 
 		xSemaphoreGive(control_mutex);
 

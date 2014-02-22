@@ -1,7 +1,7 @@
 #ifndef GRAPHIQUE_H
 #define GRAPHIQUE_H
 
-#define MAX_COURBES        10
+#define MAX_COURBES        20
 
 struct graphique
 {
