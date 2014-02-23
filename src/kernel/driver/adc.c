@@ -9,7 +9,7 @@
 #include <string.h>
 
 //! facteur multiplicatif pour compenser l'erreur entre la pratique et le gain theorique
-#define VBAT_CALIBRATION              0.985f
+#define VBAT_CALIBRATION              0.984f
 #define VBAT_GAIN            (VBAT_CALIBRATION*13*3/4096.0f)
 #define IPWM_GAIN            (3/(4096.0f * 0.377f))
 #define ADC_MAX_DATA                  128
