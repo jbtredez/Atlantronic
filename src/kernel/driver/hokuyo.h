@@ -41,7 +41,7 @@ struct hokuyo_scan
 
 typedef void (*hokuyo_callback)();
 
-class hokuyo
+class Hokuyo
 {
 	public:
 		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int usb_id);
@@ -79,7 +79,7 @@ class hokuyo
 		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
 };
 
-extern struct hokuyo hokuyo[HOKUYO_MAX];
+extern struct Hokuyo hokuyo[HOKUYO_MAX];
 
 #endif
 

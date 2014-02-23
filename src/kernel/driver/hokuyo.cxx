@@ -32,7 +32,7 @@ const char* hokuyo_hs_cmd = "HS0\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
-struct hokuyo hokuyo[HOKUYO_MAX];
+Hokuyo hokuyo[HOKUYO_MAX];
 
 int hokuyo_module_init()
 {
@@ -58,7 +58,7 @@ done:
 
 module_init(hokuyo_module_init, INIT_HOKUYO);
 
-int hokuyo::init(enum usart_id id, const char* name, int usbId)
+int Hokuyo::init(enum usart_id id, const char* name, int usbId)
 {
 	usartId = id;
 	usb_id = usbId;
@@ -81,18 +81,18 @@ int hokuyo::init(enum usart_id id, const char* name, int usbId)
 	return 0;
 }
 
-void hokuyo::setPosition(VectPlan pos, int sens)
+void Hokuyo::setPosition(VectPlan pos, int sens)
 {
 	scan.pos_hokuyo = pos;
 	scan.sens = sens;
 }
 
-void hokuyo::register_callback(hokuyo_callback _callback)
+void Hokuyo::register_callback(hokuyo_callback _callback)
 {
 	callback = _callback;
 }
 
-void hokuyo::fault_update(uint32_t err)
+void Hokuyo::fault_update(uint32_t err)
 {
 	if(err && ! last_error)
 	{
@@ -118,7 +118,7 @@ void hokuyo::fault_update(uint32_t err)
 	last_error = err;
 }
 
-uint32_t hokuyo::init_com()
+uint32_t Hokuyo::init_com()
 {
 	uint32_t err = 0;
 
@@ -126,6 +126,7 @@ uint32_t hokuyo::init_com()
 
 	do
 	{
+		err = 0;
 		// tentative a la vitesse d'utilisation (hokuyo déjà configuré)
 		usart_open(usartId, HOKUYO_SPEED);
 		usart_set_read_dma_buffer(usartId, read_dma_buffer);
@@ -186,13 +187,13 @@ retry:
 	return 0;
 }
 
-void hokuyo::task_wrapper(void* arg)
+void Hokuyo::task_wrapper(void* arg)
 {
-	struct hokuyo* h = (struct hokuyo*) arg;
+	Hokuyo* h = (Hokuyo*) arg;
 	h->task();
 }
 
-void hokuyo::task()
+void Hokuyo::task()
 {
 	uint32_t err;
 	struct systime last_scan_time;
@@ -249,7 +250,7 @@ void hokuyo::task()
 //! Vérifie que la commande envoyée est bien renvoyée par le hokuyo
 //! @return 0 si c'est bon
 //! @return ERR_HOKUYO_CHECK_CMD sinon
-uint32_t hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
+uint32_t Hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
 {
 	uint32_t res = 0;
 	uint32_t i = 0;
@@ -267,7 +268,7 @@ end:
 	return res;
 }
 
-uint32_t hokuyo::check_sum(uint32_t start, uint32_t end)
+uint32_t Hokuyo::check_sum(uint32_t start, uint32_t end)
 {
 	uint8_t sum = 0;
 	uint32_t err = 0;
@@ -290,7 +291,7 @@ uint32_t hokuyo::check_sum(uint32_t start, uint32_t end)
 
 //! Envoi une commande, attend la reponse du hokuyo, vérifie si le hokuyo fait bien un echo de la commande et le checksum du status
 //! @return 0 si ok
-uint32_t hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout)
+uint32_t Hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout)
 {
 	uint32_t err = 0;
 
@@ -334,7 +335,7 @@ end:
 	return err;
 }
 
-uint32_t hokuyo::scip2()
+uint32_t Hokuyo::scip2()
 {
 	uint32_t err = 0;
 
@@ -361,7 +362,7 @@ end:
 	return err;
 }
 
-uint32_t hokuyo::set_speed()
+uint32_t Hokuyo::set_speed()
 {
 	uint32_t err = 0;
 
@@ -397,7 +398,7 @@ end:
 	return err;
 }
 
-uint32_t hokuyo::hs()
+uint32_t Hokuyo::hs()
 {
 	uint32_t err = 0;
 
@@ -424,7 +425,7 @@ end:
 	return err;
 }
 
-uint32_t hokuyo::laser_on()
+uint32_t Hokuyo::laser_on()
 {
 	uint32_t err = 0;
 
@@ -459,14 +460,14 @@ end:
 	return err;
 }
 
-void hokuyo::start_scan()
+void Hokuyo::start_scan()
 {
 	usart_set_write_dma_buffer(usartId, (unsigned char*)hokuyo_scan_all);
 	usart_set_read_dma_size(usartId, HOKUYO_SCAN_BUFFER_SIZE);
 	usart_send_dma_buffer(usartId, 13);
 }
 
-uint32_t hokuyo::wait_decode_scan()
+uint32_t Hokuyo::wait_decode_scan()
 {
 	uint32_t err = usart_wait_read(usartId, ms_to_tick(150));
 
@@ -533,7 +534,7 @@ end:
 	return err;
 }
 
-uint16_t hokuyo::decode16(const unsigned char* data)
+uint16_t Hokuyo::decode16(const unsigned char* data)
 {
 	uint16_t val = *data++ - 0x30;
 	val <<= 6;
@@ -543,7 +544,7 @@ uint16_t hokuyo::decode16(const unsigned char* data)
 	return val;
 }
 
-int hokuyo::decode_scan()
+int Hokuyo::decode_scan()
 {
 	const unsigned char* buffer = read_dma_buffer;
 	uint16_t* distance = scan.distance;
