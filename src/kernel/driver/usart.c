@@ -73,7 +73,7 @@ __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 	else
 	{
 		// oversampling = 16
-		brr |= (((frac100 * 16) + 50)/100) & 0x07;
+		brr |= (((frac100 * 16) + 50)/100) & 0x0f;
 	}
 	usart_device[id].usart->BRR = brr;
 }
