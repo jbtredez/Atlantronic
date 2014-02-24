@@ -3,6 +3,19 @@
 //! @author Atlantronic
 
 #include "kernel/FreeRTOS.h"
+#include "priority.h"
+
+struct stack_t
+{
+	uint32_t r0;
+	uint32_t r1;
+	uint32_t r2;
+	uint32_t r3;
+	uint32_t r12;
+	uint32_t lr;
+	uint32_t pc;
+	uint32_t psr;
+};
 
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi
@@ -168,6 +181,11 @@ void isr_reset(void)
 {
 	unsigned long *pulSrc, *pulDest;
 	int i;
+
+	// activation des IT isr_mpu_fault, isr_bus_fault, isr_usage_fault
+	//SCB->SHCSR |= 0x00007000;
+	//NVIC_SetPriority(UsageFault_IRQn, PRIORITY_IRQ_USAGE_FAULT);
+
 	//
 	// Copy the data segment initializers from flash to SRAM.
 	//
@@ -279,12 +297,32 @@ static void isr_nmi(void)
 	}
 }
 
-static void isr_hard_fault(void)
+void isr_hard_fault_stack(struct stack_t* fault_stack)
 {
+	(void)fault_stack;
+	// regarder fault_stack->pc pour voir d'ou vient le probleme
+
+//	isr_pwm_reset();
+
 	while( 1 )
 	{
 
 	}
+}
+
+static void isr_hard_fault(void)
+{
+	__asm volatile
+	(
+		" tst lr, #4                     \n"
+		" ite eq                         \n"
+		" mrseq r0, msp                  \n"
+		" mrsne r0, psp                  \n"
+		" ldr r1, [r0, #24]              \n"
+		" ldr r2, mem_handler_const      \n"
+		" bx r2                          \n"
+		" mem_handler_const: .word isr_hard_fault_stack\n"
+	);
 }
 
 static void isr_mpu_fault(void)
