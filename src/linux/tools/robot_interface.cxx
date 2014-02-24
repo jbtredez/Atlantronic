@@ -630,7 +630,7 @@ int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, 
 	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_GOAL_POSITION;
 	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
-	cmd_arg.param = alpha * (1 << 26) / (2 * M_PI);
+	cmd_arg.param = alpha;
 
 	char buffer[1+sizeof(cmd_arg)];
 	buffer[0] = USB_CMD_DYNAMIXEL;

@@ -83,8 +83,9 @@ struct dynamixel_cmd_param
 	uint8_t type;           //!< type de dynamixel (ax12 ou rx24)
 	uint8_t cmd_id;         //!< id de la commande
 	uint8_t id;             //!< id du dynamixel
-	int32_t param;          //!< parametre
-};
+	uint8_t reserved;       //!< reserve
+	float param;            //!< parametre
+} __attribute((packed));
 
 #define ERR_DYNAMIXEL_SEND_CHECK             0x80
 #define ERR_DYNAMIXEL_PROTO                  0x81

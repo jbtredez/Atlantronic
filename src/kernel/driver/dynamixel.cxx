@@ -563,7 +563,7 @@ float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
 	return (alpha - 0x1ff) * 150 * M_PI / (0x1ff * 180.0f);
 }
 
-static void dynamixel_cmd(void* arg)
+__OPTIMIZE_SIZE__ static void dynamixel_cmd(void* arg)
 {
 	struct dynamixel_cmd_param* param = (struct dynamixel_cmd_param*)arg;
 	struct dynamixel_error err;
@@ -591,7 +591,7 @@ static void dynamixel_cmd(void* arg)
 			dynamixel_cmd_scan(manager);
 			break;
 		case DYNAMIXEL_CMD_SET_ID:
-			dynamixel_cmd_set_id(manager, param->id, param->param & 0xff);
+			dynamixel_cmd_set_id(manager, param->id, ((int)param->param) & 0xff);
 			break;
 		case DYNAMIXEL_CMD_SET_GOAL_POSITION:
 			manager->set_goal_position(param->id, param->param);
