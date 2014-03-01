@@ -43,15 +43,16 @@ int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_pince_set_position(const char* arg);
 int cmd_ptask(const char* arg);
+int cmd_reboot(const char* arg);
+int cmd_recalage(const char* arg);
+int cmd_rotate(const char* arg);
+int cmd_rotate_to(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
 int cmd_set_speed(const char* arg);
 int cmd_set_actuator_speed(const char* arg);
-int cmd_recalage(const char* arg);
-int cmd_rotate(const char* arg);
-int cmd_rotate_to(const char* arg);
 int cmd_free(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
@@ -94,6 +95,7 @@ COMMAND usb_commands[] = {
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
+	{ "reboot", cmd_reboot, "reboot" },
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "set_speed", cmd_set_speed, "set speed direction valeur"},
@@ -541,6 +543,12 @@ int cmd_pince_set_position (const char* arg)
 int cmd_ptask(const char*)
 {
 	cmd_robot->ptask();
+	return CMD_SUCESS;
+}
+
+int cmd_reboot(const char* )
+{
+	cmd_robot->reboot();
 	return CMD_SUCESS;
 }
 

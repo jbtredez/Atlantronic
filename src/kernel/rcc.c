@@ -100,3 +100,8 @@ __attribute__((optimize("-O2"))) void wait_active(uint32_t tick)
 	}
 }
 
+void reboot()
+{
+	SCB->AIRCR = (uint32_t)0x5FA << SCB_AIRCR_VECTKEY_Pos | SCB_AIRCR_SYSRESETREQ_Msk;
+	while(1) ;
+}

@@ -29,6 +29,10 @@ class RobotInterface
 
 		int ptask();
 
+		//! reboot soft du stm
+		//! ATTENTION : pour les tests uniquement : n'est pas equivalent a un reboot HW
+		int reboot();
+
 		// ---------- gestion des dynamixel---------------------------------------------
 		int dynamixel_set(struct dynamixel_cmd_param param);
 		int dynamixel_scan(int dynamixel_type);

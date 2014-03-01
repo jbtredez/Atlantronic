@@ -593,6 +593,13 @@ int RobotInterface::ptask()
 	return com.write(buffer, sizeof(buffer));
 }
 
+int RobotInterface::reboot()
+{
+	char buffer[1];
+	buffer[0] = USB_CMD_REBOOT;
+	return com.write(buffer, sizeof(buffer));
+}
+
 //! fonction generique pour envoyer un ordre a un dynamixel
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set(struct dynamixel_cmd_param param)

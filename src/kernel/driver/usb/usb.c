@@ -102,6 +102,7 @@ static int usb_module_init(void)
 	}
 
 	usb_add_cmd(USB_CMD_PTASK, usb_cmd_ptask);
+	usb_add_cmd(USB_CMD_REBOOT, reboot);
 
 	return 0;
 }
