@@ -12,7 +12,14 @@ enum spi_calibration_cmd
 	GYRO_CALIBRATION_STOP,
 };
 
+struct spi_gyro_cmd_set_position_arg
+{
+	float theta;
+} __attribute__((packed));
+
 float spi_gyro_get_theta();
+
+void spi_gyro_set_theta(float theta);
 
 void spi_gyro_calib(int cmd);
 

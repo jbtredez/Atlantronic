@@ -56,6 +56,7 @@ class RobotInterface
 
 		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum spi_calibration_cmd cmd);
+		int gyro_set_position(float theta);
 
 		// ---------- localisation -----------------------------------------------------
 		int set_position(VectPlan pos);

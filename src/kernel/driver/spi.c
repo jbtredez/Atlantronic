@@ -63,7 +63,8 @@ static xSemaphoreHandle spi_sem;
 
 static void spi_task(void* arg);
 
-void spi_gyro_calibration(void* arg);
+static void spi_gyro_calibration_cmd(void* arg);
+static void spi_gyro_set_position_cmd(void* arg);
 
 int spi_module_init()
 {
@@ -145,7 +146,8 @@ int spi_module_init()
 	xSemaphoreTake(spi_sem, 0);
 
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
-	usb_add_cmd(USB_CMD_GYRO_CALIB, &spi_gyro_calibration);
+	usb_add_cmd(USB_CMD_GYRO_CALIB, &spi_gyro_calibration_cmd);
+	usb_add_cmd(USB_CMD_GYRO_SET_POSITION, &spi_gyro_set_position_cmd);
 
 	return 0;
 }
@@ -347,6 +349,13 @@ float spi_gyro_get_theta()
 	return data;
 }
 
+void spi_gyro_set_theta(float theta)
+{
+	portENTER_CRITICAL();
+	spi_gyro_theta = theta;
+	portEXIT_CRITICAL();
+}
+
 static void spi_task(void* arg)
 {
 	(void) arg;
@@ -392,8 +401,14 @@ void spi_gyro_calib(int cmd)
 	}
 }
 
-void spi_gyro_calibration(void* arg)
+void spi_gyro_calibration_cmd(void* arg)
 {
 	int* cmd = (int*) arg;
 	spi_gyro_calib(*cmd);
+}
+
+void spi_gyro_set_position_cmd(void* arg)
+{
+	float* theta = (float*) arg;
+	spi_gyro_set_theta(*theta);
 }
