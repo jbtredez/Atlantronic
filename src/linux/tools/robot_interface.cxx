@@ -593,6 +593,19 @@ int RobotInterface::ptask()
 	return com.write(buffer, sizeof(buffer));
 }
 
+//! fonction generique pour envoyer un ordre a un dynamixel
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
+int RobotInterface::dynamixel_set(struct dynamixel_cmd_param param)
+{
+	char buffer[1+sizeof(param)];
+	buffer[0] = USB_CMD_DYNAMIXEL;
+	memcpy(buffer+1, &param, sizeof(param));
+
+	return com.write(buffer, sizeof(buffer));
+}
+
+//! realise un scan de tout les id
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_scan(int dynamixel_type)
 {
 	struct dynamixel_cmd_param cmd_arg;
@@ -600,13 +613,11 @@ int RobotInterface::dynamixel_scan(int dynamixel_type)
 	cmd_arg.cmd_id = DYNAMIXEL_CMD_SCAN;
 	cmd_arg.type = dynamixel_type;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_DYNAMIXEL;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return dynamixel_set(cmd_arg);
 }
 
+//! change l'id d'un dynamlixel
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id)
 {
 	struct dynamixel_cmd_param cmd_arg;
@@ -616,13 +627,11 @@ int RobotInterface::dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new
 	cmd_arg.id = id;
 	cmd_arg.param = new_id;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_DYNAMIXEL;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return dynamixel_set(cmd_arg);
 }
 
+//! envoi de la position desiree du dynamixel
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha)
 {
 	struct dynamixel_cmd_param cmd_arg;
@@ -632,11 +641,31 @@ int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, 
 	cmd_arg.id = id;
 	cmd_arg.param = alpha;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_DYNAMIXEL;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
+	return dynamixel_set(cmd_arg);
+}
 
-	return com.write(buffer, sizeof(buffer));
+//! mise a jour du baudrate du dynamixel a la valeur optimale (1Mb/s)
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
+int RobotInterface::dynamixel_set_op_baudrate(int dynamixel_type, uint8_t id)
+{
+	struct dynamixel_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_BAUDRATE;
+	cmd_arg.type = dynamixel_type;
+	cmd_arg.id = id;
+
+	return dynamixel_set(cmd_arg);
+}
+
+int RobotInterface::dynamixel_set_manager_baudrate(int dynamixel_type, int freq)
+{
+	struct dynamixel_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE;
+	cmd_arg.type = dynamixel_type;
+	cmd_arg.param = freq;
+
+	return dynamixel_set(cmd_arg);
 }
 
 int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)

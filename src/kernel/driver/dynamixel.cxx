@@ -25,7 +25,7 @@
 static uint8_t dynamixel_checksum(uint8_t* buffer, uint8_t size);
 
 // fonctions de commandes (utilisation par usb uniquement)
-static void dynamixel_cmd(void* arg);
+void dynamixel_cmd(void* arg);
 static void dynamixel_cmd_scan(DynamixelManager* manager);
 static void dynamixel_cmd_set_id(DynamixelManager* manager, uint8_t old_id, uint8_t id);
 
@@ -563,7 +563,7 @@ float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
 	return (alpha - 0x1ff) * 150 * M_PI / (0x1ff * 180.0f);
 }
 
-__OPTIMIZE_SIZE__ static void dynamixel_cmd(void* arg)
+__OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 {
 	struct dynamixel_cmd_param* param = (struct dynamixel_cmd_param*)arg;
 	struct dynamixel_error err;
@@ -595,6 +595,13 @@ __OPTIMIZE_SIZE__ static void dynamixel_cmd(void* arg)
 			break;
 		case DYNAMIXEL_CMD_SET_GOAL_POSITION:
 			manager->set_goal_position(param->id, param->param);
+			break;
+		case DYNAMIXEL_CMD_SET_BAUDRATE:
+			// on les met a 1Mb, commande usb pour la configuration
+			manager->write8(param->id, DYNAMIXEL_BAUD_RATE, 1);
+			break;
+		case DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE:
+			usart_set_frequency(manager->usart, (uint32_t)(param->param));
 			break;
 		case DYNAMIXEL_CMD_GET_POSITION:
 			theta = manager->get_position(param->id, &err);

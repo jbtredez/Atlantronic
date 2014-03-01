@@ -70,10 +70,15 @@ enum
 #define DYNAMIXEL_MAX_MOVING_SPEED    0x3ff
 #define DYNAMIXEL_MAX_TORQUE_LIMIT    0x3ff
 
-#define DYNAMIXEL_CMD_SCAN                    0x01
-#define DYNAMIXEL_CMD_SET_ID                  0x02
-#define DYNAMIXEL_CMD_SET_GOAL_POSITION       0x03
-#define DYNAMIXEL_CMD_GET_POSITION            0x04
+enum
+{
+	DYNAMIXEL_CMD_SCAN = 1,
+	DYNAMIXEL_CMD_SET_ID,
+	DYNAMIXEL_CMD_SET_BAUDRATE,
+	DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE,
+	DYNAMIXEL_CMD_SET_GOAL_POSITION,
+	DYNAMIXEL_CMD_GET_POSITION,
+};
 
 #define DYNAMIXEL_TYPE_AX12         12
 #define DYNAMIXEL_TYPE_RX24         24
@@ -178,6 +183,7 @@ class DynamixelManager
 		// donnes des dynamixel d'id 1 a max_devices_id-1
 		int max_devices_id;
 		Dynamixel* devices;
+		friend void dynamixel_cmd(void* arg);
 };
 
 extern DynamixelManager ax12;

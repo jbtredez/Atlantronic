@@ -23,6 +23,8 @@ int cmd_can_write(const char* arg);
 int cmd_dynamixel_scan(const char* arg);
 int cmd_dynamixel_set_id(const char* arg);
 int cmd_dynamixel_set_goal_position(const char* arg);
+int cmd_dynamixel_set_op_baudrate(const char* arg);
+int cmd_dynamixel_set_manager_baudrate(const char* arg);
 int cmd_dynamixel_get_position(const char* arg);
 int cmd_help(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
@@ -63,6 +65,8 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_scan", cmd_dynamixel_scan, "scan dynamixel id : dynamixel_scan type id"},
 	{ "dynamixel_set_id", cmd_dynamixel_set_id, "changement d'id des dynamixels : dynamixel_set_id type id newid"},
 	{ "dynamixel_set_goal_position", cmd_dynamixel_set_goal_position, "position cible du dynamixel : dynamixel_set_goal_position type id alpha"},
+	{ "dynamixel_set_op_baudrate", cmd_dynamixel_set_op_baudrate, "mise a jour du baudrate en conf OP"},
+	{ "dynamixel_set_manager_baudrate", cmd_dynamixel_set_manager_baudrate, "mise a jour du baudrate du gestionnaire dynamixel"},
 	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
 	{ "can_set_baudrate", cmd_can_set_baudrate, "can_set_baudrate id debug"},
 	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
@@ -151,6 +155,36 @@ int cmd_dynamixel_set_goal_position(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_goal_position(type, id, alpha);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_op_baudrate(const char* arg)
+{
+	int type;
+	unsigned int id;
+	int count = sscanf(arg, "%d %u", &type, &id);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_set_op_baudrate(type, id);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_manager_baudrate(const char* arg)
+{
+	int type;
+	unsigned int freq;
+	int count = sscanf(arg, "%d %u", &type, &freq);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_set_manager_baudrate(type, freq);
 	return CMD_SUCESS;
 }
 

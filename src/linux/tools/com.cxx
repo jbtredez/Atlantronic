@@ -250,5 +250,21 @@ int Com::write(const void* buf, int size)
 		return -1;
 	}
 
-	return ::write(fd_write, buf, size);
+	int ret = ::write(fd_write, buf, size);
+	if( ret != size )
+	{
+		if( ret < 0 )
+		{
+			log_error("write error %d : %s", errno, strerror(errno));
+		}
+		else
+		{
+			log_error("partial write %d / %d", ret, size);
+		}
+		return -1;
+	}
+	else
+	{
+		return 0;
+	}
 }
