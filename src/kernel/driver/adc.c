@@ -21,7 +21,7 @@ struct adc_an
 	uint16_t vBat;
 } __attribute__((packed));
 
-volatile struct adc_an adc_data[ADC_MAX_DATA];
+static volatile struct adc_an adc_data[ADC_MAX_DATA];
 struct adc_anf adc_filtered_data;
 static int adc_startId;
 
@@ -81,7 +81,7 @@ int adc_module_init()
 	// double buffer
 	// DMA2_Stream4 - chan 0
 	DMA2_Stream4->CR = DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_CIRC | DMA_SxCR_TCIE;// | DMA_SxCR_DBM;
-	DMA2_Stream4->NDTR = sizeof(adc_data);
+	DMA2_Stream4->NDTR = sizeof(adc_data) / sizeof(uint16_t);
 	DMA2_Stream4->PAR = (uint32_t) &ADC1->DR;
 	DMA2_Stream4->M0AR = (uint32_t) adc_data;
 
