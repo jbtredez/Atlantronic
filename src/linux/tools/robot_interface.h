@@ -137,7 +137,6 @@ class RobotInterface
 		void (*callback)(void*);
 		void* callback_arg;
 		Com com; //!< communication
-		void check_code_version();
 
 		void fault_reset();
 		static void* task_wrapper(void* arg);
