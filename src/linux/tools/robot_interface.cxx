@@ -1117,6 +1117,54 @@ int RobotInterface::can_write(struct can_msg* msg)
 	return com.write(buffer, sizeof(buffer));
 }
 
+int RobotInterface::can_lss(bool on)
+{
+	struct can_msg msg;
+	msg.id = 0x7e5;
+	msg.size = 8;
+	msg.data[0] = 4;
+	msg.data[1] = on?1:0;
+	msg.data[2] = 0;
+	msg.data[3] = 0;
+	msg.data[4] = 0;
+	msg.data[5] = 0;
+	msg.data[6] = 0;
+	msg.data[7] = 0;
+	return can_write(&msg);
+}
+
+int RobotInterface::can_lss_set_nodeid(uint8_t nodeid)
+{
+	struct can_msg msg;
+	msg.id = 0x7e5;
+	msg.size = 8;
+	msg.data[0] = 0x11;
+	msg.data[1] = nodeid;
+	msg.data[2] = 0;
+	msg.data[3] = 0;
+	msg.data[4] = 0;
+	msg.data[5] = 0;
+	msg.data[6] = 0;
+	msg.data[7] = 0;
+	return can_write(&msg);
+}
+
+int RobotInterface::can_lss_save()
+{
+	struct can_msg msg;
+	msg.id = 0x7e5;
+	msg.size = 8;
+	msg.data[0] = 0x17;
+	msg.data[1] = 0;
+	msg.data[2] = 0;
+	msg.data[3] = 0;
+	msg.data[4] = 0;
+	msg.data[5] = 0;
+	msg.data[6] = 0;
+	msg.data[7] = 0;
+	return can_write(&msg);
+}
+
 int RobotInterface::set_max_speed(float vmax_av, float vmax_rot)
 {
 	struct control_cmd_max_speed_arg cmd_arg;

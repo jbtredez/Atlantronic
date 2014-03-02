@@ -18,6 +18,9 @@ int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
 int cmd_arm_hook(const char* arg);
 int cmd_arm_abz(const char* arg);
+int cmd_can_lss(const char* arg);
+int cmd_can_lss_set_nodeid(const char* arg);
+int cmd_can_lss_save(const char* arg);
 int cmd_can_set_baudrate(const char* arg);
 int cmd_can_write(const char* arg);
 int cmd_dynamixel_scan(const char* arg);
@@ -69,6 +72,9 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_set_op_baudrate", cmd_dynamixel_set_op_baudrate, "mise a jour du baudrate en conf OP"},
 	{ "dynamixel_set_manager_baudrate", cmd_dynamixel_set_manager_baudrate, "mise a jour du baudrate du gestionnaire dynamixel"},
 	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
+	{ "can_lss", cmd_can_lss, "can_lss on/off"},
+	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
+	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
 	{ "can_set_baudrate", cmd_can_set_baudrate, "can_set_baudrate id debug"},
 	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
@@ -244,6 +250,41 @@ int cmd_can_write(const char* arg)
 	msg.type = CAN_DATA_FRAME;
 
 	cmd_robot->can_write(&msg);
+	return CMD_SUCESS;
+}
+
+int cmd_can_lss(const char* arg)
+{
+	int on;
+	int count = sscanf(arg, "%d", &on);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->can_lss(on);
+	return CMD_SUCESS;
+}
+
+int cmd_can_lss_set_nodeid(const char* arg)
+{
+	int id;
+	int count = sscanf(arg, "%x", &id);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->can_lss_set_nodeid(id);
+	return CMD_SUCESS;
+}
+
+int cmd_can_lss_save(const char* arg)
+{
+	(void) arg;
+	cmd_robot->can_lss_save();
 	return CMD_SUCESS;
 }
 

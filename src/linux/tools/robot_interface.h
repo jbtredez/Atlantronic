@@ -52,6 +52,9 @@ class RobotInterface
 		// ---------- gestion CAN ------------------------------------------------------
 		int can_set_baudrate(enum can_baudrate baudrate, int debug);
 		int can_write(struct can_msg* msg);
+		int can_lss(bool on);
+		int can_lss_set_nodeid(uint8_t nodeid);
+		int can_lss_save();
 
 		// ---------- gestion recalage, go, couleur... ---------------------------------
 		int recalage();
