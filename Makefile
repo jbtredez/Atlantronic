@@ -57,6 +57,7 @@ OBJCOPY:=$(CROSSCOMPILE)objcopy
 STRIP:=$(CROSSCOMPILE)strip
 SIZE:=$(CROSSCOMPILE)size
 DOT:=dot
+VERSION=$(shell git rev-parse HEAD)
 
 ifneq ($(MAKECMDGOALS),clean)
 MK:=$(shell find . -name 'build.mk')
@@ -72,12 +73,12 @@ $(obj)/$(ARCH)/%.d: $(obj)/$(ARCH)/%.o
 $(obj)/$(ARCH)/%.o: $(src)/%.c
 	@echo "    CC    " $@
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(CC) $(CFLAGS) -DVERSION=\"$(VERSION)\" $($(patsubst $(obj)/$(ARCH)/%,cflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.cxx
 	@echo "   CXX    " $@
 	mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
+	$(CXX) $(CXXFLAGS) -DVERSION=\"$(VERSION)\" $($(patsubst $(obj)/$(ARCH)/%,cxxflags-$(ARCH)-%, $@)) -c $< -o $@ -MMD -MF$(@:.o=.d) $(INCLUDES) || ( rm -vfr $@ $(@:.o=.d) ; exit 1 )
 
 $(obj)/$(ARCH)/%.o: $(src)/%.S
 	@echo [AS] $@

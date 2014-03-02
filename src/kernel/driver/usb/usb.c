@@ -33,10 +33,12 @@ static unsigned int usb_rx_buffer_id; //!< id courant du buffer usb de reception
 static volatile int usb_rx_waiting; //!< les 2 buffers de reception sont pleins, on fait attendre le pc pour ne pas perdre de messages
 static xSemaphoreHandle usb_mutex;
 static void (*usb_cmd[USB_CMD_NUM])(void*);
+static const char version[41] = VERSION;
 
 void usb_read_task(void *);
 void usb_write_task(void *);
 void usb_cmd_ptask(void*);
+void usb_cmd_get_version(void*);
 
 static xSemaphoreHandle usb_write_sem;
 static xSemaphoreHandle usb_read_sem;
@@ -101,6 +103,7 @@ static int usb_module_init(void)
 		return ERR_INIT_USB;
 	}
 
+	usb_add_cmd(USB_CMD_GET_VERSION, usb_cmd_get_version);
 	usb_add_cmd(USB_CMD_PTASK, usb_cmd_ptask);
 	usb_add_cmd(USB_CMD_REBOOT, reboot);
 
@@ -390,4 +393,10 @@ void usb_cmd_ptask(void* arg)
 	char usb_ptask_buffer[400];
 	vTaskGetRunTimeStats(usb_ptask_buffer, sizeof(usb_ptask_buffer));
 	log(LOG_INFO, usb_ptask_buffer);
+}
+
+void usb_cmd_get_version(void* arg)
+{
+	(void) arg;
+	usb_add(USB_CMD_GET_VERSION, (void*)version, 41);
 }

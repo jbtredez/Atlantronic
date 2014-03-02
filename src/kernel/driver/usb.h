@@ -25,7 +25,8 @@ enum
 
 enum usb_cmd
 {
-	USB_CMD_PTASK = 0,
+	USB_CMD_GET_VERSION = 0, // laisser en 0 pour la compatibilite
+	USB_CMD_PTASK,
 	USB_CMD_TRAJECTORY,
 	USB_CMD_CONTROL_PARAM,
 	USB_CMD_CONTROL_PRINT_PARAM,

@@ -21,6 +21,13 @@ enum
 	COM_MAX
 };
 
+enum RobotVersion
+{
+	ROBOT_VERSION_UNKNOWN,
+	ROBOT_VERSION_OK,
+	ROBOT_VERSION_KO,
+};
+
 class RobotInterface
 {
 	public:
@@ -119,6 +126,10 @@ class RobotInterface
 		struct vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
 		int detection_reg_num[HOKUYO_MAX];
 
+		RobotVersion versionCompatible;
+		char stm_code_version[41];
+		static const char expected_version[41];
+
 	protected:
 		char name[32];
 		pthread_t tid;
@@ -126,6 +137,7 @@ class RobotInterface
 		void (*callback)(void*);
 		void* callback_arg;
 		Com com; //!< communication
+		void check_code_version();
 
 		void fault_reset();
 		static void* task_wrapper(void* arg);
@@ -138,7 +150,9 @@ class RobotInterface
 		int process_fault(char* msg, uint16_t size);
 		int process_detect_dyn_obj_size(char* msg, uint16_t size);
 		int process_detect_dyn_obj(char* msg, uint16_t size);
+		int process_code_version(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
+		int get_stm_code_version();
 };
 
 #endif

@@ -56,6 +56,8 @@ const char* log_level_color_end[LOG_MAX] =
 		""
 };
 
+const char RobotInterface::expected_version[41] = VERSION;
+
 int RobotInterface::init(const char* _name, const char* file_read, const char* file_write, void (*_callback)(void*), void* _callback_arg)
 {
 	int i;
@@ -97,6 +99,7 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 		}
 	}
 
+	versionCompatible = ROBOT_VERSION_UNKNOWN;
 	return err;
 }
 
@@ -126,6 +129,7 @@ void* RobotInterface::task()
 	unsigned int lost_count = 0;
 
 	com.open_block();
+	get_stm_code_version();
 
 	while( !stop_task)
 	{
@@ -144,6 +148,7 @@ void* RobotInterface::task()
 		{
 			fault_reset();
 			com.open_block();
+			get_stm_code_version();
 			continue;
 		}
 
@@ -158,6 +163,7 @@ void* RobotInterface::task()
 		{
 			fault_reset();
 			com.open_block();
+			get_stm_code_version();
 			continue;
 		}
 
@@ -198,6 +204,9 @@ void* RobotInterface::task()
 				break;
 			case USB_CAN_TRACE:
 				res = can_trace(msg, size);
+				break;
+			case USB_CMD_GET_VERSION:
+				res = process_code_version(msg, size);
 				break;
 			default:
 				res = -1;
@@ -342,6 +351,45 @@ int RobotInterface::process_fault(char* msg, uint16_t size)
 			log_info("%s%4s %13.6f    Fault\t%s (%d), num %d status %d\033[0m", fault_color[state & 0x01], name, fault_list[i].time / 1000.0f, fault_description[i], i, state >> 1, state & 0x01);
 			fault_status[i] = fault_list[i];
 		}
+	}
+
+	pthread_mutex_unlock(&mutex);
+
+end:
+	return res;
+}
+
+int RobotInterface::process_code_version(char* msg, uint16_t size)
+{
+	int res = 0;
+	int ret;
+
+	if(size != sizeof(stm_code_version) || msg[40] != 0)
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	memcpy(&stm_code_version, msg, sizeof(stm_code_version));
+
+	ret = memcmp(stm_code_version, expected_version, sizeof(expected_version));
+	if( !ret )
+	{
+		versionCompatible = ROBOT_VERSION_OK;
+		log_info("stm_code_version compatible : %s", stm_code_version);
+	}
+	else
+	{
+		versionCompatible = ROBOT_VERSION_KO;
+		log_error("stm_code_version not compatible : %s expected %s", stm_code_version, expected_version);
 	}
 
 	pthread_mutex_unlock(&mutex);
@@ -597,6 +645,14 @@ int RobotInterface::reboot()
 {
 	char buffer[1];
 	buffer[0] = USB_CMD_REBOOT;
+	return com.write(buffer, sizeof(buffer));
+}
+
+int RobotInterface::get_stm_code_version()
+{
+	versionCompatible = ROBOT_VERSION_UNKNOWN;
+	char buffer[1];
+	buffer[0] = USB_CMD_GET_VERSION;
 	return com.write(buffer, sizeof(buffer));
 }
 
