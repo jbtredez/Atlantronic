@@ -58,6 +58,10 @@ void isr_can1_tx(void) __attribute__((weak, alias("isr_unexpected") )); //!< int
 void isr_can1_rx0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption reception CAN1
 void isr_can1_sce(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption status change error CAN1
 
+void isr_exti3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti3
+void isr_exti9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 5 a 9
+void isr_exti15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 10 a 15
+
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
 extern unsigned long _sidata;
@@ -102,7 +106,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
-	isr_unexpected,
+	isr_exti3,
 	isr_unexpected,
 	isr_dma1_stream0,
 	isr_dma1_stream1,
@@ -116,7 +120,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_can1_rx0,
 	isr_unexpected,
 	isr_can1_sce,
-	isr_unexpected,
+	isr_exti9_5,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
@@ -133,7 +137,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_usart2,
 	isr_usart3,
-	isr_unexpected,
+	isr_exti15_10,
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
