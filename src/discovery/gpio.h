@@ -7,10 +7,15 @@
 
 #include "kernel/cpu/cpu.h"
 
-#define LED_GREEN    0x1000
-#define LED_ORANGE   0x2000
-#define LED_RED      0x4000
-#define LED_BLUE     0x8000
+#define LED_CPU_GREEN    0x00001000
+#define LED_CPU_ORANGE   0x00002000
+#define LED_CPU_RED      0x00004000
+#define LED_CPU_BLUE     0x00008000
+#define LED_EXT_BLUE     0x80000000
+#define LED_EXT_GREEN    0x20000000
+#define LED_EXT_ORANGE1  0x00100000
+#define LED_EXT_ORANGE2  0x00040000
+#define LED_EXT_RED      0x01000000
 
 #define COLOR_RED         0
 #define COLOR_BLUE        1
@@ -117,7 +122,7 @@ void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum 
 
 void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af);
 
-void setLed(uint16_t mask);
+void setLed(uint32_t mask);
 
 static inline void gpio_set_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 {

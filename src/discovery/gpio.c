@@ -27,10 +27,10 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte led deportee
 	gpio_pin_init(GPIOC, 13, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte led deportee
 	gpio_pin_init(GPIOC, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte led deportee
-	gpio_pin_init(GPIOD, 12, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte CPU
-	gpio_pin_init(GPIOD, 13, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte CPU
-	gpio_pin_init(GPIOD, 14, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte CPU
-	gpio_pin_init(GPIOD, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte CPU
+	gpio_pin_init(GPIOD, 12, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED verte carte CPU
+	gpio_pin_init(GPIOD, 13, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED orange carte CPU
+	gpio_pin_init(GPIOD, 14, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED rouge carte CPU
+	gpio_pin_init(GPIOD, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED bleue carte CPU
 	gpio_pin_init(GPIOE, 2, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte led deportee
 	gpio_pin_init(GPIOE, 4, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // LED carte led deportee
 
@@ -41,7 +41,7 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOC, 14, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // bouton USR1
 	gpio_pin_init(GPIOD, 3, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // bouton go
 
-	setLed(LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
+	setLed(LED_CPU_GREEN | LED_CPU_ORANGE | LED_CPU_RED | LED_CPU_BLUE | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2 | LED_EXT_RED);
 
 	color = COLOR_BLUE;
 	gpio_go = 0;
@@ -100,10 +100,19 @@ void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af)
 	GPIOx->AFR[pin >> 0x03] = temp_2;
 }
 
-void setLed(uint16_t mask)
+void setLed(uint32_t mask)
 {
-	GPIOD->BSRRL = mask & (LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
-	GPIOD->BSRRH = (~mask) & (LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
+	GPIOB->BSRRL = (uint16_t)((mask & LED_EXT_RED) >> 16);
+	GPIOB->BSRRH = (uint16_t)(((~mask) & LED_EXT_RED) >> 16);
+
+	GPIOC->BSRRL = (uint16_t)((mask & (LED_EXT_BLUE | LED_EXT_GREEN)) >> 16);
+	GPIOC->BSRRH = (uint16_t)(((~mask) & (LED_EXT_BLUE | LED_EXT_GREEN)) >> 16);
+
+	GPIOD->BSRRL = (uint16_t)(mask & (LED_CPU_GREEN | LED_CPU_ORANGE | LED_CPU_RED | LED_CPU_BLUE));
+	GPIOD->BSRRH = (uint16_t)((~mask) & (LED_CPU_GREEN | LED_CPU_ORANGE | LED_CPU_RED | LED_CPU_BLUE));
+
+	GPIOE->BSRRL = (uint16_t)((mask & (LED_EXT_ORANGE1 | LED_EXT_ORANGE2)) >> 16);
+	GPIOE->BSRRH = (uint16_t)(((~mask) & (LED_EXT_ORANGE1 | LED_EXT_ORANGE2)) >> 16);
 }
 
 
@@ -117,7 +126,7 @@ static void gpio_cmd_go()
 //	if(gpio_recalage_done)
 	{
 		gpio_go = 1;
-		//setLed(LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
+		//setLed(LED_CPU_GREEN | LED_CPU_ORANGE | LED_CPU_RED | LED_CPU_BLUE);
 		systick_start_match();
 		xQueueSend(gpio_queue_go, NULL, 0);
 	}
@@ -131,13 +140,13 @@ static void gpio_cmd_color(void* arg)
 		if(new_color == COLOR_RED)
 		{
 			color = COLOR_RED;
-			setLed(LED_RED);
+			setLed(LED_CPU_RED | LED_EXT_RED);
 			log(LOG_INFO, "couleur => rouge");
 		}
 		else
 		{
 			color = COLOR_BLUE;
-			setLed(LED_BLUE);
+			setLed(LED_CPU_BLUE | LED_EXT_BLUE);
 			log(LOG_INFO, "couleur => bleu");
 		}
 	}
@@ -155,7 +164,7 @@ void isr_exti3(void)
 		//if( gpio_recalage_done )
 		{
 			gpio_go = 1;
-			//setLed(LED_GREEN | LED_ORANGE | LED_RED | LED_BLUE);
+			//setLed(LED_CPU_GREEN | LED_CPU_ORANGE | LED_CPU_RED | LED_CPU_BLUE);
 			systick_start_match_from_isr();
 			xQueueSendFromISR(gpio_queue_go, NULL, &xHigherPriorityTaskWoken);
 		}
@@ -190,12 +199,12 @@ void isr_exti15_10(void)
 			if(color == COLOR_BLUE)
 			{
 				color = COLOR_RED;
-				setLed(LED_RED);
+				setLed(LED_CPU_RED | LED_EXT_RED);
 			}
 			else
 			{
 				color = COLOR_BLUE;
-				setLed(LED_BLUE);
+				setLed(LED_CPU_BLUE | LED_EXT_BLUE);
 			}
 		}
 	}
