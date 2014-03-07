@@ -13,6 +13,10 @@
 #include "discovery/trajectory.h"
 #include "kernel/driver/dynamixel.h"
 
+#ifndef VERSION
+#error VERSION not defined
+#endif
+
 const char* fault_description[FAULT_MAX] =
 {
 	// HOKUYO
