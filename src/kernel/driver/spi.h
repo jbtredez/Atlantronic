@@ -7,7 +7,6 @@ extern "C" {
 
 enum spi_calibration_cmd
 {
-	GYRO_CALIBRATION_RESET,
 	GYRO_CALIBRATION_START,
 	GYRO_CALIBRATION_STOP,
 };

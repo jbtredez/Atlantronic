@@ -383,13 +383,10 @@ void spi_gyro_calib(int cmd)
 {
 	switch(cmd)
 	{
-		case GYRO_CALIBRATION_RESET:
-			spi_gyro_dev_count = 0;
-			spi_gyro_dev_lsb = 0;
-			log(LOG_INFO, "gyro reset calibration");
-			break;
 		case GYRO_CALIBRATION_START:
 			spi_gyro_calib_mode = 1;
+			spi_gyro_dev_count = 0;
+			spi_gyro_dev_lsb = 0;
 			log(LOG_INFO, "gyro start calibration");
 			break;
 		case GYRO_CALIBRATION_STOP:
