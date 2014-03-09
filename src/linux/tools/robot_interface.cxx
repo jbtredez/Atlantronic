@@ -34,6 +34,10 @@ const char* fault_description[FAULT_MAX] =
 	"can motor 3 disconnected",
 	"can motor 4 disconnected",
 	"can motor 5 disconnected",
+
+	// Gyro
+	"gyro disconnected",
+	"gyro error",
 };
 
 const char* log_level_description[LOG_MAX] =

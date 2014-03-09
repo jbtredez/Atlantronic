@@ -7,6 +7,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
+#include "kernel/fault.h"
 #include <math.h>
 
 #define SPI_STACK_SIZE             300
@@ -307,13 +308,24 @@ static int spi_gyro_update(float dt, int calibration)
 	uint32_t data_gyro;
 	int error = 0;
 	int res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-	if( res == 0 && ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
+	if( res == 0 && (data_gyro & 0xe0000000) == 0)
 	{
-		spi_gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
+		fault(FAULT_GYRO_DISCONNECTED, FAULT_CLEAR);
+		if( ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
+		{
+			spi_gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
+			fault(FAULT_GYRO_ERROR, FAULT_CLEAR);
+		}
+		else
+		{
+			fault(FAULT_GYRO_ERROR, FAULT_ACTIVE);
+			error = 1;
+		}
 	}
 	else
 	{
 		// erreur
+		fault(FAULT_GYRO_DISCONNECTED, FAULT_ACTIVE);
 		error = 1;
 	}
 
