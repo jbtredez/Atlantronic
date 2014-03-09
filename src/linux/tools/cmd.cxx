@@ -290,6 +290,12 @@ int cmd_help(const char* arg)
 {
 	(void) arg;
 	log_info("Aide\n");
+	for(int i = 0; i < (int)(sizeof(usb_commands) / sizeof(usb_commands[0]) - 1); i++)
+	{
+		log_info("%s : %s", usb_commands[i].name, usb_commands[i].doc);
+	}
+
+	// TODO
 	return CMD_SUCESS;
 }
 
