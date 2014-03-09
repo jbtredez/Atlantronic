@@ -101,6 +101,7 @@ class RobotInterface
 		//!< vitesse en % de vmax de configuration du robot
 		int set_max_speed(float vmax_av, float vmax_rot);
 //////////////////// FIN TODO
+		int usb_write(unsigned char cmd, void* data, int size);
 
 		pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 

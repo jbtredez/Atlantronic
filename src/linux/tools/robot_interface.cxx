@@ -638,37 +638,47 @@ void RobotInterface::fault_reset()
 	}
 }
 
+int RobotInterface::usb_write(unsigned char cmd, void* data, int size)
+{
+	char buffer[256];
+
+	if( size >= 254)
+	{
+		log_error("data size > 254 (%d)", size);
+		return -1;
+	}
+
+	buffer[0] = cmd;
+	buffer[1] = size + 2;
+	if( size && data)
+	{
+		memcpy(buffer+2, data, size);
+	}
+
+	return com.write(buffer, buffer[1]);
+}
+
 int RobotInterface::ptask()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_PTASK;
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_PTASK, NULL, 0);
 }
 
 int RobotInterface::reboot()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_REBOOT;
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_REBOOT, NULL, 0);
 }
 
 int RobotInterface::get_stm_code_version()
 {
 	versionCompatible = ROBOT_VERSION_UNKNOWN;
-	char buffer[1];
-	buffer[0] = USB_CMD_GET_VERSION;
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_GET_VERSION, NULL, 0);
 }
 
 //! fonction generique pour envoyer un ordre a un dynamixel
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set(struct dynamixel_cmd_param param)
 {
-	char buffer[1+sizeof(param)];
-	buffer[0] = USB_CMD_DYNAMIXEL;
-	memcpy(buffer+1, &param, sizeof(param));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_DYNAMIXEL, &param, sizeof(param));
 }
 
 //! realise un scan de tout les id
@@ -743,19 +753,12 @@ int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_DYNAMIXEL;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_DYNAMIXEL, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_print_param()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_CONTROL_PRINT_PARAM;
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_PRINT_PARAM, NULL, 0);
 }
 
 int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
@@ -772,11 +775,7 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	cmd_arg.ky = ky;
 	cmd_arg.kalpha = kalpha;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_PARAM;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
@@ -788,11 +787,7 @@ int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameter
 	cmd_arg.linearParam = linearParam;
 	cmd_arg.angularParam = angularParam;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_GOTO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
@@ -803,11 +798,7 @@ int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
 	cmd_arg.v = v;
 	cmd_arg.u = u;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_SET_SPEED;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_SET_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_set_actuator_speed(float v[6])
@@ -819,11 +810,7 @@ int RobotInterface::control_set_actuator_speed(float v[6])
 		cmd_arg.v[i] = v[i];
 	}
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_SET_ACTUATOR_SPEED;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_SET_ACTUATOR_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::straight(float dist)
@@ -834,11 +821,7 @@ int RobotInterface::straight(float dist)
 	cmd_arg.type = TRAJECTORY_STRAIGHT;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::straight_to_wall()
@@ -848,11 +831,7 @@ int RobotInterface::straight_to_wall()
 	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::rotate(float theta)
@@ -863,11 +842,7 @@ int RobotInterface::rotate(float theta)
 	cmd_arg.type = TRAJECTORY_ROTATE;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::rotate_to(float theta)
@@ -878,18 +853,12 @@ int RobotInterface::rotate_to(float theta)
 	cmd_arg.type = TRAJECTORY_ROTATE_TO;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_free()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_CONTROL_FREE;
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CONTROL_FREE, NULL, 0);
 }
 
 int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
@@ -903,11 +872,7 @@ int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way,
 	cmd_arg.avoidance_type = avoidance_type;
 	cmd_arg.way = way;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type)
@@ -920,11 +885,7 @@ int RobotInterface::goto_near(VectPlan dest, float dist, unsigned int way, unsig
 	cmd_arg.avoidance_type = avoidance_type;
 	cmd_arg.way = way;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::goto_graph()
@@ -934,40 +895,24 @@ int RobotInterface::goto_graph()
 	cmd_arg.type = TRAJECTORY_GOTO_GRAPH;
 	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_TRAJECTORY;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::set_position(VectPlan pos)
 {
-	char buffer[1+sizeof(pos)];
-	buffer[0] = USB_CMD_LOCATION_SET_POSITION;
-	memcpy(buffer+1, &pos, sizeof(pos));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
 }
 
 int RobotInterface::gyro_calibration(enum spi_calibration_cmd cmd)
 {
 	int32_t cmd_arg = cmd;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_GYRO_CALIB;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_GYRO_CALIB, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::gyro_set_position(float theta)
 {
-	char buffer[1+sizeof(theta)];
-	buffer[0] = USB_CMD_GYRO_SET_POSITION;
-	memcpy(buffer+1, &theta, sizeof(theta));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_GYRO_SET_POSITION, &theta, sizeof(theta));
 }
 
 int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
@@ -977,11 +922,7 @@ int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type
 	cmd_arg.type_left = cmd_type_left;
 	cmd_arg.type_right = cmd_type_right;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_PINCE;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_PINCE, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
@@ -998,11 +939,7 @@ int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 	cmd_arg.z = z * 65536.0f;
 	cmd_arg.type = type;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_GOTO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
@@ -1017,11 +954,7 @@ int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z
 	cmd_arg.tool_way = tool_way;
 	cmd_arg.type = ARM_CMD_VENTOUSE_ABS;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_GOTO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
@@ -1036,11 +969,7 @@ int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, in
 	cmd_arg.tool_way = tool_way;
 	cmd_arg.type = ARM_CMD_HOOK_ABS;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_GOTO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_abz(float a, float b, float z)
@@ -1052,73 +981,47 @@ int RobotInterface::arm_abz(float a, float b, float z)
 	cmd_arg.z = z * 65536.0f;
 	cmd_arg.type = ARM_CMD_ART;
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_ARM_GOTO;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_bridge(uint8_t on)
 {
-	char buffer[2];
-	buffer[0] = USB_CMD_ARM_BRIDGE;
-	buffer[1] = on;
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_ARM_BRIDGE, &on, sizeof(on));
 }
 
 int RobotInterface::recalage()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_RECALAGE;
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_RECALAGE, NULL, 0);
 }
 
 int RobotInterface::go()
 {
-	char buffer[1];
-	buffer[0] = USB_CMD_GO;
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_GO, NULL, 0);
 }
 
 int RobotInterface::color(uint8_t color)
 {
-	char buffer[2];
-	buffer[0] = USB_CMD_COLOR;
-	buffer[1] = color;
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_COLOR, &color, sizeof(color));
 }
 
 int RobotInterface::set_match_time(uint32_t time)
 {
-	char buffer[5];
-	buffer[0] = USB_CMD_MATCH_TIME;
-	memcpy(buffer + 1, &time, 4);
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_MATCH_TIME, &time, sizeof(time));
 }
 
 int RobotInterface::can_set_baudrate(enum can_baudrate baudrate, int debug)
 {
-	char buffer[3];
-	buffer[0] = USB_CMD_CAN_SET_BAUDRATE;
-	buffer[1] = baudrate;
-	buffer[2] = debug;
+	char buffer[2];
+	buffer[0] = baudrate;
+	buffer[1] = debug;
 
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CAN_SET_BAUDRATE, buffer, sizeof(buffer));
+
 }
 
 int RobotInterface::can_write(struct can_msg* msg)
 {
-	char buffer[sizeof(struct can_msg) + 1];
-	buffer[0] = USB_CMD_CAN_WRITE;
-	memcpy(buffer + 1, msg, sizeof(struct can_msg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CAN_WRITE, msg, sizeof(*msg));
 }
 
 int RobotInterface::can_lss(bool on)
@@ -1173,12 +1076,8 @@ int RobotInterface::set_max_speed(float vmax_av, float vmax_rot)
 {
 	struct control_cmd_max_speed_arg cmd_arg;
 
-	cmd_arg.vmax_av = fabsf(vmax_av) * 65536.0f;
-	cmd_arg.vmax_rot = fabsf(vmax_rot) * 65536.0f;
+	cmd_arg.vmax_av = fabsf(vmax_av);
+	cmd_arg.vmax_rot = fabsf(vmax_rot);
 
-	char buffer[1+sizeof(cmd_arg)];
-	buffer[0] = USB_CMD_CONTROL_MAX_SPEED;
-	memcpy(buffer+1, &cmd_arg, sizeof(cmd_arg));
-
-	return com.write(buffer, sizeof(buffer));
+	return usb_write(USB_CMD_CAN_WRITE, &cmd_arg, sizeof(cmd_arg));
 }
