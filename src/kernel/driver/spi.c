@@ -318,6 +318,14 @@ static int spi_gyro_update(float dt, int calibration)
 		}
 		else
 		{
+			log_format(LOG_ERROR, "gyro error : PLL %d Q %d NVM %d POR %d PWR %d CST %d CHK %d",
+				(int)(data_gyro >> 7) & 0x01,
+				(int)(data_gyro >> 6) & 0x01,
+				(int)(data_gyro >> 5) & 0x01,
+				(int)(data_gyro >> 4) & 0x01,
+				(int)(data_gyro >> 3) & 0x01,
+				(int)(data_gyro >> 2) & 0x01,
+				(int)(data_gyro >> 1) & 0x01);
 			fault(FAULT_GYRO_ERROR, FAULT_ACTIVE);
 			error = 1;
 		}
