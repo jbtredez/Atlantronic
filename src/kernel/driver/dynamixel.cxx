@@ -34,7 +34,7 @@ DynamixelManager rx24;
 
 static int dynamixel_module_init()
 {
-	ax12.init("ax12", USART6_HALF_DUPLEX, 1000000, AX12_MAX_ID);
+	ax12.init("ax12", USART1_HALF_DUPLEX, 1000000, AX12_MAX_ID);
 	rx24.init("rx24", UART5_FULL_DUPLEX, 1000000, RX24_MAX_ID);
 
 	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd);

@@ -18,11 +18,11 @@ struct usart_device
 
 struct usart_device usart_device[USART_MAX_DEVICE] =
 {
+	{ USART1, DMA2_Stream2, DMA2_Stream7, 0, 0},
 	{ USART2, DMA1_Stream5, DMA1_Stream6, 0, 0},
 	{ USART3, DMA1_Stream1, DMA1_Stream3, 0, 0},
 	{ UART4, DMA1_Stream2, DMA1_Stream4, 0, 0},
 	{ UART5, DMA1_Stream0, DMA1_Stream7, 0, 0},
-	{ USART6, DMA2_Stream1, DMA2_Stream6, 0, 0},
 };
 
 __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
@@ -38,7 +38,7 @@ __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 		case UART5_FULL_DUPLEX:
 			pclk = 1000000*RCC_PCLK1_MHZ;
 			break;
-		case USART6_HALF_DUPLEX:
+		case USART1_HALF_DUPLEX:
 			pclk = 1000000*RCC_PCLK2_MHZ;
 			break;
 		default:
@@ -96,6 +96,19 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 {
 	switch(id)
 	{
+		case USART1_HALF_DUPLEX:
+			// UART1 Tx = PB6, (Rx pas utilisé en half duplex)
+			// activation USART1
+			RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+
+			// activation dma2 et GPIOB
+			RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN | RCC_AHB1ENR_GPIOBEN;
+			usart_init_pin(GPIOB, 6, NULL, 0, GPIO_AF_USART1);
+
+			// reset USART1
+			RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
+			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
+			break;
 		case USART2_FULL_DUPLEX:
 			// USART2 : Tx = PA2, Rx = PA3
 			// activation USART2
@@ -148,19 +161,6 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			RCC->APB1RSTR |= RCC_APB1RSTR_UART5RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_UART5RST;
 			break;
-		case USART6_HALF_DUPLEX:
-			// UART6 Tx = PC6, (Rx pas utilisé en half duplex)
-			// activation USART6
-			RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
-
-			// activation dma2 et GPIOC
-			RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN | RCC_AHB1ENR_GPIOCEN;
-			usart_init_pin(GPIOC, 6, NULL, 0, GPIO_AF_USART6);
-
-			// reset USART6
-			RCC->APB2RSTR |= RCC_APB2RSTR_USART6RST;
-			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST;
-			break;
 		default:
 			log_format(LOG_ERROR, "unknown usart id %d", id);
 			return -1;
@@ -176,7 +176,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 	// DMA en transmission
 	// DMA en reception
 	uint32_t cr3 = USART_CR3_EIE | USART_CR3_DMAR | USART_CR3_DMAT;
-	if( id == USART6_HALF_DUPLEX)
+	if( id == USART1_HALF_DUPLEX)
 	{
 		// mode half duplex
 		cr3 |= USART_CR3_HDSEL;
@@ -197,6 +197,16 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 
 	switch(id)
 	{
+		case USART1_HALF_DUPLEX:
+			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
+			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
+			NVIC_SetPriority(USART6_IRQn, PRIORITY_IRQ_USART1);
+			NVIC_SetPriority(DMA2_Stream2_IRQn, PRIORITY_IRQ_DMA2_STREAM2);
+			NVIC_SetPriority(DMA2_Stream7_IRQn, PRIORITY_IRQ_DMA2_STREAM7);
+			NVIC_EnableIRQ(USART1_IRQn);
+			NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+			NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+			break;
 		case USART2_FULL_DUPLEX:
 			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2; // chan4
 			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2; // chan4
@@ -236,16 +246,6 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(UART5_IRQn);
 			NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 			NVIC_EnableIRQ(DMA1_Stream7_IRQn);
-			break;
-		case USART6_HALF_DUPLEX:
-			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
-			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
-			NVIC_SetPriority(USART6_IRQn, PRIORITY_IRQ_USART6);
-			NVIC_SetPriority(DMA2_Stream1_IRQn, PRIORITY_IRQ_DMA2_STREAM1);
-			NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
-			NVIC_EnableIRQ(USART6_IRQn);
-			NVIC_EnableIRQ(DMA2_Stream1_IRQn);
-			NVIC_EnableIRQ(DMA2_Stream6_IRQn);
 			break;
 		default:
 			// pas de log, deja verifie dans le switch du dessus
@@ -293,6 +293,11 @@ static void isr_usart_generic(enum usart_id id)
 	// permet de recevoir les octets qui trainent avant d'entammer une nouvelle communication
 }
 
+void isr_usart1(void)
+{
+	isr_usart_generic(USART1_HALF_DUPLEX);
+}
+
 void isr_usart2(void)
 {
 	isr_usart_generic(USART2_FULL_DUPLEX);
@@ -311,11 +316,6 @@ void isr_uart4(void)
 void isr_uart5(void)
 {
 	isr_usart_generic(UART5_FULL_DUPLEX);
-}
-
-void isr_usart6(void)
-{
-	isr_usart_generic(USART6_HALF_DUPLEX);
 }
 
 static void isr_usart_generic_dma_read(enum usart_id id, volatile uint32_t* dma_xISR, volatile uint32_t* dma_xIFCR, uint32_t dma_chan_tcif)
@@ -372,11 +372,6 @@ void isr_dma1_stream5(void)
 	isr_usart_generic_dma_read(USART2_FULL_DUPLEX, &DMA1->HISR, &DMA1->HIFCR, DMA_HISR_TCIF5);
 }
 
-void isr_dma2_stream1(void)
-{
-	isr_usart_generic_dma_read(USART6_HALF_DUPLEX, &DMA2->LISR, &DMA2->LIFCR, DMA_LISR_TCIF1);
-}
-
 void isr_dma1_stream6(void)
 {
 	if( DMA1->HISR | DMA_HISR_TCIF6)
@@ -395,12 +390,17 @@ void isr_dma1_stream7(void)
 	}
 }
 
-void isr_dma2_stream6(void)
+void isr_dma2_stream2(void)
 {
-	if( DMA2->HISR | DMA_HISR_TCIF6)
+	isr_usart_generic_dma_read(USART1_HALF_DUPLEX, &DMA2->LISR, &DMA2->LIFCR, DMA_LISR_TCIF2);
+}
+
+void isr_dma2_stream7(void)
+{
+	if( DMA2->HISR | DMA_HISR_TCIF7)
 	{
-		DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
-		DMA2_Stream6->CR &= ~DMA_SxCR_EN;
+		DMA2->HIFCR |= DMA_HIFCR_CTCIF7;
+		DMA2_Stream7->CR &= ~DMA_SxCR_EN;
 	}
 }
 
