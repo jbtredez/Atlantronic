@@ -12,60 +12,10 @@
 
 #define SPI_STACK_SIZE             300
 
-// interface accelero
-#define LIS302DL_READ_CMD             0x80
-#define LIS302DL_MULTIPLEBYTE_CMD     0x40
-#define LIS302DL_CTRL_REG1_ADDR       0x20
-#define LIS302DL_OUT_X_ADDR           0x29
-#define LIS302DL_OUT_Y_ADDR           0x2B
-#define LIS302DL_OUT_Z_ADDR           0x2D
-#define LIS302DL_DATARATE_400         0x80
-#define LIS302DL_LOWPOWERMODE_ACTIVE  0x40
-#define LIS302DL_XYZ_ENABLE           0x07
-
-// interface gyro
-#define ADXRS453_READ          0x80000000
-#define ADXRS453_WRITE         0x40000000
-#define ADXRS453_SENSOR_DATA   0x20000000
-
-#define ADXRS453_REG_RATE            0x00
-#define ADXRS453_REG_TEM             0x02
-#define ADXRS453_REG_LOCST           0x04
-#define ADXRS453_REG_HICST           0x06
-#define ADXRS453_REG_QUAD            0x08
-#define ADXRS453_REG_FAULT           0x0A
-#define ADXRS453_REG_PID             0x0C
-#define ADXRS453_REG_SN_HIGH         0x0E
-#define ADXRS453_REG_SN_LOW          0x10
-
-struct spi_accel_dma_xyz
-{
-	unsigned char reserved0;
-	signed char x;
-	unsigned char reserved1;
-	signed char y;
-	unsigned char reserved2;
-	signed char z;
-} __attribute__((packed));
-
-
-static unsigned char spi_tx_buffer[8];
-static unsigned char spi_rx_buffer[8];
-static struct spi_accel_dma_xyz spi_accel_dma_xyz;
-
-static int16_t spi_gyro_v_lsb;      //!< vitesse brute du gyro (non corrigée)
-static float spi_gyro_v;            //!< vitesse angulaire vue par le gyro
-static float spi_gyro_theta;        //!< angle vue par le gyro
-static float spi_gyro_dev_lsb;      //!< correction deviation du gyro
-static uint32_t spi_gyro_dev_count; //!< nombre de donnees utilisées pour le calcul de la correction
-static int spi_gyro_calib_mode;
-
 static xSemaphoreHandle spi_sem;
+static void(*spi_callback[SPI_DEVICE_MAX])(void);
 
 static void spi_task(void* arg);
-
-static void spi_gyro_calibration_cmd(void* arg);
-static void spi_gyro_set_position_cmd(void* arg);
 
 int spi_module_init()
 {
@@ -146,14 +96,31 @@ int spi_module_init()
 	vSemaphoreCreateBinary(spi_sem);
 	xSemaphoreTake(spi_sem, 0);
 
+	int i = 0;
+	for(i = 0; i < SPI_DEVICE_MAX; i++)
+	{
+		spi_callback[i] = nop_function;
+	}
+
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
-	usb_add_cmd(USB_CMD_GYRO_CALIB, &spi_gyro_calibration_cmd);
-	usb_add_cmd(USB_CMD_GYRO_SET_POSITION, &spi_gyro_set_position_cmd);
 
 	return 0;
 }
 
 module_init(spi_module_init, INIT_SPI);
+
+int spi_register_callback(enum spi_device device, void(*callback)(void))
+{
+	int res = -1;
+
+	if( device < SPI_DEVICE_MAX)
+	{
+		spi_callback[device] = callback;
+		res = 0;
+	}
+
+	return res;
+}
 
 void isr_dma2_stream0()
 {
@@ -223,8 +190,33 @@ static void spi_send_dma_buffer(uint16_t size)
 
 //! @return -1 si timeout
 //! @return 0 sinon
-static int spi_transaction(uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
+int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
 {
+	int res = 0;
+	GPIO_TypeDef* gpio = NULL;
+	uint32_t pin;
+
+	switch(device)
+	{
+		case SPI_DEVICE_ACCELERO:
+			gpio = GPIOE;
+			pin = 3;
+			break;
+		case SPI_DEVICE_GYRO:
+			gpio = GPIOA;
+			pin = 8;
+			break;
+		case SPI_DEVICE_UNUSED:
+			gpio = GPIOA;
+			pin = 15;
+			break;
+		case SPI_DEVICE_MAX:
+		default:
+			return -1;
+			break;
+	}
+
+	gpio_reset_pin(gpio, pin);
 	xSemaphoreTake(spi_sem, 0);
 	spi_set_read_dma_buffer(rx_buffer);
 	spi_set_read_dma_size(size);
@@ -232,200 +224,26 @@ static int spi_transaction(uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
 	spi_send_dma_buffer(size);
 	if( xSemaphoreTake(spi_sem, 1) == pdFALSE )
 	{
-		return -1;
+		res = -1;
 	}
-
-	return 0;
-}
-
-static void spi_init_accelero()
-{
-	spi_tx_buffer[0] = LIS302DL_CTRL_REG1_ADDR;
-	spi_tx_buffer[1] = LIS302DL_DATARATE_400 | LIS302DL_LOWPOWERMODE_ACTIVE | LIS302DL_XYZ_ENABLE;
-
-	gpio_reset_pin(GPIOE, 3);
-	spi_transaction(spi_tx_buffer, spi_rx_buffer, 2);
-	gpio_set_pin(GPIOE, 3);
-}
-
-static int spi_gyro_send_data(uint32_t data, uint32_t* rxdata)
-{
-	spi_tx_buffer[0] = (data >> 24) & 0xff;
-	spi_tx_buffer[1] = (data >> 16) & 0xff;
-	spi_tx_buffer[2] = (data >> 8) & 0xff;
-	spi_tx_buffer[3] = data & 0xff;
-
-	gpio_reset_pin(GPIOA, 8);
-	int res = spi_transaction(spi_tx_buffer, spi_rx_buffer, 4);
-	gpio_set_pin(GPIOA, 8);
-
-	*rxdata = ((spi_rx_buffer[0] << 24) | (spi_rx_buffer[1] << 16) | (spi_rx_buffer[2] << 8) | (spi_rx_buffer[3] << 0));
-	return res;
-}
-
-//! @return 0 si ok
-//! @return -1 sinon
-static int spi_init_gyro()
-{
-	int res = 0;
-	uint32_t data_gyro;
-
-	// 100 ms pour init du gyro apres mise sous tension
-	vTaskDelay(100);
-	res = spi_gyro_send_data(0x20000003, &data_gyro);
-	if( res )
-	{
-		goto done;
-	}
-
-	vTaskDelay(50);
-	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-	if( res )
-	{
-		goto done;
-	}
-
-	vTaskDelay(50);
-	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-	if( res )
-	{
-		goto done;
-	}
-	res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-	if( res )
-	{
-		goto done;
-	}
-
-	spi_gyro_calib_mode = 1;
-
-done:
-	return res;
-}
-
-static int spi_gyro_update(float dt, int calibration)
-{
-	uint32_t data_gyro;
-	int error = 0;
-	int res = spi_gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-	if( res == 0 && (data_gyro & 0xe0000000) == 0)
-	{
-		fault(FAULT_GYRO_DISCONNECTED, FAULT_CLEAR);
-		if( ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
-		{
-			spi_gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
-			fault(FAULT_GYRO_ERROR, FAULT_CLEAR);
-		}
-		else
-		{
-			log_format(LOG_ERROR, "gyro error : PLL %d Q %d NVM %d POR %d PWR %d CST %d CHK %d",
-				(int)(data_gyro >> 7) & 0x01,
-				(int)(data_gyro >> 6) & 0x01,
-				(int)(data_gyro >> 5) & 0x01,
-				(int)(data_gyro >> 4) & 0x01,
-				(int)(data_gyro >> 3) & 0x01,
-				(int)(data_gyro >> 2) & 0x01,
-				(int)(data_gyro >> 1) & 0x01);
-			fault(FAULT_GYRO_ERROR, FAULT_ACTIVE);
-			error = 1;
-		}
-	}
-	else
-	{
-		// erreur
-		fault(FAULT_GYRO_DISCONNECTED, FAULT_ACTIVE);
-		error = 1;
-	}
-
-	if( ! calibration )
-	{
-		// en cas d'erreur, on utilise l'ancienne valeur de vitesse
-		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
-		portENTER_CRITICAL();
-		spi_gyro_theta += spi_gyro_v * dt;
-		portEXIT_CRITICAL();
-	}
-	else
-	{
-		// en cas d'erreur, on ne fait rien
-		if( ! error )
-		{
-			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
-			spi_gyro_dev_count++;
-		}
-	}
+	gpio_set_pin(gpio, pin);
 
 	return res;
-}
-
-float spi_gyro_get_theta()
-{
-	float data;
-
-	portENTER_CRITICAL();
-	data = spi_gyro_theta;
-	portEXIT_CRITICAL();
-
-	return data;
-}
-
-void spi_gyro_set_theta(float theta)
-{
-	portENTER_CRITICAL();
-	spi_gyro_theta = theta;
-	portEXIT_CRITICAL();
 }
 
 static void spi_task(void* arg)
 {
 	(void) arg;
-
-	spi_init_accelero();
-
-	spi_init_gyro();
+	int i = 0;
 
 	while(1)
 	{
-		spi_tx_buffer[0] = LIS302DL_OUT_X_ADDR | LIS302DL_READ_CMD | LIS302DL_MULTIPLEBYTE_CMD;
-		gpio_reset_pin(GPIOE, 3);
-		spi_transaction(spi_tx_buffer, (void*)&spi_accel_dma_xyz, 6);
-		gpio_set_pin(GPIOE, 3);
-
-		spi_gyro_update(0.001f, spi_gyro_calib_mode);
-
-		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(spi_gyro_theta * 180 / M_PI));
+		for(i = 0; i < SPI_DEVICE_MAX; i++)
+		{
+			spi_callback[i]();
+		}
 
 		vTaskDelay(1);
 	}
 }
 
-void spi_gyro_calib(int cmd)
-{
-	switch(cmd)
-	{
-		case GYRO_CALIBRATION_START:
-			spi_gyro_calib_mode = 1;
-			spi_gyro_dev_count = 0;
-			spi_gyro_dev_lsb = 0;
-			log(LOG_INFO, "gyro start calibration");
-			break;
-		case GYRO_CALIBRATION_STOP:
-			spi_gyro_calib_mode = 0;
-			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_dev_lsb));
-			break;
-		default:
-			break;
-	}
-}
-
-void spi_gyro_calibration_cmd(void* arg)
-{
-	int* cmd = (int*) arg;
-	spi_gyro_calib(*cmd);
-}
-
-void spi_gyro_set_position_cmd(void* arg)
-{
-	float* theta = (float*) arg;
-	spi_gyro_set_theta(*theta);
-}

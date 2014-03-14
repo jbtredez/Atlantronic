@@ -23,6 +23,8 @@
 #define INIT_USB                      "02"
 #define INIT_FAULT                    "03"
 #define INIT_SPI                      "04"
+#define INIT_GYRO                     "05"
+#define INIT_ACCELERO                 "05"
 
 // init de la communication
 #define INIT_CAN                      "05"

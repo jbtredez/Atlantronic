@@ -5,7 +5,7 @@
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/can.h"
-#include "kernel/driver/spi.h"
+#include "kernel/driver/gyro.h"
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
@@ -72,7 +72,7 @@ class RobotInterface
 		int control_free();
 
 		// ---------- gestion gyro -----------------------------------------------------
-		int gyro_calibration(enum spi_calibration_cmd cmd);
+		int gyro_calibration(enum GyroCalibrationCmd cmd);
 		int gyro_set_position(float theta);
 
 		// ---------- localisation -----------------------------------------------------

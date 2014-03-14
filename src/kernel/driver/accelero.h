@@ -1,0 +1,11 @@
+#ifndef ACCELERO_H
+#define ACCELERO_H
+
+enum AcceleroState
+{
+	ACCELERO_STATE_DISCONNECTED = 0,
+	ACCELERO_STATE_RUNNING,
+};
+
+
+#endif

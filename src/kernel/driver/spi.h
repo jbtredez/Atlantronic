@@ -5,22 +5,19 @@
 extern "C" {
 #endif
 
-enum spi_calibration_cmd
+#include <stdint.h>
+
+enum spi_device
 {
-	GYRO_CALIBRATION_START,
-	GYRO_CALIBRATION_STOP,
+	SPI_DEVICE_ACCELERO = 0,
+	SPI_DEVICE_GYRO,
+	SPI_DEVICE_UNUSED,
+	SPI_DEVICE_MAX,
 };
 
-struct spi_gyro_cmd_set_position_arg
-{
-	float theta;
-} __attribute__((packed));
+int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size);
 
-float spi_gyro_get_theta();
-
-void spi_gyro_set_theta(float theta);
-
-void spi_gyro_calib(int cmd);
+int spi_register_callback(enum spi_device device, void(*callback)(void));
 
 #ifdef __cplusplus
 }

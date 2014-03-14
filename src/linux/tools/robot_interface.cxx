@@ -907,7 +907,7 @@ int RobotInterface::set_position(VectPlan pos)
 	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
 }
 
-int RobotInterface::gyro_calibration(enum spi_calibration_cmd cmd)
+int RobotInterface::gyro_calibration(enum GyroCalibrationCmd cmd)
 {
 	int32_t cmd_arg = cmd;
 
