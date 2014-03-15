@@ -7,19 +7,19 @@ PA4  : LRCK/AIN1x (CS43L22 - audio - carte cpu)
 PA5  : SCLK/SCL/SPC (LIS302DL - accéléro - carte cpu)
 PA6  : MISO / SDO (LIS302DL - accéléro - carte cpu)
 PA7  : MOSI / SDA/SDI/SDO (LIS302DL - accéléro - carte cpu)
-PA8  : CS2_SPI
+PA8  : CS2_SPI (gyro)
 PA9  : VBUS (USB - carte cpu)
 PA10 : ID (USB - carte cpu)
 PA11 : DM (USB - carte cpu)
 PA12 : DP (USB - carte cpu)
 PA13 : SWDIO (connecteur debug / jtag carte cpu)
 PA14 : SWCLK (connecteur debug / jtag carte cpu)
-PA15 : CS1_SPI (gyro)
+PA15 : TIM2_CH1 (encodeur 2)
 
 PB0  : AN8 - AN_MOT4
 PB1  : AN9 - AN_MOT1
 PB2  : ENABLE (activation des alim puissance)
-PB3  : SWO (connecteur debug / jtag carte cpu)
+PB3  : (SWO connecteur debug / jtag carte cpu, virer SB12, c'est prévu pour) TIM12_CH2 (encodeur 2)
 PB4  : TIM3_CH1 (encodeur 1)
 PB5  : TIM3_CH2 (encodeur 1)
 PB6  : SCL (CS43L22 - audio - carte cpu)
@@ -30,8 +30,8 @@ PB10 : CLK (MP45DT02 - audio - carte cpu)
 PB11 : OUT_3
 PB12 : IN_2
 PB13 : OUT_1
-PB14 : TIM12_CH1 (encodeur 2)
-PB15 : TIM12_CH2 (encodeur 2)
+PB14 :
+PB15 :
 
 PC0  : powerOn (USB - carte cpu)
 PC1  : AN11 - AN_MOT2
@@ -62,8 +62,8 @@ PD8  : USART3_TX (xbee)
 PD9  : USART3_RX (xbee)
 PD10 : OUT_2
 PD11 : IN_1
-PD12 : led verte (carte cpu)
-PD13 : led orange (carte cpu)
+PD12 : (led verte (carte cpu)) TIM4_CH1 (encodeur 3)
+PD13 : (led orange (carte cpu)) TIM4_CH2 (encodeur 3)
 PD14 : led rouge (carte cpu)
 PD15 : led bleue (carte cpu)
 
@@ -72,9 +72,9 @@ PE1  : INT2 (LIS302DL - accéléro - carte cpu)
 PE2  : LED4
 PE3  : CS_I2C/SPI (LIS302DL - accéléro - carte cpu)
 PE4  : LED3
-PE5  : TIM9_CH1 (encodeur 3)
-PE6  : TIM9_CH2 (encodeur 3)
-PE7  : 
+PE5  : 
+PE6  :
+PE7  : CS1_SPI
 PE8  : sens pwm1
 PE9  : TIM1_CH1 (pwm1)
 PE10 : sens pwm2
@@ -115,17 +115,21 @@ DMA2
 
 Affectation des TIMERS:
 TIM1  : PWM1 PWM2 PWM3 PWM4
-TIM2  :
+TIM2  : encodeur 2
 TIM3  : encodeur 1
-TIM4  :
+TIM4  : encodeur 3
 TIM5  :
 TIM6  :
 TIM7  :
 TIM8  :
-TIM9  : encodeur 3
+TIM9  :
 TIM10 :
 TIM11 :
-TIM12 : encodeur 2
+TIM12 :
 TIM13 :
 TIM14 :
+
+Modif discovery :
+- virer SB12
+- virer SB20
 

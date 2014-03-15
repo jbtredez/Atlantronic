@@ -7,8 +7,6 @@
 
 #include "kernel/cpu/cpu.h"
 
-#define LED_CPU_GREEN    0x00001000
-#define LED_CPU_ORANGE   0x00002000
 #define LED_CPU_RED      0x00004000
 #define LED_CPU_BLUE     0x00008000
 #define LED_EXT_BLUE     0x80000000

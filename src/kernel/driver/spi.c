@@ -35,12 +35,13 @@ int spi_module_init()
 	gpio_pin_init(GPIOA, 6, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MISO
 	gpio_pin_init(GPIOA, 7, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MOSI
 	gpio_pin_init(GPIOE, 3, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS0 accelero
+//	gpio_pin_init(GPIOE, 7, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS1
 	gpio_pin_init(GPIOA, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS2 gyro
-//	gpio_pin_init(GPIOA, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS1
 
 	// on ne selectionne rien
 	gpio_set_pin(GPIOE, 3);
 	gpio_set_pin(GPIOA, 8);
+//	gpio_set_pin(GPIOE, 7);
 
 	gpio_af_config(GPIOA, 5, GPIO_AF_SPI1);
 	gpio_af_config(GPIOA, 6, GPIO_AF_SPI1);
@@ -207,8 +208,8 @@ int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buff
 			pin = 8;
 			break;
 		case SPI_DEVICE_UNUSED:
-			gpio = GPIOA;
-			pin = 15;
+			gpio = GPIOE;
+			pin = 7;
 			break;
 		case SPI_DEVICE_MAX:
 		default:
