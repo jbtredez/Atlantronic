@@ -56,9 +56,12 @@ static struct spi_accel_dma_xyz spi_accel_dma_xyz;
 
 static int16_t spi_gyro_v_lsb;        //!< vitesse brute du gyro (non corrigée)
 static float spi_gyro_v;              //!< vitesse angulaire vue par le gyro
+static float spi_gyro_v_nonoise;      //!< vitesse angulaire nettoyée du bruit
 static float spi_gyro_theta_euler;    //!< angle intégré par un schéma Euler explicite
 static float spi_gyro_theta_simpson;  //!< angle intégré par un schéma Simpson
-static float spi_gyro_dev_lsb;        //!< correction deviation du gyro
+static float spi_gyro_bias;           //!< correction deviation du gyro
+static float spi_gyro_scale;          //!< gain du gyro
+static float spi_gyro_dead_zone;      //!< permet de créer une zone morte sur le gyro pour avoir une vraie immobilité
 static uint32_t spi_gyro_dev_count;   //!< nombre de donnees utilisées pour le calcul de la correction
 static int spi_gyro_calib_mode;
 
@@ -71,6 +74,7 @@ static void spi_task(void* arg);
 
 static void spi_gyro_calibration_cmd(void* arg);
 static void spi_gyro_set_position_cmd(void* arg);
+static void spi_gyro_set_calibration_values_cmd(void* arg);
 
 int spi_module_init()
 {
@@ -154,6 +158,7 @@ int spi_module_init()
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
 	usb_add_cmd(USB_CMD_GYRO_CALIB, &spi_gyro_calibration_cmd);
 	usb_add_cmd(USB_CMD_GYRO_SET_POSITION, &spi_gyro_set_position_cmd);
+	usb_add_cmd(USB_CMD_GYRO_SET_CALIBRATION_VALUES, &spi_gyro_set_calibration_values_cmd);
 
 	return 0;
 }
@@ -303,6 +308,10 @@ static int spi_init_gyro()
 	}
 
 	spi_gyro_calib_mode = 1;
+	portENTER_CRITICAL();
+	spi_gyro_scale = 0.000218166156f;  // from datasheet
+	spi_gyro_dead_zone = 0.f;           // conservative value
+	portEXIT_CRITICAL();
 
 done:
 	return res;
@@ -340,9 +349,17 @@ static int spi_gyro_update(float dt, int calibration)
 	{
 		// en cas d'erreur, on utilise l'ancienne valeur de vitesse
 		portENTER_CRITICAL();
-		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
-		spi_gyro_theta_euler += spi_gyro_v * dt;
-		simpson_set_derivative(&pSimpson, dt, spi_gyro_v);
+		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_bias) * spi_gyro_scale;
+		if(spi_gyro_v < spi_gyro_dead_zone && spi_gyro_v > -spi_gyro_dead_zone)
+		{
+			spi_gyro_v_nonoise = 0.f;
+		}
+		else
+		{
+			spi_gyro_v_nonoise = spi_gyro_v;
+		}
+		spi_gyro_theta_euler += spi_gyro_v_nonoise * dt;
+		simpson_set_derivative(&pSimpson, dt, spi_gyro_v_nonoise);
 		simpson_compute(&pSimpson);
 		spi_gyro_theta_simpson = simpson_get(&pSimpson);
 		portEXIT_CRITICAL();
@@ -353,8 +370,9 @@ static int spi_gyro_update(float dt, int calibration)
 		if( ! error )
 		{
 			portENTER_CRITICAL();
-			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
-			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
+			spi_gyro_bias = (spi_gyro_dev_count * spi_gyro_bias + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
+			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_bias) * spi_gyro_scale;
+			spi_gyro_v_nonoise = spi_gyro_v;
 			spi_gyro_theta_euler = 0.f;
 			spi_gyro_theta_simpson = 0.f;
 			portEXIT_CRITICAL();
@@ -448,12 +466,12 @@ void spi_gyro_calib(int cmd)
 		case GYRO_CALIBRATION_START:
 			spi_gyro_calib_mode = 1;
 			spi_gyro_dev_count = 0;
-			spi_gyro_dev_lsb = 0;
+			spi_gyro_bias = 0;
 			log(LOG_INFO, "gyro start calibration");
 			break;
 		case GYRO_CALIBRATION_STOP:
 			spi_gyro_calib_mode = 0;
-			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_dev_lsb));
+			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_bias));
 			break;
 		default:
 			break;
@@ -470,4 +488,14 @@ void spi_gyro_set_position_cmd(void* arg)
 {
 	float* theta = (float*) arg;
 	spi_gyro_set_theta(*theta);
+}
+
+void spi_gyro_set_calibration_values_cmd(void* arg)
+{
+	struct spi_gyro_cmd_set_calibration_values_arg *param = (struct spi_gyro_cmd_set_calibration_values_arg*)arg;
+	portENTER_CRITICAL();
+	spi_gyro_scale = param->scale;
+	spi_gyro_bias = param->bias;
+	spi_gyro_dead_zone = param->dead_zone;
+	portEXIT_CRITICAL();
 }

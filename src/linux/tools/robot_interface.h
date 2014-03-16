@@ -73,6 +73,7 @@ class RobotInterface
 
 		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum spi_calibration_cmd cmd);
+		int gyro_set_calibration_values(float scale, float bias, float dead_zone);
 		int gyro_set_position(float theta);
 
 		// ---------- localisation -----------------------------------------------------

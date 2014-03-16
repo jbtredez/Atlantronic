@@ -18,6 +18,14 @@ struct spi_gyro_cmd_set_position_arg
 	float theta;
 } __attribute__((packed));
 
+
+struct spi_gyro_cmd_set_calibration_values_arg
+{
+	float scale;
+	float bias;
+	float dead_zone;
+} __attribute__((packed));
+
 int32_t spi_gyro_get_raw_data();
 float spi_gyro_get_omega();
 float spi_gyro_get_theta_euler();
