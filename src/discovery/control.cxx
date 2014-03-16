@@ -141,7 +141,10 @@ static void control_task(void* arg)
 		control_usb_data.control_state = control_state;
 		control_usb_data.cons = control_cp_cmd;
 		control_usb_data.pos = loc_pos;
-		control_usb_data.pos_theta_gyro = gyro_get_theta();
+		control_usb_data.raw_data_gyro = gyro_get_raw_data();
+		control_usb_data.omega_gyro = gyro_get_omega();
+		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
+		control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
 		control_usb_data.cons_v1 = control_kinematics[CAN_MOTOR_DRIVING1].v;
 		control_usb_data.cons_v2 = control_kinematics[CAN_MOTOR_DRIVING2].v;
 		control_usb_data.cons_v3 = control_kinematics[CAN_MOTOR_DRIVING3].v;

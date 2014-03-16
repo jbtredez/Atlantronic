@@ -926,6 +926,16 @@ int RobotInterface::gyro_set_position(float theta)
 	return usb_write(USB_CMD_GYRO_SET_POSITION, &cmd_arg, sizeof(cmd_arg));
 }
 
+int RobotInterface::gyro_set_calibration_values(float scale, float bias, float dead_zone)
+{
+	struct gyro_cmd_set_calibration_values_arg cmd_arg;
+	cmd_arg.scale = scale;
+	cmd_arg.bias = bias;
+	cmd_arg.dead_zone = dead_zone;
+
+	return usb_write(USB_CMD_GYRO_SET_CALIBRATION_VALUES, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
 {
 	struct pince_cmd_arg cmd_arg;

@@ -4,6 +4,7 @@
 #include "kernel/cpu/cpu.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "kernel/math/simpson_integrator.h"
 #include "gpio.h"
 #include "kernel/fault.h"
 #include <math.h>
@@ -23,24 +24,28 @@
 #define ADXRS453_REG_SN_HIGH         0x0E
 #define ADXRS453_REG_SN_LOW          0x10
 
-static int16_t gyro_v_lsb;      //!< vitesse brute du gyro (non corrigée)
-static float gyro_v;            //!< vitesse angulaire vue par le gyro
-static float gyro_theta;        //!< angle vue par le gyro
-static float gyro_dev_lsb;      //!< correction deviation du gyro
-static uint32_t gyro_dev_count; //!< nombre de donnees utilisées pour le calcul de la correction
+static int16_t gyro_v_lsb;            //!< vitesse brute du gyro (non corrigée)
+static float gyro_v;                  //!< vitesse angulaire vue par le gyro
+static float gyro_v_nonoise;          //!< vitesse angulaire nettoyée du bruit
+static float gyro_theta_euler;        //!< angle intégré par un schéma Euler explicite
+static float gyro_theta_simpson;      //!< angle intégré par un schéma Simpson
+static float gyro_bias;               //!< correction deviation du gyro
+static float gyro_scale;              //!< gain du gyro
+static float gyro_dead_zone;          //!< permet de créer une zone morte sur le gyro pour avoir une vraie immobilité
+static uint32_t gyro_dev_count;       //!< nombre de donnees utilisées pour le calcul de la correction
 static int gyro_calib_mode;
 static enum GyroState gyro_state;
-static int gyro_init_step; // nombre de cycles (1 cycle = 1ms) depuis le debut de la phase d'init
+static int gyro_init_step;            //!< nombre de cycles (1 cycle = 1ms) depuis le debut de la phase d'init
 static unsigned char gyro_tx_buffer[8];
 static unsigned char gyro_rx_buffer[8];
-
+static SimpsonState simpsonState;
 
 static void init_gyro();
 static void gyro_calibration_cmd(void* arg);
 static void gyro_set_position_cmd(void* arg);
+static void gyro_set_calibration_values_cmd(void* arg);
 static void gyro_spi_callback();
 static int gyro_update(float dt);
-
 
 int gyro_module_init()
 {
@@ -50,6 +55,9 @@ int gyro_module_init()
 
 	usb_add_cmd(USB_CMD_GYRO_CALIB, &gyro_calibration_cmd);
 	usb_add_cmd(USB_CMD_GYRO_SET_POSITION, &gyro_set_position_cmd);
+	usb_add_cmd(USB_CMD_GYRO_SET_CALIBRATION_VALUES, &gyro_set_calibration_values_cmd);
+
+	gyro_scale = 0.000218166156f;  // from datasheet
 
 	return 0;
 }
@@ -134,7 +142,9 @@ static int gyro_update(float dt)
 	{
 		if( ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
 		{
+			portENTER_CRITICAL();
 			gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
+			portEXIT_CRITICAL();
 			fault(FAULT_GYRO_ERROR, FAULT_CLEAR);
 		}
 		else
@@ -163,9 +173,20 @@ static int gyro_update(float dt)
 	if( ! gyro_calib_mode )
 	{
 		// en cas d'erreur, on utilise l'ancienne valeur de vitesse
-		gyro_v = ((float)gyro_v_lsb - gyro_dev_lsb) * 0.000218166156f;
 		portENTER_CRITICAL();
-		gyro_theta += gyro_v * dt;
+		gyro_v = ((float)gyro_v_lsb - gyro_bias) * gyro_scale;
+		if(gyro_v < gyro_dead_zone && gyro_v > -gyro_dead_zone)
+		{
+			gyro_v_nonoise = 0;
+		}
+		else
+		{
+			gyro_v_nonoise = gyro_v;
+		}
+		gyro_theta_euler += gyro_v_nonoise * dt;
+		simpson_set_derivative(&simpsonState, dt, gyro_v_nonoise);
+		simpson_compute(&simpsonState);
+		gyro_theta_simpson = simpson_get(&simpsonState);
 		portEXIT_CRITICAL();
 	}
 	else
@@ -173,7 +194,13 @@ static int gyro_update(float dt)
 		// en cas d'erreur, on ne fait rien
 		if( ! error )
 		{
-			gyro_dev_lsb = (gyro_dev_count * gyro_dev_lsb + gyro_v_lsb) / (gyro_dev_count + 1);
+			portENTER_CRITICAL();
+			gyro_bias = (gyro_dev_count * gyro_bias + gyro_v_lsb) / (gyro_dev_count + 1);
+			gyro_v = ((float)gyro_v_lsb - gyro_bias) * gyro_scale;
+			gyro_v_nonoise = gyro_v;
+			gyro_theta_euler = 0;
+			gyro_theta_simpson = 0;
+			portEXIT_CRITICAL();
 			gyro_dev_count++;
 		}
 	}
@@ -183,12 +210,45 @@ static int gyro_update(float dt)
 	return res;
 }
 
-float gyro_get_theta()
+int16_t gyro_get_raw_data()
+{
+	int16_t data;
+
+	portENTER_CRITICAL();
+	data = gyro_v_lsb;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float gyro_get_omega()
 {
 	float data;
 
 	portENTER_CRITICAL();
-	data = gyro_theta;
+	data = gyro_v;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float gyro_get_theta_euler()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = gyro_theta_euler;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float gyro_get_theta_simpson()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = simpson_get(&simpsonState);
 	portEXIT_CRITICAL();
 
 	return data;
@@ -197,23 +257,32 @@ float gyro_get_theta()
 void gyro_set_theta(float theta)
 {
 	portENTER_CRITICAL();
-	gyro_theta = theta;
+	gyro_theta_euler = theta;
+	simpson_reset(&simpsonState, theta);
+	gyro_theta_simpson = simpson_get(&simpsonState);
 	portEXIT_CRITICAL();
+	log_format(LOG_INFO, "gyro set theta to : %d mrad", (int)(1000*theta));
 }
 
 void gyro_calib(enum GyroCalibrationCmd cmd)
 {
+	float bias = 0.f;
 	switch(cmd)
 	{
 		case GYRO_CALIBRATION_START:
+			portENTER_CRITICAL();
 			gyro_calib_mode = 1;
 			gyro_dev_count = 0;
-			gyro_dev_lsb = 0;
+			gyro_bias = 0;
+			portEXIT_CRITICAL();
 			log(LOG_INFO, "gyro start calibration");
 			break;
 		case GYRO_CALIBRATION_STOP:
 			gyro_calib_mode = 0;
-			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*gyro_dev_lsb));
+			portENTER_CRITICAL();
+			bias = gyro_bias;
+			portEXIT_CRITICAL();
+			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*bias));
 			break;
 		default:
 			break;
@@ -222,12 +291,22 @@ void gyro_calib(enum GyroCalibrationCmd cmd)
 
 void gyro_calibration_cmd(void* arg)
 {
-	int* cmd = (int*) arg;
-	gyro_calib((enum GyroCalibrationCmd)*cmd);
+	struct gyro_cmd_calibration_arg* cmd_arg = (struct gyro_cmd_calibration_arg*) arg;
+	gyro_calib((enum GyroCalibrationCmd)cmd_arg->calib_cmd);
 }
 
 void gyro_set_position_cmd(void* arg)
 {
 	struct gyro_cmd_set_position_arg* cmd_arg = (struct gyro_cmd_set_position_arg*) arg;
 	gyro_set_theta(cmd_arg->theta);
+}
+
+void gyro_set_calibration_values_cmd(void* arg)
+{
+	struct gyro_cmd_set_calibration_values_arg *param = (struct gyro_cmd_set_calibration_values_arg*)arg;
+	portENTER_CRITICAL();
+	gyro_scale = param->scale;
+	gyro_bias = param->bias;
+	gyro_dead_zone = param->dead_zone;
+	portEXIT_CRITICAL();
 }

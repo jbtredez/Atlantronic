@@ -41,6 +41,7 @@ int cmd_goto_near_xy(const char* arg);
 int cmd_gyro_calib_start(const char* arg);
 int cmd_gyro_calib_stop(const char* arg);
 int cmd_gyro_set_theta(const char* arg);
+int cmd_gyro_set_calibration_values(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_pince_set_position(const char* arg);
@@ -88,6 +89,7 @@ COMMAND usb_commands[] = {
 	{ "gyro_calib_start", cmd_gyro_calib_start, "cmd_gyro_calib_start"},
 	{ "gyro_calib_stop", cmd_gyro_calib_stop, "cmd_gyro_calib_stop"},
 	{ "gyro_set_theta", cmd_gyro_set_theta, "cmd_gyro_set_theta theta"},
+	{ "gyro_set_calibration_values", cmd_gyro_set_calibration_values, "cmd_gyro_set_calibration_values scale bias dead_zone"},
 	{ "help", cmd_help, "Display this text" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
@@ -543,6 +545,22 @@ int cmd_gyro_set_theta(const char* arg)
 		return CMD_ERROR;
 	}
 	cmd_robot->gyro_set_position(theta);
+	return CMD_SUCESS;
+}
+
+
+int cmd_gyro_set_calibration_values(const char* arg)
+{
+	float scale;
+	float bias;
+	float dead_zone;
+	int count = sscanf(arg, "%f %f %f", &scale, &bias, &dead_zone);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+	cmd_robot->gyro_set_calibration_values(scale, bias, dead_zone);
 	return CMD_SUCESS;
 }
 
