@@ -338,7 +338,7 @@ static int spi_gyro_update(float dt, int calibration)
 		portENTER_CRITICAL();
 		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
 		spi_gyro_theta_euler += spi_gyro_v * dt;
-		spi_gyro_theta_simpson = 0.f;
+		spi_gyro_theta_simpson = 12.f;
 		portEXIT_CRITICAL();
 	}
 	else
@@ -349,8 +349,8 @@ static int spi_gyro_update(float dt, int calibration)
 			portENTER_CRITICAL();
 			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
 			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
-			spi_gyro_theta_euler = 0.f;
-			spi_gyro_theta_simpson = 0.f;
+			spi_gyro_theta_euler = 66.f;
+			spi_gyro_theta_simpson = 42.f;
 			portEXIT_CRITICAL();
 			spi_gyro_dev_count++;
 		}
