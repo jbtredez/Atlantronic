@@ -338,7 +338,7 @@ static int spi_gyro_update(float dt, int calibration)
 		portENTER_CRITICAL();
 		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
 		spi_gyro_theta_euler += spi_gyro_v * dt;
-		spi_gyro_theta_simpson = 12.f;
+		spi_gyro_theta_simpson = 0.12f;
 		portEXIT_CRITICAL();
 	}
 	else
@@ -349,8 +349,8 @@ static int spi_gyro_update(float dt, int calibration)
 			portENTER_CRITICAL();
 			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
 			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
-			spi_gyro_theta_euler = 66.f;
-			spi_gyro_theta_simpson = 42.f;
+			spi_gyro_theta_euler = 0.66f;
+			spi_gyro_theta_simpson = 0.42f;
 			portEXIT_CRITICAL();
 			spi_gyro_dev_count++;
 		}
@@ -426,11 +426,11 @@ static void spi_task(void* arg)
 		spi_transaction(spi_tx_buffer, (void*)&spi_accel_dma_xyz, 6);
 		gpio_set_pin(GPIOE, 3);
 
-		spi_gyro_update(0.001f, spi_gyro_calib_mode);
+		spi_gyro_update(0.003f, spi_gyro_calib_mode);
 
 		//log_format(LOG_INFO, "ACCEL %d %d %d GYRO %d", spi_accel_dma_xyz.x, spi_accel_dma_xyz.y, spi_accel_dma_xyz.z, (int)(spi_gyro_theta * 180 / M_PI));
 
-		vTaskDelay(1);
+		vTaskDelay(3);
 	}
 }
 
