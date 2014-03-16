@@ -17,6 +17,26 @@ struct stack_t
 	uint32_t psr;
 };
 
+#define SCB_CFSR_MEMMANAG_IACCVIOL        0x01
+#define SCB_CFSR_MEMMANAG_DACCVIOL        0x02
+#define SCB_CFSR_MEMMANAG_MUNSTKERR       0x08
+#define SCB_CFSR_MEMMANAG_MSTKERR         0x10
+#define SCB_CFSR_MEMMANAG_MLSPERR         0x20
+#define SCB_CFSR_MEMMANAG_MMARVALID       0x80
+#define SCB_CFSR_BUS_IBUSERR             0x100
+#define SCB_CFSR_BUS_PRECISERR           0x200
+#define SCB_CFSR_BUS_IMPRECISERR         0x400
+#define SCB_CFSR_BUS_UNSTKERR            0x800
+#define SCB_CFSR_BUS_STKERR             0x1000
+#define SCB_CFSR_BUS_LSPERR             0x2000
+#define SCB_CFSR_BUS_BFARVALID          0x8000
+#define SCB_CFSR_USAGE_UNDEFINSTR      0x10000
+#define SCB_CFSR_USAGE_INVSTATE        0x20000
+#define SCB_CFSR_USAGE_INVPC           0x40000
+#define SCB_CFSR_USAGE_NOCP            0x80000
+#define SCB_CFSR_USAGE_UNALIGNED      0x100000
+#define SCB_CFSR_USAGE_DIVBYZERO      0x200000
+
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi
 static void isr_hard_fault(void) __attribute__ ((naked)); //!< interruption "hard fault"
@@ -61,6 +81,8 @@ void isr_can1_sce(void) __attribute__((weak, alias("isr_unexpected") )); //!< in
 void isr_exti3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti3
 void isr_exti9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 5 a 9
 void isr_exti15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 10 a 15
+
+void isr_tim6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption tim6
 
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
@@ -151,7 +173,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_uart4,
 	isr_uart5,
-	isr_unexpected,
+	isr_tim6,
 	isr_unexpected,
 	isr_dma2_stream0,
 	isr_dma2_stream1,
@@ -305,6 +327,120 @@ void isr_hard_fault_stack(struct stack_t* fault_stack)
 {
 	(void)fault_stack;
 	// regarder fault_stack->pc pour voir d'ou vient le probleme
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_IACCVIOL )
+	{
+		// Instruction access violation
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_DACCVIOL )
+	{
+		// Data access violation
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MUNSTKERR)
+	{
+		// Memory Management Fault on unstacking for a return from exception
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MSTKERR )
+	{
+		// Memory Management Fault on stacking for exception entry
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MLSPERR )
+	{
+		// Memory Management Fault during floating point lazy state preservation
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MMARVALID )
+	{
+		// Memory Management Fault Address Register (SCB->MMFAR) valid flag
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_IBUSERR )
+	{
+		// Instruction bus error
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_PRECISERR )
+	{
+		// Precise data bus error
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_IMPRECISERR )
+	{
+		// Imprecise data bus error
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_UNSTKERR )
+	{
+		// BusFault on unstacking for a return from exception
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_STKERR )
+	{
+		// BusFault on stacking for exception entry
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_LSPERR )
+	{
+		// Bus Fault during floating point lazy state preservation
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_BUS_BFARVALID )
+	{
+		// Bus Fault Address Register (SCB->BFAR) valid flag
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_UNDEFINSTR )
+	{
+		// Undefined instruction Usage Fault
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_INVSTATE )
+	{
+		// Invalid state Usage Fault
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_INVPC )
+	{
+		// Invalid PC load Usage Fault, caused by an invalid EXC_RETURN value
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_NOCP )
+	{
+		// No coprocessor Usage Fault. The processor does not support coprocessor instructions
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_UNALIGNED )
+	{
+		// Unaligned access
+		// TODO : action ?
+	}
+
+	if( SCB->CFSR | SCB_CFSR_USAGE_DIVBYZERO )
+	{
+		// Divide by zero
+		// TODO : action ?
+	}
 
 //	isr_pwm_reset();
 
