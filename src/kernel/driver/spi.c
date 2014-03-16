@@ -373,8 +373,9 @@ static int spi_gyro_update(float dt, int calibration)
 			spi_gyro_bias = (spi_gyro_dev_count * spi_gyro_bias + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
 			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_bias) * spi_gyro_scale;
 			spi_gyro_v_nonoise = spi_gyro_v;
+			spi_gyro_theta_euler = 0.f;
+			spi_gyro_theta_simpson = 0.f;
 			portEXIT_CRITICAL();
-			spi_gyro_set_theta(0.);
 			spi_gyro_dev_count++;
 		}
 	}
@@ -428,11 +429,13 @@ float spi_gyro_get_theta_simpson()
 
 void spi_gyro_set_theta(float theta)
 {
+	log_format(LOG_INFO, "spi_gyro_set_theta : portENTER_CRITICAL");
 	portENTER_CRITICAL();
 	spi_gyro_theta_euler = theta;
 	simpson_reset(&pSimpson, theta);
 	spi_gyro_theta_simpson = simpson_get(&pSimpson);
 	portEXIT_CRITICAL();
+	log_format(LOG_INFO, "spi_gyro_set_theta : portEXIT_CRITICAL");
 }
 
 static void spi_task(void* arg)
@@ -460,19 +463,24 @@ static void spi_task(void* arg)
 
 void spi_gyro_calib(int cmd)
 {
+	float bias = 0.f;
 	switch(cmd)
 	{
 		case GYRO_CALIBRATION_START:
 			spi_gyro_calib_mode = 1;
 			spi_gyro_dev_count = 0;
+			portENTER_CRITICAL();
 			spi_gyro_bias = 0;
+			portEXIT_CRITICAL();
 			log(LOG_INFO, "gyro start calibration");
 			break;
 		case GYRO_CALIBRATION_STOP:
 			spi_gyro_calib_mode = 0;
 			portENTER_CRITICAL();
-			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_bias));
+			bias = spi_gyro_bias;
 			portEXIT_CRITICAL();
+			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*bias));
+			spi_gyro_set_theta(0.f);
 			break;
 		default:
 			break;
