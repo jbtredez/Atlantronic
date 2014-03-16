@@ -228,6 +228,6 @@ void gyro_calibration_cmd(void* arg)
 
 void gyro_set_position_cmd(void* arg)
 {
-	float* theta = (float*) arg;
-	gyro_set_theta(*theta);
+	struct gyro_cmd_set_position_arg* cmd_arg = (struct gyro_cmd_set_position_arg*) arg;
+	gyro_set_theta(cmd_arg->theta);
 }

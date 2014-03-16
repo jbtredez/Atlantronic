@@ -916,7 +916,9 @@ int RobotInterface::gyro_calibration(enum GyroCalibrationCmd cmd)
 
 int RobotInterface::gyro_set_position(float theta)
 {
-	return usb_write(USB_CMD_GYRO_SET_POSITION, &theta, sizeof(theta));
+	struct gyro_cmd_set_position_arg cmd_arg;
+	cmd_arg.theta = theta;
+	return usb_write(USB_CMD_GYRO_SET_POSITION, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
