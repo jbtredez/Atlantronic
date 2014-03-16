@@ -373,9 +373,8 @@ static int spi_gyro_update(float dt, int calibration)
 			spi_gyro_bias = (spi_gyro_dev_count * spi_gyro_bias + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
 			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_bias) * spi_gyro_scale;
 			spi_gyro_v_nonoise = spi_gyro_v;
-			spi_gyro_theta_euler = 0.f;
-			spi_gyro_theta_simpson = 0.f;
 			portEXIT_CRITICAL();
+			spi_gyro_set_theta(0.);
 			spi_gyro_dev_count++;
 		}
 	}
@@ -471,7 +470,9 @@ void spi_gyro_calib(int cmd)
 			break;
 		case GYRO_CALIBRATION_STOP:
 			spi_gyro_calib_mode = 0;
+			portENTER_CRITICAL();
 			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*spi_gyro_bias));
+			portEXIT_CRITICAL();
 			break;
 		default:
 			break;
