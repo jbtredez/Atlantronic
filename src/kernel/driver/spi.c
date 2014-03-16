@@ -493,7 +493,8 @@ void spi_gyro_calibration_cmd(void* arg)
 
 void spi_gyro_set_position_cmd(void* arg)
 {
-	float* theta = (float*) arg;
+	float* theta;
+	memcpy(&theta, arg, 4);
 	spi_gyro_set_theta(*theta);
 }
 
