@@ -431,7 +431,7 @@ void spi_gyro_set_theta(float theta)
 	portENTER_CRITICAL();
 	spi_gyro_theta_euler = theta;
 	simpson_reset(&pSimpson, theta);
-	spi_gyro_theta_simpson = theta;
+	spi_gyro_theta_simpson = simpson_get(&pSimpson);
 	portEXIT_CRITICAL();
 }
 
