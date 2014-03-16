@@ -32,6 +32,7 @@ obj-discovery-baz += kernel/canopen.o
 obj-discovery-baz += kernel/can_motor.o
 obj-discovery-baz += kernel/math/vect_plan.o
 obj-discovery-baz += kernel/math/vect2.o
+obj-discovery-baz += kernel/math/simpson_integrator.o
 obj-discovery-baz += kernel/control/kinematics.o
 obj-discovery-baz += kernel/geometric_model/geometric_model.o
 obj-discovery-baz += kernel/location/location.o

@@ -10,6 +10,7 @@
 #include "kernel/fault.h"
 #include <math.h>
 
+
 #define SPI_STACK_SIZE             300
 
 // interface accelero
@@ -60,6 +61,9 @@ static float spi_gyro_theta_simpson;  //!< angle intégré par un schéma Simpso
 static float spi_gyro_dev_lsb;        //!< correction deviation du gyro
 static uint32_t spi_gyro_dev_count;   //!< nombre de donnees utilisées pour le calcul de la correction
 static int spi_gyro_calib_mode;
+
+#include "kernel/math/simpson_integrator.h"
+static SimpsonState pSimpson;
 
 static xSemaphoreHandle spi_sem;
 
@@ -338,7 +342,9 @@ static int spi_gyro_update(float dt, int calibration)
 		portENTER_CRITICAL();
 		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
 		spi_gyro_theta_euler += spi_gyro_v * dt;
-		spi_gyro_theta_simpson = 0.12f;
+		simpson_set_derivative(&pSimpson, dt, spi_gyro_v);
+		simpson_compute(&pSimpson);
+		spi_gyro_theta_simpson = simpson_get(&pSimpson);
 		portEXIT_CRITICAL();
 	}
 	else
@@ -349,8 +355,8 @@ static int spi_gyro_update(float dt, int calibration)
 			portENTER_CRITICAL();
 			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
 			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
-			spi_gyro_theta_euler = 0.66f;
-			spi_gyro_theta_simpson = 0.42f;
+			spi_gyro_theta_euler = 0.f;
+			spi_gyro_theta_simpson = 0.f;
 			portEXIT_CRITICAL();
 			spi_gyro_dev_count++;
 		}
@@ -397,7 +403,7 @@ float spi_gyro_get_theta_simpson()
 	float data;
 
 	portENTER_CRITICAL();
-	data = spi_gyro_theta_simpson;
+	data = simpson_get(&pSimpson);
 	portEXIT_CRITICAL();
 
 	return data;
@@ -407,6 +413,7 @@ void spi_gyro_set_theta(float theta)
 {
 	portENTER_CRITICAL();
 	spi_gyro_theta_euler = theta;
+	simpson_reset(&pSimpson, theta);
 	spi_gyro_theta_simpson = theta;
 	portEXIT_CRITICAL();
 }
