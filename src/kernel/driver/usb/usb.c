@@ -26,7 +26,7 @@ static unsigned char usb_buffer[USB_TX_BUFER_SIZE];
 static int usb_buffer_begin;
 static int usb_buffer_end;
 static int usb_buffer_size;
-static unsigned char usb_rx_buffer_one_msg[256]; //!< buffer usb de reception avec un seul message mis a plat pour le traitement par la tache usb_read (en cas de bouclage sur le buffer circulaire)
+static unsigned char usb_rx_buffer_one_msg[256] __attribute__ ((aligned (4))); //!< buffer usb aligne de reception avec un seul message mis a plat pour le traitement par la tache usb_read
 static unsigned char usb_rx_buffer_ep[64]; //!< buffer usb de reception d'un endpoint si on n'a pas 64 octets contigus pour le mettre directement dans le buffer circulaire
 static unsigned char usb_rx_buffer[USB_RX_BUFER_SIZE]; //!< buffer usb de reception (circulaire)
 static unsigned int usb_rx_buffer_head; //!< position ou on doit ajouter les nouveaux octets
@@ -251,15 +251,15 @@ void usb_read_task(void * arg)
 					// mise "a plat" dans un seul buffer pour le traitement si necessaire
 					if( size <= nMax )
 					{
-						// message deja contigu en memoire
-						usb_cmd[id](&usb_rx_buffer[usb_rx_buffer_tail+2]);
+						// message deja contigu en memoire mais on le copie pour l'aligner
+						memcpy(usb_rx_buffer_one_msg, &usb_rx_buffer[usb_rx_buffer_tail], size);
 					}
 					else
 					{
 						memcpy(usb_rx_buffer_one_msg, &usb_rx_buffer[usb_rx_buffer_tail], nMax);
 						memcpy(&usb_rx_buffer_one_msg[nMax], usb_rx_buffer, size - nMax);
-						usb_cmd[id](&usb_rx_buffer_one_msg[2]);
 					}
+					usb_cmd[id](&usb_rx_buffer_one_msg[2]);
 				}
 				else
 				{
