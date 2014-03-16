@@ -238,6 +238,9 @@ void isr_reset(void)
 		"        blt     zero_loop                 "
 	);
 
+	// activation du FPU
+	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
+
 	// appel des constructeurs c++
 	int count = __preinit_array_end - __preinit_array_start;
 	for (i = 0; i < count; i++)

@@ -82,9 +82,6 @@ static int rcc_module_init()
 
 	}
 
-	// activation du FPU
-	SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));
-
 	return 0;
 }
 
