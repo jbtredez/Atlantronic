@@ -53,11 +53,12 @@ static unsigned char spi_tx_buffer[8];
 static unsigned char spi_rx_buffer[8];
 static struct spi_accel_dma_xyz spi_accel_dma_xyz;
 
-static int16_t spi_gyro_v_lsb;      //!< vitesse brute du gyro (non corrigée)
-static float spi_gyro_v;            //!< vitesse angulaire vue par le gyro
-static float spi_gyro_theta;        //!< angle vue par le gyro
-static float spi_gyro_dev_lsb;      //!< correction deviation du gyro
-static uint32_t spi_gyro_dev_count; //!< nombre de donnees utilisées pour le calcul de la correction
+static int16_t spi_gyro_v_lsb;        //!< vitesse brute du gyro (non corrigée)
+static float spi_gyro_v;              //!< vitesse angulaire vue par le gyro
+static float spi_gyro_theta_euler;    //!< angle intégré par un schéma Euler explicite
+static float spi_gyro_theta_simpson;  //!< angle intégré par un schéma Simpson
+static float spi_gyro_dev_lsb;        //!< correction deviation du gyro
+static uint32_t spi_gyro_dev_count;   //!< nombre de donnees utilisées pour le calcul de la correction
 static int spi_gyro_calib_mode;
 
 static xSemaphoreHandle spi_sem;
@@ -313,7 +314,9 @@ static int spi_gyro_update(float dt, int calibration)
 		fault(FAULT_GYRO_DISCONNECTED, FAULT_CLEAR);
 		if( ((data_gyro & 0xC000000) == 0x4000000) && ((data_gyro & 0x04) != 0x04) )
 		{
+			portENTER_CRITICAL();
 			spi_gyro_v_lsb = (int16_t)((data_gyro >> 10) & 0xffff);
+			portEXIT_CRITICAL();
 			fault(FAULT_GYRO_ERROR, FAULT_CLEAR);
 		}
 		else
@@ -332,9 +335,10 @@ static int spi_gyro_update(float dt, int calibration)
 	if( ! calibration )
 	{
 		// en cas d'erreur, on utilise l'ancienne valeur de vitesse
-		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
 		portENTER_CRITICAL();
-		spi_gyro_theta += spi_gyro_v * dt;
+		spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
+		spi_gyro_theta_euler += spi_gyro_v * dt;
+		spi_gyro_theta_simpson = 0.f;
 		portEXIT_CRITICAL();
 	}
 	else
@@ -342,7 +346,12 @@ static int spi_gyro_update(float dt, int calibration)
 		// en cas d'erreur, on ne fait rien
 		if( ! error )
 		{
+			portENTER_CRITICAL();
 			spi_gyro_dev_lsb = (spi_gyro_dev_count * spi_gyro_dev_lsb + spi_gyro_v_lsb) / (spi_gyro_dev_count + 1);
+			spi_gyro_v = ((float)spi_gyro_v_lsb - spi_gyro_dev_lsb) * 0.000218166156f;
+			spi_gyro_theta_euler = 0.f;
+			spi_gyro_theta_simpson = 0.f;
+			portEXIT_CRITICAL();
 			spi_gyro_dev_count++;
 		}
 	}
@@ -350,12 +359,45 @@ static int spi_gyro_update(float dt, int calibration)
 	return res;
 }
 
-float spi_gyro_get_theta()
+int32_t spi_gyro_get_raw_data()
 {
 	float data;
 
 	portENTER_CRITICAL();
-	data = spi_gyro_theta;
+	data = (int32_t) spi_gyro_v_lsb;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float spi_gyro_get_omega()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = spi_gyro_v;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float spi_gyro_get_theta_euler()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = spi_gyro_theta_euler;
+	portEXIT_CRITICAL();
+
+	return data;
+}
+
+float spi_gyro_get_theta_simpson()
+{
+	float data;
+
+	portENTER_CRITICAL();
+	data = spi_gyro_theta_simpson;
 	portEXIT_CRITICAL();
 
 	return data;
@@ -364,7 +406,8 @@ float spi_gyro_get_theta()
 void spi_gyro_set_theta(float theta)
 {
 	portENTER_CRITICAL();
-	spi_gyro_theta = theta;
+	spi_gyro_theta_euler = theta;
+	spi_gyro_theta_simpson = theta;
 	portEXIT_CRITICAL();
 }
 
