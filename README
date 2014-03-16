@@ -8,6 +8,11 @@ Requirements :
 	- gdb-7.6
 	- newlib-2.0.0 (flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
 
+cible linux :
+	- readline
+	- gtk+-2
+	- gtkglext-1
+
 doc : 
 	- doxygen >= 1.8.4
 		- graphviz >= 2.28
