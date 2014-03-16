@@ -66,7 +66,7 @@ static uint32_t spi_gyro_dev_count;   //!< nombre de donnees utilisées pour le 
 static int spi_gyro_calib_mode;
 
 #include "kernel/math/simpson_integrator.h"
-static SimpsonState pSimpson;
+static SimpsonState simpsonState;
 
 static xSemaphoreHandle spi_sem;
 
@@ -359,9 +359,9 @@ static int spi_gyro_update(float dt, int calibration)
 			spi_gyro_v_nonoise = spi_gyro_v;
 		}
 		spi_gyro_theta_euler += spi_gyro_v_nonoise * dt;
-		simpson_set_derivative(&pSimpson, dt, spi_gyro_v_nonoise);
-		simpson_compute(&pSimpson);
-		spi_gyro_theta_simpson = simpson_get(&pSimpson);
+		simpson_set_derivative(&simpsonState, dt, spi_gyro_v_nonoise);
+		simpson_compute(&simpsonState);
+		spi_gyro_theta_simpson = simpson_get(&simpsonState);
 		portEXIT_CRITICAL();
 	}
 	else
@@ -421,7 +421,7 @@ float spi_gyro_get_theta_simpson()
 	float data;
 
 	portENTER_CRITICAL();
-	data = simpson_get(&pSimpson);
+	data = simpson_get(&simpsonState);
 	portEXIT_CRITICAL();
 
 	return data;
@@ -429,13 +429,12 @@ float spi_gyro_get_theta_simpson()
 
 void spi_gyro_set_theta(float theta)
 {
-	log_format(LOG_INFO, "spi_gyro_set_theta : portENTER_CRITICAL");
 	portENTER_CRITICAL();
 	spi_gyro_theta_euler = theta;
-	simpson_reset(&pSimpson, theta);
-	spi_gyro_theta_simpson = simpson_get(&pSimpson);
+	simpson_reset(&simpsonState, theta);
+	spi_gyro_theta_simpson = simpson_get(&simpsonState);
 	portEXIT_CRITICAL();
-	log_format(LOG_INFO, "spi_gyro_set_theta : portEXIT_CRITICAL");
+	log_format(LOG_INFO, "gyro set theta to : %d mrad", (int)(1000*theta));
 }
 
 static void spi_task(void* arg)
@@ -480,7 +479,6 @@ void spi_gyro_calib(int cmd)
 			bias = spi_gyro_bias;
 			portEXIT_CRITICAL();
 			log_format(LOG_INFO, "gyro stop calibration : %d mLSB/s", (int)(1000*bias));
-			spi_gyro_set_theta(0.f);
 			break;
 		default:
 			break;

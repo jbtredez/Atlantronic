@@ -35,7 +35,7 @@ module_init(systick_module_init, INIT_SYSTICK);
 //! interruption systick, on declenche l'IT de changement de contexte
 //! on desactive les IT avant de toucher au systick pour ne pas entrer
 //! en concurence avec l'IT de changement de contexte
-void isr_systick( void )
+__attribute__((optimize("-O2"))) void isr_systick( void )
 {
 	// preemption
 	*(portNVIC_INT_CTRL) = portNVIC_PENDSVSET;
@@ -56,7 +56,7 @@ struct systime systick_get_time()
 	return t;
 }
 
-struct systime systick_get_time_from_isr()
+__attribute__((optimize("-O2"))) struct systime systick_get_time_from_isr()
 {
 	// formule pour eviter les debordements sur 32 bits
 	systick_time.ns = (1000 * (SysTick->LOAD - SysTick->VAL)) / RCC_SYSCLK_MHZ;
