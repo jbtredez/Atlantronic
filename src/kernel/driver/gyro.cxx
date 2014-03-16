@@ -90,16 +90,16 @@ static void init_gyro()
 	if( gyro_init_step == 100)
 	{
 		res = gyro_send_data(0x20000003, &data_gyro);
-		if( ! res )
+		if( res )
 		{
 			gyro_init_step = 0;
 			fault(FAULT_GYRO_DISCONNECTED, FAULT_ACTIVE);
 		}
 	}
-	else if( gyro_init_step == 150 || gyro_init_step == 200 || gyro_init_step == 250)
+	else if( gyro_init_step == 150 || gyro_init_step == 200)
 	{
 		res = gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
-		if( ! res )
+		if( res )
 		{
 			gyro_init_step = 0;
 			fault(FAULT_GYRO_DISCONNECTED, FAULT_ACTIVE);
@@ -108,9 +108,18 @@ static void init_gyro()
 
 	if( gyro_init_step == 250)
 	{
-		gyro_calib_mode = 1;
-		gyro_state = GYRO_STATE_RUNNING;
-		fault(FAULT_GYRO_DISCONNECTED, FAULT_CLEAR);
+		res = gyro_send_data(ADXRS453_SENSOR_DATA, &data_gyro);
+		if( res == 0 && (data_gyro & 0xe0000000) == 0 )
+		{
+			gyro_calib_mode = 1;
+			gyro_state = GYRO_STATE_RUNNING;
+			fault(FAULT_GYRO_DISCONNECTED, FAULT_CLEAR);
+		}
+		else
+		{
+			gyro_init_step = 0;
+			fault(FAULT_GYRO_DISCONNECTED, FAULT_ACTIVE);
+		}
 	}
 
 	gyro_init_step++;
