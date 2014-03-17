@@ -99,7 +99,7 @@ void fault(enum fault id, unsigned char new_state)
 	}
 }
 
-long fault_from_isr(enum fault id, unsigned char new_state)
+long fault_from_isr(enum fault id, unsigned char new_state, const char* debugText)
 {
 	long xHigherPriorityTaskWoken = 0;
 
@@ -107,6 +107,7 @@ long fault_from_isr(enum fault id, unsigned char new_state)
 	{
 		fault_status[id].state = new_state;
 		fault_status[id].time = systick_get_time_from_isr().ms;
+		strncpy(fault_status[id].debugtext, debugText, sizeof(fault_status[id].debugtext));
 		xSemaphoreGiveFromISR(fault_barrier, &xHigherPriorityTaskWoken);
 	}
 

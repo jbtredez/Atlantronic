@@ -10,6 +10,10 @@
 //! ne pas oublier de mettre a jour la description dans foo_interface
 enum fault
 {
+	// erreurs OS
+	FAULT_UNALIGNED,
+	FAULT_DIVBY0,
+
 	// HOKUYO
 	FAULT_HOKUYO_DISCONNECTED,
 	FAULT_HOKUYO_DATA_CORRUPTION, // erreur FE/NE/ORE sur usart, check_cmd, unknown status, checksum

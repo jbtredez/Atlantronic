@@ -4,6 +4,7 @@
 
 #include "kernel/FreeRTOS.h"
 #include "priority.h"
+#include "kernel/fault.h"
 
 struct stack_t
 {
@@ -34,12 +35,13 @@ struct stack_t
 #define SCB_CFSR_USAGE_INVSTATE        0x20000
 #define SCB_CFSR_USAGE_INVPC           0x40000
 #define SCB_CFSR_USAGE_NOCP            0x80000
-#define SCB_CFSR_USAGE_UNALIGNED      0x100000
-#define SCB_CFSR_USAGE_DIVBYZERO      0x200000
+#define SCB_CFSR_USAGE_UNALIGNED     0x1000000
+#define SCB_CFSR_USAGE_DIVBYZERO     0x2000000
 
 void isr_reset(void) __attribute__ ((naked)); //!< fonction de reset (point d'entrée)
 static void isr_nmi(void); //!< interruption nmi
 static void isr_hard_fault(void) __attribute__ ((naked)); //!< interruption "hard fault"
+const char* isr_kill_current_task() __attribute__((weak, alias("isr_unexpected") ));
 static void isr_mpu_fault(void); //!< interruption d'erreur sur le mpu
 static void isr_bus_fault(void); //!< interruption d'erreur sur le bus
 static void isr_usage_fault(void); //!< interruption d'erreur "usage fault"
@@ -331,126 +333,146 @@ void isr_hard_fault_stack(struct stack_t* fault_stack)
 	(void)fault_stack;
 	// regarder fault_stack->pc pour voir d'ou vient le probleme
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_IACCVIOL )
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_IACCVIOL )
 	{
 		// Instruction access violation
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_DACCVIOL )
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_DACCVIOL )
 	{
 		// Data access violation
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MUNSTKERR)
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_MUNSTKERR)
 	{
 		// Memory Management Fault on unstacking for a return from exception
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MSTKERR )
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_MSTKERR )
 	{
 		// Memory Management Fault on stacking for exception entry
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MLSPERR )
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_MLSPERR )
 	{
 		// Memory Management Fault during floating point lazy state preservation
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_MEMMANAG_MMARVALID )
+	if( SCB->CFSR & SCB_CFSR_MEMMANAG_MMARVALID )
 	{
 		// Memory Management Fault Address Register (SCB->MMFAR) valid flag
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_IBUSERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_IBUSERR )
 	{
 		// Instruction bus error
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_PRECISERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_PRECISERR )
 	{
 		// Precise data bus error
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_IMPRECISERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_IMPRECISERR )
 	{
 		// Imprecise data bus error
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_UNSTKERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_UNSTKERR )
 	{
 		// BusFault on unstacking for a return from exception
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_STKERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_STKERR )
 	{
 		// BusFault on stacking for exception entry
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_LSPERR )
+	if( SCB->CFSR & SCB_CFSR_BUS_LSPERR )
 	{
 		// Bus Fault during floating point lazy state preservation
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_BUS_BFARVALID )
+	if( SCB->CFSR & SCB_CFSR_BUS_BFARVALID )
 	{
 		// Bus Fault Address Register (SCB->BFAR) valid flag
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_UNDEFINSTR )
+	if( SCB->CFSR & SCB_CFSR_USAGE_UNDEFINSTR )
 	{
 		// Undefined instruction Usage Fault
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_INVSTATE )
+	if( SCB->CFSR & SCB_CFSR_USAGE_INVSTATE )
 	{
 		// Invalid state Usage Fault
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_INVPC )
+	if( SCB->CFSR & SCB_CFSR_USAGE_INVPC )
 	{
 		// Invalid PC load Usage Fault, caused by an invalid EXC_RETURN value
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_NOCP )
+	if( SCB->CFSR & SCB_CFSR_USAGE_NOCP )
 	{
 		// No coprocessor Usage Fault. The processor does not support coprocessor instructions
 		// TODO : action ?
+		while( 1 ) ;
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_UNALIGNED )
+	if( SCB->CFSR & SCB_CFSR_USAGE_UNALIGNED )
 	{
 		// Unaligned access
-		// TODO : action ?
+		// on supprime la tache courante
+		SCB->CFSR |= SCB_CFSR_USAGE_UNALIGNED;
+		SCB->HFSR |= SCB_HFSR_FORCED_Msk;
+		const char* taskName = isr_kill_current_task();
+		fault_from_isr(FAULT_UNALIGNED, FAULT_ACTIVE, taskName);
 	}
 
-	if( SCB->CFSR | SCB_CFSR_USAGE_DIVBYZERO )
+	if( SCB->CFSR & SCB_CFSR_USAGE_DIVBYZERO )
 	{
 		// Divide by zero
-		// TODO : action ?
+		// on supprime la tache courante
+		SCB->CFSR |= SCB_CFSR_USAGE_DIVBYZERO;
+		SCB->HFSR |= SCB_HFSR_FORCED_Msk;
+		const char* taskName = isr_kill_current_task();
+		fault_from_isr(FAULT_DIVBY0, FAULT_ACTIVE, taskName);
 	}
 
 //	isr_pwm_reset();
-
-	while( 1 )
-	{
-
-	}
 }
 
 static void isr_hard_fault(void)

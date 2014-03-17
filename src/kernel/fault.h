@@ -17,15 +17,16 @@ extern "C" {
 
 struct fault_status
 {
-	uint32_t state; //!< dernier bit : actif ou non. state >> 1 : nombre de defauts de ce type depuis le debut
-	uint32_t time;  //!< date du dernier defaut de ce type (en ms)
+	uint32_t state;      //!< dernier bit : actif ou non. state >> 1 : nombre de defauts de ce type depuis le debut
+	uint32_t time;       //!< date du dernier defaut de ce type (en ms)
+	char debugtext[16];  //!< infos debug
 } __attribute__((packed));
 
 //!< monter / descendre un defaut
 void fault(enum fault id, unsigned char new_state);
 
 //!< monter / descendre un defaut depuis une IT
-long fault_from_isr(enum fault id, unsigned char new_state);
+long fault_from_isr(enum fault id, unsigned char new_state, const char* debugText);
 
 #ifdef __cplusplus
 }

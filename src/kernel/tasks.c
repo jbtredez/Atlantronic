@@ -718,6 +718,27 @@ tskTCB * pxNewTCB;
 
 #endif /* INCLUDE_vTaskDelete */
 /*-----------------------------------------------------------*/
+const char* isr_kill_current_task()
+{
+	const char* name = (const char*)pxCurrentTCB->pcTaskName;
+	// suppression tache
+	if( uxListRemove( ( xListItem * ) &( pxCurrentTCB->xGenericListItem ) ) == 0 )
+	{
+		taskRESET_READY_PRIORITY( pxCurrentTCB->uxPriority );
+	}
+
+	if( pxCurrentTCB->xEventListItem.pvContainer != NULL )
+	{
+		uxListRemove( &( pxCurrentTCB->xEventListItem ) );
+	}
+
+	if( xSchedulerRunning != pdFALSE )
+	{
+		portEND_SWITCHING_ISR(1);
+	}
+
+	return name;
+}
 
 #if ( INCLUDE_vTaskDelayUntil == 1 )
 
