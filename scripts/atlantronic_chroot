@@ -1,0 +1,150 @@
+#!/bin/bash
+
+CHROOT_DIR=""
+
+display_help()
+{
+	PROG_NAME=$(basename $0)
+	echo "${PROG_NAME} dirname [admin_mode]"
+	echo "dirname : directory of chroot image"
+}
+
+root_check()
+{
+	ID=$(id -u)
+
+	if ! [ $ID -eq 0 ]
+	then
+		echo "Must be root"
+		exit 0
+	fi
+
+	if [ "$1x" == "x" ]
+	then
+		display_help
+		exit 0
+	fi
+
+	CHROOT_DIR=$(dirname $1/x)
+	if [ "${CHROOT_DIR}" == "/" ]
+	then
+		echo "error : dirname is \"/\""
+		exit 0
+	fi
+}
+
+root_check $1
+shift
+xhost +
+
+
+ADMIN_MODE=0
+if [ "$1" == "1" ]
+then
+	ADMIN_MODE=1
+fi
+shift
+
+NODE_ID=$(stat -c %i ${CHROOT_DIR})
+MOUNT_MARK=/tmp/.chroot_mount-${NODE_ID}
+MOUNT_MARK_ADMIN=/tmp/.chroot_mount-${NODE_ID}-admin
+KERNEL=`uname -r`
+
+declare -i CPT
+
+if [ -e ${MOUNT_MARK} ] 
+then
+	echo "Bind already done"
+else
+	echo "0" > ${MOUNT_MARK}
+fi
+
+CPT=`cat ${MOUNT_MARK}`
+(( CPT++ ))
+
+echo "This is chroot session $CPT"
+
+echo $CPT > ${MOUNT_MARK}
+
+if (( CPT == 1))
+then
+	echo "Mounting chroot..."
+
+	mount -t proc proc ${CHROOT_DIR}/proc
+	mount -o bind /sys ${CHROOT_DIR}/sys
+	mount -o bind /dev ${CHROOT_DIR}/dev
+	mount -o bind /dev/pts ${CHROOT_DIR}/dev/pts
+	mount -o bind /dev/shm ${CHROOT_DIR}/dev/shm
+	mount -o bind /run ${CHROOT_DIR}/run
+	mount -o bind /run/shm ${CHROOT_DIR}/run/shm
+	mount -o bind /tmp ${CHROOT_DIR}/tmp
+	mount -o bind /var/tmp ${CHROOT_DIR}/var/tmp
+	mount -o bind /etc/resolv.conf ${CHROOT_DIR}/etc/resolv.conf
+	mkdir -p ${CHROOT_DIR}/lib/modules/${KERNEL}/build
+	mount -o bind /lib/modules/${KERNEL}/build ${CHROOT_DIR}/lib/modules/${KERNEL}/build
+
+	if [ ${ADMIN_MODE} == "1" ]
+	then
+		if ! [ -e ${MOUNT_MARK_ADMIN} ]
+		then
+			echo "Mounting portage"
+			mount -o bind /usr/portage ${CHROOT_DIR}/usr/portage
+			mount -o bind /usr/local/portage/distfiles ${CHROOT_DIR}/usr/local/portage/distfiles
+			touch ${MOUNT_MARK_ADMIN}
+		fi
+	else
+		mount -o bind /etc/hosts ${CHROOT_DIR}/etc/hosts
+	fi
+
+fi
+
+if [ ${ADMIN_MODE} == "1" ]
+then
+	if [ "x$*" == "x" ]
+	then
+		chroot ${CHROOT_DIR} /bin/bash
+	else
+		chroot ${CHROOT_DIR} /bin/bash -c "$*"
+	fi
+else
+	chroot ${CHROOT_DIR} /bin/bash --rcfile /root/.bashrc2
+fi
+
+CPT=`cat ${MOUNT_MARK}`
+(( CPT-- ))
+
+echo $CPT > ${MOUNT_MARK}
+
+if (( CPT <= 0 ))
+then
+	echo "Last chroot session, unmounting..."
+
+	sync
+
+	umount ${CHROOT_DIR}/proc
+	umount ${CHROOT_DIR}/sys
+	umount ${CHROOT_DIR}/dev/shm
+	umount ${CHROOT_DIR}/dev/pts
+	umount ${CHROOT_DIR}/dev
+	umount ${CHROOT_DIR}/run/shm
+	umount ${CHROOT_DIR}/run
+	umount ${CHROOT_DIR}/tmp
+	umount ${CHROOT_DIR}/var/tmp
+	umount ${CHROOT_DIR}/etc/resolv.conf
+	umount ${CHROOT_DIR}/lib/modules/${KERNEL}/build
+
+	if [ -e ${MOUNT_MARK_ADMIN} ]
+	then
+		echo "Umounting portage"
+		umount ${CHROOT_DIR}/usr/portage
+		umount ${CHROOT_DIR}/usr/local/portage/distfiles
+		rm ${MOUNT_MARK_ADMIN}
+	else
+		umount ${CHROOT_DIR}/etc/hosts
+	fi
+
+	rm ${MOUNT_MARK}
+else
+	echo "Still $CPT users"
+fi
+
