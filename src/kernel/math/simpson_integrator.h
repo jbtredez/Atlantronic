@@ -1,38 +1,34 @@
 #ifndef __SIMPSON_INTEGRATOR_H__
 #define __SIMPSON_INTEGRATOR_H__
 
-#ifdef __cplusplus
-extern "C"
+class Simpson
 {
-#endif
+	public:
+		Simpson();
+		void reset(float val);
+		void set_derivative(float age_s, float derivative);
+		void compute();
 
-typedef struct SimpsonState
-{
-	// derivatives
-	float xk;
-	float xkm1;
-	float xkm2;
+		inline float get()
+		{
+			return yk;
+		}
 
-	// outputs
-	float yk;
-	float ykm1;
-	float ykm2;
+	protected:
+		// derivatives
+		float xk;
+		float xkm1;
+		float xkm2;
 
-	// times
-	float dtk;
-	float dtkm1;
-	float dtkm2;
-} SimpsonState;
+		// outputs
+		float yk;
+		float ykm1;
+		float ykm2;
 
-SimpsonState * simpson_construct_state();
-void simpson_reset(SimpsonState * pstate, float val);
-void simpson_set_derivative(SimpsonState * pstate, float age_s, float derivative);
-void simpson_compute(SimpsonState * pstate);
-float simpson_get(SimpsonState * pstate);
-void simpson_destroy_state(SimpsonState * pstate);
-
-#ifdef __cplusplus
-}
-#endif
+		// times
+		float dtk;
+		float dtkm1;
+		float dtkm2;
+};
 
 #endif

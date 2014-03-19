@@ -38,7 +38,7 @@ static enum GyroState gyro_state;
 static int gyro_init_step;            //!< nombre de cycles (1 cycle = 1ms) depuis le debut de la phase d'init
 static unsigned char gyro_tx_buffer[8];
 static unsigned char gyro_rx_buffer[8];
-static SimpsonState simpsonState;
+static Simpson gyro_simpson;
 
 static void init_gyro();
 static void gyro_calibration_cmd(void* arg);
@@ -184,9 +184,9 @@ static int gyro_update(float dt)
 			gyro_v_nonoise = gyro_v;
 		}
 		gyro_theta_euler += gyro_v_nonoise * dt;
-		simpson_set_derivative(&simpsonState, dt, gyro_v_nonoise);
-		simpson_compute(&simpsonState);
-		gyro_theta_simpson = simpson_get(&simpsonState);
+		gyro_simpson.set_derivative(dt, gyro_v_nonoise);
+		gyro_simpson.compute();
+		gyro_theta_simpson = gyro_simpson.get();
 		portEXIT_CRITICAL();
 	}
 	else
@@ -248,7 +248,7 @@ float gyro_get_theta_simpson()
 	float data;
 
 	portENTER_CRITICAL();
-	data = simpson_get(&simpsonState);
+	data = gyro_simpson.get();
 	portEXIT_CRITICAL();
 
 	return data;
@@ -258,8 +258,8 @@ void gyro_set_theta(float theta)
 {
 	portENTER_CRITICAL();
 	gyro_theta_euler = theta;
-	simpson_reset(&simpsonState, theta);
-	gyro_theta_simpson = simpson_get(&simpsonState);
+	gyro_simpson.reset(theta);
+	gyro_theta_simpson = gyro_simpson.get();
 	portEXIT_CRITICAL();
 	log_format(LOG_INFO, "gyro set theta to : %d mrad", (int)(1000*theta));
 }
