@@ -108,6 +108,7 @@ class RobotInterface
 		// données brutes
 		struct hokuyo_scan hokuyo_scan[HOKUYO_MAX];
 		struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
+		struct control_usb_data last_control_usb_data;
 		int control_usb_data_count;
 		struct fault_status fault_status[FAULT_MAX];
 

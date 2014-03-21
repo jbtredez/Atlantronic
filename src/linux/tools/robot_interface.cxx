@@ -603,7 +603,8 @@ int RobotInterface::process_control(char* msg, uint16_t size)
 	}
 
 	memcpy(control_usb_data + control_usb_data_count, msg, size);
-	t = control_usb_data[control_usb_data_count].current_time;
+	last_control_usb_data = control_usb_data[control_usb_data_count];
+	t = last_control_usb_data.current_time;
 	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
