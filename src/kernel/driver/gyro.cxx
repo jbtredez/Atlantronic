@@ -68,7 +68,7 @@ static void gyro_spi_callback()
 {
 	if( gyro_state == GYRO_STATE_RUNNING)
 	{
-		gyro_update(0.001f);
+		gyro_update(0.002020202f); // TODO relier a frequence spi de facon correcte
 	}
 	else if( gyro_state == GYRO_STATE_DISCONNECTED )
 	{
@@ -94,6 +94,7 @@ static void init_gyro()
 	int res;
 	uint32_t data_gyro;
 
+	// TODO 1 step pas forcement 1ms, mettre des systick_get_time
 	// attente de 100 ms pour init du gyro apres mise sous tension
 	if( gyro_init_step == 100)
 	{

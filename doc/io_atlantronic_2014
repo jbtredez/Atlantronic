@@ -119,7 +119,7 @@ TIM2  : encodeur 2
 TIM3  : encodeur 1
 TIM4  : encodeur 3
 TIM5  :
-TIM6  :
+TIM6  : timer / frequence bus SPI
 TIM7  :
 TIM8  :
 TIM9  :

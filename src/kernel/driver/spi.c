@@ -13,6 +13,7 @@
 #define SPI_STACK_SIZE             300
 
 static xSemaphoreHandle spi_sem;
+static xSemaphoreHandle tim_sem;
 static void(*spi_callback[SPI_DEVICE_MAX])(void);
 
 static void spi_task(void* arg);
@@ -104,6 +105,26 @@ int spi_module_init()
 	}
 
 	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
+
+	//////////// TESTS SPI sur timer
+	// activation timer 6
+	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+	TIM6->CR1 = 0x00;//TIM_CR1_ARPE;
+
+	// TIM6_CLK = 84MHz / (PSC + 1) = 21Mhz
+	TIM6->PSC = 3;
+
+	// IT tout les TIM6_CLK / ARR = 485 Hz
+	TIM6->ARR = 43299;
+	TIM6->DIER = TIM_DIER_UIE;
+	NVIC_EnableIRQ(TIM6_DAC_IRQn);
+	NVIC_SetPriority(TIM6_DAC_IRQn, PRIORITY_IRQ_SPI);
+
+	vSemaphoreCreateBinary(tim_sem);
+	xSemaphoreTake(tim_sem, 0);
+
+	// activation
+	TIM6->CR1 |= TIM_CR1_CEN;
 
 	return 0;
 }
@@ -232,6 +253,21 @@ int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buff
 	return res;
 }
 
+void isr_tim6(void)
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
+	if( TIM6->SR | TIM_SR_UIF )
+	{
+		TIM6->SR &= ~TIM_SR_UIF;
+		xSemaphoreGiveFromISR(tim_sem, &xHigherPriorityTaskWoken);
+	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
 static void spi_task(void* arg)
 {
 	(void) arg;
@@ -244,7 +280,8 @@ static void spi_task(void* arg)
 			spi_callback[i]();
 		}
 
-		vTaskDelay(1);
+		xSemaphoreTake(tim_sem, portMAX_DELAY);
+		//vTaskDelay(1);
 	}
 }
 
