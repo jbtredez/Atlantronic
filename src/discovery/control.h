@@ -79,7 +79,7 @@ struct control_usb_data
 	VectPlan cons;
 	VectPlan pos;
 	VectPlan wanted_pos;
-	int16_t raw_data_gyro;
+	int32_t raw_data_gyro;
 	float omega_gyro;
 	float pos_theta_gyro_euler;
 	float pos_theta_gyro_simpson;
