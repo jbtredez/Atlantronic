@@ -28,6 +28,7 @@ obj-discovery-gyro += $(obj-discovery-core)
 obj-discovery-gyro += kernel/driver/spi.o
 obj-discovery-gyro += kernel/driver/accelero.o
 obj-discovery-gyro += kernel/driver/gyro.o
+obj-discovery-gyro += kernel/math/simpson_integrator.o
 
 obj-discovery-dynamixel += $(obj-discovery-core)
 obj-discovery-dynamixel += kernel/driver/dynamixel.o
