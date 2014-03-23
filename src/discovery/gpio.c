@@ -39,6 +39,29 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOC, 14, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // bouton USR1
 	gpio_pin_init(GPIOD, 3, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // bouton go
 
+	// io sur les 5 connecteurs io generiques
+	// pull up pour les omron
+	// PD11 : IN_1
+	// PB13 : IN_2
+	// PB12 : IN_3
+	// PD10 : IN_4
+	// PD7  : IN_5
+	// PB11 : IN_6
+	// PC11 : IN_7
+	// PD6  : IN_8
+	// PC9  : IN_9
+	// PC8  : IN_10
+	gpio_pin_init(GPIOD, 11, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_1
+	gpio_pin_init(GPIOB, 13, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_2
+	gpio_pin_init(GPIOB, 12, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_3
+	gpio_pin_init(GPIOD, 10, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_4
+	gpio_pin_init(GPIOD, 7, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_5
+	gpio_pin_init(GPIOB, 11, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_6
+	gpio_pin_init(GPIOC, 11, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_7
+	gpio_pin_init(GPIOD, 6, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_8
+	gpio_pin_init(GPIOC, 9, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_9
+	gpio_pin_init(GPIOC, 8, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_10
+
 	setLed( LED_CPU_RED | LED_CPU_BLUE | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2 | LED_EXT_RED);
 
 	color = COLOR_BLUE;

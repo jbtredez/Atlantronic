@@ -27,9 +27,9 @@ PB7  : BTN2
 PB8  : LED5
 PB9  : SDA (CS43L22 - audio - carte cpu)
 PB10 : CLK (MP45DT02 - audio - carte cpu)
-PB11 : OUT_3
-PB12 : IN_2
-PB13 : OUT_1
+PB11 : IN_6
+PB12 : IN_3
+PB13 : IN_2
 PB14 :
 PB15 :
 
@@ -41,10 +41,10 @@ PC4  : (CS43L22 - audio - carte cpu)
 PC5  : AN15 - tension BAT
 PC6  : USART6_TX (=> AX12 en half duplex)
 PC7  : MCLK (CS43L22 - audio - carte cpu)
-PC8  : OUT_5
-PC9  : IN_5
+PC8  : IN_10
+PC9  : IN_9
 PC10 : SCLK (CS43L22 - audio - carte cpu)
-PC11 : IN_4
+PC11 : IN_7
 PC12 : SDIN (CS43L22 - audio - carte cpu). UART5_TX (RX24F), on n'utilise pas la puce audio
 PC13 : LED2
 PC14 : (osc32_in si on en met un ? a priori, pas utile) => BTN1
@@ -56,11 +56,11 @@ PD2  : UART5_RX (RX24F)
 PD3  : GO
 PD4  : RESET (CS43L22 - audio - carte cpu)
 PD5  : led rouge overcurrent (USB - carte cpu)
-PD6  : OUT_4
-PD7  : IN_3
+PD6  : IN_8
+PD7  : IN_5
 PD8  : USART3_TX (xbee)
 PD9  : USART3_RX (xbee)
-PD10 : OUT_2
+PD10 : IN_4
 PD11 : IN_1
 PD12 : (led verte (carte cpu)) TIM4_CH1 (encodeur 3)
 PD13 : (led orange (carte cpu)) TIM4_CH2 (encodeur 3)
