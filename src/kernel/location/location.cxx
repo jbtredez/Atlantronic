@@ -9,17 +9,12 @@
 #include "kernel/geometric_model/geometric_model.h"
 
 static void location_cmd_set_position(void* arg);
-VectPlan location_pos;
+VectPlan location_pos(0, 700, -M_PI/2);
 VectPlan location_speed;
 
 static int location_module_init()
 {
 	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, location_cmd_set_position);
-
-	// position initiale
-	location_pos.x = 0;
-	location_pos.y = 700;
-	location_pos.theta = -M_PI/2;
 
 	return 0;
 };
