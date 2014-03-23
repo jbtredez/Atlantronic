@@ -5,6 +5,7 @@
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
 #include "kernel/control/kinematics.h"
+#include "kernel/fault.h"
 
 enum
 {
@@ -48,15 +49,17 @@ class CanMotor : public CanopenNode
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
 		float outputGain;   //!< gain pour convertir la position en unites robot
 		float positionOffset; //!< offset sur la position
+		bool connected;
+		enum fault fault_disconnected_id;
 
-		void update();
+		void update(portTickType absTimeout);
 		void update_homing(float v);
 		void update_state();
 		void set_speed(float v);
 
 		inline bool is_op_enable()
 		{
-			return (status_word & 0x6f) == 0x27;
+			return connected && (status_word & 0x6f) == 0x27;
 		}
 	protected:
 		virtual void rx_pdo(struct can_msg *msg, int type);

@@ -57,28 +57,28 @@ static int canopen_module_init(void)
 
 module_init(canopen_module_init, INIT_CAN);
 
-void canopen_update()
+void canopen_update(portTickType absTimeout)
 {
-	bool all_nmt_op = true;
+	//bool all_nmt_op = true;
 	for(int i = 0; i < can_max_node; i++)
 	{
 		if( canopen_nodes[i]->state != NMT_OPERATIONAL )
 		{
-			all_nmt_op = false;
+			//all_nmt_op = false;
 		}
 		// mise a 0 de la semaphore avant le sync
 		xSemaphoreTake(canopen_nodes[i]->sem, 0);
 	}
 
-	if( all_nmt_op )
-	{
+	//if( all_nmt_op )
+	//{
 		//log(LOG_INFO, "sync");
 		canopen_sync();
-	}
+	//}
 
 	for(int i = 0; i < can_max_node; i++)
 	{
-		canopen_nodes[i]->update();
+		canopen_nodes[i]->update(absTimeout);
 	}
 }
 
@@ -273,7 +273,7 @@ CanopenNode::CanopenNode()
 	xSemaphoreTake(sem, 0);
 }
 
-void CanopenNode::update()
+void CanopenNode::update(portTickType /*absTimeout*/)
 {
 	if( state == NMT_PRE_OPERATIONAL )
 	{

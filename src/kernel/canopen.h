@@ -56,11 +56,11 @@ class CanopenNode
 
 		virtual void rx_pdo(struct can_msg *msg, int type);
 
-		virtual void update();
+		virtual void update(portTickType absTimeout);
 		int wait_update_until(portTickType t);
 };
 
-void canopen_update();
+void canopen_update(portTickType absTimeout);
 
 int canopen_register_node(CanopenNode* node);
 

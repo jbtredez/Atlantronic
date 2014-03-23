@@ -37,9 +37,6 @@ module_init(control_module_init, INIT_CONTROL);
 
 static void control_task(void* /*arg*/)
 {
-	int motorNotReady;
-	int i = 0;
-
 	uint32_t wake_time = 0;
 
 	while(1)
@@ -48,29 +45,17 @@ static void control_task(void* /*arg*/)
 		adc_update();
 
 		// mise a jour du can
-		canopen_update();
+		canopen_update(wake_time + 2);
 
 		// mise a jour de la localisation
-		int motor_update_max_abstime = wake_time + 2;
-		motorNotReady = 0;
-		for(i = 0; i < CAN_MOTOR_MAX; i++)
+		int motorNotReady = 0;
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
 		{
-			int res = can_motor[i].wait_update_until(motor_update_max_abstime);
-			if( res )
+			if( ! can_motor[i].is_op_enable() )
 			{
-				// defaut, moteur ne repond pas
-				fault((enum fault)(FAULT_CAN_MOTOR_DISCONNECTED_0 + i), FAULT_ACTIVE);
 				motorNotReady = 1;
+			}
 
-			}
-			else
-			{
-				fault((enum fault)(FAULT_CAN_MOTOR_DISCONNECTED_0 + i), FAULT_CLEAR);
-				if( ! can_motor[i].is_op_enable() )
-				{
-					motorNotReady = 1;
-				}
-			}
 			control_kinematics_mes[i] = can_motor[i].kinematics;
 		}
 
