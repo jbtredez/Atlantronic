@@ -10,7 +10,7 @@
 
 #define EPSILON                                 1e-4
 
-static KinematicsParameters paramDriving = {1500, 1000, 1500};
+static KinematicsParameters paramDriving = {1500, 1500, 1500};
 static KinematicsParameters paramSteering = {1.5, 1.5, 1.5};
 
 static const float steering_coupling[3] = { DRIVING1_WHEEL_RADIUS, DRIVING2_WHEEL_RADIUS, DRIVING3_WHEEL_RADIUS};
