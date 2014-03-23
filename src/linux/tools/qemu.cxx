@@ -37,8 +37,8 @@ int qemu::init(const char* prog_name, int gdb_port)
 
 	snprintf(file_qemu_read, sizeof(file_qemu_read), "/tmp/qemu-%i.out", current_pid);
 	snprintf(file_qemu_write, sizeof(file_qemu_write), "/tmp/qemu-%i.in", current_pid);
-	snprintf(file_foo_read, sizeof(file_foo_read), "/tmp/foo-%i.out", current_pid);
-	snprintf(file_foo_write, sizeof(file_foo_write), "/tmp/foo-%i.in", current_pid);
+	snprintf(file_foo_read, sizeof(file_foo_read), "/tmp/carte-%i.out", current_pid);
+	snprintf(file_foo_write, sizeof(file_foo_write), "/tmp/carte-%i.in", current_pid);
 
 	mkfifo(file_qemu_read, 0666);
 	mkfifo(file_qemu_write, 0666);
@@ -49,7 +49,7 @@ int qemu::init(const char* prog_name, int gdb_port)
 
 	char pipe_usb[64];
 	char pipe_model[64];
-	snprintf(pipe_usb, sizeof(pipe_usb), "pipe,id=foo_usb,path=/tmp/foo-%i", current_pid);
+	snprintf(pipe_usb, sizeof(pipe_usb), "pipe,id=foo_usb,path=/tmp/carte-%i", current_pid);
 	snprintf(pipe_model, sizeof(pipe_model), "pipe,id=foo_model,path=/tmp/qemu-%i", current_pid);
 
 	if(pid == 0)
