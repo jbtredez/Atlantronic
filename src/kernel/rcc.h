@@ -23,7 +23,7 @@ extern "C" {
 
 void wait_active(uint32_t tick);
 
-void reboot();
+void reboot(void);
 
 #ifdef __cplusplus
 }
