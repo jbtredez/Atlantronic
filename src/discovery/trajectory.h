@@ -5,7 +5,7 @@
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
-#include "control.h"
+#include "motion.h"
 #include "kernel/location/location.h"
 
 enum trajectory_cmd_type
@@ -43,9 +43,6 @@ struct trajectory_cmd_arg
 	uint16_t avoidance_type;   //!< type d'évitement
 	uint16_t way;              //!< sens
 	VectPlan dest;
-	VectPlan cp;
-	KinematicsParameters linearParam;
-	KinematicsParameters angularParam;
 	float dist;
 } __attribute__ (( packed ));
 

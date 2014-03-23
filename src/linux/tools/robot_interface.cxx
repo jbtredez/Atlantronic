@@ -767,12 +767,12 @@ int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 
 int RobotInterface::control_print_param()
 {
-	return usb_write(USB_CMD_CONTROL_PRINT_PARAM, NULL, 0);
+	return usb_write(USB_CMD_MOTION_PRINT_PARAM, NULL, 0);
 }
 
 int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
 {
-	struct control_cmd_param_arg cmd_arg;
+	struct motion_cmd_param_arg cmd_arg;
 
 	cmd_arg.kp_av = kp_av;
 	cmd_arg.ki_av = ki_av;
@@ -784,42 +784,42 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	cmd_arg.ky = ky;
 	cmd_arg.kalpha = kalpha;
 
-	return usb_write(USB_CMD_CONTROL_PARAM, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
-	struct control_cmd_goto_arg cmd_arg;
+	struct motion_cmd_goto_arg cmd_arg;
 
 	cmd_arg.dest = dest;
 	cmd_arg.cp = cp;
 	cmd_arg.linearParam = linearParam;
 	cmd_arg.angularParam = angularParam;
 
-	return usb_write(USB_CMD_CONTROL_GOTO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MOTION_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
 {
-	struct control_cmd_set_speed_arg cmd_arg;
+	struct motion_cmd_set_speed_arg cmd_arg;
 
 	cmd_arg.cp = cp;
 	cmd_arg.v = v;
 	cmd_arg.u = u;
 
-	return usb_write(USB_CMD_CONTROL_SET_SPEED, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MOTION_SET_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_set_actuator_speed(float v[6])
 {
-	struct control_cmd_set_actuator_speed_arg cmd_arg;
+	struct motion_cmd_set_actuator_speed_arg cmd_arg;
 
 	for(int i = 0; i < 6; i++)
 	{
 		cmd_arg.v[i] = v[i];
 	}
 
-	return usb_write(USB_CMD_CONTROL_SET_ACTUATOR_SPEED, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MOTION_SET_ACTUATOR_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::straight(float dist)
@@ -867,7 +867,7 @@ int RobotInterface::rotate_to(float theta)
 
 int RobotInterface::control_free()
 {
-	return usb_write(USB_CMD_CONTROL_FREE, NULL, 0);
+	return usb_write(USB_CMD_MOTION_FREE, NULL, 0);
 }
 
 int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type)
@@ -1095,7 +1095,7 @@ int RobotInterface::can_lss_save()
 
 int RobotInterface::set_max_speed(float vmax_av, float vmax_rot)
 {
-	struct control_cmd_max_speed_arg cmd_arg;
+	struct motion_cmd_max_speed_arg cmd_arg;
 
 	cmd_arg.vmax_av = fabsf(vmax_av);
 	cmd_arg.vmax_rot = fabsf(vmax_rot);

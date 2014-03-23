@@ -57,22 +57,22 @@ enum
 
 enum
 {
-	SUBGRAPH_CONTROL_SPEED_DIST_MES = 0,
-	SUBGRAPH_CONTROL_SPEED_DIST_CONS,
-	SUBGRAPH_CONTROL_SPEED_ROT_MES,
-	SUBGRAPH_CONTROL_SPEED_ROT_CONS,
-	SUBGRAPH_CONTROL_V1,
-	SUBGRAPH_CONTROL_V2,
-	SUBGRAPH_CONTROL_V3,
-	SUBGRAPH_CONTROL_V4,
-	SUBGRAPH_CONTROL_V5,
-	SUBGRAPH_CONTROL_V6,
-	SUBGRAPH_CONTROL_VBAT,
-	SUBGRAPH_CONTROL_I1,
-	SUBGRAPH_CONTROL_I2,
-	SUBGRAPH_CONTROL_I3,
-	SUBGRAPH_CONTROL_I4,
-	SUBGRAPH_CONTROL_NUM,
+	SUBGRAPH_MOTION_SPEED_DIST_MES = 0,
+	SUBGRAPH_MOTION_SPEED_DIST_CONS,
+	SUBGRAPH_MOTION_SPEED_ROT_MES,
+	SUBGRAPH_MOTION_SPEED_ROT_CONS,
+	SUBGRAPH_MOTION_V1,
+	SUBGRAPH_MOTION_V2,
+	SUBGRAPH_MOTION_V3,
+	SUBGRAPH_MOTION_V4,
+	SUBGRAPH_MOTION_V5,
+	SUBGRAPH_MOTION_V6,
+	SUBGRAPH_MOTION_VBAT,
+	SUBGRAPH_MOTION_I1,
+	SUBGRAPH_MOTION_I2,
+	SUBGRAPH_MOTION_I3,
+	SUBGRAPH_MOTION_I4,
+	SUBGRAPH_MOTION_NUM,
 };
 
 static GLuint font_base;
@@ -216,21 +216,21 @@ int main(int argc, char *argv[])
 	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo 2", 1, 0, 0, 1);
 
 	graphique_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V1, "v1", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V2, "v2", 0, 0.5, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V3, "v3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V4, "w1", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V5, "w2", 0, 0.5, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_V6, "w3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_VBAT, "vBat", 0, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I1, "i1", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I2, "i2", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I3, "i3", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_CONTROL_I4, "i4", 0, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V2, "v2", 0, 0.5, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V3, "v3", 0, 0.1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V4, "w1", 0, 1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V5, "w2", 0, 0.5, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V6, "w3", 0, 0.1, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_VBAT, "vBat", 0, 1, 0, 0);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I1, "i1", 0, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
+	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -713,7 +713,7 @@ void plot_table(struct graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
 		for(i=0; i< max; i++)
 		{
-			if(robot_interface.control_usb_data[i].control_state != CONTROL_READY_ASSER && robot_interface.control_usb_data[i].control_state != CONTROL_READY_FREE)
+			if(robot_interface.control_usb_data[i].motion_state != MOTION_READY_ASSER && robot_interface.control_usb_data[i].motion_state != MOTION_READY_FREE)
 			{
 				draw_plus(robot_interface.control_usb_data[i].cons.x, robot_interface.control_usb_data[i].cons.y, plus_dx, plus_dy);
 			}
@@ -857,9 +857,9 @@ void plot_speed_dist(struct graphique* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_CONS] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_CONS]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_CONS]);
 		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
@@ -870,9 +870,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_CONS] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_CONS] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_CONS]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_CONS]);
 		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
@@ -883,9 +883,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_DIST_MES] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_MES] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_DIST_MES]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_MES]);
 		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
@@ -896,9 +896,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_SPEED_ROT_MES] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_MES] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_SPEED_ROT_MES]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_MES]);
 		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
@@ -909,36 +909,36 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V1] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V1] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V1]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v1, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V2] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V2] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V2]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V2]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v2, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V3] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V3] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V3]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V3]);
 		for(i=0; i < robot_interface.control_usb_data_count; i++)
 		{
 			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v3, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V4] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V4] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V4]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V4]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
 			float w = (robot_interface.control_usb_data[i].cons_theta1 - robot_interface.control_usb_data[i-1].cons_theta1)*CONTROL_HZ;
@@ -946,9 +946,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V5] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V5] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V5]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V5]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
 			float w = (robot_interface.control_usb_data[i].cons_theta2 - robot_interface.control_usb_data[i-1].cons_theta2)*CONTROL_HZ;
@@ -956,9 +956,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_V6] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_V6] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_CONTROL_V6]);
+		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V6]);
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
 			float w = (robot_interface.control_usb_data[i].cons_theta3 - robot_interface.control_usb_data[i-1].cons_theta3)*CONTROL_HZ;
@@ -966,9 +966,9 @@ void plot_speed_dist(struct graphique* graph)
 		}
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_CONTROL_VBAT] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_VBAT] )
 	{
-		glColor3fv(&graph->color[3*(SUBGRAPH_CONTROL_VBAT)]);
+		glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
 		for(int j=1; j < robot_interface.control_usb_data_count; j++)
 		{
 			float v = robot_interface.control_usb_data[j].vBat;
@@ -978,9 +978,9 @@ void plot_speed_dist(struct graphique* graph)
 
 	for(int i = 0; i < 4; i++)
 	{
-		if( graph->courbes_activated[SUBGRAPH_CONTROL_I1+i] )
+		if( graph->courbes_activated[SUBGRAPH_MOTION_I1+i] )
 		{
-			glColor3fv(&graph->color[3*(SUBGRAPH_CONTROL_I1+i)]);
+			glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_I1+i)]);
 			for(int j=1; j < robot_interface.control_usb_data_count; j++)
 			{
 				float current = robot_interface.control_usb_data[j].iPwm[i];
@@ -995,7 +995,7 @@ void plot_speed_dist(struct graphique* graph)
 		float dist = 0;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			if(robot_interface.control_usb_data[i].control_state == CONTROL_READY_FREE)
+			if(robot_interface.control_usb_data[i].motion_state == MOTION_READY_FREE)
 			{
 				dist = 0;
 			}
@@ -1012,7 +1012,7 @@ void plot_speed_dist(struct graphique* graph)
 		float dist = 0;
 		for(i=1; i < robot_interface.control_usb_data_count; i++)
 		{
-			if(robot_interface.control_usb_data[i].control_state == CONTROL_READY_FREE)
+			if(robot_interface.control_usb_data[i].motion_state == MOTION_READY_FREE)
 			{
 				dist = 0;
 			}
