@@ -78,12 +78,13 @@ first_install()
 		chroot_exec ebuild ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib/newlib-2.1.0.ebuild digest
 
 		chroot_exec emerge -uv ccache eix -j 3
+		chroot_exec eix-update
 		chroot_exec eselect python set 1
 		chroot_exec python-updater
 		chroot_exec emerge -DvN -1 portage
 		chroot_exec emerge -ev world -j 3
 		chroot_exec perl-cleaner --all
-		chroot_exec emerge -uv crossdev dev-vcs/git x11-libs/gtkglext -j 3
+		chroot_exec emerge -uv crossdev dev-vcs/git x11-libs/gtkglext media-libs/libcanberra dev-embedded/openocd dev-util/colorgcc dev-vcs/git x11-themes/gnome-themes-standard -j 3
 		chroot_exec crossdev -t arm-none-eabi -s4 --without-headers
 		chroot_exec crossdev -t arm-none-eabi -s3 --ex-only --ex-gdb
 
