@@ -173,7 +173,7 @@ void CanMotor::update_state()
 	if( state == NMT_OPERATIONAL )
 	{
 		// gestion machine a etat du moteur
-		if( is_op_enable() )
+		if( (status_word & 0x6f) == 0x27 )
 		{
 			// etat op enable
 			// rien a faire, on souhaite y rester

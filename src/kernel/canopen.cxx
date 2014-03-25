@@ -1,3 +1,4 @@
+#define WEAK_CANOPEN
 #include "canopen.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
@@ -11,19 +12,12 @@
 #define CAN_MAX_NODE                 6
 #define CANOPEN_SDO_TIMEOUT        400 // en ms
 
-enum
-{
-	SDO_OK = 0,
-	SDO_KO,
-	SDO_TRANSMITING,
-};
-
 static void can_task(void *arg);
 static xQueueHandle can_read_queue;
 static int can_max_node;
 static struct CanopenNode* canopen_nodes[CAN_MAX_NODE];
 static systime canopen_last_sdo_time;
-static uint8_t canopen_sdoStatus = SDO_OK;
+static bool canopen_sdoTransmitting = false; // synchro des sdo des differents noeuds pour les envoyer un par un
 
 static int canopen_op_mode(int node);
 
@@ -101,20 +95,23 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 			// reponse "OK" a un SDO write
 			const struct canopen_configuration* conf = &node->static_conf[node->conf_id];
 			log_format(LOG_INFO, "SDO %x %x:%x OK", nodeid, conf->index, conf->subindex);
-			canopen_sdoStatus = SDO_KO;
+			node->sdo_status = SDO_STATUS_OK;
+			canopen_sdoTransmitting = false;
 		}
 		else if( msg->data[0] == 0x80 )
 		{
 			// reponse d'erreur a un SDO (read ou write)
 			log_format(LOG_ERROR, "SDO write failed node %x index %x subindex %x error 0x%x%x%x%x",
 					nodeid, index, subindex, msg->data[7], msg->data[6], msg->data[5], msg->data[4]);
-			canopen_sdoStatus = SDO_KO;
+			node->sdo_status = SDO_STATUS_KO;
+			canopen_sdoTransmitting = false;
 		}
 	}
 	else if( type == CANOPEN_BOOTUP)
 	{
 		node->state = NMT_PRE_OPERATIONAL;
 		node->conf_id = 0;
+		node->sdo_status = SDO_STATUS_UNKNOWN;
 	}
 }
 
@@ -269,6 +266,7 @@ CanopenNode::CanopenNode()
 	conf_id = 0;
 	conf_size = 0;
 	static_conf = 0;
+	sdo_status = SDO_STATUS_UNKNOWN;
 	vSemaphoreCreateBinary(sem);
 	xSemaphoreTake(sem, 0);
 }
@@ -280,41 +278,48 @@ void CanopenNode::update(portTickType /*absTimeout*/)
 		// etat pre op : on regarde si on a des SDO de conf a envoyer
 		if( conf_id < conf_size )
 		{
-			if( canopen_sdoStatus == SDO_TRANSMITING )
+			if( sdo_status != SDO_STATUS_UNKNOWN )
 			{
-				// SDO envoye mais pas encore de reponse
-				systime t = systick_get_time();
-				systime dt = t - canopen_last_sdo_time;
-
-				if(dt.ms < CANOPEN_SDO_TIMEOUT)
+				if( canopen_sdoTransmitting && sdo_status == SDO_STATUS_TRANSMITING )
 				{
-					// rien a faire
-					return;
+					// SDO envoye mais pas encore de reponse
+					systime t = systick_get_time();
+					systime dt = t - canopen_last_sdo_time;
+
+					if(dt.ms < CANOPEN_SDO_TIMEOUT)
+					{
+						// rien a faire
+						return;
+					}
+					// sinon, on garde conf_id pour retenter l'envoi
 				}
-				// sinon, on garde conf_id pour retenter l'envoi
-			}
-			else
-			{
-				// SDO_OK ou SDO_KO
-				// on passe au sdo suivant
-				// TODO rententer 3 fois si KO ?
-				conf_id++;
+				else
+				{
+					// SDO_OK ou SDO_KO
+					// on passe au sdo suivant
+					// TODO rententer 3 fois si KO ?
+					conf_id++;
+					canopen_sdoTransmitting = false;
+				}
 			}
 
-			if( conf_id < conf_size )
+			if( ! canopen_sdoTransmitting )
 			{
-				// envoi du sdo
-				const struct canopen_configuration* conf = &static_conf[conf_id];
-				canopen_last_sdo_time = systick_get_time();
-				canopen_sdoStatus = SDO_TRANSMITING;
-				canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
-			}
-			else
-			{
-				log_format(LOG_INFO, "configuration %x end", nodeid);
-				// TODO affecter le OP apres confirmation ?
-				state = NMT_OPERATIONAL;
-				canopen_op_mode(nodeid);
+				if( conf_id < conf_size )
+				{
+					// envoi du sdo
+					const struct canopen_configuration* conf = &static_conf[conf_id];
+					canopen_last_sdo_time = systick_get_time();
+					canopen_sdoTransmitting = true;
+					canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
+				}
+				else
+				{
+					log_format(LOG_INFO, "configuration %x end", nodeid);
+					// TODO affecter le OP apres confirmation ?
+					state = NMT_OPERATIONAL;
+					canopen_op_mode(nodeid);
+				}
 			}
 		}
 		else

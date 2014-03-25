@@ -20,7 +20,6 @@ obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_req.o
 obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_atlantronic_core.o
 obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_usr.o
 obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_desc.o
-obj-discovery-core += kernel/driver/usart.o
 obj-discovery-core += kernel/end.o
 obj-discovery-core += discovery/gpio.o
 
@@ -31,9 +30,37 @@ obj-discovery-gyro += kernel/driver/gyro.o
 obj-discovery-gyro += kernel/math/simpson_integrator.o
 
 obj-discovery-dynamixel += $(obj-discovery-core)
+obj-discovery-dynamixel += kernel/driver/usart.o
 obj-discovery-dynamixel += kernel/driver/dynamixel.o
 
+obj-discovery-hokuyo += $(obj-discovery-core)
+obj-discovery-hokuyo += kernel/driver/usart.o
+obj-discovery-hokuyo += kernel/driver/hokuyo.o
+obj-discovery-hokuyo += kernel/location/location.o
+obj-discovery-hokuyo += kernel/geometric_model/geometric_model.o
+obj-discovery-hokuyo += kernel/control/kinematics.o
+obj-discovery-hokuyo += kernel/math/vect_plan.o
+
+obj-discovery-baz_small += $(obj-discovery-core)
+obj-discovery-baz_small += kernel/driver/usart.o
+obj-discovery-baz_small += kernel/driver/spi.o
+obj-discovery-baz_small += kernel/driver/accelero.o
+obj-discovery-baz_small += kernel/driver/gyro.o
+obj-discovery-baz_small += kernel/driver/hokuyo.o
+obj-discovery-baz_small += kernel/driver/dynamixel.o
+obj-discovery-baz_small += kernel/driver/pwm.o
+obj-discovery-baz_small += kernel/driver/encoder.o
+obj-discovery-baz_small += kernel/driver/adc.o
+obj-discovery-baz_small += kernel/math/vect_plan.o
+obj-discovery-baz_small += kernel/math/vect2.o
+obj-discovery-baz_small += kernel/math/simpson_integrator.o
+obj-discovery-baz_small += kernel/control/kinematics.o
+obj-discovery-baz_small += kernel/geometric_model/geometric_model.o
+obj-discovery-baz_small += kernel/location/location.o
+obj-discovery-baz_small += discovery/control.o
+
 obj-discovery-baz += $(obj-discovery-core)
+obj-discovery-baz += kernel/driver/usart.o
 obj-discovery-baz += kernel/driver/spi.o
 obj-discovery-baz += kernel/driver/accelero.o
 obj-discovery-baz += kernel/driver/gyro.o
@@ -66,4 +93,6 @@ obj-discovery-baz += discovery/motion.o
 bin-discovery += core
 bin-discovery += gyro
 bin-discovery += dynamixel
+bin-discovery += hokuyo
+bin-discovery += baz_small
 bin-discovery += baz

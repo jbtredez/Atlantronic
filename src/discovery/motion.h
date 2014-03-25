@@ -7,6 +7,11 @@
 
 #include <stdint.h>
 #include "kernel/systick.h"
+#include "kernel/asm/asm_base_func.h"
+
+#ifndef WEAK_MOTION
+#define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
+#endif
 
 enum motion_state
 {
@@ -65,9 +70,9 @@ void motion_set_cp_speed(VectPlan cp, VectPlan u, float v);
 void motion_set_actuator_speed(float v[6]);
 
 //!< mise a jour de l'asservissement
-void motion_compute();
+void motion_compute() WEAK_MOTION;
 
-void motion_update_usb_data(struct control_usb_data* data);
+void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
 
 struct motion_cmd_param_arg
 {

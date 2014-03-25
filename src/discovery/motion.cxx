@@ -1,3 +1,4 @@
+#define WEAK_MOTION
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
@@ -62,12 +63,37 @@ void motion_compute()
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
-	motion_pos_mes = location_get_position();
+	int motorNotReady = 0;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
+		if( ! can_motor[i].is_op_enable() )
+		{
+			motorNotReady = 1;
+		}
+
 		motion_kinematics_mes[i] = can_motor[i].kinematics;
 	}
+
+	// homing
+	if( ! motorNotReady )
+	{
+		for(int i = 0; i < 3; i++)
+		{
+			if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE)
+			{
+				can_motor[2*i+1].update_homing(1);
+			}
+		}
+	}
+
+	if( ! motorNotReady )
+	{
+		// mise à jour de la position
+		location_update(motion_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
+	}
+
+	motion_pos_mes = location_get_position();
 
 	switch(motion_state)
 	{
@@ -344,6 +370,7 @@ void motion_set_actuator_speed(float v[6])
 void motion_update_usb_data(struct control_usb_data* data)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
+
 	data->motion_state = motion_state;
 	data->cons = motion_cp_cmd;
 	data->cons_v1 = motion_kinematics[CAN_MOTOR_DRIVING1].v;
@@ -353,6 +380,12 @@ void motion_update_usb_data(struct control_usb_data* data)
 	data->cons_theta2 = motion_kinematics[CAN_MOTOR_STEERING2].pos;
 	data->cons_theta3 = motion_kinematics[CAN_MOTOR_STEERING3].pos;
 	data->wanted_pos = motion_dest;
+	data->mes_v1 = motion_kinematics_mes[CAN_MOTOR_DRIVING1].v;
+	data->mes_v2 = motion_kinematics_mes[CAN_MOTOR_DRIVING2].v;
+	data->mes_v3 = motion_kinematics_mes[CAN_MOTOR_DRIVING3].v;
+	data->mes_theta1 = motion_kinematics_mes[CAN_MOTOR_STEERING1].pos;
+	data->mes_theta2 = motion_kinematics_mes[CAN_MOTOR_STEERING2].pos;
+	data->mes_theta3 = motion_kinematics_mes[CAN_MOTOR_STEERING3].pos;
 
 	xSemaphoreGive(motion_mutex);
 }

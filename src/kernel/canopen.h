@@ -6,6 +6,10 @@
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 
+#ifndef WEAK_CANOPEN
+#define WEAK_CANOPEN __attribute__((weak, alias("nop_function") ))
+#endif
+
 enum
 {
 	CANOPEN_NMT = 0,
@@ -23,6 +27,14 @@ enum
 	CANOPEN_SDO_REQ,
 	CANOPEN_RESERVED_13,
 	CANOPEN_BOOTUP,
+};
+
+enum
+{
+	SDO_STATUS_OK = 0,
+	SDO_STATUS_KO,
+	SDO_STATUS_TRANSMITING,
+	SDO_STATUS_UNKNOWN,
 };
 
 enum
@@ -53,6 +65,7 @@ class CanopenNode
 		uint8_t conf_size;
 		const struct canopen_configuration* static_conf;
 		xSemaphoreHandle sem;
+		int sdo_status;
 
 		virtual void rx_pdo(struct can_msg *msg, int type);
 
@@ -60,7 +73,7 @@ class CanopenNode
 		int wait_update_until(portTickType t);
 };
 
-void canopen_update(portTickType absTimeout);
+void canopen_update(portTickType absTimeout) WEAK_CANOPEN;
 
 int canopen_register_node(CanopenNode* node);
 

@@ -59,7 +59,7 @@ class CanMotor : public CanopenNode
 
 		inline bool is_op_enable()
 		{
-			return connected && (status_word & 0x6f) == 0x27;
+			return (status_word & 0x6f) == 0x27;
 		}
 	protected:
 		virtual void rx_pdo(struct can_msg *msg, int type);
