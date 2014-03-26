@@ -10,6 +10,7 @@
 #include "kernel/control/kinematics.h"
 #include "kernel/math/vect_plan.h"
 #include "motion.h"
+#include "kernel/driver/encoder.h"
 
 //! période de la tache de controle en ms
 #define CONTROL_PERIOD                             5
@@ -24,7 +25,8 @@ struct control_usb_data
 	VectPlan cons;
 	VectPlan pos;
 	VectPlan wanted_pos;
-	int32_t raw_data_gyro;
+	int16_t raw_data_gyro;
+	uint16_t encoder[ENCODER_MAX];
 	float omega_gyro;
 	float pos_theta_gyro_euler;
 	float pos_theta_gyro_simpson;

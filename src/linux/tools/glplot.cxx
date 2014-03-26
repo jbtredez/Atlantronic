@@ -1075,11 +1075,6 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		plot_legende(&graph[current_graph]);
 
 		glColor3f(0,0,0);
-		int id = robot_interface.control_usb_data_count - 1;
-		if( id < 0)
-		{
-			id = 0;
-		}
 
 		if( current_graph == GRAPH_TABLE )
 		{
@@ -1095,41 +1090,43 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			glPrintf(1600, lineId*lineHeight, font_base, "match %13.6f", match_time);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
-					robot_interface.control_usb_data[id].pos.x, robot_interface.control_usb_data[id].pos.y,
-					robot_interface.control_usb_data[id].pos.theta * 180 / M_PI);
+					robot_interface.last_control_usb_data.pos.x, robot_interface.last_control_usb_data.pos.y,
+					robot_interface.last_control_usb_data.pos.theta * 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "wpos %6.0f %6.0f %6.2f",
-					robot_interface.control_usb_data[id].wanted_pos.x, robot_interface.control_usb_data[id].wanted_pos.y,
-					robot_interface.control_usb_data[id].wanted_pos.theta * 180 / M_PI);
+					robot_interface.last_control_usb_data.wanted_pos.x, robot_interface.last_control_usb_data.wanted_pos.y,
+					robot_interface.last_control_usb_data.wanted_pos.theta * 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
-					robot_interface.control_usb_data[id].mes_v1, robot_interface.control_usb_data[id].cons_v1);
+					robot_interface.last_control_usb_data.mes_v1, robot_interface.last_control_usb_data.cons_v1);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
-							robot_interface.control_usb_data[id].mes_v2, robot_interface.control_usb_data[id].cons_v2);
+							robot_interface.last_control_usb_data.mes_v2, robot_interface.last_control_usb_data.cons_v2);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
-							robot_interface.control_usb_data[id].mes_v3, robot_interface.control_usb_data[id].cons_v3);
+							robot_interface.last_control_usb_data.mes_v3, robot_interface.last_control_usb_data.cons_v3);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
-					robot_interface.control_usb_data[id].mes_theta1* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta1* 180 / M_PI);
+					robot_interface.last_control_usb_data.mes_theta1* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta1* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
-							robot_interface.control_usb_data[id].mes_theta2* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta2* 180 / M_PI);
+							robot_interface.last_control_usb_data.mes_theta2* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta2* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
-							robot_interface.control_usb_data[id].mes_theta3* 180 / M_PI, robot_interface.control_usb_data[id].cons_theta3* 180 / M_PI);
+							robot_interface.last_control_usb_data.mes_theta3* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta3* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "gyro %6.2f",
-							robot_interface.control_usb_data[id].pos_theta_gyro_euler * 180 / M_PI);
+							robot_interface.last_control_usb_data.pos_theta_gyro_euler * 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robot_interface.control_usb_data[id].vBat);
+			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robot_interface.last_control_usb_data.vBat);
 			lineId++;
 			for(int i = 0; i < 4; i++)
 			{
-				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robot_interface.control_usb_data[id].iPwm[i]);
+				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robot_interface.last_control_usb_data.iPwm[i]);
 				lineId++;
 			}
+			glPrintf(1600, lineId*lineHeight, font_base, "cod  %6d %6d %6d", robot_interface.last_control_usb_data.encoder[0], robot_interface.last_control_usb_data.encoder[1], robot_interface.last_control_usb_data.encoder[2]);
+			lineId++;
 		}
 
 		pthread_mutex_unlock(&robot_interface.mutex);

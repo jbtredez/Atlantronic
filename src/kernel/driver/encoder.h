@@ -5,6 +5,10 @@
 //! @brief Encoder
 //! @author Atlantronic
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 enum
@@ -16,5 +20,9 @@ enum
 };
 
 uint16_t encoder_get(const unsigned int num);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
