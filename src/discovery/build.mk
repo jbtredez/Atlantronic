@@ -21,6 +21,7 @@ obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_atlantronic_core.o
 obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_usr.o
 obj-discovery-core += kernel/driver/usb/stm32f4xx/usbd_desc.o
 obj-discovery-core += kernel/end.o
+obj-discovery-core += kernel/driver/power.o
 obj-discovery-core += discovery/gpio.o
 
 obj-discovery-gyro += $(obj-discovery-core)

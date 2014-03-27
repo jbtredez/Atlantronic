@@ -4,6 +4,7 @@
 
 #include "kernel/module.h"
 #include "kernel/rcc.h"
+#include "kernel/driver/power.h"
 #include "gpio.h"
 #include "adc.h"
 #include <string.h>
@@ -121,6 +122,15 @@ void adc_update()
 		adc_filtered_data.i[2] = ADC_FILTER_GAIN * adc_filtered_data.i[2] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[2];
 		adc_filtered_data.i[3] = ADC_FILTER_GAIN * adc_filtered_data.i[3] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[3];
 		adc_startId = (adc_startId + 1) % ADC_MAX_DATA;
+	}
+
+	if( adc_filtered_data.vBat < ADC_VBAT_MIN )
+	{
+		power_set(POWER_OFF_UNDERVOLTAGE);
+	}
+	else
+	{
+		power_clear(POWER_OFF_UNDERVOLTAGE);
 	}
 }
 

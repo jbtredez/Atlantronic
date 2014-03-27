@@ -8,6 +8,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 #include "gpio.h"
+#include "kernel/driver/power.h"
 
 #define END_STACK_SIZE           100
 uint32_t end_match_time = 90000; //!< duree du match en ms
@@ -61,7 +62,7 @@ static void end_task(void *arg)
 	end_match = 1;
 	log(LOG_INFO, "Fin du match");
 
-	gpio_power_off();
+	power_set(POWER_OFF_END_MATCH);
 	exitModules();
 	setLed(0x00);
 

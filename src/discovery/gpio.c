@@ -88,7 +88,7 @@ static int gpio_module_init(void)
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-	gpio_power_on();
+	gpio_power_off();
 
 	return 0;
 }
