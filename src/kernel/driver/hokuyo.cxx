@@ -36,13 +36,13 @@ Hokuyo hokuyo[HOKUYO_MAX];
 
 int hokuyo_module_init()
 {
-	int err = hokuyo[0].init(UART4_FULL_DUPLEX, "hokuyo1", USB_HOKUYO1);
+	int err = hokuyo[0].init(UART4_FULL_DUPLEX, "hokuyo1", HOKUYO1);
 	if(err)
 	{
 		goto done;
 	}
 
-	err = hokuyo[1].init(USART2_FULL_DUPLEX, "hokuyo2", USB_HOKUYO2);
+	err = hokuyo[1].init(USART2_FULL_DUPLEX, "hokuyo2", HOKUYO2);
 
 	if(err)
 	{
@@ -58,10 +58,10 @@ done:
 
 module_init(hokuyo_module_init, INIT_HOKUYO);
 
-int Hokuyo::init(enum usart_id id, const char* name, int usbId)
+int Hokuyo::init(enum usart_id id, const char* name, int hokuyo_id)
 {
 	usartId = id;
-	usb_id = usbId;
+	scan.id = hokuyo_id;
 	callback = NULL;
 	last_error = 0;
 
@@ -242,7 +242,7 @@ void Hokuyo::task()
 			}
 
 			// on envoi les donnees par usb pour le debug
-			usb_add(usb_id, &scan, sizeof(scan));
+			usb_add(USB_HOKUYO, &scan, sizeof(scan));
 		}
 	}
 }

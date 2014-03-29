@@ -24,18 +24,19 @@
 
 enum hokuyo_id
 {
-	HOKUYO1,
+	HOKUYO1 = 0,
 	HOKUYO2,
 	HOKUYO_MAX,
 };
 
 struct hokuyo_scan
 {
+	int id;
 	VectPlan pos_robot; //!< position absolue du robot au moment du scan
 	VectPlan pos_hokuyo; //!< position du hokuyo dans le repère robot
 	signed char sens; //!< sens du hokuyo (1 = vers le haut, -1 = vers le bas)
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
-};
+} __attribute__((packed));;
 
 #ifndef LINUX
 
@@ -44,7 +45,7 @@ typedef void (*hokuyo_callback)();
 class Hokuyo
 {
 	public:
-		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int usb_id);
+		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int hokuyo_id);
 		void setPosition(VectPlan pos, int sens);
 
 		//!< enregistrement d'une callback
@@ -74,7 +75,6 @@ class Hokuyo
 		hokuyo_callback callback;
 		uint32_t last_error;
 		enum usart_id usartId;
-		int usb_id;
 		// variable alignee pour le dma
 		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
 };

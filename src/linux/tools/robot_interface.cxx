@@ -11,7 +11,6 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "discovery/trajectory.h"
-#include "kernel/driver/dynamixel.h"
 #include "kernel/pump.h"
 #include "discovery/gpio.h"
 
@@ -114,6 +113,23 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	}
 
 	versionCompatible = ROBOT_VERSION_UNKNOWN;
+
+	for( int i = 0; i < USB_DATA_MAX; i++)
+	{
+		process_func[i] = 0;
+	}
+	add_usb_data_callback(USB_LOG, &RobotInterface::process_log);
+	add_usb_data_callback(USB_ERR, &RobotInterface::process_fault);
+	add_usb_data_callback(USB_HOKUYO, &RobotInterface::process_hokuyo);
+	add_usb_data_callback(USB_HOKUYO_SEG, &RobotInterface::process_hokuyo_seg);
+	add_usb_data_callback(USB_CONTROL, &RobotInterface::process_control);
+	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &RobotInterface::process_detect_dyn_obj_size);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT, &RobotInterface::process_detect_dyn_obj);
+	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
+	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);
+	add_usb_data_callback(USB_DYNAMIXEL, &RobotInterface::process_dynamixel);
+
 	return err;
 }
 
@@ -128,6 +144,17 @@ void RobotInterface::destroy()
 
 	rl_free_line_state();
 	rl_cleanup_after_signal();
+}
+
+int RobotInterface::add_usb_data_callback(uint8_t cmd, int (RobotInterface::*func)(char* msg, uint16_t size))
+{
+	if( cmd < USB_DATA_MAX)
+	{
+		process_func[cmd] = func;
+		return 0;
+	}
+
+	return -1;
 }
 
 void* RobotInterface::task_wrapper(void* arg)
@@ -187,44 +214,16 @@ void* RobotInterface::task()
 		msg[size] = 0;
 
 		// traitement du message
-		switch( type )
+		if( type < USB_DATA_MAX)
 		{
-			case USB_LOG:
-				res = process_log(msg, size);
-				break;
-			case USB_ERR:
-				res = process_fault(msg, size);
-				break;
-			case USB_HOKUYO1:
-				res = process_hokuyo(HOKUYO1, msg, size);
-				break;
-			case USB_HOKUYO2:
-				res = process_hokuyo(HOKUYO2, msg, size);
-				break;
-			case USB_HOKUYO_FOO_SEG:
-				res = process_hokuyo_seg(HOKUYO1, msg, size);
-				break;
-			case USB_CONTROL:
-				res = process_control(msg, size);
-				break;
-			case USB_GO:
-				res = process_go(msg, size);
-				break;
-			case USB_DETECTION_DYNAMIC_OBJECT_SIZE:
-				res = process_detect_dyn_obj_size(msg, size);
-				break;
-			case USB_DETECTION_DYNAMIC_OBJECT:
-				res = process_detect_dyn_obj(msg, size);
-				break;
-			case USB_CAN_TRACE:
-				res = can_trace(msg, size);
-				break;
-			case USB_CMD_GET_VERSION:
-				res = process_code_version(msg, size);
-				break;
-			default:
-				res = -1;
-				break;
+			if( process_func[type] )
+			{
+				res = (this->*process_func[type])(msg, size);
+			}
+		}
+		else
+		{
+			res = -1;
 		}
 
 		if( res )
@@ -412,6 +411,55 @@ end:
 	return res;
 }
 
+int RobotInterface::process_dynamixel(char* msg, uint16_t size)
+{
+	int res = 0;
+	struct dynamixel_usb_data* data = (struct dynamixel_usb_data*) msg;
+	int maxId = 0;
+	struct dynamixel_data* dynamixels = NULL;
+
+	if(size != sizeof(dynamixel_usb_data))
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	if(data->type == DYNAMIXEL_TYPE_AX12)
+	{
+		dynamixels = ax12;
+		maxId = AX12_MAX_ID;
+	}
+	else if( data->type == DYNAMIXEL_TYPE_RX24)
+	{
+		dynamixels = rx24;
+		maxId = AX12_MAX_ID;
+	}
+	else
+	{
+		log_error("unknown dynamixel type %d", data->type);
+		goto end;
+	}
+
+	if(data->id < maxId)
+	{
+		dynamixels[data->id].pos = data->pos * DYNAMIXEL_POS_TO_RD;
+		dynamixels[data->id].flags = data->flags;
+	}
+
+	pthread_mutex_unlock(&mutex);
+
+end:
+	return res;
+}
+
 int RobotInterface::process_detect_dyn_obj_size(char* msg, uint16_t size)
 {
 	int res = 0;
@@ -523,9 +571,10 @@ end:
 	return res;
 }
 
-int RobotInterface::process_hokuyo(int id, char* msg, uint16_t size)
+int RobotInterface::process_hokuyo(char* msg, uint16_t size)
 {
 	int res = 0;
+	int id;
 
 	if(size != sizeof(struct hokuyo_scan))
 	{
@@ -541,6 +590,7 @@ int RobotInterface::process_hokuyo(int id, char* msg, uint16_t size)
 		goto end;
 	}
 
+	id = ((struct hokuyo_scan*)msg)->id;
 	memcpy(&hokuyo_scan[id], msg, size);
 
 	hokuyo_compute_xy(&hokuyo_scan[id], detection_hokuyo_pos + HOKUYO_NUM_POINTS * id);
@@ -551,10 +601,10 @@ end:
 	return res;
 }
 
-int RobotInterface::process_hokuyo_seg(int id, char* msg, uint16_t size)
+int RobotInterface::process_hokuyo_seg(char* msg, uint16_t size)
 {
 	int res = 0;
-
+	int id = HOKUYO1;
 	unsigned int num = size / sizeof(detection_hokuyo_reg[0]);
 	if(size != num * sizeof(detection_hokuyo_reg[0]) )
 	{
@@ -687,84 +737,66 @@ int RobotInterface::get_stm_code_version()
 
 //! fonction generique pour envoyer un ordre a un dynamixel
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
-int RobotInterface::dynamixel_set(struct dynamixel_cmd_param param)
+int RobotInterface::dynamixel_cmd(uint8_t cmd, int dynamixel_type, uint8_t id, float param)
 {
-	return usb_write(USB_CMD_DYNAMIXEL, &param, sizeof(param));
+	struct dynamixel_cmd_param cmd_arg;
+
+	cmd_arg.cmd_id = cmd;
+	cmd_arg.type = dynamixel_type;
+	cmd_arg.id = id;
+	cmd_arg.param = param;
+
+	return usb_write(USB_CMD_DYNAMIXEL, &cmd_arg, sizeof(cmd_arg));
 }
 
 //! realise un scan de tout les id
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_scan(int dynamixel_type)
 {
-	struct dynamixel_cmd_param cmd_arg;
-
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_SCAN;
-	cmd_arg.type = dynamixel_type;
-
-	return dynamixel_set(cmd_arg);
+	return dynamixel_cmd(DYNAMIXEL_CMD_SCAN, dynamixel_type, 0, 0);
 }
 
 //! change l'id d'un dynamlixel
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id)
 {
-	struct dynamixel_cmd_param cmd_arg;
-
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_ID;
-	cmd_arg.type = dynamixel_type;
-	cmd_arg.id = id;
-	cmd_arg.param = new_id;
-
-	return dynamixel_set(cmd_arg);
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_ID, dynamixel_type, id, new_id);
 }
 
 //! envoi de la position desiree du dynamixel
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha)
 {
-	struct dynamixel_cmd_param cmd_arg;
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_GOAL_POSITION, dynamixel_type, id, alpha);
+}
 
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_GOAL_POSITION;
-	cmd_arg.type = dynamixel_type;
-	cmd_arg.id = id;
-	cmd_arg.param = alpha;
+//! choix du couple max (entre 0 et 100 pour 100%)
+//! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
+int RobotInterface::dynamixel_set_max_torque(int dynamixel_type, uint8_t id, uint8_t val)
+{
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_MAX_TORQUE, dynamixel_type, id, val / 100.0f);
+}
 
-	return dynamixel_set(cmd_arg);
+int RobotInterface::dynamixel_set_target_reached_threshold(int dynamixel_type, uint8_t id, uint8_t val)
+{
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_TARGET_REACHED_THRESHOLD, dynamixel_type, id, val);
 }
 
 //! mise a jour du baudrate du dynamixel a la valeur optimale (1Mb/s)
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_op_baudrate(int dynamixel_type, uint8_t id)
 {
-	struct dynamixel_cmd_param cmd_arg;
-
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_BAUDRATE;
-	cmd_arg.type = dynamixel_type;
-	cmd_arg.id = id;
-
-	return dynamixel_set(cmd_arg);
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_BAUDRATE, dynamixel_type, id, 0);
 }
 
 int RobotInterface::dynamixel_set_manager_baudrate(int dynamixel_type, int freq)
 {
-	struct dynamixel_cmd_param cmd_arg;
-
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE;
-	cmd_arg.type = dynamixel_type;
-	cmd_arg.param = freq;
-
-	return dynamixel_set(cmd_arg);
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE, dynamixel_type, 0, freq);
 }
 
 int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 {
-	struct dynamixel_cmd_param cmd_arg;
-
-	cmd_arg.cmd_id = DYNAMIXEL_CMD_GET_POSITION;
-	cmd_arg.type = dynamixel_type;
-	cmd_arg.id = id;
-
-	return usb_write(USB_CMD_DYNAMIXEL, &cmd_arg, sizeof(cmd_arg));
+	return dynamixel_cmd(DYNAMIXEL_CMD_GET_POSITION, dynamixel_type, id, 0);
 }
 
 int RobotInterface::pump(uint8_t id, uint8_t val)

@@ -9,6 +9,8 @@
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
+#include "kernel/driver/usb.h"
+#include "kernel/driver/dynamixel.h"
 #include "discovery/control.h"
 #include "foo/pince.h"
 #include "foo/arm.h"
@@ -28,6 +30,12 @@ enum RobotVersion
 	ROBOT_VERSION_KO,
 };
 
+struct dynamixel_data
+{
+	float pos;           //!< position
+	uint16_t flags;      //!< flags
+};
+
 class RobotInterface
 {
 	public:
@@ -41,12 +49,14 @@ class RobotInterface
 		int reboot();
 
 		// ---------- gestion des dynamixel --------------------------------------------
-		int dynamixel_set(struct dynamixel_cmd_param param);
+		int dynamixel_cmd(uint8_t cmd, int dynamixel_type, uint8_t id, float param);
 		int dynamixel_scan(int dynamixel_type);
 		int dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id);
 		int dynamixel_set_op_baudrate(int dynamixel_type, uint8_t id);
 		int dynamixel_set_manager_baudrate(int dynamixel_type, int freq);
 		int dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha);
+		int dynamixel_set_max_torque(int dynamixel_type, uint8_t id, uint8_t val);
+		int dynamixel_set_target_reached_threshold(int dynamixel_type, uint8_t id, uint8_t val);
 		int dynamixel_get_position(int dynamixel_type, uint8_t id);
 
 		// ---------- gestion pompes ---------------------------------------------------
@@ -131,6 +141,9 @@ class RobotInterface
 		struct vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
 
+		struct dynamixel_data ax12[AX12_MAX_ID];
+		struct dynamixel_data rx24[RX24_MAX_ID];
+
 		// calculs
 		struct vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];
 		struct vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
@@ -154,14 +167,18 @@ class RobotInterface
 		int process_log(char* msg, uint16_t size);
 		int process_control(char* msg, uint16_t size);
 		int process_go(char* msg, uint16_t size);
-		int process_hokuyo(int id, char* msg, uint16_t size);
-		int process_hokuyo_seg(int id, char* msg, uint16_t size);
+		int process_hokuyo(char* msg, uint16_t size);
+		int process_hokuyo_seg(char* msg, uint16_t size);
 		int process_fault(char* msg, uint16_t size);
 		int process_detect_dyn_obj_size(char* msg, uint16_t size);
 		int process_detect_dyn_obj(char* msg, uint16_t size);
 		int process_code_version(char* msg, uint16_t size);
+		int process_dynamixel(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
 		int get_stm_code_version();
+
+		int add_usb_data_callback(uint8_t cmd, int (RobotInterface::*process_func)(char* msg, uint16_t size));
+		int (RobotInterface::*process_func[USB_DATA_MAX])(char* msg, uint16_t size);
 };
 
 #endif

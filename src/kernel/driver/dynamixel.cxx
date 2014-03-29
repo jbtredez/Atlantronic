@@ -34,8 +34,8 @@ DynamixelManager rx24;
 
 static int dynamixel_module_init()
 {
-	ax12.init("ax12", USART6_HALF_DUPLEX, 1000000, AX12_MAX_ID);
-	rx24.init("rx24", UART5_FULL_DUPLEX, 1000000, RX24_MAX_ID);
+	ax12.init("ax12", USART6_HALF_DUPLEX, 1000000, AX12_MAX_ID, 12);
+	rx24.init("rx24", UART5_FULL_DUPLEX, 1000000, RX24_MAX_ID, 24);
 
 	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd);
 
@@ -44,9 +44,10 @@ static int dynamixel_module_init()
 
 module_init(dynamixel_module_init, INIT_DYNAMIXEL);
 
-int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t frequency, int Max_devices_id)
+int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t frequency, int Max_devices_id, uint8_t Type)
 {
 	usart = usart_id;
+	type = Type;
 	int res = usart_open(usart, frequency);
 	if( res )
 	{
@@ -118,7 +119,8 @@ void DynamixelManager::task()
 			int goal_pos = devices[id].goal_pos;
 			xSemaphoreGive(mutex);
 
-			if( abs(pos - goal_pos) > 1)
+			uint16_t pos_err = abs(pos - goal_pos);
+			if( pos_err > 1)
 			{
 				// on va envoyer la position désirée
 				req.instruction = DYNAMIXEL_INSTRUCTION_WRITE_DATA;
@@ -128,6 +130,15 @@ void DynamixelManager::task()
 				req.argc = 3;
 				send(&req);
 			}
+
+			if( pos_err < devices[id].target_reached_threshold)
+			{
+				devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
+			}
+			else
+			{
+				devices[id].flags &= ~DYNAMIXEL_FLAG_TARGET_REACHED;
+			}
 		}
 
 		if(devices[id].last_error.transmit_error != req.status.error.transmit_error || devices[id].last_error.internal_error != req.status.error.internal_error)
@@ -135,6 +146,13 @@ void DynamixelManager::task()
 			print_error(req.id, req.status.error);
 			devices[id].last_error = req.status.error;
 		}
+
+		struct dynamixel_usb_data usb_data;
+		usb_data.id = id;
+		usb_data.type = type;
+		usb_data.pos = devices[id].pos;
+		usb_data.flags = devices[id].flags;
+		usb_add(USB_DYNAMIXEL, &usb_data, sizeof(usb_data));
 
 		id = (id + 1) % (max_devices_id-1);
 		if(id == 0)
@@ -450,7 +468,7 @@ struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float the
 
 	// passage en unité dynamixel entre 0 et 0x3ff (de -150 degre a 150 degre)
 	// zero au milieu qui vaut 0x1ff
-	int32_t alpha = 0x1ff + theta * 0x1ff * 180 / (150 * M_PI);
+	int32_t alpha = 0x1ff + theta * DYNAMIXEL_RD_TO_POS;
 	uint16_t min = 0;
 	uint16_t max = 0x3ff;
 
@@ -477,6 +495,14 @@ struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float the
 		// utilisation de la tache pour la mise à jour
 		xSemaphoreTake(mutex, portMAX_DELAY);
 		devices[id].goal_pos = alpha;
+		if( abs(devices[id].goal_pos - devices[id].pos) < devices[id].target_reached_threshold)
+		{
+			devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
+		}
+		else
+		{
+			devices[id].flags &= ~DYNAMIXEL_FLAG_TARGET_REACHED;
+		}
 		err = devices[id].last_error;
 		xSemaphoreGive(mutex);
 	}
@@ -489,19 +515,34 @@ struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float the
 	return err;
 }
 
-struct dynamixel_error DynamixelManager::set_torque_limit(uint8_t id, uint16_t torque_limit)
+struct dynamixel_error DynamixelManager::set_torque_limit(uint8_t id, float torque_limit)
 {
-	if( end_match )
+	if( end_match || torque_limit < 0)
 	{
-		torque_limit = 0x00;
+		torque_limit = 0;
 	}
 
-	return write16(id, DYNAMIXEL_TORQUE_LIMIT_L, torque_limit & DYNAMIXEL_MAX_TORQUE_LIMIT);
+	if( torque_limit > 1)
+	{
+		torque_limit = 1;
+	}
+
+	return write16(id, DYNAMIXEL_TORQUE_LIMIT_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
 }
 
-struct dynamixel_error DynamixelManager::set_torque_limit_eeprom(uint8_t id, uint16_t torque_limit)
+struct dynamixel_error DynamixelManager::set_torque_limit_eeprom(uint8_t id, float torque_limit)
 {
-	return write16(id, DYNAMIXEL_MAX_TORQUE_L, torque_limit & DYNAMIXEL_MAX_TORQUE_LIMIT);
+	if( torque_limit < 0)
+	{
+		torque_limit = 0;
+	}
+
+	if( torque_limit > 1)
+	{
+		torque_limit = 1;
+	}
+
+	return write16(id, DYNAMIXEL_MAX_TORQUE_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
 }
 
 struct dynamixel_error DynamixelManager::set_torque_enable(uint8_t id, uint8_t enable)
@@ -517,8 +558,8 @@ void DynamixelManager::set_goal_limit(uint8_t id, float min, float max)
 		return;
 	}
 
-	min = 0x1ff + min * 0x1ff * 180 / (150 * M_PI);
-	max = 0x1ff + min * 0x1ff * 180 / (150 * M_PI);
+	min = 0x1ff + min * DYNAMIXEL_RD_TO_POS;
+	max = 0x1ff + min * DYNAMIXEL_RD_TO_POS;
 
 	if(min < 0)
 	{
@@ -542,6 +583,17 @@ void DynamixelManager::set_goal_limit(uint8_t id, float min, float max)
 	devices[id].max_goal = max;
 }
 
+void DynamixelManager::set_target_reached_threshold(uint8_t id, float threshold)
+{
+	id--;
+	if( id >= max_devices_id-1 )
+	{
+		return;
+	}
+
+	devices[id].target_reached_threshold = threshold * DYNAMIXEL_RD_TO_POS;
+}
+
 float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
 {
 	id--;
@@ -560,7 +612,7 @@ float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
 
 	// passage en rd
 	// zero au milieu qui vaut "0x1ff"
-	return (alpha - 0x1ff) * 150 * M_PI / (0x1ff * 180.0f);
+	return (alpha - 0x1ff) * DYNAMIXEL_POS_TO_RD;
 }
 
 __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
@@ -602,6 +654,13 @@ __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 			break;
 		case DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE:
 			usart_set_frequency(manager->usart, (uint32_t)(param->param));
+			break;
+		case DYNAMIXEL_CMD_SET_MAX_TORQUE:
+			manager->set_torque_enable(param->id, 1);
+			manager->set_torque_limit(param->id, param->param);
+			break;
+		case DYNAMIXEL_CMD_SET_TARGET_REACHED_THRESHOLD:
+			manager->set_target_reached_threshold(param->id, param->param);
 			break;
 		case DYNAMIXEL_CMD_GET_POSITION:
 			theta = manager->get_position(param->id, &err);

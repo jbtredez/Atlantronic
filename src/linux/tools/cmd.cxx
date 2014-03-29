@@ -29,6 +29,8 @@ int cmd_dynamixel_set_goal_position(const char* arg);
 int cmd_dynamixel_set_op_baudrate(const char* arg);
 int cmd_dynamixel_set_manager_baudrate(const char* arg);
 int cmd_dynamixel_get_position(const char* arg);
+int cmd_dynamixel_set_max_torque(const char* arg);
+int cmd_dynamixel_set_target_reached_threshold(const char* arg);
 int cmd_help(const char* arg);
 int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
@@ -68,12 +70,6 @@ COMMAND usb_commands[] = {
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
 	{ "arm_hook", cmd_arm_hook, "deplacement du crochet perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_hook x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
-	{ "dynamixel_scan", cmd_dynamixel_scan, "scan dynamixel id : dynamixel_scan type id"},
-	{ "dynamixel_set_id", cmd_dynamixel_set_id, "changement d'id des dynamixels : dynamixel_set_id type id newid"},
-	{ "dynamixel_set_goal_position", cmd_dynamixel_set_goal_position, "position cible du dynamixel : dynamixel_set_goal_position type id alpha"},
-	{ "dynamixel_set_op_baudrate", cmd_dynamixel_set_op_baudrate, "mise a jour du baudrate en conf OP"},
-	{ "dynamixel_set_manager_baudrate", cmd_dynamixel_set_manager_baudrate, "mise a jour du baudrate du gestionnaire dynamixel"},
-	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
 	{ "can_lss", cmd_can_lss, "can_lss on/off"},
 	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
 	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
@@ -81,6 +77,14 @@ COMMAND usb_commands[] = {
 	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
 	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
 	{ "control_print_param", cmd_control_print_param, "control_print_param"},
+	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
+	{ "dynamixel_scan", cmd_dynamixel_scan, "scan dynamixel id : dynamixel_scan type id"},
+	{ "dynamixel_set_id", cmd_dynamixel_set_id, "changement d'id des dynamixels : dynamixel_set_id type id newid"},
+	{ "dynamixel_set_goal_position", cmd_dynamixel_set_goal_position, "position cible du dynamixel : dynamixel_set_goal_position type id alpha"},
+	{ "dynamixel_set_op_baudrate", cmd_dynamixel_set_op_baudrate, "mise a jour du baudrate en conf OP"},
+	{ "dynamixel_set_manager_baudrate", cmd_dynamixel_set_manager_baudrate, "mise a jour du baudrate du gestionnaire dynamixel"},
+	{ "dynamixel_set_max_torque", cmd_dynamixel_set_max_torque, "dynamixel_set_max_torque id type val[0 100]"},
+	{ "dynamixel_set_target_reached_threshold", cmd_dynamixel_set_target_reached_threshold, "dynamixel_set_target_reached_threshold id type threshold"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "free", cmd_free, "free()" },
 	{ "go", cmd_go, "go" },
@@ -197,6 +201,38 @@ int cmd_dynamixel_set_manager_baudrate(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_manager_baudrate(type, freq);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_max_torque(const char* arg)
+{
+	int type;
+	unsigned int id;
+	float torque;
+	int count = sscanf(arg, "%d %u %f", &type, &id, &torque);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_set_max_torque(type, id, torque);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_target_reached_threshold(const char* arg)
+{
+	int type;
+	unsigned int id;
+	float threshold;
+	int count = sscanf(arg, "%d %u %f", &type, &id, &threshold);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_set_target_reached_threshold(type, id, threshold);
 	return CMD_SUCESS;
 }
 
