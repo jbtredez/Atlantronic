@@ -46,7 +46,9 @@
 #define INIT_PINCE                    "21"
 #define INIT_ARM                      "22"
 #define INIT_TRAJECTORY               "23"
-#define INIT_STRATEGY                 "24"
+#define INIT_PUMP                     "24"
+
+#define INIT_STRATEGY                 "40"
 
 #define INIT_TEST                     "50"
 #define INIT_TEST_PINCE               "50"

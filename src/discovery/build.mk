@@ -64,6 +64,7 @@ obj-discovery-baz_small += kernel/math/simpson_integrator.o
 obj-discovery-baz_small += kernel/control/kinematics.o
 obj-discovery-baz_small += kernel/geometric_model/geometric_model.o
 obj-discovery-baz_small += kernel/location/location.o
+obj-discovery-baz_small += kernel/pump.o
 obj-discovery-baz_small += discovery/control.o
 
 obj-discovery-baz += $(obj-discovery-core)
@@ -86,6 +87,7 @@ obj-discovery-baz += kernel/control/kinematics.o
 obj-discovery-baz += kernel/geometric_model/geometric_model.o
 obj-discovery-baz += kernel/location/location.o
 obj-discovery-baz += kernel/hokuyo_tools.o
+obj-discovery-baz += kernel/pump.o
 obj-discovery-baz += discovery/control.o
 obj-discovery-baz += discovery/motion.o
 

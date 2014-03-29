@@ -13,6 +13,7 @@
 #include "kernel/driver/gyro.h"
 #include "kernel/driver/adc.h"
 #include "kernel/fault.h"
+#include "kernel/pump.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -48,6 +49,8 @@ static void control_task(void* /*arg*/)
 
 		// mise a jour de la loc et calcul asservissement
 		motion_compute();
+
+		pump_update();
 
 		motion_update_usb_data(&control_usb_data);
 		control_usb_data.current_time = systick_get_time();

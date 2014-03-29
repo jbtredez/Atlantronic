@@ -12,6 +12,7 @@
 #include "kernel/driver/usb.h"
 #include "discovery/trajectory.h"
 #include "kernel/driver/dynamixel.h"
+#include "kernel/pump.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -763,6 +764,16 @@ int RobotInterface::dynamixel_get_position(int dynamixel_type, uint8_t id)
 	cmd_arg.id = id;
 
 	return usb_write(USB_CMD_DYNAMIXEL, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::pump(uint8_t id, uint8_t val)
+{
+	struct pump_cmd_arg cmd_arg;
+
+	cmd_arg.id = id;
+	cmd_arg.val = val;
+
+	return usb_write(USB_CMD_PUMP, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::control_print_param()

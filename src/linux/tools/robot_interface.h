@@ -40,7 +40,7 @@ class RobotInterface
 		//! ATTENTION : pour les tests uniquement : n'est pas equivalent a un reboot HW
 		int reboot();
 
-		// ---------- gestion des dynamixel---------------------------------------------
+		// ---------- gestion des dynamixel --------------------------------------------
 		int dynamixel_set(struct dynamixel_cmd_param param);
 		int dynamixel_scan(int dynamixel_type);
 		int dynamixel_set_id(int dynamixel_type, uint8_t id, uint8_t new_id);
@@ -48,6 +48,9 @@ class RobotInterface
 		int dynamixel_set_manager_baudrate(int dynamixel_type, int freq);
 		int dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha);
 		int dynamixel_get_position(int dynamixel_type, uint8_t id);
+
+		// ---------- gestion pompes ---------------------------------------------------
+		int pump(uint8_t id, uint8_t val);
 
 		// ---------- gestion CAN ------------------------------------------------------
 		int can_set_baudrate(enum can_baudrate baudrate, int debug);

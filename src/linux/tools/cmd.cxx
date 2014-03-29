@@ -30,6 +30,7 @@ int cmd_dynamixel_set_op_baudrate(const char* arg);
 int cmd_dynamixel_set_manager_baudrate(const char* arg);
 int cmd_dynamixel_get_position(const char* arg);
 int cmd_help(const char* arg);
+int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_qemu_manage_canopen_connexion(const char* arg);
 int cmd_quit(const char* arg);
@@ -95,6 +96,7 @@ COMMAND usb_commands[] = {
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "ptask", cmd_ptask, "print tasks"},
+	{ "pump", cmd_pump, "pump id val[0 100]"},
 	{ "q", cmd_quit, "Quit" },
 	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
 	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
@@ -598,6 +600,21 @@ int cmd_pince_set_position (const char* arg)
 int cmd_ptask(const char*)
 {
 	cmd_robot->ptask();
+	return CMD_SUCESS;
+}
+
+int cmd_pump(const char* arg)
+{
+	int id;
+	int val;
+	int count = sscanf(arg, "%d %d", &id, &val);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->pump(id, val);
 	return CMD_SUCESS;
 }
 

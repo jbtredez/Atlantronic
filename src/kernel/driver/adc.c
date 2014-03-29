@@ -104,6 +104,8 @@ int adc_module_init()
 	return 0;
 }
 
+module_init(adc_module_init, INIT_ADC);
+
 void adc_update()
 {
 	int end = (sizeof(adc_data) - DMA2_Stream4->NDTR) / sizeof(adc_data[0]);
@@ -134,4 +136,3 @@ void adc_update()
 	}
 }
 
-module_init(adc_module_init, INIT_ADC);
