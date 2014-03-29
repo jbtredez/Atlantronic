@@ -9,11 +9,11 @@
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;
-volatile uint8_t gpio_recaler;
-//uint8_t gpio_recalage_done;
+static uint8_t gpio_enable_go;
+
 static xQueueHandle gpio_queue_go;
 
-static void gpio_cmd_go();
+static void gpio_cmd_go(void* arg);
 static void gpio_cmd_color(void* arg);
 
 static int gpio_module_init(void)
@@ -64,11 +64,9 @@ static int gpio_module_init(void)
 
 	setLed( LED_CPU_RED | LED_CPU_BLUE | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2 | LED_EXT_RED);
 
-	color = COLOR_BLUE;
+	color = COLOR_RED;
 	gpio_go = 0;
-	gpio_recaler = 0;
 	gpio_queue_go = xQueueCreate(1, 0);
-//	gpio_recalage_done = 0;
 
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
@@ -121,6 +119,27 @@ void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af)
 	GPIOx->AFR[pin >> 0x03] = temp_2;
 }
 
+uint32_t gpio_get_state()
+{
+	uint32_t res = 0;
+
+	res |= gpio_get_pin(GPIOD, 11);      // IN_1
+	res |= gpio_get_pin(GPIOB, 13) << 1; // IN_2
+	res |= gpio_get_pin(GPIOB, 12) << 2; // IN_3
+	res |= gpio_get_pin(GPIOD, 10) << 3; // IN_4
+	res |= gpio_get_pin(GPIOD, 7) << 4;  // IN_5
+	res |= gpio_get_pin(GPIOB, 11) << 5; // IN_6
+	res |= gpio_get_pin(GPIOC, 11) << 6; // IN_7
+	res |= gpio_get_pin(GPIOD, 6) << 7;  // IN_8
+	res |= gpio_get_pin(GPIOC, 9) << 8;  // IN_9
+	res |= gpio_get_pin(GPIOC, 8) << 9;  // IN_10
+	res |= gpio_get_pin(GPIOD, 3) << 10; // INGO
+	res |= (gpio_go?1:0) << 11; // GO
+	res |= (color?1:0) << 12; // color
+
+	return res;
+}
+
 void setLed(uint32_t mask)
 {
 	GPIOB->BSRRL = (uint16_t)((mask & LED_EXT_RED) >> 16);
@@ -142,14 +161,29 @@ void gpio_wait_go()
 	xQueuePeek(gpio_queue_go, NULL, portMAX_DELAY);
 }
 
-static void gpio_cmd_go()
+static void gpio_cmd_go(void * arg)
 {
-//	if(gpio_recalage_done)
+	struct gpio_cmd_go_arg* cmd_arg = (struct gpio_cmd_go_arg*) arg;
+
+	switch(cmd_arg->cmd)
 	{
-		gpio_go = 1;
-		//setLed(LED_CPU_RED | LED_CPU_BLUE);
-		systick_start_match();
-		xQueueSend(gpio_queue_go, NULL, 0);
+		case GPIO_CMD_ENABLE_GO:
+			gpio_enable_go = 1;
+			log(LOG_INFO, "enable GO");
+			break;
+		case GPIO_CMD_GO:
+			if(gpio_enable_go)
+			{
+				log(LOG_INFO, "usb go");
+				gpio_go = 1;
+				//setLed(LED_CPU_RED | LED_CPU_BLUE);
+				systick_start_match();
+				xQueueSend(gpio_queue_go, NULL, 0);
+			}
+			break;
+		default:
+			log_format(LOG_ERROR, "unknown go cmd %d", cmd_arg->cmd);
+			break;
 	}
 }
 
@@ -166,9 +200,9 @@ static void gpio_cmd_color(void* arg)
 		}
 		else
 		{
-			color = COLOR_BLUE;
-			setLed(LED_CPU_BLUE | LED_EXT_BLUE);
-			log(LOG_INFO, "couleur => bleu");
+			color = COLOR_YELLOW;
+			setLed(LED_CPU_BLUE | LED_EXT_ORANGE1);
+			log(LOG_INFO, "couleur => jaune");
 		}
 	}
 }
@@ -182,7 +216,7 @@ void isr_exti3(void)
 	if( EXTI->PR & EXTI_PR_PR3)
 	{
 		EXTI->PR = EXTI_PR_PR3;
-		//if( gpio_recalage_done )
+		if( gpio_enable_go )
 		{
 			gpio_go = 1;
 			//setLed(LED_CPU_RED | LED_CPU_BLUE);
@@ -217,15 +251,15 @@ void isr_exti15_10(void)
 		EXTI->PR = EXTI_PR_PR14;
 		if(gpio_go == 0)
 		{
-			if(color == COLOR_BLUE)
+			if(color == COLOR_YELLOW)
 			{
 				color = COLOR_RED;
 				setLed(LED_CPU_RED | LED_EXT_RED);
 			}
 			else
 			{
-				color = COLOR_BLUE;
-				setLed(LED_CPU_BLUE | LED_EXT_BLUE);
+				color = COLOR_YELLOW;
+				setLed(LED_CPU_BLUE | LED_EXT_ORANGE1);
 			}
 		}
 	}

@@ -62,6 +62,7 @@ class RobotInterface
 		// ---------- gestion recalage, go, couleur... ---------------------------------
 		int recalage();
 		int go();
+		int go_enable();
 		int color(uint8_t color);
 		//!< time : temps en ms
 		int set_match_time(uint32_t time);

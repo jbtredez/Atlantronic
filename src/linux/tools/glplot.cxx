@@ -1127,6 +1127,20 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			}
 			glPrintf(1600, lineId*lineHeight, font_base, "cod  %6d %6d %6d", robot_interface.last_control_usb_data.encoder[0], robot_interface.last_control_usb_data.encoder[1], robot_interface.last_control_usb_data.encoder[2]);
 			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
+					robot_interface.last_control_usb_data.gpio & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 1) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 2) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 3) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 4) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 5) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 6) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 7) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 8) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 9) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 10) & 0x01,
+					(robot_interface.last_control_usb_data.gpio >> 11) & 0x01);
+			lineId++;
 		}
 
 		pthread_mutex_unlock(&robot_interface.mutex);

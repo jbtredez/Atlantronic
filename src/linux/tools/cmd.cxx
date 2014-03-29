@@ -35,6 +35,7 @@ int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_qemu_manage_canopen_connexion(const char* arg);
 int cmd_quit(const char* arg);
 int cmd_go(const char* arg);
+int cmd_go_enable(const char* arg);
 int cmd_goto(const char*arg);
 int cmd_goto_graph(const char* arg);
 int cmd_goto_near(const char* arg);
@@ -83,6 +84,7 @@ COMMAND usb_commands[] = {
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "free", cmd_free, "free()" },
 	{ "go", cmd_go, "go" },
+	{ "go_enable", cmd_go_enable, "go_enable" },
 	{ "goto", cmd_goto, "goto x y theta cpx cpy cptheta" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
@@ -633,6 +635,12 @@ int cmd_recalage(const char*)
 int cmd_go(const char*)
 {
 	cmd_robot->go();
+	return CMD_SUCESS;
+}
+
+int cmd_go_enable(const char*)
+{
+	cmd_robot->go_enable();
 	return CMD_SUCESS;
 }
 

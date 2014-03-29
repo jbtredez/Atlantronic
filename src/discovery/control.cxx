@@ -12,6 +12,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro.h"
 #include "kernel/driver/adc.h"
+#include "gpio.h"
 #include "kernel/fault.h"
 #include "kernel/pump.h"
 
@@ -67,6 +68,7 @@ static void control_task(void* /*arg*/)
 		control_usb_data.encoder[ENCODER_1] = encoder_get(ENCODER_1);
 		control_usb_data.encoder[ENCODER_2] = encoder_get(ENCODER_2);
 		control_usb_data.encoder[ENCODER_3] = encoder_get(ENCODER_3);
+		control_usb_data.gpio = gpio_get_state();
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 

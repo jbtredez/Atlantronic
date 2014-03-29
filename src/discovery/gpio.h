@@ -7,6 +7,10 @@
 
 #include "kernel/cpu/cpu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LED_CPU_RED      0x00004000
 #define LED_CPU_BLUE     0x00008000
 #define LED_EXT_BLUE     0x80000000
@@ -16,7 +20,21 @@
 #define LED_EXT_RED      0x01000000
 
 #define COLOR_RED         0
-#define COLOR_BLUE        1
+#define COLOR_YELLOW      1
+
+#define GPIO_IN_1          0x01  // IN_1
+#define GPIO_IN_2          0x02  // IN_2
+#define GPIO_IN_3          0x04  // IN_3
+#define GPIO_IN_4          0x08  // IN_4
+#define GPIO_IN_5          0x10  // IN_5
+#define GPIO_IN_6          0x20  // IN_6
+#define GPIO_IN_7          0x40  // IN_7
+#define GPIO_IN_8          0x80  // IN_8
+#define GPIO_IN_9         0x100  // IN_9
+#define GPIO_IN_10        0x200  // IN_10
+#define GPIO_IN_GO        0x400  // IN_GO (etat pin)
+#define GPIO_GO           0x800  // GO : match lance
+#define GPIO_COLOR       0x1000  // color
 
 enum gpio_mode
 {
@@ -116,6 +134,7 @@ enum gpio_pupd
 //!<AF 15 selection
 #define GPIO_AF_EVENTOUT      ((uint8_t)0x0F)  /* EVENTOUT Alternate Function mapping */
 
+#ifndef LINUX
 void gpio_pin_init(GPIO_TypeDef* GPIOx, uint32_t pin, enum gpio_mode mode, enum gpio_speed speed, enum gpio_otype otype, enum gpio_pupd pupd);
 
 void gpio_af_config(GPIO_TypeDef* GPIOx, uint32_t pin, uint32_t gpio_af);
@@ -130,6 +149,11 @@ static inline void gpio_set_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 static inline void gpio_reset_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 {
 	GPIOx->BSRRH = 1 << pin;
+};
+
+static inline uint32_t gpio_get_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
+{
+	return (GPIOx->IDR >> pin) & 0x01;
 };
 
 static inline void gpio_power_on()
@@ -154,18 +178,24 @@ static inline uint8_t getGo()
 	return gpio_go;
 }
 
-static inline uint8_t getRecalage()
-{
-	extern volatile uint8_t gpio_recaler;
-	return gpio_recaler;
-}
-
-static inline void resetRecalage()
-{
-	extern volatile uint8_t gpio_recaler;
-	gpio_recaler = 0;
-}
+uint32_t gpio_get_state();
 
 void gpio_wait_go();
+#endif
+// ---------------- interface usb ------------
+enum
+{
+	GPIO_CMD_ENABLE_GO,
+	GPIO_CMD_GO,
+};
+
+struct gpio_cmd_go_arg
+{
+	uint8_t cmd;
+};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

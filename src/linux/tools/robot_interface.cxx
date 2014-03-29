@@ -13,6 +13,7 @@
 #include "discovery/trajectory.h"
 #include "kernel/driver/dynamixel.h"
 #include "kernel/pump.h"
+#include "discovery/gpio.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -1028,7 +1029,16 @@ int RobotInterface::recalage()
 
 int RobotInterface::go()
 {
-	return usb_write(USB_CMD_GO, NULL, 0);
+	struct gpio_cmd_go_arg cmd_arg;
+	cmd_arg.cmd = GPIO_CMD_GO;
+	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::go_enable()
+{
+	struct gpio_cmd_go_arg cmd_arg;
+	cmd_arg.cmd = GPIO_CMD_ENABLE_GO;
+	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::color(uint8_t color)

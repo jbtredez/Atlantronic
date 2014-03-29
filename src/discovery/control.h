@@ -27,6 +27,7 @@ struct control_usb_data
 	VectPlan wanted_pos;
 	int16_t raw_data_gyro;
 	uint16_t encoder[ENCODER_MAX];
+	uint32_t gpio;
 	float omega_gyro;
 	float pos_theta_gyro_euler;
 	float pos_theta_gyro_simpson;
