@@ -34,6 +34,7 @@ struct dynamixel_data
 {
 	float pos;           //!< position
 	uint16_t flags;      //!< flags
+	struct dynamixel_error error; //!< erreurs
 };
 
 class RobotInterface

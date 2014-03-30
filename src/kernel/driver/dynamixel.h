@@ -112,7 +112,7 @@ struct dynamixel_error
 	uint8_t transmit_error;
 	//!< erreur interne dynamixel (champ de bit)
 	uint8_t internal_error;
-};
+} __attribute((packed));
 
 struct Dynamixel
 {
@@ -210,6 +210,7 @@ struct dynamixel_usb_data
 	uint8_t id;             //!< id du dynamixel
 	uint16_t pos;           //!< position
 	uint16_t flags;         //!< flags
+	struct dynamixel_error error; //!< erreurs
 
 } __attribute((packed));
 

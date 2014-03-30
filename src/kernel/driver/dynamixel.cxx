@@ -120,7 +120,7 @@ void DynamixelManager::task()
 			xSemaphoreGive(mutex);
 
 			uint16_t pos_err = abs(pos - goal_pos);
-			if( pos_err > 1)
+			if( pos_err > 0)
 			{
 				// on va envoyer la position désirée
 				req.instruction = DYNAMIXEL_INSTRUCTION_WRITE_DATA;
@@ -148,10 +148,11 @@ void DynamixelManager::task()
 		}
 
 		struct dynamixel_usb_data usb_data;
-		usb_data.id = id;
+		usb_data.id = id + 1;
 		usb_data.type = type;
 		usb_data.pos = devices[id].pos;
 		usb_data.flags = devices[id].flags;
+		usb_data.error = devices[id].last_error;
 		usb_add(USB_DYNAMIXEL, &usb_data, sizeof(usb_data));
 
 		id = (id + 1) % (max_devices_id-1);

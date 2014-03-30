@@ -450,8 +450,9 @@ int RobotInterface::process_dynamixel(char* msg, uint16_t size)
 
 	if(data->id < maxId)
 	{
-		dynamixels[data->id].pos = data->pos * DYNAMIXEL_POS_TO_RD;
+		dynamixels[data->id].pos = (data->pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
 		dynamixels[data->id].flags = data->flags;
+		dynamixels[data->id].error = data->error;
 	}
 
 	pthread_mutex_unlock(&mutex);

@@ -1079,7 +1079,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		if( current_graph == GRAPH_TABLE )
 		{
 			int lineHeight = -2*font_digit_height * graph->ratio_y;
-			int lineId = 0;
+			int lineId = -5;
 			glPrintf(1600, lineId*lineHeight, font_base, "time  %13.6f", robot_interface.current_time);
 			lineId++;
 			double match_time = 0;
@@ -1141,6 +1141,24 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 					(robot_interface.last_control_usb_data.gpio >> 10) & 0x01,
 					(robot_interface.last_control_usb_data.gpio >> 11) & 0x01);
 			lineId++;
+			for(int i = 2; i < AX12_MAX_ID; i++)
+			{
+				glPrintf(1600, lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
+						robot_interface.ax12[i].pos * 180 / M_PI,
+						robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED,
+						robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_STUCK,
+						(robot_interface.ax12[i].error.transmit_error << 8) + robot_interface.ax12[i].error.internal_error);
+				lineId++;
+			}
+			for(int i = 2; i < RX24_MAX_ID; i++)
+			{
+				glPrintf(1600, lineId*lineHeight, font_base, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
+						robot_interface.rx24[i].pos * 180 / M_PI,
+						robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED,
+						robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_STUCK,
+						(robot_interface.rx24[i].error.transmit_error << 8) + robot_interface.rx24[i].error.internal_error);
+				lineId++;
+			}
 		}
 
 		pthread_mutex_unlock(&robot_interface.mutex);
