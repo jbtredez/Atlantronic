@@ -97,7 +97,7 @@ static GtkWidget* opengl_window;
 static GtkWidget* main_window;
 static int simulation = 0;
 
-struct graphique graph[GRAPH_NUM];
+Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
@@ -199,38 +199,38 @@ int main(int argc, char *argv[])
 		file_foo_write = qemu.file_foo_write;
 	}
 
-	graphique_init(&graph[GRAPH_TABLE], "Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_TEXTURE, "Texture", 1, 0, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 0, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO1, "Hokuyo 1", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO1_SEG, "Hokuyo 1 - poly", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH, "Graph", 0, 0, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_TABLE], SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
+	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TEXTURE, "Texture", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1, "Hokuyo 1", 1, 1, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1_SEG, "Hokuyo 1 - poly", 1, 0, 1, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH, "Graph", 0, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
 
-	graphique_init(&graph[GRAPH_HOKUYO_HIST], "Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_FOO, "Hokuyo 1", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_HOKUYO_HIST], GRAPH_HOKUYO_HIST_BAR, "Hokuyo 2", 1, 0, 0, 1);
+	graph[GRAPH_HOKUYO_HIST].init("Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
+	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO_HIST_FOO, "Hokuyo 1", 1, 1, 0, 0);
+	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO_HIST_BAR, "Hokuyo 2", 1, 0, 0, 1);
 
-	graphique_init(&graph[GRAPH_SPEED_DIST], "Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V2, "v2", 0, 0.5, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V3, "v3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V4, "w1", 0, 1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V5, "w2", 0, 0.5, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_V6, "w3", 0, 0.1, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_VBAT, "vBat", 0, 1, 0, 0);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I1, "i1", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
-	graphique_add_courbe(&graph[GRAPH_SPEED_DIST], SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].init("Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2, "v2", 0, 0.5, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V3, "v3", 0, 0.1, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V4, "w1", 0, 1, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V5, "w2", 0, 0.5, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V6, "w3", 0, 0.1, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_VBAT, "vBat", 0, 1, 0, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I1, "i1", 0, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -470,7 +470,7 @@ static void init(GtkWidget* widget, gpointer arg)
 
 	for(i = 0; i < GRAPH_NUM; i++)
 	{
-		graphique_set_border(&graph[i], 10 * font_width, font_height*3);
+		graph[i].set_border(10 * font_width, font_height*3);
 	}
 
 	GError *error = NULL;
@@ -513,7 +513,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	int i;
 	for( i = 0; i < GRAPH_NUM; i++)
 	{
-		graphique_resize_screen(&graph[i], screen_width, screen_height);
+		graph[i].resize_screen(screen_width, screen_height);
 	}
 
 	glViewport(0, 0, screen_width, screen_height);
@@ -538,7 +538,7 @@ static void draw_plus(float x, float y, float rx, float ry)
 	glEnd();
 }
 
-void plot_axes(struct graphique* graph)
+void plot_axes(Graphique* graph)
 {
 	float roi_xmin = graph->roi_xmin;
 	float roi_xmax = graph->roi_xmax;
@@ -583,7 +583,7 @@ void plot_axes(struct graphique* graph)
 	}
 }
 
-void plot_legende(struct graphique* graph)
+void plot_legende(Graphique* graph)
 {
 	int i = 0;
 	int dy = 0;
@@ -598,7 +598,7 @@ void plot_legende(struct graphique* graph)
 	}
 }
 
-void plot_table(struct graphique* graph)
+void plot_table(Graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
@@ -824,7 +824,7 @@ void plot_table(struct graphique* graph)
 	glPopMatrix();
 }
 
-void plot_hokuyo_hist(struct graphique* graph)
+void plot_hokuyo_hist(Graphique* graph)
 {
 	int i;
 
@@ -850,7 +850,7 @@ void plot_hokuyo_hist(struct graphique* graph)
 	}
 }
 
-void plot_speed_dist(struct graphique* graph)
+void plot_speed_dist(Graphique* graph)
 {
 	int i;
 
@@ -1046,7 +1046,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	{
 		if(current_graph == GRAPH_SPEED_DIST)
 		{
-			graphique_resize_axis_x(&graph[current_graph], 0, robot_interface.control_usb_data_count * 5);
+			graph[current_graph].resize_axis_x(0, robot_interface.control_usb_data_count * 5);
 		}
 
 		glMatrixMode(GL_PROJECTION);
@@ -1245,7 +1245,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 	}
 	else if(event->button == 3 && current_graph == GRAPH_TABLE)
 	{
-		struct graphique* gr = &graph[current_graph];
+		Graphique* gr = &graph[current_graph];
 		float xrange = gr->roi_xmax - gr->roi_xmin;
 		float yrange = gr->roi_ymax - gr->roi_ymin;
 
@@ -1267,12 +1267,12 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 		else
 		{
 			// c'est pas un robot, on reset la roi
-			graphique_reset_roi(&graph[current_graph]);
+			graph[current_graph].reset_roi();
 		}
 	}
 	else
 	{
-		graphique_reset_roi(&graph[current_graph]);
+		graph[current_graph].reset_roi();
 	}
 	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 }
@@ -1283,7 +1283,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( drawing_zoom_selection && mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
-			graphique_zoom(&graph[current_graph], mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
+			graph[current_graph].zoom(mouse_x1, mouse_x2, screen_height - mouse_y1, screen_height - mouse_y2);
 		}
 
 		drawing_zoom_selection = 0;
@@ -1297,7 +1297,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 	{
 		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
 		{
-			struct graphique* gr = &graph[current_graph];
+			Graphique* gr = &graph[current_graph];
 
 			float xrange = gr->roi_xmax - gr->roi_xmin;
 			float yrange = gr->roi_ymax - gr->roi_ymin;
@@ -1342,7 +1342,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 
 		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
 		{
-			struct graphique* gr = &graph[current_graph];
+			Graphique* gr = &graph[current_graph];
 
 			float xrange = gr->roi_xmax - gr->roi_xmin;
 			float yrange = gr->roi_ymax - gr->roi_ymin;
@@ -1380,11 +1380,11 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			break;
 		case GDK_KP_Subtract:
 		case GDK_minus:
-			graphique_zoomf(&graph[current_graph], 2);
+			graph[current_graph].zoomf(2);
 			break;
 		case GDK_KP_Add:
 		case GDK_plus:
-			graphique_zoomf(&graph[current_graph], 0.5);
+			graph[current_graph].zoomf(0.5);
 			break;
 		case GDK_r:
 			res = pthread_mutex_lock(&robot_interface.mutex);
@@ -1395,7 +1395,7 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			}
 			break;
 		case GDK_u:
-			graphique_reset_roi(&graph[current_graph]);
+			graph[current_graph].reset_roi();
 			break;
 	}
 

@@ -4,106 +4,102 @@
 
 #include "linux/tools/graphique.h"
 
-static float graphique_quantize(float range);
-static void graphique_update_data(struct graphique* graph);
-
-void graphique_init(struct graphique* graph, const char* name, float xmin, float xmax, float ymin, float ymax, int screen_width, int screen_height, int bordure_pixel_x, int bordure_pixel_y)
+void Graphique::init(const char* Name, float Xmin, float Xmax, float Ymin, float Ymax, int Screen_width, int Screen_height, int Bordure_pixel_x, int Bordure_pixel_y)
 {
 	int i = 0;
 
-	graph->name = (char*)malloc(strlen(name)+1);
-	strcpy(graph->name, name);
+	name = (char*)malloc(strlen(Name)+1);
+	strcpy(name, Name);
 
 	for(i = 0; i < MAX_COURBES; i++)
 	{
-		graph->courbes_names[i] = NULL;
-		graph->courbes_activated[i] = 0;
+		courbes_names[i] = NULL;
+		courbes_activated[i] = 0;
 	}
 
-	memset(graph->color, 0x00, sizeof(graph->color));
+	memset(color, 0x00, sizeof(color));
 
-	graph->xmin = xmin;
-	graph->xmax = xmax;
-	graph->ymin = ymin;
-	graph->ymax = ymax;
+	xmin = Xmin;
+	xmax = Xmax;
+	ymin = Ymin;
+	ymax = Ymax;
 
-	graph->screen_width = screen_width;
-	graph->screen_height = screen_height;
-	graph->bordure_pixel_x = bordure_pixel_x;
-	graph->bordure_pixel_y = bordure_pixel_y;
+	screen_width = Screen_width;
+	screen_height = Screen_height;
+	bordure_pixel_x = Bordure_pixel_x;
+	bordure_pixel_y = Bordure_pixel_y;
 
 	// par defaut roi = tout
-	graphique_reset_roi(graph);
-	graphique_update_data(graph);
+	reset_roi();
 }
 
-void graphique_add_courbe(struct graphique* graph, int id, const char* name, int activated, float r, float g, float b)
+void Graphique::add_courbe(int id, const char* name, int activated, float r, float g, float b)
 {
 	if(id >= MAX_COURBES || id < 0)
 	{
 		return;
 	}
 
-	if(graph->courbes_names[id])
+	if(courbes_names[id])
 	{
-		free(graph->courbes_names[id]);
+		free(courbes_names[id]);
 	}
 
-	graph->color[3*id] = r;
-	graph->color[3*id+1] = g;
-	graph->color[3*id+2] = b;
-	graph->courbes_activated[id] = activated;
-	graph->courbes_names[id] = (char*)malloc(strlen(name)+1);
-	strcpy(graph->courbes_names[id], name);
+	color[3*id] = r;
+	color[3*id+1] = g;
+	color[3*id+2] = b;
+	courbes_activated[id] = activated;
+	courbes_names[id] = (char*)malloc(strlen(name)+1);
+	strcpy(courbes_names[id], name);
 }
 
-void graphique_destroy(struct graphique* graph)
+Graphique::~Graphique()
 {
 	int i;
-	if(graph->name)
+	if(name)
 	{
-		free(graph->name);
-		graph->name = NULL;
+		free(name);
+		name = NULL;
 	}
 
 	for(i = 0; i < MAX_COURBES; i++)
 	{
-		if( graph->courbes_names[i] )
+		if( courbes_names[i] )
 		{
-			free( graph->courbes_names[i]);
-			graph->courbes_names[i] = NULL;
+			free( courbes_names[i]);
+			courbes_names[i] = NULL;
 		}
 	}
 }
 
-void graphique_reset_roi(struct graphique* graph)
+void Graphique::reset_roi()
 {
-	graph->roi_xmin = graph->xmin;
-	graph->roi_xmax = graph->xmax;
-	graph->roi_ymin = graph->ymin;
-	graph->roi_ymax = graph->ymax;
+	roi_xmin = xmin;
+	roi_xmax = xmax;
+	roi_ymin = ymin;
+	roi_ymax = ymax;
 
-	graphique_update_data(graph);
+	update_data();
 }
 
-static void graphique_update_data(struct graphique* graph)
+void Graphique::update_data()
 {
-	graph->tics_dx = graphique_quantize(graph->roi_xmax - graph->roi_xmin);
-	graph->tics_dy = graphique_quantize(graph->roi_ymax - graph->roi_ymin);
+	tics_dx = quantize(roi_xmax - roi_xmin);
+	tics_dy = quantize(roi_ymax - roi_ymin);
 
-	graph->ratio_x = (graph->roi_xmax - graph->roi_xmin) / (graph->screen_width - 2 * graph->bordure_pixel_x);
-	graph->ratio_y = (graph->roi_ymax - graph->roi_ymin) / (graph->screen_height - 2 * graph->bordure_pixel_y);
+	ratio_x = (roi_xmax - roi_xmin) / (screen_width - 2 * bordure_pixel_x);
+	ratio_y = (roi_ymax - roi_ymin) / (screen_height - 2 * bordure_pixel_y);
 
-	float bordure_x = graph->bordure_pixel_x * graph->ratio_x;
-	float bordure_y = graph->bordure_pixel_y * graph->ratio_y;
+	float bordure_x = bordure_pixel_x * ratio_x;
+	float bordure_y = bordure_pixel_y * ratio_y;
 
-	graph->plot_xmin = graph->roi_xmin - bordure_x;
-	graph->plot_xmax = graph->roi_xmax + bordure_x;
-	graph->plot_ymin = graph->roi_ymin - bordure_y;
-	graph->plot_ymax = graph->roi_ymax + bordure_y;
+	plot_xmin = roi_xmin - bordure_x;
+	plot_xmax = roi_xmax + bordure_x;
+	plot_ymin = roi_ymin - bordure_y;
+	plot_ymax = roi_ymax + bordure_y;
 }
 
-static float graphique_quantize(float range)
+float Graphique::quantize(float range)
 {
 	float power = pow(10, floor(log10(range)));
 	float xnorm = range / power;
@@ -142,43 +138,43 @@ static float graphique_quantize(float range)
 	return tics * power;
 }
 
-void graphique_resize_screen(struct graphique* graph, int screen_width, int screen_height)
+void Graphique::resize_screen(int Screen_width, int Screen_height)
 {
-	graph->screen_width = screen_width;
-	graph->screen_height = screen_height;
+	screen_width = Screen_width;
+	screen_height = Screen_height;
 
-	graphique_update_data(graph);
+	update_data();
 }
 
-void graphique_set_border(struct graphique* graph, int bordure_pixel_x, int bordure_pixel_y)
+void Graphique::set_border(int Bordure_pixel_x, int Bordure_pixel_y)
 {
-	graph->bordure_pixel_x = bordure_pixel_x;
-	graph->bordure_pixel_y = bordure_pixel_y;
+	bordure_pixel_x = Bordure_pixel_x;
+	bordure_pixel_y = Bordure_pixel_y;
 
-	graphique_update_data(graph);
+	update_data();
 }
 
-void graphique_resize_axis_x(struct graphique* graph, float xmin, float xmax)
+void Graphique::resize_axis_x(float Xmin, float Xmax)
 {
-	int reset_roi = 0;
+	int resetroi = 0;
 
-	if( graph->xmin == graph->roi_xmin && graph->xmax == graph->roi_xmax )
+	if( xmin == roi_xmin && xmax == roi_xmax )
 	{
-		reset_roi = 1;
+		resetroi = 1;
 	}
 
-	graph->xmin = xmin;
-	graph->xmax = xmax;
+	xmin = Xmin;
+	xmax = Xmax;
 
-	if(reset_roi)
+	if(resetroi)
 	{
-		graphique_reset_roi(graph);
+		reset_roi();
 	}
 
-	graphique_update_data(graph);
+	update_data();
 }
 
-void graphique_zoom(struct graphique* graph, float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2)
+void Graphique::zoom(float mouse_x1, float mouse_x2, float mouse_y1, float mouse_y2)
 {
 	if(mouse_x1 > mouse_x2)
 	{
@@ -193,34 +189,34 @@ void graphique_zoom(struct graphique* graph, float mouse_x1, float mouse_x2, flo
 		mouse_y2 = tmp;
 	}
 
-	float zoom_x1 = (mouse_x1 - graph->bordure_pixel_x) / (graph->screen_width - 2 * graph->bordure_pixel_x);
-	float zoom_x2 = (mouse_x2 - graph->bordure_pixel_x) / (graph->screen_width - 2 * graph->bordure_pixel_x);
-	float zoom_y1 = (mouse_y1 - graph->bordure_pixel_y) / (graph->screen_height - 2 * graph->bordure_pixel_y);
-	float zoom_y2 = (mouse_y2 - graph->bordure_pixel_y) / (graph->screen_height - 2 * graph->bordure_pixel_y);
+	float zoom_x1 = (mouse_x1 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
+	float zoom_x2 = (mouse_x2 - bordure_pixel_x) / (screen_width - 2 * bordure_pixel_x);
+	float zoom_y1 = (mouse_y1 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
+	float zoom_y2 = (mouse_y2 - bordure_pixel_y) / (screen_height - 2 * bordure_pixel_y);
 
-	float xrange = graph->roi_xmax - graph->roi_xmin;
-	float yrange = graph->roi_ymax - graph->roi_ymin;
+	float xrange = roi_xmax - roi_xmin;
+	float yrange = roi_ymax - roi_ymin;
 
-	graph->roi_xmin += zoom_x1 * xrange;
-	graph->roi_xmax -= (1-zoom_x2) * xrange;
-	graph->roi_ymin += zoom_y1 * yrange;
-	graph->roi_ymax -= (1-zoom_y2) * yrange;
+	roi_xmin += zoom_x1 * xrange;
+	roi_xmax -= (1-zoom_x2) * xrange;
+	roi_ymin += zoom_y1 * yrange;
+	roi_ymax -= (1-zoom_y2) * yrange;
 
-	graphique_update_data(graph);
+	update_data();
 }
 
-void graphique_zoomf(struct graphique* graph, float zoom)
+void Graphique::zoomf(float zoom)
 {
-	float xrange = graph->roi_xmax - graph->roi_xmin;
-	float yrange = graph->roi_ymax - graph->roi_ymin;
+	float xrange = roi_xmax - roi_xmin;
+	float yrange = roi_ymax - roi_ymin;
 
-	float xmed = 0.5*(graph->roi_xmax + graph->roi_xmin);
-	float ymed = 0.5*(graph->roi_ymax + graph->roi_ymin);
+	float xmed = 0.5*(roi_xmax + roi_xmin);
+	float ymed = 0.5*(roi_ymax + roi_ymin);
 
-	graph->roi_xmin = xmed - 0.5 * xrange * zoom;
-	graph->roi_xmax = xmed + 0.5 * xrange * zoom;
-	graph->roi_ymin = ymed - 0.5 * yrange * zoom;
-	graph->roi_ymax = ymed + 0.5 * yrange * zoom;
+	roi_xmin = xmed - 0.5 * xrange * zoom;
+	roi_xmax = xmed + 0.5 * xrange * zoom;
+	roi_ymin = ymed - 0.5 * yrange * zoom;
+	roi_ymax = ymed + 0.5 * yrange * zoom;
 
-	graphique_update_data(graph);
+	update_data();
 }
