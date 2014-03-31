@@ -29,8 +29,10 @@
 // init de la communication
 #define INIT_CAN                      "07"
 #define INIT_CAN_MOTOR                "08"
+
 // init adc
 #define INIT_ADC                      "09"
+#define INIT_XBEE                     "10"
 
 #define INIT_ENCODERS                 "10"
 #define INIT_PWM                      "11"

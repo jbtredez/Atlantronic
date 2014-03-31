@@ -76,6 +76,11 @@ class RobotInterface
 		int can_lss_set_nodeid(uint8_t nodeid);
 		int can_lss_save();
 
+		// ---------- gestion xbee -----------------------------------------------------
+		int xbee_cmd(uint8_t cmd, float param);
+		int xbee_set_op_baudrate();
+		int xbee_set_manager_baudrate(uint32_t baudrate);
+
 		// ---------- gestion recalage, go, couleur... ---------------------------------
 		int recalage();
 		int go();

@@ -10,6 +10,7 @@
 #include "kernel/log_level.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/xbee.h"
 #include "discovery/trajectory.h"
 #include "kernel/pump.h"
 #include "discovery/gpio.h"
@@ -1082,6 +1083,24 @@ int RobotInterface::color(uint8_t color)
 int RobotInterface::set_match_time(uint32_t time)
 {
 	return usb_write(USB_CMD_MATCH_TIME, &time, sizeof(time));
+}
+
+int RobotInterface::xbee_cmd(uint8_t cmd, float param)
+{
+	struct xbee_cmd_param cmd_arg;
+	cmd_arg.cmd_id = cmd;
+	cmd_arg.param = param;
+	return usb_write(USB_CMD_XBEE, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::xbee_set_op_baudrate()
+{
+	return xbee_cmd(XBEE_CMD_SET_OP_BAUDRATE, 0);
+}
+
+int RobotInterface::xbee_set_manager_baudrate(uint32_t baudrate)
+{
+	return xbee_cmd(XBEE_CMD_SET_MANAGER_BAUDRATE, baudrate);
 }
 
 int RobotInterface::can_set_baudrate(enum can_baudrate baudrate, int debug)

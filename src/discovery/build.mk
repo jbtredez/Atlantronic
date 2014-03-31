@@ -78,6 +78,7 @@ obj-discovery-baz += kernel/driver/dynamixel.o
 obj-discovery-baz += kernel/driver/pwm.o
 obj-discovery-baz += kernel/driver/encoder.o
 obj-discovery-baz += kernel/driver/adc.o
+obj-discovery-baz += kernel/driver/xbee.o
 obj-discovery-baz += kernel/canopen.o
 obj-discovery-baz += kernel/can_motor.o
 obj-discovery-baz += kernel/math/vect_plan.o

@@ -63,6 +63,8 @@ int cmd_set_actuator_speed(const char* arg);
 int cmd_free(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
+int cmd_xbee_set_op_baudrate(const char* arg);
+int cmd_xbee_set_manager_baudrate(const char* arg);
 
 COMMAND usb_commands[] = {
 	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
@@ -116,6 +118,8 @@ COMMAND usb_commands[] = {
 	{ "set_actuator_speed", cmd_set_actuator_speed, "set actuators speed"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
+	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
+	{ "xbee_set_manager_baudrate", cmd_xbee_set_manager_baudrate, "xbee_set_manager_baudrate baudrate"},
 	{ "?", cmd_help, "Synonym for `help'" },
 	{ NULL, NULL, NULL }
 };
@@ -829,5 +833,25 @@ int cmd_arm_bridge(const char* arg)
 	}
 
 	cmd_robot->arm_bridge((uint8_t) on);
+	return CMD_SUCESS;
+}
+
+int cmd_xbee_set_op_baudrate(const char* /*arg*/)
+{
+	cmd_robot->xbee_set_op_baudrate();
+	return CMD_SUCESS;
+}
+
+int cmd_xbee_set_manager_baudrate(const char* arg)
+{
+	int baudrate;
+
+	int count = sscanf(arg, "%d", &baudrate);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+	cmd_robot->xbee_set_manager_baudrate(baudrate);
 	return CMD_SUCESS;
 }

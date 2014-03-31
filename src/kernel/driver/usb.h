@@ -53,6 +53,7 @@ enum usb_cmd
 	USB_CMD_GYRO_SET_CALIBRATION_VALUES,
 	USB_CMD_REBOOT,
 	USB_CMD_PUMP,
+	USB_CMD_XBEE,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 
