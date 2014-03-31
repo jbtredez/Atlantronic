@@ -63,6 +63,12 @@ class RobotInterface
 		// ---------- gestion pompes ---------------------------------------------------
 		int pump(uint8_t id, uint8_t val);
 
+		// ---------- lecture gpio ------------------------------------------------------
+		inline bool get_gpio(uint32_t mask)
+		{
+			return (last_control_usb_data.gpio & mask) ? 1 : 0;
+		}
+
 		// ---------- gestion CAN ------------------------------------------------------
 		int can_set_baudrate(enum can_baudrate baudrate, int debug);
 		int can_write(struct can_msg* msg);
