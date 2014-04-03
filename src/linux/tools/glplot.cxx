@@ -1141,6 +1141,12 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 					(robot_interface.last_control_usb_data.gpio >> 10) & 0x01,
 					(robot_interface.last_control_usb_data.gpio >> 11) & 0x01);
 			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "pump blocked %d %d %d %d",
+					(robot_interface.last_control_usb_data.pumpState & 0x01),
+					((robot_interface.last_control_usb_data.pumpState >> 1) & 0x01),
+					((robot_interface.last_control_usb_data.pumpState >> 2) & 0x01),
+					((robot_interface.last_control_usb_data.pumpState >> 3) & 0x01));
+			lineId++;
 			for(int i = 2; i < AX12_MAX_ID; i++)
 			{
 				glPrintf(1600, lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,

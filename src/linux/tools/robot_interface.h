@@ -62,12 +62,10 @@ class RobotInterface
 
 		// ---------- gestion pompes ---------------------------------------------------
 		int pump(uint8_t id, uint8_t val);
+		inline bool pump_is_blocked(uint8_t id);
 
 		// ---------- lecture gpio ------------------------------------------------------
-		inline bool get_gpio(uint32_t mask)
-		{
-			return (last_control_usb_data.gpio & mask) ? 1 : 0;
-		}
+		inline bool get_gpio(uint32_t mask);
 
 		// ---------- gestion CAN ------------------------------------------------------
 		int can_set_baudrate(enum can_baudrate baudrate, int debug);
@@ -192,5 +190,16 @@ class RobotInterface
 		int add_usb_data_callback(uint8_t cmd, int (RobotInterface::*process_func)(char* msg, uint16_t size));
 		int (RobotInterface::*process_func[USB_DATA_MAX])(char* msg, uint16_t size);
 };
+
+
+inline bool RobotInterface::get_gpio(uint32_t mask)
+{
+	return (last_control_usb_data.gpio & mask) ? 1 : 0;
+}
+
+inline bool RobotInterface::pump_is_blocked(uint8_t id)
+{
+	return (last_control_usb_data.pumpState >> id) & 0x01;
+}
 
 #endif
