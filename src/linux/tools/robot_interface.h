@@ -99,6 +99,15 @@ class RobotInterface
 		int gyro_calibration(enum GyroCalibrationCmd cmd);
 		int gyro_set_calibration_values(float scale, float bias, float dead_zone);
 		int gyro_set_position(float theta);
+		inline int gyro_start_calibration()
+		{
+			return gyro_calibration(GYRO_CALIBRATION_START);
+		}
+		inline int gyro_stop_calibration()
+		{
+			return gyro_calibration(GYRO_CALIBRATION_STOP);
+		}
+		int gyro_stop_calibration(float theta);
 
 		// ---------- localisation -----------------------------------------------------
 		int set_position(VectPlan pos);
@@ -126,6 +135,8 @@ class RobotInterface
 		//!< vitesse en % de vmax de configuration du robot
 		int set_max_speed(float vmax_av, float vmax_rot);
 //////////////////// FIN TODO
+		//! ecriture sur l'usb
+		//! @return 0 si ok, -1 sinon
 		int usb_write(unsigned char cmd, void* data, int size);
 
 		pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
