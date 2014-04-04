@@ -104,13 +104,14 @@ struct dynamixel_error
 
 struct Dynamixel
 {
-	uint16_t min_goal;
-	uint16_t max_goal;
-	uint16_t goal_pos;
-	uint16_t pos;
-	uint16_t target_reached_threshold;
-	uint16_t flags;
-	struct dynamixel_error last_error;
+	uint16_t min_goal;                        //!< position min
+	uint16_t max_goal;                        //!< position max
+	uint16_t goal_pos;                        //!< position desiree
+	uint16_t pos;                             //!< position actuelle
+	uint16_t target_reached_threshold;        //!< tolerance pour target reached
+	uint16_t flags;                           //!< flags - champ de bit ( DYNAMIXEL_FLAG_TARGET_REACHED, DYNAMIXEL_FLAG_STUCK)
+	uint16_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
+	struct dynamixel_error last_error;        //!< derniere erreur
 };
 
 struct dynamixel_status

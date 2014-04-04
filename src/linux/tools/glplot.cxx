@@ -1151,8 +1151,8 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			{
 				glPrintf(1600, lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
 						robot_interface.ax12[i].pos * 180 / M_PI,
-						robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED,
-						robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_STUCK,
+						(robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
 						(robot_interface.ax12[i].error.transmit_error << 8) + robot_interface.ax12[i].error.internal_error);
 				lineId++;
 			}
@@ -1160,8 +1160,8 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			{
 				glPrintf(1600, lineId*lineHeight, font_base, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
 						robot_interface.rx24[i].pos * 180 / M_PI,
-						robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED,
-						robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_STUCK,
+						(robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
 						(robot_interface.rx24[i].error.transmit_error << 8) + robot_interface.rx24[i].error.internal_error);
 				lineId++;
 			}

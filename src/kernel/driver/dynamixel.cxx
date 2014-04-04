@@ -21,6 +21,7 @@
 
 #define DYNAMIXEL_STACK_SIZE            350
 #define DYNAMIXEL_READ_TIMEOUT           15 // en ms
+#define DYNAMIXEL_MOVE_TIMEOUT         1000 // en ms
 
 static uint8_t dynamixel_checksum(uint8_t* buffer, uint8_t size);
 
@@ -86,6 +87,8 @@ int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t fr
 		devices[i].last_error.transmit_error = 0xff;
 		devices[i].max_goal = 0x3ff;
 		devices[i].goal_pos = 0x1ff;
+		devices[i].target_reached_threshold = 2;
+		devices[i].flags = DYNAMIXEL_FLAG_TARGET_REACHED;
 	}
 
 	return 0;
@@ -117,9 +120,44 @@ void DynamixelManager::task()
 			xSemaphoreTake(mutex, portMAX_DELAY);
 			devices[id].pos = pos;
 			int goal_pos = devices[id].goal_pos;
-			xSemaphoreGive(mutex);
 
 			uint16_t pos_err = abs(pos - goal_pos);
+			systime t = systick_get_time();
+			if( pos_err < devices[id].target_reached_threshold)
+			{
+				devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
+				devices[id].timeStartMoving_ms = t.ms;
+				if( devices[id].flags & DYNAMIXEL_FLAG_STUCK )
+				{
+					log_format(LOG_ERROR, "%s id %d unstucked", pcTaskGetTaskName(NULL), id+1);
+					devices[id].flags &= ~DYNAMIXEL_FLAG_STUCK;
+				}
+			}
+			else
+			{
+				if( devices[id].flags & DYNAMIXEL_FLAG_TARGET_REACHED )
+				{
+					devices[id].timeStartMoving_ms = t.ms;
+					devices[id].flags &= ~DYNAMIXEL_FLAG_TARGET_REACHED;
+				}
+
+				if( t.ms - devices[id].timeStartMoving_ms > DYNAMIXEL_MOVE_TIMEOUT )
+				{
+					if( ! (devices[id].flags & DYNAMIXEL_FLAG_STUCK) )
+					{
+						log_format(LOG_ERROR, "%s id %d stucked", pcTaskGetTaskName(NULL), id+1);
+						devices[id].flags |= DYNAMIXEL_FLAG_STUCK;
+					}
+				}
+				else if( devices[id].flags & DYNAMIXEL_FLAG_STUCK )
+				{
+					log_format(LOG_ERROR, "%s id %d unstucked", pcTaskGetTaskName(NULL), id+1);
+					devices[id].flags &= ~DYNAMIXEL_FLAG_STUCK;
+				}
+			}
+
+			xSemaphoreGive(mutex);
+
 			if( pos_err > 0)
 			{
 				// on va envoyer la position désirée
@@ -129,15 +167,6 @@ void DynamixelManager::task()
 				req.arg[2] = (uint8_t) ((goal_pos >> 8) & 0xFF);
 				req.argc = 3;
 				send(&req);
-			}
-
-			if( pos_err < devices[id].target_reached_threshold)
-			{
-				devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
-			}
-			else
-			{
-				devices[id].flags &= ~DYNAMIXEL_FLAG_TARGET_REACHED;
 			}
 		}
 
