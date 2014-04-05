@@ -8,7 +8,7 @@
 
 // pompe 12V
 #define PUMP_VMAX                          12
-#define PUMP_BLOCKED_MIN_STDDEV2       0.004f
+#define PUMP_BLOCKED_MIN_STDDEV2       0.003f
 #define PUMP_UNBLOCKED_MAX_STDDEV2     0.002f
 #define PUMP_CURRENT_PIC_DELAY_MS         200
 
