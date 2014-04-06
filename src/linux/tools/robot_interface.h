@@ -1,6 +1,10 @@
 #ifndef ROBOT_INTERFACE_H
 #define ROBOT_INTERFACE_H
 
+#ifndef LINUX
+#define LINUX
+#endif
+
 #include <pthread.h>
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
