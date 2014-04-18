@@ -244,7 +244,7 @@ int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buff
 	spi_set_read_dma_size(size);
 	spi_set_write_dma_buffer(tx_buffer);
 	spi_send_dma_buffer(size);
-	if( xSemaphoreTake(spi_sem, 1) == pdFALSE )
+	if( xSemaphoreTake(spi_sem, 2) == pdFALSE )
 	{
 		res = -1;
 	}
