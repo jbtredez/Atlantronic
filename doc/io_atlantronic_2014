@@ -30,8 +30,8 @@ PB10 : CLK (MP45DT02 - audio - carte cpu)
 PB11 : IN_6
 PB12 : IN_3
 PB13 : IN_2
-PB14 :
-PB15 :
+PB14 : IN_11
+PB15 : IN_12
 
 PC0  : powerOn (USB - carte cpu)
 PC1  : AN11 - AN_MOT2
@@ -72,8 +72,8 @@ PE1  : INT2 (LIS302DL - accéléro - carte cpu)
 PE2  : LED4
 PE3  : CS_I2C/SPI (LIS302DL - accéléro - carte cpu)
 PE4  : LED3
-PE5  : 
-PE6  :
+PE5  : IN_14
+PE6  : IN_13
 PE7  : CS1_SPI
 PE8  : sens pwm1
 PE9  : TIM1_CH1 (pwm1)
