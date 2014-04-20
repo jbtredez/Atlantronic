@@ -31,19 +31,19 @@ struct atlantronic_model_tx_event
 	};
 };
 
-int qemu::init(const char* prog_name, int gdb_port)
+int Qemu::init(const char* prog_name, int gdb_port)
 {
 	pid_t current_pid = getpid();
 
 	snprintf(file_qemu_read, sizeof(file_qemu_read), "/tmp/qemu-%i.out", current_pid);
 	snprintf(file_qemu_write, sizeof(file_qemu_write), "/tmp/qemu-%i.in", current_pid);
-	snprintf(file_foo_read, sizeof(file_foo_read), "/tmp/carte-%i.out", current_pid);
-	snprintf(file_foo_write, sizeof(file_foo_write), "/tmp/carte-%i.in", current_pid);
+	snprintf(file_board_read, sizeof(file_board_read), "/tmp/carte-%i.out", current_pid);
+	snprintf(file_board_write, sizeof(file_board_write), "/tmp/carte-%i.in", current_pid);
 
 	mkfifo(file_qemu_read, 0666);
 	mkfifo(file_qemu_write, 0666);
-	mkfifo(file_foo_read, 0666);
-	mkfifo(file_foo_write, 0666);
+	mkfifo(file_board_read, 0666);
+	mkfifo(file_board_write, 0666);
 
 	pid = fork();
 
@@ -99,7 +99,7 @@ int qemu::init(const char* prog_name, int gdb_port)
 	return 0;
 }
 
-void qemu::destroy()
+void Qemu::destroy()
 {
 	// TODO un peu bourrin, faire mieux
 	if(pid > 0)
@@ -112,11 +112,11 @@ void qemu::destroy()
 
 	unlink(file_qemu_read);
 	unlink(file_qemu_write);
-	unlink(file_foo_read);
-	unlink(file_foo_write);
+	unlink(file_board_read);
+	unlink(file_board_write);
 }
 
-int qemu::set_clock_factor(unsigned int factor, unsigned int icount)
+int Qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 {
 	struct atlantronic_model_tx_event event;
 
@@ -127,7 +127,7 @@ int qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 	return com.write((void*) &event, sizeof(event));
 }
 
-int qemu::add_object(const struct polyline polyline)
+int Qemu::add_object(const struct polyline polyline)
 {
 	struct atlantronic_model_tx_event event;
 	unsigned int i = 0;
@@ -146,7 +146,7 @@ int qemu::add_object(const struct polyline polyline)
 	return com.write((void*) &event, sizeof(event));
 }
 
-int qemu::move_object(int id, struct vect2 origin, VectPlan delta)
+int Qemu::move_object(int id, struct vect2 origin, VectPlan delta)
 {
 	struct atlantronic_model_tx_event event;
 
@@ -164,7 +164,7 @@ int qemu::move_object(int id, struct vect2 origin, VectPlan delta)
 }
 
 //! @param nodeId : nodeId ou 0 pour tous
-int qemu::manage_canopen_connexion(int nodeId, bool connected)
+int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 {
 	struct atlantronic_model_tx_event event;
 

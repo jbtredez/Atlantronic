@@ -11,7 +11,7 @@
 
 static void (*cmd_exit_callback)(void) = NULL;
 static RobotInterface* cmd_robot = NULL;
-static struct qemu* cmd_qemu = NULL;
+static Qemu* cmd_qemu = NULL;
 
 int cmd_arm_bridge(const char* arg);
 int cmd_arm_xyz(const char* arg);
@@ -124,7 +124,7 @@ COMMAND usb_commands[] = {
 	{ NULL, NULL, NULL }
 };
 
-int cmd_init(RobotInterface* robot, struct qemu* qemu, void (*f)(void))
+int cmd_init(RobotInterface* robot, Qemu* qemu, void (*f)(void))
 {
 	cmd_robot = robot;
 	cmd_qemu = qemu;

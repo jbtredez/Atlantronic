@@ -5,6 +5,6 @@
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
 
-int cmd_init(RobotInterface* robot, struct qemu* qemu, void (*f)(void));
+int cmd_init(RobotInterface* robot, Qemu* qemu, void (*f)(void));
 
 #endif

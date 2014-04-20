@@ -5,13 +5,13 @@
 #include "kernel/math/polyline.h"
 #include "kernel/math/vect_plan.h"
 
-class qemu
+class Qemu
 {
 	public:
 		char file_qemu_read[64];
 		char file_qemu_write[64];
-		char file_foo_read[64];
-		char file_foo_write[64];
+		char file_board_read[64];
+		char file_board_write[64];
 		Com com; //!< communication avec qemu
 		pid_t pid; //!< pid de qemu
 

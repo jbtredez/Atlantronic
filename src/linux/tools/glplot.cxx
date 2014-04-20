@@ -85,7 +85,7 @@ static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
 static RobotInterface robot_interface;
-static struct qemu qemu;
+static Qemu* qemu;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
@@ -147,57 +147,13 @@ struct polyline oponent_robot =
 
 struct VectPlan opponent_robot_pos(1800, 800, 0);
 
-int main(int argc, char *argv[])
+int glplot_main(int Simulation, Qemu* Qemu, const char* file_foo_read, const char* file_foo_write)
 {
 	long i = 0;
 	long j = 0;
 
-	const char* file_foo_read = NULL;
-	const char* file_foo_write = NULL;
-
-	const char* prog_foo = NULL;
-	int gdb_port = 0;
-
-	if(argc > 1)
-	{
-		int option = -1;
-		while( (option = getopt(argc, argv, "s:g")) != -1)
-		{
-			switch(option)
-			{
-				case 's':
-					simulation = 1;
-					prog_foo = optarg;
-					break;
-				case 'g':
-					gdb_port = 1235;
-					break;
-				default:
-					fprintf(stderr, "option %c inconnue", (char)option);
-					return -1;
-					break;
-			}
-		}
-	}
-
-	if( argc - optind > 0)
-	{
-		file_foo_read = argv[optind];
-		file_foo_write = file_foo_read;
-	}
-
-	if(simulation)
-	{
-		int res = qemu.init(prog_foo, gdb_port);
-		if( res )
-		{
-			fprintf(stderr, "qemu_init : error");
-			return -1;
-		}
-
-		file_foo_read = qemu.file_foo_read;
-		file_foo_write = qemu.file_foo_write;
-	}
+	simulation = Simulation;
+	qemu = Qemu;
 
 	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
@@ -235,8 +191,8 @@ int main(int argc, char *argv[])
 	gdk_threads_init();
 	gdk_threads_enter();
 
-	gtk_init(&argc, &argv);
-	gtk_gl_init(&argc, &argv);
+	gtk_init(0, NULL);
+	gtk_gl_init(0, NULL);
 
 	// config de opengl
 	GdkGLConfig* glconfig = gdk_gl_config_new_by_mode((GdkGLConfigMode) (GDK_GL_MODE_RGB | GDK_GL_MODE_DEPTH | GDK_GL_MODE_DOUBLE));
@@ -344,20 +300,20 @@ int main(int argc, char *argv[])
 
 	if( simulation )
 	{
-		cmd_init(&robot_interface, &qemu, gtk_end);
+		cmd_init(&robot_interface, qemu, gtk_end);
 
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			qemu.add_object(table_obj[i]);
+			qemu->add_object(table_obj[i]);
 		}
 
 		// ajout d'un robot adverse
-		qemu.add_object(oponent_robot);
+		qemu->add_object(oponent_robot);
 
 		// on le met a sa position de depart
 		vect2 origin(0, 0);
-		qemu.move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
+		qemu->move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
 	}
 	else
 	{
@@ -367,8 +323,6 @@ int main(int argc, char *argv[])
 	gtk_main();
 
 	gdk_threads_leave();
-
-	qemu.destroy();
 
 	robot_interface.destroy();
 
@@ -1320,7 +1274,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			opponent_robot_pos.y += delta.y;
 			if(simulation)
 			{
-				qemu.move_object(QEMU_OPPONENT_ID, origin, delta);
+				qemu->move_object(QEMU_OPPONENT_ID, origin, delta);
 			}
 
 			move_oponent_robot = 0;
@@ -1365,7 +1319,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			opponent_robot_pos.y += delta.y;
 			if(simulation)
 			{
-				qemu.move_object(QEMU_OPPONENT_ID, origin, delta);
+				qemu->move_object(QEMU_OPPONENT_ID, origin, delta);
 			}
 			mouse_x1 = event->x;
 			mouse_y1 = event->y;
