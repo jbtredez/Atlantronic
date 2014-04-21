@@ -10,6 +10,7 @@ CFLAGS:=-march=$(MARCH)
 CFLAGS+=-m$(BIT)
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
+CFLAGS+=-g
 
 LDFLAGS:=-march=$(MARCH)
 LDFLAGS+=-m$(BIT)
@@ -17,14 +18,10 @@ LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-pthread
 LDFLAGS+=-lrt
 
-ifeq ($(DEBUG),1)
-CFLAGS+=-g
-LDFLAGS+=-g
-else
+ifneq ($(DEBUG),1)
 DEF+= NDEBUG
-CFLAGS+=-O3
+CFLAGS+=-O2
 CFLAGS+=-fomit-frame-pointer
-LDFLAGS+=-O3
 endif
 
 CFLAGS+=$(addprefix -D,$(DEF))
