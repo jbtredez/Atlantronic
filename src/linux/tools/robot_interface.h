@@ -16,6 +16,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/driver/dynamixel.h"
 #include "discovery/control.h"
+#include "discovery/gpio.h"
 #include "foo/pince.h"
 #include "foo/arm.h"
 
