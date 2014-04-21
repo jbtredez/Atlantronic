@@ -15,7 +15,7 @@ class Qemu
 		Com com; //!< communication avec qemu
 		pid_t pid; //!< pid de qemu
 
-		int init(const char* prog_name, int gdb_port);
+		int init(const char* qemu_path, const char* prog_name, int gdb_port);
 		void destroy();
 		int set_clock_factor(unsigned int factor, unsigned int icount);
 		int add_object(const struct polyline polyline);

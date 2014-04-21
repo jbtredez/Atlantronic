@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
@@ -84,7 +85,7 @@ static int font_width = 0;
 static XFontStruct* font_info = NULL;
 static int screen_width = 0;
 static int screen_height = 0;
-static RobotInterface robot_interface;
+static RobotInterface* robotItf;
 static Qemu* qemu;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
@@ -93,9 +94,10 @@ static float mouse_y2 = 0;
 static int drawing_zoom_selection = 0;
 static int move_oponent_robot = 0;
 static int current_graph = GRAPH_TABLE;
-static GtkWidget* opengl_window;
-static GtkWidget* main_window;
+static GtkWidget* opengl_window = NULL;
+static GtkWidget* main_window = NULL;
 static int simulation = 0;
+static char* atlantronicPath;
 
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
@@ -122,8 +124,6 @@ static void glPrintf_xcenter_ycenter(float x, float y, float x_ratio, float y_ra
 static void glprint(float x, float y, GLuint base, const char* buffer, int size);
 void gtk_end();
 
-void read_callback(void* arg);
-
 #define OPPONENT_PERIMETER         128.0f
 
 struct vect2 opponent_robot_pt[] =
@@ -147,13 +147,14 @@ struct polyline oponent_robot =
 
 struct VectPlan opponent_robot_pos(1800, 800, 0);
 
-int glplot_main(int Simulation, Qemu* Qemu, const char* file_foo_read, const char* file_foo_write)
+int glplot_main(const char* AtlantronicPath, int Simulation, Qemu* Qemu, RobotInterface* RobotItf)
 {
 	long i = 0;
 	long j = 0;
-
+	atlantronicPath = strdup(AtlantronicPath);
 	simulation = Simulation;
 	qemu = Qemu;
+	robotItf = RobotItf;
 
 	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
@@ -187,6 +188,10 @@ int glplot_main(int Simulation, Qemu* Qemu, const char* file_foo_read, const cha
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
+
+#ifdef OLD_GTK
+	g_thread_init(NULL);
+#endif
 
 	gdk_threads_init();
 	gdk_threads_enter();
@@ -296,11 +301,9 @@ int glplot_main(int Simulation, Qemu* Qemu, const char* file_foo_read, const cha
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	robot_interface.init("discovery", file_foo_read, file_foo_write, read_callback, opengl_window);
-
 	if( simulation )
 	{
-		cmd_init(&robot_interface, qemu, gtk_end);
+		cmd_init(robotItf, qemu, gtk_end);
 
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -317,14 +320,12 @@ int glplot_main(int Simulation, Qemu* Qemu, const char* file_foo_read, const cha
 	}
 	else
 	{
-		cmd_init(&robot_interface, NULL, gtk_end);
+		cmd_init(robotItf, NULL, gtk_end);
 	}
 
 	gtk_main();
 
 	gdk_threads_leave();
-
-	robot_interface.destroy();
 
 	joystick_destroy(&joystick);
 
@@ -338,24 +339,26 @@ void gtk_end()
 	gdk_threads_leave();
 }
 
-void read_callback(void* arg)
+void glplot_update()
 {
-	GtkWidget* widget = (GtkWidget*)arg;
 	static struct timespec last_plot = {0, 0};
 	struct timespec current;
 
-	clock_gettime(CLOCK_MONOTONIC, &current);
-	double delta = (current.tv_sec - last_plot.tv_sec) + (current.tv_nsec - last_plot.tv_nsec) / ((double)1000000000.0f);
-	if((delta >= 1.0f/MAX_FPS && (current_graph == GRAPH_TABLE || current_graph == GRAPH_HOKUYO_HIST) )
-		|| delta >= 1.0f/5)
+	if( opengl_window )
 	{
-		gdk_threads_enter();
-		if(widget->window)
+		clock_gettime(CLOCK_MONOTONIC, &current);
+		double delta = (current.tv_sec - last_plot.tv_sec) + (current.tv_nsec - last_plot.tv_nsec) / ((double)1000000000.0f);
+		if((delta >= 1.0f/MAX_FPS && (current_graph == GRAPH_TABLE || current_graph == GRAPH_HOKUYO_HIST) )
+			|| delta >= 1.0f/5)
 		{
-			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+			gdk_threads_enter();
+			if(opengl_window->window)
+			{
+				gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+			}
+			gdk_threads_leave();
+			last_plot = current;
 		}
-		gdk_threads_leave();
-		last_plot = current;
 	}
 }
 
@@ -428,7 +431,9 @@ static void init(GtkWidget* widget, gpointer arg)
 	}
 
 	GError *error = NULL;
-	GdkPixbuf *pix = gdk_pixbuf_new_from_file("img/table_2014.jpg", &error);
+	char buffer[1024];
+	snprintf(buffer, sizeof(buffer), "%simg/table_2014.jpg", atlantronicPath);
+	GdkPixbuf *pix = gdk_pixbuf_new_from_file(buffer, &error);
 	if( ! pix )
 	{
 		g_printerr ("Error loading file: #%d %s\n", error->code, error->message);
@@ -627,14 +632,14 @@ void plot_table(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
-		for(i = 0; i < robot_interface.detection_dynamic_object_size; i++)
+		for(i = 0; i < robotItf->detection_dynamic_object_size; i++)
 		{
-			if(robot_interface.detection_dynamic_obj[i].size > 1)
+			if(robotItf->detection_dynamic_obj[i].size > 1)
 			{
 				glBegin(GL_LINE_STRIP);
-				for(j = 0; j < robot_interface.detection_dynamic_obj[i].size; j++)
+				for(j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
 				{
-					struct vect2 pt = robot_interface.detection_dynamic_obj[i].pt[j];
+					struct vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
 					glVertex2f(pt.x, pt.y);
 				}
 				glEnd();
@@ -647,7 +652,7 @@ void plot_table(Graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
 		for(i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
+			draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
 	}
 
@@ -656,20 +661,20 @@ void plot_table(Graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
 		for(i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(robot_interface.detection_hokuyo_pos[i].x, robot_interface.detection_hokuyo_pos[i].y, plus_dx, plus_dy);
+			draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 		}
 	}
 
-	int max = robot_interface.control_usb_data_count % CONTROL_USB_DATA_MAX;
+	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
 		for(i=0; i< max; i++)
 		{
-			if(robot_interface.control_usb_data[i].motion_state != MOTION_READY_ASSER && robot_interface.control_usb_data[i].motion_state != MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state != MOTION_READY_ASSER && robotItf->control_usb_data[i].motion_state != MOTION_READY_FREE)
 			{
-				draw_plus(robot_interface.control_usb_data[i].cons.x, robot_interface.control_usb_data[i].cons.y, plus_dx, plus_dy);
+				draw_plus(robotItf->control_usb_data[i].cons.x, robotItf->control_usb_data[i].cons.y, plus_dx, plus_dy);
 			}
 		}
 	}
@@ -679,7 +684,7 @@ void plot_table(Graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(i=0; i < max; i++)
 		{
-			draw_plus(robot_interface.control_usb_data[i].pos.x, robot_interface.control_usb_data[i].pos.y, plus_dx, plus_dy);
+			draw_plus(robotItf->control_usb_data[i].pos.x, robotItf->control_usb_data[i].pos.y, plus_dx, plus_dy);
 		}
 	}
 
@@ -723,7 +728,7 @@ void plot_table(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
 		glColor3f(0, 0, 0);
-		VectPlan pos_robot = robot_interface.control_usb_data[max-1].pos;
+		VectPlan pos_robot = robotItf->control_usb_data[max-1].pos;
 
 		glPushMatrix();
 		glTranslatef(pos_robot.x, pos_robot.y, 0);
@@ -743,9 +748,9 @@ void plot_table(Graphique* graph)
 			VectPlan(   0, -155, 0),
 			VectPlan(-175,    0, 0)
 		};
-		Turret[0].theta = robot_interface.control_usb_data[max-1].mes_theta1;
-		Turret[1].theta = robot_interface.control_usb_data[max-1].mes_theta2;
-		Turret[2].theta = robot_interface.control_usb_data[max-1].mes_theta3;
+		Turret[0].theta = robotItf->control_usb_data[max-1].mes_theta1;
+		Turret[1].theta = robotItf->control_usb_data[max-1].mes_theta2;
+		Turret[2].theta = robotItf->control_usb_data[max-1].mes_theta3;
 
 		for(int i = 0; i < 3; i++)
 		{
@@ -790,7 +795,7 @@ void plot_hokuyo_hist(Graphique* graph)
 		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO1].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(i, robotItf->hokuyo_scan[HOKUYO1].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
@@ -799,7 +804,7 @@ void plot_hokuyo_hist(Graphique* graph)
 		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_BAR]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robot_interface.hokuyo_scan[HOKUYO2].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(i, robotItf->hokuyo_scan[HOKUYO2].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 }
@@ -814,10 +819,10 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_CONS]);
-		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		VectPlan old_cons = robotItf->control_usb_data[0].cons;
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			VectPlan cons = robot_interface.control_usb_data[i].cons;
+			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
 			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_cons = cons;
@@ -827,10 +832,10 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_CONS] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_CONS]);
-		VectPlan old_cons = robot_interface.control_usb_data[0].cons;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		VectPlan old_cons = robotItf->control_usb_data[0].cons;
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			VectPlan cons = robot_interface.control_usb_data[i].cons;
+			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
 			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_cons = cons;
@@ -840,10 +845,10 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_MES]);
-		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		VectPlan old_pos = robotItf->control_usb_data[0].pos;
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			VectPlan pos = robot_interface.control_usb_data[i].pos;
+			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
 			draw_plus(5*i, v.norm(), 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_pos = pos;
@@ -853,10 +858,10 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_MES] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_MES]);
-		VectPlan old_pos = robot_interface.control_usb_data[0].pos;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		VectPlan old_pos = robotItf->control_usb_data[0].pos;
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			VectPlan pos = robot_interface.control_usb_data[i].pos;
+			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
 			draw_plus(5*i, v.theta*1000.0f, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			old_pos = pos;
@@ -866,36 +871,36 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V1] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		for(i=0; i < robotItf->control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v1, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robotItf->control_usb_data[i].cons_v1, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V2] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V2]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		for(i=0; i < robotItf->control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v2, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robotItf->control_usb_data[i].cons_v2, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V3] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V3]);
-		for(i=0; i < robot_interface.control_usb_data_count; i++)
+		for(i=0; i < robotItf->control_usb_data_count; i++)
 		{
-			draw_plus(5*i, robot_interface.control_usb_data[i].cons_v3, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
+			draw_plus(5*i, robotItf->control_usb_data[i].cons_v3, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V4] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V4]);
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			float w = (robot_interface.control_usb_data[i].cons_theta1 - robot_interface.control_usb_data[i-1].cons_theta1)*CONTROL_HZ;
+			float w = (robotItf->control_usb_data[i].cons_theta1 - robotItf->control_usb_data[i-1].cons_theta1)*CONTROL_HZ;
 			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -903,9 +908,9 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V5] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V5]);
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			float w = (robot_interface.control_usb_data[i].cons_theta2 - robot_interface.control_usb_data[i-1].cons_theta2)*CONTROL_HZ;
+			float w = (robotItf->control_usb_data[i].cons_theta2 - robotItf->control_usb_data[i-1].cons_theta2)*CONTROL_HZ;
 			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -913,9 +918,9 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_V6] )
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V6]);
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			float w = (robot_interface.control_usb_data[i].cons_theta3 - robot_interface.control_usb_data[i-1].cons_theta3)*CONTROL_HZ;
+			float w = (robotItf->control_usb_data[i].cons_theta3 - robotItf->control_usb_data[i-1].cons_theta3)*CONTROL_HZ;
 			draw_plus(5*i, 1000*w, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -923,9 +928,9 @@ void plot_speed_dist(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_MOTION_VBAT] )
 	{
 		glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
-		for(int j=1; j < robot_interface.control_usb_data_count; j++)
+		for(int j=1; j < robotItf->control_usb_data_count; j++)
 		{
-			float v = robot_interface.control_usb_data[j].vBat;
+			float v = robotItf->control_usb_data[j].vBat;
 			draw_plus(5*j, v, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
@@ -935,9 +940,9 @@ void plot_speed_dist(Graphique* graph)
 		if( graph->courbes_activated[SUBGRAPH_MOTION_I1+i] )
 		{
 			glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_I1+i)]);
-			for(int j=1; j < robot_interface.control_usb_data_count; j++)
+			for(int j=1; j < robotItf->control_usb_data_count; j++)
 			{
-				float current = robot_interface.control_usb_data[j].iPwm[i];
+				float current = robotItf->control_usb_data[j].iPwm[i];
 				draw_plus(5*j, 1000*current, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 			}
 		}
@@ -947,14 +952,14 @@ void plot_speed_dist(Graphique* graph)
 	{
 		glColor3f(0, 1, 1);
 		float dist = 0;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			if(robot_interface.control_usb_data[i].motion_state == MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state == MOTION_READY_FREE)
 			{
 				dist = 0;
 			}
-			float dx = (robot_interface.control_usb_data[i].control_cons_x - robot_interface.control_usb_data[i-1].control_cons_x)/65536.0f;
-			float dy = (robot_interface.control_usb_data[i].control_cons_y - robot_interface.control_usb_data[i-1].control_cons_y)/65536.0f;
+			float dx = (robotItf->control_usb_data[i].control_cons_x - robotItf->control_usb_data[i-1].control_cons_x)/65536.0f;
+			float dy = (robotItf->control_usb_data[i].control_cons_y - robotItf->control_usb_data[i-1].control_cons_y)/65536.0f;
 			dist += sqrtf(dx*dx+dy*dy);
 			draw_plus(5*i, dist, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
@@ -964,14 +969,14 @@ void plot_speed_dist(Graphique* graph)
 		// TODO : precalculer
 		glColor3f(1, 1, 0);
 		float dist = 0;
-		for(i=1; i < robot_interface.control_usb_data_count; i++)
+		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			if(robot_interface.control_usb_data[i].motion_state == MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state == MOTION_READY_FREE)
 			{
 				dist = 0;
 			}
-			float dx = (robot_interface.control_usb_data[i].control_pos_x - robot_interface.control_usb_data[i-1].control_pos_x)/65536.0f;
-			float dy = (robot_interface.control_usb_data[i].control_pos_y - robot_interface.control_usb_data[i-1].control_pos_y)/65536.0f;
+			float dx = (robotItf->control_usb_data[i].control_pos_x - robotItf->control_usb_data[i-1].control_pos_x)/65536.0f;
+			float dy = (robotItf->control_usb_data[i].control_pos_y - robotItf->control_usb_data[i-1].control_pos_y)/65536.0f;
 			dist += sqrtf(dx*dx+dy*dy);
 			draw_plus(5*i, dist, 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
@@ -995,12 +1000,12 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	glClearColor(1,1,1,1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	int res = pthread_mutex_lock(&robot_interface.mutex);
+	int res = pthread_mutex_lock(&robotItf->mutex);
 	if(res == 0)
 	{
 		if(current_graph == GRAPH_SPEED_DIST)
 		{
-			graph[current_graph].resize_axis_x(0, robot_interface.control_usb_data_count * 5);
+			graph[current_graph].resize_axis_x(0, robotItf->control_usb_data_count * 5);
 		}
 
 		glMatrixMode(GL_PROJECTION);
@@ -1034,94 +1039,94 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		{
 			int lineHeight = -2*font_digit_height * graph->ratio_y;
 			int lineId = -5;
-			glPrintf(1600, lineId*lineHeight, font_base, "time  %13.6f", robot_interface.current_time);
+			glPrintf(1600, lineId*lineHeight, font_base, "time  %13.6f", robotItf->current_time);
 			lineId++;
 			double match_time = 0;
-			if( robot_interface.start_time )
+			if( robotItf->start_time )
 			{
-				match_time = robot_interface.current_time - robot_interface.start_time;
+				match_time = robotItf->current_time - robotItf->start_time;
 			}
 			glPrintf(1600, lineId*lineHeight, font_base, "match %13.6f", match_time);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
-					robot_interface.last_control_usb_data.pos.x, robot_interface.last_control_usb_data.pos.y,
-					robot_interface.last_control_usb_data.pos.theta * 180 / M_PI);
+					robotItf->last_control_usb_data.pos.x, robotItf->last_control_usb_data.pos.y,
+					robotItf->last_control_usb_data.pos.theta * 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "wpos %6.0f %6.0f %6.2f",
-					robot_interface.last_control_usb_data.wanted_pos.x, robot_interface.last_control_usb_data.wanted_pos.y,
-					robot_interface.last_control_usb_data.wanted_pos.theta * 180 / M_PI);
+					robotItf->last_control_usb_data.wanted_pos.x, robotItf->last_control_usb_data.wanted_pos.y,
+					robotItf->last_control_usb_data.wanted_pos.theta * 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
-					robot_interface.last_control_usb_data.mes_v1, robot_interface.last_control_usb_data.cons_v1);
+					robotItf->last_control_usb_data.mes_v1, robotItf->last_control_usb_data.cons_v1);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
-							robot_interface.last_control_usb_data.mes_v2, robot_interface.last_control_usb_data.cons_v2);
+							robotItf->last_control_usb_data.mes_v2, robotItf->last_control_usb_data.cons_v2);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
-							robot_interface.last_control_usb_data.mes_v3, robot_interface.last_control_usb_data.cons_v3);
+							robotItf->last_control_usb_data.mes_v3, robotItf->last_control_usb_data.cons_v3);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
-					robot_interface.last_control_usb_data.mes_theta1* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta1* 180 / M_PI);
+					robotItf->last_control_usb_data.mes_theta1* 180 / M_PI, robotItf->last_control_usb_data.cons_theta1* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
-							robot_interface.last_control_usb_data.mes_theta2* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta2* 180 / M_PI);
+							robotItf->last_control_usb_data.mes_theta2* 180 / M_PI, robotItf->last_control_usb_data.cons_theta2* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
-							robot_interface.last_control_usb_data.mes_theta3* 180 / M_PI, robot_interface.last_control_usb_data.cons_theta3* 180 / M_PI);
+							robotItf->last_control_usb_data.mes_theta3* 180 / M_PI, robotItf->last_control_usb_data.cons_theta3* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "gyro %6.2f",
-							robot_interface.last_control_usb_data.pos_theta_gyro_euler * 180 / M_PI);
+							robotItf->last_control_usb_data.pos_theta_gyro_euler * 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robot_interface.last_control_usb_data.vBat);
+			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robotItf->last_control_usb_data.vBat);
 			lineId++;
 			for(int i = 0; i < 4; i++)
 			{
-				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robot_interface.last_control_usb_data.iPwm[i]);
+				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robotItf->last_control_usb_data.iPwm[i]);
 				lineId++;
 			}
-			glPrintf(1600, lineId*lineHeight, font_base, "cod  %6d %6d %6d", robot_interface.last_control_usb_data.encoder[0], robot_interface.last_control_usb_data.encoder[1], robot_interface.last_control_usb_data.encoder[2]);
+			glPrintf(1600, lineId*lineHeight, font_base, "cod  %6d %6d %6d", robotItf->last_control_usb_data.encoder[0], robotItf->last_control_usb_data.encoder[1], robotItf->last_control_usb_data.encoder[2]);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
-					robot_interface.last_control_usb_data.gpio & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 1) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 2) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 3) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 4) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 5) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 6) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 7) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 8) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 9) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 10) & 0x01,
-					(robot_interface.last_control_usb_data.gpio >> 11) & 0x01);
+					robotItf->last_control_usb_data.gpio & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 1) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 2) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 3) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 4) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 5) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 6) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 7) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 8) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 9) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 10) & 0x01,
+					(robotItf->last_control_usb_data.gpio >> 11) & 0x01);
 			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "pump blocked %d %d %d %d",
-					(robot_interface.last_control_usb_data.pumpState & 0x01),
-					((robot_interface.last_control_usb_data.pumpState >> 1) & 0x01),
-					((robot_interface.last_control_usb_data.pumpState >> 2) & 0x01),
-					((robot_interface.last_control_usb_data.pumpState >> 3) & 0x01));
+					(robotItf->last_control_usb_data.pumpState & 0x01),
+					((robotItf->last_control_usb_data.pumpState >> 1) & 0x01),
+					((robotItf->last_control_usb_data.pumpState >> 2) & 0x01),
+					((robotItf->last_control_usb_data.pumpState >> 3) & 0x01));
 			lineId++;
 			for(int i = 2; i < AX12_MAX_ID; i++)
 			{
 				glPrintf(1600, lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
-						robot_interface.ax12[i].pos * 180 / M_PI,
-						(robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-						(robot_interface.ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-						(robot_interface.ax12[i].error.transmit_error << 8) + robot_interface.ax12[i].error.internal_error);
+						robotItf->ax12[i].pos * 180 / M_PI,
+						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+						(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
 				lineId++;
 			}
 			for(int i = 2; i < RX24_MAX_ID; i++)
 			{
 				glPrintf(1600, lineId*lineHeight, font_base, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
-						robot_interface.rx24[i].pos * 180 / M_PI,
-						(robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-						(robot_interface.rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-						(robot_interface.rx24[i].error.transmit_error << 8) + robot_interface.rx24[i].error.internal_error);
+						robotItf->rx24[i].pos * 180 / M_PI,
+						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+						(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
 				lineId++;
 			}
 		}
 
-		pthread_mutex_unlock(&robot_interface.mutex);
+		pthread_mutex_unlock(&robotItf->mutex);
 	}
 
 	glMatrixMode(GL_PROJECTION);
@@ -1347,11 +1352,11 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			graph[current_graph].zoomf(0.5);
 			break;
 		case GDK_r:
-			res = pthread_mutex_lock(&robot_interface.mutex);
+			res = pthread_mutex_lock(&robotItf->mutex);
 			if(res == 0)
 			{
-				robot_interface.control_usb_data_count = 0;
-				pthread_mutex_unlock(&robot_interface.mutex);
+				robotItf->control_usb_data_count = 0;
+				pthread_mutex_unlock(&robotItf->mutex);
 			}
 			break;
 		case GDK_u:
@@ -1383,13 +1388,13 @@ static void joystick_event(int event, float val)
 			case 0: // A (xbox)
 				if( v )
 				{
-					robot_interface.pince(PINCE_OPEN, PINCE_OPEN);
+					robotItf->pince(PINCE_OPEN, PINCE_OPEN);
 				}
 				break;
 			case 1: // B (xbox)
 				if( v )
 				{
-					robot_interface.pince(PINCE_CLOSE, PINCE_CLOSE);
+					robotItf->pince(PINCE_CLOSE, PINCE_CLOSE);
 				}
 				break;
 			case 2: // X (xbox)
@@ -1411,13 +1416,13 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 0: // joystick gauche (xbox)
-				robot_interface.control_set_speed(VectPlan(), VectPlan(0,0,1), val);
+				robotItf->control_set_speed(VectPlan(), VectPlan(0,0,1), val);
 				break;
 			case 2: // gachette gauche (xbox)
-				robot_interface.control_set_speed(VectPlan(), VectPlan(1,0,0), val*1000);
+				robotItf->control_set_speed(VectPlan(), VectPlan(1,0,0), val*1000);
 				break;
 			case 5: // gachette droite (xbox)
-				robot_interface.control_set_speed(VectPlan(), VectPlan(0,1,0), val*1000);
+				robotItf->control_set_speed(VectPlan(), VectPlan(0,1,0), val*1000);
 				break;
 			default:
 				break;

@@ -31,7 +31,7 @@ struct atlantronic_model_tx_event
 	};
 };
 
-int Qemu::init(const char* prog_name, int gdb_port)
+int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 {
 	pid_t current_pid = getpid();
 
@@ -57,7 +57,7 @@ int Qemu::init(const char* prog_name, int gdb_port)
 		char* arg[15];
 		char buf_tcp[64];
 
-		arg[0] = (char*) "qemu/arm-softmmu/qemu-system-arm";
+		arg[0] = (char*) qemu_path;
 		arg[1] = (char*) "-M";
 		arg[2] = (char*) "atlantronic";
 		arg[3] = (char*)"-nodefaults";

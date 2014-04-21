@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include "glplot.h"
 
+static Qemu qemu;
+static RobotInterface robotItf;
+
+void robotItfCallback(void* arg);
+
 int main(int argc, char *argv[])
 {
 	const char* file_stm_read = NULL;
@@ -11,7 +16,6 @@ int main(int argc, char *argv[])
 	const char* prog_stm = NULL;
 	int gdb_port = 0;
 	int simulation = 0;
-	Qemu qemu;
 
 	if(argc > 1)
 	{
@@ -43,7 +47,7 @@ int main(int argc, char *argv[])
 
 	if(simulation)
 	{
-		int res = qemu.init(prog_stm, gdb_port);
+		int res = qemu.init("qemu/arm-softmmu/qemu-system-arm", prog_stm, gdb_port);
 		if( res )
 		{
 			fprintf(stderr, "qemu_init : error");
@@ -54,9 +58,18 @@ int main(int argc, char *argv[])
 		file_stm_write = qemu.file_board_write;
 	}
 
-	int res = glplot_main(simulation, &qemu, file_stm_read, file_stm_write);
+	robotItf.init("discovery", file_stm_read, file_stm_write, robotItfCallback, NULL);
+
+	int res = glplot_main("", simulation, &qemu, &robotItf);
+
+	robotItf.destroy();
 
 	qemu.destroy();
 
 	return res;
+}
+
+void robotItfCallback(void* /*arg*/)
+{
+	glplot_update();
 }

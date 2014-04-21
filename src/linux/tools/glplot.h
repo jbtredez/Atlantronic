@@ -2,7 +2,10 @@
 #define GLPLOT_H
 
 #include "qemu.h"
+#include "robot_interface.h"
 
-int glplot_main(int simulation, Qemu* qemu, const char* file_stm_io, const char* file_foo_write);
+int glplot_main(const char* atlantronicPath, int simulation, Qemu* qemu, RobotInterface* robotItf);
+
+void glplot_update();
 
 #endif
