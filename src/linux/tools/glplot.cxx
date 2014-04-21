@@ -576,10 +576,10 @@ void plot_table(Graphique* graph)
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, table_texture);
 		glBegin(GL_QUADS);
-		glTexCoord2i(1,1); glVertex2f(-1500, -1000);
-		glTexCoord2i(0,1); glVertex2f( 1500, -1000);
-		glTexCoord2i(0,0); glVertex2f( 1500,  1000);
-		glTexCoord2i(1,0); glVertex2f(-1500,  1000);
+		glTexCoord2i(1,1); glVertex2f( 1500, -1000);
+		glTexCoord2i(0,1); glVertex2f(-1500, -1000);
+		glTexCoord2i(0,0); glVertex2f(-1500,  1000);
+		glTexCoord2i(1,0); glVertex2f( 1500,  1000);
 		glEnd();
 		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_LIGHTING);
@@ -613,14 +613,14 @@ void plot_table(Graphique* graph)
 
 		// couleurs sur les bords des cases de depart
 		glLineWidth(3);
-		glColor3f(1, 0.9 ,0);
+		glColor3f(1, 0, 0);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(-1100, 1000);
 		glVertex2f(-1500, 1000);
 		glVertex2f(-1500,  310);
 		glEnd();
 
-		glColor3f(1, 0, 0);
+		glColor3f(1, 0.9 ,0);
 		glBegin(GL_LINE_STRIP);
 		glVertex2f(1100, 1000);
 		glVertex2f(1500, 1000);
