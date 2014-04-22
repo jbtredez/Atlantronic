@@ -15,6 +15,7 @@
 #include "kernel/math/polyline.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/dynamixel.h"
+#include "kernel/pump.h"
 #include "discovery/control.h"
 #include "discovery/gpio.h"
 #include "foo/pince.h"
