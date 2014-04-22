@@ -112,7 +112,7 @@ struct Dynamixel
 	uint16_t pos;                             //!< position actuelle
 	uint16_t target_reached_threshold;        //!< tolerance pour target reached
 	uint16_t flags;                           //!< flags - champ de bit ( DYNAMIXEL_FLAG_TARGET_REACHED, DYNAMIXEL_FLAG_STUCK)
-	uint16_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
+	uint32_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
 	struct dynamixel_error last_error;        //!< derniere erreur
 };
 
