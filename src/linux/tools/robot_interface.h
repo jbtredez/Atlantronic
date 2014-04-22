@@ -61,7 +61,7 @@ class RobotInterface
 		int dynamixel_set_op_baudrate(int dynamixel_type, uint8_t id);
 		int dynamixel_set_manager_baudrate(int dynamixel_type, int freq);
 		int dynamixel_set_goal_position(int dynamixel_type, uint8_t id, float alpha);
-		int dynamixel_set_max_torque(int dynamixel_type, uint8_t id, uint8_t val);
+		int dynamixel_set_max_torque(int dynamixel_type, uint8_t id, float val);
 		int dynamixel_set_target_reached_threshold(int dynamixel_type, uint8_t id, float val);
 		int dynamixel_get_position(int dynamixel_type, uint8_t id);
 

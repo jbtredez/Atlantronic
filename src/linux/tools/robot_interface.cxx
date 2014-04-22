@@ -774,7 +774,7 @@ int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, 
 
 //! choix du couple max (entre 0 et 100 pour 100%)
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
-int RobotInterface::dynamixel_set_max_torque(int dynamixel_type, uint8_t id, uint8_t val)
+int RobotInterface::dynamixel_set_max_torque(int dynamixel_type, uint8_t id, float val)
 {
 	return dynamixel_cmd(DYNAMIXEL_CMD_SET_MAX_TORQUE, dynamixel_type, id, val / 100.0f);
 }
