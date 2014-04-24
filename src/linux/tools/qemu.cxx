@@ -13,6 +13,7 @@ enum
 	EVENT_NEW_OBJECT,
 	EVENT_MOVE_OBJECT,
 	EVENT_MANAGE_CAN_MOTOR,
+	EVENT_SET_IO,
 };
 
 enum
@@ -178,6 +179,16 @@ int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 	{
 		event.data32[1] = EVENT_MANAGE_CAN_MOTOR_DISCONNECT;
 	}
+
+	return com.write((void*) &event, sizeof(event));
+}
+
+int Qemu::set_io(uint32_t id, bool val)
+{
+	struct atlantronic_model_tx_event event;
+	event.type = EVENT_SET_IO;
+	event.data32[0] = id;
+	event.data32[1] = val?1:0;
 
 	return com.write((void*) &event, sizeof(event));
 }

@@ -51,6 +51,10 @@ static int gpio_module_init(void)
 	// PD6  : IN_8
 	// PC9  : IN_9
 	// PC8  : IN_10
+	// PB14 : IN_11
+	// PB15 : IN_12
+	// PE6  : IN_13
+	// PE5  : IN_14
 	gpio_pin_init(GPIOD, 11, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_1
 	gpio_pin_init(GPIOB, 13, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_2
 	gpio_pin_init(GPIOB, 12, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // IN_3
@@ -61,6 +65,10 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOD, 6, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_8
 	gpio_pin_init(GPIOC, 9, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_9
 	gpio_pin_init(GPIOC, 8, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_10
+	gpio_pin_init(GPIOB, 14, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_11
+	gpio_pin_init(GPIOB, 15, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_12
+	gpio_pin_init(GPIOE, 6, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_13
+	gpio_pin_init(GPIOE, 5, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_14
 
 	setLed( LED_CPU_RED | LED_CPU_BLUE | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2 | LED_EXT_RED);
 
@@ -133,9 +141,15 @@ uint32_t gpio_get_state()
 	res |= gpio_get_pin(GPIOD, 6) << 7;  // IN_8
 	res |= gpio_get_pin(GPIOC, 9) << 8;  // IN_9
 	res |= gpio_get_pin(GPIOC, 8) << 9;  // IN_10
-	res |= gpio_get_pin(GPIOD, 3) << 10; // INGO
-	res |= (gpio_go?1:0) << 11; // GO
-	res |= (color?1:0) << 12; // color
+	res |= gpio_get_pin(GPIOB, 14) << 10;  // IN_11
+	res |= gpio_get_pin(GPIOB, 15) << 11;  // IN_12
+	res |= gpio_get_pin(GPIOE, 6) << 12;  // IN_13
+	res |= gpio_get_pin(GPIOE, 5) << 13;  // IN_14
+	res |= gpio_get_pin(GPIOC, 14) << 14;  // IN_BTN1
+	res |= gpio_get_pin(GPIOB, 7) << 15;  // IN_BTN2
+	res |= gpio_get_pin(GPIOD, 3) << 16; // INGO
+	res |= (gpio_go?1:0) << 17; // GO
+	res |= (color?1:0) << 18; // color
 
 	return res;
 }

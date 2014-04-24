@@ -34,6 +34,7 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg);
 int cmd_help(const char* arg);
 int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
+int cmd_qemu_set_io(const char* arg);
 int cmd_qemu_manage_canopen_connexion(const char* arg);
 int cmd_quit(const char* arg);
 int cmd_go(const char* arg);
@@ -107,6 +108,7 @@ COMMAND usb_commands[] = {
 	{ "pump", cmd_pump, "pump id val[0 100]"},
 	{ "q", cmd_quit, "Quit" },
 	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
+	{ "qemu_set_io", cmd_qemu_set_io, "qemu_set_io id val" },
 	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
@@ -358,6 +360,25 @@ int cmd_qemu_set_clock_factor(const char* arg)
 	if( cmd_qemu )
 	{
 		cmd_qemu->set_clock_factor(system_clock_factor, icount);
+	}
+
+	return CMD_SUCESS;
+}
+
+int cmd_qemu_set_io(const char* arg)
+{
+	unsigned int id;
+	unsigned int val =0;
+	int count = sscanf(arg, "%u %u", &id, &val);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	if( cmd_qemu )
+	{
+		cmd_qemu->set_io(id, val?1:0);
 	}
 
 	return CMD_SUCESS;

@@ -32,9 +32,15 @@ extern "C" {
 #define GPIO_IN_8          0x80  // IN_8
 #define GPIO_IN_9         0x100  // IN_9
 #define GPIO_IN_10        0x200  // IN_10
-#define GPIO_IN_GO        0x400  // IN_GO (etat pin)
-#define GPIO_GO           0x800  // GO : match lance
-#define GPIO_COLOR       0x1000  // color
+#define GPIO_IN_11        0x400  // IN_11
+#define GPIO_IN_12        0x800  // IN_12
+#define GPIO_IN_13       0x1000  // IN_13
+#define GPIO_IN_14       0x2000  // IN_14
+#define GPIO_IN_GO       0x4000  // IN_GO (etat pin)
+#define GPIO_IN_BTN1     0x8000  // IN_BTN1 (etat pin)
+#define GPIO_IN_BTN2    0x10000  // IN_BTN2 (etat pin)
+#define GPIO_GO         0x20000  // GO : match lance
+#define GPIO_COLOR      0x40000  // color
 
 enum gpio_mode
 {
