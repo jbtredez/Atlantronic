@@ -4,7 +4,7 @@
 #include "qemu.h"
 #include "robot_interface.h"
 
-int glplot_main(const char* atlantronicPath, int simulation, Qemu* qemu, RobotInterface* robotItf);
+int glplot_main(const char* atlantronicPath, int simulation, bool cli, Qemu* qemu, RobotInterface* robotItf);
 
 void glplot_update();
 

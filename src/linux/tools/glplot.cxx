@@ -147,12 +147,16 @@ struct polyline oponent_robot =
 
 struct VectPlan opponent_robot_pos(1800, 800, 0);
 
-int glplot_main(const char* AtlantronicPath, int Simulation, Qemu* Qemu, RobotInterface* RobotItf)
+int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
 {
 	long i = 0;
 	long j = 0;
 	atlantronicPath = strdup(AtlantronicPath);
 	simulation = Simulation;
+	if( ! simulation )
+	{
+		Qemu = NULL;
+	}
 	qemu = Qemu;
 	robotItf = RobotItf;
 
@@ -301,10 +305,13 @@ int glplot_main(const char* AtlantronicPath, int Simulation, Qemu* Qemu, RobotIn
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
 
-	if( simulation )
+	if( cli )
 	{
 		cmd_init(robotItf, qemu, gtk_end);
+	}
 
+	if( simulation )
+	{
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
@@ -317,10 +324,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, Qemu* Qemu, RobotIn
 		// on le met a sa position de depart
 		vect2 origin(0, 0);
 		qemu->move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
-	}
-	else
-	{
-		cmd_init(robotItf, NULL, gtk_end);
 	}
 
 	gtk_main();

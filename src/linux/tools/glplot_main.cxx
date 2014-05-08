@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
 	robotItf.init("discovery", file_stm_read, file_stm_write, robotItfCallback, NULL);
 
-	int res = glplot_main("", simulation, &qemu, &robotItf);
+	int res = glplot_main("", simulation, true, &qemu, &robotItf);
 
 	robotItf.destroy();
 
