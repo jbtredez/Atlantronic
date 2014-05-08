@@ -316,6 +316,11 @@ int RobotInterface::process_log(char* msg, uint16_t size)
 	memcpy(&line, msg + 9, 2);
 
 	log = strchr(msg+11, ':');
+	if( ! log )
+	{
+		res = -1;
+		goto end;
+	}
 	*log = 0;
 	log++;
 
