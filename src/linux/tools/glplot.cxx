@@ -410,12 +410,13 @@ static void init(GtkWidget* widget, gpointer arg)
 	if(!gdk_gl_drawable_gl_begin(gldrawable, glcontext)) return;
 
 	font_base = glGenLists(256);
-	if (!glIsList(font_base))
+	// la verif ne passe pas sur une vm de virtualbox
+	/*if (!glIsList(font_base))
 	{
 		fprintf(stderr, "my_init(): Out of display lists. - Exiting.\n");
 		exit(-1);
 	}
-	else
+	else*/
 	{
 		int res = init_font(font_base, font_name);
 		if(res != 0)
