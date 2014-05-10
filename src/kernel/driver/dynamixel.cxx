@@ -8,6 +8,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/end.h"
+#include "kernel/driver/power.h"
 #include <stdlib.h>
 #include <math.h>
 
@@ -325,21 +326,25 @@ void DynamixelManager::print_error(int id, struct dynamixel_error err)
 		}
 		else
 		{
-			if(err.transmit_error & ERR_USART_TIMEOUT)
+			// pas de log d erreur de com si pas de puissance
+			if( ! power_get() )
 			{
-				log_format(LOG_ERROR, "%s %3d : timeout", pcTaskGetTaskName(NULL), id);
-			}
-			else if(err.transmit_error & ERR_USART_READ_SR_FE)
-			{
-				log_format(LOG_ERROR, "%s %3d : desynchro, bruit ou octet \"break\" sur l'usart", pcTaskGetTaskName(NULL), id);
-			}
-			if(err.transmit_error & ERR_USART_READ_SR_NE)
-			{
-				log_format(LOG_ERROR, "%s %3d : bruit sur l'usart", pcTaskGetTaskName(NULL), id);
-			}
-			if(err.transmit_error & ERR_USART_READ_SR_ORE)
-			{
-				log_format(LOG_ERROR, "%s %3d : overrun sur l'usart", pcTaskGetTaskName(NULL), id);
+				if(err.transmit_error & ERR_USART_TIMEOUT)
+				{
+					log_format(LOG_ERROR, "%s %3d : timeout", pcTaskGetTaskName(NULL), id);
+				}
+				else if(err.transmit_error & ERR_USART_READ_SR_FE)
+				{
+					log_format(LOG_ERROR, "%s %3d : desynchro, bruit ou octet \"break\" sur l'usart", pcTaskGetTaskName(NULL), id);
+				}
+				if(err.transmit_error & ERR_USART_READ_SR_NE)
+				{
+					log_format(LOG_ERROR, "%s %3d : bruit sur l'usart", pcTaskGetTaskName(NULL), id);
+				}
+				if(err.transmit_error & ERR_USART_READ_SR_ORE)
+				{
+					log_format(LOG_ERROR, "%s %3d : overrun sur l'usart", pcTaskGetTaskName(NULL), id);
+				}
 			}
 		}
 	}

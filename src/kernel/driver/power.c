@@ -2,7 +2,7 @@
 #include "gpio.h"
 #include "kernel/log.h"
 
-static int power_state = POWER_ON;
+int power_state = POWER_ON;
 
 void power_set(int powerEventMask)
 {
@@ -26,6 +26,10 @@ void power_set(int powerEventMask)
 	{
 		log(LOG_INFO, "power off");
 	}
+	if( diff & POWER_OFF_AU )
+	{
+		log(LOG_ERROR, "power off - AU");
+	}
 }
 
 void power_clear(int powerEventMask)
@@ -46,6 +50,10 @@ void power_clear(int powerEventMask)
 	{
 		log(LOG_INFO, "power clear - off");
 	}
+	if( diff & POWER_OFF_AU )
+	{
+		log(LOG_INFO, "power clear - AU");
+	}
 
 	if( ! power_state )
 	{
@@ -56,3 +64,4 @@ void power_clear(int powerEventMask)
 		}
 	}
 }
+

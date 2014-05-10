@@ -110,6 +110,7 @@ void adc_update()
 {
 	int end = (sizeof(adc_data) - DMA2_Stream4->NDTR) / sizeof(adc_data[0]);
 	int count = end - adc_startId;
+
 	if( count < 0 )
 	{
 		count += ADC_MAX_DATA;
@@ -126,11 +127,20 @@ void adc_update()
 		adc_startId = (adc_startId + 1) % ADC_MAX_DATA;
 	}
 
-	if( adc_filtered_data.vBat < ADC_VBAT_MIN )
+	if( adc_filtered_data.vBat < ADC_VBAT_AU)
+	{
+		power_set(POWER_OFF_AU);
+	}
+	else if ( adc_filtered_data.vBat > ADC_VBAT_AU_CLEAR)
+	{
+		power_clear(POWER_OFF_AU);
+	}
+
+	if( adc_filtered_data.vBat < ADC_VBAT_UNDERVOLTAGE)
 	{
 		power_set(POWER_OFF_UNDERVOLTAGE);
 	}
-	else
+	else if( adc_filtered_data.vBat > ADC_VBAT_UNDERVOLTAGE_CLEAR)
 	{
 		power_clear(POWER_OFF_UNDERVOLTAGE);
 	}
