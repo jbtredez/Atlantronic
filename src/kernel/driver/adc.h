@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 #define ADC_CURRENT_MAX                 4
-#define ADC_VBAT_MIN                   16
+#define ADC_VBAT_MIN                   19
 
 #ifdef __cplusplus
 extern "C" {
