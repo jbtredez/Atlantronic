@@ -114,7 +114,17 @@ void DynamixelManager::task()
 		req.arg[1] = 0x02;
 		req.argc = 2;
 		req.id = id + 1;
-		send(&req);
+
+		// pas de log d erreur de com si pas de puissance
+		if( ! power_get() )
+		{
+			send(&req);
+		}
+		else
+		{
+			req.status.error.transmit_error = ERR_DYNAMIXEL_POWER_OFF;
+		}
+
 		if( !req.status.error.transmit_error )
 		{
 			int pos = req.status.arg[0] + (req.status.arg[1] << 8);
@@ -324,27 +334,27 @@ void DynamixelManager::print_error(int id, struct dynamixel_error err)
 		{
 			log_format(LOG_ERROR, "%s %3d : somme de verification incompatible", pcTaskGetTaskName(NULL), id);
 		}
+		else if( err.transmit_error == ERR_DYNAMIXEL_POWER_OFF)
+		{
+			log_format(LOG_ERROR, "%s %3d : power off", pcTaskGetTaskName(NULL), id);
+		}
 		else
 		{
-			// pas de log d erreur de com si pas de puissance
-			if( ! power_get() )
+			if(err.transmit_error & ERR_USART_TIMEOUT)
 			{
-				if(err.transmit_error & ERR_USART_TIMEOUT)
-				{
-					log_format(LOG_ERROR, "%s %3d : timeout", pcTaskGetTaskName(NULL), id);
-				}
-				else if(err.transmit_error & ERR_USART_READ_SR_FE)
-				{
-					log_format(LOG_ERROR, "%s %3d : desynchro, bruit ou octet \"break\" sur l'usart", pcTaskGetTaskName(NULL), id);
-				}
-				if(err.transmit_error & ERR_USART_READ_SR_NE)
-				{
-					log_format(LOG_ERROR, "%s %3d : bruit sur l'usart", pcTaskGetTaskName(NULL), id);
-				}
-				if(err.transmit_error & ERR_USART_READ_SR_ORE)
-				{
-					log_format(LOG_ERROR, "%s %3d : overrun sur l'usart", pcTaskGetTaskName(NULL), id);
-				}
+				log_format(LOG_ERROR, "%s %3d : timeout", pcTaskGetTaskName(NULL), id);
+			}
+			else if(err.transmit_error & ERR_USART_READ_SR_FE)
+			{
+				log_format(LOG_ERROR, "%s %3d : desynchro, bruit ou octet \"break\" sur l'usart", pcTaskGetTaskName(NULL), id);
+			}
+			if(err.transmit_error & ERR_USART_READ_SR_NE)
+			{
+				log_format(LOG_ERROR, "%s %3d : bruit sur l'usart", pcTaskGetTaskName(NULL), id);
+			}
+			if(err.transmit_error & ERR_USART_READ_SR_ORE)
+			{
+				log_format(LOG_ERROR, "%s %3d : overrun sur l'usart", pcTaskGetTaskName(NULL), id);
 			}
 		}
 	}
