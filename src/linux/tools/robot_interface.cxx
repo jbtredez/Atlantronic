@@ -408,7 +408,7 @@ int RobotInterface::process_code_version(char* msg, uint16_t size)
 	else
 	{
 		versionCompatible = ROBOT_VERSION_KO;
-		log_error("stm_code_version not compatible : %s expected %s", stm_code_version, expected_version);
+		log_error("stm_code_version not compatible : stm32 %s expected %s", stm_code_version, expected_version);
 	}
 
 	pthread_mutex_unlock(&mutex);
