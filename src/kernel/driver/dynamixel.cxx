@@ -1,4 +1,4 @@
-//! @file dynamixel.c
+//! @file dynamixel.cxx
 //! @brief Gestion des dynamixel (ax12 et rx24)
 //! @author Atlantronic
 
@@ -134,7 +134,7 @@ void DynamixelManager::task()
 
 			uint16_t pos_err = abs(pos - goal_pos);
 			systime t = systick_get_time();
-			if( pos_err < devices[id].target_reached_threshold)
+			if( pos_err <= devices[id].target_reached_threshold)
 			{
 				devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
 				devices[id].timeStartMoving_ms = t.ms;
