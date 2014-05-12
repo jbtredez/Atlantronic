@@ -12,6 +12,7 @@
 #define CAN_MOTOR_CMD_EN       0x0f    //!< enable
 #define CAN_MOTOR_CMD_GOHOSEQ  0x2f    //!< lancement homing
 #define CAN_MOTOR_CMD_M        0x3c    //!< debut du mouvement
+#define CAN_MOTOR_CMD_SETTTL   0x52    //!< passage de l'entree AN en 5V
 #define CAN_MOTOR_CMD_HOSP     0x78    //!< vitesse du homing
 #define CAN_MOTOR_CMD_HP       0x79    //!< hard polarity   // TODO : dans la conf, SDO sur 0x2310:5 ?
 #define CAN_MOTOR_CMD_LCC      0x80    //!< limitation courant continu
@@ -147,6 +148,8 @@ CanMotor::CanMotor()
 	kinematics.a = 0;
 	homingStatus = CAN_MOTOR_HOMING_NONE;
 	positionOffset = 0;
+	status_word = 0;
+	last_status_word = 0;
 	connected = false;
 }
 
@@ -160,11 +163,27 @@ void CanMotor::update(portTickType absTimeout)
 		// defaut, moteur ne repond pas
 		fault(fault_disconnected_id, FAULT_ACTIVE);
 		connected = false;
+		systime t = systick_get_time();
+		if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
+		{
+			resetNode();
+		}
 	}
 	else
 	{
 		fault(fault_disconnected_id, FAULT_CLEAR);
 		connected = true;
+	}
+
+	if( state == NMT_OPERATIONAL )
+	{
+		update_state();
+	}
+	else
+	{
+		status_word = 0;
+		last_status_word = 0;
+		homingStatus = CAN_MOTOR_HOMING_NONE;
 	}
 }
 
@@ -177,7 +196,10 @@ void CanMotor::update_state()
 		{
 			// etat op enable
 			// rien a faire, on souhaite y rester
-			log_format(LOG_INFO, "op enable %x", nodeid);
+			if( status_word != last_status_word )
+			{
+				log_format(LOG_INFO, "op enable %x", nodeid);
+			}
 		}
 		else if( (status_word & 0x6f) == 0x07 )
 		{
@@ -195,14 +217,20 @@ void CanMotor::update_state()
 		{
 			// etat switch on
 			// on veut aller en op enable
-			log_format(LOG_INFO, "switch on %x", nodeid);
+			if( status_word != last_status_word )
+			{
+				log_format(LOG_INFO, "switch on %x", nodeid);
+			}
 			can_motor_tx_pdo1(nodeid, 0x0f);
 		}
 		else if( (status_word & 0x6f) == 0x21 )
 		{
 			// etat ready to switch on
 			// on veut aller en switch on
-			log_format(LOG_INFO, "ready to switch on %x", nodeid);
+			if( status_word != last_status_word )
+			{
+				log_format(LOG_INFO, "ready to switch on %x", nodeid);
+			}
 			can_motor_tx_pdo1(nodeid, 7);
 		}
 		else if( (status_word & 0x4f) == 0x40 )
@@ -211,7 +239,10 @@ void CanMotor::update_state()
 			// on veut aller en ready to switch on
 			//can_motor_tx_pdo1(nodeid, 6);
 
-			log_format(LOG_INFO, "switch on disable %x", nodeid);
+			if( status_word != last_status_word )
+			{
+				log_format(LOG_INFO, "switch on disable %x", nodeid);
+			}
 			// command faulhaber qui va direct en OP ENABLE
 			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
 		}
@@ -235,6 +266,8 @@ void CanMotor::update_state()
 			homingStatus = CAN_MOTOR_HOMING_DONE;
 		}
 	}
+
+	last_status_word = status_word;
 }
 
 void CanMotor::rx_pdo(struct can_msg *msg, int type)
@@ -255,8 +288,8 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 	}
 	else if( type == CANOPEN_RX_PDO1 )
 	{
+		state = NMT_OPERATIONAL;
 		status_word = (msg->data[1] << 8) + msg->data[0];
-		update_state();
 	}
 }
 
@@ -270,12 +303,14 @@ void CanMotor::update_homing(float v)
 {
 	int32_t speed = v * inputGain;
 
-	// utilisation de l'entree AN (TODO passer en 5V TTL), front descendant ?
-
 	switch(homingStatus)
 	{
 		case CAN_MOTOR_HOMING_NONE:
 			log_format(LOG_INFO, "start homing %s", name);
+		case CAN_MOTOR_HOMING_SETTTL:
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_SETTTL, 0);
+			homingStatus = CAN_MOTOR_HOMING_RUN_HP;
+			break;
 		case CAN_MOTOR_HOMING_RUN_HP:
 			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HP, 0); // polarite : front descendant
 			homingStatus = CAN_MOTOR_HOMING_RUN_SHL;
@@ -293,11 +328,12 @@ void CanMotor::update_homing(float v)
 			homingStatus = CAN_MOTOR_HOMING_RUN_HOSP;
 			break;
 		case CAN_MOTOR_HOMING_RUN_HOSP:
-			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HOSP, speed); // mise a 0 de l'encodeur sur front descendant pin AN
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_HOSP, speed); // vitesse homing
 			homingStatus = CAN_MOTOR_HOMING_RUN_GOHOSEQ;
 			break;
 		case CAN_MOTOR_HOMING_RUN_GOHOSEQ:
-			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_GOHOSEQ, speed); // lancement homing
+			log_format(LOG_INFO, "homing %s - GOHOSEQ", name);
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_GOHOSEQ, 0); // lancement homing
 			homingStatus = CAN_MOTOR_HOMING_RUNING_GOHOSEQ;
 			break;
 		case CAN_MOTOR_HOMING_RUNING_GOHOSEQ:

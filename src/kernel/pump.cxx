@@ -98,6 +98,12 @@ void Pump::update()
 
 	systime dt = systick_get_time() - startTime;
 
+	// pas de detection de bloquage si on est a moins de 50%
+	if(val < 0.5f)
+	{
+		stdDev2 = 0;
+	}
+
 	if( dt.ms > PUMP_CURRENT_PIC_DELAY_MS && stdDev2 * val > PUMP_BLOCKED_MIN_STDDEV2 )
 	{
 		if( ! pumpBlocked )

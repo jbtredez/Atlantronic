@@ -16,8 +16,6 @@ static void can_task(void *arg);
 static xQueueHandle can_read_queue;
 static int can_max_node;
 static struct CanopenNode* canopen_nodes[CAN_MAX_NODE];
-static systime canopen_last_sdo_time;
-static bool canopen_sdoTransmitting = false; // synchro des sdo des differents noeuds pour les envoyer un par un
 
 static int canopen_op_mode(int node);
 
@@ -56,10 +54,10 @@ void canopen_update(portTickType absTimeout)
 	//bool all_nmt_op = true;
 	for(int i = 0; i < can_max_node; i++)
 	{
-		if( canopen_nodes[i]->state != NMT_OPERATIONAL )
-		{
+		//if( canopen_nodes[i]->state != NMT_OPERATIONAL )
+		//{
 			//all_nmt_op = false;
-		}
+		//}
 		// mise a 0 de la semaphore avant le sync
 		xSemaphoreTake(canopen_nodes[i]->sem, 0);
 	}
@@ -79,6 +77,8 @@ void canopen_update(portTickType absTimeout)
 static void can_update_node(int id, unsigned int nodeid, int type, struct can_msg* msg)
 {
 	CanopenNode* node = canopen_nodes[id];
+	node->last_communication_time = systick_get_time();
+
 	if( type == CANOPEN_RX_PDO1 || type == CANOPEN_RX_PDO2 || type == CANOPEN_RX_PDO3 )
 	{
 		// gestion des pdo specifique => callback
@@ -96,7 +96,6 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 			const struct canopen_configuration* conf = &node->static_conf[node->conf_id];
 			log_format(LOG_INFO, "SDO %x %x:%x OK", nodeid, conf->index, conf->subindex);
 			node->sdo_status = SDO_STATUS_OK;
-			canopen_sdoTransmitting = false;
 		}
 		else if( msg->data[0] == 0x80 )
 		{
@@ -104,14 +103,13 @@ static void can_update_node(int id, unsigned int nodeid, int type, struct can_ms
 			log_format(LOG_ERROR, "SDO write failed node %x index %x subindex %x error 0x%x%x%x%x",
 					nodeid, index, subindex, msg->data[7], msg->data[6], msg->data[5], msg->data[4]);
 			node->sdo_status = SDO_STATUS_KO;
-			canopen_sdoTransmitting = false;
 		}
 	}
 	else if( type == CANOPEN_BOOTUP)
 	{
-		node->state = NMT_PRE_OPERATIONAL;
 		node->conf_id = 0;
 		node->sdo_status = SDO_STATUS_UNKNOWN;
+		node->state = NMT_PRE_OPERATIONAL;
 	}
 }
 
@@ -280,16 +278,21 @@ void CanopenNode::update(portTickType /*absTimeout*/)
 		{
 			if( sdo_status != SDO_STATUS_UNKNOWN )
 			{
-				if( canopen_sdoTransmitting && sdo_status == SDO_STATUS_TRANSMITING )
+				if( sdo_status == SDO_STATUS_TRANSMITING )
 				{
 					// SDO envoye mais pas encore de reponse
 					systime t = systick_get_time();
-					systime dt = t - canopen_last_sdo_time;
+					systime dt = t - last_sdo_time;
 
 					if(dt.ms < CANOPEN_SDO_TIMEOUT)
 					{
 						// rien a faire
 						return;
+					}
+					else
+					{
+						log_format(LOG_ERROR, "sdo timeout on %x", nodeid);
+						sdo_status = SDO_STATUS_KO;// TODO timeout a la place
 					}
 					// sinon, on garde conf_id pour retenter l'envoi
 				}
@@ -299,37 +302,38 @@ void CanopenNode::update(portTickType /*absTimeout*/)
 					// on passe au sdo suivant
 					// TODO rententer 3 fois si KO ?
 					conf_id++;
-					canopen_sdoTransmitting = false;
 				}
 			}
 
-			if( ! canopen_sdoTransmitting )
+			if( sdo_status != SDO_STATUS_TRANSMITING)
 			{
 				if( conf_id < conf_size )
 				{
 					// envoi du sdo
 					const struct canopen_configuration* conf = &static_conf[conf_id];
-					canopen_last_sdo_time = systick_get_time();
-					canopen_sdoTransmitting = true;
+					last_sdo_time = systick_get_time();
 					canopen_sdo_write(nodeid, conf->size, conf->index, conf->subindex, conf->data);
 				}
 				else
 				{
 					log_format(LOG_INFO, "configuration %x end", nodeid);
-					// TODO affecter le OP apres confirmation ?
-					state = NMT_OPERATIONAL;
 					canopen_op_mode(nodeid);
 				}
 			}
 		}
 		else
 		{
-			// TODO affecter le OP apres confirmation ?
-			state = NMT_OPERATIONAL;
 			// on passe en op si pas de conf ou si cela n'a pas marche plus tot
 			canopen_op_mode(nodeid);
 		}
 	}
+}
+
+void CanopenNode::resetNode()
+{
+	log_format(LOG_INFO, "reset node %x", nodeid);
+	last_reset_node_time = systick_get_time();
+	canopen_reset_node(nodeid);
 }
 
 void CanopenNode::rx_pdo(struct can_msg *msg, int type)

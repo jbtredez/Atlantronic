@@ -19,7 +19,7 @@ extern "C" {
 
 enum
 {
-	PWM_1 = 1,
+	PWM_1,
 	PWM_2,
 	PWM_3,
 	PWM_4

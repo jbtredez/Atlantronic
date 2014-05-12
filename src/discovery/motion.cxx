@@ -80,7 +80,7 @@ void motion_compute()
 	{
 		for(int i = 0; i < 3; i++)
 		{
-			if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE)
+			if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE && can_motor[2*i+1].is_op_enable())
 			{
 				can_motor[2*i+1].update_homing(1);
 			}

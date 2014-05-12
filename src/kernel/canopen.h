@@ -66,11 +66,15 @@ class CanopenNode
 		const struct canopen_configuration* static_conf;
 		xSemaphoreHandle sem;
 		int sdo_status;
+		systime last_sdo_time;
+		systime last_communication_time;
+		systime last_reset_node_time;
 
 		virtual void rx_pdo(struct can_msg *msg, int type);
 
 		virtual void update(portTickType absTimeout);
 		int wait_update_until(portTickType t);
+		void resetNode();
 };
 
 void canopen_update(portTickType absTimeout) WEAK_CANOPEN;
