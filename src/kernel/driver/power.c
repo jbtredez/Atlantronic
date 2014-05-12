@@ -1,8 +1,20 @@
 #include "power.h"
 #include "gpio.h"
+#include "kernel/module.h"
 #include "kernel/log.h"
+#include "kernel/driver/pwm.h"
 
 int power_state = POWER_ON;
+static void power_cmd(void* arg);
+
+int power_module_init()
+{
+	usb_add_cmd(USB_CMD_POWER, power_cmd);
+
+	return 0;
+}
+
+module_init(power_module_init, INIT_POWER);
 
 void power_set(int powerEventMask)
 {
@@ -10,6 +22,7 @@ void power_set(int powerEventMask)
 	power_state |= powerEventMask;
 	if( power_state )
 	{
+		pwm_disable();
 		gpio_power_off();
 	}
 
@@ -57,6 +70,7 @@ void power_clear(int powerEventMask)
 
 	if( ! power_state )
 	{
+		pwm_enable();
 		gpio_power_on();
 		if(old_state != power_state)
 		{
@@ -65,3 +79,15 @@ void power_clear(int powerEventMask)
 	}
 }
 
+static void power_cmd(void* arg)
+{
+	struct power_cmd_arg* cmd_arg = (struct power_cmd_arg*) arg;
+	if( cmd_arg->power_off )
+	{
+		power_set(POWER_OFF);
+	}
+	else
+	{
+		power_clear(POWER_OFF);
+	}
+}

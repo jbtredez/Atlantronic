@@ -16,10 +16,10 @@ static void pump_cmd(void*);
 
 static Pump pump[PUMP_MAX] =
 {
-	Pump(PWM_PUMP_1),
-	Pump(PWM_PUMP_2),
-	Pump(PWM_PUMP_3),
-	Pump(PWM_PUMP_4)
+	Pump(PWM_1),
+	Pump(PWM_2),
+	Pump(PWM_3),
+	Pump(PWM_4)
 };
 
 int pump_module_init()

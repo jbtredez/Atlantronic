@@ -56,6 +56,8 @@ class RobotInterface
 		//! ATTENTION : pour les tests uniquement : n'est pas equivalent a un reboot HW
 		int reboot();
 
+		int power_off(bool power_off);
+
 		// ---------- gestion des dynamixel --------------------------------------------
 		int dynamixel_cmd(uint8_t cmd, int dynamixel_type, uint8_t id, float param);
 		int dynamixel_scan(int dynamixel_type);

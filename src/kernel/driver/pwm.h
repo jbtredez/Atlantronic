@@ -7,15 +7,23 @@
 
 #include <stdint.h>
 #include "kernel/rcc.h"
+#include "kernel/log.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define PWM_PUMP_1     0
-#define PWM_PUMP_2     1
-#define PWM_PUMP_3     2
-#define PWM_PUMP_4     3
+#ifndef WEAK_PWM
+#define WEAK_PWM __attribute__((weak, alias("nop_function") ))
+#endif
+
+enum
+{
+	PWM_1 = 1,
+	PWM_2,
+	PWM_3,
+	PWM_4
+};
 
 #if( RCC_PCLK2_MHZ != 84)
 #error revoir les pwm
@@ -44,6 +52,11 @@ void pwm_set16(const unsigned int num, int16_t val);
 //! @param val new value ([-1 ; 1])
 void pwm_set(const unsigned int num, float val);
 
+//! enable pwm
+void pwm_enable() WEAK_PWM;
+
+//! disable pwm (power off)
+void pwm_disable() WEAK_PWM;
 
 #ifdef __cplusplus
 }

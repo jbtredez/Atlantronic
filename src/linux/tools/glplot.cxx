@@ -1052,6 +1052,8 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			}
 			glPrintf(1600, lineId*lineHeight, font_base, "match %13.6f", match_time);
 			lineId++;
+			glPrintf(1600, lineId*lineHeight, font_base, "power off %#9x", robotItf->last_control_usb_data.power_state);
+			lineId++;
 			glPrintf(1600, lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
 					robotItf->last_control_usb_data.pos.x, robotItf->last_control_usb_data.pos.y,
 					robotItf->last_control_usb_data.pos.theta * 180 / M_PI);

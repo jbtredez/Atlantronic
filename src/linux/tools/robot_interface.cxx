@@ -736,6 +736,20 @@ int RobotInterface::reboot()
 	return usb_write(USB_CMD_REBOOT, NULL, 0);
 }
 
+int RobotInterface::power_off(bool power_off)
+{
+	struct power_cmd_arg msg;
+	if( power_off )
+	{
+		msg.power_off = 1;
+	}
+	else
+	{
+		msg.power_off = 0;
+	}
+	return usb_write(USB_CMD_POWER, &msg, sizeof(msg));
+}
+
 int RobotInterface::get_stm_code_version()
 {
 	versionCompatible = ROBOT_VERSION_UNKNOWN;

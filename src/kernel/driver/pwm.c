@@ -2,12 +2,14 @@
 //! @brief PWM
 //! @author Atlantronic
 
+#define WEAK_PWM
 #include "pwm.h"
 #include "gpio.h"
 #include "kernel/module.h"
 #include "kernel/cpu/cpu.h"
 
 void isr_pwm_reset(void);
+static int pwm_on;
 
 static int pwm_module_init()
 {
@@ -61,6 +63,7 @@ static int pwm_module_init()
 	// on active le tout
 	TIM1->CR1 |= TIM_CR1_CEN;
 	TIM1->BDTR |= TIM_BDTR_MOE;
+	pwm_on = 1;
 
 	return 0;
 }
@@ -84,9 +87,14 @@ void pwm_set16(const unsigned int num, int16_t val)
 		val = PWM_ARR;
 	}
 
+	if( ! pwm_on )
+	{
+		val = 0;
+	}
+
 	switch(num)
 	{
-		case 0:
+		case PWM_1:
 			if(dir > 0)
 			{
 				gpio_set_pin(GPIOE, 8);
@@ -97,7 +105,7 @@ void pwm_set16(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR1 = val;
 			break;
-		case 1:
+		case PWM_2:
 			if(dir > 0)
 			{
 				gpio_set_pin(GPIOE, 10);
@@ -108,7 +116,7 @@ void pwm_set16(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR2 = val;
 			break;
-		case 2:
+		case PWM_3:
 			if(dir > 0)
 			{
 				gpio_set_pin(GPIOE, 12);
@@ -119,7 +127,7 @@ void pwm_set16(const unsigned int num, int16_t val)
 			}
 			TIM1->CCR3 = val;
 			break;
-		case 3:
+		case PWM_4:
 			if(dir > 0)
 			{
 				gpio_set_pin(GPIOE, 15);
@@ -131,7 +139,7 @@ void pwm_set16(const unsigned int num, int16_t val)
 			TIM1->CCR4 = val;
 			break;
 		default:
-			// TODO : log erreur
+			log_format(LOG_ERROR, "unknown pwm id %d", num);
 			break;
 	}
 }
@@ -144,6 +152,17 @@ void pwm_set(const unsigned int num, float val)
 void isr_pwm_reset(void)
 {
 	// on est dans une IT d'erreur ou fin du match => arrêt des moteurs
+	pwm_disable();
+}
+
+void pwm_enable()
+{
+	pwm_on = 1;
+}
+
+void pwm_disable()
+{
+	pwm_on = 0;
 	TIM1->CCR1 = 0;
 	TIM1->CCR2 = 0;
 	TIM1->CCR3 = 0;
