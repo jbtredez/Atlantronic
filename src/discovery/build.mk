@@ -1,6 +1,7 @@
 obj-discovery-core += kernel/main.o
 obj-discovery-core += kernel/asm/isr_stm32f4xx.o
 obj-discovery-core += kernel/rcc.o
+obj-discovery-core += kernel/led.o
 obj-discovery-core += kernel/systick.o
 obj-discovery-core += kernel/tasks.o
 obj-discovery-core += kernel/queue.o

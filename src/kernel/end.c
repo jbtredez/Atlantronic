@@ -7,6 +7,7 @@
 #include "kernel/task.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
+#include "kernel/led.h"
 #include "gpio.h"
 #include "kernel/driver/power.h"
 

@@ -20,12 +20,13 @@
 
 // init gpio, usb et error pour afficher les erreurs sur les led et envoyer des log
 #define INIT_GPIO                     "01"
-#define INIT_USB                      "02"
-#define INIT_FAULT                    "03"
-#define INIT_POWER                    "04"
-#define INIT_SPI                      "05"
-#define INIT_GYRO                     "06"
-#define INIT_ACCELERO                 "07"
+#define INIT_LED                      "02"
+#define INIT_USB                      "03"
+#define INIT_FAULT                    "04"
+#define INIT_POWER                    "05"
+#define INIT_SPI                      "06"
+#define INIT_GYRO                     "07"
+#define INIT_ACCELERO                 "08"
 
 // init de la communication
 #define INIT_CAN                      "10"
