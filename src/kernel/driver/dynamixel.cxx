@@ -733,7 +733,7 @@ static void dynamixel_cmd_scan(DynamixelManager* manager)
 		error = manager->ping(i);
 		if(! error.transmit_error)
 		{
-			log_format(LOG_INFO, "dynamixel %3d détecté - status %#.2x", i, error.internal_error);
+			log_format(LOG_INFO, "dynamixel type %d id %3d détecté - status %#.2x", manager->getType(), i, error.internal_error);
 		}
 	}
 

@@ -163,6 +163,11 @@ class DynamixelManager
 		struct dynamixel_error write8(uint8_t id, uint8_t offset, uint8_t data);
 		struct dynamixel_error write16(uint8_t id, uint8_t offset, uint16_t data);
 
+		inline int getType()
+		{
+			return type;
+		}
+
 	protected:
 		static void task_wrapper(void* arg);
 		void task();
