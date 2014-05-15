@@ -74,6 +74,12 @@ void usb_add_log(unsigned char level, const char* func, uint16_t line, const cha
 //!< peut être appelée avant l'initialisation du module usb
 void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*));
 
+static inline unsigned char usb_is_get_version_done()
+{
+	extern unsigned char usb_get_version_done;
+	return usb_get_version_done;
+}
+
 #ifdef __cplusplus
 }
 #endif

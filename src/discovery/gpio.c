@@ -9,6 +9,7 @@
 
 volatile uint32_t color;
 volatile uint8_t gpio_go;
+volatile uint8_t gpio_color_change_enable;
 static uint8_t gpio_enable_go;
 
 static xQueueHandle gpio_queue_go;
@@ -64,6 +65,7 @@ static int gpio_module_init(void)
 	color = COLOR_RED;
 	gpio_go = 0;
 	gpio_queue_go = xQueueCreate(1, 0);
+	gpio_color_change_enable = 1;
 
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
@@ -177,18 +179,16 @@ static void gpio_cmd_go(void * arg)
 static void gpio_cmd_color(void* arg)
 {
 	uint8_t new_color = *((uint8_t*) arg);
-	if(gpio_go == 0)
+	if(gpio_go == 0 && gpio_color_change_enable)
 	{
 		if(new_color == COLOR_RED)
 		{
 			color = COLOR_RED;
-			//setLed(LED_CPU_RED | LED_EXT_RED);
 			log(LOG_INFO, "couleur => rouge");
 		}
 		else
 		{
 			color = COLOR_YELLOW;
-			//setLed(LED_CPU_BLUE | LED_EXT_ORANGE1);
 			log(LOG_INFO, "couleur => jaune");
 		}
 	}
@@ -206,7 +206,6 @@ void isr_exti3(void)
 		if( gpio_enable_go )
 		{
 			gpio_go = 1;
-			//setLed(LED_CPU_RED | LED_CPU_BLUE);
 			systick_start_match_from_isr();
 			xQueueSendFromISR(gpio_queue_go, NULL, &xHigherPriorityTaskWoken);
 		}
@@ -236,17 +235,15 @@ void isr_exti15_10(void)
 	if( EXTI->PR & EXTI_PR_PR14)
 	{
 		EXTI->PR = EXTI_PR_PR14;
-		if(gpio_go == 0)
+		if(gpio_go == 0 && gpio_color_change_enable)
 		{
 			if(color == COLOR_YELLOW)
 			{
 				color = COLOR_RED;
-				//setLed(LED_CPU_RED | LED_EXT_RED);
 			}
 			else
 			{
 				color = COLOR_YELLOW;
-				//setLed(LED_CPU_BLUE | LED_EXT_ORANGE1);
 			}
 		}
 	}

@@ -170,6 +170,12 @@ static inline void gpio_power_off()
 	gpio_set_pin(GPIOB, 2);
 }
 
+static inline void gpio_color_change_disable()
+{
+	extern volatile uint8_t gpio_color_change_enable;
+	gpio_color_change_enable = 0;
+}
+
 static inline uint32_t getcolor()
 {
 	extern volatile uint32_t color;

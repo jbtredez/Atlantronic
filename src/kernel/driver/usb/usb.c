@@ -37,6 +37,7 @@ static int usb_rx_waiting; //!< overflow sur usb - reception. Vaut 1 si on doit 
 static xSemaphoreHandle usb_mutex;
 static void (*usb_cmd[USB_CMD_NUM])(void*);
 static const char version[41] = VERSION;
+unsigned char usb_get_version_done = 0;
 
 void usb_read_task(void *);
 void usb_write_task(void *);
@@ -416,5 +417,6 @@ void usb_cmd_ptask(void* arg)
 void usb_cmd_get_version(void* arg)
 {
 	(void) arg;
+	usb_get_version_done = 1;
 	usb_add(USB_CMD_GET_VERSION, (void*)version, 41);
 }

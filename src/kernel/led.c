@@ -5,6 +5,7 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
+#include "kernel/end.h"
 #include "led.h"
 #include "gpio.h"
 
@@ -62,18 +63,30 @@ static void led_task(void *arg)
 {
 	(void) arg;
 
+	int color = getcolor();
+	int old_color = color;
+
 	while(1)
 	{
 		switch(led_mode)
 		{
 			case LED_MODE_WAIT_X86:
 				led_two_half_chaser();
+				if(usb_is_get_version_done())
+				{
+					led_mode = LED_MODE_WAIT_COLOR_SELECTION;
+				}
 				break;
 			case LED_MODE_WAIT_COLOR_SELECTION:
 				led_tetris();
+				color = getcolor();
+				if( color != old_color )
+				{
+					led_mode = LED_MODE_COLOR_SELECTION;
+				}
+				old_color = color;
 				break;
 			case LED_MODE_COLOR_SELECTION:
-				// TODO
 				if(getcolor() == COLOR_RED)
 				{
 					setLed(LED_EXT_RED);
@@ -82,12 +95,39 @@ static void led_task(void *arg)
 				{
 					setLed(LED_EXT_ORANGE1);
 				}
+				if( gpio_get_state() & GPIO_IN_GO )
+				{
+					gpio_color_change_disable();
+					led_mode = LED_MODE_WAIT_INIT;
+				}
 				break;
 			case LED_MODE_WAIT_INIT:
-				// TODO
+				if( led_step & 0x01)
+				{
+					if(getcolor() == COLOR_RED)
+					{
+						setLed(LED_EXT_RED);
+					}
+					else
+					{
+						setLed(LED_EXT_ORANGE1);
+					}
+				}
+				else
+				{
+					setLed(0x00);
+				}
+
+				if( getGo() )
+				{
+					led_mode = LED_MODE_MATCH_RUNNING;
+				}
 				break;
 			case LED_MODE_MATCH_RUNNING:
-				led_chaser();
+				if( ! end_match )
+				{
+					led_chaser();
+				}
 				break;
 			default:
 				break;
