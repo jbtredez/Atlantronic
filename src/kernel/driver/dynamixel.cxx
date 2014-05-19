@@ -144,7 +144,7 @@ void DynamixelManager::task()
 					devices[id].flags &= ~DYNAMIXEL_FLAG_STUCK;
 				}
 			}
-			else
+			else if( pos_err > devices[id].target_reached_threshold + 1)
 			{
 				if( devices[id].flags & DYNAMIXEL_FLAG_TARGET_REACHED )
 				{
