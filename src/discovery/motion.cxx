@@ -64,6 +64,7 @@ void motion_compute()
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	int motorNotReady = 0;
+	int homing = 0;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
@@ -83,6 +84,8 @@ void motion_compute()
 			if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE && can_motor[2*i+1].is_op_enable())
 			{
 				can_motor[2*i+1].update_homing(1);
+				motorNotReady = 1;
+				homing = 1;
 			}
 		}
 	}
@@ -91,6 +94,11 @@ void motion_compute()
 	{
 		// mise à jour de la position
 		location_update(motion_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
+	}
+	else if( motion_state != MOTION_READY_FREE)
+	{
+		motion_state = MOTION_READY_FREE;
+		log(LOG_INFO, "all motors not ready -> MOTION_READY_FREE");
 	}
 
 	motion_pos_mes = location_get_position();
@@ -134,7 +142,10 @@ void motion_compute()
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
-		can_motor[i].set_speed(motion_kinematics[i].v);
+		if( ! (homing &&  (i & 0x01)) )
+		{
+			can_motor[i].set_speed(motion_kinematics[i].v);
+		}
 	}
 
 	xSemaphoreGive(motion_mutex);
