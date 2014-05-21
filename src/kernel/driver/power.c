@@ -4,7 +4,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/pwm.h"
 
-int power_state = POWER_ON;
+int power_state = POWER_OFF;
 static void power_cmd(void* arg);
 
 int power_module_init()
