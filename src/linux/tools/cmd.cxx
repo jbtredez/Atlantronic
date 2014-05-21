@@ -32,6 +32,7 @@ int cmd_dynamixel_get_position(const char* arg);
 int cmd_dynamixel_set_max_torque(const char* arg);
 int cmd_dynamixel_set_target_reached_threshold(const char* arg);
 int cmd_help(const char* arg);
+int cmd_homing(const char* arg);
 int cmd_power_off(const char* arg);
 int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
@@ -102,6 +103,7 @@ COMMAND usb_commands[] = {
 	{ "gyro_set_theta", cmd_gyro_set_theta, "cmd_gyro_set_theta theta"},
 	{ "gyro_set_calibration_values", cmd_gyro_set_calibration_values, "cmd_gyro_set_calibration_values scale bias dead_zone"},
 	{ "help", cmd_help, "Display this text" },
+	{ "homing", cmd_homing, "homing" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
@@ -345,6 +347,13 @@ int cmd_help(const char* arg)
 		log_info("%s : %s", usb_commands[i].name, usb_commands[i].doc);
 	}
 
+	return CMD_SUCESS;
+}
+
+int cmd_homing(const char* arg)
+{
+	(void) arg;
+	cmd_robot->motion_homing();
 	return CMD_SUCESS;
 }
 

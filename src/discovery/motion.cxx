@@ -39,7 +39,7 @@ void motion_cmd_goto(void* arg);
 void motion_cmd_set_speed(void* arg);
 void motion_cmd_free(void* arg);
 void motion_cmd_set_actuator_kinematics(void* arg);
-
+void motion_cmd_homing(void* arg);
 
 static int motion_module_init()
 {
@@ -54,6 +54,7 @@ static int motion_module_init()
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &motion_cmd_set_speed);
 	usb_add_cmd(USB_CMD_MOTION_FREE, &motion_cmd_free);
 	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &motion_cmd_set_actuator_kinematics);
+	usb_add_cmd(USB_CMD_MOTION_HOMING, &motion_cmd_homing);
 
 	return 0;
 }
@@ -82,11 +83,9 @@ void motion_compute()
 	{
 		for(int i = 0; i < 3; i++)
 		{
-			if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE && can_motor[2*i+1].is_op_enable())
+			if( can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE )
 			{
-				can_motor[2*i+1].update_homing(1);
 				motorNotReady = 1;
-				homing = 1;
 			}
 		}
 	}
@@ -118,6 +117,21 @@ void motion_compute()
 			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				motion_kinematics[i].v = 0;
+			}
+			break;
+		case MOTION_HOMING:
+			for(int i = 0; i < 3; i++)
+			{
+				if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE && can_motor[2*i+1].is_op_enable())
+				{
+					can_motor[2*i+1].update_homing(1);
+				}
+				homing = 1;
+			}
+			if( ! homing )
+			{
+				motion_state = MOTION_READY_FREE;
+				log(LOG_INFO, "homing end -> MOTION_READY_FREE");
 			}
 			break;
 		case MOTION_SPEED:
@@ -250,6 +264,23 @@ void motion_cmd_set_actuator_kinematics(void* arg)
 {
 	struct motion_cmd_set_actuator_kinematics_arg* cmd = (struct motion_cmd_set_actuator_kinematics_arg*) arg;
 	motion_set_actuator_kinematics(*cmd);
+}
+
+void motion_cmd_homing(void* arg)
+{
+	(void) arg;
+	motion_homing();
+}
+
+void motion_homing()
+{
+	xSemaphoreTake(motion_mutex, portMAX_DELAY);
+	if(motion_state == MOTION_READY_FREE)
+	{
+		motion_state = MOTION_HOMING;
+		log(LOG_INFO, "MOTION_HOMING");
+	}
+	xSemaphoreGive(motion_mutex);
 }
 
 void motion_stop(bool asser)

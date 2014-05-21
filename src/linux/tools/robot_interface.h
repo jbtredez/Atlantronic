@@ -96,6 +96,9 @@ class RobotInterface
 		//!< time : temps en ms
 		int set_match_time(uint32_t time);
 
+		// ---------- gestion motion --------------------------------------------------
+		int motion_homing();
+
 		// ---------- gestion control --------------------------------------------------
 		int control_print_param();
 		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour

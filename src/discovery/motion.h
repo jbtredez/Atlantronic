@@ -17,6 +17,7 @@ enum motion_state
 {
 	MOTION_READY_FREE = 0,       //!< no trajectory ongoing, control off
 	MOTION_READY_ASSER,          //!< no trajectory ongoing, control on
+	MOTION_HOMING,               //!< homing des moteurs
 	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
 	MOTION_TRAJECTORY,           //!< trajectoire en cours
@@ -73,6 +74,8 @@ void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_ar
 void motion_compute() WEAK_MOTION;
 
 void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
+
+void motion_homing();
 
 struct motion_cmd_param_arg
 {

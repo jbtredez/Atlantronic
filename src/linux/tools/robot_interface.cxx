@@ -830,6 +830,11 @@ int RobotInterface::pump(uint8_t id, uint8_t val)
 	return usb_write(USB_CMD_PUMP, &cmd_arg, sizeof(cmd_arg));
 }
 
+int RobotInterface::motion_homing()
+{
+	return usb_write(USB_CMD_MOTION_HOMING, NULL, 0);
+}
+
 int RobotInterface::control_print_param()
 {
 	return usb_write(USB_CMD_MOTION_PRINT_PARAM, NULL, 0);
