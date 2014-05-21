@@ -18,7 +18,7 @@ enum motion_state
 	MOTION_READY_FREE = 0,       //!< no trajectory ongoing, control off
 	MOTION_READY_ASSER,          //!< no trajectory ongoing, control on
 	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
-	MOTION_ACTUATOR_SPEED,       //!< pilotage des vitesses des moteurs (debug)
+	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
 	MOTION_TRAJECTORY,           //!< trajectoire en cours
 	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	MOTION_END,                  //!< end : halted forever
@@ -66,8 +66,8 @@ void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearP
 //!< demande de vitesse
 void motion_set_cp_speed(VectPlan cp, VectPlan u, float v);
 
-//!< demande de vitesse actionneur (debug)
-void motion_set_actuator_speed(float v[6]);
+//!< demande de cinematique actionneur (debug)
+void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 
 //!< mise a jour de l'asservissement
 void motion_compute() WEAK_MOTION;
@@ -116,9 +116,10 @@ struct motion_cmd_set_speed_arg
 	float v;
 }  __attribute__((packed));
 
-struct motion_cmd_set_actuator_speed_arg
+struct motion_cmd_set_actuator_kinematics_arg
 {
-	float v[6];
+	int mode[6];
+	float val[6];
 }  __attribute__((packed));
 
 #endif

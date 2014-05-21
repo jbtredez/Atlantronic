@@ -17,6 +17,7 @@
 
 static enum motion_state motion_state;
 static enum motion_status motion_status;
+static struct motion_cmd_set_actuator_kinematics_arg motion_wanted_kinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)
 static Kinematics motion_kinematics[CAN_MOTOR_MAX];
 static Kinematics motion_kinematics_mes[CAN_MOTOR_MAX];
 static xSemaphoreHandle motion_mutex;
@@ -37,7 +38,7 @@ static void motion_compute_speed();
 void motion_cmd_goto(void* arg);
 void motion_cmd_set_speed(void* arg);
 void motion_cmd_free(void* arg);
-void motion_cmd_set_actuator_speed(void* arg);
+void motion_cmd_set_actuator_kinematics(void* arg);
 
 
 static int motion_module_init()
@@ -52,7 +53,7 @@ static int motion_module_init()
 	usb_add_cmd(USB_CMD_MOTION_GOTO, &motion_cmd_goto);
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &motion_cmd_set_speed);
 	usb_add_cmd(USB_CMD_MOTION_FREE, &motion_cmd_free);
-	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_SPEED, &motion_cmd_set_actuator_speed);
+	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &motion_cmd_set_actuator_kinematics);
 
 	return 0;
 }
@@ -122,7 +123,20 @@ void motion_compute()
 		case MOTION_SPEED:
 			motion_compute_speed();
 			break;
-		case MOTION_ACTUATOR_SPEED:
+		case MOTION_ACTUATOR_KINEMATICS:
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
+			{
+				if(motion_wanted_kinematics.mode[i] == KINEMATICS_SPEED)
+				{
+					motion_kinematics[i].v = motion_wanted_kinematics.val[i];
+					motion_kinematics[i].mode = KINEMATICS_SPEED;
+				}
+				else if(motion_wanted_kinematics.mode[i] == KINEMATICS_POSITION)
+				{
+					motion_kinematics[i].pos = motion_wanted_kinematics.val[i];
+					motion_kinematics[i].mode = KINEMATICS_POSITION;
+				}
+			}
 			break;
 		case MOTION_TRAJECTORY:
 			motion_compute_trajectory();
@@ -144,7 +158,14 @@ void motion_compute()
 	{
 		if( ! (homing &&  (i & 0x01)) )
 		{
-			can_motor[i].set_speed(motion_kinematics[i].v);
+			if( motion_kinematics[i].mode == KINEMATICS_SPEED )
+			{
+				can_motor[i].set_speed(motion_kinematics[i].v);
+			}
+			else if( motion_kinematics[i].mode == KINEMATICS_POSITION )
+			{
+				can_motor[i].set_position(motion_kinematics[i].pos);
+			}
 		}
 	}
 
@@ -225,10 +246,10 @@ void motion_cmd_free(void* arg)
 	motion_stop(false);
 }
 
-void motion_cmd_set_actuator_speed(void* arg)
+void motion_cmd_set_actuator_kinematics(void* arg)
 {
-	struct motion_cmd_set_actuator_speed_arg* cmd = (struct motion_cmd_set_actuator_speed_arg*) arg;
-	motion_set_actuator_speed(cmd->v);
+	struct motion_cmd_set_actuator_kinematics_arg* cmd = (struct motion_cmd_set_actuator_kinematics_arg*) arg;
+	motion_set_actuator_kinematics(*cmd);
 }
 
 void motion_stop(bool asser)
@@ -361,17 +382,22 @@ void motion_set_cp_speed(VectPlan cp, VectPlan u, float v)
 	xSemaphoreGive(motion_mutex);
 }
 
-void motion_set_actuator_speed(float v[6])
+void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	if(motion_state != MOTION_END)
 	{
-		log(LOG_INFO, "set actuators speed");
-		motion_state = MOTION_ACTUATOR_SPEED;
+		motion_state = MOTION_ACTUATOR_KINEMATICS;
+		motion_wanted_kinematics = cmd;
+
 		for(int i = 0; i < 6; i++)
 		{
-			motion_kinematics[i].v = v[i];
+			if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
+			{
+				log_format(LOG_ERROR, "unknown mode %d for actuator %i", cmd.mode[i], i);
+				motion_state = MOTION_READY_FREE;
+			}
 		}
 	}
 

@@ -61,7 +61,7 @@ int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
 int cmd_set_speed(const char* arg);
-int cmd_set_actuator_speed(const char* arg);
+int cmd_set_actuator_kinematics(const char* arg);
 int cmd_free(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
@@ -119,7 +119,7 @@ COMMAND usb_commands[] = {
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "set_speed", cmd_set_speed, "set speed direction valeur"},
-	{ "set_actuator_speed", cmd_set_actuator_speed, "set actuators speed"},
+	{ "set_actuator_kinematics", cmd_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
@@ -768,18 +768,24 @@ int cmd_set_speed(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_set_actuator_speed(const char* arg)
+int cmd_set_actuator_kinematics(const char* arg)
 {
-	float v[6];
+	struct motion_cmd_set_actuator_kinematics_arg cmd;
 
-	int count = sscanf(arg, "%f %f %f %f %f %f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+	int count = sscanf(arg, "%d %f %d %f %d %f %d %f %d %f %d %f",
+			&cmd.mode[0], &cmd.val[0],
+			&cmd.mode[1], &cmd.val[1],
+			&cmd.mode[2], &cmd.val[2],
+			&cmd.mode[3], &cmd.val[3],
+			&cmd.mode[4], &cmd.val[4],
+			&cmd.mode[5], &cmd.val[5]);
 
-	if(count != 6)
+	if(count != 12)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->control_set_actuator_speed(v);
+	cmd_robot->control_set_actuator_kinematics(cmd);
 	return CMD_SUCESS;
 }
 

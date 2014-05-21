@@ -875,16 +875,9 @@ int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
 	return usb_write(USB_CMD_MOTION_SET_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_set_actuator_speed(float v[6])
+int RobotInterface::control_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd_arg)
 {
-	struct motion_cmd_set_actuator_speed_arg cmd_arg;
-
-	for(int i = 0; i < 6; i++)
-	{
-		cmd_arg.v[i] = v[i];
-	}
-
-	return usb_write(USB_CMD_MOTION_SET_ACTUATOR_SPEED, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::straight(float dist)

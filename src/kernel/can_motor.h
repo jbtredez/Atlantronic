@@ -57,6 +57,7 @@ class CanMotor : public CanopenNode
 		void update_homing(float v);
 		void update_state();
 		void set_speed(float v);
+		void set_position(float pos);
 
 		inline bool is_op_enable()
 		{

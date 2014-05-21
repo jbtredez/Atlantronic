@@ -1,6 +1,14 @@
 #include "kinematics.h"
 #include <math.h>
 
+void Kinematics::reset()
+{
+	pos = 0;
+	v = 0;
+	a = 0;
+	mode = KINEMATICS_SPEED;
+}
+
 void Kinematics::setSpeed(float wantedSpeed, const KinematicsParameters& param, float dt)
 {
 	float vmin;

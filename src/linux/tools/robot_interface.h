@@ -101,7 +101,7 @@ class RobotInterface
 		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour
 		int control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
 		int control_set_speed(VectPlan cp, VectPlan u, float v);
-		int control_set_actuator_speed(float v[6]);
+		int control_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 		int control_free();
 
 		// ---------- gestion gyro -----------------------------------------------------
