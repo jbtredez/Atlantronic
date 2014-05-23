@@ -107,7 +107,7 @@ int can_motor_module_init()
 }
 
 module_init(can_motor_module_init, INIT_CAN_MOTOR);
-
+/*
 static void can_motor_tx_pdo1(int node, uint16_t control_word)
 {
 	struct can_msg msg;
@@ -120,7 +120,7 @@ static void can_motor_tx_pdo1(int node, uint16_t control_word)
 	msg.data[1] = (control_word >> 8) & 0xff;
 
 	can_write(&msg, 0);
-}
+}*/
 
 static void can_motor_tx_pdo2(int node, uint8_t cmd, uint32_t param)
 {
@@ -221,7 +221,7 @@ void CanMotor::update_state()
 			{
 				log_format(LOG_INFO, "switch on %x", nodeid);
 			}
-			can_motor_tx_pdo1(nodeid, 0x0f);
+			//can_motor_tx_pdo1(nodeid, 0x0f);
 		}
 		else if( (status_word & 0x6f) == 0x21 )
 		{
@@ -231,7 +231,7 @@ void CanMotor::update_state()
 			{
 				log_format(LOG_INFO, "ready to switch on %x", nodeid);
 			}
-			can_motor_tx_pdo1(nodeid, 7);
+			//can_motor_tx_pdo1(nodeid, 7);
 		}
 		else if( (status_word & 0x4f) == 0x40 )
 		{
@@ -244,7 +244,7 @@ void CanMotor::update_state()
 				log_format(LOG_INFO, "switch on disable %x", nodeid);
 			}
 			// command faulhaber qui va direct en OP ENABLE
-			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
+			//can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
 		}
 //		else if( (motor->status_word & 0x4f) == 0x00 )
 //		{
@@ -293,6 +293,22 @@ void CanMotor::rx_pdo(struct can_msg *msg, int type)
 	}
 }
 
+void CanMotor::enable(bool enable)
+{
+	if(enable)
+	{
+		if( ! is_op_enable() )
+		{
+			// command faulhaber qui va direct en OP ENABLE
+			can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_EN, 0);
+		}
+	}
+	else if( is_op_enable() )
+	{
+		can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_DI, 0);
+	}
+}
+
 void CanMotor::set_speed(float v)
 {
 	int32_t speed = v * inputGain;
@@ -304,6 +320,13 @@ void CanMotor::set_position(float pos)
 	int32_t pos_raw = pos * inputGain * MOTOR_ENCODER_RESOLUTION / 60;
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_LA, pos_raw);
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_M, 0);
+}
+
+//! courant max en A
+void CanMotor::set_max_current(float val)
+{
+	// conversion en mA pour le moteur
+	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_LPC, 1000 * val);
 }
 
 void CanMotor::update_homing(float v)

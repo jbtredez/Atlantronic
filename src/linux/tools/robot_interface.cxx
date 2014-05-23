@@ -928,9 +928,20 @@ int RobotInterface::rotate_to(float theta)
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_free()
+int RobotInterface::motion_enable(bool enable)
 {
-	return usb_write(USB_CMD_MOTION_FREE, NULL, 0);
+	struct motion_cmd_enable_arg cmd_arg;
+	cmd_arg.enable = enable?1:0;
+
+	return usb_write(USB_CMD_MOTION_ENABLE, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::motion_set_max_driving_current(float maxCurrent)
+{
+	struct motion_cmd_set_max_driving_current_arg cmd_arg;
+	cmd_arg.maxDrivingCurrent = maxCurrent;
+
+	return usb_write(USB_CMD_MOTION_SET_MAX_CURRENT, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type)

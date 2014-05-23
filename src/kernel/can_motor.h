@@ -58,6 +58,8 @@ class CanMotor : public CanopenNode
 		void update_state();
 		void set_speed(float v);
 		void set_position(float pos);
+		void set_max_current(float val);
+		void enable(bool enable);
 
 		inline bool is_op_enable()
 		{

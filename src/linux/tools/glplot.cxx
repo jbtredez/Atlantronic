@@ -676,7 +676,7 @@ void plot_table(Graphique* graph)
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
 		for(i=0; i< max; i++)
 		{
-			if(robotItf->control_usb_data[i].motion_state != MOTION_READY_ASSER && robotItf->control_usb_data[i].motion_state != MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state != MOTION_ENABLED && robotItf->control_usb_data[i].motion_state != MOTION_DISABLED)
 			{
 				draw_plus(robotItf->control_usb_data[i].cons.x, robotItf->control_usb_data[i].cons.y, plus_dx, plus_dy);
 			}
@@ -958,7 +958,7 @@ void plot_speed_dist(Graphique* graph)
 		float dist = 0;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			if(robotItf->control_usb_data[i].motion_state == MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state == MOTION_DISABLED)
 			{
 				dist = 0;
 			}
@@ -975,7 +975,7 @@ void plot_speed_dist(Graphique* graph)
 		float dist = 0;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			if(robotItf->control_usb_data[i].motion_state == MOTION_READY_FREE)
+			if(robotItf->control_usb_data[i].motion_state == MOTION_DISABLED)
 			{
 				dist = 0;
 			}

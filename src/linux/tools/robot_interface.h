@@ -98,6 +98,8 @@ class RobotInterface
 
 		// ---------- gestion motion --------------------------------------------------
 		int motion_homing();
+		int motion_enable(bool enable);
+		int motion_set_max_driving_current(float maxCurrent);
 
 		// ---------- gestion control --------------------------------------------------
 		int control_print_param();
@@ -105,7 +107,6 @@ class RobotInterface
 		int control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
 		int control_set_speed(VectPlan cp, VectPlan u, float v);
 		int control_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
-		int control_free();
 
 		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum GyroCalibrationCmd cmd);

@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
+#include "kernel/can_motor.h"
 
 #ifndef WEAK_MOTION
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
@@ -15,8 +16,8 @@
 
 enum motion_state
 {
-	MOTION_READY_FREE = 0,       //!< no trajectory ongoing, control off
-	MOTION_READY_ASSER,          //!< no trajectory ongoing, control on
+	MOTION_DISABLED = 0,         //!< no trajectory ongoing, control off
+	MOTION_ENABLED,              //!< no trajectory ongoing, control on
 	MOTION_HOMING,               //!< homing des moteurs
 	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
@@ -59,7 +60,7 @@ enum motion_type
 	MOTION_LINE_XYA,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
 };
 
-void motion_stop(bool asser);
+void motion_enable(bool enable);
 
 //!< demande de trajectoire
 void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
@@ -76,6 +77,8 @@ void motion_compute() WEAK_MOTION;
 void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
 
 void motion_homing();
+
+void motion_set_max_driving_current(float maxCurrent);
 
 struct motion_cmd_param_arg
 {
@@ -121,8 +124,18 @@ struct motion_cmd_set_speed_arg
 
 struct motion_cmd_set_actuator_kinematics_arg
 {
-	int mode[6];
-	float val[6];
+	int mode[CAN_MOTOR_MAX];
+	float val[CAN_MOTOR_MAX];
+}  __attribute__((packed));
+
+struct motion_cmd_enable_arg
+{
+	uint8_t enable;
+}  __attribute__((packed));
+
+struct motion_cmd_set_max_driving_current_arg
+{
+	float maxDrivingCurrent;
 }  __attribute__((packed));
 
 #endif

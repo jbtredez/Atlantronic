@@ -4,7 +4,6 @@
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
-#include "kernel/can_motor.h"
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
 #include "control.h"
@@ -14,6 +13,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro.h"
 #include "kernel/fault.h"
+#include "kernel/driver/power.h"
 
 static enum motion_state motion_state;
 static enum motion_status motion_status;
@@ -37,9 +37,10 @@ static void motion_compute_speed();
 // interface usb
 void motion_cmd_goto(void* arg);
 void motion_cmd_set_speed(void* arg);
-void motion_cmd_free(void* arg);
+void motion_cmd_enable(void* arg);
 void motion_cmd_set_actuator_kinematics(void* arg);
 void motion_cmd_homing(void* arg);
+void motion_cmd_set_max_current(void* arg);
 
 static int motion_module_init()
 {
@@ -52,7 +53,8 @@ static int motion_module_init()
 
 	usb_add_cmd(USB_CMD_MOTION_GOTO, &motion_cmd_goto);
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &motion_cmd_set_speed);
-	usb_add_cmd(USB_CMD_MOTION_FREE, &motion_cmd_free);
+	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &motion_cmd_set_max_current);
+	usb_add_cmd(USB_CMD_MOTION_ENABLE, &motion_cmd_enable);
 	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &motion_cmd_set_actuator_kinematics);
 	usb_add_cmd(USB_CMD_MOTION_HOMING, &motion_cmd_homing);
 
@@ -95,28 +97,38 @@ void motion_compute()
 		// mise à jour de la position
 		location_update(motion_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
 	}
-	else if( motion_state != MOTION_READY_FREE)
+	else if( motion_state != MOTION_DISABLED)
 	{
-		motion_state = MOTION_READY_FREE;
-		log(LOG_INFO, "all motors not ready -> MOTION_READY_FREE");
+		motion_state = MOTION_DISABLED;
+		log(LOG_INFO, "all motors not ready -> MOTION_DISABLED");
+	}
+
+	if( power_get() )
+	{
+		if( motion_state != MOTION_DISABLED )
+		{
+			motion_state = MOTION_DISABLED;
+			log(LOG_INFO, "power off -> MOTION_DISABLED");
+		}
 	}
 
 	motion_pos_mes = location_get_position();
 
 	switch(motion_state)
 	{
-		case MOTION_READY_FREE:
+		case MOTION_DISABLED:
 			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				motion_kinematics[i].pos = motion_kinematics_mes[i].pos;
 				motion_kinematics[i].v = 0;
+				can_motor[i].enable(false);
 			}
 			break;
-		case MOTION_READY_ASSER:
-			// TODO
+		case MOTION_ENABLED:
 			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				motion_kinematics[i].v = 0;
+				can_motor[i].enable(true);
 			}
 			break;
 		case MOTION_HOMING:
@@ -130,8 +142,8 @@ void motion_compute()
 			}
 			if( ! homing )
 			{
-				motion_state = MOTION_READY_FREE;
-				log(LOG_INFO, "homing end -> MOTION_READY_FREE");
+				motion_state = MOTION_DISABLED;
+				log(LOG_INFO, "homing end -> MOTION_DISABLED");
 			}
 			break;
 		case MOTION_SPEED:
@@ -160,10 +172,10 @@ void motion_compute()
 			break;
 		default:
 		case MOTION_END:
-			// TODO : c'est termine, on ne bouge plus
 			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
 				motion_kinematics[i].v = 0;
+				can_motor[i].enable(false);
 			}
 			break;
 	}
@@ -214,7 +226,7 @@ void motion_compute_trajectory()
 		// TODO regarder en fonction des tolerances si c'est reached ou non
 		log(LOG_INFO, "MOTION_TARGET_REACHED");
 		motion_status = MOTION_TARGET_REACHED;
-		motion_state = MOTION_READY_ASSER;
+		motion_state = MOTION_ENABLED;
 		motion_curvilinearKinematics.v = 0;
 		motion_curvilinearKinematics.a = 0;
 		for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -254,10 +266,17 @@ void motion_cmd_set_speed(void* arg)
 	motion_set_cp_speed(cmd->cp, cmd->u, cmd->v);
 }
 
-void motion_cmd_free(void* arg)
+void motion_cmd_set_max_current(void* arg)
 {
-	(void) arg;
-	motion_stop(false);
+	struct motion_cmd_set_max_driving_current_arg* cmd = (struct motion_cmd_set_max_driving_current_arg*) arg;
+	motion_set_max_driving_current(cmd->maxDrivingCurrent);
+}
+
+void motion_cmd_enable(void* arg)
+{
+	struct motion_cmd_enable_arg* cmd_arg = (struct motion_cmd_enable_arg*) arg;
+
+	motion_enable(cmd_arg->enable != 0);
 }
 
 void motion_cmd_set_actuator_kinematics(void* arg)
@@ -275,7 +294,7 @@ void motion_cmd_homing(void* arg)
 void motion_homing()
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
-	if(motion_state == MOTION_READY_FREE)
+	if(motion_state == MOTION_DISABLED)
 	{
 		motion_state = MOTION_HOMING;
 		log(LOG_INFO, "MOTION_HOMING");
@@ -283,23 +302,30 @@ void motion_homing()
 	xSemaphoreGive(motion_mutex);
 }
 
-void motion_stop(bool asser)
+void motion_enable(bool enable)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 	if(motion_state != MOTION_END)
 	{
-		if( asser)
+		if( enable )
 		{
-			motion_state = MOTION_READY_ASSER;
-			log(LOG_INFO, "MOTION_READY_ASSER");
+			motion_state = MOTION_ENABLED;
+			log(LOG_INFO, "MOTION_ENABLED");
 		}
 		else
 		{
-			motion_state = MOTION_READY_FREE;
-			log(LOG_INFO, "MOTION_READY_FREE");
+			motion_state = MOTION_DISABLED;
+			log(LOG_INFO, "MOTION_DISABLED");
 		}
 	}
 	xSemaphoreGive(motion_mutex);
+}
+
+void motion_set_max_driving_current(float maxCurrent)
+{
+	can_motor[CAN_MOTOR_DRIVING1].set_max_current(maxCurrent);
+	can_motor[CAN_MOTOR_DRIVING2].set_max_current(maxCurrent);
+	can_motor[CAN_MOTOR_DRIVING3].set_max_current(maxCurrent);
 }
 
 void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
@@ -311,7 +337,7 @@ void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearP
 	VectPlan ab = B - A;
 	float nab = ab.norm();
 
-	if(motion_state != MOTION_READY_FREE && motion_state != MOTION_READY_ASSER)
+	if(motion_state != MOTION_DISABLED && motion_state != MOTION_ENABLED)
 	{
 		// on fait deja quelque chose
 		if( motion_state != MOTION_TRAJECTORY)
@@ -427,7 +453,7 @@ void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_ar
 			if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 			{
 				log_format(LOG_ERROR, "unknown mode %d for actuator %i", cmd.mode[i], i);
-				motion_state = MOTION_READY_FREE;
+				motion_state = MOTION_DISABLED;
 			}
 		}
 	}

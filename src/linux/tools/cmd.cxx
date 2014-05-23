@@ -51,6 +51,8 @@ int cmd_gyro_set_theta(const char* arg);
 int cmd_gyro_set_calibration_values(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
+int cmd_motion_enable(const char* arg);
+int cmd_motion_set_max_driving_current(const char* arg);
 int cmd_pince_set_position(const char* arg);
 int cmd_ptask(const char* arg);
 int cmd_reboot(const char* arg);
@@ -63,7 +65,6 @@ int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
 int cmd_set_speed(const char* arg);
 int cmd_set_actuator_kinematics(const char* arg);
-int cmd_free(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
 int cmd_xbee_set_op_baudrate(const char* arg);
@@ -91,7 +92,6 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_set_max_torque", cmd_dynamixel_set_max_torque, "dynamixel_set_max_torque id type val[0 100]"},
 	{ "dynamixel_set_target_reached_threshold", cmd_dynamixel_set_target_reached_threshold, "dynamixel_set_target_reached_threshold id type threshold"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
-	{ "free", cmd_free, "free()" },
 	{ "go", cmd_go, "go" },
 	{ "go_enable", cmd_go_enable, "go_enable" },
 	{ "goto", cmd_goto, "goto x y theta cpx cpy cptheta" },
@@ -106,6 +106,8 @@ COMMAND usb_commands[] = {
 	{ "homing", cmd_homing, "homing" },
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
+	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
+	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "ptask", cmd_ptask, "print tasks"},
 	{ "power_off", cmd_power_off, "power off {0,1}"},
@@ -525,10 +527,32 @@ int cmd_rotate_to(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_free(const char* arg)
+int cmd_motion_enable(const char* arg)
 {
-	(void) arg;
-	cmd_robot->control_free();
+	int enable;
+	int count = sscanf(arg, "%d", &enable);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->motion_enable(enable);
+
+	return CMD_SUCESS;
+}
+
+int cmd_motion_set_max_driving_current(const char* arg)
+{
+	float maxCurrent;
+	int count = sscanf(arg, "%f", &maxCurrent);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->motion_set_max_driving_current(maxCurrent);
 
 	return CMD_SUCESS;
 }
