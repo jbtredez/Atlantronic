@@ -72,6 +72,7 @@ enum
 
 #define DYNAMIXEL_FLAG_TARGET_REACHED         0x01
 #define DYNAMIXEL_FLAG_STUCK                  0x02
+#define DYNAMIXEL_FLAG_CONTROL_OFF            0x04
 
 #define DYNAMIXEL_TYPE_AX12         12
 #define DYNAMIXEL_TYPE_RX24         24

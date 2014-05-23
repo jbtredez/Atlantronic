@@ -89,7 +89,7 @@ int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t fr
 		devices[i].max_goal = 0x3ff;
 		devices[i].goal_pos = 0x1ff;
 		devices[i].target_reached_threshold = 2;
-		devices[i].flags = DYNAMIXEL_FLAG_TARGET_REACHED;
+		devices[i].flags = DYNAMIXEL_FLAG_TARGET_REACHED | DYNAMIXEL_FLAG_CONTROL_OFF;
 	}
 
 	return 0;
@@ -134,6 +134,10 @@ void DynamixelManager::task()
 
 			uint16_t pos_err = abs(pos - goal_pos);
 			systime t = systick_get_time();
+			if( devices[id].flags & DYNAMIXEL_FLAG_CONTROL_OFF )
+			{
+				devices[id].timeStartMoving_ms = t.ms;
+			}
 			if( pos_err <= devices[id].target_reached_threshold)
 			{
 				devices[id].flags |= DYNAMIXEL_FLAG_TARGET_REACHED;
@@ -169,7 +173,7 @@ void DynamixelManager::task()
 
 			xSemaphoreGive(mutex);
 
-			if( pos_err > 0)
+			if( pos_err > 0 && ! (devices[id].flags & DYNAMIXEL_FLAG_CONTROL_OFF))
 			{
 				// on va envoyer la position désirée
 				req.instruction = DYNAMIXEL_INSTRUCTION_WRITE_DATA;
@@ -539,6 +543,7 @@ struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float the
 	{
 		// utilisation de la tache pour la mise à jour
 		xSemaphoreTake(mutex, portMAX_DELAY);
+		devices[id].flags &= ~DYNAMIXEL_FLAG_CONTROL_OFF;
 		devices[id].goal_pos = alpha;
 		if( abs(devices[id].goal_pos - devices[id].pos) < devices[id].target_reached_threshold)
 		{
