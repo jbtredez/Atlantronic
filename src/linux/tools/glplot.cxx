@@ -1428,13 +1428,13 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 0: // joystick gauche (xbox)
-				robotItf->control_set_speed(VectPlan(), VectPlan(0,0,1), val);
+				robotItf->motion_set_speed(VectPlan(), VectPlan(0,0,1), val);
 				break;
 			case 2: // gachette gauche (xbox)
-				robotItf->control_set_speed(VectPlan(), VectPlan(1,0,0), val*1000);
+				robotItf->motion_set_speed(VectPlan(), VectPlan(1,0,0), val*1000);
 				break;
 			case 5: // gachette droite (xbox)
-				robotItf->control_set_speed(VectPlan(), VectPlan(0,1,0), val*1000);
+				robotItf->motion_set_speed(VectPlan(), VectPlan(0,1,0), val*1000);
 				break;
 			default:
 				break;

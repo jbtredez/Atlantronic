@@ -125,31 +125,19 @@ void motion_compute()
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
-	int motorNotReady = 0;
+	int motor_mes_valid = 1;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		if( ! can_motor[i].is_op_enable() )
 		{
-			motorNotReady = 1;
+			motor_mes_valid = 0;
 		}
 
 		motion_kinematics_mes[i] = can_motor[i].kinematics;
 	}
 
-	// homing
-	if( ! motorNotReady )
-	{
-		for(int i = 0; i < 3; i++)
-		{
-			if( can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE )
-			{
-				motorNotReady = 1;
-			}
-		}
-	}
-
-	if( ! motorNotReady )
+	if( motor_mes_valid && motionStateMachine.getCurrentState() != MOTION_HOMING )
 	{
 		// mise à jour de la position
 		location_update(motion_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);

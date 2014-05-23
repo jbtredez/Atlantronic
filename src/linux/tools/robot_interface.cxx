@@ -857,7 +857,7 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
+int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	struct motion_cmd_goto_arg cmd_arg;
 
@@ -869,7 +869,7 @@ int RobotInterface::control_goto(VectPlan dest, VectPlan cp, KinematicsParameter
 	return usb_write(USB_CMD_MOTION_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
+int RobotInterface::motion_set_speed(VectPlan cp, VectPlan u, float v)
 {
 	struct motion_cmd_set_speed_arg cmd_arg;
 
@@ -880,7 +880,7 @@ int RobotInterface::control_set_speed(VectPlan cp, VectPlan u, float v)
 	return usb_write(USB_CMD_MOTION_SET_SPEED, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd_arg)
+int RobotInterface::motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd_arg)
 {
 	return usb_write(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &cmd_arg, sizeof(cmd_arg));
 }

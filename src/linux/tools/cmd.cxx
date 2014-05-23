@@ -53,6 +53,8 @@ int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_motion_enable(const char* arg);
 int cmd_motion_set_max_driving_current(const char* arg);
+int cmd_motion_set_actuator_kinematics(const char* arg);
+int cmd_motion_set_speed(const char* arg);
 int cmd_pince_set_position(const char* arg);
 int cmd_ptask(const char* arg);
 int cmd_reboot(const char* arg);
@@ -63,8 +65,6 @@ int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
-int cmd_set_speed(const char* arg);
-int cmd_set_actuator_kinematics(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
 int cmd_xbee_set_op_baudrate(const char* arg);
@@ -108,6 +108,8 @@ COMMAND usb_commands[] = {
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
+	{ "motion_set_actuator_kinematics", cmd_motion_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
+	{ "motion_set_speed", cmd_motion_set_speed, "set speed direction valeur"},
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "ptask", cmd_ptask, "print tasks"},
 	{ "power_off", cmd_power_off, "power off {0,1}"},
@@ -122,8 +124,6 @@ COMMAND usb_commands[] = {
 	{ "reboot", cmd_reboot, "reboot" },
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
-	{ "set_speed", cmd_set_speed, "set speed direction valeur"},
-	{ "set_actuator_kinematics", cmd_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
@@ -609,7 +609,7 @@ int cmd_goto(const char* arg)
 	KinematicsParameters linearParam = {1000, 1000, 1000}; // TODO
 	KinematicsParameters angularParam = {1, 1, 1}; // TODO
 
-	cmd_robot->control_goto(dest, cp, linearParam, angularParam);
+	cmd_robot->motion_goto(dest, cp, linearParam, angularParam);
 	return CMD_SUCESS;
 }
 
@@ -784,7 +784,7 @@ int cmd_set_color(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_set_speed(const char* arg)
+int cmd_motion_set_speed(const char* arg)
 {
 	VectPlan u;
 	VectPlan cp;
@@ -797,11 +797,11 @@ int cmd_set_speed(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->control_set_speed(cp, u, v);
+	cmd_robot->motion_set_speed(cp, u, v);
 	return CMD_SUCESS;
 }
 
-int cmd_set_actuator_kinematics(const char* arg)
+int cmd_motion_set_actuator_kinematics(const char* arg)
 {
 	struct motion_cmd_set_actuator_kinematics_arg cmd;
 
@@ -818,7 +818,7 @@ int cmd_set_actuator_kinematics(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->control_set_actuator_kinematics(cmd);
+	cmd_robot->motion_set_actuator_kinematics(cmd);
 	return CMD_SUCESS;
 }
 
