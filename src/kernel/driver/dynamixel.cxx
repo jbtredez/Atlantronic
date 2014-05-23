@@ -609,7 +609,7 @@ void DynamixelManager::set_goal_limit(uint8_t id, float min, float max)
 	}
 
 	min = 0x1ff + min * DYNAMIXEL_RD_TO_POS;
-	max = 0x1ff + min * DYNAMIXEL_RD_TO_POS;
+	max = 0x1ff + max * DYNAMIXEL_RD_TO_POS;
 
 	if(min < 0)
 	{
