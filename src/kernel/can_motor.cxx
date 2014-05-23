@@ -317,7 +317,7 @@ void CanMotor::set_speed(float v)
 
 void CanMotor::set_position(float pos)
 {
-	int32_t pos_raw = pos * inputGain * MOTOR_ENCODER_RESOLUTION / 60;
+	int32_t pos_raw = (pos - positionOffset) / outputGain;
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_LA, pos_raw);
 	can_motor_tx_pdo2(nodeid, CAN_MOTOR_CMD_M, 0);
 }

@@ -16,14 +16,15 @@
 
 enum motion_state
 {
-	MOTION_DISABLED = 0,         //!< no trajectory ongoing, control off
-	MOTION_ENABLED,              //!< no trajectory ongoing, control on
+	MOTION_DISABLED = 0,         //!< pas de puissance sur les moteurs
+	MOTION_TRY_ENABLE,           //!< mise en puissance des moteurs
+	MOTION_ENABLED,              //!< moteurs avec puissance
 	MOTION_HOMING,               //!< homing des moteurs
-	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
+	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_TRAJECTORY,           //!< trajectoire en cours
-	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
-	MOTION_END,                  //!< end : halted forever
+//	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
+	MOTION_MAX_STATE,
 };
 
 enum motion_status
