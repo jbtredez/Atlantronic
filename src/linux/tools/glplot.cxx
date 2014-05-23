@@ -51,8 +51,8 @@ enum
 
 enum
 {
-	GRAPH_HOKUYO_HIST_FOO = 0,
-	GRAPH_HOKUYO_HIST_BAR,
+	GRAPH_HOKUYO1_HIST = 0,
+	GRAPH_HOKUYO2_HIST,
 	GRAPH_HOKUYO_HIST_NUM,
 };
 
@@ -98,13 +98,17 @@ static GtkWidget* opengl_window = NULL;
 static GtkWidget* main_window = NULL;
 static int simulation = 0;
 static char* atlantronicPath;
+static bool glplot_show_legend = false;
+static bool glplot_3d = false;
 
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
+static void show_legend(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
+static void enable3d(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
@@ -173,8 +177,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
 
 	graph[GRAPH_HOKUYO_HIST].init("Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
-	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO_HIST_FOO, "Hokuyo 1", 1, 1, 0, 0);
-	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO_HIST_BAR, "Hokuyo 2", 1, 0, 0, 1);
+	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO1_HIST, "Hokuyo 1", 1, 1, 0, 0);
+	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO2_HIST, "Hokuyo 2", 1, 0, 0, 1);
 
 	graph[GRAPH_SPEED_DIST].init("Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
@@ -293,6 +297,23 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 		}
 	}
 
+	menu1 = gtk_menu_new();	// menu "niveau 1"
+	menuObj = gtk_menu_item_new_with_label("Options");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+
+	menuObj = gtk_check_menu_item_new_with_label("afficher legende");
+	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
+	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(show_legend), NULL);
+	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+
+	menuObj = gtk_check_menu_item_new_with_label("3D");
+	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
+	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(enable3d), NULL);
+	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
 	GtkWidget* main_vbox = gtk_vbox_new(FALSE, 0);
@@ -384,6 +405,14 @@ static void select_graph(GtkWidget* widget, gpointer arg)
 	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
 }
 
+static void show_legend(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+	(void) arg;
+
+	glplot_show_legend = ! glplot_show_legend;
+}
+
 static void select_active_courbe(GtkWidget* widget, gpointer arg)
 {
 	(void) widget;
@@ -400,6 +429,14 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg)
 	}
 
 	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+}
+
+static void enable3d(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+	(void) arg;
+
+	glplot_3d = ! glplot_3d;
 }
 
 static void init(GtkWidget* widget, gpointer arg)
@@ -575,6 +612,7 @@ void plot_table(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_TEXTURE] )
 	{
+		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		glEnable(GL_TEXTURE_2D);
@@ -782,6 +820,86 @@ void plot_table(Graphique* graph)
 		glVertex2f(Turret[2].x, Turret[2].y);
 		glVertex2f(Turret[0].x, Turret[0].y);
 		glEnd();
+		if( glplot_3d )
+		{
+			glBegin(GL_LINE_STRIP);
+			glVertex3f(Turret[0].x, Turret[0].y, 0);
+			glVertex3f(Turret[0].x, Turret[0].y, 350);
+			glVertex3f(Turret[1].x, Turret[1].y, 350);
+			glVertex3f(Turret[1].x, Turret[1].y, 0);
+			glEnd();
+
+			glBegin(GL_LINE_STRIP);
+			VectPlan med = (Turret[0] + Turret[1]) / 2;
+			glVertex3f(med.x, med.y, 0);
+			glVertex3f(med.x, med.y, 350);
+			glEnd();
+
+			glBegin(GL_LINE_STRIP);
+			glVertex3f(Turret[1].x, Turret[1].y, 0);
+			glVertex3f(Turret[1].x, Turret[1].y, 350);
+			glVertex3f(Turret[2].x, Turret[2].y, 350);
+			glVertex3f(Turret[2].x, Turret[2].y, 0);
+			glEnd();
+
+			glBegin(GL_LINE_STRIP);
+			glVertex3f(Turret[0].x, Turret[0].y, 0);
+			glVertex3f(Turret[0].x, Turret[0].y, 350);
+			glVertex3f(Turret[2].x, Turret[2].y, 350);
+			glVertex3f(Turret[2].x, Turret[2].y, 0);
+			glEnd();
+		}
+
+		// dessin du bras
+		// TODO vite fait, mettre le robot en 3D
+		glPushMatrix();
+
+		glColor3f(0, 1, 1);
+		glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
+		glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, 1, 0);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(0, 0);
+		glVertex2f(ARM_DIST_SHOULDER_TO_WRIST, 0);
+		glEnd();
+
+		glColor3f(1, 0, 1);
+		glTranslatef(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
+		glRotatef(robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 1, 0);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(0, 0);
+		glVertex2f(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0);
+		glEnd();
+
+		glColor3f(0, 1, 1);
+		glTranslatef(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
+		glRotatef(robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 1, 0);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(0, 0);
+		glVertex2f(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0);
+		glEnd();
+
+		glColor3f(1, 0, 1);
+		glTranslatef(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
+		glRotatef(robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, 1, 0);
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(0, 0);
+		glVertex2f(ARM_DIST_WRIST_ELBOW_TO_SUCKER, 0);
+		glEnd();
+/*
+ * 	arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, 0);
+	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
+
+	arm_transform.translate(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
+	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST] );
+
+	arm_transform.translate(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
+	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
+
+	arm_transform.translate(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
+	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
+	arm_transform.translate(ARM_DIST_WRIST_ELBOW_TO_SUCKER, 0, 0);
+ */		glPopMatrix();
+
 		glPopMatrix();
 	}
 	glPopMatrix();
@@ -794,18 +912,18 @@ void plot_hokuyo_hist(Graphique* graph)
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
 
-	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_FOO] )
+	if( graph->courbes_activated[GRAPH_HOKUYO1_HIST] )
 	{
-		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_FOO]);
+		glColor3fv(&graph->color[3*GRAPH_HOKUYO1_HIST]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robotItf->hokuyo_scan[HOKUYO1].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
 		}
 	}
 
-	if( graph->courbes_activated[GRAPH_HOKUYO_HIST_BAR] )
+	if( graph->courbes_activated[GRAPH_HOKUYO2_HIST] )
 	{
-		glColor3fv(&graph->color[3*GRAPH_HOKUYO_HIST_BAR]);
+		glColor3fv(&graph->color[3*GRAPH_HOKUYO2_HIST]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robotItf->hokuyo_scan[HOKUYO2].distance[i], 0.25*font_width*ratio_x, 0.25*font_width*ratio_y);
@@ -1014,10 +1132,18 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
+		if( ! glplot_3d )
+		{
+			glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
+		}
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
+		if( glplot_3d )
+		{
+			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
+			gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1);
+		}
 
 		switch(current_graph)
 		{
@@ -1035,64 +1161,67 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 		glColor3f(0,0,0);
 		plot_axes(&graph[current_graph]);
-		plot_legende(&graph[current_graph]);
+		if( glplot_show_legend )
+		{
+			plot_legende(&graph[current_graph]);
+		}
 
 		glColor3f(0,0,0);
 
 		if( current_graph == GRAPH_TABLE )
 		{
 			int lineHeight = -2*font_digit_height * graph->ratio_y;
-			int lineId = -5;
-			glPrintf(1600, lineId*lineHeight, font_base, "time  %13.6f", robotItf->current_time);
+			int lineId = 0;
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "time  %13.6f", robotItf->current_time);
 			lineId++;
 			double match_time = 0;
 			if( robotItf->start_time )
 			{
 				match_time = robotItf->current_time - robotItf->start_time;
 			}
-			glPrintf(1600, lineId*lineHeight, font_base, "match %13.6f", match_time);
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "match %13.6f", match_time);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "power off %#9x", robotItf->last_control_usb_data.power_state);
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "power off %#9x", robotItf->last_control_usb_data.power_state);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "pos  %6.0f %6.0f %6.2f",
 					robotItf->last_control_usb_data.pos.x, robotItf->last_control_usb_data.pos.y,
 					robotItf->last_control_usb_data.pos.theta * 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "wpos %6.0f %6.0f %6.2f",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "wpos %6.0f %6.0f %6.2f",
 					robotItf->last_control_usb_data.wanted_pos.x, robotItf->last_control_usb_data.wanted_pos.y,
 					robotItf->last_control_usb_data.wanted_pos.theta * 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
 					robotItf->last_control_usb_data.mes_v1, robotItf->last_control_usb_data.cons_v1);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
 							robotItf->last_control_usb_data.mes_v2, robotItf->last_control_usb_data.cons_v2);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
 							robotItf->last_control_usb_data.mes_v3, robotItf->last_control_usb_data.cons_v3);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
 					robotItf->last_control_usb_data.mes_theta1* 180 / M_PI, robotItf->last_control_usb_data.cons_theta1* 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
 							robotItf->last_control_usb_data.mes_theta2* 180 / M_PI, robotItf->last_control_usb_data.cons_theta2* 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
 							robotItf->last_control_usb_data.mes_theta3* 180 / M_PI, robotItf->last_control_usb_data.cons_theta3* 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "gyro %6.2f",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "gyro %6.2f",
 							robotItf->last_control_usb_data.pos_theta_gyro_euler * 180 / M_PI);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "vBat  %6.3f", robotItf->last_control_usb_data.vBat);
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "vBat  %6.3f", robotItf->last_control_usb_data.vBat);
 			lineId++;
 			for(int i = 0; i < 4; i++)
 			{
-				glPrintf(1600, lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robotItf->last_control_usb_data.iPwm[i]);
+				glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "iPwm%i  %6.3f", i, robotItf->last_control_usb_data.iPwm[i]);
 				lineId++;
 			}
-			glPrintf(1600, lineId*lineHeight, font_base, "cod  %6d %6d %6d", robotItf->last_control_usb_data.encoder[0], robotItf->last_control_usb_data.encoder[1], robotItf->last_control_usb_data.encoder[2]);
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "cod  %6d %6d %6d", robotItf->last_control_usb_data.encoder[0], robotItf->last_control_usb_data.encoder[1], robotItf->last_control_usb_data.encoder[2]);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d %d%d %d%d btn %d%d ingo %d go %d",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d %d%d %d%d btn %d%d ingo %d go %d",
 					robotItf->last_control_usb_data.gpio & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 1) & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 2) & 0x01,
@@ -1112,7 +1241,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 					(robotItf->last_control_usb_data.gpio >> 16) & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 17) & 0x01);
 			lineId++;
-			glPrintf(1600, lineId*lineHeight, font_base, "pump blocked %d %d %d %d",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "pump blocked %d %d %d %d",
 					(robotItf->last_control_usb_data.pumpState & 0x01),
 					((robotItf->last_control_usb_data.pumpState >> 1) & 0x01),
 					((robotItf->last_control_usb_data.pumpState >> 2) & 0x01),
@@ -1120,7 +1249,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			lineId++;
 			for(int i = 2; i < AX12_MAX_ID; i++)
 			{
-				glPrintf(1600, lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
+				glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
 						robotItf->ax12[i].pos * 180 / M_PI,
 						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
 						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
@@ -1129,13 +1258,20 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			}
 			for(int i = 2; i < RX24_MAX_ID; i++)
 			{
-				glPrintf(1600, lineId*lineHeight, font_base, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
+				glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
 						robotItf->rx24[i].pos * 180 / M_PI,
 						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
 						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
 						(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
 				lineId++;
 			}
+			float* mat = robotItf->last_control_usb_data.arm_matrix;
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
+			lineId++;
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);
+			lineId++;
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[8], mat[9], mat[10], mat[11]);
+			lineId++;
 		}
 
 		pthread_mutex_unlock(&robotItf->mutex);

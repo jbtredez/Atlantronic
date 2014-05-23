@@ -17,10 +17,10 @@
 #include "kernel/driver/dynamixel.h"
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
+#include "kernel/arm.h"
 #include "discovery/control.h"
 #include "discovery/gpio.h"
 #include "foo/pince.h"
-#include "foo/arm.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 

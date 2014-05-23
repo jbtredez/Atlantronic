@@ -1032,7 +1032,7 @@ int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type
 
 int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 {
-	struct arm_cmd_goto_param cmd_arg;
+/*	struct arm_cmd_goto_param cmd_arg;
 
 	if(type == ARM_CMD_ART)
 	{
@@ -1044,12 +1044,12 @@ int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 	cmd_arg.z = z * 65536.0f;
 	cmd_arg.type = type;
 
-	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
 }
 
 int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
-	struct arm_cmd_goto_param cmd_arg;
+/*	struct arm_cmd_goto_param cmd_arg;
 
 	cmd_arg.x1 = x1 * 65536.0f;
 	cmd_arg.y1 = y1 * 65536.0f;
@@ -1059,12 +1059,13 @@ int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z
 	cmd_arg.tool_way = tool_way;
 	cmd_arg.type = ARM_CMD_VENTOUSE_ABS;
 
-	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
+	return 0;
 }
 
 int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
-	struct arm_cmd_goto_param cmd_arg;
+/*	struct arm_cmd_goto_param cmd_arg;
 
 	cmd_arg.x1 = x1 * 65536.0f;
 	cmd_arg.y1 = y1 * 65536.0f;
@@ -1074,19 +1075,21 @@ int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, in
 	cmd_arg.tool_way = tool_way;
 	cmd_arg.type = ARM_CMD_HOOK_ABS;
 
-	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
+	return 0;
 }
 
 int RobotInterface::arm_abz(float a, float b, float z)
 {
-	struct arm_cmd_goto_param cmd_arg;
+/*	struct arm_cmd_goto_param cmd_arg;
 
 	cmd_arg.a = a * (1 << 26) / (2 * M_PI);
 	cmd_arg.b = b * (1 << 26) / (2 * M_PI);
 	cmd_arg.z = z * 65536.0f;
 	cmd_arg.type = ARM_CMD_ART;
 
-	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
+	return 0;
 }
 
 int RobotInterface::arm_bridge(uint8_t on)
