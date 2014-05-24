@@ -598,6 +598,58 @@ void plot_legende(Graphique* graph)
 	}
 }
 
+void plot_pave(float x, float y, float z, float dx, float dy, float dz)
+{
+	glTranslatef(x, y, z);
+	dx /= 2;
+	dy /= 2;
+	dz /= 2;
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(-dx, -dy, -dz);
+	glVertex3f(-dx, -dy,  dz);
+	glVertex3f(-dx,  dy,  dz);
+	glVertex3f(-dx,  dy, -dz);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f( dx, -dy, -dz);
+	glVertex3f( dx, -dy,  dz);
+	glVertex3f( dx,  dy,  dz);
+	glVertex3f( dx,  dy, -dz);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(-dx, -dy, -dz);
+	glVertex3f(-dx, -dy,  dz);
+	glVertex3f( dx, -dy,  dz);
+	glVertex3f( dx, -dy, -dz);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(-dx,  dy, -dz);
+	glVertex3f(-dx,  dy,  dz);
+	glVertex3f( dx,  dy,  dz);
+	glVertex3f( dx,  dy, -dz);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(-dx, -dy, -dz);
+	glVertex3f(-dx,  dy, -dz);
+	glVertex3f( dx,  dy, -dz);
+	glVertex3f( dx, -dy, -dz);
+	glEnd();
+
+	glBegin(GL_LINE_STRIP);
+	glVertex3f(-dx, -dy, dz);
+	glVertex3f(-dx,  dy, dz);
+	glVertex3f( dx,  dy, dz);
+	glVertex3f( dx, -dy, dz);
+	glEnd();
+
+	glTranslatef(-x, -y, -z);
+}
+
 void plot_table(Graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
@@ -851,54 +903,32 @@ void plot_table(Graphique* graph)
 		}
 
 		// dessin du bras
-		// TODO vite fait, mettre le robot en 3D
-		glPushMatrix();
+		if( glplot_3d )
+		{
+			glPushMatrix();
 
-		glColor3f(0, 1, 1);
-		glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
-		glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, 1, 0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(0, 0);
-		glVertex2f(ARM_DIST_SHOULDER_TO_WRIST, 0);
-		glEnd();
+			glColor3f(0, 1, 1);
+			glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
+			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, 1, 0);
+			plot_pave(ARM_DIST_SHOULDER_TO_WRIST/2, 0, 0, ARM_DIST_SHOULDER_TO_WRIST, 40, 40);
 
-		glColor3f(1, 0, 1);
-		glTranslatef(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
-		glRotatef(robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 1, 0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(0, 0);
-		glVertex2f(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0);
-		glEnd();
+			glColor3f(1, 0, 1);
+			glTranslatef(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
+			glRotatef(robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 1, 0);
+			plot_pave(ARM_DIST_WRIST_TO_SHOULDER_ELBOW/2, 0, 0, ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 40, 40);
 
-		glColor3f(0, 1, 1);
-		glTranslatef(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
-		glRotatef(robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 1, 0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(0, 0);
-		glVertex2f(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0);
-		glEnd();
+			glColor3f(0, 1, 1);
+			glTranslatef(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
+			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 1, 0);
+			plot_pave(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW/2, 0, 0, ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 40, 40);
 
-		glColor3f(1, 0, 1);
-		glTranslatef(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-		glRotatef(robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, 1, 0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(0, 0);
-		glVertex2f(ARM_DIST_WRIST_ELBOW_TO_SUCKER, 0);
-		glEnd();
-/*
- * 	arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, 0);
-	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
+			glColor3f(1, 0, 1);
+			glTranslatef(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
+			glRotatef(robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, 1, 0);
+			plot_pave(ARM_DIST_WRIST_ELBOW_TO_SUCKER/2, 0, 0, ARM_DIST_WRIST_ELBOW_TO_SUCKER, 40, 40);
 
-	arm_transform.translate(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
-	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST] );
-
-	arm_transform.translate(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
-	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
-
-	arm_transform.translate(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
-	arm_transform.translate(ARM_DIST_WRIST_ELBOW_TO_SUCKER, 0, 0);
- */		glPopMatrix();
+			glPopMatrix();
+		}
 
 		glPopMatrix();
 	}
