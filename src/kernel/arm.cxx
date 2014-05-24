@@ -114,13 +114,13 @@ static void arm_update_position()
 	// TODO calculer z0
 	arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, 0);
 	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
-	arm_transform.translate(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
-	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST] );
-	arm_transform.translate(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
-	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
+	arm_transform.translate(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
+	arm_transform.rotateZ( -arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
 	arm_transform.translate(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
-	arm_transform.translate(ARM_DIST_WRIST_ELBOW_TO_SUCKER, 0, 0);
+	arm_transform.rotateY( -arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
+	arm_transform.translate(ARM_DIST_WRIST_ELBOW_TO_WRIST, 0, 0);
+	arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST] );
+	arm_transform.translate(ARM_DIST_WRIST_TO_SUCKER, 0, 0);
 }
 
 void arm_goto(struct arm_cmd cmd)

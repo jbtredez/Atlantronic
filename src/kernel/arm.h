@@ -14,10 +14,10 @@
 #endif
 
 #define ARM_SHOULDER_POSITION_X                      70.0f
-#define ARM_DIST_SHOULDER_TO_WRIST                   87.5f
-#define ARM_DIST_WRIST_TO_SHOULDER_ELBOW             67.5f
+#define ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW          87.5f
 #define ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW       67.5f
-#define ARM_DIST_WRIST_ELBOW_TO_SUCKER               33.7f
+#define ARM_DIST_WRIST_ELBOW_TO_WRIST                67.5f
+#define ARM_DIST_WRIST_TO_SUCKER                     33.7f
 
 
 enum arm_cmd_type

@@ -909,23 +909,23 @@ void plot_table(Graphique* graph)
 
 			glColor3f(0, 1, 1);
 			glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, 1, 0);
-			plot_pave(ARM_DIST_SHOULDER_TO_WRIST/2, 0, 0, ARM_DIST_SHOULDER_TO_WRIST, 40, 40);
+			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, -1, 0);
+			plot_pave(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW/2, 0, 0, ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 40, 40);
 
 			glColor3f(1, 0, 1);
-			glTranslatef(ARM_DIST_SHOULDER_TO_WRIST, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 1, 0);
-			plot_pave(ARM_DIST_WRIST_TO_SHOULDER_ELBOW/2, 0, 0, ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 40, 40);
-
-			glColor3f(0, 1, 1);
-			glTranslatef(ARM_DIST_WRIST_TO_SHOULDER_ELBOW, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 1, 0);
+			glTranslatef(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
+			glRotatef(-robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 0, 1);
 			plot_pave(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW/2, 0, 0, ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 40, 40);
 
-			glColor3f(1, 0, 1);
+			glColor3f(0, 1, 1);
 			glTranslatef(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, 1, 0);
-			plot_pave(ARM_DIST_WRIST_ELBOW_TO_SUCKER/2, 0, 0, ARM_DIST_WRIST_ELBOW_TO_SUCKER, 40, 40);
+			glRotatef(-robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, -1, 0);
+			plot_pave(ARM_DIST_WRIST_ELBOW_TO_WRIST/2, 0, 0, ARM_DIST_WRIST_ELBOW_TO_WRIST, 40, 40);
+
+			glColor3f(1, 0, 1);
+			glTranslatef(ARM_DIST_WRIST_ELBOW_TO_WRIST, 0, 0);
+			glRotatef(robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 0, 1);
+			plot_pave(ARM_DIST_WRIST_TO_SUCKER/2, 0, 0, ARM_DIST_WRIST_TO_SUCKER, 40, 40);
 
 			glPopMatrix();
 		}
