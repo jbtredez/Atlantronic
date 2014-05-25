@@ -4,6 +4,7 @@
 #include "kernel/task.h"
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/power.h"
 #include "kernel/log.h"
 #include "kernel/end.h"
 #include "led.h"
@@ -134,6 +135,11 @@ static void led_task(void *arg)
 		}
 		led_step++;
 		vTaskDelay(ms_to_tick(100));
+	}
+
+	if( power_get() & POWER_OFF_HEARTBEAT )
+	{
+		led_mode = LED_MODE_WAIT_X86;
 	}
 }
 
