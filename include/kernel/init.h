@@ -27,6 +27,7 @@
 #define INIT_SPI                      "06"
 #define INIT_GYRO                     "07"
 #define INIT_ACCELERO                 "08"
+#define INIT_HEARTBEAT                "09"
 
 // init de la communication
 #define INIT_CAN                      "10"

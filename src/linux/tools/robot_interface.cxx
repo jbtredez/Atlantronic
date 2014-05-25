@@ -986,6 +986,20 @@ int RobotInterface::set_position(VectPlan pos)
 	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
 }
 
+int RobotInterface::heartbeat_update()
+{
+	struct heartbeat_cmd_arg cmd_arg;
+	cmd_arg.type = HEARTBEAT_UPDATE;
+	return usb_write(USB_CMD_HEARTBEAT, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::heartbeat_disable()
+{
+	struct heartbeat_cmd_arg cmd_arg;
+	cmd_arg.type = HEARTBEAT_DISABLE;
+	return usb_write(USB_CMD_HEARTBEAT, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::gyro_calibration(enum GyroCalibrationCmd cmd)
 {
 	int32_t cmd_arg = cmd;
@@ -1032,6 +1046,10 @@ int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type
 
 int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 {
+	(void) x;
+	(void) y;
+	(void) z;
+	(void) type;
 /*	struct arm_cmd_goto_param cmd_arg;
 
 	if(type == ARM_CMD_ART)
@@ -1045,10 +1063,17 @@ int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 	cmd_arg.type = type;
 
 	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
+	return 0;
 }
 
 int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
 {
+	(void) x1;
+	(void) y1;
+	(void) x2;
+	(void) y2;
+	(void) z;
+	(void) tool_way;
 /*	struct arm_cmd_goto_param cmd_arg;
 
 	cmd_arg.x1 = x1 * 65536.0f;
@@ -1065,6 +1090,9 @@ int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z
 
 int RobotInterface::arm_abz(float a, float b, float z)
 {
+	(void) a;
+	(void) b;
+	(void) z;
 /*	struct arm_cmd_goto_param cmd_arg;
 
 	cmd_arg.a = a * (1 << 26) / (2 * M_PI);

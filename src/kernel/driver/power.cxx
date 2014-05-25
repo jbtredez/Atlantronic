@@ -43,6 +43,10 @@ void power_set(int powerEventMask)
 	{
 		log(LOG_ERROR, "power off - AU");
 	}
+	if( diff & POWER_OFF_HEARTBEAT)
+	{
+		log(LOG_ERROR, "power off - HeartBeat");
+	}
 }
 
 void power_clear(int powerEventMask)
@@ -66,6 +70,10 @@ void power_clear(int powerEventMask)
 	if( diff & POWER_OFF_AU )
 	{
 		log(LOG_INFO, "power clear - AU");
+	}
+	if( diff & POWER_OFF_HEARTBEAT)
+	{
+		log(LOG_ERROR, "power clear - HeartBeat");
 	}
 
 	if( ! power_state )

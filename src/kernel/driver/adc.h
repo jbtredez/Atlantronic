@@ -13,10 +13,6 @@
 #define ADC_VBAT_AU                     3
 #define ADC_VBAT_AU_CLEAR               5
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct adc_anf
 {
 	float i[ADC_CURRENT_MAX];
@@ -26,9 +22,5 @@ struct adc_anf
 void adc_update();
 
 extern struct adc_anf adc_filtered_data;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

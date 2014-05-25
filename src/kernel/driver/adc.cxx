@@ -5,6 +5,7 @@
 #include "kernel/module.h"
 #include "kernel/rcc.h"
 #include "kernel/driver/power.h"
+#include "kernel/systick.h"
 #include "gpio.h"
 #include "adc.h"
 #include <string.h>
@@ -15,6 +16,7 @@
 #define IPWM_GAIN            (3/(4096.0f * 0.377f))
 #define ADC_MAX_DATA                  128
 #define ADC_FILTER_GAIN        0.9539466f// exp(-period/tau) avec period = 1/(4.242kHz) et tau = 5ms
+#define ADC_UNDERVOLTAGE_DELAY         10
 
 struct adc_an
 {
@@ -25,6 +27,8 @@ struct adc_an
 static volatile struct adc_an adc_data[ADC_MAX_DATA];
 struct adc_anf adc_filtered_data;
 static int adc_startId;
+static systime adc_undervoltage_time;
+static int adc_undervoltage;
 
 int adc_module_init()
 {
@@ -110,7 +114,6 @@ void adc_update()
 {
 	int end = (sizeof(adc_data) - DMA2_Stream4->NDTR) / sizeof(adc_data[0]);
 	int count = end - adc_startId;
-
 	if( count < 0 )
 	{
 		count += ADC_MAX_DATA;
@@ -138,11 +141,22 @@ void adc_update()
 
 	if( adc_filtered_data.vBat < ADC_VBAT_UNDERVOLTAGE)
 	{
-		power_set(POWER_OFF_UNDERVOLTAGE);
+		systime t = systick_get_time();
+		if( ! adc_undervoltage )
+		{
+			adc_undervoltage = 1;
+			adc_undervoltage_time = t;
+		}
+
+		if( (adc_undervoltage_time - t).ms > 1000*ADC_UNDERVOLTAGE_DELAY )
+		{
+			power_set(POWER_OFF_UNDERVOLTAGE);
+		}
 	}
 	else if( adc_filtered_data.vBat > ADC_VBAT_UNDERVOLTAGE_CLEAR)
 	{
 		power_clear(POWER_OFF_UNDERVOLTAGE);
+		adc_undervoltage = 0;
 	}
 }
 

@@ -18,6 +18,7 @@
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
 #include "kernel/arm.h"
+#include "kernel/heartbeat.h"
 #include "discovery/control.h"
 #include "discovery/gpio.h"
 #include "foo/pince.h"
@@ -122,8 +123,12 @@ class RobotInterface
 		}
 		int gyro_stop_calibration(float theta);
 
-		// ---------- localisation -----------------------------------------------------
+		// ---------- localisation ------------------------------------------------------
 		int set_position(VectPlan pos);
+
+		// ---------- heartbeat ---------------------------------------------------------
+		int heartbeat_update();
+		int heartbeat_disable();
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------
