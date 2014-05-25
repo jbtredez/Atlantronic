@@ -13,6 +13,8 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/dynamixel.h"
+#include "kernel/state_machine/state_machine.h"
+#include "kernel/driver/power.h"
 #include <math.h>
 #include <stdlib.h>
 
@@ -21,10 +23,15 @@
 static struct arm_cmd arm_pos_wanted; //!< position desiree du bras
 static struct arm_cmd arm_pos_cmd; //!< position commandee du bras
 static struct arm_cmd arm_pos_mes;
-
 static xSemaphoreHandle arm_mutex;
+/*
+static void arm_disabled_run();
+static unsigned int arm_disabled_transition(unsigned int currentState);
+*/
 static MatrixHomogeneous arm_transform;
-
+/*static StateMachineState arm_states[ARM_STATE_MAX] = {
+		{ "ARM_STATE_DISABLED", &nop_function, &arm_disabled_run, &arm_disabled_transition},
+};*/
 static void arm_task(void* arg);
 static void arm_update_position();
 
@@ -111,8 +118,9 @@ static void arm_update_position()
 
 	arm_transform.setIdentity();
 
-	// TODO calculer z0
-	arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, 0);
+	float theta2 = asinf( (ARM_SLIDER_POSITION_Y - ARM_SLIDER_L1 * sinf(arm_pos_mes.val[ARM_AXIS_SLIDER])) / ARM_SLIDER_L2 );
+	float z0 = ARM_SLIDER_POSITION_Z + ARM_SLIDER_L1 * cosf(arm_pos_mes.val[ARM_AXIS_SLIDER]) + ARM_SLIDER_L2 * cosf(theta2);
+	arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, z0);
 	arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
 	arm_transform.translate(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
 	arm_transform.rotateZ( -arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
@@ -136,3 +144,15 @@ void arm_get_matrix(float* mat)
 	memcpy(mat, arm_transform.val, sizeof(arm_transform.val));
 	xSemaphoreGive(arm_mutex);
 }
+/*
+//---------------------- Etat ARM_STATE_DISABLED ------------------------------
+static void arm_disabled_run()
+{
+
+}
+
+static unsigned int arm_disabled_transition(unsigned int currentState)
+{
+	return currentState;
+}
+*/

@@ -133,8 +133,6 @@ class RobotInterface
 		int arm_xyz(float x, float y, float z, enum arm_cmd_type type);
 		int arm_abz(float a, float b, float z);
 		int arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
-		int arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
-		int arm_bridge(uint8_t on);
 
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);

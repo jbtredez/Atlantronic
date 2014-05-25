@@ -13,10 +13,8 @@ static void (*cmd_exit_callback)(void) = NULL;
 static RobotInterface* cmd_robot = NULL;
 static Qemu* cmd_qemu = NULL;
 
-int cmd_arm_bridge(const char* arg);
 int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
-int cmd_arm_hook(const char* arg);
 int cmd_arm_abz(const char* arg);
 int cmd_can_lss(const char* arg);
 int cmd_can_lss_set_nodeid(const char* arg);
@@ -71,10 +69,8 @@ int cmd_xbee_set_op_baudrate(const char* arg);
 int cmd_xbee_set_manager_baudrate(const char* arg);
 
 COMMAND usb_commands[] = {
-	{ "arm_bridge", cmd_arm_bridge, "mise en marche ou non de la pompe (0 ou 1)"},
 	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z, type)"},
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
-	{ "arm_hook", cmd_arm_hook, "deplacement du crochet perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_hook x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
 	{ "can_lss", cmd_can_lss, "can_lss on/off"},
 	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
@@ -874,41 +870,6 @@ int cmd_arm_ventouse(const char* arg)
 	}
 
 	cmd_robot->arm_ventouse(x1, y1, x2, y2, z, tool_way);
-	return CMD_SUCESS;
-}
-
-int cmd_arm_hook(const char* arg)
-{
-	float x1;
-	float y1;
-	float x2;
-	float y2;
-	float z;
-	int tool_way;
-
-	int count = sscanf(arg, "%f %f %f %f %f %d", &x1, &y1, &x2, &y2, &z, &tool_way);
-
-	if(count != 6)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->arm_hook(x1, y1, x2, y2, z, tool_way);
-	return CMD_SUCESS;
-}
-
-int cmd_arm_bridge(const char* arg)
-{
-	int on;
-
-	int count = sscanf(arg, "%d", &on);
-
-	if(count != 1)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->arm_bridge((uint8_t) on);
 	return CMD_SUCESS;
 }
 

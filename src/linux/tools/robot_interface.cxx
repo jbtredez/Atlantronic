@@ -1063,22 +1063,6 @@ int RobotInterface::arm_ventouse(float x1, float y1, float x2, float y2, float z
 	return 0;
 }
 
-int RobotInterface::arm_hook(float x1, float y1, float x2, float y2, float z, int8_t tool_way)
-{
-/*	struct arm_cmd_goto_param cmd_arg;
-
-	cmd_arg.x1 = x1 * 65536.0f;
-	cmd_arg.y1 = y1 * 65536.0f;
-	cmd_arg.x2 = x2 * 65536.0f;
-	cmd_arg.y2 = y2 * 65536.0f;
-	cmd_arg.z = z * 65536.0f;
-	cmd_arg.tool_way = tool_way;
-	cmd_arg.type = ARM_CMD_HOOK_ABS;
-
-	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
-	return 0;
-}
-
 int RobotInterface::arm_abz(float a, float b, float z)
 {
 /*	struct arm_cmd_goto_param cmd_arg;
@@ -1090,11 +1074,6 @@ int RobotInterface::arm_abz(float a, float b, float z)
 
 	return usb_write(USB_CMD_ARM_GOTO, &cmd_arg, sizeof(cmd_arg));*/
 	return 0;
-}
-
-int RobotInterface::arm_bridge(uint8_t on)
-{
-	return usb_write(USB_CMD_ARM_BRIDGE, &on, sizeof(on));
 }
 
 int RobotInterface::recalage()

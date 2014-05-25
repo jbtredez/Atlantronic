@@ -13,6 +13,11 @@
 #define WEAK_ARM __attribute__((weak, alias("nop_function") ))
 #endif
 
+#define ARM_SLIDER_POSITION_Y                        78.0f
+#define ARM_SLIDER_POSITION_Z                       225.6f
+#define ARM_SLIDER_L1                               100.0f
+#define ARM_SLIDER_L2                               100.0f
+#define ARM_SLIDER_L3                                27.0f
 #define ARM_SHOULDER_POSITION_X                      70.0f
 #define ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW          87.5f
 #define ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW       67.5f
@@ -33,6 +38,12 @@ enum
 	ARM_AXIS_SHOULDER_ELBOW,
 	ARM_AXIS_WRIST_ELBOW,
 	ARM_AXIS_MAX,
+};
+
+enum
+{
+	ARM_STATE_DISABLED,
+	ARM_STATE_MAX,
 };
 
 struct arm_cmd
