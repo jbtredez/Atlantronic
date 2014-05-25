@@ -73,6 +73,7 @@ enum
 #define DYNAMIXEL_FLAG_TARGET_REACHED         0x01
 #define DYNAMIXEL_FLAG_STUCK                  0x02
 #define DYNAMIXEL_FLAG_CONTROL_OFF            0x04
+#define DYNAMIXEL_FLAG_TORQUE_TO_UPDATE       0x08
 
 #define DYNAMIXEL_TYPE_AX12         12
 #define DYNAMIXEL_TYPE_RX24         24
@@ -113,6 +114,7 @@ struct Dynamixel
 	uint16_t goal_pos;                        //!< position desiree
 	uint16_t pos;                             //!< position actuelle
 	uint16_t target_reached_threshold;        //!< tolerance pour target reached
+	uint16_t max_torque;                      //!< couple max
 	uint16_t flags;                           //!< flags - champ de bit ( DYNAMIXEL_FLAG_TARGET_REACHED, DYNAMIXEL_FLAG_STUCK)
 	uint32_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
 	struct dynamixel_error last_error;        //!< derniere erreur
