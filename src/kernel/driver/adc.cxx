@@ -139,7 +139,7 @@ void adc_update()
 		power_clear(POWER_OFF_AU);
 	}
 
-	if( adc_filtered_data.vBat < ADC_VBAT_UNDERVOLTAGE)
+	if( adc_filtered_data.vBat < ADC_VBAT_UNDERVOLTAGE && adc_filtered_data.vBat > ADC_VBAT_AU_CLEAR)
 	{
 		systime t = systick_get_time();
 		if( ! adc_undervoltage )
@@ -148,12 +148,13 @@ void adc_update()
 			adc_undervoltage_time = t;
 		}
 
-		if( (adc_undervoltage_time - t).ms > 1000*ADC_UNDERVOLTAGE_DELAY )
+		if( (t - adc_undervoltage_time).ms > 1000*ADC_UNDERVOLTAGE_DELAY )
 		{
+			int dt = (t - adc_undervoltage_time).ms;
 			power_set(POWER_OFF_UNDERVOLTAGE);
 		}
 	}
-	else if( adc_filtered_data.vBat > ADC_VBAT_UNDERVOLTAGE_CLEAR)
+	else if( adc_filtered_data.vBat > ADC_VBAT_UNDERVOLTAGE_CLEAR || adc_filtered_data.vBat < ADC_VBAT_AU)
 	{
 		power_clear(POWER_OFF_UNDERVOLTAGE);
 		adc_undervoltage = 0;
