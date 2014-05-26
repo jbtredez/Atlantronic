@@ -20,8 +20,10 @@
 #include "kernel/pump.h"
 
 #define CONTROL_STACK_SIZE       350
+#define CONTROL_USB_DT_FACTOR     10
 
 static struct control_usb_data control_usb_data;
+static int control_usb_cycle_count;
 
 static void control_task(void* arg);
 
@@ -57,28 +59,33 @@ static void control_task(void* /*arg*/)
 		// mise a jour heartbeat
 		heartbeat_update();
 
-		control_usb_data.pumpState = pump_update();
+		control_usb_cycle_count++;
+		if( control_usb_cycle_count == CONTROL_USB_DT_FACTOR)
+		{
+			control_usb_data.pumpState = pump_update();
 
-		motion_update_usb_data(&control_usb_data);
-		control_usb_data.current_time = systick_get_time();
-		control_usb_data.pos = location_get_position();
-		control_usb_data.raw_data_gyro = gyro_get_raw_data();
-		control_usb_data.omega_gyro = gyro_get_omega();
-		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
-		control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
-		control_usb_data.vBat = adc_filtered_data.vBat;
-		control_usb_data.iPwm[0] = adc_filtered_data.i[0];
-		control_usb_data.iPwm[1] = adc_filtered_data.i[1];
-		control_usb_data.iPwm[2] = adc_filtered_data.i[2];
-		control_usb_data.iPwm[3] = adc_filtered_data.i[3];
-		control_usb_data.encoder[ENCODER_1] = encoder_get(ENCODER_1);
-		control_usb_data.encoder[ENCODER_2] = encoder_get(ENCODER_2);
-		control_usb_data.encoder[ENCODER_3] = encoder_get(ENCODER_3);
-		control_usb_data.gpio = gpio_get_state();
-		control_usb_data.power_state = power_get();
-		arm_get_matrix(control_usb_data.arm_matrix);
+			motion_update_usb_data(&control_usb_data);
+			control_usb_data.current_time = systick_get_time();
+			control_usb_data.pos = location_get_position();
+			control_usb_data.raw_data_gyro = gyro_get_raw_data();
+			control_usb_data.omega_gyro = gyro_get_omega();
+			control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
+			control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
+			control_usb_data.vBat = adc_filtered_data.vBat;
+			control_usb_data.iPwm[0] = adc_filtered_data.i[0];
+			control_usb_data.iPwm[1] = adc_filtered_data.i[1];
+			control_usb_data.iPwm[2] = adc_filtered_data.i[2];
+			control_usb_data.iPwm[3] = adc_filtered_data.i[3];
+			control_usb_data.encoder[ENCODER_1] = encoder_get(ENCODER_1);
+			control_usb_data.encoder[ENCODER_2] = encoder_get(ENCODER_2);
+			control_usb_data.encoder[ENCODER_3] = encoder_get(ENCODER_3);
+			control_usb_data.gpio = gpio_get_state();
+			control_usb_data.power_state = power_get();
+			arm_get_matrix(control_usb_data.arm_matrix);
 
-		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+			usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+			control_usb_cycle_count = 0;
+		}
 
 		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}
