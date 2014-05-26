@@ -752,7 +752,9 @@ int RobotInterface::ptask()
 
 int RobotInterface::reboot()
 {
-	return usb_write(USB_CMD_REBOOT, NULL, 0);
+	int res = usb_write(USB_CMD_REBOOT, NULL, 0);
+	connected = false;
+	return res;
 }
 
 int RobotInterface::power_off(bool power_off)
