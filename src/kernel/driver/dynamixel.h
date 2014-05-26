@@ -171,6 +171,8 @@ class DynamixelManager
 			return type;
 		}
 
+		bool isFlagActive(uint8_t id, uint32_t mask);
+
 	protected:
 		static void task_wrapper(void* arg);
 		void task();

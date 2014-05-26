@@ -171,12 +171,13 @@ void DynamixelManager::task()
 				}
 			}
 
-			if( devices[id].flags & DYNAMIXEL_FLAG_TORQUE_TO_UPDATE )
+			// renvoi du couple uniquement si ! control_off et torque_to_update
+			if( (devices[id].flags & (DYNAMIXEL_FLAG_TORQUE_TO_UPDATE | DYNAMIXEL_FLAG_CONTROL_OFF)) == DYNAMIXEL_FLAG_TORQUE_TO_UPDATE)
 			{
 				struct dynamixel_error err = write16(id+1, DYNAMIXEL_TORQUE_LIMIT_L, devices[id].max_torque);
 				if( ! err.transmit_error && ! err.internal_error )
 				{
-					err = write8(id, DYNAMIXEL_TORQUE_ENABLE, 0x01);
+					err = write8(id+1, DYNAMIXEL_TORQUE_ENABLE, 0x01);
 					if( ! err.transmit_error )
 					{
 						devices[id].flags &= ~DYNAMIXEL_FLAG_TORQUE_TO_UPDATE;
@@ -679,6 +680,20 @@ void DynamixelManager::set_target_reached_threshold(uint8_t id, float threshold)
 	}
 
 	devices[id].target_reached_threshold = threshold * DYNAMIXEL_RD_TO_POS;
+}
+
+bool DynamixelManager::isFlagActive(uint8_t id,  uint32_t mask)
+{
+	bool res = false;
+	id--;
+	if(id < max_devices_id-1 )
+	{
+		xSemaphoreTake(mutex, portMAX_DELAY);
+		res = devices[id].flags & mask;
+		xSemaphoreGive(mutex);
+	}
+
+	return res;
 }
 
 float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
