@@ -36,8 +36,8 @@ DynamixelManager rx24;
 
 static int dynamixel_module_init()
 {
-	ax12.init("ax12", USART6_HALF_DUPLEX, 500000, AX12_MAX_ID, 12);
-	rx24.init("rx24", UART5_FULL_DUPLEX, 500000, RX24_MAX_ID, 24);
+	ax12.init("ax12", USART6_HALF_DUPLEX, 200000, AX12_MAX_ID, 12);
+	rx24.init("rx24", UART5_FULL_DUPLEX, 200000, RX24_MAX_ID, 24);
 
 	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd);
 
@@ -751,8 +751,8 @@ __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 			manager->set_goal_position(param->id, param->param);
 			break;
 		case DYNAMIXEL_CMD_SET_BAUDRATE:
-			// on les met a 500kb, commande usb pour la configuration
-			manager->write8(param->id, DYNAMIXEL_BAUD_RATE, 3);
+			// on les met a 200kb, commande usb pour la configuration
+			manager->write8(param->id, DYNAMIXEL_BAUD_RATE, 9);
 			break;
 		case DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE:
 			usart_set_frequency(manager->usart, (uint32_t)(param->param));
