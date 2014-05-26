@@ -28,7 +28,7 @@ static int arm_cmd_type;
 static bool arm_target_reached = false;
 
 static void arm_disabled_run();
-static unsigned int arm_disabled_transition(unsigned int currentState);
+static unsigned int arm_generic_transition(unsigned int currentState);
 
 static void arm_homing_entry();
 static void arm_homing0_run();
@@ -36,12 +36,21 @@ static void arm_homing1_run();
 static void arm_homing2_run();
 static unsigned int arm_homing_transition(unsigned int currentState);
 
+static void arm_move_center_run();
+
+static void arm_move_right_run();
+
+static void arm_move_left_run();
+
 static MatrixHomogeneous arm_transform;
 static StateMachineState arm_states[ARM_STATE_MAX] = {
-		{ "ARM_STATE_DISABLED", &nop_function, &arm_disabled_run, &arm_disabled_transition},
+		{ "ARM_STATE_DISABLED", &nop_function, &arm_disabled_run, &arm_generic_transition},
 		{ "ARM_STATE_HOMING_0", &arm_homing_entry, &arm_homing0_run, &arm_homing_transition},
 		{ "ARM_STATE_HOMING_1", &arm_homing_entry, &arm_homing1_run, &arm_homing_transition},
 		{ "ARM_STATE_HOMING_2", &arm_homing_entry, &arm_homing2_run, &arm_homing_transition},
+		{ "ARM_CMD_MOVE_CENTER", &nop_function, &arm_move_center_run, &arm_generic_transition},
+		{ "ARM_CMD_MOVE_RIGHT", &nop_function, &arm_move_right_run, &arm_generic_transition},
+		{ "ARM_CMD_MOVE_LEFT", &nop_function, &arm_move_left_run, &arm_generic_transition},
 };
 static StateMachine arm_stateMachine(arm_states, ARM_STATE_MAX);
 
@@ -70,7 +79,7 @@ static int arm_module_init()
 	ax12.set_goal_limit(AX12_ARM_SHOULDER_ELBOW, -M_PI_2, M_PI_2);
 	ax12.set_goal_limit(AX12_ARM_WRIST_ELBOW, -M_PI_2, M_PI_2);
 	ax12.set_goal_limit(AX12_ARM_WRIST, -M_PI_2, M_PI_2);
-	rx24.set_goal_limit(RX24_ARM_SLIDER, -0.28, 0.98);
+	rx24.set_goal_limit(RX24_ARM_SLIDER, -0.92, 1.3);
 
 	ax12.set_torque_limit(AX12_ARM_SHOULDER, 1);
 	ax12.set_torque_limit(AX12_ARM_SHOULDER_ELBOW, 0.5);
@@ -192,11 +201,31 @@ static void arm_disabled_run()
 
 }
 
-static unsigned int arm_disabled_transition(unsigned int currentState)
+static unsigned int arm_generic_transition(unsigned int currentState)
 {
-	if( ! power_get() && arm_cmd_type == ARM_CMD_HOMING )
+	if( power_get() )
+	{
+		return ARM_STATE_DISABLED;
+	}
+
+	if( arm_cmd_type == ARM_CMD_HOMING )
 	{
 		return ARM_STATE_HOMING_0;
+	}
+
+	if( arm_cmd_type == ARM_CMD_MOVE_CENTER )
+	{
+		return ARM_STATE_MOVE_CENTER;
+	}
+
+	if( arm_cmd_type == ARM_CMD_MOVE_RIGHT )
+	{
+		return ARM_STATE_MOVE_RIGHT;
+	}
+
+	if( arm_cmd_type == ARM_CMD_MOVE_LEFT )
+	{
+		return ARM_STATE_MOVE_LEFT;
 	}
 
 	return currentState;
@@ -236,7 +265,7 @@ static void arm_homing2_run()
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
-	arm_pos_cmd.val[ARM_AXIS_SLIDER] = arm_pos_mes.val[ARM_AXIS_SLIDER]; // TODO val
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.9; // TODO val
 
 	arm_update();
 }
@@ -256,12 +285,51 @@ static unsigned int arm_homing_transition(unsigned int state)
 	{
 		state = ARM_STATE_HOMING_2;
 	}
-	else if( state == ARM_STATE_HOMING_1 && arm_target_reached )
+	else if( state == ARM_STATE_HOMING_2 && arm_target_reached && arm_cmd_type != ARM_CMD_HOMING )
 	{
-		//state = ARM_STATE_ENABLE; // TODO
+		state = arm_generic_transition(state);
 	}
 
 	return state;
+}
+
+//---------------------- Etat ARM_STATE_MOVE_CENTER --------------------------------
+static void arm_move_center_run()
+{
+	// TODO voir position
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = -M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_MOVE_RIGHT --------------------------------
+static void arm_move_right_run()
+{
+	// TODO voir position
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = -M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_MOVE_LEFT --------------------------------
+static void arm_move_left_run()
+{
+	// TODO voir position
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
 }
 
 //---------------------- Fin StateMachine -------------------------------------
