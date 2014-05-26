@@ -22,7 +22,7 @@
 
 #define DYNAMIXEL_STACK_SIZE            350
 #define DYNAMIXEL_READ_TIMEOUT           15 // en ms
-#define DYNAMIXEL_MOVE_TIMEOUT         1000 // en ms
+#define DYNAMIXEL_MOVE_TIMEOUT         3000 // en ms
 
 static uint8_t dynamixel_checksum(uint8_t* buffer, uint8_t size);
 
