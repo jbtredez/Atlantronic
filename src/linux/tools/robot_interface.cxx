@@ -752,8 +752,8 @@ int RobotInterface::ptask()
 
 int RobotInterface::reboot()
 {
-	int res = usb_write(USB_CMD_REBOOT, NULL, 0);
 	connected = false;
+	int res = usb_write(USB_CMD_REBOOT, NULL, 0);
 	return res;
 }
 
