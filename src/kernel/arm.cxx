@@ -136,16 +136,17 @@ static void arm_update_position()
 	{
 		arm_transform.setIdentity();
 
-		float theta2 = asinf( (ARM_SLIDER_POSITION_Y - ARM_SLIDER_L1 * sinf(arm_pos_mes.val[ARM_AXIS_SLIDER])) / ARM_SLIDER_L2 );
-		float z0 = ARM_SLIDER_POSITION_Z + ARM_SLIDER_L1 * cosf(arm_pos_mes.val[ARM_AXIS_SLIDER]) + ARM_SLIDER_L2 * cosf(theta2);
+		float theta = -(arm_pos_mes.val[ARM_AXIS_SLIDER] - M_PI_2);
+		float theta2 = asinf( (ARM_SLIDER_POSITION_Y - ARM_SLIDER_L1 * sinf(theta)) / ARM_SLIDER_L2 ) - M_PI;
+		float z0 = ARM_SLIDER_POSITION_Z + ARM_SLIDER_L1 * cosf(theta) + ARM_SLIDER_L2 * cosf(theta2);
 		arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, z0);
 		arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
 		arm_transform.translate(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
-		arm_transform.rotateZ( -arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
+		arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_SHOULDER_ELBOW] );
 		arm_transform.translate(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-		arm_transform.rotateY( -arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
+		arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_WRIST_ELBOW] );
 		arm_transform.translate(ARM_DIST_WRIST_ELBOW_TO_WRIST, 0, 0);
-		arm_transform.rotateZ( arm_pos_mes.val[ARM_AXIS_WRIST] );
+		arm_transform.rotateZ( -arm_pos_mes.val[ARM_AXIS_WRIST] );
 		arm_transform.translate(ARM_DIST_WRIST_TO_SUCKER, 0, 0);
 
 		arm_target_reached = ax12.isFlagActive(AX12_ARM_SHOULDER, DYNAMIXEL_FLAG_TARGET_REACHED);
