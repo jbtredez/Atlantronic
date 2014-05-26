@@ -72,7 +72,7 @@ const char* log_level_color_end[LOG_MAX] =
 
 const char RobotInterface::expected_version[41] = VERSION;
 
-int RobotInterface::init(const char* _name, const char* file_read, const char* file_write, void (*_callback)(void*), void* _callback_arg)
+int RobotInterface::init(const char* _name, const char* file_read, const char* file_write, const char* ip, void (*_callback)(void*), void* _callback_arg)
 {
 	int i;
 	int err = 0;
@@ -88,11 +88,15 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 
 	if(file_read)
 	{
-		com.init(file_read, file_write);
+		com.init(file_read, file_write, NULL);
+	}
+	else if(ip)
+	{
+		com.init(NULL, NULL, ip);
 	}
 	else
 	{
-		com.init("/dev/discovery0", "/dev/discovery0");
+		com.init("/dev/discovery0", "/dev/discovery0", NULL);
 	}
 
 	control_usb_data_count = 0;
@@ -132,6 +136,12 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);
 	add_usb_data_callback(USB_DYNAMIXEL, &RobotInterface::process_dynamixel);
 
+	if( ip == NULL )
+	{
+		serverTcp.configure(&com, 41666);
+		serverTcp.start();
+	}
+
 	return err;
 }
 
@@ -141,6 +151,7 @@ void RobotInterface::destroy()
 	usleep(100000);
 	pthread_cancel(tid);
 
+	serverTcp.stop();
 	com.close();
 	com.destroy();
 
@@ -176,11 +187,10 @@ void* RobotInterface::task()
 
 	while( !stop_task)
 	{
-		uint16_t type;
-		uint16_t size;
+		struct usb_header header;
 
 		// lecture entete
-		res = com.read_header(&type, &size);
+		res = com.read_header(&header);
 
 		if( stop_task)
 		{
@@ -196,8 +206,11 @@ void* RobotInterface::task()
 			continue;
 		}
 
+
+		serverTcp.write(&header, sizeof(header));
+
 		// lecture du message
-		res = com.read(size + 4);
+		res = com.read(header.size + 4);
 		if( stop_task)
 		{
 			goto end;
@@ -213,16 +226,16 @@ void* RobotInterface::task()
 		}
 
 		// copie du message (vers un buffer non circulaire)
-		char msg[size+1];
-		com.copy(msg, 4, size);
-		msg[size] = 0;
+		char msg[header.size+1];
+		com.copy(msg, 4, header.size);
+		msg[header.size] = 0;
 
 		// traitement du message
-		if( type < USB_DATA_MAX)
+		if( header.type < USB_DATA_MAX)
 		{
-			if( process_func[type] )
+			if( process_func[header.type] )
 			{
-				res = (this->*process_func[type])(msg, size);
+				res = (this->*process_func[header.type])(msg, header.size);
 			}
 		}
 		else
@@ -235,7 +248,7 @@ void* RobotInterface::task()
 			if( lost_count == 0)
 			{
 				// premiere perte : log header
-				log_error("com error, header = %d %d", type, size);
+				log_error("com error, header = %d %d", header.type, header.size);
 			}
 			unsigned char byte = com.buffer[com.buffer_begin];
 			if(lost_count >= sizeof(lost)-2)
@@ -282,8 +295,10 @@ void* RobotInterface::task()
 				lost_count = 0;
 			}
 
-			size += 4;
-			com.skip(size);
+			com.copy(msg, 4, header.size);
+			serverTcp.write(msg, header.size);
+			header.size += 4;
+			com.skip(header.size);
 			if(callback)
 			{
 				callback(callback_arg);

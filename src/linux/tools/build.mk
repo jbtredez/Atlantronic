@@ -1,5 +1,6 @@
 obj-linux-usb_interface += linux/tools/usb_interface.o
 obj-linux-usb_interface += linux/tools/com.o
+obj-linux-usb_interface += linux/tools/server_tcp.o
 obj-linux-usb_interface += kernel/hokuyo_tools.o
 obj-linux-usb_interface += kernel/math/regression.o
 obj-linux-usb_interface += kernel/vect_pos.o
@@ -17,6 +18,7 @@ bin-linux += usb_interface
 obj-linux-glplot += linux/tools/glplot.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/com.o
+obj-linux-glplot += linux/tools/server_tcp.o
 obj-linux-glplot += kernel/hokuyo_tools.o
 obj-linux-glplot += kernel/math/regression.o
 obj-linux-glplot += kernel/math/fx_math.o

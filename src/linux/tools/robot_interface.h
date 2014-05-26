@@ -22,6 +22,7 @@
 #include "discovery/control.h"
 #include "discovery/gpio.h"
 #include "foo/pince.h"
+#include "server_tcp.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 
@@ -48,7 +49,7 @@ struct dynamixel_data
 class RobotInterface
 {
 	public:
-		int init(const char* name, const char* file_read, const char* file_write, void (*callback)(void*), void* callback_arg);
+		int init(const char* name, const char* file_read, const char* file_write, const char* ip, void (*callback)(void*), void* callback_arg);
 		void destroy();
 
 		inline bool isConnected()
@@ -206,6 +207,7 @@ class RobotInterface
 		void* callback_arg;
 		Com com; //!< communication
 		bool connected;
+		ServerTcp serverTcp;
 
 		void fault_reset();
 		static void* task_wrapper(void* arg);

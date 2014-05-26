@@ -93,7 +93,7 @@ int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 		return -1;
 	}
 
-	com.init(file_qemu_read, file_qemu_write);
+	com.init(file_qemu_read, file_qemu_write, NULL);
 
 	com.open_block();
 

@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 		file = argv[1];
 	}
 
-	robot_interface.init("discovery", file, file, NULL, NULL);
+	robot_interface.init("discovery", file, file, NULL, NULL, NULL);
 	cmd_init(&robot_interface, NULL, NULL);
 
 	while(1)

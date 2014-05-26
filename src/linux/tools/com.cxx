@@ -1,17 +1,46 @@
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"
 
-void Com::init(const char* File_read, const char* File_write)
+void Com::init(const char* File_read, const char* File_write, const char* Ip)
 {
 	fd_read = -1;
 	fd_write = -1;
-	file_read = (char*)malloc(strlen (File_read) + 1);
-	file_write = (char*)malloc(strlen (File_write) + 1);
-	strcpy(file_read, File_read);
-	strcpy(file_write, File_write);
+	if(File_read != NULL)
+	{
+		file_read = (char*)malloc(strlen (File_read) + 1);
+		strcpy(file_read, File_read);
+	}
+	else
+	{
+		file_read = NULL;
+	}
+
+	if(File_write != NULL)
+	{
+		file_write = (char*)malloc(strlen (File_write) + 1);
+		strcpy(file_write, File_write);
+	}
+	else
+	{
+		file_write = NULL;
+	}
+	if(Ip != NULL)
+	{
+		ip = (char*)malloc(strlen (Ip) + 1);
+		strcpy(ip, Ip);
+	}
+	else
+	{
+		ip = NULL;
+	}
+
 	buffer_end = 0;
 	buffer_begin = 0;
 	buffer_size = 0;
@@ -87,7 +116,14 @@ int Com::close()
 		res = 0;
 	}
 
-	log_info("close %s %s", file_read, file_write);
+	if( file_read )
+	{
+		log_info("close %s %s", file_read, file_write);
+	}
+	else if( ip )
+	{
+		log_info("close %s", ip);
+	}
 
 end:
 	return res;
@@ -95,7 +131,9 @@ end:
 
 int Com::open()
 {
-	int res = close();
+	int res = 0;
+
+	close();
 
 	if(fd_read != -1 || fd_write != -1)
 	{
@@ -106,35 +144,67 @@ int Com::open()
 	buffer_begin = 0;
 	buffer_size = 0;
 
-	if(strcmp(file_read, file_write) == 0)
+	if( file_read != NULL && file_write != NULL)
 	{
-		fd_read = ::open(file_read, O_RDWR);
+		if(strcmp(file_read, file_write) == 0)
+		{
+			fd_read = ::open(file_read, O_RDWR);
+			fd_write = fd_read;
+		}
+		else
+		{
+			fd_read = ::open(file_read, O_RDONLY);
+			fd_write = ::open(file_write, O_WRONLY);
+		}
+
+		if(fd_read <= 0)
+		{
+			res = -1;
+			fd_read = -1;
+			log_error_errno("open");
+			goto end;
+		}
+
+		if(fd_write <= 0)
+		{
+			res = -1;
+			fd_write = -1;
+			log_error_errno("open");
+			close();
+			goto end;
+		}
+
+		log_info("open  %s %s", file_read, file_write);
+	}
+	else if( ip != NULL )
+	{
+		struct sockaddr_in addr;
+		int res;
+
+		fd_read = socket(AF_INET, SOCK_STREAM, 0);
+		if( fd_read < 0)
+		{
+			fd_read = -1;
+			log_error_errno("socket");
+			close();
+			goto end;
+		}
+
+		memset(&addr, 0, sizeof(addr));
+		addr.sin_family = AF_INET;
+		addr.sin_addr.s_addr = inet_addr (ip);
+		addr.sin_port = htons(41666);
+		res = connect(fd_read, (struct sockaddr *) &addr, sizeof(addr));
+		if( res < 0 )
+		{
+			fd_read = -1;
+			log_error_errno("socket");
+			close();
+			goto end;
+		}
 		fd_write = fd_read;
+		log_info("connected to %s", ip);
 	}
-	else
-	{
-		fd_read = ::open(file_read, O_RDONLY);
-		fd_write = ::open(file_write, O_WRONLY);
-	}
-
-	if(fd_read <= 0)
-	{
-		res = -1;
-		fd_read = -1;
-		log_error_errno("open");
-		goto end;
-	}
-
-	if(fd_write <= 0)
-	{
-		res = -1;
-		fd_write = -1;
-		log_error_errno("open");
-		close();
-		goto end;
-	}
-
-	log_info("open  %s %s", file_read, file_write);
 
 end:
 	if(fd_write == -1 || fd_read == -1)
@@ -205,21 +275,18 @@ end:
 	return res;
 }
 
-int Com::read_header(uint16_t* type, uint16_t* size)
+int Com::read_header(struct usb_header* header)
 {
 	int res = 0;
-	struct usb_header header;
 
-	int err = read(sizeof(header));
+	int err = read(sizeof(*header));
 	if(err)
 	{
 		res = err;
 		goto end;
 	}
 
-	copy(&header, 0, sizeof(header));
-	*type = header.type;
-	*size = header.size;
+	copy(header, 0, sizeof(*header));
 
 end:
 	return res;

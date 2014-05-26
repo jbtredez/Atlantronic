@@ -14,13 +14,14 @@ int main(int argc, char *argv[])
 	const char* file_stm_read = NULL;
 	const char* file_stm_write = NULL;
 	const char* prog_stm = NULL;
+	const char* ip = NULL;
 	int gdb_port = 0;
 	int simulation = 0;
 
 	if(argc > 1)
 	{
 		int option = -1;
-		while( (option = getopt(argc, argv, "s:g")) != -1)
+		while( (option = getopt(argc, argv, "gi:s:")) != -1)
 		{
 			switch(option)
 			{
@@ -30,6 +31,9 @@ int main(int argc, char *argv[])
 					break;
 				case 'g':
 					gdb_port = 1235;
+					break;
+				case 'i':
+					ip = optarg;
 					break;
 				default:
 					fprintf(stderr, "option %c inconnue", (char)option);
@@ -58,7 +62,7 @@ int main(int argc, char *argv[])
 		file_stm_write = qemu.file_board_write;
 	}
 
-	robotItf.init("discovery", file_stm_read, file_stm_write, robotItfCallback, NULL);
+	robotItf.init("discovery", file_stm_read, file_stm_write, ip, robotItfCallback, NULL);
 
 	int res = glplot_main("", simulation, true, &qemu, &robotItf);
 
