@@ -24,10 +24,10 @@
 #define ARM_DIST_WRIST_ELBOW_TO_WRIST                67.5f
 #define ARM_DIST_WRIST_TO_SUCKER                     33.7f
 
-
 enum arm_cmd_type
 {
-	ARM_CMD_ART,
+	ARM_CMD_DISABLE,
+	ARM_CMD_HOMING,
 };
 
 enum
@@ -43,6 +43,7 @@ enum
 enum
 {
 	ARM_STATE_DISABLED,
+	ARM_STATE_HOMING,
 	ARM_STATE_MAX,
 };
 
@@ -53,7 +54,7 @@ struct arm_cmd
 } __attribute__((packed));
 
 //!< met le bras à la position souhaitée
-void arm_goto(struct arm_cmd cmd);
+//void arm_goto(struct arm_cmd cmd);
 
 // TODO refiler MatriceHomogene (a compiler dans glplot)
 void arm_get_matrix(float* mat) WEAK_ARM;
