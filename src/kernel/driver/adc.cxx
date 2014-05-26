@@ -150,7 +150,6 @@ void adc_update()
 
 		if( (t - adc_undervoltage_time).ms > 1000*ADC_UNDERVOLTAGE_DELAY )
 		{
-			int dt = (t - adc_undervoltage_time).ms;
 			power_set(POWER_OFF_UNDERVOLTAGE);
 		}
 	}
