@@ -29,6 +29,8 @@ enum arm_cmd_type
 	ARM_CMD_DISABLE,
 	ARM_CMD_HOMING,
 	ARM_CMD_MOVE_CENTER,
+	ARM_CMD_MOVE_PROTECT_TORCH,
+	ARM_CMD_MOVE_TORCH,
 	ARM_CMD_MOVE_RIGHT,
 	ARM_CMD_MOVE_LEFT
 };
@@ -50,6 +52,8 @@ enum
 	ARM_STATE_HOMING_1,
 	ARM_STATE_HOMING_2,
 	ARM_STATE_MOVE_CENTER,
+	ARM_STATE_MOVE_TORCH,
+	ARM_STATE_MOVE_PROTECT_TORCH,
 	ARM_STATE_MOVE_RIGHT,
 	ARM_STATE_MOVE_LEFT,
 	ARM_STATE_MAX,
@@ -61,8 +65,6 @@ struct arm_cmd
 	float val[5];
 } __attribute__((packed));
 
-//!< met le bras à la position souhaitée
-//void arm_goto(struct arm_cmd cmd);
 
 // TODO refiler MatriceHomogene (a compiler dans glplot)
 void arm_get_matrix(float* mat) WEAK_ARM;
