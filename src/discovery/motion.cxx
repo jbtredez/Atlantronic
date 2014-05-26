@@ -636,6 +636,13 @@ void motion_update_usb_data(struct control_usb_data* data)
 	data->cons_theta2 = motion_kinematics[CAN_MOTOR_STEERING2].pos;
 	data->cons_theta3 = motion_kinematics[CAN_MOTOR_STEERING3].pos;
 	data->wanted_pos = motion_dest;
+
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		data->mes_motors[i] = motion_kinematics_mes[i];
+	}
+
+	// TODO obsolete, a virer
 	data->mes_v1 = motion_kinematics_mes[CAN_MOTOR_DRIVING1].v;
 	data->mes_v2 = motion_kinematics_mes[CAN_MOTOR_DRIVING2].v;
 	data->mes_v3 = motion_kinematics_mes[CAN_MOTOR_DRIVING3].v;
