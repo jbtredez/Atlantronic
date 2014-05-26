@@ -51,6 +51,11 @@ class RobotInterface
 		int init(const char* name, const char* file_read, const char* file_write, void (*callback)(void*), void* callback_arg);
 		void destroy();
 
+		inline bool isConnected()
+		{
+			return connected;
+		}
+
 		int ptask();
 
 		//! reboot soft du stm
@@ -130,6 +135,9 @@ class RobotInterface
 		int heartbeat_update();
 		int heartbeat_disable();
 
+		// ---------- gestion du bras --------------------------------------------------
+		int arm_cmd(uint32_t cmdType);
+
 /////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------
 		int pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);
@@ -197,6 +205,7 @@ class RobotInterface
 		void (*callback)(void*);
 		void* callback_arg;
 		Com com; //!< communication
+		bool connected;
 
 		void fault_reset();
 		static void* task_wrapper(void* arg);

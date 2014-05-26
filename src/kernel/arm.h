@@ -49,7 +49,7 @@ enum
 
 struct arm_cmd
 {
-	int cmdType;
+	uint32_t cmdType;
 	float val[5];
 } __attribute__((packed));
 

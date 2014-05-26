@@ -84,6 +84,7 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	stop_task = 1;
 	start_time = 0;
 	current_time = 0;
+	connected = false;
 
 	if(file_read)
 	{
@@ -189,6 +190,7 @@ void* RobotInterface::task()
 		if( res )
 		{
 			fault_reset();
+			connected = false;
 			com.open_block();
 			get_stm_code_version();
 			continue;
@@ -204,6 +206,7 @@ void* RobotInterface::task()
 		if( res )
 		{
 			fault_reset();
+			connected = false;
 			com.open_block();
 			get_stm_code_version();
 			continue;
@@ -410,6 +413,7 @@ int RobotInterface::process_code_version(char* msg, uint16_t size)
 		versionCompatible = ROBOT_VERSION_KO;
 		log_error("stm_code_version not compatible : stm32 %s expected %s", stm_code_version, expected_version);
 	}
+	connected = true;
 
 	pthread_mutex_unlock(&mutex);
 
@@ -1042,6 +1046,15 @@ int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type
 	cmd_arg.type_right = cmd_type_right;
 
 	return usb_write(USB_CMD_PINCE, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::arm_cmd(uint32_t cmdType)
+{
+	struct arm_cmd cmd_arg;
+
+	cmd_arg.cmdType = cmdType;
+
+	return usb_write(USB_CMD_ARM, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)

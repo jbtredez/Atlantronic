@@ -189,11 +189,12 @@ static unsigned int arm_disabled_transition(unsigned int currentState)
 static void arm_homing_run()
 {
 	// TODO mesurer la position homing + voir si on bouge les servos 1 par 1
-	//arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
-	//arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
-	//arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
-	//arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
-	//arm_pos_cmd.val[ARM_AXIS_SLIDER] = ;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
+
+	arm_update();
 }
 
 static unsigned int arm_homing_transition(unsigned int currentState)

@@ -16,6 +16,7 @@ static Qemu* cmd_qemu = NULL;
 int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
 int cmd_arm_abz(const char* arg);
+int cmd_arm_cmd(const char* arg);
 int cmd_can_lss(const char* arg);
 int cmd_can_lss_set_nodeid(const char* arg);
 int cmd_can_lss_save(const char* arg);
@@ -74,6 +75,7 @@ COMMAND usb_commands[] = {
 	{ "arm_xyz", cmd_arm_xyz, "deplacement du bras (x, y, z, type)"},
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
+	{ "arm_cmd", cmd_arm_cmd, "arm_cmd type"},
 	{ "can_lss", cmd_can_lss, "can_lss on/off"},
 	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
 	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
@@ -850,6 +852,21 @@ int cmd_arm_abz(const char* arg)
 	}
 
 	cmd_robot->arm_abz(a, b, z);
+	return CMD_SUCESS;
+}
+
+int cmd_arm_cmd(const char* arg)
+{
+	int cmdType;
+
+	int count = sscanf(arg, "%d", &cmdType);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->arm_cmd(cmdType);
 	return CMD_SUCESS;
 }
 
