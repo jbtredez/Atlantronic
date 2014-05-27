@@ -640,6 +640,7 @@ void motion_update_usb_data(struct control_usb_data* data)
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		data->mes_motors[i] = motion_kinematics_mes[i];
+		data->mes_motor_current[i] = can_motor[i].current;
 	}
 
 	data->homingDone = can_motor[CAN_MOTOR_STEERING1].homingStatus == CAN_MOTOR_HOMING_DONE;
