@@ -12,6 +12,10 @@
 #include "kernel/queue.h"
 #include "kernel/semphr.h"
 
+#ifndef WEAK_DYNAMIXEL
+#define WEAK_DYNAMIXEL __attribute__((weak, alias("nop_function") ))
+#endif
+
 enum
 {
 	DYNAMIXEL_MODEL_NUMBER_L = 0,
@@ -189,6 +193,7 @@ class DynamixelManager
 		int max_devices_id;
 		Dynamixel* devices;
 		friend void dynamixel_cmd(void* arg);
+		friend void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel);
 		uint8_t type;
 };
 
@@ -217,14 +222,20 @@ struct dynamixel_cmd_param
 	float param;            //!< parametre
 } __attribute((packed));
 
-struct dynamixel_usb_data
+struct dynamixel_usb_device_data
 {
-	uint8_t type;           //!< type de dynamixel (ax12 ou rx24)
-	uint8_t id;             //!< id du dynamixel
 	uint16_t pos;           //!< position
 	uint16_t flags;         //!< flags
 	struct dynamixel_error error; //!< erreurs
+} __attribute((packed));
+
+struct dynamixel_usb_data
+{
+	struct dynamixel_usb_device_data ax12[AX12_MAX_ID];
+	struct dynamixel_usb_device_data rx24[RX24_MAX_ID];
 
 } __attribute((packed));
+
+void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel) WEAK_DYNAMIXEL;
 
 #endif

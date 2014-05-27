@@ -12,6 +12,7 @@
 #include "kernel/math/matrix_homogeneous.h"
 #include "motion.h"
 #include "kernel/driver/encoder.h"
+#include "kernel/driver/dynamixel.h"
 
 //! période de la tache de controle en ms
 #define CONTROL_PERIOD                            10
@@ -45,6 +46,7 @@ struct control_usb_data
 	bool homingDone;
 	uint8_t pumpState;
 	uint32_t power_state;
+	struct dynamixel_usb_data dynamixel;
 	MatrixHomogeneous arm_matrix;
 } __attribute__((packed));
 

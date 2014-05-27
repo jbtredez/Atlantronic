@@ -2,6 +2,7 @@
 //! @brief Gestion des dynamixel (ax12 et rx24)
 //! @author Atlantronic
 
+#define WEAK_DYNAMIXEL
 #include "dynamixel.h"
 #include "kernel/module.h"
 #include "kernel/rcc.h"
@@ -209,15 +210,7 @@ void DynamixelManager::task()
 			devices[id].last_error = req.status.error;
 		}
 
-		struct dynamixel_usb_data usb_data;
-		usb_data.id = id + 1;
-		usb_data.type = type;
-		usb_data.pos = devices[id].pos;
-		usb_data.flags = devices[id].flags;
-		usb_data.error = devices[id].last_error;
 		xSemaphoreGive(mutex);
-
-		usb_add(USB_DYNAMIXEL, &usb_data, sizeof(usb_data));
 
 		id = (id + 1) % (max_devices_id-1);
 		if(id == 0)
@@ -226,6 +219,27 @@ void DynamixelManager::task()
 			vTaskDelay(5);
 		}
 	}
+}
+
+void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel)
+{
+	xSemaphoreTake(ax12.mutex, portMAX_DELAY);
+	for(int i = 1; i < AX12_MAX_ID; i++)
+	{
+		dynamixel->ax12[i].pos = ax12.devices[i-1].pos;
+		dynamixel->ax12[i].flags = ax12.devices[i-1].flags;
+		dynamixel->ax12[i].error = ax12.devices[i-1].last_error;
+	}
+	xSemaphoreGive(ax12.mutex);
+
+	xSemaphoreTake(rx24.mutex, portMAX_DELAY);
+	for(int i = 1; i < RX24_MAX_ID; i++)
+	{
+		dynamixel->rx24[i].pos = rx24.devices[i-1].pos;
+		dynamixel->rx24[i].flags = rx24.devices[i-1].flags;
+		dynamixel->rx24[i].error = rx24.devices[i-1].last_error;
+	}
+	xSemaphoreGive(rx24.mutex);
 }
 
 void DynamixelManager::send(struct dynamixel_request *req)

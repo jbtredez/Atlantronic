@@ -203,6 +203,7 @@ class RobotInterface
 		static const char expected_version[41];
 
 	protected:
+		char msg[65537]; // taille max = 65536 (header.size) + 1
 		char name[32];
 		pthread_t tid;
 		volatile int stop_task;
@@ -224,7 +225,6 @@ class RobotInterface
 		int process_detect_dyn_obj_size(char* msg, uint16_t size);
 		int process_detect_dyn_obj(char* msg, uint16_t size);
 		int process_code_version(char* msg, uint16_t size);
-		int process_dynamixel(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
 		int get_stm_code_version();
 

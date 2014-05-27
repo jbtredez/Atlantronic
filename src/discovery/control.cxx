@@ -78,6 +78,8 @@ static void control_task(void* /*arg*/)
 		control_usb_data.power_state = power_get();
 		arm_get_matrix(&control_usb_data.arm_matrix);
 
+		dynamixel_update_usb_data(&control_usb_data.dynamixel);
+
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 
 

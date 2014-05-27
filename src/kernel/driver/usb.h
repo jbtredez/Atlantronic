@@ -20,7 +20,6 @@ enum
 	USB_DETECTION_DYNAMIC_OBJECT_SIZE,
 	USB_DETECTION_DYNAMIC_OBJECT,
 	USB_CAN_TRACE,
-	USB_DYNAMIXEL,
 	USB_DATA_MAX,     //!< nombre d'id, laisser en dernier
 };
 

@@ -134,7 +134,6 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT, &RobotInterface::process_detect_dyn_obj);
 	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
 	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);
-	add_usb_data_callback(USB_DYNAMIXEL, &RobotInterface::process_dynamixel);
 
 	if( ip == NULL )
 	{
@@ -226,7 +225,6 @@ void* RobotInterface::task()
 		}
 
 		// copie du message (vers un buffer non circulaire)
-		char msg[header.size+1];
 		com.copy(msg, 4, header.size);
 		msg[header.size] = 0;
 
@@ -436,56 +434,6 @@ end:
 	return res;
 }
 
-int RobotInterface::process_dynamixel(char* msg, uint16_t size)
-{
-	int res = 0;
-	struct dynamixel_usb_data* data = (struct dynamixel_usb_data*) msg;
-	int maxId = 0;
-	struct dynamixel_data* dynamixels = NULL;
-
-	if(size != sizeof(dynamixel_usb_data))
-	{
-		res = -1;
-		goto end;
-	}
-
-	res = pthread_mutex_lock(&mutex);
-
-	if(res)
-	{
-		log_error("pthread_mutex_lock : %i", res);
-		goto end;
-	}
-
-	if(data->type == DYNAMIXEL_TYPE_AX12)
-	{
-		dynamixels = ax12;
-		maxId = AX12_MAX_ID;
-	}
-	else if( data->type == DYNAMIXEL_TYPE_RX24)
-	{
-		dynamixels = rx24;
-		maxId = AX12_MAX_ID;
-	}
-	else
-	{
-		log_error("unknown dynamixel type %d", data->type);
-		goto end;
-	}
-
-	if(data->id < maxId)
-	{
-		dynamixels[data->id].pos = (data->pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		dynamixels[data->id].flags = data->flags;
-		dynamixels[data->id].error = data->error;
-	}
-
-	pthread_mutex_unlock(&mutex);
-
-end:
-	return res;
-}
-
 int RobotInterface::process_detect_dyn_obj_size(char* msg, uint16_t size)
 {
 	int res = 0;
@@ -685,6 +633,20 @@ int RobotInterface::process_control(char* msg, uint16_t size)
 	t = last_control_usb_data.current_time;
 	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
+
+	for(int i = 0; i < AX12_MAX_ID; i++)
+	{
+		ax12[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		ax12[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
+		ax12[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+	}
+
+	for(int i = 0; i < RX24_MAX_ID; i++)
+	{
+		rx24[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		rx24[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
+		rx24[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+	}
 
 	pthread_mutex_unlock(&mutex);
 
