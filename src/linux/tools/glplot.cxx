@@ -842,9 +842,9 @@ void plot_table(Graphique* graph)
 			VectPlan(   0, -155, 0),
 			VectPlan(-175,    0, 0)
 		};
-		Turret[0].theta = robotItf->control_usb_data[max-1].mes_theta1;
-		Turret[1].theta = robotItf->control_usb_data[max-1].mes_theta2;
-		Turret[2].theta = robotItf->control_usb_data[max-1].mes_theta3;
+		Turret[0].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING1].pos;
+		Turret[1].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING2].pos;
+		Turret[2].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING3].pos;
 
 		for(int i = 0; i < 3; i++)
 		{
@@ -1224,22 +1224,22 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 					robotItf->last_control_usb_data.wanted_pos.theta * 180 / M_PI);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv1 %7.0f (wanted %7.0f)",
-					robotItf->last_control_usb_data.mes_v1, robotItf->last_control_usb_data.cons_v1);
+					robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_DRIVING1].v, robotItf->last_control_usb_data.cons_v1);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv2 %7.0f (wanted %7.0f)",
-							robotItf->last_control_usb_data.mes_v2, robotItf->last_control_usb_data.cons_v2);
+							robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_DRIVING2].v, robotItf->last_control_usb_data.cons_v2);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "drv3 %7.0f (wanted %7.0f)",
-							robotItf->last_control_usb_data.mes_v3, robotItf->last_control_usb_data.cons_v3);
+							robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_DRIVING3].v, robotItf->last_control_usb_data.cons_v3);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str1 %7.2f (wanted %7.2f)",
-					robotItf->last_control_usb_data.mes_theta1* 180 / M_PI, robotItf->last_control_usb_data.cons_theta1* 180 / M_PI);
+					robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_STEERING1].pos* 180 / M_PI, robotItf->last_control_usb_data.cons_theta1* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str2 %7.2f (wanted %7.2f)",
-							robotItf->last_control_usb_data.mes_theta2* 180 / M_PI, robotItf->last_control_usb_data.cons_theta2* 180 / M_PI);
+							robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_STEERING2].pos* 180 / M_PI, robotItf->last_control_usb_data.cons_theta2* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "str3 %7.2f (wanted %7.2f)",
-							robotItf->last_control_usb_data.mes_theta3* 180 / M_PI, robotItf->last_control_usb_data.cons_theta3* 180 / M_PI);
+							robotItf->last_control_usb_data.mes_motors[CAN_MOTOR_STEERING3].pos * 180 / M_PI, robotItf->last_control_usb_data.cons_theta3* 180 / M_PI);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "gyro %6.2f",
 							robotItf->last_control_usb_data.pos_theta_gyro_euler * 180 / M_PI);

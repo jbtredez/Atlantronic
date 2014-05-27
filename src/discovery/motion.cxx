@@ -646,13 +646,5 @@ void motion_update_usb_data(struct control_usb_data* data)
 	data->homingDone &= can_motor[CAN_MOTOR_STEERING2].homingStatus == CAN_MOTOR_HOMING_DONE;
 	data->homingDone &= can_motor[CAN_MOTOR_STEERING3].homingStatus == CAN_MOTOR_HOMING_DONE;
 
-	// TODO obsolete, a virer
-	data->mes_v1 = motion_kinematics_mes[CAN_MOTOR_DRIVING1].v;
-	data->mes_v2 = motion_kinematics_mes[CAN_MOTOR_DRIVING2].v;
-	data->mes_v3 = motion_kinematics_mes[CAN_MOTOR_DRIVING3].v;
-	data->mes_theta1 = motion_kinematics_mes[CAN_MOTOR_STEERING1].pos;
-	data->mes_theta2 = motion_kinematics_mes[CAN_MOTOR_STEERING2].pos;
-	data->mes_theta3 = motion_kinematics_mes[CAN_MOTOR_STEERING3].pos;
-
 	xSemaphoreGive(motion_mutex);
 }

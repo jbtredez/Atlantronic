@@ -38,14 +38,6 @@ struct control_usb_data
 	float cons_theta2;
 	float cons_theta3;
 	Kinematics mes_motors[CAN_MOTOR_MAX];
-	// TODO obsolete, a virer
-	float mes_v1;
-	float mes_v2;
-	float mes_v3;
-	float mes_theta1;
-	float mes_theta2;
-	float mes_theta3;
-	///// fin TODO
 	float vBat;
 	float iPwm[4];
 	bool homingDone;
