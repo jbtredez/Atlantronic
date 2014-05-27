@@ -10,7 +10,7 @@
 volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_color_change_enable;
-static uint8_t gpio_enable_go;
+volatile uint8_t gpio_enable_go = 0;
 
 static xQueueHandle gpio_queue_go;
 
@@ -70,13 +70,15 @@ static int gpio_module_init(void)
 	usb_add_cmd(USB_CMD_GO, &gpio_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &gpio_cmd_color);
 
-	// boutons en IT sur front montant : USR1 et USR2 et GO
+	// boutons en IT sur front montant : USR1 et USR2
+	// boutons en IT sur front descendant sur le GO
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PD;
 	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PB;
 	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI14_PC;
 	EXTI->IMR |= EXTI_IMR_MR3 | EXTI_IMR_MR7 | EXTI_IMR_MR14;
-	EXTI->RTSR |= EXTI_RTSR_TR3 | EXTI_RTSR_TR7 | EXTI_RTSR_TR14;
+	EXTI->RTSR |= EXTI_RTSR_TR7 | EXTI_RTSR_TR14;
+	EXTI->FTSR |= EXTI_RTSR_TR3;
 
 	NVIC_SetPriority(EXTI3_IRQn, PRIORITY_IRQ_EXTI3);
 	NVIC_SetPriority(EXTI9_5_IRQn, PRIORITY_IRQ_EXTI9_5);

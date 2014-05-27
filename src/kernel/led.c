@@ -19,6 +19,7 @@ enum
 	LED_MODE_WAIT_COLOR_SELECTION,
 	LED_MODE_COLOR_SELECTION,
 	LED_MODE_WAIT_INIT,
+	LED_MODE_INIT_DONE,
 	LED_MODE_MATCH_RUNNING,
 };
 
@@ -26,9 +27,11 @@ static void led_task(void *arg);
 static void led_two_half_chaser();
 static void led_chaser();
 static void led_tetris();
+static void led_cmd(void* arg);
 
 static int led_mode = LED_MODE_BOOT;
 static int led_step;
+static uint8_t led_ready_for_init;
 
 static int led_module_init(void)
 {
@@ -54,6 +57,7 @@ static int led_module_init(void)
 	}
 
 	led_mode = LED_MODE_WAIT_X86;
+	usb_add_cmd(USB_CMD_LED_READY_FOR_INIT, led_cmd);
 
 	return 0;
 }
@@ -73,7 +77,7 @@ static void led_task(void *arg)
 		{
 			case LED_MODE_WAIT_X86:
 				led_two_half_chaser();
-				if(usb_is_get_version_done())
+				if(usb_is_get_version_done() && led_ready_for_init)
 				{
 					led_mode = LED_MODE_WAIT_COLOR_SELECTION;
 				}
@@ -117,6 +121,28 @@ static void led_task(void *arg)
 				else
 				{
 					setLed(0x00);
+				}
+
+				if( gpio_is_go_enable() )
+				{
+					led_mode = LED_MODE_INIT_DONE;
+				}
+				break;
+			case LED_MODE_INIT_DONE:
+				if( led_step & 0x01)
+				{
+					if(getcolor() == COLOR_RED)
+					{
+						setLed(LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2);;//setLed(LED_EXT_RED);
+					}
+					else
+					{
+						setLed(LED_EXT_RED | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE2);//setLed(LED_EXT_ORANGE1);
+					}
+				}
+				else
+				{
+					setLed(LED_EXT_RED | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2);
 				}
 
 				if( getGo() )
@@ -222,4 +248,10 @@ static void led_tetris()
 			setLed(LED_EXT_RED | LED_EXT_ORANGE2 | LED_EXT_ORANGE1 | LED_EXT_GREEN | LED_EXT_BLUE);
 			break;
 	}
+}
+
+static void led_cmd(void* arg)
+{
+	(void) arg;
+	led_ready_for_init = 1;
 }

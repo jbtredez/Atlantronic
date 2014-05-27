@@ -50,6 +50,7 @@ int cmd_heartbeat_disable(const char* arg);
 int cmd_heartbeat_update(const char* arg);
 int cmd_help(const char* arg);
 int cmd_homing(const char* arg);
+int cmd_led_ready_for_init(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_motion_enable(const char* arg);
@@ -106,6 +107,7 @@ COMMAND usb_commands[] = {
 	{ "heartbeat_disable", cmd_heartbeat_disable, "heartbeat_disable" },
 	{ "heartbeat_update", cmd_heartbeat_update, "heartbeat_update"},
 	{ "homing", cmd_homing, "homing" },
+	{ "led_ready_for_init", cmd_led_ready_for_init, "led_ready_for_init"},
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
@@ -472,6 +474,13 @@ int cmd_control_print_param(const char* arg)
 	(void) arg;
 	cmd_robot->control_print_param();
 
+	return CMD_SUCESS;
+}
+
+int cmd_led_ready_for_init(const char* arg)
+{
+	(void) arg;
+	cmd_robot->led_ready_for_init();
 	return CMD_SUCESS;
 }
 

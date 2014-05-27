@@ -139,6 +139,9 @@ class RobotInterface
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);
 
+		// ---------- gestion des led --------------------------------------------------
+		int led_ready_for_init();
+
 /////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------
 		int pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);

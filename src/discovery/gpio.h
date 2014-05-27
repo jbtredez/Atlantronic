@@ -188,6 +188,12 @@ static inline uint8_t getGo()
 	return gpio_go;
 }
 
+static inline uint8_t gpio_is_go_enable()
+{
+	extern volatile uint8_t gpio_enable_go;
+	return gpio_enable_go;
+}
+
 uint32_t gpio_get_state();
 
 void gpio_wait_go();

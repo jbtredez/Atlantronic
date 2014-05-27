@@ -57,6 +57,7 @@ enum usb_cmd
 	USB_CMD_XBEE,
 	USB_CMD_POWER,
 	USB_CMD_HEARTBEAT,
+	USB_CMD_LED_READY_FOR_INIT,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 
