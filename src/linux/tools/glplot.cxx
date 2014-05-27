@@ -19,6 +19,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
+#include "kernel/math/matrix_homogeneous.h"
 #include "discovery/graph.h"
 #include "discovery/table.h"
 
@@ -100,6 +101,7 @@ static int simulation = 0;
 static char* atlantronicPath;
 static bool glplot_show_legend = false;
 static bool glplot_3d = false;
+static MatrixHomogeneous glplot_view;
 
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
@@ -1175,6 +1177,25 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		{
 			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
 			gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1);
+			//gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1); // TODO glplot_view
+			float mat[16];
+			mat[0] = glplot_view.val[0];
+			mat[1] = glplot_view.val[4];
+			mat[2] = glplot_view.val[8];
+			mat[3] = 0;
+			mat[4] = glplot_view.val[1];
+			mat[5] = glplot_view.val[5];
+			mat[6] = glplot_view.val[9];
+			mat[7] = 0;
+			mat[8] = glplot_view.val[2];
+			mat[9] = glplot_view.val[6];
+			mat[10] = glplot_view.val[10];
+			mat[11] = 0;
+			mat[12] = glplot_view.val[3];
+			mat[13] = glplot_view.val[7];
+			mat[14] = glplot_view.val[11];
+			mat[15] = 1;
+			glMultMatrixf(mat);
 		}
 
 		switch(current_graph)
@@ -1530,6 +1551,18 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 		case GDK_KP_Add:
 		case GDK_plus:
 			graph[current_graph].zoomf(0.5);
+			break;
+		case GDK_Right:
+			glplot_view.translate(-20,0,0);
+			break;
+		case GDK_Left:
+			glplot_view.translate(20,0,0);
+			break;
+		case GDK_Up:
+			glplot_view.translate(0,-20,0);
+			break;
+		case GDK_Down:
+			glplot_view.translate(0,20,0);
 			break;
 		case GDK_r:
 			res = pthread_mutex_lock(&robotItf->mutex);
