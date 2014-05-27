@@ -48,6 +48,7 @@ struct control_usb_data
 	///// fin TODO
 	float vBat;
 	float iPwm[4];
+	bool homingDone;
 	uint8_t pumpState;
 	uint32_t power_state;
 	float arm_matrix[12];
