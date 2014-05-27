@@ -15,6 +15,7 @@
 #include "kernel/driver/dynamixel.h"
 #include "kernel/state_machine/state_machine.h"
 #include "kernel/driver/power.h"
+#include "kernel/pump.h"
 #include <math.h>
 #include <stdlib.h>
 
@@ -35,11 +36,18 @@ static void arm_homing1_run();
 static void arm_homing2_run();
 static unsigned int arm_homing_transition(unsigned int currentState);
 
-static void arm_move_center_run();
-static void arm_move_protect_torch_run();
-static void arm_move_torch_run();
-static void arm_move_right_run();
-static void arm_move_left_run();
+static void arm_take_front_triangle0_run();
+static void arm_take_front_triangle1_run();
+static void arm_take_front_triangle2_run();
+static unsigned int arm_take_front_triangle_transition(unsigned int currentState);
+
+
+static void arm_protect_torch_run();
+static void arm_swalow_torch_run();
+static void arm_take_right_finger_run();
+static void arm_release_right_finger_run();
+static void arm_take_left_finger_run();
+static void arm_release_left_finger_run();
 
 static MatrixHomogeneous arm_transform;
 static StateMachineState arm_states[ARM_STATE_MAX] = {
@@ -47,11 +55,15 @@ static StateMachineState arm_states[ARM_STATE_MAX] = {
 		{ "ARM_STATE_HOMING_0", &arm_homing_entry, &arm_homing0_run, &arm_homing_transition},
 		{ "ARM_STATE_HOMING_1", &arm_homing_entry, &arm_homing1_run, &arm_homing_transition},
 		{ "ARM_STATE_HOMING_2", &arm_homing_entry, &arm_homing2_run, &arm_homing_transition},
-		{ "ARM_CMD_MOVE_CENTER", &nop_function, &arm_move_center_run, &arm_generic_transition},
-		{ "ARM_STATE_MOVE_PROTECT_TORCH", &nop_function, &arm_move_protect_torch_run, &arm_generic_transition},
-		{ "ARM_STATE_MOVE_TORCH", &nop_function, &arm_move_torch_run, &arm_generic_transition},
-		{ "ARM_CMD_MOVE_RIGHT", &nop_function, &arm_move_right_run, &arm_generic_transition},
-		{ "ARM_CMD_MOVE_LEFT", &nop_function, &arm_move_left_run, &arm_generic_transition},
+		{ "ARM_STATE_TAKE_FRONT_TRIANGLE_0", &nop_function, &arm_take_front_triangle0_run, &arm_take_front_triangle_transition},
+		{ "ARM_STATE_TAKE_FRONT_TRIANGLE_1", &nop_function, &arm_take_front_triangle1_run, &arm_take_front_triangle_transition},
+		{ "ARM_STATE_TAKE_FRONT_TRIANGLE_2", &nop_function, &arm_take_front_triangle2_run, &arm_take_front_triangle_transition},
+		{ "ARM_STATE_PROTECT_TORCH", &nop_function, &arm_protect_torch_run, &arm_generic_transition},
+		{ "ARM_STATE_SWALOW_TORCH", &nop_function, &arm_swalow_torch_run, &arm_generic_transition},
+		{ "ARM_STATE_TAKE_RIGHT_FINGER", &nop_function, &arm_take_right_finger_run, &arm_generic_transition},
+		{ "ARM_STATE_RELEASE_RIGHT_FINGER", &nop_function, &arm_release_right_finger_run, &arm_generic_transition},
+		{ "ARM_STATE_TAKE_LEFT_FINGER", &nop_function, &arm_take_left_finger_run, &arm_generic_transition},
+		{ "ARM_STATE_RELEASE_LEFT_FINGER", &nop_function, &arm_release_left_finger_run, &arm_generic_transition},
 };
 static StateMachine arm_stateMachine(arm_states, ARM_STATE_MAX);
 
@@ -80,7 +92,7 @@ static int arm_module_init()
 	ax12.set_goal_limit(AX12_ARM_SHOULDER_ELBOW, -M_PI_2, M_PI_2);
 	ax12.set_goal_limit(AX12_ARM_WRIST_ELBOW, -M_PI_2, M_PI_2);
 	ax12.set_goal_limit(AX12_ARM_WRIST, -M_PI_2, M_PI_2);
-	rx24.set_goal_limit(RX24_ARM_SLIDER, -0.92, 1.3);
+	rx24.set_goal_limit(RX24_ARM_SLIDER, -0.9, 1.3);
 
 	ax12.set_torque_limit(AX12_ARM_SHOULDER, 1);
 	ax12.set_torque_limit(AX12_ARM_SHOULDER_ELBOW, 0.5);
@@ -148,7 +160,7 @@ static void arm_update_position()
 
 		float theta = -(arm_pos_mes.val[ARM_AXIS_SLIDER] - M_PI_2);
 		float theta2 = asinf( (ARM_SLIDER_POSITION_Y - ARM_SLIDER_L1 * sinf(theta)) / ARM_SLIDER_L2 ) - M_PI;
-		float z0 = ARM_SLIDER_POSITION_Z + ARM_SLIDER_L1 * cosf(theta) + ARM_SLIDER_L2 * cosf(theta2);
+		float z0 = ARM_SLIDER_POSITION_Z + ARM_SLIDER_L1 * cosf(theta) + ARM_SLIDER_L2 * cosf(theta2) - ARM_SLIDER_L3;
 		arm_transform.translate(ARM_SHOULDER_POSITION_X, 0, z0);
 		arm_transform.rotateY( arm_pos_mes.val[ARM_AXIS_SHOULDER] );
 		arm_transform.translate(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
@@ -165,6 +177,13 @@ static void arm_update_position()
 		arm_target_reached &= ax12.isFlagActive(AX12_ARM_WRIST, DYNAMIXEL_FLAG_TARGET_REACHED);
 		// TODO bug ?
 		//arm_target_reached &= rx24.isFlagActive(RX24_ARM_SLIDER, DYNAMIXEL_FLAG_TARGET_REACHED);
+
+		if( arm_transform.val[11] >= 350 )
+		{
+			// bug, on ne doit pas depasser la hauteur limite
+			log_format(LOG_ERROR, "arm - z = %d >= 350", (int) arm_transform.val[11]);
+			power_set(POWER_OFF);
+		}
 	}
 	else
 	{
@@ -181,7 +200,6 @@ void arm_get_matrix(float* mat)
 
 void arm_update()
 {
-	// TODO verif pas de depassement en hauteur
 	ax12.set_goal_position(AX12_ARM_SHOULDER, arm_pos_cmd.val[ARM_AXIS_SHOULDER]);
 	ax12.set_goal_position(AX12_ARM_SHOULDER_ELBOW, arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW]);
 	ax12.set_goal_position(AX12_ARM_WRIST_ELBOW, arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW]);
@@ -202,29 +220,35 @@ static unsigned int arm_generic_transition(unsigned int currentState)
 		return ARM_STATE_DISABLED;
 	}
 
-	if( arm_cmd_type == ARM_CMD_HOMING )
+	switch(arm_cmd_type)
 	{
-		return ARM_STATE_HOMING_0;
-	}
-
-	if( arm_cmd_type == ARM_CMD_MOVE_CENTER )
-	{
-		return ARM_STATE_MOVE_CENTER;
-	}
-
-	if( arm_cmd_type == ARM_CMD_MOVE_RIGHT )
-	{
-		return ARM_STATE_MOVE_RIGHT;
-	}
-
-	if( arm_cmd_type == ARM_CMD_MOVE_LEFT )
-	{
-		return ARM_STATE_MOVE_LEFT;
-	}
-
-	if( arm_cmd_type == ARM_CMD_MOVE_PROTECT_TORCH )
-	{
-		return ARM_STATE_MOVE_PROTECT_TORCH;
+		case ARM_CMD_HOMING:
+			return ARM_STATE_HOMING_0;
+			break;
+		case ARM_CMD_TAKE_FRONT_TRIANGLE:
+			return ARM_STATE_TAKE_FRONT_TRIANGLE_0;
+			break;
+		case ARM_CMD_PROTECT_TORCH:
+			return ARM_STATE_PROTECT_TORCH;
+			break;
+		case ARM_CMD_SWALOW_TORCH:
+			return ARM_STATE_SWALOW_TORCH;
+			break;
+		case ARM_CMD_TAKE_RIGHT_FINGER:
+			return ARM_STATE_TAKE_RIGHT_FINGER;
+			break;
+		case ARM_CMD_RELEASE_RIGHT_FINGER:
+			return ARM_STATE_RELEASE_RIGHT_FINGER;
+			break;
+		case ARM_CMD_TAKE_LEFT_FINGER:
+			return ARM_STATE_TAKE_LEFT_FINGER;
+			break;
+		case ARM_CMD_RELEASE_LEFT_FINGER:
+			return ARM_STATE_RELEASE_LEFT_FINGER;
+			break;
+		default:
+			return ARM_CMD_DISABLE;
+			break;
 	}
 
 	return currentState;
@@ -242,7 +266,7 @@ static void arm_homing0_run()
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
-	arm_pos_cmd.val[ARM_AXIS_SLIDER] = arm_pos_mes.val[ARM_AXIS_SLIDER];
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.5;
 
 	arm_update();
 }
@@ -253,7 +277,7 @@ static void arm_homing1_run()
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
 	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
-	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.9;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.8;
 
 	arm_update();
 }
@@ -264,7 +288,7 @@ static void arm_homing2_run()
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = -0.38;
 	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = -0.164;
 	arm_pos_cmd.val[ARM_AXIS_WRIST] = -0.384;
-	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.9;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = -0.8;
 
 	arm_update();
 }
@@ -292,8 +316,61 @@ static unsigned int arm_homing_transition(unsigned int state)
 	return state;
 }
 
-//---------------------- Etat ARM_STATE_MOVE_CENTER --------------------------------
-static void arm_move_center_run()
+//---------------------- Etat ARM_STATE_TAKE_FRONT_TRIANGLE_0 -----------------
+static void arm_take_front_triangle0_run()
+{
+	pump[3].set(1);
+
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = -M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_TAKE_FRONT_TRIANGLE_1 -----------------
+static void arm_take_front_triangle1_run()
+{
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.3;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_TAKE_FRONT_TRIANGLE_2 -----------------
+static void arm_take_front_triangle2_run()
+{
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+static unsigned int arm_take_front_triangle_transition(unsigned int state)
+{
+	if( power_get() || arm_cmd_type == ARM_CMD_DISABLE )
+	{
+		return ARM_STATE_DISABLED;
+	}
+
+	if( state == ARM_STATE_TAKE_FRONT_TRIANGLE_0 && arm_target_reached )
+	{
+		state = ARM_STATE_TAKE_FRONT_TRIANGLE_1;
+	}
+	else if( state == ARM_STATE_TAKE_FRONT_TRIANGLE_1 && arm_target_reached )
+	{
+		state = ARM_STATE_TAKE_FRONT_TRIANGLE_2;
+	}
+	else if( state == ARM_STATE_TAKE_FRONT_TRIANGLE_2 && arm_target_reached && arm_cmd_type != ARM_CMD_TAKE_FRONT_TRIANGLE )
+	{
+		state = arm_generic_transition(state);
+	}
+
+	return state;
+}
+
+//---------------------- Etat ARM_STATE_PROTECT_TORCH ------------------------------
+static void arm_protect_torch_run()
 {
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
@@ -304,20 +381,8 @@ static void arm_move_center_run()
 	arm_update();
 }
 
-//---------------------- Etat ARM_STATE_MOVE_PROTECT_TORCH ------------------------------
-static void arm_move_protect_torch_run()
-{
-	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
-	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = 0;
-	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = -M_PI_2;
-	arm_pos_cmd.val[ARM_AXIS_WRIST] = 0;
-	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
-
-	arm_update();
-}
-
-//---------------------- Etat ARM_STATE_MOVE_TORCH ------------------------------
-static void arm_move_torch_run()
+//---------------------- Etat ARM_STATE_SWALOW_TORCH ------------------------------
+static void arm_swalow_torch_run()
 {
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = -M_PI_2;
@@ -328,8 +393,8 @@ static void arm_move_torch_run()
 	arm_update();
 }
 
-//---------------------- Etat ARM_STATE_MOVE_RIGHT --------------------------------
-static void arm_move_right_run()
+//---------------------- Etat ARM_STATE_TAKE_RIGHT_FINGER --------------------------------
+static void arm_take_right_finger_run()
 {
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = -M_PI_2;
@@ -340,8 +405,32 @@ static void arm_move_right_run()
 	arm_update();
 }
 
-//---------------------- Etat ARM_STATE_MOVE_LEFT --------------------------------
-static void arm_move_left_run()
+//---------------------- Etat ARM_STATE_RELEASE_RIGHT_FINGER --------------------------------
+static void arm_release_right_finger_run()
+{
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = -M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_TAKE_LEFT_FINGER --------------------------------
+static void arm_take_left_finger_run()
+{
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
+	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_WRIST_ELBOW] = 0;
+	arm_pos_cmd.val[ARM_AXIS_WRIST] = -M_PI_2;
+	arm_pos_cmd.val[ARM_AXIS_SLIDER] = 0.5;
+
+	arm_update();
+}
+
+//---------------------- Etat ARM_STATE_RELEASE_LEFT_FINGER --------------------------------
+static void arm_release_left_finger_run()
 {
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER] = 0;
 	arm_pos_cmd.val[ARM_AXIS_SHOULDER_ELBOW] = M_PI_2;

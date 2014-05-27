@@ -45,6 +45,8 @@ class Pump
 		systime startTime;
 };
 
+extern Pump pump[PUMP_MAX];
+
 uint32_t pump_update() WEAK_PUMP;
 
 //------------------ interface usb -------------------

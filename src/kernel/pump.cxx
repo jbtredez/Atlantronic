@@ -14,7 +14,7 @@
 
 static void pump_cmd(void*);
 
-static Pump pump[PUMP_MAX] =
+Pump pump[PUMP_MAX] =
 {
 	Pump(PWM_1),
 	Pump(PWM_2),
