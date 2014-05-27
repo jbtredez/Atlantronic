@@ -157,8 +157,11 @@ static void gpio_cmd_go(void * arg)
 	switch(cmd_arg->cmd)
 	{
 		case GPIO_CMD_ENABLE_GO:
-			gpio_enable_go = 1;
-			log(LOG_INFO, "enable GO");
+			if( gpio_enable_go != 1 )
+			{
+				gpio_enable_go = 1;
+				log(LOG_INFO, "enable GO");
+			}
 			break;
 		case GPIO_CMD_GO:
 			if(gpio_enable_go)
