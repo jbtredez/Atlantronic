@@ -909,7 +909,7 @@ void plot_table(Graphique* graph)
 		{
 			glPushMatrix();
 
-			glTranslatef(0, 0, robotItf->last_control_usb_data.arm_matrix[11]);
+			glTranslatef(0, 0, robotItf->last_control_usb_data.arm_matrix.val[11]);
 
 			glColor3f(0, 1, 1);
 			glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
@@ -1318,7 +1318,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 						(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
 				lineId++;
 			}
-			float* mat = robotItf->last_control_usb_data.arm_matrix;
+			float* mat = robotItf->last_control_usb_data.arm_matrix.val;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);

@@ -38,6 +38,7 @@ obj-discovery-gyro += kernel/control/kinematics.o
 obj-discovery-gyro += kernel/geometric_model/geometric_model.o
 obj-discovery-gyro += kernel/location/location.o
 obj-discovery-gyro += kernel/math/vect_plan.o
+obj-discovery-gyro += kernel/math/matrix_homogeneous.o
 obj-discovery-gyro += discovery/control.o
 
 obj-discovery-dynamixel += $(obj-discovery-core)

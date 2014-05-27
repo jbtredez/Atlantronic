@@ -191,10 +191,10 @@ static void arm_update_position()
 	}
 }
 
-void arm_get_matrix(float* mat)
+void arm_get_matrix(MatrixHomogeneous* mat)
 {
 	xSemaphoreTake(arm_mutex, portMAX_DELAY);
-	memcpy(mat, arm_transform.val, sizeof(arm_transform.val));
+	memcpy(mat, &arm_transform, sizeof(arm_transform));
 	xSemaphoreGive(arm_mutex);
 }
 

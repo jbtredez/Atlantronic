@@ -72,7 +72,6 @@ struct arm_cmd
 } __attribute__((packed));
 
 
-// TODO refiler MatriceHomogene (a compiler dans glplot)
-void arm_get_matrix(float* mat) WEAK_ARM;
+void arm_get_matrix(MatrixHomogeneous* mat) WEAK_ARM;
 
 #endif

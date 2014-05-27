@@ -76,7 +76,7 @@ static void control_task(void* /*arg*/)
 		control_usb_data.encoder[ENCODER_3] = encoder_get(ENCODER_3);
 		control_usb_data.gpio = gpio_get_state();
 		control_usb_data.power_state = power_get();
-		arm_get_matrix(control_usb_data.arm_matrix);
+		arm_get_matrix(&control_usb_data.arm_matrix);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 

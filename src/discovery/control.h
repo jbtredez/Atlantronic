@@ -9,6 +9,7 @@
 #include "kernel/systick.h"
 #include "kernel/control/kinematics.h"
 #include "kernel/math/vect_plan.h"
+#include "kernel/math/matrix_homogeneous.h"
 #include "motion.h"
 #include "kernel/driver/encoder.h"
 
@@ -44,7 +45,7 @@ struct control_usb_data
 	bool homingDone;
 	uint8_t pumpState;
 	uint32_t power_state;
-	float arm_matrix[12];
+	MatrixHomogeneous arm_matrix;
 } __attribute__((packed));
 
 #endif

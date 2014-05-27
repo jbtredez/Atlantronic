@@ -12,7 +12,22 @@ class MatrixHomogeneous
 		void rotateY(float theta);
 		void rotateZ(float theta);
 
+		inline float getX()
+		{
+			return val[3];
+		}
+
+		inline float getY()
+		{
+			return val[7];
+		}
+
+		inline float getZ()
+		{
+			return val[7];
+		}
+
 		float val[12];
-};
+} __attribute__((packed));
 
 #endif
