@@ -26,7 +26,7 @@ enum
 static void led_task(void *arg);
 static void led_two_half_chaser();
 static void led_chaser();
-static void led_tetris();
+//static void led_tetris();
 static void led_cmd(void* arg);
 
 static int led_mode = LED_MODE_BOOT;
@@ -83,7 +83,16 @@ static void led_task(void *arg)
 				}
 				break;
 			case LED_MODE_WAIT_COLOR_SELECTION:
-				led_tetris();
+				//led_tetris();
+				if( led_step & 0x01)
+				{
+					setLed(LED_EXT_RED | LED_EXT_ORANGE1);
+				}
+				else
+				{
+					setLed(0x00);
+				}
+
 				color = getcolor();
 				if( color != old_color )
 				{
@@ -225,7 +234,7 @@ static void led_chaser()
 			break;
 	}
 }
-
+/*
 static void led_tetris()
 {
 	switch(led_step)
@@ -248,7 +257,7 @@ static void led_tetris()
 			setLed(LED_EXT_RED | LED_EXT_ORANGE2 | LED_EXT_ORANGE1 | LED_EXT_GREEN | LED_EXT_BLUE);
 			break;
 	}
-}
+}*/
 
 static void led_cmd(void* arg)
 {
