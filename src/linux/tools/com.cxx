@@ -122,10 +122,14 @@ int Com::close()
 	}
 	else if( ip )
 	{
-		log_info("close %s", ip);
+		if(opened)
+		{
+			log_info("close %s", ip);
+		}
 	}
 
 end:
+	opened = false;
 	return res;
 }
 
@@ -185,7 +189,7 @@ int Com::open()
 		if( fd_read < 0)
 		{
 			fd_read = -1;
-			log_error_errno("socket");
+			//log_error_errno("socket");
 			close();
 			goto end;
 		}
@@ -197,12 +201,13 @@ int Com::open()
 		res = connect(fd_read, (struct sockaddr *) &addr, sizeof(addr));
 		if( res < 0 )
 		{
-			fd_read = -1;
-			log_error_errno("socket");
 			close();
+			//log_error_errno("connect");
+			fd_read = -1;
 			goto end;
 		}
 		fd_write = fd_read;
+		opened = true;
 		log_info("connected to %s", ip);
 	}
 

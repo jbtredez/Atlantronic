@@ -34,6 +34,7 @@ class Com
 		int buffer_end;
 		int buffer_begin;
 		int buffer_size;
+		bool opened;
 };
 
 #endif
