@@ -41,7 +41,6 @@ extern "C" {
 #define GPIO_IN_BTN2     0x8000  // IN_BTN2 (etat pin)
 #define GPIO_IN_GO      0x10000  // IN_GO (etat pin)
 #define GPIO_GO         0x20000  // GO : match lance
-#define GPIO_COLOR      0x40000  // color
 
 enum gpio_mode
 {

@@ -101,7 +101,7 @@ static void led_task(void *arg)
 				old_color = color;
 				break;
 			case LED_MODE_COLOR_SELECTION:
-				if(getcolor() != COLOR_RED)
+				if(getcolor() == COLOR_RED)
 				{
 					setLed(LED_EXT_RED);
 				}

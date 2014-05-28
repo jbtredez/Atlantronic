@@ -45,6 +45,7 @@ struct control_usb_data
 	float iPwm[4];
 	bool homingDone;
 	uint8_t pumpState;
+	uint8_t color;
 	uint32_t power_state;
 	struct dynamixel_usb_data dynamixel;
 	MatrixHomogeneous arm_matrix;

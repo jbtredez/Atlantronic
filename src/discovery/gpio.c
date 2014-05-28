@@ -11,6 +11,7 @@ volatile uint32_t color;
 volatile uint8_t gpio_go;
 volatile uint8_t gpio_color_change_enable;
 volatile uint8_t gpio_enable_go = 0;
+static volatile struct systime gpio_color_change_time;
 
 static xQueueHandle gpio_queue_go;
 
@@ -146,7 +147,6 @@ uint32_t gpio_get_state()
 	res |= gpio_get_pin(GPIOB, 7) << 15;  // IN_BTN2
 	res |= gpio_get_pin(GPIOD, 3) << 16; // INGO
 	res |= (gpio_go?1:0) << 17; // GO
-	res |= (color?1:0) << 18; // color
 
 	return res;
 }
@@ -246,13 +246,19 @@ void isr_exti15_10(void)
 		EXTI->PR = EXTI_PR_PR14;
 		if(gpio_go == 0 && gpio_color_change_enable)
 		{
-			if(color == COLOR_YELLOW)
+			struct systime t = systick_get_time_from_isr();
+			struct systime dt = timediff(t, gpio_color_change_time);
+			if( dt.ms > 300)
 			{
-				color = COLOR_RED;
-			}
-			else
-			{
-				color = COLOR_YELLOW;
+				gpio_color_change_time = t;
+				if(color == COLOR_YELLOW)
+				{
+					color = COLOR_RED;
+				}
+				else
+				{
+					color = COLOR_YELLOW;
+				}
 			}
 		}
 	}
