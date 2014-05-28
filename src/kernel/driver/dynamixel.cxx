@@ -173,8 +173,13 @@ void DynamixelManager::task()
 			}
 
 			// renvoi du couple uniquement si ! control_off et torque_to_update
-			if( (devices[id].flags & (DYNAMIXEL_FLAG_TORQUE_TO_UPDATE | DYNAMIXEL_FLAG_CONTROL_OFF)) == DYNAMIXEL_FLAG_TORQUE_TO_UPDATE)
+			if( (devices[id].flags & (DYNAMIXEL_FLAG_TORQUE_TO_UPDATE | DYNAMIXEL_FLAG_CONTROL_OFF)) == DYNAMIXEL_FLAG_TORQUE_TO_UPDATE || disabled)
 			{
+				uint16_t max_torque = 0;
+				if( ! disabled )
+				{
+					max_torque = devices[id].max_torque;
+				}
 				struct dynamixel_error err = write16(id+1, DYNAMIXEL_TORQUE_LIMIT_L, devices[id].max_torque);
 				if( ! err.transmit_error && ! err.internal_error )
 				{
@@ -187,7 +192,7 @@ void DynamixelManager::task()
 			}
 			xSemaphoreGive(mutex);
 
-			if( pos_err > 0 && ! (devices[id].flags & DYNAMIXEL_FLAG_CONTROL_OFF))
+			if( pos_err > 0 && ! (devices[id].flags & DYNAMIXEL_FLAG_CONTROL_OFF) && ! disabled)
 			{
 				// on va envoyer la position désirée
 				req.instruction = DYNAMIXEL_INSTRUCTION_WRITE_DATA;
@@ -240,6 +245,18 @@ void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel)
 		dynamixel->rx24[i].error = rx24.devices[i-1].last_error;
 	}
 	xSemaphoreGive(rx24.mutex);
+}
+
+void dynamixel_enable()
+{
+	ax12.disabled = false;
+	rx24.disabled = false;
+}
+
+void dynamixel_disable()
+{
+	ax12.disabled = true;
+	rx24.disabled = true;
 }
 
 void DynamixelManager::send(struct dynamixel_request *req)

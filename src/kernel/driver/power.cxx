@@ -4,7 +4,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/pwm.h"
 
-int power_state = POWER_OFF;
+int power_state = POWER_ON;
 static void power_cmd(void* arg);
 
 int power_module_init()
@@ -23,7 +23,10 @@ void power_set(int powerEventMask)
 	if( power_state )
 	{
 		pwm_disable();
-		gpio_power_off();
+		if( power_state & ~POWER_OFF_HEARTBEAT )
+		{
+			gpio_power_off();
+		}
 	}
 
 	int diff = power_state ^ old_state;
@@ -74,6 +77,11 @@ void power_clear(int powerEventMask)
 	if( diff & POWER_OFF_HEARTBEAT)
 	{
 		log(LOG_ERROR, "power clear - HeartBeat");
+	}
+
+	if( ! (power_state & ~POWER_OFF_HEARTBEAT) )
+	{
+		gpio_power_on();
 	}
 
 	if( ! power_state )

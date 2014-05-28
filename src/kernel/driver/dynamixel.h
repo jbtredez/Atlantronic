@@ -192,8 +192,11 @@ class DynamixelManager
 		// donnes des dynamixel d'id 1 a max_devices_id-1
 		int max_devices_id;
 		Dynamixel* devices;
+		bool disabled;
 		friend void dynamixel_cmd(void* arg);
 		friend void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel);
+		friend void dynamixel_disable();
+		friend void dynamixel_enable();
 		uint8_t type;
 };
 
@@ -237,5 +240,9 @@ struct dynamixel_usb_data
 } __attribute((packed));
 
 void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel) WEAK_DYNAMIXEL;
+
+void dynamixel_disable() WEAK_DYNAMIXEL;
+
+void dynamixel_enable() WEAK_DYNAMIXEL;
 
 #endif
