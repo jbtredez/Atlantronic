@@ -19,8 +19,9 @@ extern "C" {
 #define LED_EXT_ORANGE2  0x00040000
 #define LED_EXT_RED      0x01000000
 
-#define COLOR_RED         0
-#define COLOR_YELLOW      1
+#define COLOR_UNKNOWN     0
+#define COLOR_RED         1
+#define COLOR_YELLOW      2
 
 #define GPIO_IN_1          0x01  // IN_1
 #define GPIO_IN_2          0x02  // IN_2

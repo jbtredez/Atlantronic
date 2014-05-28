@@ -101,7 +101,7 @@ static void led_task(void *arg)
 				old_color = color;
 				break;
 			case LED_MODE_COLOR_SELECTION:
-				if(getcolor() == COLOR_RED)
+				if(getcolor() != COLOR_RED)
 				{
 					setLed(LED_EXT_RED);
 				}
@@ -109,7 +109,7 @@ static void led_task(void *arg)
 				{
 					setLed(LED_EXT_ORANGE1);
 				}
-				if( gpio_get_state() & GPIO_IN_GO )
+				if( gpio_get_state() & GPIO_IN_GO && getcolor() != COLOR_UNKNOWN)
 				{
 					gpio_color_change_disable();
 					led_mode = LED_MODE_WAIT_INIT;

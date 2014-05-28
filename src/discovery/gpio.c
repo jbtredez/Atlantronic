@@ -62,7 +62,10 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOE, 6, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_13
 	gpio_pin_init(GPIOE, 5, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_14
 
-	color = COLOR_RED;
+	// TODO puissance par defaut
+
+	gpio_power_on();
+	color = COLOR_UNKNOWN;
 	gpio_go = 0;
 	gpio_queue_go = xQueueCreate(1, 0);
 	gpio_color_change_enable = 1;
@@ -87,7 +90,8 @@ static int gpio_module_init(void)
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
 
-	gpio_power_off();
+	// TODO puissance par defaut
+//	gpio_power_off();
 
 	return 0;
 }
