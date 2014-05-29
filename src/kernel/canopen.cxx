@@ -331,7 +331,8 @@ void CanopenNode::update(portTickType /*absTimeout*/)
 
 void CanopenNode::resetNode()
 {
-	log_format(LOG_INFO, "reset node %x", nodeid);
+// TODO commente, pas utilise pour coupe 2014
+//	log_format(LOG_INFO, "reset node %x", nodeid);
 	last_reset_node_time = systick_get_time();
 	canopen_reset_node(nodeid);
 }
