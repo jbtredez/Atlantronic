@@ -23,15 +23,17 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
 
 	for( ; size--; )
 	{
-		if(*distance > HOKUYO_MIN_RANGE && *distance < HOKUYO_MAX_RANGE)
+		float hokuyoTheta = theta - hokuyo_pos_table.theta;
+		if(*distance > HOKUYO_MIN_RANGE && *distance < HOKUYO_MAX_RANGE && hokuyoTheta > scan->theta_min && hokuyoTheta < scan->theta_max)
 		{
 			pos->x = *distance * cosf(theta) + hokuyo_pos_table.x;
 			pos->y = *distance * sinf(theta) + hokuyo_pos_table.y;
 		}
 		else
 		{
-			pos->x = 0;
-			pos->y = 0;
+			pos->x = 1000000;
+			pos->y = 1000000;
+			*distance = 0;
 		}
 
 		distance++;
@@ -53,7 +55,7 @@ int hokuyo_find_objects(uint16_t* distance, struct vect2* hokuyo_pos, unsigned i
 	while(i < size)
 	{
 		// on passe les points erronés ou en dehors de la table
-		while( ( i < size && distance[i] < 20) || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000)
+		while( ( i < size && distance[i] < HOKUYO_MIN_RANGE) || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000)
 		{
 			i++;
 		}
@@ -71,7 +73,7 @@ int hokuyo_find_objects(uint16_t* distance, struct vect2* hokuyo_pos, unsigned i
 		while(i < size && abs(gap) < GAP)
 		{
 			dist = distance[i];
-			if( dist < 20 || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000 )
+			if( dist < HOKUYO_MIN_RANGE || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000 )
 			{
 				gap = GAP;
 			}

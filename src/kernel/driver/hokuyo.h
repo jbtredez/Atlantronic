@@ -26,7 +26,7 @@
 #define HOKUYO_DTHETA         	                                        (M_PI / 512.0f)
 #define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
 #define HOKUYO_MAX_RANGE                                                           4000
-#define HOKUYO_MIN_RANGE                                                             20
+#define HOKUYO_MIN_RANGE                                                             50
 #define HOKUYO_POINT_TO_POINT_DT                                         (0.1f/1024.0f)
 
 enum hokuyo_id
@@ -44,7 +44,9 @@ struct hokuyo_scan
 	signed char sens; //!< sens du hokuyo (1 = vers le haut, -1 = vers le bas)
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
 	systime date;
-} __attribute__((packed));;
+	float theta_min;
+	float theta_max;
+} __attribute__((packed));
 
 #ifndef LINUX
 
