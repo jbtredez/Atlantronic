@@ -52,7 +52,6 @@ static int detection_reg_size;
 static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT];
 static struct detection_object detection_obj1[DETECTION_NUM_OBJECT];
 static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
-static struct detection_object detection_obj[DETECTION_NUM_OBJECT];
 static int32_t detection_num_obj[HOKUYO_MAX];
 
 int detection_module_init()
@@ -106,6 +105,24 @@ static void detection_task(void* arg)
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
+
+				//TODO
+				//xSemaphoreGive(hokuyo_scan_mutex);
+
+				int16_t detect_size = detection_num_obj[HOKUYO1];
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE1, &detect_size, sizeof(detect_size));
+
+				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
+				/*for(i = 0 ; i < detection_num_obj; i++)
+				{
+					usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
+				}*/
+
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT1, detection_obj1, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj1[0]));
+				/*for(i = 0 ; i < detection_num_obj; i++)
+				{
+					log_format(LOG_INFO, "obj = %d %d", (int)detection_obj[i].x, (int)detection_obj[i].y);
+				}*/
 			}
 			if( event == DETECTION_EVENT_HOKUYO_2 )
 			{
@@ -114,24 +131,26 @@ static void detection_task(void* arg)
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
+
+				//TODO
+				//xSemaphoreGive(hokuyo_scan_mutex);
+
+				int16_t detect_size = detection_num_obj[HOKUYO2];
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &detect_size, sizeof(detect_size));
+
+				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
+				/*for(i = 0 ; i < detection_num_obj; i++)
+				{
+					usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
+				}*/
+
+				usb_add(USB_DETECTION_DYNAMIC_OBJECT2, detection_obj2, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj2[0]));
+				/*for(i = 0 ; i < detection_num_obj; i++)
+				{
+					log_format(LOG_INFO, "obj = %d %d", (int)detection_obj[i].x, (int)detection_obj[i].y);
+				}*/
 			}
-			//TODO
-			//xSemaphoreGive(hokuyo_scan_mutex);
 
-			int16_t detect_size = detection_num_obj[HOKUYO1] + detection_num_obj[HOKUYO2];
-			usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &detect_size, sizeof(detect_size));
-
-			//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
-			/*for(i = 0 ; i < detection_num_obj; i++)
-			{
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
-			}*/
-
-			usb_add(USB_DETECTION_DYNAMIC_OBJECT, detection_obj, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj[0]));
-			/*for(i = 0 ; i < detection_num_obj; i++)
-			{
-				log_format(LOG_INFO, "obj = %d %d", (int)detection_obj[i].x, (int)detection_obj[i].y);
-			}*/
 			detection_callback_function();
 		}
 	}
@@ -163,7 +182,7 @@ static void detection_compute(int id)
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	detection_num_obj[id] = hokuyo_find_objects(hokuyo[id].scan.distance, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object_polyline, DETECTION_NUM_OBJECT);
+	detection_num_obj[id] = hokuyo_find_objects(&hokuyo[id].scan, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object_polyline, DETECTION_NUM_OBJECT);
 	detection_reg_size = 0;
 
 	for( i = 0 ; i < detection_num_obj[id] ; i++)
@@ -180,7 +199,7 @@ static void detection_compute(int id)
 		float xmax = xmin;
 		float ymin = detection_object_polyline[i].pt[0].y;
 		float ymax = ymin;
-		for(int j = 0; j < detection_object_polyline[i].size; j++ )
+		for(int j = 1; j < detection_object_polyline[i].size; j++ )
 		{
 			if( detection_object_polyline[i].pt[j].x < xmin )
 			{
@@ -201,7 +220,6 @@ static void detection_compute(int id)
 			}
 		}
 
-		// TODo faire mieux pour la fusion
 		if(id == HOKUYO1 )
 		{
 			detection_obj1[i].x = (xmin + xmax) / 2;
@@ -221,17 +239,6 @@ static void detection_compute(int id)
 			{
 				detection_obj2[i].size = ymax - ymin;
 			}
-		}
-		int i = 0;
-		for(int j = 0; j < detection_num_obj[HOKUYO1]; j++)
-		{
-			detection_obj[i] = detection_obj1[j];
-			i++;
-		}
-		for(int j = 0; j < detection_num_obj[HOKUYO2]; j++)
-		{
-			detection_obj[i] = detection_obj2[j];
-			i++;
 		}
 	}
 

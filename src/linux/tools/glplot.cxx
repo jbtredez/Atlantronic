@@ -725,7 +725,7 @@ void plot_table(Graphique* graph)
 		glLineWidth(1);
 	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
+	/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 	{
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
 		for(i = 0; i < robotItf->detection_dynamic_object_size; i++)
@@ -741,6 +741,20 @@ void plot_table(Graphique* graph)
 				glEnd();
 			}
 		}
+	}*/
+
+	for(i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
+	{
+		glColor3f(0,0,1);
+		draw_plus(robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y, 50, 50);
+		//printf("obj_h1 : %7.2f %7.2f\n", robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y);
+	}
+
+	for(i = 0; i < (int)robotItf->detection_dynamic_object_count2; i++)
+	{
+		glColor3f(0,1,1);
+		draw_plus(robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y, 50, 50);
+		//printf("obj_h2 : %7.2f %7.2f\n", robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y);
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )

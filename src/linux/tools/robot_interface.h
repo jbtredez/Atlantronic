@@ -181,7 +181,7 @@ class RobotInterface
 		double start_time;
 
 		// tmp (en cours de mise à jour)
-		int detection_dynamic_object_id;
+		/*int detection_dynamic_object_id;
 		int detection_dynamic_object_pt_tmp_size;
 		int16_t detection_dynamic_object_size_tmp;
 		struct vect2 detection_dynamic_object_pt_tmp[HOKUYO_NUM_POINTS];
@@ -190,10 +190,12 @@ class RobotInterface
 		int16_t detection_dynamic_object_size;
 		struct vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
-
+*/
 		// detection adverse
-		struct detection_object detection_obj[DETECTION_NUM_OBJECT_USB];
-		int detection_dynamic_object_count;
+		struct detection_object detection_obj1[DETECTION_NUM_OBJECT_USB];
+		int16_t detection_dynamic_object_count1;
+		struct detection_object detection_obj2[DETECTION_NUM_OBJECT_USB];
+		int16_t detection_dynamic_object_count2;
 
 		struct dynamixel_data ax12[AX12_MAX_ID];
 		struct dynamixel_data rx24[RX24_MAX_ID];
@@ -227,9 +229,11 @@ class RobotInterface
 		int process_hokuyo(char* msg, uint16_t size);
 		int process_hokuyo_seg(char* msg, uint16_t size);
 		int process_fault(char* msg, uint16_t size);
-		int process_detect_dyn_obj_size(char* msg, uint16_t size);
-		int process_detect_dyn_obj(char* msg, uint16_t size);
-		int process_detect_obj(char* msg, uint16_t size);
+		int process_detect_dyn_obj_size1(char* msg, uint16_t size);
+		int process_detect_dyn_obj_size2(char* msg, uint16_t size);
+		//int process_detect_dyn_obj(char* msg, uint16_t size);
+		int process_detect_obj1(char* msg, uint16_t size);
+		int process_detect_obj2(char* msg, uint16_t size);
 		int process_code_version(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
 		int get_stm_code_version();
