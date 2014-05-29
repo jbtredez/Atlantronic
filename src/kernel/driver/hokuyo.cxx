@@ -24,6 +24,7 @@
 
 #define HOKUYO_STACK_SIZE              400
 #define HOKUYO_SPEED                750000
+#define HOKUYO_SPEED_PRE_CONFIGURED
 
 const char* hokuyo_scip2_cmd = "SCIP2.0\n";
 const char* hokuyo_speed_cmd = "SS750000\n";
@@ -147,6 +148,7 @@ uint32_t Hokuyo::init_com()
 		}
 
 		err = scip2();
+#ifndef HOKUYO_SPEED_PRE_CONFIGURED
 		if(err & ERR_HOKUYO_TIMEOUT)
 		{
 			// pas de réponse à HOKUYO_SPEED, le hokuyo n'est peut être pas configuré
@@ -171,7 +173,7 @@ uint32_t Hokuyo::init_com()
 
 			usart_set_frequency(usartId, HOKUYO_SPEED);
 		}
-
+#endif
 		if(err)
 		{
 			goto retry;
