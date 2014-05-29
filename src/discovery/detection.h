@@ -8,12 +8,22 @@
 #include <stdint.h>
 #include "kernel/vect_pos.h"
 
+#define DETECTION_NUM_OBJECT         100
+#define DETECTION_NUM_OBJECT_USB      10
+
 enum detection_type
 {
 	DETECTION_FULL,
 	DETECTION_STATIC_OBJ,
 	DETECTION_DYNAMIC_OBJ,
 };
+
+struct detection_object
+{
+	float x;
+	float y;
+	float size;
+} __attribute__((packed));
 
 typedef void (*detection_callback)(void);
 

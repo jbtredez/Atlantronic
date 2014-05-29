@@ -20,6 +20,7 @@
 #include "kernel/arm.h"
 #include "kernel/heartbeat.h"
 #include "discovery/control.h"
+#include "discovery/detection.h"
 #include "discovery/gpio.h"
 #include "foo/pince.h"
 #include "server_tcp.h"
@@ -189,6 +190,7 @@ class RobotInterface
 		int16_t detection_dynamic_object_size;
 		struct vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
+		struct detection_object detection_obj[DETECTION_NUM_OBJECT_USB];
 
 		struct dynamixel_data ax12[AX12_MAX_ID];
 		struct dynamixel_data rx24[RX24_MAX_ID];
@@ -224,6 +226,7 @@ class RobotInterface
 		int process_fault(char* msg, uint16_t size);
 		int process_detect_dyn_obj_size(char* msg, uint16_t size);
 		int process_detect_dyn_obj(char* msg, uint16_t size);
+		int process_detect_obj(char* msg, uint16_t size);
 		int process_code_version(char* msg, uint16_t size);
 		int can_trace(char* msg, uint16_t size);
 		int get_stm_code_version();

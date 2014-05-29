@@ -101,11 +101,11 @@ obj-discovery-baz += discovery/control.o
 obj-discovery-baz += discovery/motion.o
 
 
-#obj-discovery-baz += kernel/math/regression.o
+obj-discovery-baz += kernel/math/regression.o
 #obj-discovery-baz += discovery/graph.o
 #obj-discovery-baz += discovery/trajectory.o
-#obj-discovery-baz += discovery/detection.o
-#obj-discovery-baz += discovery/table.o
+obj-discovery-baz += discovery/detection.o
+obj-discovery-baz += discovery/table.o
 #obj-discovery-baz += discovery/test.o
 
 bin-discovery += core

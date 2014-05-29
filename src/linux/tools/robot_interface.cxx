@@ -131,7 +131,8 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	add_usb_data_callback(USB_CONTROL, &RobotInterface::process_control);
 	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &RobotInterface::process_detect_dyn_obj_size);
-	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT, &RobotInterface::process_detect_dyn_obj);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, &RobotInterface::process_detect_obj);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT, &RobotInterface::process_detect_obj);
 	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
 	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);
 
@@ -505,6 +506,32 @@ int RobotInterface::process_detect_dyn_obj(char* msg, uint16_t size)
 		memcpy(detection_dynamic_obj, detection_dynamic_obj_tmp, detection_dynamic_object_size * sizeof(detection_dynamic_obj[0]));
 		detection_dynamic_object_size = detection_dynamic_object_size_tmp;
 	}
+
+	pthread_mutex_unlock(&mutex);
+
+end:
+	return res;
+}
+
+int RobotInterface::process_detect_obj(char* msg, uint16_t size)
+{
+	int res = 0;
+
+	if(size != sizeof(detection_obj) )
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	memcpy(detection_obj, msg, sizeof(detection_obj));
 
 	pthread_mutex_unlock(&mutex);
 
