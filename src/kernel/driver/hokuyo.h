@@ -14,6 +14,7 @@
 #include "kernel/FreeRTOS.h"
 #include "kernel/semphr.h"
 #endif
+#include "kernel/systick.h"
 
 #define HOKUYO_NUM_POINTS            682
 //!< taille de la réponse maxi avec hokuyo_scan_all :
@@ -21,6 +22,12 @@
 //!< 1364 data = 21 * 64 + 20 data
 //!< donc 23 octets entête, + 21*(64+2) + (20+2) + 1 = 1432
 #define HOKUYO_SCAN_BUFFER_SIZE       1432
+
+#define HOKUYO_DTHETA         	                                        (M_PI / 512.0f)
+#define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
+#define HOKUYO_MAX_RANGE                                                           4000
+#define HOKUYO_MIN_RANGE                                                             20
+#define HOKUYO_POINT_TO_POINT_DT                                         (0.1f/1024.0f)
 
 enum hokuyo_id
 {
@@ -36,6 +43,7 @@ struct hokuyo_scan
 	VectPlan pos_hokuyo; //!< position du hokuyo dans le repère robot
 	signed char sens; //!< sens du hokuyo (1 = vers le haut, -1 = vers le bas)
 	uint16_t distance[HOKUYO_NUM_POINTS]; //!< distances des angles 44 à 725 du hokuyo
+	systime date;
 } __attribute__((packed));;
 
 #ifndef LINUX

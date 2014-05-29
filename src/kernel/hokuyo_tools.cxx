@@ -14,10 +14,6 @@
 
 #define GAP 90 //150
 
-#define HOKUYO_DTHETA         	              (M_PI / 512.0f)
-#define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
-
-
 void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
 {
 	int size = HOKUYO_NUM_POINTS;
@@ -27,7 +23,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
 
 	for( ; size--; )
 	{
-		if(*distance > 19 && *distance < 4000)
+		if(*distance > HOKUYO_MIN_RANGE && *distance < HOKUYO_MAX_RANGE)
 		{
 			pos->x = *distance * cosf(theta) + hokuyo_pos_table.x;
 			pos->y = *distance * sinf(theta) + hokuyo_pos_table.y;

@@ -49,8 +49,8 @@ int hokuyo_module_init()
 		goto done;
 	}
 
-	hokuyo[0].setPosition(VectPlan(0,0,0), 1);
-	hokuyo[1].setPosition(VectPlan(0,0,0), 1);
+	hokuyo[0].setPosition(VectPlan(-51,0,0), 1);
+	hokuyo[1].setPosition(VectPlan(0, -154, M_PI), 1);
 
 done:
 	return err;
@@ -236,6 +236,8 @@ void Hokuyo::task()
 		// si le dernier scan n'a pas echoue on reveille la tache detection
 		if( ! err)
 		{
+			scan.date = current_time;
+
 			if(callback)
 			{
 				callback();
