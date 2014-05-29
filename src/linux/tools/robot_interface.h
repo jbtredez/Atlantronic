@@ -190,7 +190,10 @@ class RobotInterface
 		int16_t detection_dynamic_object_size;
 		struct vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
+
+		// detection adverse
 		struct detection_object detection_obj[DETECTION_NUM_OBJECT_USB];
+		int detection_dynamic_object_count;
 
 		struct dynamixel_data ax12[AX12_MAX_ID];
 		struct dynamixel_data rx24[RX24_MAX_ID];

@@ -142,6 +142,8 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 		serverTcp.start();
 	}
 
+	detection_dynamic_object_count = 0;
+
 	return err;
 }
 
@@ -456,6 +458,7 @@ int RobotInterface::process_detect_dyn_obj_size(char* msg, uint16_t size)
 	detection_dynamic_object_id = 0;
 	detection_dynamic_object_pt_tmp_size = 0;
 	memcpy(&detection_dynamic_object_size_tmp, msg, sizeof(detection_dynamic_object_size_tmp));
+	detection_dynamic_object_count = detection_dynamic_object_size_tmp;
 
 	// pas d'objets a attendre
 	if( detection_dynamic_object_size_tmp == 0)
