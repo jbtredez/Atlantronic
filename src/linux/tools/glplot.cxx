@@ -1638,9 +1638,11 @@ static void simu_go(GtkWidget* widget, gpointer arg)
 {
 	(void) widget;
 	(void) arg;
+	static bool go = false;
 	if(qemu)
 	{
-		qemu->set_io(GPIO_IN_GO, true);
+		go = !go;
+		qemu->set_io(GPIO_IN_GO, go);
 	}
 }
 
