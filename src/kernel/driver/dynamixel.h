@@ -99,8 +99,8 @@ enum
 
 #define DYNAMIXEL_POS_TO_RD          (150 * M_PI / (0x1ff * 180.0f))
 #define DYNAMIXEL_RD_TO_POS          (0x1ff * 180 / (150 * M_PI))
-
 #define DYNAMIXEL_MAX_MOVING_SPEED_RD      11.938f       // 114 rpm
+#define DYNAMIXEL_RDS_TO_SPEED       (DYNAMIXEL_MAX_MOVING_SPEED_RD / 0x3ff)
 
 struct dynamixel_error
 {
@@ -153,11 +153,13 @@ class DynamixelManager
 		struct dynamixel_error reset(uint8_t id);
 
 		struct dynamixel_error set_led(uint8_t id, uint8_t on);
-		struct dynamixel_error set_moving_speed(uint8_t id, uint16_t speed);
+		struct dynamixel_error set_moving_speed(uint8_t id, float speed);
 		struct dynamixel_error set_goal_position(uint8_t id, float theta);  //!< deplacement vers l'angle theta (en rd)
 		struct dynamixel_error set_torque_limit(uint8_t id, float torque_limit);
 		struct dynamixel_error set_torque_limit_eeprom(uint8_t id, float torque_limit);
 		struct dynamixel_error set_torque_enable(uint8_t id, uint8_t enable);
+		struct dynamixel_error set_cw_angle_limit(uint8_t id, uint16_t val);
+		struct dynamixel_error set_ccw_angle_limit(uint8_t id, uint16_t val);
 
 		void set_goal_limit(uint8_t id, float min, float max);  //!< configuration des limites d'un dynamixel (limites mécaniques par exemple pour ne pas forcer)
 		void set_target_reached_threshold(uint8_t id, float threshold);
@@ -211,9 +213,12 @@ enum
 	DYNAMIXEL_CMD_SET_BAUDRATE,
 	DYNAMIXEL_CMD_SET_MANAGER_BAUDRATE,
 	DYNAMIXEL_CMD_SET_GOAL_POSITION,
+	DYNAMIXEL_CMD_SET_SPEED,
 	DYNAMIXEL_CMD_SET_MAX_TORQUE,
 	DYNAMIXEL_CMD_SET_TARGET_REACHED_THRESHOLD,
 	DYNAMIXEL_CMD_GET_POSITION,
+	DYNAMIXEL_CMD_ENABLE_ENDLESS_TURN_MODE,
+	DYNAMIXEL_CMD_DISABLE_ENDLESS_TURN_MODE,
 };
 
 struct dynamixel_cmd_param

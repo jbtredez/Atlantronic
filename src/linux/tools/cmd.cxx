@@ -30,6 +30,9 @@ int cmd_dynamixel_set_manager_baudrate(const char* arg);
 int cmd_dynamixel_get_position(const char* arg);
 int cmd_dynamixel_set_max_torque(const char* arg);
 int cmd_dynamixel_set_target_reached_threshold(const char* arg);
+int cmd_dynamixel_enable_endless_turn_mode(const char* arg);
+int cmd_dynamixel_disable_endless_turn_mode(const char* arg);
+int cmd_dynamixel_set_speed(const char* arg);
 int cmd_power_off(const char* arg);
 int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
@@ -92,6 +95,9 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_set_manager_baudrate", cmd_dynamixel_set_manager_baudrate, "mise a jour du baudrate du gestionnaire dynamixel"},
 	{ "dynamixel_set_max_torque", cmd_dynamixel_set_max_torque, "dynamixel_set_max_torque id type val[0 100]"},
 	{ "dynamixel_set_target_reached_threshold", cmd_dynamixel_set_target_reached_threshold, "dynamixel_set_target_reached_threshold id type threshold"},
+	{ "dynamixel_enable_endless_turn_mode", cmd_dynamixel_enable_endless_turn_mode, "dynamixel_enable_endless_turn_mode  id type"},
+	{ "dynamixel_disable_endless_turn_mode", cmd_dynamixel_disable_endless_turn_mode, "dynamixel_disable_endless_turn_mode  id type"},
+	{ "dynamixel_set_speed", cmd_dynamixel_set_speed, "dynamixel_set_speed  id type speed"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
 	{ "go_enable", cmd_go_enable, "go_enable" },
@@ -249,6 +255,55 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_target_reached_threshold(type, id, threshold);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_enable_endless_turn_mode(const char* arg)
+{
+	int type;
+	unsigned int id;
+
+	int count = sscanf(arg, "%d %u", &type, &id);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_enable_endless_turn_mode(type, id);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_disable_endless_turn_mode(const char* arg)
+{
+	int type;
+	unsigned int id;
+
+	int count = sscanf(arg, "%d %u", &type, &id);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_disable_endless_turn_mode(type, id);
+	return CMD_SUCESS;
+}
+
+int cmd_dynamixel_set_speed(const char* arg)
+{
+	int type;
+	unsigned int id;
+	float speed;
+
+	int count = sscanf(arg, "%d %u %f", &type, &id, &speed);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->dynamixel_set_speed(type, id, speed);
 	return CMD_SUCESS;
 }
 

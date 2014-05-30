@@ -723,9 +723,9 @@ int RobotInterface::process_control(char* msg, uint16_t size)
 
 	for(int i = 0; i < RX24_MAX_ID; i++)
 	{
-		rx24[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		rx24[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
-		rx24[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+		rx24[i].pos = (last_control_usb_data.dynamixel.rx24[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		rx24[i].flags = last_control_usb_data.dynamixel.rx24[i].flags;
+		rx24[i].error = last_control_usb_data.dynamixel.rx24[i].error;
 	}
 
 	pthread_mutex_unlock(&mutex);
@@ -854,6 +854,11 @@ int RobotInterface::dynamixel_set_goal_position(int dynamixel_type, uint8_t id, 
 	return dynamixel_cmd(DYNAMIXEL_CMD_SET_GOAL_POSITION, dynamixel_type, id, alpha);
 }
 
+int RobotInterface::dynamixel_set_speed(int dynamixel_type, uint8_t id, float speed)
+{
+	return dynamixel_cmd(DYNAMIXEL_CMD_SET_SPEED, dynamixel_type, id, speed);
+}
+
 //! choix du couple max (entre 0 et 100 pour 100%)
 //! @return 0 s'il n'y a pas d'erreur d'envoi, -1 sinon
 int RobotInterface::dynamixel_set_max_torque(int dynamixel_type, uint8_t id, float val)
@@ -864,6 +869,16 @@ int RobotInterface::dynamixel_set_max_torque(int dynamixel_type, uint8_t id, flo
 int RobotInterface::dynamixel_set_target_reached_threshold(int dynamixel_type, uint8_t id, float val)
 {
 	return dynamixel_cmd(DYNAMIXEL_CMD_SET_TARGET_REACHED_THRESHOLD, dynamixel_type, id, val);
+}
+
+int RobotInterface::dynamixel_enable_endless_turn_mode(int dynamixel_type, uint8_t id)
+{
+	return dynamixel_cmd(DYNAMIXEL_CMD_ENABLE_ENDLESS_TURN_MODE, dynamixel_type, id, 0);
+}
+
+int RobotInterface::dynamixel_disable_endless_turn_mode(int dynamixel_type, uint8_t id)
+{
+	return dynamixel_cmd(DYNAMIXEL_CMD_DISABLE_ENDLESS_TURN_MODE, dynamixel_type, id, 0);
 }
 
 //! mise a jour du baudrate du dynamixel a la valeur optimale (1Mb/s)

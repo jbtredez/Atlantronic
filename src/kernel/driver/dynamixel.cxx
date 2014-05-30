@@ -180,7 +180,7 @@ void DynamixelManager::task()
 				{
 					max_torque = devices[id].max_torque;
 				}
-				struct dynamixel_error err = write16(id+1, DYNAMIXEL_TORQUE_LIMIT_L, devices[id].max_torque);
+				struct dynamixel_error err = write16(id+1, DYNAMIXEL_TORQUE_LIMIT_L, max_torque);
 				if( ! err.transmit_error && ! err.internal_error )
 				{
 					err = write8(id+1, DYNAMIXEL_TORQUE_ENABLE, 0x01);
@@ -542,12 +542,17 @@ struct dynamixel_error DynamixelManager::reset(uint8_t id)
 
 struct dynamixel_error DynamixelManager::set_led(uint8_t id, uint8_t on)
 {
-	return write8(id, DYNAMIXEL_LED, on);
+	return write8(id+1, DYNAMIXEL_LED, on);
 }
 
-struct dynamixel_error DynamixelManager::set_moving_speed(uint8_t id, uint16_t speed)
+struct dynamixel_error DynamixelManager::set_moving_speed(uint8_t id, float speed)
 {
-	return write16(id, DYNAMIXEL_MOVING_SPEED_L, speed & DYNAMIXEL_MAX_MOVING_SPEED);
+	uint16_t speed16 = (uint16_t)(DYNAMIXEL_RD_TO_POS * speed);
+	if( speed16 > 0x3ff )
+	{
+		speed16 = 0x3ff;
+	}
+	return write16(id+1, DYNAMIXEL_MOVING_SPEED_L, speed16);
 }
 
 struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float theta)
@@ -661,12 +666,22 @@ struct dynamixel_error DynamixelManager::set_torque_limit_eeprom(uint8_t id, flo
 		torque_limit = 1;
 	}
 
-	return write16(id, DYNAMIXEL_MAX_TORQUE_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
+	return write16(id+1, DYNAMIXEL_MAX_TORQUE_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
 }
 
 struct dynamixel_error DynamixelManager::set_torque_enable(uint8_t id, uint8_t enable)
 {
-	return write8(id, DYNAMIXEL_TORQUE_ENABLE, enable & 0x01);
+	return write8(id+1, DYNAMIXEL_TORQUE_ENABLE, enable & 0x01);
+}
+
+struct dynamixel_error DynamixelManager::set_cw_angle_limit(uint8_t id, uint16_t val)
+{
+	return write16(id+1, DYNAMIXEL_CW_ANGLE_LIMIT_L, val);
+}
+
+struct dynamixel_error DynamixelManager::set_ccw_angle_limit(uint8_t id, uint16_t val)
+{
+	return write16(id+1, DYNAMIXEL_CCW_ANGLE_LIMIT_L, val);
 }
 
 void DynamixelManager::set_goal_limit(uint8_t id, float min, float max)
@@ -781,6 +796,9 @@ __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 		case DYNAMIXEL_CMD_SET_GOAL_POSITION:
 			manager->set_goal_position(param->id, param->param);
 			break;
+		case DYNAMIXEL_CMD_SET_SPEED:
+			manager->set_moving_speed(param->id, param->param);
+			break;
 		case DYNAMIXEL_CMD_SET_BAUDRATE:
 			// on les met a 200kb, commande usb pour la configuration
 			manager->write8(param->id, DYNAMIXEL_BAUD_RATE, 9);
@@ -802,6 +820,14 @@ __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 				theta *= 180 / M_PI;
 				log_format(LOG_INFO, "ax%d %u - pos %d", param->type, param->id, (int)theta);
 			}
+			break;
+		case DYNAMIXEL_CMD_ENABLE_ENDLESS_TURN_MODE:
+			//manager->set_cw_angle_limit(param->id, 0);
+			manager->set_ccw_angle_limit(param->id, 0);
+			break;
+		case DYNAMIXEL_CMD_DISABLE_ENDLESS_TURN_MODE:
+			//manager->set_cw_angle_limit(param->id, 0);
+			manager->set_ccw_angle_limit(param->id, 0x3ff);
 			break;
 		default:
 			log_format(LOG_ERROR, "unknown dynamixel command : %d", param->cmd_id);
