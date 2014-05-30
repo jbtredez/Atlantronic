@@ -318,7 +318,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
-	if(simulation)
+	if(qemu)
 	{
 		menu1 = gtk_menu_new();	// menu "niveau 1"
 		menuObj = gtk_menu_item_new_with_label("Simulation");
