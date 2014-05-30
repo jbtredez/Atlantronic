@@ -118,6 +118,8 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event);
 static void mounse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
+static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg);
+static void simu_go(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static int init_font(GLuint base, char* f);
@@ -315,6 +317,23 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(enable3d), NULL);
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+
+	if(simulation)
+	{
+		menu1 = gtk_menu_new();	// menu "niveau 1"
+		menuObj = gtk_menu_item_new_with_label("Simulation");
+		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+
+		menuObj = gtk_menu_item_new_with_label("toggle BTN color");
+		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(simu_toggle_btn_color), NULL);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+
+		menuObj = gtk_check_menu_item_new_with_label("go");
+		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
+		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(simu_go), NULL);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+	}
 
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
@@ -1602,6 +1621,27 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 	(void) event;
 	(void) arg;
 	return TRUE;
+}
+
+static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+	(void) arg;
+	if(qemu)
+	{
+		qemu->set_io(GPIO_IN_BTN1, true);
+		qemu->set_io(GPIO_IN_BTN1, false);
+	}
+}
+
+static void simu_go(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+	(void) arg;
+	if(qemu)
+	{
+		qemu->set_io(GPIO_IN_GO, true);
+	}
 }
 
 static void joystick_event(int event, float val)
