@@ -13,6 +13,7 @@
 #include <stdlib.h>
 
 #define GAP 90 //150
+#define HOKUYO_TABLE_DELTA       200
 
 void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
 {
@@ -56,7 +57,7 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, struct vect2* hokuyo_pos, unsi
 	while(i < size)
 	{
 		// on passe les points erronés ou en dehors de la table
-		while( ( i < size && scan->distance[i] < scan->min_distance) || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000)
+		while( ( i < size && scan->distance[i] < scan->min_distance) || fabsf(hokuyo_pos[i].x) > 1500 - HOKUYO_TABLE_DELTA || fabsf(hokuyo_pos[i].y) > 1000 - HOKUYO_TABLE_DELTA)
 		{
 			i++;
 		}
@@ -74,7 +75,7 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, struct vect2* hokuyo_pos, unsi
 		while(i < size && abs(gap) < GAP)
 		{
 			dist = scan->distance[i];
-			if( dist < scan->min_distance || fabsf(hokuyo_pos[i].x) > 1500 || fabsf(hokuyo_pos[i].y) > 1000 )
+			if( dist < scan->min_distance || fabsf(hokuyo_pos[i].x) > 1500 - HOKUYO_TABLE_DELTA || fabsf(hokuyo_pos[i].y) > 1000 - HOKUYO_TABLE_DELTA )
 			{
 				gap = GAP;
 			}
