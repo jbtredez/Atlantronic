@@ -542,17 +542,27 @@ struct dynamixel_error DynamixelManager::reset(uint8_t id)
 
 struct dynamixel_error DynamixelManager::set_led(uint8_t id, uint8_t on)
 {
-	return write8(id+1, DYNAMIXEL_LED, on);
+	return write8(id, DYNAMIXEL_LED, on);
 }
 
 struct dynamixel_error DynamixelManager::set_moving_speed(uint8_t id, float speed)
 {
-	uint16_t speed16 = (uint16_t)(DYNAMIXEL_RD_TO_POS * speed);
+	uint16_t speed16 = (uint16_t)fabsf(DYNAMIXEL_RD_TO_POS * speed);
 	if( speed16 > 0x3ff )
 	{
 		speed16 = 0x3ff;
 	}
-	return write16(id+1, DYNAMIXEL_MOVING_SPEED_L, speed16);
+	if( speed < 0 )
+	{
+		speed16 |= 1<<10;
+	}
+
+	struct dynamixel_error error = write16(id, DYNAMIXEL_MOVING_SPEED_L, speed16);
+	if( error.transmit_error)
+	{
+		log(LOG_ERROR, "erreur de transmission");
+	}
+	return error;
 }
 
 struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float theta)
@@ -616,6 +626,14 @@ struct dynamixel_error DynamixelManager::set_goal_position(uint8_t id, float the
 	{
 		// envoi simple
 		err = write16(id+1, DYNAMIXEL_GOAL_POSITION_L, (uint16_t) alpha);
+		if( err.transmit_error)
+		{
+			log(LOG_ERROR, "erreur de transmission");
+		}
+		else
+		{
+			log_format(LOG_INFO, "set goal position %d - status = %#.2x", (uint16_t)alpha, err.internal_error);
+		}
 	}
 
 	return err;
@@ -666,22 +684,42 @@ struct dynamixel_error DynamixelManager::set_torque_limit_eeprom(uint8_t id, flo
 		torque_limit = 1;
 	}
 
-	return write16(id+1, DYNAMIXEL_MAX_TORQUE_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
+	return write16(id, DYNAMIXEL_MAX_TORQUE_L, torque_limit * DYNAMIXEL_MAX_TORQUE_LIMIT);
 }
 
 struct dynamixel_error DynamixelManager::set_torque_enable(uint8_t id, uint8_t enable)
 {
-	return write8(id+1, DYNAMIXEL_TORQUE_ENABLE, enable & 0x01);
+	return write8(id, DYNAMIXEL_TORQUE_ENABLE, enable & 0x01);
 }
 
 struct dynamixel_error DynamixelManager::set_cw_angle_limit(uint8_t id, uint16_t val)
 {
-	return write16(id+1, DYNAMIXEL_CW_ANGLE_LIMIT_L, val);
+	struct dynamixel_error error = write16(id, DYNAMIXEL_CW_ANGLE_LIMIT_L, val);
+	if( error.transmit_error)
+	{
+		log(LOG_ERROR, "erreur de transmission");
+	}
+	else
+	{
+		log_format(LOG_INFO, "cw angle limit %d - status = %#.2x", val, error.internal_error);
+	}
+
+	return error;
 }
 
 struct dynamixel_error DynamixelManager::set_ccw_angle_limit(uint8_t id, uint16_t val)
 {
-	return write16(id+1, DYNAMIXEL_CCW_ANGLE_LIMIT_L, val);
+	struct dynamixel_error error = write16(id, DYNAMIXEL_CCW_ANGLE_LIMIT_L, val);
+	if( error.transmit_error)
+	{
+		log(LOG_ERROR, "erreur de transmission");
+	}
+	else
+	{
+		log_format(LOG_INFO, "ccw angle limit %d - status = %#.2x", val, error.internal_error);
+	}
+
+	return error;
 }
 
 void DynamixelManager::set_goal_limit(uint8_t id, float min, float max)
@@ -822,11 +860,11 @@ __OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
 			}
 			break;
 		case DYNAMIXEL_CMD_ENABLE_ENDLESS_TURN_MODE:
-			//manager->set_cw_angle_limit(param->id, 0);
+			manager->set_cw_angle_limit(param->id, 0);
 			manager->set_ccw_angle_limit(param->id, 0);
 			break;
 		case DYNAMIXEL_CMD_DISABLE_ENDLESS_TURN_MODE:
-			//manager->set_cw_angle_limit(param->id, 0);
+			manager->set_cw_angle_limit(param->id, 0);
 			manager->set_ccw_angle_limit(param->id, 0x3ff);
 			break;
 		default:
