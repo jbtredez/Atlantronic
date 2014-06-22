@@ -14,6 +14,7 @@ CFLAGS+=-fno-exceptions
 CFLAGS+=-fno-non-call-exceptions
 CFLAGS+=-fsingle-precision-constant
 CFLAGS+=-ffast-math
+CFLAGS+=-fno-stack-protector
 CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wswitch-default

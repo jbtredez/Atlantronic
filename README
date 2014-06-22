@@ -3,10 +3,10 @@ Site : http://www.atlantronic.fr/
 
 Requirements :
 "arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
-	- binutils-2.23.1
-	- gcc-4.7.3
-	- gdb-7.6
-	- newlib-2.0.0 (flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
+	- binutils-2.24
+	- gcc-4.8.3 (patch t-arm-elf, cf dossier toolchain)
+	- gdb-7.7.1
+	- newlib-2.1.0 (cf ebuild dans toolchain avec flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
 
 cible linux :
 	- readline
@@ -18,7 +18,7 @@ doc :
 		- graphviz >= 2.28
 
 jtag :
-	- openocd 0.6.1
+	- openocd 0.7.0
 	- libftdi 1.0
 
 ---------------------------------------------------------
@@ -36,4 +36,4 @@ qemu : qemu modifié pour la simulation
 --------------------------------------------------------
 exemple simulation avec le binaire arm strat5 :
 cd Atlantronic
-./bin/linux/glplot -s ./bin/foo/strat5
+./bin/linux/glplot -s bin/discovery/baz
