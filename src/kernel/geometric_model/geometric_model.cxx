@@ -77,7 +77,8 @@ float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed,
 		// non la position : on regarde si on a la capacite d'aller a la bonne vitesse
 		Kinematics kinematics = kinematics_cmd[2*i+1];
 		kinematics.setSpeed(w[i], paramSteering, dt);
-		if( fabsf(w[i]) > EPSILON && fabsf(kinematics.pos - theta[i]) > EPSILON)
+		// verification des saturations si la vitesse n'est pas faible
+		if( fabsf(w[i]) > 0.1f && fabsf(kinematics.pos - theta[i]) > EPSILON)
 		{
 			float k = fabsf(kinematics.v / w[i]);
 			if( k < kmin )

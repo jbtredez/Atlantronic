@@ -380,6 +380,7 @@ static void motion_state_trajectory_entry()
 	VectPlan B = loc_to_abs(motion_wanted_dest, motion_wanted_cp);
 	VectPlan ab = B - A;
 	float nab = ab.norm();
+	float t = 0;
 
 	motion_ds = 0;
 	motion_cp = motion_wanted_cp;
@@ -393,19 +394,22 @@ static void motion_state_trajectory_entry()
 		float sigmaAbs = fabsf(motion_u.theta);
 		if( sigmaAbs > EPSILON)
 		{
-			if(motion_curvilinearKinematicsParam.vMax > motion_wanted_angularParam.vMax / sigmaAbs)
+			float vmax = motion_wanted_angularParam.vMax / sigmaAbs;
+			if(motion_curvilinearKinematicsParam.vMax > vmax)
 			{
-				motion_curvilinearKinematicsParam.vMax = motion_wanted_angularParam.vMax / sigmaAbs;
+				motion_curvilinearKinematicsParam.vMax = vmax;
 			}
 
-			if(motion_curvilinearKinematicsParam.aMax > motion_wanted_angularParam.aMax / sigmaAbs)
+			float aMax = motion_wanted_angularParam.aMax / sigmaAbs;
+			if(motion_curvilinearKinematicsParam.aMax > aMax)
 			{
-				motion_curvilinearKinematicsParam.aMax = motion_wanted_angularParam.aMax / sigmaAbs;
+				motion_curvilinearKinematicsParam.aMax = aMax;
 			}
 
-			if(motion_curvilinearKinematicsParam.dMax > motion_wanted_angularParam.dMax / sigmaAbs)
+			float dMax = motion_wanted_angularParam.dMax / sigmaAbs;
+			if(motion_curvilinearKinematicsParam.dMax > dMax)
 			{
-				motion_curvilinearKinematicsParam.dMax = motion_wanted_angularParam.dMax / sigmaAbs;
+				motion_curvilinearKinematicsParam.dMax = dMax;
 			}
 		}
 	}
@@ -419,7 +423,8 @@ static void motion_state_trajectory_entry()
 		motion_ds = fabsf(ab.theta);
 	}
 
-	log_format(LOG_INFO, "goto %d %d %d", (int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI));
+	t = motion_ds / motion_curvilinearKinematicsParam.vMax + 0.5f * motion_curvilinearKinematicsParam.vMax * ( 1 / motion_curvilinearKinematicsParam.aMax + 1 / motion_curvilinearKinematicsParam.dMax);
+	log_format(LOG_INFO, "goto %d %d %d t %d ms", (int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI), (int)(1000*t));
 	motion_cp_cmd = A;
 	motion_curvilinearKinematics.pos = 0;
 	motion_status = MOTION_PREPARING_MOTION;
