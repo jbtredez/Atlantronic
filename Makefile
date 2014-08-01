@@ -102,11 +102,14 @@ stat: $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
 else
 all:
 	$(MAKE) ARCH=discovery
+	$(MAKE) ARCH=disco
 	$(MAKE) ARCH=linux
 	$(MAKE) ARCH=discovery stat
+	$(MAKE) ARCH=disco stat
 
 stat:
 	$(MAKE) ARCH=discovery stat
+	$(MAKE) ARCH=disco stat
 
 endif
 
