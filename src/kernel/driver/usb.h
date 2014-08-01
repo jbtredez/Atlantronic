@@ -9,6 +9,12 @@
 extern "C" {
 #endif
 
+#include "kernel/asm/asm_base_func.h"
+
+#ifndef WEAK_USB
+#define WEAK_USB __attribute__((weak, alias("nop_function") ))
+#endif
+
 enum
 {
 	USB_LOG = 1,
@@ -71,9 +77,9 @@ struct usb_header
 
 //!< ajout de log
 //!< le module usb doit être initialisé
-void usb_add(uint16_t type, void* msg, uint16_t size);
+void usb_add(uint16_t type, void* msg, uint16_t size) WEAK_USB;
 
-void usb_add_log(unsigned char level, const char* func, uint16_t line, const char* msg);
+void usb_add_log(unsigned char level, const char* func, uint16_t line, const char* msg) WEAK_USB;
 
 //!< ajout d'une commande
 //!< peut être appelée avant l'initialisation du module usb

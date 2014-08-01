@@ -9,7 +9,7 @@
 #include "kernel/driver/usb/stm32f4xx/usbd_desc.h"
 #include "kernel/driver/usb/stm32f4xx/usb_dcd_int.h"
 #include "gpio.h"
-
+#define WEAK_USB
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
