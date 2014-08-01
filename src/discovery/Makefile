@@ -21,6 +21,7 @@ CFLAGS+=-Wswitch-default
 CFLAGS+=-Wswitch-enum
 CFLAGS+=-D__$(ARCH)__
 CFLAGS+=-DSTM32F4XX
+CFLAGS+=-DSTM32F407xx
 CFLAGS+=-g3
 ifneq ($(DEBUG),1)
 CFLAGS+=-O2
