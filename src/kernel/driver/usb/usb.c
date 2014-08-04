@@ -1,15 +1,15 @@
+#define WEAK_USB
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "priority.h"
 
-#include "kernel/driver/usb/stm32f4xx/usbd_atlantronic_core.h"
-#include "kernel/driver/usb/stm32f4xx/usbd_usr.h"
-#include "kernel/driver/usb/stm32f4xx/usbd_desc.h"
-#include "kernel/driver/usb/stm32f4xx/usb_dcd_int.h"
+#include "kernel/driver/usb/stm32f4xx/usbd_core.h"
+#include "kernel/driver/usb/stm32f4xx/usbd_def.h"
+#include "kernel/driver/usb/stm32f4xx/stm32f4xx_hal_pcd.h"
+#include "usb_descriptor.h"
 #include "gpio.h"
-#define WEAK_USB
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
@@ -19,6 +19,12 @@
 #define USB_RX_BUFER_SIZE        512
 #define USB_READ_STACK_SIZE      400
 #define USB_WRITE_STACK_SIZE      75
+
+#define USBD_MANUFACTURER_STRING      "Atlantronic"
+#define USBD_PRODUCT_STRING           "discovery"
+#define USBD_SERIALNUMBER_STRING      "00000000011C"
+#define USBD_CONFIGURATION_STRING      "Atlantronic config"
+#define USBD_INTERFACE_STRING          "Atlantronic interface"
 
 // variables statiques => segment bss, initialisation a 0
 
@@ -43,12 +49,65 @@ void usb_read_task(void *);
 void usb_write_task(void *);
 void usb_cmd_ptask(void*);
 void usb_cmd_get_version(void*);
+uint8_t* usb_get_device_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_lang_id_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_manufacturer_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_product_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_serial_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_configuration_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
+uint8_t* usb_get_interface_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
 
 static xSemaphoreHandle usb_write_sem;
 static xSemaphoreHandle usb_read_sem;
 static volatile unsigned int usb_endpoint_ready;
-static __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
-void USB_OTG_BSP_mDelay (const uint32_t msec);
+static USBD_HandleTypeDef usb_handle;
+static USBD_DescriptorsTypeDef usb_descriptors =
+{
+	usb_get_device_descriptor,
+	usb_get_lang_id_str_descriptor,
+	usb_get_manufacturer_str_descriptor,
+	usb_get_product_str_descriptor,
+	usb_get_serial_str_descriptor,
+	usb_get_configuration_str_descriptor,
+	usb_get_interface_str_descriptor,
+};
+
+uint8_t usb_cb_init(struct _USBD_HandleTypeDef *pdev , uint8_t cfgidx);
+uint8_t usb_cb_de_init(struct _USBD_HandleTypeDef *pdev , uint8_t cfgidx);
+uint8_t usb_cb_Setup(struct _USBD_HandleTypeDef *pdev , USBD_SetupReqTypedef  *req);
+//uint8_t usb_cb_EP0_TxSent(struct _USBD_HandleTypeDef *pdev );
+//uint8_t usb_cb_EP0_RxReady(struct _USBD_HandleTypeDef *pdev );
+/* Class Specific Endpoints*/
+uint8_t usb_cb_DataIn(struct _USBD_HandleTypeDef *pdev , uint8_t epnum);
+uint8_t usb_cb_DataOut(struct _USBD_HandleTypeDef *pdev , uint8_t epnum);
+//uint8_t usb_cb_SOF(struct _USBD_HandleTypeDef *pdev);
+//uint8_t usb_cb_IsoINIncomplete(struct _USBD_HandleTypeDef *pdev , uint8_t epnum);
+//uint8_t usb_cb_IsoOUTIncomplete(struct _USBD_HandleTypeDef *pdev , uint8_t epnum);
+
+uint8_t* usb_cb_GetHSConfigDescriptor(uint16_t *length);
+uint8_t* usb_cb_GetFSConfigDescriptor(uint16_t *length);
+uint8_t* usb_cb_GetOtherSpeedConfigDescriptor(uint16_t *length);
+uint8_t* usb_cb_GetDeviceQualifierDescriptor(uint16_t *length);
+
+static USBD_ClassTypeDef usb_cb =
+{
+		usb_cb_init,
+		usb_cb_de_init,
+		usb_cb_Setup,
+		0,//usb_cb_EP0_TxSent,
+		0,//usb_cb_EP0_RxReady,
+		usb_cb_DataIn,
+		usb_cb_DataOut,
+		0,//usb_cb_SOF,
+		0,//usb_cb_IsoINIncomplete,
+		0,//usb_cb_IsoOUTIncomplete,
+		usb_cb_GetHSConfigDescriptor,
+		usb_cb_GetFSConfigDescriptor,
+		usb_cb_GetOtherSpeedConfigDescriptor,
+		usb_cb_GetDeviceQualifierDescriptor,
+};
+
+static uint8_t USBD_StrDesc[USBD_MAX_STR_DESC_SIZ];
 
 static int usb_module_init(void)
 {
@@ -60,25 +119,45 @@ static int usb_module_init(void)
 	{
 		return ERR_INIT_USB;
 	}
+#ifdef STM32F4_USB_HS
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_OTGHSEN;
+	gpio_pin_init(GPIOB, 12, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // ID
+	gpio_pin_init(GPIOB, 13, GPIO_MODE_IN, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // VBUS
+	gpio_pin_init(GPIOB, 14, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DM
+	gpio_pin_init(GPIOB, 15, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DP
 
+	gpio_af_config(GPIOB, 12, GPIO_AF_OTG_HS_FS);
+	//gpio_af_config(GPIOB, 13, GPIO_AF_OTG_HS);
+	gpio_af_config(GPIOB, 14, GPIO_AF_OTG_HS_FS);
+	gpio_af_config(GPIOB, 15, GPIO_AF_OTG_HS_FS);
+	USBD_Init(&usb_handle, &usb_descriptors, 0);
+	USBD_RegisterClass(&usb_handle, &usb_cb);
+	USBD_Start(&usb_handle);
+	USBD_LL_PrepareReceive(&usb_handle, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
+
+	NVIC_SetPriority(OTG_HS_IRQn, PRIORITY_IRQ_USB);
+	NVIC_EnableIRQ(OTG_HS_IRQn);
+#else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-	gpio_pin_init(GPIOA,  9, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // VBUS
-	gpio_pin_init(GPIOA, 10, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_OD, GPIO_PUPD_UP);     // ID
+	gpio_pin_init(GPIOA, 9, GPIO_MODE_IN, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // VBUS
+	gpio_pin_init(GPIOA, 10, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // ID
 	gpio_pin_init(GPIOA, 11, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DM
 	gpio_pin_init(GPIOA, 12, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DP
 
-	gpio_af_config(GPIOA,  9, GPIO_AF_OTG_FS);
+	gpio_af_config(GPIOA, 9, GPIO_AF_OTG_FS);
 	gpio_af_config(GPIOA, 10, GPIO_AF_OTG_FS);
 	gpio_af_config(GPIOA, 11, GPIO_AF_OTG_FS);
 	gpio_af_config(GPIOA, 12, GPIO_AF_OTG_FS);
-	USBD_Init(&USB_OTG_dev, 1, &USR_desc, &USBD_atlantronic_cb, &USR_cb);
-	DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
+	USBD_Init(&usb_handle, &usb_descriptors, 1);
+	USBD_RegisterClass(&usb_handle, &usb_cb);
+	USBD_Start(&usb_handle);
+	USBD_LL_PrepareReceive(&usb_handle, 2, usb_rx_buffer, sizeof(usb_rx_buffer));
 
 	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
-
+#endif
 	vSemaphoreCreateBinary(usb_write_sem);
 	if( usb_write_sem == NULL )
 	{
@@ -115,6 +194,179 @@ static int usb_module_init(void)
 }
 
 module_init(usb_module_init, INIT_USB);
+
+uint8_t* usb_get_device_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	*length = sizeof(usb_device_descriptor);
+	return (uint8_t*)usb_device_descriptor;
+}
+
+uint8_t* usb_get_lang_id_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	*length =  sizeof(usb_string_langID);
+	return (uint8_t*)usb_string_langID;
+}
+
+uint8_t* usb_get_manufacturer_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	USBD_GetString ((uint8_t*)USBD_MANUFACTURER_STRING, USBD_StrDesc, length);
+	return USBD_StrDesc;
+}
+
+uint8_t* usb_get_product_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	USBD_GetString ((uint8_t*)USBD_PRODUCT_STRING, USBD_StrDesc, length);
+	return USBD_StrDesc;
+}
+
+uint8_t* usb_get_serial_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	USBD_GetString ((uint8_t*)USBD_SERIALNUMBER_STRING, USBD_StrDesc, length);
+	return USBD_StrDesc;
+}
+
+uint8_t* usb_get_configuration_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	USBD_GetString ((uint8_t*)USBD_CONFIGURATION_STRING, USBD_StrDesc, length);
+	return USBD_StrDesc;
+}
+
+uint8_t* usb_get_interface_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length)
+{
+	(void) speed;
+	USBD_GetString ((uint8_t*)USBD_INTERFACE_STRING, USBD_StrDesc, length);
+	return USBD_StrDesc;
+}
+
+uint8_t usb_cb_init(struct _USBD_HandleTypeDef *pdev , uint8_t cfgidx)
+{
+	(void) cfgidx;
+	USBD_LL_OpenEP(pdev, 0x81, USBD_EP_TYPE_BULK, 0x40);
+	USBD_LL_OpenEP(pdev, 0x02, USBD_EP_TYPE_BULK, 0x40);
+	return USBD_OK;
+}
+
+uint8_t usb_cb_de_init(struct _USBD_HandleTypeDef *pdev , uint8_t cfgidx)
+{
+	(void) cfgidx;
+	USBD_LL_CloseEP(pdev, 0x81);
+	USBD_LL_CloseEP(pdev, 0x02);
+	return USBD_OK;
+}
+
+uint8_t usb_cb_Setup(struct _USBD_HandleTypeDef *pdev , USBD_SetupReqTypedef  *req)
+{
+	(void) pdev;
+	(void) req;
+	return USBD_OK;
+}
+
+uint8_t usb_cb_DataIn(struct _USBD_HandleTypeDef *pdev , uint8_t epnum)
+{
+	(void) pdev;
+	if( epnum == 0x01)
+	{
+		portBASE_TYPE xHigherPriorityTaskWoken = 0;
+		portSET_INTERRUPT_MASK_FROM_ISR();
+
+		if( ! usb_endpoint_ready )
+		{
+			usb_endpoint_ready = 1;
+			xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
+		}
+
+		portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+		portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+	}
+	return USBD_OK;
+}
+
+uint8_t usb_cb_DataOut(struct _USBD_HandleTypeDef *pdev , uint8_t epnum)
+{
+	(void) pdev;
+	if( epnum == 0x02)
+	{
+		portBASE_TYPE xHigherPriorityTaskWoken = 0;
+		portSET_INTERRUPT_MASK_FROM_ISR();
+
+		// pas de commande en cours de traitement
+		int count = USBD_GetRxCount(&usb_handle, 0x02);
+		if( unlikely(usb_rx_buffer_ep_used) )
+		{
+			int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
+			if( count <= nMax )
+			{
+				memcpy(&usb_rx_buffer[usb_rx_buffer_head], usb_rx_buffer_ep, count);
+			}
+			else
+			{
+				memcpy(&usb_rx_buffer[usb_rx_buffer_head], usb_rx_buffer_ep, nMax);
+				memcpy(usb_rx_buffer, &usb_rx_buffer_ep[nMax], count - nMax);
+			}
+		}
+		usb_rx_buffer_ep_used = 0;
+		usb_rx_buffer_count += count;
+		usb_rx_buffer_head = (usb_rx_buffer_head + count) % sizeof(usb_rx_buffer);
+
+		int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
+		count = sizeof(usb_rx_buffer) - usb_rx_buffer_count;
+		if( count < nMax )
+		{
+			nMax = count;
+		}
+
+		if( likely(nMax >= 64) )
+		{
+			USBD_LL_PrepareReceive(&usb_handle, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
+		}
+		else if( count > 64)
+		{
+			USBD_LL_PrepareReceive(&usb_handle, 2, usb_rx_buffer_ep, nMax);
+			usb_rx_buffer_ep_used = 1;
+		}
+		else
+		{
+			// overflow
+			usb_rx_waiting = 1;
+		}
+
+		xSemaphoreGiveFromISR(usb_read_sem, &xHigherPriorityTaskWoken);
+
+		portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+		portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+	}
+	return USBD_OK;
+}
+
+uint8_t* usb_cb_GetHSConfigDescriptor(uint16_t *length)
+{
+	*length = sizeof(usb_config_descriptor);
+	return (uint8_t*) usb_config_descriptor;
+}
+
+uint8_t* usb_cb_GetFSConfigDescriptor(uint16_t *length)
+{
+	*length = sizeof(usb_config_descriptor);
+	return (uint8_t*) usb_config_descriptor;
+}
+
+uint8_t* usb_cb_GetOtherSpeedConfigDescriptor(uint16_t *length)
+{
+	*length = sizeof(usb_config_descriptor);
+	return (uint8_t*) usb_config_descriptor;
+}
+
+uint8_t* usb_cb_GetDeviceQualifierDescriptor(uint16_t *length)
+{
+	*length = sizeof(usb_device_qualifier_desc);
+	return usb_device_qualifier_desc;
+}
 
 void usb_write_byte(unsigned char byte)
 {
@@ -163,7 +415,7 @@ void usb_add(uint16_t type, void* msg, uint16_t size)
 	}
 
 	// on se reserve le buffer circulaire pour les log s'il n'y a personne sur l'usb
-	if( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
+	if( usb_handle.dev_state != USBD_STATE_CONFIGURED )
 	{
 		return;
 	}
@@ -233,7 +485,7 @@ void usb_read_task(void * arg)
 
 	while(1)
 	{
-		while( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
+		while( usb_handle.dev_state != USBD_STATE_CONFIGURED )
 		{
 			vTaskDelay( ms_to_tick(100) );
 		}
@@ -281,7 +533,7 @@ void usb_read_task(void * arg)
 					if( nMax > 0 )
 					{
 						// on a eu un overflow, il faut relancer la reception des messages
-						DCD_EP_PrepareRx(&USB_OTG_dev, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
+						USBD_LL_PrepareReceive(&usb_handle, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
 						usb_rx_waiting = 0;
 					}
 				}
@@ -306,7 +558,7 @@ void usb_write_task(void * arg)
 
 	while(1)
 	{
-		while( USB_OTG_dev.dev.device_status != USB_OTG_CONFIGURED )
+		while( usb_handle.dev_state != USBD_STATE_CONFIGURED )
 		{
 			vTaskDelay( ms_to_tick(100) );
 		}
@@ -323,7 +575,7 @@ void usb_write_task(void * arg)
 				}
 
 				usb_endpoint_ready = 0;
-				DCD_EP_Tx(&USB_OTG_dev, 0x81, usb_buffer + usb_buffer_begin, sizeMax);
+				USBD_LL_Transmit(&usb_handle, 0x81, usb_buffer + usb_buffer_begin, sizeMax);
 				usb_buffer_size -= sizeMax;
 				usb_buffer_begin = (usb_buffer_begin + sizeMax) % USB_TX_BUFER_SIZE;
 			}
@@ -334,76 +586,13 @@ void usb_write_task(void * arg)
 	}
 }
 
+#ifdef STM32F4_USB_HS
+void isr_otg_hs(void)
+#else
 void isr_otg_fs(void)
+#endif
 {
-	USBD_OTG_ISR_Handler(&USB_OTG_dev);
-}
-
-void EP1_IN_Callback(void)
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( ! usb_endpoint_ready )
-	{
-		usb_endpoint_ready = 1;
-		xSemaphoreGiveFromISR(usb_write_sem, &xHigherPriorityTaskWoken);
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-
-void EP2_OUT_Callback(void)
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	// pas de commande en cours de traitement
-	int count = USBD_GetRxCount(&USB_OTG_dev, 0x02);
-	if( unlikely(usb_rx_buffer_ep_used) )
-	{
-		int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
-		if( count <= nMax )
-		{
-			memcpy(&usb_rx_buffer[usb_rx_buffer_head], usb_rx_buffer_ep, count);
-		}
-		else
-		{
-			memcpy(&usb_rx_buffer[usb_rx_buffer_head], usb_rx_buffer_ep, nMax);
-			memcpy(usb_rx_buffer, &usb_rx_buffer_ep[nMax], count - nMax);
-		}
-	}
-	usb_rx_buffer_ep_used = 0;
-	usb_rx_buffer_count += count;
-	usb_rx_buffer_head = (usb_rx_buffer_head + count) % sizeof(usb_rx_buffer);
-
-	int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
-	count = sizeof(usb_rx_buffer) - usb_rx_buffer_count;
-	if( count < nMax )
-	{
-		nMax = count;
-	}
-
-	if( likely(nMax >= 64) )
-	{
-		DCD_EP_PrepareRx(&USB_OTG_dev, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
-	}
-	else if( count > 64)
-	{
-		DCD_EP_PrepareRx(&USB_OTG_dev, 2, usb_rx_buffer_ep, nMax);
-		usb_rx_buffer_ep_used = 1;
-	}
-	else
-	{
-		// overflow
-		usb_rx_waiting = 1;
-	}
-
-	xSemaphoreGiveFromISR(usb_read_sem, &xHigherPriorityTaskWoken);
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+	HAL_PCD_IRQHandler(usb_handle.pData);
 }
 
 void usb_cmd_ptask(void* arg)

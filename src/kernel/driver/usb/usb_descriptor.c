@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "usb_descriptor.h"
+#include "kernel/driver/usb/stm32f4xx/usbd_def.h"
 
 // USB Standard Device Descriptor
 const uint8_t usb_device_descriptor[USB_DEVICE_DESCRIPTOR_SIZE] __attribute__ ((aligned (4))) =
@@ -20,7 +21,7 @@ const uint8_t usb_device_descriptor[USB_DEVICE_DESCRIPTOR_SIZE] __attribute__ ((
 #elif defined( __bar__ )
 	0x02,
 	0x00,   // idProduct = 0x0002
-#elif defined(__discovery__)
+#elif defined(__discovery__) || defined(__disco__)
 	0x03,                       // idProduct = 0x0003
 	0x00,
 #else
@@ -82,3 +83,19 @@ const uint8_t usb_string_langID[USB_STRING_LANG_ID_SIZE] __attribute__ ((aligned
 	0x0c,
 	0x04 // LangID = 0x040c: Fr
 };
+
+/* USB Standard Device Descriptor */
+uint8_t usb_device_qualifier_desc[USB_LEN_DEV_QUALIFIER_DESC] __attribute__ ((aligned (4))) =
+{
+  USB_LEN_DEV_QUALIFIER_DESC,
+  USB_DESC_TYPE_DEVICE_QUALIFIER,
+  0x00,
+  0x02,
+  0x00,
+  0x00,
+  0x00,
+  0x40,
+  0x01,
+  0x00,
+};
+
