@@ -21,7 +21,7 @@
 #define USB_WRITE_STACK_SIZE      75
 
 #define USBD_MANUFACTURER_STRING      "Atlantronic"
-#define USBD_PRODUCT_STRING           "discovery"
+#define USBD_PRODUCT_STRING           ARCH
 #define USBD_SERIALNUMBER_STRING      "00000000011C"
 #define USBD_CONFIGURATION_STRING      "Atlantronic config"
 #define USBD_INTERFACE_STRING          "Atlantronic interface"
@@ -158,6 +158,7 @@ static int usb_module_init(void)
 	NVIC_SetPriority(OTG_FS_IRQn, PRIORITY_IRQ_USB);
 	NVIC_EnableIRQ(OTG_FS_IRQn);
 #endif
+
 	vSemaphoreCreateBinary(usb_write_sem);
 	if( usb_write_sem == NULL )
 	{

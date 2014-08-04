@@ -19,6 +19,7 @@ CFLAGS+=-Wall
 CFLAGS+=-Wextra
 CFLAGS+=-Wswitch-default
 CFLAGS+=-Wswitch-enum
+CFLAGS+=-DARCH=\"$(ARCH)\"
 CFLAGS+=-D__$(ARCH)__
 CFLAGS+=-DSTM32F4XX
 CFLAGS+=-DSTM32F407xx
