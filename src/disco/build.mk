@@ -27,5 +27,6 @@ obj-disco-core += ${core_os}
 obj-disco-core += ${core_usb}
 obj-disco-core += kernel/log.o
 obj-disco-core += kernel/driver/sdram.o
+obj-disco-core += kernel/driver/spi.o
 bin-disco += core
 

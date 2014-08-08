@@ -10,83 +10,46 @@
 #include "kernel/fault.h"
 #include <math.h>
 
-#define SPI_STACK_SIZE             300
+#define SPI_DEVICE_MAX        3
 
-static xSemaphoreHandle spi_sem;
-static xSemaphoreHandle tim_sem;
-static void(*spi_callback[SPI_DEVICE_MAX])(void);
+typedef struct
+{
+	GPIO_TypeDef* gpio_cs;
+	uint32_t pin_cs;
+} SpiDevice;
 
-static void spi_task(void* arg);
+typedef struct
+{
+	SPI_TypeDef* reg;
+	DMA_Stream_TypeDef* txDma;
+	DMA_Stream_TypeDef* rxDma;
+	SpiDevice devices[SPI_DEVICE_MAX];
+	xSemaphoreHandle sem;
+	xSemaphoreHandle mutex;
+} SpiDriver;
+
+static SpiDriver spi_driver[SPI_DRIVER_MAX];
+
+static void spi_register_device(const enum spi_device id, GPIO_TypeDef* gpio_cs, uint32_t pin_cs);
+static void spi_driver_init(const enum spi_driver id, SPI_TypeDef* spi_reg, GPIO_TypeDef* gpio_sck, uint32_t pin_sck, GPIO_TypeDef* gpio_miso, uint32_t pin_miso, GPIO_TypeDef* gpio_mosi, uint32_t pin_mosi, uint32_t gpio_af, DMA_Stream_TypeDef* txDma, int txChan, DMA_Stream_TypeDef* rxDma, int rxChan);
 
 int spi_module_init()
 {
+#if defined(__discovery__)
 	// activation du SPI1
 	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
 
-	// activation dma2
-	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN;
-
-	// activation GPIOA (SCK, MOSI et MISO sur le port A)
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-
-	// activation GPIOE (CS de l'accelero)
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
-
-	gpio_pin_init(GPIOA, 5, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // SCK
-	gpio_pin_init(GPIOA, 6, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MISO
-	gpio_pin_init(GPIOA, 7, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MOSI
-	gpio_pin_init(GPIOE, 3, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS0 accelero
-	gpio_pin_init(GPIOE, 7, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS1 gyro
-//	gpio_pin_init(GPIOA, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // CS2
-
-	// on ne selectionne rien
-	gpio_set_pin(GPIOE, 3);
-	gpio_set_pin(GPIOE, 7);
-//	gpio_set_pin(GPIOA, 8);
-
-	gpio_af_config(GPIOA, 5, GPIO_AF_SPI1);
-	gpio_af_config(GPIOA, 6, GPIO_AF_SPI1);
-	gpio_af_config(GPIOA, 7, GPIO_AF_SPI1);
-
+	// activation GPIOA (SCK, MOSI et MISO sur le port A) et GPIOE (CS de l'accelero) et dma2
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
 
 	// reset SPI1
 	RCC->APB2RSTR |= RCC_APB2RSTR_SPI1;
 	RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1;
 
-	// spi full duplex, lignes dediees a sens unique
-	// datasize = 8
-	// clock polarity : low
-	// clock phase : edge
-	// selection esclave (NSS) : soft (=> SSM = 1 et SSI = 1)
-	// prescaler : 16 (SPI_CR1_BR_0 | SPI_CR1_BR_1) => PCLk2/16 = 5.25 MHz
-	// format LSBFIRST
-	// spi maitre
-	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_MSTR | SPI_CR1_BR_0 | SPI_CR1_BR_1;
-
-	// activation du mode SPI
-	SPI1->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
-
-	// crc polynomial
-	SPI1->CRCPR = 7;
-
-	// enable SPI
-	SPI1->CR1 |= SPI_CR1_SPE;
-
-	// activation DMA sur SPI1 et de l'IT d'erreur
-	SPI1->CR2 = SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN | SPI_CR2_ERRIE;
-
-	// taille mémoire d'une donnée : 8 bits
-	// incrément automatique mémoire : 1
-	// taille mémoire périph d'une donnée : 8 bits
-	// incrément automatique mémoire périph : 0
-	// transfert (écriture) : mem => mem périph
-	// transfert (lecture) : mem périph => mem
-	// SPI1_RX : DMA2, stream0 sur chan3
-	// SPI1_TX : DMA2, stream3 sur chan3
-	DMA2_Stream0->CR = DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1 | DMA_SxCR_MINC | DMA_SxCR_TCIE;
-	DMA2_Stream0->PAR = (uint32_t) &SPI1->DR;
-	DMA2_Stream3->CR = DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE;
-	DMA2_Stream3->PAR = (uint32_t) &SPI1->DR;
+	spi_register_device(SPI_DEVICE_ACCELERO, GPIOE, 3);
+	spi_register_device(SPI_DEVICE_GYRO, GPIOE, 7);
+	//spi_register_device(SPI_DEVICE_GYRO, GPIOA, 8);
+	spi_driver_init(SPI_DRIVER_1, SPI1, GPIOA, 5, GPIOA, 6, GPIOA, 7, GPIO_AF_SPI1, DMA2_Stream3, 3, DMA2_Stream0, 3);
 
 	NVIC_EnableIRQ(SPI1_IRQn);
 	NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -94,66 +57,138 @@ int spi_module_init()
 	NVIC_SetPriority(SPI1_IRQn, PRIORITY_IRQ_SPI);
 	NVIC_SetPriority(DMA2_Stream0_IRQn, PRIORITY_IRQ_DMA2_STREAM0);
 	NVIC_SetPriority(DMA2_Stream3_IRQn, PRIORITY_IRQ_DMA2_STREAM3);
+#elif defined(__disco__)
+	// activation du SPI5 et SPI6
+	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN /*| RCC_APB2ENR_SPI6EN*/;
 
-	vSemaphoreCreateBinary(spi_sem);
-	xSemaphoreTake(spi_sem, 0);
+	// activation GPIOC (CS du gyro et CS du lcd), GPIOF (SCK, MOSI et MISO sur le port F) et dma2
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_DMA2EN;
 
-	int i = 0;
-	for(i = 0; i < SPI_DEVICE_MAX; i++)
-	{
-		spi_callback[i] = nop_function;
-	}
+	// reset SPI5 et SPI6
+	RCC->APB2RSTR |= RCC_APB2RSTR_SPI5RST /*| RCC_APB2RSTR_SPI6RST*/;
+	RCC->APB2RSTR &= ~(RCC_APB2RSTR_SPI5RST /*| RCC_APB2RSTR_SPI6RST*/);
 
-	xTaskCreate(spi_task, "spi", SPI_STACK_SIZE, NULL, PRIORITY_TASK_SPI, NULL);
+	spi_register_device(SPI_DEVICE_GYRO, GPIOC, 1);
+	spi_register_device(SPI_DEVICE_LCD, GPIOC, 2);
+	//spi_register_device(SPI_DEVICE_UNUSED_SPI5, GPIOF, 10);
+	spi_driver_init(SPI_DRIVER_5, SPI5, GPIOF, 7, GPIOF, 8, GPIOF, 9, GPIO_AF_SPI5, DMA2_Stream4, 2, DMA2_Stream3, 2);
+	//spi_register_device(SPI_DEVICE_UNUSED1_SPI6, GPIOB, 3);
+	//spi_register_device(SPI_DEVICE_UNUSED2_SPI6, GPIOE, 2);
+	//spi_driver_init(SPI_DRIVER_6, SPI6, GPIOG, 13, GPIOG, 12, GPIOG, 14, GPIO_AF_SPI6, DMA2_Stream5, 1, DMA2_Stream6, 1);
 
-	//////////// TESTS SPI sur timer
-	// activation timer 6
-	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
-	TIM6->CR1 = 0x00;//TIM_CR1_ARPE;
+	NVIC_EnableIRQ(SPI5_IRQn);
+	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+	NVIC_EnableIRQ(DMA2_Stream4_IRQn);
+	NVIC_SetPriority(SPI5_IRQn, PRIORITY_IRQ_SPI);
+	NVIC_SetPriority(DMA2_Stream3_IRQn, PRIORITY_IRQ_DMA2_STREAM3);
+	NVIC_SetPriority(DMA2_Stream4_IRQn, PRIORITY_IRQ_DMA2_STREAM4);
 
-	// TIM6_CLK = 84MHz / (PSC + 1) = 21Mhz
-	TIM6->PSC = 3;
-
-	// IT tout les TIM6_CLK / ARR = 485 Hz
-	TIM6->ARR = 43299;
-	TIM6->DIER = TIM_DIER_UIE;
-	NVIC_EnableIRQ(TIM6_DAC_IRQn);
-	NVIC_SetPriority(TIM6_DAC_IRQn, PRIORITY_IRQ_SPI);
-
-	vSemaphoreCreateBinary(tim_sem);
-	xSemaphoreTake(tim_sem, 0);
-
-	// activation
-	TIM6->CR1 |= TIM_CR1_CEN;
-
+	//NVIC_EnableIRQ(SPI6_IRQn);
+	//NVIC_EnableIRQ(DMA2_Stream5_IRQn);
+	//NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+	//NVIC_SetPriority(SPI6_IRQn, PRIORITY_IRQ_SPI);
+	//NVIC_SetPriority(DMA2_Stream5_IRQn, PRIORITY_IRQ_DMA2_STREAM5);
+	//NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
+#else
+#error unknown card
+#endif
 	return 0;
 }
 
 module_init(spi_module_init, INIT_SPI);
 
-int spi_register_callback(enum spi_device device, void(*callback)(void))
+static void spi_driver_init(const enum spi_driver id, SPI_TypeDef* spi_reg, GPIO_TypeDef* gpio_sck, uint32_t pin_sck, GPIO_TypeDef* gpio_miso, uint32_t pin_miso, GPIO_TypeDef* gpio_mosi, uint32_t pin_mosi, uint32_t gpio_af, DMA_Stream_TypeDef* txDma, int txChan, DMA_Stream_TypeDef* rxDma, int rxChan)
 {
-	int res = -1;
-
-	if( device < SPI_DEVICE_MAX)
+	if( id >= SPI_DRIVER_MAX )
 	{
-		spi_callback[device] = callback;
-		res = 0;
+		return;
 	}
 
-	return res;
+	gpio_pin_init(gpio_sck, pin_sck, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // SCK
+	gpio_pin_init(gpio_miso, pin_miso, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MISO
+	gpio_pin_init(gpio_mosi, pin_mosi, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // MOSI
+	gpio_af_config(gpio_sck, pin_sck, gpio_af);
+	gpio_af_config(gpio_miso, pin_miso, gpio_af);
+	gpio_af_config(gpio_mosi, pin_mosi, gpio_af);
+	spi_driver[id].reg = spi_reg;
+	spi_driver[id].txDma = txDma;
+	spi_driver[id].rxDma = rxDma;
+	vSemaphoreCreateBinary(spi_driver[id].sem);
+	xSemaphoreTake(spi_driver[id].sem, 0);
+	spi_driver[id].mutex = xSemaphoreCreateMutex();
+
+	int i;
+	for(i = 0; i < SPI_DEVICE_MAX; i++)
+	{
+		SpiDevice* dev = &spi_driver[id].devices[i];
+		if( dev->gpio_cs )
+		{
+			// init pin cs
+			gpio_pin_init(dev->gpio_cs, dev->pin_cs, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN);
+
+			// on ne selectionne rien
+			gpio_set_pin(dev->gpio_cs, dev->pin_cs);
+		}
+	}
+
+	// spi full duplex, lignes dediees a sens unique
+	// datasize = 8
+	// clock polarity : low
+	// clock phase : edge
+	// selection esclave (NSS) : soft (=> SSM = 1 et SSI = 1)
+	// prescaler : 16 (SPI_CR1_BR_0 | SPI_CR1_BR_1) => PCLk2/16 = 5.25 MHz
+	// format MSBFIRST
+	// spi maitre
+	spi_reg->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_MSTR | SPI_CR1_BR_0 | SPI_CR1_BR_1;
+
+	// activation du mode SPI
+	spi_reg->I2SCFGR &= ~SPI_I2SCFGR_I2SMOD;
+
+	// crc polynomial
+	spi_reg->CRCPR = 7;
+
+	// enable SPI
+	spi_reg->CR1 |= SPI_CR1_SPE;
+
+	// activation DMA sur SPI5 et de l'IT d'erreur
+	spi_reg->CR2 = SPI_CR2_TXDMAEN | SPI_CR2_RXDMAEN | SPI_CR2_ERRIE;
+
+	// taille mémoire d'une donnée : 8 bits
+	// incrément automatique mémoire : 1
+	// taille mémoire périph d'une donnée : 8 bits
+	// incrément automatique mémoire périph : 0
+	// transfert (écriture) : mem => mem périph
+	// transfert (lecture) : mem périph => mem
+	rxDma->CR = (rxChan * DMA_SxCR_CHSEL_0) | DMA_SxCR_MINC | DMA_SxCR_TCIE;
+	rxDma->PAR = (uint32_t) &spi_reg->DR;
+	txDma->CR = (txChan * DMA_SxCR_CHSEL_0) | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_TCIE;
+	txDma->PAR = (uint32_t) &spi_reg->DR;
 }
 
+static void spi_register_device(const enum spi_device id, GPIO_TypeDef* gpio_cs, uint32_t pin_cs)
+{
+	int driverId = id >> 16;
+	int deviceId = id & 0xffff;
+
+	if( driverId >= SPI_DRIVER_MAX || deviceId >= SPI_DEVICE_MAX)
+	{
+		return;
+	}
+
+	spi_driver[driverId].devices[deviceId].gpio_cs = gpio_cs;
+	spi_driver[driverId].devices[deviceId].pin_cs = pin_cs;
+}
+
+#if defined(__discovery__)
 void isr_dma2_stream0()
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK_FROM_ISR();
-
 	if( DMA2->LISR | DMA_LISR_TCIF0)
 	{
 		DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
 		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-		xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
+		xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_1].sem, &xHigherPriorityTaskWoken);
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
@@ -162,11 +197,21 @@ void isr_dma2_stream0()
 
 void isr_dma2_stream3()
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
 	if( DMA2->LISR | DMA_LISR_TCIF3)
 	{
 		DMA2->LIFCR |= DMA_LIFCR_CTCIF3;
 		DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+
+		if( SPI1->CR1 & SPI_CR1_BIDIOE )
+		{
+			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_1].sem, &xHigherPriorityTaskWoken);
+		}
 	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 void isr_spi1(void)
@@ -187,101 +232,113 @@ void isr_spi1(void)
 		SPI1->SR;
 	}
 }
-
-static void spi_set_read_dma_buffer(unsigned char* buf)
-{
-	DMA2_Stream0->M0AR = (uint32_t) buf;
-}
-
-static void spi_set_read_dma_size(uint16_t size)
-{
-	DMA2_Stream0->NDTR = size;
-	DMA2_Stream0->CR |= DMA_SxCR_EN;
-}
-
-static void spi_set_write_dma_buffer(const void* buf)
-{
-	DMA2_Stream3->M0AR = (uint32_t) buf;
-}
-
-static void spi_send_dma_buffer(uint16_t size)
-{
-	DMA2_Stream3->NDTR = size;
-	DMA2_Stream3->CR |= DMA_SxCR_EN;
-}
-
-//! @return -1 si timeout
-//! @return 0 sinon
-int spi_transaction(enum spi_device device, const void* tx_buffer, void* rx_buffer, uint16_t size)
-{
-	int res = 0;
-	GPIO_TypeDef* gpio = NULL;
-	uint32_t pin;
-
-	switch(device)
-	{
-		case SPI_DEVICE_ACCELERO:
-			gpio = GPIOE;
-			pin = 3;
-			break;
-		case SPI_DEVICE_GYRO:
-			gpio = GPIOE;
-			pin = 7;
-			break;
-		case SPI_DEVICE_UNUSED:
-			gpio = GPIOA;
-			pin = 8;
-			break;
-		case SPI_DEVICE_MAX:
-		default:
-			return -1;
-			break;
-	}
-
-	gpio_reset_pin(gpio, pin);
-	xSemaphoreTake(spi_sem, 0);
-	spi_set_read_dma_buffer(rx_buffer);
-	spi_set_read_dma_size(size);
-	spi_set_write_dma_buffer(tx_buffer);
-	spi_send_dma_buffer(size);
-	if( xSemaphoreTake(spi_sem, 2) == pdFALSE )
-	{
-		res = -1;
-	}
-	gpio_set_pin(gpio, pin);
-
-	return res;
-}
-
-void isr_tim6(void)
+#elif defined(__disco__)
+void isr_dma2_stream3()
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 	portSET_INTERRUPT_MASK_FROM_ISR();
 
-	if( TIM6->SR | TIM_SR_UIF )
+	if( DMA2->LISR | DMA_LISR_TCIF3)
 	{
-		TIM6->SR &= ~TIM_SR_UIF;
-		xSemaphoreGiveFromISR(tim_sem, &xHigherPriorityTaskWoken);
+		DMA2->LIFCR |= DMA_LIFCR_CTCIF3;
+		DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+		xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_5].sem, &xHigherPriorityTaskWoken);
+
 	}
 
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
-static void spi_task(void* arg)
+void isr_dma2_stream4()
 {
-	(void) arg;
-	int i = 0;
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
 
-	while(1)
+	if( DMA2->HISR | DMA_HISR_TCIF4)
 	{
-		for(i = 0; i < SPI_DEVICE_MAX; i++)
-		{
-			spi_callback[i]();
-		}
+		DMA2->HIFCR |= DMA_HIFCR_CTCIF4;
+		DMA2_Stream4->CR &= ~DMA_SxCR_EN;
 
-		xSemaphoreTake(tim_sem, portMAX_DELAY);
-		//vTaskDelay(1);
+		if( SPI5->CR1 & SPI_CR1_BIDIOE )
+		{
+			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_5].sem, &xHigherPriorityTaskWoken);
+		}
 	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
+void isr_spi5(void)
+{
+	int status = SPI5->SR;
+	if( status & (SPI_SR_OVR | SPI_SR_MODF | SPI_SR_CRCERR) )
+	{
+		// TODO : remonter erreur + log erreur
+
+		// erreur MODF qui ne doit pas arriver (NSS soft et SSI = 1)
+		// erreur CRC qui ne doit pas arriver (pas active)
+
+		// on desactive le DMA de reception
+		DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+
+		// clear overrun : lecture DR puis lecture SR
+		SPI5->DR;
+		SPI5->SR;
+	}
+}
+#else
+#error unknown card
+#endif
+
+//! @return -1 si timeout ou erreur
+//! @return 0 sinon
+int spi_transaction(enum spi_device id, const void* tx_buffer, void* rx_buffer, uint16_t size)
+{
+	int driverId = id >> 16;
+	int deviceId = id & 0xffff;
+	int res = 0;
+
+	if( driverId >= SPI_DRIVER_MAX || deviceId >= SPI_DEVICE_MAX)
+	{
+		return -1;
+	}
+
+	SpiDriver* drv = &spi_driver[driverId];
+	SpiDevice* dev = &drv->devices[deviceId];
+	xSemaphoreTake(drv->mutex, portMAX_DELAY);
+
+	gpio_reset_pin(dev->gpio_cs, dev->pin_cs);
+	xSemaphoreTake(drv->sem, 0);
+	if( rx_buffer )
+	{
+		drv->reg->CR1 &= ~(SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE);
+		drv->rxDma->M0AR = (uint32_t) rx_buffer;
+		drv->rxDma->NDTR = size;
+		drv->rxDma->CR |= DMA_SxCR_EN;
+	}
+	else
+	{
+		drv->reg->CR1 |= SPI_CR1_BIDIMODE | SPI_CR1_BIDIOE;
+	}
+	drv->txDma->M0AR = (uint32_t) tx_buffer;
+	drv->txDma->NDTR = size;
+	drv->txDma->CR |= DMA_SxCR_EN;
+	if( xSemaphoreTake(drv->sem, 2) == pdFALSE )
+	{
+		res = -1;
+	}
+	gpio_set_pin(dev->gpio_cs, dev->pin_cs);
+
+	xSemaphoreGive(drv->mutex);
+
+	return res;
+}
+
+//! @return -1 si timeout
+//! @return 0 sinon
+int spi_write(enum spi_device device, const void* tx_buffer, uint16_t size)
+{
+	return spi_transaction(device, tx_buffer, 0, size);
+}

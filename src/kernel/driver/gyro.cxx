@@ -2,12 +2,17 @@
 #include "gyro.h"
 #include "kernel/module.h"
 #include "kernel/cpu/cpu.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/math/simpson_integrator.h"
 #include "gpio.h"
 #include "kernel/fault.h"
 #include <math.h>
+
+#define ADXRS453_STACK_SIZE           300
 
 // interface gyro
 #define ADXRS453_READ          0x80000000
@@ -39,19 +44,18 @@ static int gyro_init_step;            //!< nombre de cycles (1 cycle = 1ms) depu
 static unsigned char gyro_tx_buffer[8];
 static unsigned char gyro_rx_buffer[8];
 static Simpson gyro_simpson;
+static xSemaphoreHandle tim_sem;
 
 static void init_gyro();
 static void gyro_calibration_cmd(void* arg);
 static void gyro_set_position_cmd(void* arg);
 static void gyro_set_calibration_values_cmd(void* arg);
-static void gyro_spi_callback();
 static int gyro_update(float dt);
+static void gyro_task(void* arg);
 
 int gyro_module_init()
 {
 	gyro_state = GYRO_STATE_DISCONNECTED;
-
-	spi_register_callback(SPI_DEVICE_GYRO, gyro_spi_callback);
 
 	usb_add_cmd(USB_CMD_GYRO_CALIB, &gyro_calibration_cmd);
 	usb_add_cmd(USB_CMD_GYRO_SET_POSITION, &gyro_set_position_cmd);
@@ -59,20 +63,66 @@ int gyro_module_init()
 
 	gyro_scale = 0.000218166156f;  // from datasheet
 
+	//////////// TESTS gyro sur timer
+	// activation timer 6
+	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
+	TIM6->CR1 = 0x00;//TIM_CR1_ARPE;
+
+	// TIM6_CLK = 84MHz / (PSC + 1) = 21Mhz
+	TIM6->PSC = 3;
+
+	// IT tout les TIM6_CLK / ARR = 485 Hz
+	TIM6->ARR = 43299;
+	TIM6->DIER = TIM_DIER_UIE;
+	NVIC_EnableIRQ(TIM6_DAC_IRQn);
+	NVIC_SetPriority(TIM6_DAC_IRQn, PRIORITY_IRQ_SPI);
+
+	vSemaphoreCreateBinary(tim_sem);
+	xSemaphoreTake(tim_sem, 0);
+
+	// activation
+	TIM6->CR1 |= TIM_CR1_CEN;
+
+	xTaskCreate(gyro_task, "adxrs453", ADXRS453_STACK_SIZE, NULL, PRIORITY_TASK_ACCELERO, NULL);
+
 	return 0;
 }
 
 module_init(gyro_module_init, INIT_GYRO);
 
-static void gyro_spi_callback()
+void isr_tim6(void)
 {
-	if( gyro_state == GYRO_STATE_RUNNING)
-	{
-		gyro_update(0.002020202f); // TODO relier a frequence spi de facon correcte
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
+	if( TIM6->SR | TIM_SR_UIF )
+ 	{
+		TIM6->SR &= ~TIM_SR_UIF;
+		xSemaphoreGiveFromISR(tim_sem, &xHigherPriorityTaskWoken);
 	}
-	else if( gyro_state == GYRO_STATE_DISCONNECTED )
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
+static void gyro_task(void* arg)
+{
+	(void) arg;
+
+	init_gyro();
+
+	while(1)
 	{
-		init_gyro();
+		if( gyro_state == GYRO_STATE_RUNNING)
+		{
+			gyro_update(0.002020202f); // TODO relier a frequence du timer de facon correcte
+		}
+		else if( gyro_state == GYRO_STATE_DISCONNECTED )
+		{
+			init_gyro();
+		}
+
+		xSemaphoreTake(tim_sem, portMAX_DELAY);
 	}
 }
 

@@ -68,7 +68,10 @@ void isr_dma2_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!
 void isr_dma2_stream6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_6
 
 void isr_spi1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi1
-
+#ifdef STM32F429xx
+void isr_spi5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi5
+void isr_spi6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi6
+#endif
 void isr_usart2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart2
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
 void isr_uart4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption uart4
@@ -204,6 +207,17 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_unexpected,
+#ifdef STM32F429xx
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_spi5,
+	isr_spi6,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+	isr_unexpected,
+#endif
 };
 
 void isr_reset(void)
