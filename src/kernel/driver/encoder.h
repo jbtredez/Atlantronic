@@ -19,7 +19,7 @@ enum
 	ENCODER_MAX
 };
 
-uint16_t encoder_get(const unsigned int num);
+uint16_t encoder_get(const unsigned int id);
 
 #ifdef __cplusplus
 }
