@@ -11,58 +11,58 @@
 void isr_pwm_reset(void);
 static int pwm_on;
 
+#define PWM_CH1         0x01
+#define PWM_CH2         0x02
+#define PWM_CH3         0x04
+#define PWM_CH4         0x08
+
+typedef struct
+{
+	volatile uint32_t* ccrx;
+	GPIO_TypeDef* gpio_dir;
+	uint32_t pin_dir;
+	uint32_t arr;
+} PwmMapping;
+
+PwmMapping pwm_map[PWM_MAX];
+
+static void pwm_timer_init(TIM_TypeDef* tim, uint32_t arr, uint32_t pwm_ch_mask);
+static void pwn_pin_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch, uint32_t pin_ch, volatile uint32_t* ccrx, uint32_t arr, uint32_t gpio_af, GPIO_TypeDef* gpio_dir, uint32_t pin_dir);
+
 static int pwm_module_init()
 {
+#if defined(__discovery__)
 	// activation GPIOE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
 
-	gpio_pin_init(GPIOE, 9, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // TIM1_CH1
-	gpio_pin_init(GPIOE, 11, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // TIM1_CH2
-	gpio_pin_init(GPIOE, 13, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // TIM1_CH3
-	gpio_pin_init(GPIOE, 14, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // TIM1_CH4
-	gpio_af_config(GPIOE, 9, GPIO_AF_TIM1);
-	gpio_af_config(GPIOE, 11, GPIO_AF_TIM1);
-	gpio_af_config(GPIOE, 13, GPIO_AF_TIM1);
-	gpio_af_config(GPIOE, 14, GPIO_AF_TIM1);
-
-	gpio_pin_init(GPIOE, 8, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 1
-	gpio_pin_init(GPIOE, 10, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 2
-	gpio_pin_init(GPIOE, 12, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 3
-	gpio_pin_init(GPIOE, 15, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // sens 4
+	pwn_pin_init(PWM_1, GPIOE, 9, &TIM1->CCR1, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 8);
+	pwn_pin_init(PWM_2, GPIOE, 11, &TIM1->CCR2, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 10);
+	pwn_pin_init(PWM_3, GPIOE, 13, &TIM1->CCR3, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 12);
+	pwn_pin_init(PWM_4, GPIOE, 14, &TIM1->CCR4, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 15);
 
 	// activation clock sur le timer 1
 	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+	pwm_timer_init(TIM1, PWM_ARR1, PWM_CH1 | PWM_CH2 | PWM_CH3 | PWM_CH4);
+#elif defined(__disco__)
+	// activation GPIOA, GPIOC, GPIOE, GPIOF, GPIOG
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_GPIOGEN;
 
-	TIM1->PSC = PWM_PSC;
-	TIM1->ARR = PWM_ARR;
+	pwn_pin_init(PWM_1, GPIOA, 2, &TIM5->CCR3, PWM_ARR1, GPIO_AF_TIM5, GPIOF, 6);
+	pwn_pin_init(PWM_2, GPIOA, 3, &TIM5->CCR4, PWM_ARR1, GPIO_AF_TIM5, GPIOC, 8);
+	pwn_pin_init(PWM_3, GPIOE, 5, &TIM9->CCR1, PWM_ARR2, GPIO_AF_TIM9, GPIOG, 3);
+	pwn_pin_init(PWM_4, GPIOE, 6, &TIM9->CCR2, PWM_ARR2, GPIO_AF_TIM9, GPIOG, 2);
 
-	TIM1->RCR =0x00;
-	TIM1->CR1 = 0x00;
-	TIM1->CR2 = 0x00;
+	// activation clock sur le timer 5
+	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+	pwm_timer_init(TIM5, PWM_ARR1, PWM_CH3 | PWM_CH4);
 
-	TIM1->CR1 |= /*TIM_CR1_ARPE |*/ TIM_CR1_URS;
-	TIM1->SMCR = 0x00;
+	// activation clock sur le timer 9
+	RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
+	pwm_timer_init(TIM9, PWM_ARR2, PWM_CH1 | PWM_CH2);
+#else
+#error unknown card
+#endif
 
-	// mise à jour "update generation"
-	TIM1->EGR |= TIM_EGR_UG;
-
-	TIM1->CCER = 0x00; // permet de programmer CCMR1 et CCMR2
-	TIM1->BDTR = 0x00; // permet de programmer CCMR1 et CCMR2
-	TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1PE | // mode PWM 1 sur le canal 1 avec preload
-	              TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2PE;  // mode PWM 1 sur le canal 2 avec preload
-	TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3PE | // mode PWM 1 sur le canal 3 avec preload
-	              TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4PE;  // mode PWM 1 sur le canal 4 avec preload
-
-	TIM1->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E;
-
-	TIM1->CCR1 = 0x00; // pwm initiale a 0 sur le canal 1
-	TIM1->CCR2 = 0x00; // pwm initiale a 0 sur le canal 2
-	TIM1->CCR3 = 0x00; // pwm initiale a 0 sur le canal 3
-	TIM1->CCR4 = 0x00; // pwm initiale a 0 sur le canal 4
-
-	// on active le tout
-	TIM1->CR1 |= TIM_CR1_CEN;
-	TIM1->BDTR |= TIM_BDTR_MOE;
 	pwm_on = 1;
 
 	return 0;
@@ -72,19 +72,97 @@ module_init(pwm_module_init, INIT_PWM);
 
 module_exit(isr_pwm_reset, EXIT_PWM);
 
-void pwm_set16(const unsigned int num, int16_t val)
+static void pwn_pin_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch, uint32_t pin_ch, volatile uint32_t* ccrx, uint32_t arr, uint32_t gpio_af, GPIO_TypeDef* gpio_dir, uint32_t pin_dir)
 {
-	int dir = 1;
-	if(val < 0)
+	if( id >= PWM_MAX )
 	{
-		val = -val;
-		dir = -1;
+		return;
 	}
 
-	// saturation
-	if( val > PWM_ARR )
+	// pin pwm
+	gpio_pin_init(GPIOx_ch, pin_ch, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);
+	gpio_af_config(GPIOx_ch, pin_ch, gpio_af);
+
+	// pin direction
+	gpio_pin_init(gpio_dir, pin_dir, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);
+
+	pwm_map[id].ccrx = ccrx;
+	pwm_map[id].gpio_dir = gpio_dir;
+	pwm_map[id].pin_dir = pin_dir;
+	pwm_map[id].arr = arr;
+}
+
+static void pwm_timer_init(TIM_TypeDef* tim, uint32_t arr, uint32_t pwm_ch_mask)
+{
+	tim->PSC = PWM_PSC;
+	tim->ARR = arr;
+	tim->RCR =0x00;
+	tim->CR1 = 0x00;
+	tim->CR2 = 0x00;
+	tim->CR1 |= /*TIM_CR1_ARPE |*/ TIM_CR1_URS;
+	tim->SMCR = 0x00;
+
+	// mise à jour "update generation"
+	tim->EGR |= TIM_EGR_UG;
+
+	tim->CCER = 0x00; // permet de programmer CCMR1 et CCMR2
+	if( tim == TIM1 || tim == TIM8 )
 	{
-		val = PWM_ARR;
+		tim->BDTR = 0x00; // permet de programmer CCMR1 et CCMR2
+	}
+
+	uint32_t ccmr1 = 0;
+	uint32_t ccmr2 = 0;
+	uint32_t ccer = 0;
+
+	if( pwm_ch_mask & PWM_CH1 )
+	{
+		ccmr1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1PE; // mode PWM 1 sur le canal 1 avec preload
+		ccer |= TIM_CCER_CC1E;
+		tim->CCR1 = 0x00; // pwm initiale a 0 sur le canal 1
+	}
+
+	if( pwm_ch_mask & PWM_CH2 )
+	{
+		ccmr1 |= TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 | TIM_CCMR1_OC2PE;  // mode PWM 1 sur le canal 2 avec preload
+		ccer |= TIM_CCER_CC2E;
+		tim->CCR2 = 0x00; // pwm initiale a 0 sur le canal 2
+	}
+
+	if( pwm_ch_mask & PWM_CH3 )
+	{
+		ccmr2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3PE; // mode PWM 1 sur le canal 3 avec preload
+		ccer |= TIM_CCER_CC3E;
+		tim->CCR3 = 0x00; // pwm initiale a 0 sur le canal 3
+	}
+
+	if( pwm_ch_mask & PWM_CH4 )
+	{
+		ccmr2 |= TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4PE;  // mode PWM 1 sur le canal 4 avec preload
+		ccer |= TIM_CCER_CC4E;
+		tim->CCR4 = 0x00; // pwm initiale a 0 sur le canal 4
+	}
+
+	tim->CCMR1 = ccmr1;
+	tim->CCMR2 = ccmr2;
+	tim->CCER = ccer;
+
+	// on active le tout
+	tim->CR1 |= TIM_CR1_CEN;
+	if( tim == TIM1 || tim == TIM8 )
+	{
+		tim->BDTR |= TIM_BDTR_MOE;
+	}
+}
+
+void pwm_set(const unsigned int id, float val)
+{
+	int dir = 1;
+
+	if( id >= PWM_MAX )
+	{
+		log_format(LOG_ERROR, "unknown pwm id %d", id);
+		return;
 	}
 
 	if( ! pwm_on )
@@ -92,61 +170,29 @@ void pwm_set16(const unsigned int num, int16_t val)
 		val = 0;
 	}
 
-	switch(num)
+	if(val < 0)
 	{
-		case PWM_1:
-			if(dir > 0)
-			{
-				gpio_set_pin(GPIOE, 8);
-			}
-			else
-			{
-				gpio_reset_pin(GPIOE, 8);
-			}
-			TIM1->CCR1 = val;
-			break;
-		case PWM_2:
-			if(dir > 0)
-			{
-				gpio_set_pin(GPIOE, 10);
-			}
-			else
-			{
-				gpio_reset_pin(GPIOE, 10);
-			}
-			TIM1->CCR2 = val;
-			break;
-		case PWM_3:
-			if(dir > 0)
-			{
-				gpio_set_pin(GPIOE, 12);
-			}
-			else
-			{
-				gpio_reset_pin(GPIOE, 12);
-			}
-			TIM1->CCR3 = val;
-			break;
-		case PWM_4:
-			if(dir > 0)
-			{
-				gpio_set_pin(GPIOE, 15);
-			}
-			else
-			{
-				gpio_reset_pin(GPIOE, 15);
-			}
-			TIM1->CCR4 = val;
-			break;
-		default:
-			log_format(LOG_ERROR, "unknown pwm id %d", num);
-			break;
+		val = -val;
+		dir = -1;
 	}
-}
 
-void pwm_set(const unsigned int num, float val)
-{
-	pwm_set16(num, val * PWM_ARR);
+	int arr = pwm_map[id].arr;
+	uint16_t val16 = val * arr;
+	if( val16 > arr)
+	{
+		val16 = arr;
+	}
+
+	if(dir > 0)
+	{
+		gpio_set_pin(pwm_map[id].gpio_dir, pwm_map[id].pin_dir);
+	}
+	else
+	{
+		gpio_reset_pin(pwm_map[id].gpio_dir, pwm_map[id].pin_dir);
+	}
+
+	*pwm_map[id].ccrx = val16;
 }
 
 void isr_pwm_reset(void)
@@ -163,8 +209,9 @@ void pwm_enable()
 void pwm_disable()
 {
 	pwm_on = 0;
-	TIM1->CCR1 = 0;
-	TIM1->CCR2 = 0;
-	TIM1->CCR3 = 0;
-	TIM1->CCR4 = 0;
+	int i = 0;
+	for(i = 0; i < PWM_MAX; i++)
+	{
+		*pwm_map[i].ccrx = 0;
+	}
 }
