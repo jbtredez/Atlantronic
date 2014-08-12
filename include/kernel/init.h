@@ -34,7 +34,9 @@
 #define INIT_CAN_MOTOR                "11"
 
 #define INIT_SDRAM                    "12"
-#define INIT_LCD                      "13"
+#define INIT_I2C                      "13"
+#define INIT_STMPE811                 "14"
+#define INIT_LCD                      "15"
 
 // init adc
 #define INIT_ADC                      "20"

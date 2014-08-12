@@ -27,8 +27,12 @@ obj-disco-core += ${core_os}
 obj-disco-core += ${core_usb}
 obj-disco-core += kernel/log.o
 obj-disco-core += kernel/driver/sdram.o
+obj-disco-core += kernel/driver/pwm.o
 obj-disco-core += kernel/driver/spi.o
 obj-disco-core += kernel/driver/gyro/l3gd20.o
 obj-disco-core += kernel/driver/lcd/lcd.o
+obj-disco-core += kernel/driver/encoder.o
+obj-disco-core += kernel/driver/i2c.o
+obj-disco-core += kernel/driver/ts/stmpe811.o
 bin-disco += core
 
