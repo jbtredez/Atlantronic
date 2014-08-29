@@ -199,7 +199,7 @@ static void spi_set_read_dma_size(uint16_t size)
 	DMA2_Stream0->CR |= DMA_SxCR_EN;
 }
 
-static void spi_set_write_dma_buffer(unsigned char* buf)
+static void spi_set_write_dma_buffer(const void* buf)
 {
 	DMA2_Stream3->M0AR = (uint32_t) buf;
 }
@@ -212,7 +212,7 @@ static void spi_send_dma_buffer(uint16_t size)
 
 //! @return -1 si timeout
 //! @return 0 sinon
-int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size)
+int spi_transaction(enum spi_device device, const void* tx_buffer, void* rx_buffer, uint16_t size)
 {
 	int res = 0;
 	GPIO_TypeDef* gpio = NULL;

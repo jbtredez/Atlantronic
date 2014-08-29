@@ -15,7 +15,7 @@ enum spi_device
 	SPI_DEVICE_MAX,
 };
 
-int spi_transaction(enum spi_device device, uint8_t* tx_buffer, uint8_t* rx_buffer, uint8_t size);
+int spi_transaction(enum spi_device device, const void* tx_buffer, void* rx_buffer, uint16_t size);
 
 int spi_register_callback(enum spi_device device, void(*callback)(void));
 
