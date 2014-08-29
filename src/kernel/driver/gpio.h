@@ -11,37 +11,6 @@
 extern "C" {
 #endif
 
-#define LED_CPU_RED      0x00004000
-#define LED_CPU_BLUE     0x00008000
-#define LED_EXT_BLUE     0x80000000
-#define LED_EXT_GREEN    0x20000000
-#define LED_EXT_ORANGE1  0x00100000
-#define LED_EXT_ORANGE2  0x00040000
-#define LED_EXT_RED      0x01000000
-
-#define COLOR_UNKNOWN     0
-#define COLOR_RED         1
-#define COLOR_YELLOW      2
-
-#define GPIO_IN_1          0x01  // IN_1
-#define GPIO_IN_2          0x02  // IN_2
-#define GPIO_IN_3          0x04  // IN_3
-#define GPIO_IN_4          0x08  // IN_4
-#define GPIO_IN_5          0x10  // IN_5
-#define GPIO_IN_6          0x20  // IN_6
-#define GPIO_IN_7          0x40  // IN_7
-#define GPIO_IN_8          0x80  // IN_8
-#define GPIO_IN_9         0x100  // IN_9
-#define GPIO_IN_10        0x200  // IN_10
-#define GPIO_IN_11        0x400  // IN_11
-#define GPIO_IN_12        0x800  // IN_12
-#define GPIO_IN_13       0x1000  // IN_13
-#define GPIO_IN_14       0x2000  // IN_14
-#define GPIO_IN_BTN1     0x4000  // IN_BTN1 (etat pin)
-#define GPIO_IN_BTN2     0x8000  // IN_BTN2 (etat pin)
-#define GPIO_IN_GO      0x10000  // IN_GO (etat pin)
-#define GPIO_GO         0x20000  // GO : match lance
-
 enum gpio_mode
 {
 	GPIO_MODE_IN   = 0x00,
@@ -100,20 +69,34 @@ enum gpio_pupd
 //!<AF 5 selection
 #define GPIO_AF_SPI1          ((uint8_t)0x05)  /* SPI1 Alternate Function mapping */
 #define GPIO_AF_SPI2          ((uint8_t)0x05)  /* SPI2/I2S2 Alternate Function mapping */
+#ifdef STM32F429xx
+#define GPIO_AF_SPI4          ((uint8_t)0x05)  /* SPI4 Alternate Function mapping        */
+#define GPIO_AF_SPI5          ((uint8_t)0x05)  /* SPI5 Alternate Function mapping        */
+#define GPIO_AF_SPI6          ((uint8_t)0x05)  /* SPI6 Alternate Function mapping        */
+#define GPIO_AF5_I2S3ext       ((uint8_t)0x05)  /* I2S3ext_SD Alternate Function mapping  */
+#endif
 
 //!<AF 6 selection
 #define GPIO_AF_SPI3          ((uint8_t)0x06)  /* SPI3/I2S3 Alternate Function mapping */
+#ifdef STM32F429xx
+#define GPIO_AF_I2S2ext       ((uint8_t)0x06)  /* I2S2ext_SD Alternate Function mapping */
+#define GPIO_AF_SAI1          ((uint8_t)0x06)  /* SAI1 Alternate Function mapping       */
+#endif
 
 //!<AF 7 selection
 #define GPIO_AF_USART1        ((uint8_t)0x07)  /* USART1 Alternate Function mapping */
 #define GPIO_AF_USART2        ((uint8_t)0x07)  /* USART2 Alternate Function mapping */
 #define GPIO_AF_USART3        ((uint8_t)0x07)  /* USART3 Alternate Function mapping */
-#define GPIO_AF_I2S3ext       ((uint8_t)0x07)  /* I2S3ext Alternate Function mapping */
+#define GPIO_AF7_I2S3ext       ((uint8_t)0x07)  /* I2S3ext Alternate Function mapping */
 
 //!<AF 8 selection
 #define GPIO_AF_UART4         ((uint8_t)0x08)  /* UART4 Alternate Function mapping */
 #define GPIO_AF_UART5         ((uint8_t)0x08)  /* UART5 Alternate Function mapping */
 #define GPIO_AF_USART6        ((uint8_t)0x08)  /* USART6 Alternate Function mapping */
+#ifdef STM32F429xx
+#define GPIO_AF_UART7         ((uint8_t)0x08)  /* UART7 Alternate Function mapping  */
+#define GPIO_AF_UART8         ((uint8_t)0x08)  /* UART8 Alternate Function mapping  */
+#endif
 
 //!<AF 9 selection
 #define GPIO_AF_CAN1          ((uint8_t)0x09)  /* CAN1 Alternate Function mapping */
@@ -121,6 +104,9 @@ enum gpio_pupd
 #define GPIO_AF_TIM12         ((uint8_t)0x09)  /* TIM12 Alternate Function mapping */
 #define GPIO_AF_TIM13         ((uint8_t)0x09)  /* TIM13 Alternate Function mapping */
 #define GPIO_AF_TIM14         ((uint8_t)0x09)  /* TIM14 Alternate Function mapping */
+#ifdef STM32F429xx
+#define GPIO_AF9_LTDC          ((uint8_t)0x09)  /* LCD-TFT Alternate Function mapping */
+#endif
 
 //!<AF 10 selection
 #define GPIO_AF_OTG_FS         ((uint8_t)0xA)  /* OTG_FS Alternate Function mapping */
@@ -136,6 +122,11 @@ enum gpio_pupd
 
 //!<AF 13 selection
 #define GPIO_AF_DCMI          ((uint8_t)0x0D)  /* DCMI Alternate Function mapping */
+
+//!<AF 14 selection
+#ifdef STM32F429xx
+#define GPIO_AF14_LTDC          ((uint8_t)0x0E)  /* LCD-TFT Alternate Function mapping */
+#endif
 
 //!<AF 15 selection
 #define GPIO_AF_EVENTOUT      ((uint8_t)0x0F)  /* EVENTOUT Alternate Function mapping */
@@ -160,55 +151,7 @@ static inline uint32_t gpio_get_pin(GPIO_TypeDef* GPIOx, uint32_t pin)
 	return (GPIOx->IDR >> pin) & 0x01;
 };
 
-static inline void gpio_power_on()
-{
-	gpio_reset_pin(GPIOB, 2);
-}
-
-static inline void gpio_power_off()
-{
-	gpio_set_pin(GPIOB, 2);
-}
-
-static inline void gpio_color_change_disable()
-{
-	extern volatile uint8_t gpio_color_change_enable;
-	gpio_color_change_enable = 0;
-}
-
-static inline uint32_t getcolor()
-{
-	extern volatile uint32_t color;
-	return color;
-}
-
-static inline uint8_t getGo()
-{
-	extern volatile uint8_t gpio_go;
-	return gpio_go;
-}
-
-static inline uint8_t gpio_is_go_enable()
-{
-	extern volatile uint8_t gpio_enable_go;
-	return gpio_enable_go;
-}
-
-uint32_t gpio_get_state();
-
-void gpio_wait_go();
 #endif
-// ---------------- interface usb ------------
-enum
-{
-	GPIO_CMD_ENABLE_GO,
-	GPIO_CMD_GO,
-};
-
-struct gpio_cmd_go_arg
-{
-	uint8_t cmd;
-};
 
 #ifdef __cplusplus
 }

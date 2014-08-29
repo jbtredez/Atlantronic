@@ -8,7 +8,8 @@
 #include "kernel/log.h"
 #include "kernel/end.h"
 #include "led.h"
-#include "gpio.h"
+#include "kernel/driver/gpio.h"
+#include "bsp.h"
 
 #define LED_STACK_SIZE           100
 

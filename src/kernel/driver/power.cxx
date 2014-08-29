@@ -1,5 +1,5 @@
 #include "power.h"
-#include "gpio.h"
+#include "bsp.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/driver/pwm.h"

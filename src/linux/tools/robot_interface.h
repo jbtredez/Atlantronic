@@ -21,7 +21,7 @@
 #include "kernel/heartbeat.h"
 #include "discovery/control.h"
 #include "discovery/detection.h"
-#include "discovery/gpio.h"
+#include "discovery/bsp.h"
 #include "foo/pince.h"
 #include "server_tcp.h"
 

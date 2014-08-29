@@ -12,7 +12,6 @@
 #include "kernel/math/segment_intersection.h"
 #include "kernel/math/polyline.h"
 #include "kernel/location/location.h"
-#include "gpio.h"
 #include "table.h"
 #include "detection.h"
 

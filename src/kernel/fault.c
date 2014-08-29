@@ -12,7 +12,7 @@
 #include "kernel/driver/usb.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "gpio.h"
+#include "bsp.h"
 
 #define FAULT_STACK_SIZE       70
 

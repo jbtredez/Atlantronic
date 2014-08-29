@@ -3,7 +3,6 @@
 //! @author Atlantronic
 
 #include "kernel/module.h"
-#include "gpio.h"
 #include <stdint.h>
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"

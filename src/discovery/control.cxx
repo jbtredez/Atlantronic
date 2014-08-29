@@ -15,7 +15,7 @@
 #include "kernel/driver/power.h"
 #include "kernel/arm.h"
 #include "kernel/heartbeat.h"
-#include "gpio.h"
+#include "bsp.h"
 #include "kernel/fault.h"
 #include "kernel/pump.h"
 

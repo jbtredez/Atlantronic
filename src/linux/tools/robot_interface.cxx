@@ -13,7 +13,6 @@
 #include "kernel/driver/xbee.h"
 #include "discovery/trajectory.h"
 #include "kernel/pump.h"
-#include "discovery/gpio.h"
 
 #ifndef VERSION
 #error VERSION not defined

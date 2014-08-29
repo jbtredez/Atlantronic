@@ -9,7 +9,7 @@
 #include "kernel/driver/usb/stm32f4xx/usbd_def.h"
 #include "kernel/driver/usb/stm32f4xx/stm32f4xx_hal_pcd.h"
 #include "usb_descriptor.h"
-#include "gpio.h"
+#include "kernel/driver/gpio.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 

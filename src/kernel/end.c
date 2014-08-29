@@ -8,7 +8,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 #include "kernel/led.h"
-#include "gpio.h"
+#include "bsp.h"
 #include "kernel/driver/power.h"
 
 #define END_STACK_SIZE           100
