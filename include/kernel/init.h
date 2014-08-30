@@ -33,6 +33,8 @@
 #define INIT_CAN                      "10"
 #define INIT_CAN_MOTOR                "11"
 
+#define INIT_SDRAM                    "12"
+
 // init adc
 #define INIT_ADC                      "20"
 #define INIT_XBEE                     "21"
