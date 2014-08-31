@@ -34,6 +34,7 @@ int cmd_dynamixel_enable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_disable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_set_speed(const char* arg);
 int cmd_power_off(const char* arg);
+int cmd_pwm_set(const char* arg);
 int cmd_pump(const char* arg);
 int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_qemu_set_io(const char* arg);
@@ -123,6 +124,7 @@ COMMAND usb_commands[] = {
 	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "ptask", cmd_ptask, "print tasks"},
 	{ "power_off", cmd_power_off, "power off {0,1}"},
+	{ "pwm_set", cmd_pwm_set, "pwm_set id val"},
 	{ "pump", cmd_pump, "pump id val[0 100]"},
 	{ "q", cmd_quit, "Quit" },
 	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
@@ -792,6 +794,21 @@ int cmd_power_off(const char* arg)
 	}
 
 	cmd_robot->power_off(val != 0);
+	return CMD_SUCESS;
+}
+
+int cmd_pwm_set(const char* arg)
+{
+	int id;
+	float val;
+	int count = sscanf(arg, "%d %f", &id, &val);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->pwm_set(id, val);
 	return CMD_SUCESS;
 }
 

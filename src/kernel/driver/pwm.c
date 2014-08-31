@@ -28,6 +28,7 @@ PwmMapping pwm_map[PWM_MAX];
 
 static void pwm_timer_init(TIM_TypeDef* tim, uint32_t arr, uint32_t pwm_ch_mask);
 static void pwn_pin_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch, uint32_t pin_ch, volatile uint32_t* ccrx, uint32_t arr, uint32_t gpio_af, GPIO_TypeDef* gpio_dir, uint32_t pin_dir);
+static void pwm_cmd(void* arg);
 
 static int pwm_module_init()
 {
@@ -62,6 +63,8 @@ static int pwm_module_init()
 #else
 #error unknown card
 #endif
+
+	usb_add_cmd(USB_CMD_PWM, pwm_cmd);
 
 	pwm_on = 1;
 
@@ -214,4 +217,11 @@ void pwm_disable()
 	{
 		*pwm_map[i].ccrx = 0;
 	}
+}
+
+static void pwm_cmd(void* arg)
+{
+	struct pwm_usb_cmd* cmd = (struct pwm_usb_cmd*) arg;
+
+	pwm_set(cmd->id, cmd->val);
 }

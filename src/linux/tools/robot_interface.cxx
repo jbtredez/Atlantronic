@@ -812,6 +812,14 @@ int RobotInterface::power_off(bool power_off)
 	return usb_write(USB_CMD_POWER, &msg, sizeof(msg));
 }
 
+int RobotInterface::pwm_set(int id, float val)
+{
+	struct pwm_usb_cmd msg;
+	msg.id = id;
+	msg.val = val;
+	return usb_write(USB_CMD_PWM, &msg, sizeof(msg));
+}
+
 int RobotInterface::get_stm_code_version()
 {
 	versionCompatible = ROBOT_VERSION_UNKNOWN;

@@ -10,6 +10,7 @@
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/can.h"
 #include "kernel/driver/gyro.h"
+#include "kernel/driver/pwm.h"
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
@@ -65,6 +66,9 @@ class RobotInterface
 		int reboot();
 
 		int power_off(bool power_off);
+
+		// ---------- gestion des pwm (bas lv) -----------------------------------------
+		int pwm_set(int id, float val);
 
 		// ---------- gestion des dynamixel --------------------------------------------
 		int dynamixel_cmd(uint8_t cmd, int dynamixel_type, uint8_t id, float param);

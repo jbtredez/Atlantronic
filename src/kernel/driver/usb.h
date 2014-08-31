@@ -35,7 +35,12 @@ enum
 enum usb_cmd
 {
 	USB_CMD_GET_VERSION = 0, // laisser en 0 pour la compatibilite
+// ordres OS
 	USB_CMD_PTASK,
+	USB_CMD_REBOOT,
+// ordres bas niveau
+	USB_CMD_PWM,
+// ordres haut niveau
 	USB_CMD_TRAJECTORY,
 	USB_CMD_MOTION_PARAM,
 	USB_CMD_MOTION_PRINT_PARAM,
@@ -60,7 +65,6 @@ enum usb_cmd
 	USB_CMD_GYRO_CALIB,
 	USB_CMD_GYRO_SET_POSITION,
 	USB_CMD_GYRO_SET_CALIBRATION_VALUES,
-	USB_CMD_REBOOT,
 	USB_CMD_PUMP,
 	USB_CMD_XBEE,
 	USB_CMD_POWER,

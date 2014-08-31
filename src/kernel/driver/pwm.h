@@ -59,6 +59,12 @@ void pwm_enable() WEAK_PWM;
 //! disable pwm (power off)
 void pwm_disable() WEAK_PWM;
 
+struct pwm_usb_cmd
+{
+	int id;
+	float val;
+} __attribute__((packed));
+
 #ifdef __cplusplus
 }
 #endif
