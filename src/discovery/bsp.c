@@ -21,10 +21,7 @@ static void gpio_cmd_color(void* arg);
 
 static int gpio_module_init(void)
 {
-	// io "sorties"
-	// puissance on/off sur PB2
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN;
-	gpio_pin_init(GPIOB, 2, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // on/off
 
 	// "io entrees"
 	// boutons USR1 et USR2 carte led sur PC14 et PB7
@@ -64,9 +61,6 @@ static int gpio_module_init(void)
 	gpio_pin_init(GPIOE, 6, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_13
 	gpio_pin_init(GPIOE, 5, GPIO_MODE_IN, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);  // IN_14
 
-	// TODO puissance par defaut
-
-	gpio_power_on();
 	color = COLOR_UNKNOWN;
 	gpio_go = 0;
 	gpio_queue_go = xQueueCreate(1, 0);
@@ -91,9 +85,6 @@ static int gpio_module_init(void)
 	NVIC_EnableIRQ(EXTI3_IRQn);
 	NVIC_EnableIRQ(EXTI9_5_IRQn);
 	NVIC_EnableIRQ(EXTI15_10_IRQn);
-
-	// TODO puissance par defaut
-//	gpio_power_off();
 
 	return 0;
 }

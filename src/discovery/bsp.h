@@ -44,16 +44,6 @@ extern "C" {
 #define GPIO_GO         0x20000  // GO : match lance
 
 #ifndef LINUX
-static inline void gpio_power_on()
-{
-	gpio_reset_pin(GPIOB, 2);
-}
-
-static inline void gpio_power_off()
-{
-	gpio_set_pin(GPIOB, 2);
-}
-
 static inline void gpio_color_change_disable()
 {
 	extern volatile uint8_t gpio_color_change_enable;
