@@ -40,9 +40,11 @@ enum
 
 // priorites des IT bloquees par l'os
 #define PRIORITY_IRQ_SYSCALL          5
-//#define PRIORITY_IRQ_EXTI0            9
-//#define PRIORITY_IRQ_EXTI1            9
+#define PRIORITY_IRQ_EXTI0            9
+#define PRIORITY_IRQ_EXTI1            9
+#define PRIORITY_IRQ_EXTI2            9
 #define PRIORITY_IRQ_EXTI3            9
+#define PRIORITY_IRQ_EXTI4            9
 #define PRIORITY_IRQ_EXTI9_5          9
 #define PRIORITY_IRQ_EXTI15_10        9
 #define PRIORITY_IRQ_CAN1_SCE        10

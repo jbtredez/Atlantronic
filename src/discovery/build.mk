@@ -25,6 +25,7 @@ obj-discovery-core += kernel/state_machine/state_machine.o
 obj-discovery-core += kernel/end.o
 obj-discovery-core += kernel/driver/power.o
 obj-discovery-core += kernel/driver/gpio.o
+obj-discovery-core += kernel/driver/exti.o
 obj-discovery-core += discovery/bsp.o
 
 obj-discovery-gyro += $(obj-discovery-core)

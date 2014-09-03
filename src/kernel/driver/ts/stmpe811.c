@@ -1,11 +1,12 @@
 #include "stmpe811.h"
 #include "kernel/driver/i2c.h"
+#include "kernel/driver/exti.h"
+#include "kernel/driver/gpio.h"
 #include "kernel/module.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/semphr.h"
 #include "kernel/log.h"
-#include "kernel/driver/gpio.h"
 
 /* chip IDs */
 #define STMPE811_ID                     0x0811
@@ -139,6 +140,7 @@ static int stmpe811_init();
 static int stmpe811_init_ts();
 static I2c_error stmpe811_write_reg(uint8_t reg, uint8_t val);
 static I2c_error stmpe811_read_reg(uint8_t reg, uint8_t* val);
+static long stmpe811_isr();
 
 static xSemaphoreHandle stmpe811_sem;
 
@@ -151,13 +153,7 @@ int stmpe811_module_init()
 	gpio_pin_init(GPIOA, 15, GPIO_MODE_IN, GPIO_SPEED_25MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP);
 
 	// activation EXTI sur PA15, front descendant
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI15_PA;
-	EXTI->IMR |= EXTI_IMR_MR15;
-	EXTI->FTSR |= EXTI_FTSR_TR15;
-
-	NVIC_SetPriority(EXTI15_10_IRQn, PRIORITY_IRQ_EXTI15_10);
-	NVIC_EnableIRQ(EXTI15_10_IRQn);
+	exti_register(EXTI_PA, 15, EXTI_TYPE_DOWN, stmpe811_isr);
 
 	vSemaphoreCreateBinary(stmpe811_sem);
 	xSemaphoreTake(stmpe811_sem, 0);
@@ -325,17 +321,9 @@ static int stmpe811_init_ts()
 	return 0;
 }
 
-void isr_exti15_10(void)
+long stmpe811_isr(void)
 {
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( EXTI->PR & EXTI_PR_PR15)
-	{
-		EXTI->PR = EXTI_PR_PR15;
-		xSemaphoreGiveFromISR(stmpe811_sem, &xHigherPriorityTaskWoken);
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+	long xHigherPriorityTaskWoken = 0;
+	xSemaphoreGiveFromISR(stmpe811_sem, &xHigherPriorityTaskWoken);
+	return xHigherPriorityTaskWoken;
 }

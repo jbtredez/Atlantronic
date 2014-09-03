@@ -6,6 +6,7 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gpio.h"
+#include "kernel/driver/exti.h"
 #include "kernel/log.h"
 
 volatile uint32_t color;
@@ -15,6 +16,10 @@ volatile uint8_t gpio_enable_go = 0;
 static volatile struct systime gpio_color_change_time;
 
 static xQueueHandle gpio_queue_go;
+
+static portBASE_TYPE gpio_go_isr(void);
+static portBASE_TYPE gpio_usr1_isr(void);
+static portBASE_TYPE gpio_usr2_isr(void);
 
 static void gpio_cmd_go(void* arg);
 static void gpio_cmd_color(void* arg);
@@ -71,20 +76,9 @@ static int gpio_module_init(void)
 
 	// boutons en IT sur front montant : USR1 et USR2
 	// boutons en IT sur front descendant sur le GO
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
-	SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI3_PD;
-	SYSCFG->EXTICR[1] |= SYSCFG_EXTICR2_EXTI7_PB;
-	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI14_PC;
-	EXTI->IMR |= EXTI_IMR_MR3 | EXTI_IMR_MR7 | EXTI_IMR_MR14;
-	EXTI->RTSR |= EXTI_RTSR_TR7 | EXTI_RTSR_TR14;
-	EXTI->FTSR |= EXTI_RTSR_TR3;
-
-	NVIC_SetPriority(EXTI3_IRQn, PRIORITY_IRQ_EXTI3);
-	NVIC_SetPriority(EXTI9_5_IRQn, PRIORITY_IRQ_EXTI9_5);
-	NVIC_SetPriority(EXTI15_10_IRQn, PRIORITY_IRQ_EXTI15_10);
-	NVIC_EnableIRQ(EXTI3_IRQn);
-	NVIC_EnableIRQ(EXTI9_5_IRQn);
-	NVIC_EnableIRQ(EXTI15_10_IRQn);
+	exti_register(EXTI_PD,  3, EXTI_TYPE_DOWN, gpio_go_isr);
+	exti_register(EXTI_PC, 14, EXTI_TYPE_UP, gpio_usr1_isr);
+	exti_register(EXTI_PB,  7, EXTI_TYPE_UP, gpio_usr2_isr);
 
 	return 0;
 }
@@ -158,65 +152,43 @@ static void gpio_cmd_color(void* arg)
 	}
 }
 
-void isr_exti3(void)
+portBASE_TYPE gpio_go_isr(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( EXTI->PR & EXTI_PR_PR3)
+	if( gpio_enable_go )
 	{
-		EXTI->PR = EXTI_PR_PR3;
-		if( gpio_enable_go )
-		{
-			gpio_go = 1;
-			systick_start_match_from_isr();
-			xQueueSendFromISR(gpio_queue_go, NULL, &xHigherPriorityTaskWoken);
-		}
-	}
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-
-void isr_exti9_5(void)
-{
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( EXTI->PR & EXTI_PR_PR7)
-	{
-		EXTI->PR = EXTI_PR_PR7;
-		// TODO action bouton USR2
+		gpio_go = 1;
+		systick_start_match_from_isr();
+		xQueueSendFromISR(gpio_queue_go, NULL, &xHigherPriorityTaskWoken);
 	}
 
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+	return xHigherPriorityTaskWoken;
 }
 
-void isr_exti15_10(void)
+portBASE_TYPE gpio_usr1_isr(void)
 {
-	portSET_INTERRUPT_MASK_FROM_ISR();
-
-	if( EXTI->PR & EXTI_PR_PR14)
+	if(gpio_go == 0 && gpio_color_change_enable)
 	{
-		EXTI->PR = EXTI_PR_PR14;
-		if(gpio_go == 0 && gpio_color_change_enable)
+		struct systime t = systick_get_time_from_isr();
+		struct systime dt = timediff(t, gpio_color_change_time);
+		if( dt.ms > 300)
 		{
-			struct systime t = systick_get_time_from_isr();
-			struct systime dt = timediff(t, gpio_color_change_time);
-			if( dt.ms > 300)
+			gpio_color_change_time = t;
+			if(color == COLOR_YELLOW)
 			{
-				gpio_color_change_time = t;
-				if(color == COLOR_YELLOW)
-				{
-					color = COLOR_RED;
-				}
-				else
-				{
-					color = COLOR_YELLOW;
-				}
+				color = COLOR_RED;
+			}
+			else
+			{
+				color = COLOR_YELLOW;
 			}
 		}
 	}
+	return 0;
+}
 
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+portBASE_TYPE gpio_usr2_isr(void)
+{
+	return 0;
 }
