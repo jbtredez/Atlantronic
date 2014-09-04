@@ -165,6 +165,10 @@ static void led_task(void *arg)
 				{
 					led_chaser();
 				}
+				else
+				{
+					setLed(0x00);
+				}
 				break;
 			default:
 				break;

@@ -36,5 +36,7 @@ obj-disco-core += kernel/driver/i2c.o
 obj-disco-core += kernel/driver/ts/stmpe811.o
 obj-disco-core += kernel/driver/power.o
 obj-disco-core += kernel/driver/exti.o
+obj-disco-core += kernel/match.o
+obj-disco-core += disco/bsp.o
 bin-disco += core
 

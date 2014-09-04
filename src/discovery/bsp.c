@@ -3,7 +3,6 @@
 #include "kernel/rcc.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/systick.h"
-#include "kernel/driver/usb.h"
 #include "kernel/driver/gpio.h"
 #include "kernel/driver/exti.h"
 #include "kernel/log.h"

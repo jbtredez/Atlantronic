@@ -7,7 +7,6 @@
 #include "kernel/task.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
-#include "kernel/led.h"
 #include "kernel/driver/power.h"
 #include "kernel/driver/exti.h"
 #include "kernel/queue.h"
@@ -72,7 +71,6 @@ static void match_task(void *arg)
 
 	power_set(POWER_OFF_END_MATCH);
 	exitModules();
-	setLed(0x00);
 
 	vTaskSuspend(0);
 }
