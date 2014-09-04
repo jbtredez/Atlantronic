@@ -13,6 +13,7 @@
 #include "kernel/driver/xbee.h"
 #include "discovery/trajectory.h"
 #include "kernel/pump.h"
+#include "kernel/match.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -1211,14 +1212,14 @@ int RobotInterface::recalage()
 int RobotInterface::go()
 {
 	struct gpio_cmd_go_arg cmd_arg;
-	cmd_arg.cmd = GPIO_CMD_GO;
+	cmd_arg.cmd = MATCH_CMD_GO;
 	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::go_enable()
 {
 	struct gpio_cmd_go_arg cmd_arg;
-	cmd_arg.cmd = GPIO_CMD_ENABLE_GO;
+	cmd_arg.cmd = MATCH_CMD_ENABLE_GO;
 	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
 }
 

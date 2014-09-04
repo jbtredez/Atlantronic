@@ -6,7 +6,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/driver/power.h"
 #include "kernel/log.h"
-#include "kernel/end.h"
+#include "kernel/match.h"
 #include "led.h"
 #include "kernel/driver/gpio.h"
 #include "bsp.h"
@@ -69,7 +69,7 @@ static void led_task(void *arg)
 {
 	(void) arg;
 
-	int color = getcolor();
+	int color = match_get_color();
 	int old_color = color;
 
 	while(1)
@@ -94,7 +94,7 @@ static void led_task(void *arg)
 					setLed(0x00);
 				}
 
-				color = getcolor();
+				color = match_get_color();
 				if( color != old_color )
 				{
 					led_mode = LED_MODE_COLOR_SELECTION;
@@ -102,7 +102,7 @@ static void led_task(void *arg)
 				old_color = color;
 				break;
 			case LED_MODE_COLOR_SELECTION:
-				if(getcolor() == COLOR_RED)
+				if(match_get_color() == COLOR_RED)
 				{
 					setLed(LED_EXT_RED);
 				}
@@ -110,16 +110,16 @@ static void led_task(void *arg)
 				{
 					setLed(LED_EXT_ORANGE1);
 				}
-				if( gpio_get_state() & GPIO_IN_GO && getcolor() != COLOR_UNKNOWN)
+				if( gpio_get_state() & GPIO_IN_GO && match_get_color() != COLOR_UNKNOWN)
 				{
-					gpio_color_change_disable();
+					match_color_change_disable();
 					led_mode = LED_MODE_WAIT_INIT;
 				}
 				break;
 			case LED_MODE_WAIT_INIT:
 				if( led_step & 0x01)
 				{
-					if(getcolor() == COLOR_RED)
+					if(match_get_color() == COLOR_RED)
 					{
 						setLed(LED_EXT_RED);
 					}
@@ -133,7 +133,7 @@ static void led_task(void *arg)
 					setLed(0x00);
 				}
 
-				if( gpio_is_go_enable() )
+				if( match_is_go_enable() )
 				{
 					led_mode = LED_MODE_INIT_DONE;
 				}
@@ -141,7 +141,7 @@ static void led_task(void *arg)
 			case LED_MODE_INIT_DONE:
 				if( led_step & 0x01)
 				{
-					if(getcolor() == COLOR_RED)
+					if(match_get_color() == COLOR_RED)
 					{
 						setLed(LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2);;//setLed(LED_EXT_RED);
 					}
@@ -155,13 +155,13 @@ static void led_task(void *arg)
 					setLed(LED_EXT_RED | LED_EXT_BLUE | LED_EXT_GREEN | LED_EXT_ORANGE1 | LED_EXT_ORANGE2);
 				}
 
-				if( getGo() )
+				if( match_get_go() )
 				{
 					led_mode = LED_MODE_MATCH_RUNNING;
 				}
 				break;
 			case LED_MODE_MATCH_RUNNING:
-				if( ! end_match )
+				if( ! match_end )
 				{
 					led_chaser();
 				}

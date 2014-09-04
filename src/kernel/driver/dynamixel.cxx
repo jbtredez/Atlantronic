@@ -8,7 +8,7 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
-#include "kernel/end.h"
+#include "kernel/match.h"
 #include "kernel/driver/power.h"
 #include <stdlib.h>
 #include <math.h>
@@ -644,7 +644,7 @@ struct dynamixel_error DynamixelManager::set_torque_limit(uint8_t id, float torq
 	struct dynamixel_error err;
 	id--;
 
-	if( end_match || torque_limit < 0)
+	if( match_end || torque_limit < 0)
 	{
 		torque_limit = 0;
 	}

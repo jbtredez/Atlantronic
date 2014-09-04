@@ -12,10 +12,6 @@
 extern "C" {
 #endif
 
-#define COLOR_UNKNOWN     0
-#define COLOR_RED         1
-#define COLOR_YELLOW      2
-
 #define GPIO_IN_1          0x01  // IN_1
 #define GPIO_IN_2          0x02  // IN_2
 #define GPIO_IN_3          0x04  // IN_3
@@ -35,46 +31,7 @@ extern "C" {
 #define GPIO_IN_GO      0x10000  // IN_GO (etat pin)
 #define GPIO_GO         0x20000  // GO : match lance
 
-#ifndef LINUX
-static inline void gpio_color_change_disable()
-{
-	extern volatile uint8_t gpio_color_change_enable;
-	gpio_color_change_enable = 0;
-}
-
-static inline uint32_t getcolor()
-{
-	extern volatile uint32_t color;
-	return color;
-}
-
-static inline uint8_t getGo()
-{
-	extern volatile uint8_t gpio_go;
-	return gpio_go;
-}
-
-static inline uint8_t gpio_is_go_enable()
-{
-	extern volatile uint8_t gpio_enable_go;
-	return gpio_enable_go;
-}
-
 uint32_t gpio_get_state();
-
-void gpio_wait_go();
-#endif
-// ---------------- interface usb ------------
-enum
-{
-	GPIO_CMD_ENABLE_GO,
-	GPIO_CMD_GO,
-};
-
-struct gpio_cmd_go_arg
-{
-	uint8_t cmd;
-};
 
 #ifdef __cplusplus
 }
