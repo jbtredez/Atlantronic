@@ -31,7 +31,7 @@ extern "C" {
 #define GPIO_IN_GO      0x10000  // IN_GO (etat pin)
 #define GPIO_GO         0x20000  // GO : match lance
 
-uint32_t gpio_get_state();
+uint32_t gpio_get_state(void);
 
 #ifdef __cplusplus
 }
