@@ -496,7 +496,7 @@ void usb_read_task(void * arg)
 			// lecture header
 			int id = usb_rx_buffer[usb_rx_buffer_tail];
 			int size = usb_rx_buffer[(usb_rx_buffer_tail + 1)%sizeof(usb_rx_buffer)];
-			if( size <= (int)usb_rx_buffer_count)
+			if( size <= (int)usb_rx_buffer_count && size >= 2)
 			{
 				// on a recu tout le message, on va le traiter
 				if( id < USB_CMD_NUM && usb_cmd[id])
@@ -522,29 +522,36 @@ void usb_read_task(void * arg)
 
 				__sync_sub_and_fetch(&usb_rx_buffer_count, size);
 				usb_rx_buffer_tail = (usb_rx_buffer_tail + size) % sizeof(usb_rx_buffer);
-				if( unlikely(usb_rx_waiting != 0))
-				{
-					int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
-					int count = sizeof(usb_rx_buffer) - usb_rx_buffer_count;
-					if( count < nMax )
-					{
-						nMax = count;
-					}
+			}
+			else
+			{
+				log_format(LOG_ERROR, "usb protocol error : size = %d", size);
+				usb_rx_buffer_count = 0;
+				usb_rx_buffer_tail = usb_rx_buffer_head;
+			}
 
-					if( nMax > 0 )
-					{
-						// on a eu un overflow, il faut relancer la reception des messages
-						USBD_LL_PrepareReceive(&usb_handle, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
-						usb_rx_waiting = 0;
-					}
+			if( unlikely(usb_rx_waiting != 0))
+			{
+				int nMax = sizeof(usb_rx_buffer) - usb_rx_buffer_head;
+				int count = sizeof(usb_rx_buffer) - usb_rx_buffer_count;
+				if( count < nMax )
+				{
+					nMax = count;
 				}
 
-				if( usb_rx_buffer_count )
+				if( nMax > 0 )
 				{
-					// on a traite un message et il en reste
-					// on enchaine sans prendre la semaphore
-					continue;
+					// on a eu un overflow, il faut relancer la reception des messages
+					USBD_LL_PrepareReceive(&usb_handle, 2, &usb_rx_buffer[usb_rx_buffer_head], nMax);
+					usb_rx_waiting = 0;
 				}
+			}
+
+			if( usb_rx_buffer_count )
+			{
+				// on a traite un message et il en reste
+				// on enchaine sans prendre la semaphore
+				continue;
 			}
 		}
 
