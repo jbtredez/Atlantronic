@@ -32,6 +32,7 @@ static int adc_undervoltage;
 
 int adc_module_init()
 {
+#if defined(__discovery__)
 	// activation GPIOB et GPIOC et DMA2
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA2EN;
 
@@ -97,7 +98,11 @@ int adc_module_init()
 	// enable adc 1 et adc 2
 	ADC1->CR2 |= ADC_CR2_ADON;
 	ADC1->CR2 |= ADC_CR2_SWSTART;
-
+#elif defined(__disco__)
+#warning TODO
+#else
+#error unknown card
+#endif
 	int i;
 	for(i = 0; i < ADC_CURRENT_MAX; i++)
 	{
