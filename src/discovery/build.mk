@@ -36,11 +36,11 @@ obj-discovery-gyro += kernel/math/simpson_integrator.o
 obj-discovery-gyro += kernel/driver/adc.o
 obj-discovery-gyro += kernel/driver/encoder.o
 obj-discovery-gyro += kernel/control/kinematics.o
-obj-discovery-gyro += kernel/geometric_model/geometric_model.o
+obj-discovery-gyro += kernel/geometric_model/geometric_model_3_turret.o
 obj-discovery-gyro += kernel/location/location.o
 obj-discovery-gyro += kernel/math/vect_plan.o
 obj-discovery-gyro += kernel/math/matrix_homogeneous.o
-obj-discovery-gyro += discovery/control.o
+obj-discovery-gyro += kernel/control.o
 
 obj-discovery-dynamixel += $(obj-discovery-core)
 obj-discovery-dynamixel += kernel/driver/usart.o
@@ -50,7 +50,7 @@ obj-discovery-hokuyo += $(obj-discovery-core)
 obj-discovery-hokuyo += kernel/driver/usart.o
 obj-discovery-hokuyo += kernel/driver/hokuyo.o
 obj-discovery-hokuyo += kernel/location/location.o
-obj-discovery-hokuyo += kernel/geometric_model/geometric_model.o
+obj-discovery-hokuyo += kernel/geometric_model/geometric_model_3_turret.o
 obj-discovery-hokuyo += kernel/control/kinematics.o
 obj-discovery-hokuyo += kernel/math/vect_plan.o
 
@@ -67,12 +67,12 @@ obj-discovery-baz_small += kernel/math/vect_plan.o
 obj-discovery-baz_small += kernel/math/vect2.o
 obj-discovery-baz_small += kernel/math/simpson_integrator.o
 obj-discovery-baz_small += kernel/control/kinematics.o
-obj-discovery-baz_small += kernel/geometric_model/geometric_model.o
+obj-discovery-baz_small += kernel/geometric_model/geometric_model_3_turret.o
 obj-discovery-baz_small += kernel/location/location.o
 obj-discovery-baz_small += kernel/pump.o
 obj-discovery-baz_small += kernel/arm.o
 obj-discovery-baz_small += kernel/math/matrix_homogeneous.o
-obj-discovery-baz_small += discovery/control.o
+obj-discovery-baz_small += kernel/control.o
 
 obj-discovery-baz += $(obj-discovery-core)
 obj-discovery-baz += kernel/driver/usart.o
@@ -92,13 +92,13 @@ obj-discovery-baz += kernel/math/vect_plan.o
 obj-discovery-baz += kernel/math/vect2.o
 obj-discovery-baz += kernel/math/simpson_integrator.o
 obj-discovery-baz += kernel/control/kinematics.o
-obj-discovery-baz += kernel/geometric_model/geometric_model.o
+obj-discovery-baz += kernel/geometric_model/geometric_model_3_turret.o
 obj-discovery-baz += kernel/location/location.o
 obj-discovery-baz += kernel/hokuyo_tools.o
 obj-discovery-baz += kernel/pump.o
 obj-discovery-baz += kernel/arm.o
 obj-discovery-baz += kernel/math/matrix_homogeneous.o
-obj-discovery-baz += discovery/control.o
+obj-discovery-baz += kernel/control.o
 obj-discovery-baz += discovery/motion.o
 
 

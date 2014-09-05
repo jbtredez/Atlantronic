@@ -20,7 +20,7 @@
 #include "kernel/pump.h"
 #include "kernel/arm.h"
 #include "kernel/heartbeat.h"
-#include "discovery/control.h"
+#include "kernel/control.h"
 #include "discovery/detection.h"
 #include "discovery/bsp.h"
 #include "foo/pince.h"

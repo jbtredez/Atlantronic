@@ -6,7 +6,7 @@
 #include "kernel/can_motor.h"
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
-#include "control.h"
+#include "kernel/control.h"
 #include "kernel/location/location.h"
 #include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"

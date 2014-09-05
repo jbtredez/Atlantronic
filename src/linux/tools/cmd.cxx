@@ -6,8 +6,6 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"
-#include "discovery/control.h"
-#include "discovery/trajectory.h"
 
 static void (*cmd_exit_callback)(void) = NULL;
 static RobotInterface* cmd_robot = NULL;
