@@ -9,7 +9,11 @@
 extern "C" {
 #endif
 
-void heartbeat_update();
+#ifndef WEAK_HEARTBEAT
+#define WEAK_HEARTBEAT __attribute__((weak, alias("nop_function") ))
+#endif
+
+void heartbeat_update() WEAK_HEARTBEAT;
 
 enum
 {

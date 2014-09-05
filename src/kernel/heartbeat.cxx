@@ -1,3 +1,4 @@
+#define WEAK_HEARTBEAT
 #include "kernel/driver/power.h"
 #include "heartbeat.h"
 #include "kernel/module.h"
