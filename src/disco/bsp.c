@@ -18,7 +18,7 @@ typedef struct
 // io sur les connecteurs io generiques
 static const BspIo bsp_io[] =
 {
-	{GPIOC, 14, GPIO_PUPD_UP}, // IN_0
+	{GPIOC, 15, GPIO_PUPD_UP}, // IN_0
 	{GPIOC, 13, GPIO_PUPD_UP}, // IN_1
 	{GPIOE,  3, GPIO_PUPD_UP}, // IN_2
 	{GPIOE,  4, GPIO_PUPD_UP}, // IN_3
@@ -30,7 +30,7 @@ static const BspIo bsp_io[] =
 	{GPIOD,  2, GPIO_PUPD_UP}, // IN_9
 	{GPIOG,  7, GPIO_PUPD_UP}, // IN_10
 	{GPIOG,  6, GPIO_PUPD_UP}, // IN_11
-	{GPIOC, 15, GPIO_PUPD_DOWN}, // go
+	{GPIOC, 14, GPIO_PUPD_DOWN}, // go
 };
 
 static int bsp_module_init(void)
@@ -46,7 +46,7 @@ static int bsp_module_init(void)
 	}
 
 	// boutons en IT sur front descendant sur le GO
-	exti_register(EXTI_PC, 15, EXTI_TYPE_DOWN, match_go_from_isr);
+	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN, match_go_from_isr);
 
 	return 0;
 }
