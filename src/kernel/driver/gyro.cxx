@@ -1,3 +1,4 @@
+#define WEAK_GYRO
 #include "spi.h"
 #include "gyro.h"
 #include "kernel/module.h"

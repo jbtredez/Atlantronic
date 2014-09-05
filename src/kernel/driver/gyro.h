@@ -1,6 +1,10 @@
 #ifndef GYRO_H
 #define GYRO_H
 
+#ifndef WEAK_GYRO
+#define WEAK_GYRO __attribute__((weak, alias("nop_function") ))
+#endif
+
 enum GyroState
 {
 	GYRO_STATE_DISCONNECTED = 0,
@@ -31,10 +35,10 @@ struct gyro_cmd_set_calibration_values_arg
 } __attribute__((packed));
 
 
-int16_t gyro_get_raw_data();
-float gyro_get_omega();
-float gyro_get_theta_euler();
-float gyro_get_theta_simpson();
+int16_t gyro_get_raw_data() WEAK_GYRO;
+float gyro_get_omega() WEAK_GYRO;
+float gyro_get_theta_euler() WEAK_GYRO;
+float gyro_get_theta_simpson() WEAK_GYRO;
 
 void gyro_set_theta(float theta);
 
