@@ -9,7 +9,7 @@
 #include "kernel/match.h"
 #include "led.h"
 #include "kernel/driver/gpio.h"
-#include "bsp.h"
+#include "kernel/driver/io.h"
 
 #define LED_STACK_SIZE           100
 

@@ -10,7 +10,7 @@
 #include "kernel/driver/power.h"
 #include "kernel/driver/exti.h"
 #include "kernel/queue.h"
-#include "bsp.h"
+#include "kernel/driver/io.h"
 #include "match.h"
 
 #define MATCH_STACK_SIZE           100

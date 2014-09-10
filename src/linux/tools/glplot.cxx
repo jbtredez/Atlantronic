@@ -1307,7 +1307,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			}
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "cod  %6d %6d %6d", robotItf->last_control_usb_data.encoder[0], robotItf->last_control_usb_data.encoder[1], robotItf->last_control_usb_data.encoder[2]);
 			lineId++;
-			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d %d%d %d%d btn %d%d ingo %d go %d",
+			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "io %d%d %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
 					robotItf->last_control_usb_data.gpio & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 1) & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 2) & 0x01,
@@ -1321,11 +1321,7 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 					(robotItf->last_control_usb_data.gpio >> 10) & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 11) & 0x01,
 					(robotItf->last_control_usb_data.gpio >> 12) & 0x01,
-					(robotItf->last_control_usb_data.gpio >> 13) & 0x01,
-					(robotItf->last_control_usb_data.gpio >> 14) & 0x01,
-					(robotItf->last_control_usb_data.gpio >> 15) & 0x01,
-					(robotItf->last_control_usb_data.gpio >> 16) & 0x01,
-					(robotItf->last_control_usb_data.gpio >> 17) & 0x01);
+					(robotItf->last_control_usb_data.gpio >> 13) & 0x01);
 			lineId++;
 			glPrintf(1600, graph->roi_ymax + lineId*lineHeight, font_base, "pump blocked %d %d %d %d",
 					(robotItf->last_control_usb_data.pumpState & 0x01),
@@ -1629,8 +1625,8 @@ static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg)
 	(void) arg;
 	if(qemu)
 	{
-		qemu->set_io(GPIO_IN_BTN1, true);
-		qemu->set_io(GPIO_IN_BTN1, false);
+		//qemu->set_io(GPIO_IN_BTN1, true);
+		//qemu->set_io(GPIO_IN_BTN1, false);
 	}
 }
 

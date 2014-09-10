@@ -17,6 +17,7 @@ LDFLAGS+=-m$(BIT)
 LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-pthread
 LDFLAGS+=-lrt
+DEF+=__disco__
 
 ifneq ($(DEBUG),1)
 DEF+= NDEBUG

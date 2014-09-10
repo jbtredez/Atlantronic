@@ -26,7 +26,7 @@ obj-discovery-core += kernel/match.o
 obj-discovery-core += kernel/driver/power.o
 obj-discovery-core += kernel/driver/gpio.o
 obj-discovery-core += kernel/driver/exti.o
-obj-discovery-core += discovery/bsp.o
+obj-discovery-core += kernel/driver/io.o
 
 obj-discovery-gyro += $(obj-discovery-core)
 obj-discovery-gyro += kernel/driver/spi.o

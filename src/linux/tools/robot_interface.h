@@ -22,7 +22,7 @@
 #include "kernel/heartbeat.h"
 #include "kernel/control.h"
 #include "discovery/detection.h"
-#include "discovery/bsp.h"
+#include "kernel/driver/io.h"
 #include "foo/pince.h"
 #include "server_tcp.h"
 

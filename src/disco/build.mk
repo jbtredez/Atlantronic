@@ -37,6 +37,7 @@ obj-disco-core += kernel/driver/ts/stmpe811.o
 obj-disco-core += kernel/driver/power.o
 obj-disco-core += kernel/driver/exti.o
 obj-disco-core += kernel/driver/adc.o
+obj-disco-core += kernel/driver/io.o
 obj-disco-core += kernel/match.o
 obj-disco-core += kernel/control.o
 obj-disco-core += kernel/location/location.o
@@ -44,6 +45,5 @@ obj-disco-core += kernel/math/vect_plan.o
 obj-disco-core += kernel/math/matrix_homogeneous.o
 obj-disco-core += kernel/geometric_model/geometric_model_diff.o
 obj-disco-core += kernel/control/kinematics.o
-obj-disco-core += disco/bsp.o
 bin-disco += core
 

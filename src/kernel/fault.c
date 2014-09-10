@@ -10,9 +10,9 @@
 #include "kernel/module.h"
 #include "kernel/fault.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/io.h"
 #include <stdlib.h>
 #include <stdio.h>
-#include "bsp.h"
 
 #define FAULT_STACK_SIZE       70
 
