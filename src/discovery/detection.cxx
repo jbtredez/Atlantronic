@@ -38,9 +38,7 @@ static void detection_hokuyo2_callback();
 static xQueueHandle detection_queue;
 static detection_callback detection_callback_function = (detection_callback)nop_function;
 
-// données privées à la tache detection, ne doit pas être disponible
-// à l'extérieur car ce n'est pas connu pour un hokuyo distant (sur bar)
-// Les méthodes de calculs doivent utiliser les objets et segments
+// données privées à la tache detection
 static vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 static int detection_reg_ecart = 25;
 

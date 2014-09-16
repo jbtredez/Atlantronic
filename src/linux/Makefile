@@ -28,4 +28,4 @@ endif
 CFLAGS+=$(addprefix -D,$(DEF))
 CXXFLAGS:=$(CFLAGS)
 
-INCLUDES+=-Iinclude/discovery -Iinclude/foo -Isrc/linux -Isrc/kernel -Isrc/discovery -Isrc/foo -Isrc/bar
+INCLUDES+=-Iinclude/discovery -Isrc/linux -Isrc/kernel -Isrc/discovery

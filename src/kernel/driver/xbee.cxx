@@ -27,7 +27,7 @@
 #define XBEE_NETWORK_ID                0x1818
 #define XBEE_ADDR_DISCOVERY            0x1111
 #define XBEE_ADDR_PC                   0x2222
-
+#define XBEE_USART                     USART2_FULL_DUPLEX
 
 enum XbeeStatus
 {
@@ -65,9 +65,9 @@ module_init(xbee_module_init, INIT_XBEE);
 
 void xbee_task(void* /*arg*/)
 {
-	usart_open(USART3_FULL_DUPLEX, XBEE_OP_BAUDRATE);
-	usart_set_write_dma_buffer(USART3_FULL_DUPLEX, xbee_tx_buffer_dma);
-	usart_set_read_dma_buffer(USART3_FULL_DUPLEX, xbee_rx_buffer_dma);
+	usart_open(XBEE_USART, XBEE_OP_BAUDRATE);
+	usart_set_write_dma_buffer(XBEE_USART, xbee_tx_buffer_dma);
+	usart_set_read_dma_buffer(XBEE_USART, xbee_rx_buffer_dma);
 
 	while(1)
 	{
@@ -129,10 +129,10 @@ static uint32_t xbee_send_api(uint8_t cmd, const char* buffer, uint16_t size, ui
 
 	xbee_tx_buffer_dma[size + 4] = 0xff - checksum;
 
-	usart_set_read_dma_size(USART3_FULL_DUPLEX, read_size);
-	usart_send_dma_buffer(USART3_FULL_DUPLEX, size + 5);
+	usart_set_read_dma_size(XBEE_USART, read_size);
+	usart_send_dma_buffer(XBEE_USART, size + 5);
 
-	return usart_wait_read(USART3_FULL_DUPLEX, timeout);
+	return usart_wait_read(XBEE_USART, timeout);
 }
 
 static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
@@ -172,11 +172,11 @@ static void xbee_cmd(void* arg)
 	switch(cmd_arg->cmd_id)
 	{
 		case XBEE_CMD_SET_MANAGER_BAUDRATE:
-			usart_set_frequency(USART3_FULL_DUPLEX, (uint32_t)cmd_arg->param);
+			usart_set_frequency(XBEE_USART, (uint32_t)cmd_arg->param);
 			break;
 		case XBEE_CMD_SET_OP_BAUDRATE:
 			xbee_configure(XBEE_AT_BAUDRATE, XBEE_OP_BAUDRATE);
-			usart_set_frequency(USART3_FULL_DUPLEX, XBEE_OP_BAUDRATE);
+			usart_set_frequency(XBEE_USART, XBEE_OP_BAUDRATE);
 			vTaskDelay(ms_to_tick(25));
 			xbee_configure(XBEE_AT_WRITE_EEPROM, 0);
 			xbee_configure(XBEE_AT_SW_RESET, 0);

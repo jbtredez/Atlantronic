@@ -109,9 +109,9 @@ obj-discovery-baz += discovery/detection.o
 obj-discovery-baz += discovery/table.o
 #obj-discovery-baz += discovery/test.o
 
-bin-discovery += core
-bin-discovery += gyro
-bin-discovery += dynamixel
-bin-discovery += hokuyo
-bin-discovery += baz_small
-bin-discovery += baz
+#bin-discovery += core
+#bin-discovery += gyro
+#bin-discovery += dynamixel
+#bin-discovery += hokuyo
+#bin-discovery += baz_small
+#bin-discovery += baz

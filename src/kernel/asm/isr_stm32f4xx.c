@@ -63,9 +63,12 @@ void isr_dma1_stream7(void) __attribute__((weak, alias("isr_unexpected") )); //!
 
 void isr_dma2_stream0(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_0
 void isr_dma2_stream1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_1
-void isr_dma2_stream4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_4
+void isr_dma2_stream2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_2
 void isr_dma2_stream3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_3
+void isr_dma2_stream4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_4
+void isr_dma2_stream5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_5
 void isr_dma2_stream6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_6
+void isr_dma2_stream7(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption dma2_7
 
 void isr_spi1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi1
 #ifdef STM32F429xx
@@ -187,7 +190,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_dma2_stream0,
 	isr_dma2_stream1,
-	isr_unexpected,
+	isr_dma2_stream2,
 	isr_dma2_stream3,
 	isr_dma2_stream4,
 	isr_unexpected,
@@ -197,9 +200,9 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_unexpected,
 	isr_otg_fs,
-	isr_unexpected,
+	isr_dma2_stream5,
 	isr_dma2_stream6,
-	isr_unexpected,
+	isr_dma2_stream7,
 	isr_usart6,
 	isr_unexpected,
 	isr_unexpected,

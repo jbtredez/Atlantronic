@@ -37,13 +37,13 @@ Hokuyo hokuyo[HOKUYO_MAX];
 
 int hokuyo_module_init()
 {
-	int err = hokuyo[0].init(UART4_FULL_DUPLEX, "hokuyo1", HOKUYO1);
+	int err = hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1);
 	if(err)
 	{
 		goto done;
 	}
 
-	err = hokuyo[1].init(USART2_FULL_DUPLEX, "hokuyo2", HOKUYO2);
+	err = hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2);
 
 	if(err)
 	{
