@@ -23,7 +23,7 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 	{ USART3, DMA1_Stream1, DMA1_Stream3, 0, 0},
 	{ UART4, DMA1_Stream2, DMA1_Stream4, 0, 0},
 	{ UART5, DMA1_Stream0, DMA1_Stream7, 0, 0},
-	//{ USART6, DMA2_Stream1, DMA2_Stream7, 0, 0},
+	{ USART6, DMA2_Stream1, DMA2_Stream7, 0, 0},
 };
 
 __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
@@ -40,7 +40,7 @@ __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 			pclk = 1000000*RCC_PCLK1_MHZ;
 			break;
 		case USART1_FULL_DUPLEX:
-		//case USART6_HALF_DUPLEX:
+		case USART6_FULL_DUPLEX:
 			pclk = 1000000*RCC_PCLK2_MHZ;
 			break;
 		default:
@@ -163,8 +163,10 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			RCC->APB1RSTR |= RCC_APB1RSTR_UART5RST;
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_UART5RST;
 			break;
-/*		case USART6_HALF_DUPLEX:
-			// UART6 Tx = PC6, Rx = PG9
+		case USART6_FULL_DUPLEX:
+			log(LOG_ERROR, "mutex entre buffer dma usart1_tx et usart6_tx non implemente, usart6 desactive");
+			return -1;
+			// USART6 Tx = PC6, Rx = PG9
 			// activation USART6
 			RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
 
@@ -175,7 +177,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			// reset USART6
 			RCC->APB2RSTR |= RCC_APB2RSTR_USART6RST;
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST;
-			break;*/
+			break;
 		default:
 			log_format(LOG_ERROR, "unknown usart id %d", id);
 			return -1;
@@ -262,7 +264,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 			NVIC_EnableIRQ(DMA1_Stream7_IRQn);
 			break;
-		/*case USART6_FULL_DUPLEX:
+		case USART6_FULL_DUPLEX:
 			usart_device[id].dma_write->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
 			usart_device[id].dma_read->CR |= DMA_SxCR_CHSEL_2 | DMA_SxCR_CHSEL_0; // chan5
 			NVIC_SetPriority(USART6_IRQn, PRIORITY_IRQ_USART6);
@@ -271,7 +273,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			NVIC_EnableIRQ(USART6_IRQn);
 			NVIC_EnableIRQ(DMA2_Stream1_IRQn);
 			NVIC_EnableIRQ(DMA2_Stream7_IRQn);
-			break;*/
+			break;
 		default:
 			// pas de log, deja verifie dans le switch du dessus
 			return -1;
@@ -343,10 +345,10 @@ void isr_uart5(void)
 	isr_usart_generic(UART5_HALF_DUPLEX);
 }
 
-/*void isr_usart6(void)
+void isr_usart6(void)
 {
 	isr_usart_generic(USART6_FULL_DUPLEX);
-}*/
+}
 
 static void isr_usart_generic_dma_read(enum usart_id id, volatile uint32_t* dma_xISR, volatile uint32_t* dma_xIFCR, uint32_t dma_chan_tcif)
 {
@@ -420,10 +422,10 @@ void isr_dma1_stream7(void)
 	}
 }
 
-/*void isr_dma2_stream1(void)
+void isr_dma2_stream1(void)
 {
-	isr_usart_generic_dma_read(USART6_HALF_DUPLEX, &DMA2->LISR, &DMA2->LIFCR, DMA_LISR_TCIF1);
-}*/
+	isr_usart_generic_dma_read(USART6_FULL_DUPLEX, &DMA2->LISR, &DMA2->LIFCR, DMA_LISR_TCIF1);
+}
 
 void isr_dma2_stream2(void)
 {

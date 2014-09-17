@@ -48,10 +48,10 @@ obj-disco-core += kernel/math/matrix_homogeneous.o
 obj-disco-core += kernel/geometric_model/geometric_model_diff.o
 obj-disco-core += kernel/control/kinematics.o
 obj-disco-core += kernel/driver/usart.o
-#obj-disco-core += kernel/driver/hokuyo.o
-#obj-disco-core += kernel/driver/dynamixel.o
-#obj-disco-core += kernel/driver/xbee.o
-#obj-disco-core += kernel/hokuyo_tools.o
+obj-disco-core += kernel/driver/hokuyo.o
+obj-disco-core += kernel/driver/dynamixel.o
+obj-disco-core += kernel/driver/xbee.o
+obj-disco-core += kernel/hokuyo_tools.o
 #obj-disco-core += discovery/detection.o
 #obj-disco-core += discovery/table.o
 

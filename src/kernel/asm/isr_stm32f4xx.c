@@ -75,6 +75,7 @@ void isr_spi1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interr
 void isr_spi5(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi5
 void isr_spi6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption spi6
 #endif
+void isr_usart1(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart1
 void isr_usart2(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart2
 void isr_usart3(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption usart3
 void isr_uart4(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption uart4
@@ -169,7 +170,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_unexpected,
 	isr_spi1,
 	isr_unexpected,
-	isr_unexpected,
+	isr_usart1,
 	isr_usart2,
 	isr_usart3,
 	isr_exti15_10,
