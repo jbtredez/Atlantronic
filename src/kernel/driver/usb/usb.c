@@ -128,7 +128,7 @@ static int usb_module_init(void)
 	gpio_pin_init(GPIOB, 15, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DP
 
 	gpio_af_config(GPIOB, 12, GPIO_AF_OTG_HS_FS);
-	//gpio_af_config(GPIOB, 13, GPIO_AF_OTG_HS);
+	//gpio_af_config(GPIOB, 13, GPIO_AF_OTG_HS_FS);
 	gpio_af_config(GPIOB, 14, GPIO_AF_OTG_HS_FS);
 	gpio_af_config(GPIOB, 15, GPIO_AF_OTG_HS_FS);
 	USBD_Init(&usb_handle, &usb_descriptors, 0);
@@ -141,13 +141,13 @@ static int usb_module_init(void)
 #else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
-	gpio_pin_init(GPIOA, 9, GPIO_MODE_IN, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // VBUS
-	gpio_pin_init(GPIOA, 10, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // ID
+	//gpio_pin_init(GPIOA, 9, GPIO_MODE_IN, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // VBUS
+	//gpio_pin_init(GPIOA, 10, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // ID
 	gpio_pin_init(GPIOA, 11, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DM
 	gpio_pin_init(GPIOA, 12, GPIO_MODE_AF, GPIO_SPEED_100MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL); // DP
 
-	gpio_af_config(GPIOA, 9, GPIO_AF_OTG_FS);
-	gpio_af_config(GPIOA, 10, GPIO_AF_OTG_FS);
+	//gpio_af_config(GPIOA, 9, GPIO_AF_OTG_FS);
+	//gpio_af_config(GPIOA, 10, GPIO_AF_OTG_FS);
 	gpio_af_config(GPIOA, 11, GPIO_AF_OTG_FS);
 	gpio_af_config(GPIOA, 12, GPIO_AF_OTG_FS);
 	USBD_Init(&usb_handle, &usb_descriptors, 1);
