@@ -8,14 +8,18 @@
 #error sdram only for disco board
 #endif
 
-#define SDRAM_LoadToActiveDelay     2 // TMRD: 2 cycles => 1 cycle = 1/84MHz = 11.90ns
-#define SDRAM_ExitSelfRefreshDelay  6 // TXSR: min=70ns (6x11.90ns)
-#define SDRAM_SelfRefreshTime       4 // TRAS: min=42ns (4x11.90ns) max=120k (ns)
-#define SDRAM_RowCycleDelay         6 // TRC:  min=70 (6x11.90ns)
-#define SDRAM_WriteRecoveryTime     2 // TWR:  min=1+ 7ns (1+1x11.90ns)
-#define SDRAM_RPDelay               2 // TRP:  20ns => 2x11.90ns
-#define SDRAM_RCDDelay              2 // TRCD: 20ns => 2x11.90ns
-#define SDRAM_REFRESH_COUNT      1292 // (15.62 us x Freq) - 20
+#if( RCC_PCLK1_MHZ != 48)
+#error revoir sdram timings
+#endif
+
+#define SDRAM_LoadToActiveDelay     2 // TMRD: 2 cycles => frequence = 192Mhz/2 = 96MHz (90MHz spec) => 1 cycle = 1/96MHz = 10.42ns
+#define SDRAM_ExitSelfRefreshDelay  7 // TXSR: min=70ns (7x10.42ns)
+#define SDRAM_SelfRefreshTime       4 // TRAS: min=42ns (4x10.42ns) max=120k (ns)
+#define SDRAM_RowCycleDelay         7 // TRC:  min=70 (7x10.42ns)
+#define SDRAM_WriteRecoveryTime     2 // TWR:  min=1 + 7ns (1+1x10.42ns)
+#define SDRAM_RPDelay               2 // TRP:  20ns => 2x10.42ns
+#define SDRAM_RCDDelay              2 // TRCD: 20ns => 2x10.42ns
+#define SDRAM_REFRESH_COUNT      1480 // (15.62 us x Freq) - 20
 
 #define FMC_SDRAM_CMD_NORMAL_MODE             ((uint32_t)0x00000000)
 #define FMC_SDRAM_CMD_CLK_ENABLE              ((uint32_t)0x00000001)

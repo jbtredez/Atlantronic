@@ -131,12 +131,19 @@ static void spi_driver_init(const enum spi_driver id, SPI_TypeDef* spi_reg, GPIO
 		}
 	}
 
+#if( RCC_PCLK2_MHZ != 96)
+#error revoir calcul frequence spi
+#endif
 	// spi full duplex, lignes dediees a sens unique
 	// datasize = 8
 	// clock polarity : low
 	// clock phase : edge
 	// selection esclave (NSS) : soft (=> SSM = 1 et SSI = 1)
-	// prescaler : 16 (SPI_CR1_BR_0 | SPI_CR1_BR_1) => PCLk2/16 = 5.25 MHz
+	// prescaler : 16 (SPI_CR1_BR_0 | SPI_CR1_BR_1) => PCLk2/16 = 6 MHz
+	// note : freq max :
+	// - adxrs453 : 8MHz
+	// - l3gd20   : 10MHz
+	// - ili9341  : 6.66Mhz lecture, 10Mhz ecriture
 	// format MSBFIRST
 	// spi maitre
 	spi_reg->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_MSTR | SPI_CR1_BR_0 | SPI_CR1_BR_1;

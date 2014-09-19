@@ -8,11 +8,11 @@
 
 // PLL_VCO = (HSE_VALUE or HSI_VALUE / PLL_M) * PLL_N 
 #define PLL_M      8
-#define PLL_N      336
+#define PLL_N    384
 // SYSCLK = PLL_VCO / PLL_P
 #define PLL_P      2
 // USB OTG FS, SDIO and RNG Clock =  PLL_VCO / PLLQ
-#define PLL_Q      7
+#define PLL_Q      8
 
 static int rcc_module_init()
 {
@@ -65,8 +65,8 @@ static int rcc_module_init()
 	}
 
 #ifdef STM32F429xx
-	// activation du "over drive" pour le passage a 180 Mhz
-//	PWR->CR |= PWR_CR_ODEN;
+	// activation du "over drive" pour le passage a 192 Mhz
+	PWR->CR |= PWR_CR_ODEN;
 #endif
 
 	// flash : utilisation du Prefetch

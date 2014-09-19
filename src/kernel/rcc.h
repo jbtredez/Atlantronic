@@ -11,11 +11,11 @@
 extern "C" {
 #endif
 
-#define RCC_SYSCLK      168000000
-#define RCC_SYSCLK_MHZ        168
-#define RCC_HCLK_MHZ          168
-#define RCC_PCLK1_MHZ          42
-#define RCC_PCLK2_MHZ          84
+#define RCC_SYSCLK      192000000
+#define RCC_SYSCLK_MHZ        192
+#define RCC_HCLK_MHZ          192
+#define RCC_PCLK1_MHZ          48
+#define RCC_PCLK2_MHZ          96
 
 #define ms_to_tick(a)    (a)
 #define ms_to_systick(a)    ((uint64_t)(a)*RCC_SYSCLK/1000)

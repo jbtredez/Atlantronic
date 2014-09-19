@@ -15,7 +15,7 @@
 #define VBAT_GAIN            (VBAT_CALIBRATION*13*3/4096.0f)
 #define IPWM_GAIN            (3/(4096.0f * 0.377f))
 #define ADC_MAX_DATA                  128
-#define ADC_FILTER_GAIN        0.9539466f// exp(-period/tau) avec period = 1/(4.242kHz) et tau = 5ms
+#define ADC_FILTER_GAIN        0.9284497216f// exp(-period/tau) avec period = 1/(2694Hz) et tau = 5ms
 #define ADC_UNDERVOLTAGE_DELAY         10
 
 typedef struct
@@ -108,12 +108,15 @@ int adc_module_init()
 		adc_init(i, anParam[i].gpio, anParam[i].pin, anParam[i].an);
 	}
 
-	// ADCCLK = PCLK2/8 (10.5 MHz)
+#if( RCC_PCLK2_MHZ != 96)
+#error frequence adc
+#endif
+	// ADCCLK = PCLK2/8 (12 MHz)
 	ADC->CCR = ADC_CCR_ADCPRE_1 | ADC_CCR_ADCPRE_0;
 
 	// temps total de conversion : 480 cycles + 15 cycles (resolution 12 bit)
-	// => frequence adc de 10.5MhZ / (480+15) = 21.212kHz
-	// => frequence de 4.242kHz par mesure
+	// => frequence adc de 12MhZ / (480+15) = 24.242kHz
+	// => frequence de 2694 Hz par mesure (pour 9 mesures)
 	ADC1->SQR1 = (ADC1->SQR1 & ~ADC_SQR1_L) | (ADC_SQR1_L_0 * (sizeof(anParam) / sizeof(anParam[0]) - 1)); // x conversions - 1
 
 	// dma

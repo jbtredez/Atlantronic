@@ -63,4 +63,3 @@ obj-disco-core += kernel/hokuyo_tools.o
 #obj-disco-core += discovery/table.o
 
 bin-disco += core
-

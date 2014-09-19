@@ -26,11 +26,11 @@ enum
 	PWM_MAX,
 };
 
-#if( RCC_PCLK1_MHZ != 42)
+#if( RCC_PCLK1_MHZ != 48)
 #error revoir les pwm
 #endif
 
-#if( RCC_PCLK2_MHZ != 84)
+#if( RCC_PCLK2_MHZ != 96)
 #error revoir les pwm
 #endif
 
@@ -40,12 +40,12 @@ enum
 // => PSC = 0, on maximise TIMCLK (= PCLK) donc ARR
 #define PWM_PSC     0x00
 
-// pour PSC = 0, TIMCLK = 84 MHz,
-// ARR = TIM1CLK / 25000 - 1 = 3359 pour une PWM à 25 kHz. On a une resolution de 3360 sur une periode
+// pour PSC = 0, TIMCLK = 96 MHz,
+// ARR = TIM1CLK / 25000 - 1 = 3839 pour une PWM à 25 kHz. On a une resolution de 3840 sur une periode
 // pour PSC = 0, TIMCLK = 42 MHz,
-// ARR = TIM1CLK / 25000 - 1 = 1679 pour une PWM à 25 kHz. On a une resolution de 1680 sur une periode
-#define PWM_ARR1     3359
-#define PWM_ARR2     1679
+// ARR = TIM1CLK / 25000 - 1 = 1919 pour une PWM à 25 kHz. On a une resolution de 1920 sur une periode
+#define PWM_ARR1     3839
+#define PWM_ARR2     1919
 
 //! set a pwm
 //!

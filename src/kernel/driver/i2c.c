@@ -33,13 +33,17 @@ int i2c_module_init()
 	RCC->APB1RSTR |= RCC_APB1RSTR_I2C3RST;
 	RCC->APB1RSTR &= ~RCC_APB1RSTR_I2C3RST;
 
+#if( RCC_PCLK1_MHZ != 48)
+#error revoir i2c
+#endif
+
 	// desactivation i2c3
 	I2C3->CR1 = 0;
 	I2C3->CR2 = RCC_PCLK1_MHZ;
 	// i2c_speed = PCLK1 / (25 * CCR) si fm et DUTY = 1
-	// => pour 42MHz et 400k, CCR=4.2. On prend donc CCR=5 et du coup, i2c_speed = 336kHz
+	// => pour 42MHz et 400k, CCR=4.2. On prend donc CCR=5 et du coup, i2c_speed = 384kHz
 	I2C3->CCR = 5 | I2C_CCR_DUTY | I2C_CCR_FS;
-	I2C3->TRISE = I2C_RISE_TIME(RCC_PCLK1_MHZ, 336000);
+	I2C3->TRISE = I2C_RISE_TIME(RCC_PCLK1_MHZ, 384000);
 	// adresses 7 bits
 	I2C3->OAR1 = 0x4000; // le bit 14 doit etre a 1
 	I2C3->OAR2 = 0;
