@@ -20,11 +20,11 @@ typedef enum
 }I2c_error;
 
 
-I2c_error i2c_transaction(uint16_t i2c_addr, void* _tx_data, uint16_t tx_size, void* _rx_data, uint16_t rx_size, uint32_t timeout);
+I2c_error i2c_transaction(uint16_t addr, void* _tx_data, uint16_t tx_size, void* _rx_data, uint16_t rx_size, uint32_t timeout);
 
-static inline I2c_error i2c_write_data(uint16_t i2c_addr, void* data, uint16_t size, uint32_t timeout)
+static inline I2c_error i2c_write_data(uint16_t addr, void* data, uint16_t size, uint32_t timeout)
 {
-	return i2c_transaction(i2c_addr, data, size, 0, 0, timeout);
+	return i2c_transaction(addr, data, size, 0, 0, timeout);
 }
 
 #ifdef __cplusplus

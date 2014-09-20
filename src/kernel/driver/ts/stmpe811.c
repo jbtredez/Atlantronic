@@ -132,8 +132,10 @@
 #define STMPE811_TS_CTRL_ENABLE         0x01
 #define STMPE811_TS_CTRL_STATUS         0x80
 
-#define STMPE811_STACK_SIZE         300
-#define STMPE811_I2C_ADDR           0x82
+#define STMPE811_STACK_SIZE              300
+#define STMPE811_I2C_ADDR               0x82
+
+#define STMPE811_TIMEOUT                 500
 
 static void stmpe811_task(void* arg);
 static int stmpe811_init();
@@ -177,7 +179,7 @@ static void stmpe811_task(void* arg)
 		uint8_t reg = STMPE811_REG_TSC_DATA_NON_INC;
 		uint8_t data[4];
 
-		i2c_transaction(STMPE811_I2C_ADDR, &reg, 1, data, sizeof(data), 0);
+		i2c_transaction(STMPE811_I2C_ADDR, &reg, 1, data, sizeof(data), STMPE811_TIMEOUT);
 		uint32_t tmp = (data[0] << 24)|(data[1] << 16)|(data[2] << 8)| data[3];
 		uint16_t x = (tmp >> 20) & 0x00000FFF;
 		uint16_t y = (tmp >> 8) & 0x00000FFF;
@@ -198,7 +200,7 @@ static I2c_error stmpe811_write_reg(uint8_t reg, uint8_t val)
 	char tx_buffer[2];
 	tx_buffer[0] = reg;
 	tx_buffer[1] = val;
-	I2c_error res = i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, 0);
+	I2c_error res = i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, STMPE811_TIMEOUT);
 	if( res )
 	{
 		log_format(LOG_ERROR, "i2c_write_data(%x, %x) failed : %x", reg, val, res);
@@ -209,7 +211,7 @@ static I2c_error stmpe811_write_reg(uint8_t reg, uint8_t val)
 
 static I2c_error stmpe811_read_reg(uint8_t reg, uint8_t* val)
 {
-	return i2c_transaction(STMPE811_I2C_ADDR, &reg, 1, &val, 1, 0);
+	return i2c_transaction(STMPE811_I2C_ADDR, &reg, 1, &val, 1, STMPE811_TIMEOUT);
 }
 
 static int stmpe811_init()
@@ -218,7 +220,7 @@ static int stmpe811_init()
 	char rx_buffer[2];
 
 	tx_buffer[0] = STMPE811_REG_CHP_ID_LSB;
-	I2c_error res = i2c_transaction(STMPE811_I2C_ADDR, tx_buffer, 1, rx_buffer, 2, 0);
+	I2c_error res = i2c_transaction(STMPE811_I2C_ADDR, tx_buffer, 1, rx_buffer, 2, STMPE811_TIMEOUT);
 
 	if( res )
 	{
@@ -239,7 +241,7 @@ static int stmpe811_init()
 	// reset
 	tx_buffer[0] = STMPE811_REG_SYS_CTRL1;
 	tx_buffer[1] = 2;
-	i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, 0);
+	i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, STMPE811_TIMEOUT);
 
 	// attente reset
 	vTaskDelay(10);
@@ -247,7 +249,7 @@ static int stmpe811_init()
 	// power on
 	tx_buffer[0] = STMPE811_REG_SYS_CTRL1;
 	tx_buffer[1] = 0;
-	i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, 0);
+	i2c_write_data(STMPE811_I2C_ADDR, tx_buffer, 2, STMPE811_TIMEOUT);
 
 	// attente reinitialisation
 	vTaskDelay(2);
