@@ -25,24 +25,10 @@ typedef struct
 	uint8_t an;
 }AnParam;
 
-#if defined(__discovery__)
-#define ADC_DMA_CHAN               DMA2_Stream4
-AnParam anParam[] =
-{
-	{GPIOB, 1, 9},  // MOT1
-	{GPIOC, 1, 11}, // MOT2
-	{GPIOC, 2, 12}, // MOT3
-	{GPIOB, 0, 8},  // MOT4
-	{GPIOC, 5, 15}, // VBAT_ARU
-};
+#if ! defined(__disco__)
+#error unknown card
+#endif
 
-struct adc_an
-{
-	uint16_t i[ADC_CURRENT_MAX];
-	uint16_t vBat;
-} __attribute__((packed));
-
-#elif defined(__disco__)
 #define ADC_DMA_CHAN               DMA2_Stream0
 AnParam anParam[] =
 {
@@ -64,10 +50,6 @@ struct adc_an
 	uint16_t an[4];
 } __attribute__((packed));
 
-#else
-#error unknown card
-#endif
-
 static volatile struct adc_an adc_data[ADC_MAX_DATA];
 struct adc_anf adc_filtered_data;
 static int adc_startId;
@@ -78,15 +60,8 @@ static void adc_init(uint8_t id, GPIO_TypeDef* gpio, uint8_t pin, uint8_t an);
 
 int adc_module_init()
 {
-#if defined(__discovery__)
-	// activation GPIOB et GPIOC et DMA2
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA2EN;
-#elif defined(__disco__)
 	// activation GPIOA, GPIOB, GPIOC et DMA2
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA2EN;
-#else
-#error unknown card
-#endif
 
 	// activation clock adc 1
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
@@ -207,10 +182,14 @@ void adc_update()
 	for(i = 0; i < count; i++)
 	{
 		adc_filtered_data.vBat = ADC_FILTER_GAIN * adc_filtered_data.vBat + (1-ADC_FILTER_GAIN) * VBAT_GAIN * adc_data[adc_startId].vBat;
-		adc_filtered_data.i[0] = ADC_FILTER_GAIN * adc_filtered_data.i[0] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[0];
-		adc_filtered_data.i[1] = ADC_FILTER_GAIN * adc_filtered_data.i[1] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[1];
-		adc_filtered_data.i[2] = ADC_FILTER_GAIN * adc_filtered_data.i[2] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[2];
-		adc_filtered_data.i[3] = ADC_FILTER_GAIN * adc_filtered_data.i[3] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[3];
+		for(int i = 0; i < 4; i++)
+		{
+			adc_filtered_data.i[i] = ADC_FILTER_GAIN * adc_filtered_data.i[i] + (1-ADC_FILTER_GAIN) * IPWM_GAIN * adc_data[adc_startId].i[i];
+		}
+		for(int i = 0; i < 4; i++)
+		{
+			adc_filtered_data.an[i] = ADC_FILTER_GAIN * adc_filtered_data.an[i] + (1-ADC_FILTER_GAIN) * adc_data[adc_startId].an[i];
+		}
 		adc_startId = (adc_startId + 1) % ADC_MAX_DATA;
 	}
 

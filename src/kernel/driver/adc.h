@@ -17,6 +17,7 @@ struct adc_anf
 {
 	float i[ADC_CURRENT_MAX];
 	float vBat;
+	float an[4];
 };
 
 void adc_update();
