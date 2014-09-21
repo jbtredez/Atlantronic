@@ -59,6 +59,7 @@ obj-disco-core += kernel/driver/hokuyo.o
 obj-disco-core += kernel/driver/dynamixel.o
 obj-disco-core += kernel/driver/xbee.o
 obj-disco-core += kernel/hokuyo_tools.o
+#obj-disco-core += kernel/driver/can.o
 #obj-disco-core += discovery/detection.o
 #obj-disco-core += discovery/table.o
 

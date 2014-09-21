@@ -31,11 +31,11 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	// CAN_TX : PD1
 
 	// activation GPIOD
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
-	gpio_pin_init(GPIOD, 0, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
-	gpio_pin_init(GPIOD, 1, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
-	gpio_af_config(GPIOD, 0, GPIO_AF_CAN1);
-	gpio_af_config(GPIOD, 1, GPIO_AF_CAN1);
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+	gpio_pin_init(GPIOB, 8, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
+	gpio_pin_init(GPIOB, 9, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
+	gpio_af_config(GPIOB, 8, GPIO_AF_CAN1);
+	gpio_af_config(GPIOB, 9, GPIO_AF_CAN1);
 
 	// activation clock sur le can 1
 	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
@@ -52,7 +52,7 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	// sortie automatique de bus off
 	CAN1->MCR |= CAN_MCR_ABOM;
 
-	//sortie du mode sleep
+	// sortie du mode sleep
 	CAN1->MCR &= ~CAN_MCR_SLEEP;
 
 	// configuration
@@ -121,7 +121,7 @@ static int can_set_mask(int id, uint32_t mask)
 }
 
 
-static void can_set_btr(int sjw, int tbs1, int tbs2, int tq)
+static void can_set_btr(int tbs1, int tbs2, int tq, int sjw)
 {
 	CAN1->BTR &= ~ ( CAN_BTR_SJW | CAN_BTR_TS2 | CAN_BTR_TS1 | CAN_BTR_BRP );
 	CAN1->BTR |= (((sjw-1) << 24) & CAN_BTR_SJW) | (((tbs2-1) << 20) & CAN_BTR_TS2) | (((tbs1-1) << 16) & CAN_BTR_TS1) | ((tq-1) & CAN_BTR_BRP);
@@ -129,8 +129,8 @@ static void can_set_btr(int sjw, int tbs1, int tbs2, int tq)
 
 static void can_set_baudrate(enum can_baudrate speed, int debug)
 {
-	#if( RCC_PCLK1_MHZ != 42)
-	#error "remettre RCC_PCLK1 à 42Mhz, sinon c'est le bordel pour recalculer BTR"
+	#if( RCC_PCLK1_MHZ != 48)
+	#error recalculer BTR
 	#endif
 
 	// init mode
@@ -140,38 +140,39 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 	// TODO timeout a ajouter
 	while( ! (CAN1->MSR & CAN_MSR_INAK) ) ;
 
-	// TBS1 = 14 TQ
-	// TBS2 =  6 TQ
-	// SJW  =  4 TQ
-	// total bit can (1 + TBS1 + TBS2) = 21 TQ
-	// SP = (1 + TBS1)/total = 71,43 %
-	// vitesse : 1000kb => 1000000*18*TQ = PCLK = 42Mhz
-	// => TQ = PCLK / (21 * 1000000) = 2
+	// TBS1 = 13 TQ
+	// TBS2 =  2 TQ
+	// SJW  =  1 a 4 TQ
+	// total bit can (1 + TBS1 + TBS2) = 16 TQ
+	// SP = (1 + TBS1)/total = 87.5 %
+	// vitesse : 1000kb => 1000000*16*TQ = PCLK = 48Mhz
+	// => TQ = PCLK / (16 * 1000000) = 3
 	switch(speed)
 	{
 		case CAN_1000:
-			can_set_btr(4, 14, 6, 2);
+			can_set_btr(13, 2, 3, 1);
 			break;
 		case CAN_800:
-			can_set_btr(4, 14, 6, 3);
+			// pas de solution a 87.5% => 86.7% a la place
+			can_set_btr(12, 2, 4, 1);
 			break;
 		case CAN_500:
-			can_set_btr(4, 14, 6, 4);
+			can_set_btr(13, 2, 6, 1);
 			break;
 		case CAN_250:
-			can_set_btr(4, 14, 6, 8);
+			can_set_btr(13, 2, 12, 1);
 			break;
 		case CAN_125:
-			can_set_btr(4, 14, 6, 16);
+			can_set_btr(13, 2, 24, 1);
 			break;
 		case CAN_50:
-			can_set_btr(4, 14, 6, 40);
+			can_set_btr(13, 2, 60, 1);
 			break;
 		case CAN_20:
-			can_set_btr(4, 14, 6, 100);
+			can_set_btr(13, 2, 150, 1);
 			break;
 		case CAN_10:
-			can_set_btr(4, 14, 6, 200);
+			can_set_btr(13, 2, 300, 1);
 			break;
 		case CAN_RESERVED:
 		default:
