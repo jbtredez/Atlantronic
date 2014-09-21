@@ -5,6 +5,8 @@
 #define WEAK_GYRO __attribute__((weak, alias("nop_function") ))
 #endif
 
+#include <stdint.h>
+
 enum GyroState
 {
 	GYRO_STATE_DISCONNECTED = 0,

@@ -62,5 +62,15 @@ obj-disco-core += kernel/hokuyo_tools.o
 #obj-disco-core += kernel/driver/can.o
 #obj-disco-core += discovery/detection.o
 #obj-disco-core += discovery/table.o
+#obj-disco-core += kernel/driver/gyro/adxrs453.o
+#obj-disco-core += kernel/math/simpson_integrator.o
+#obj-disco-core += kernel/state_machine/state_machine.o
+#obj-disco-core += kernel/canopen.o
+#obj-disco-core += kernel/can_motor.o
+#obj-disco-core += discovery/motion.o
+#obj-disco-core += discovery/graph.o
+#obj-disco-core += discovery/trajectory.o
+#obj-disco-core += kernel/pump.o
+#obj-disco-core += kernel/arm.o
 
 bin-disco += core

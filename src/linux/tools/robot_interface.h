@@ -9,7 +9,7 @@
 #include "linux/tools/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/can.h"
-#include "kernel/driver/gyro.h"
+#include "kernel/driver/gyro/gyro.h"
 #include "kernel/driver/pwm.h"
 #include "kernel/error_codes.h"
 #include "kernel/fault.h"

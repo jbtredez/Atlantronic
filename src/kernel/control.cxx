@@ -10,7 +10,7 @@
 #include "kernel/location/location.h"
 #include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"
-#include "kernel/driver/gyro.h"
+#include "kernel/driver/gyro/gyro.h"
 #include "kernel/driver/adc.h"
 #include "kernel/driver/power.h"
 #include "kernel/arm.h"
