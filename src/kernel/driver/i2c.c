@@ -267,6 +267,9 @@ void isr_i2c3_ev(void)
 
 void isr_i2c3_er(void)
 {
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
 	uint32_t erren = I2C3->CR2 & I2C_CR2_ITERREN;
 	if( (I2C3->SR1 & I2C_SR1_BERR) && erren )
 	{
@@ -291,6 +294,7 @@ void isr_i2c3_er(void)
 		else
 		{
 			// erreur AF (acknowledge failure)
+			I2C3->CR1 |= I2C_CR1_STOP;
 			i2c_error = I2C_ERROR_AF;
 			I2C3->SR1 = ~I2C_SR1_AF;
 		}
@@ -302,6 +306,10 @@ void isr_i2c3_er(void)
 		i2c_error = I2C_ERROR_OVR;
 		I2C3->SR1 = ~I2C_SR1_OVR;
 	}
+
+	xSemaphoreGiveFromISR(i2c_sem, &xHigherPriorityTaskWoken);
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
 I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* rx_data, uint16_t rx_size, uint32_t timeout)
@@ -345,7 +353,6 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 	I2C3->CR1 |= I2C_CR1_START;
 	if( xSemaphoreTake(i2c_sem, timeout) == pdFALSE )
 	{
-		log_format(LOG_ERROR, "i2c timeout tx %d / %d rx %d / %d", i2c_tx_buffer_count, i2c_tx_buffer_size, i2c_rx_buffer_count, i2c_rx_buffer_size);
 		res = I2C_ERROR_TIMEOUT;
 	}
 	else
@@ -354,6 +361,36 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 	}
 
 	xSemaphoreGive(i2c_mutex);
+
+	switch( res )
+	{
+		case I2C_ERROR_NONE:
+			break;
+		case I2C_ERROR_BERR:
+			log(LOG_ERROR, "i2c berr");
+			break;
+		case I2C_ERROR_ARLO:
+			log(LOG_ERROR, "i2c arbitration lost");
+			break;
+		case I2C_ERROR_AF:
+			log(LOG_ERROR, "i2c ack failure");
+			break;
+		case I2C_ERROR_OVR:
+			log(LOG_ERROR, "i2c overflow / underflow");
+			break;
+		case I2C_ERROR_DMA:
+			log(LOG_ERROR, "dma error");
+			break;
+		case I2C_ERROR_TIMEOUT:
+			log_format(LOG_ERROR, "i2c timeout tx %d / %d rx %d / %d", i2c_tx_buffer_count, i2c_tx_buffer_size, i2c_rx_buffer_count, i2c_rx_buffer_size);
+			break;
+		case I2C_ERROR_BUSY:
+			log(LOG_ERROR, "busy");
+			break;
+		default:
+			log_format(LOG_ERROR, "unknown i2c error %d", res);
+			break;
+	}
 
 done:
 	return res;
