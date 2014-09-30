@@ -315,7 +315,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	menuObj = gtk_check_menu_item_new_with_label("3D");
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(enable3d), NULL);
-	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
+	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), TRUE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
 	if(simulation)
@@ -511,7 +511,12 @@ static void init(GtkWidget* widget, gpointer arg)
 	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 //	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), 0, GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
 	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
-
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_COLOR_MATERIAL);
 	gdk_gl_drawable_gl_end(gldrawable);
 }
 
@@ -541,8 +546,6 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, screen_width, screen_height, 0, 0, 1);
-
-	glDisable(GL_DEPTH_TEST);
 
 	gdk_gl_drawable_gl_end(gldrawable);
 
@@ -626,52 +629,52 @@ void plot_pave(float x, float y, float z, float dx, float dy, float dz)
 	dy /= 2;
 	dz /= 2;
 
-	glBegin(GL_TRIANGLE_STRIP);
+	glBegin(GL_QUADS);
+	glNormal3f(-1, 0, 0);
 	glVertex3f(-dx, -dy, -dz);
-	glVertex3f(-dx, -dy,  dz);
-	glVertex3f(-dx,  dy,  dz);
-	glVertex3f(-dx,  dy, -dz);
-	glVertex3f(-dx, -dy, -dz);
-	glEnd();
-
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex3f( dx, -dy, -dz);
-	glVertex3f( dx, -dy,  dz);
-	glVertex3f( dx,  dy,  dz);
-	glVertex3f( dx,  dy, -dz);
-	glVertex3f( dx, -dy, -dz);
-	glEnd();
-
-	glBegin(GL_TRIANGLE_STRIP);
-	glVertex3f(-dx, -dy, -dz);
-	glVertex3f(-dx, -dy,  dz);
-	glVertex3f( dx, -dy,  dz);
-	glVertex3f( dx, -dy, -dz);
-	glVertex3f(-dx, -dy, -dz);
-	glEnd();
-
-	glBegin(GL_TRIANGLE_STRIP);
 	glVertex3f(-dx,  dy, -dz);
 	glVertex3f(-dx,  dy,  dz);
+	glVertex3f(-dx, -dy,  dz);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glNormal3f(1, 0, 0);
+	glVertex3f( dx, -dy, -dz);
+	glVertex3f( dx,  dy, -dz);
+	glVertex3f( dx,  dy,  dz);
+	glVertex3f( dx, -dy,  dz);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glNormal3f(0, -1, 0);
+	glVertex3f(-dx, -dy, -dz);
+	glVertex3f(-dx, -dy,  dz);
+	glVertex3f( dx, -dy,  dz);
+	glVertex3f( dx, -dy, -dz);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glNormal3f(0, 1, 0);
+	glVertex3f(-dx,  dy, -dz);
+	glVertex3f(-dx,  dy,  dz);
 	glVertex3f( dx,  dy,  dz);
 	glVertex3f( dx,  dy, -dz);
-	glVertex3f(-dx,  dy, -dz);
 	glEnd();
 
-	glBegin(GL_TRIANGLE_STRIP);
+	glBegin(GL_QUADS);
+	glNormal3f(0, 0, -1);
 	glVertex3f(-dx, -dy, -dz);
-	glVertex3f(-dx,  dy, -dz);
-	glVertex3f( dx,  dy, -dz);
 	glVertex3f( dx, -dy, -dz);
-	glVertex3f(-dx, -dy, -dz);
+	glVertex3f( dx,  dy, -dz);
+	glVertex3f(-dx,  dy, -dz);
 	glEnd();
 
-	glBegin(GL_TRIANGLE_STRIP);
+	glBegin(GL_QUADS);
+	glNormal3f(0, 0, 1);
 	glVertex3f(-dx, -dy, dz);
-	glVertex3f(-dx,  dy, dz);
-	glVertex3f( dx,  dy, dz);
 	glVertex3f( dx, -dy, dz);
-	glVertex3f(-dx, -dy, dz);
+	glVertex3f( dx,  dy, dz);
+	glVertex3f(-dx,  dy, dz);
 	glEnd();
 
 	glTranslatef(-x, -y, -z);
@@ -692,8 +695,6 @@ void plot_table(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_TEXTURE] )
 	{
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, table_texture);
 		glBegin(GL_QUADS);
@@ -703,44 +704,42 @@ void plot_table(Graphique* graph)
 		glTexCoord2i(1,0); glVertex2f( 1500,  1000);
 		glEnd();
 		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_LIGHTING);
 	}
 
 	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
-#if 0
 		// pb / lumiere sur la 3d
 		if( glplot_3d )
 		{
-			glEnable(GL_COLOR_MATERIAL);
-			glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-			GLfloat ambientLight[] = { 0, 0, 0, 1 };
-			GLfloat diffuseLight[] = { 1, 1, 1, 1 };
-			GLfloat specularLight[] = { 1, 1, 1, 1 };
-			GLfloat light_position[] = { 1, 0, 1, 0 };
 			GLfloat mat_specular[] = { 1, 1, 1, 1 };
-			GLfloat mat_emission[] = { 0, 0, 0, 1 };
-			GLfloat mat_shininess[] = { 100.0 };
-			glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
-			glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-			glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-			glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+			GLfloat mat_emission[] = { 0, 0, 0, 0 };
+			GLfloat mat_shininess[] = { 96.0 };
+
 			glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 			glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
 			glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-			glEnable(GL_LIGHTING);
-			glEnable(GL_LIGHT0);
 
-			/*plot_pave(0, 1011, 35, 3000, 22, 70);
+			glColor3f(0, 0, 1);
+			plot_pave(0, 0, -11, 3000, 2000, 22);
+
+			glColor3f(1, 0, 0);
+			plot_pave(0, 1011, 35, 3000, 22, 70);
 			plot_pave(0, -1011, 35, 3000, 22, 70);
 			plot_pave(-1511, 0, 35, 22, 2000, 70);
-			plot_pave(1511, 0, 35, 22, 2000, 70);*/
-			glColor3f(1, 1, 0);
+			plot_pave(1511, 0, 35, 22, 2000, 70);
 
+			glColor3f(1, 1, 0);
 			plot_pave(-266.5, 705, 11, 500, 590, 22);
-			glDisable(GL_LIGHTING);
+			plot_pave(-266.5, 740, 33, 500, 520, 22);
+			plot_pave(-266.5, 775, 55, 500, 450, 22);
+			plot_pave(-266.5, 810, 77, 500, 380, 22);
+			glColor3f(0, 1, 0);
+			plot_pave(266.5, 705, 11, 500, 590, 22);
+			plot_pave(266.5, 740, 33, 500, 520, 22);
+			plot_pave(266.5, 775, 55, 500, 450, 22);
+			plot_pave(266.5, 810, 77, 500, 380, 22);
 		}
-#endif
+
 		glColor3f(0, 0, 0);
 		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -1243,14 +1242,16 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		{
 			glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
 		}
+		else
+		{
+			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
+		}
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		if( glplot_3d )
 		{
-			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
 			gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1);
-			//gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1); // TODO glplot_view
 			float mat[16];
 			mat[0] = glplot_view.val[0];
 			mat[1] = glplot_view.val[4];
@@ -1269,6 +1270,31 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			mat[14] = glplot_view.val[11];
 			mat[15] = 1;
 			glMultMatrixf(mat);
+
+			glEnable(GL_LIGHTING);
+			glEnable(GL_DEPTH_TEST);
+			//GLfloat global_ambient[] = { 0.5, 0.5, 0.5, 1 };
+			GLfloat ambientLight[] = { 0.5, 0.5, 0.5, 1 };
+			GLfloat diffuseLight[] = { 0.8, 0.8, 0.8, 1 };
+			GLfloat specularLight[] = { 1, 1, 1, 1 };
+			//GLfloat light_position[] = { 0, 0, 1000, 1 };
+			GLfloat light_position[] = { 1000, 1000, 1000, 1 };
+			GLfloat light_direction[] = { -1, -1, -1, 0};
+			//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+			glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+			glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+			glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
+			glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+			glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
+			//glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45.0);
+			//glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 2.0);
+			//glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.00001f);
+			//glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
+		}
+		else
+		{
+			glDisable(GL_LIGHTING);
+			glDisable(GL_DEPTH_TEST);
 		}
 
 		switch(current_graph)
@@ -1622,16 +1648,16 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			graph[current_graph].zoomf(0.5);
 			break;
 		case GDK_Right:
-			glplot_view.translate(-20,0,0);
+			glplot_view.translate(-40,0,0);
 			break;
 		case GDK_Left:
-			glplot_view.translate(20,0,0);
+			glplot_view.translate(40,0,0);
 			break;
 		case GDK_Up:
-			glplot_view.translate(0,-20,0);
+			glplot_view.translate(0,-40,0);
 			break;
 		case GDK_Down:
-			glplot_view.translate(0,20,0);
+			glplot_view.translate(0,40,0);
 			break;
 		case GDK_r:
 			res = pthread_mutex_lock(&robotItf->mutex);
