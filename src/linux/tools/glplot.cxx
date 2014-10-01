@@ -680,6 +680,59 @@ void plot_pave(float x, float y, float z, float dx, float dy, float dz)
 	glTranslatef(-x, -y, -z);
 }
 
+void plot_circle(float x, float y, float z, float radius, float startAngle, float angle, int res)
+{
+	glPushMatrix();
+	glTranslatef(x, y, z);
+
+	float theta = 0;
+	glBegin(GL_TRIANGLE_STRIP);
+	glNormal3f(0, 0, 1);
+	for(int i = 0; i < res; i++)
+	{
+		glVertex3f(0, 0, 0);
+		theta = startAngle + i * angle / res;
+		glVertex3f(radius * cos(theta), radius * sin(theta), 0);
+		theta = startAngle + (i+1) * angle / res;
+		glVertex3f(radius * cos(theta), radius * sin(theta), 0);
+	}
+	glEnd();
+	glPopMatrix();
+}
+
+void plot_start_position(bool green)
+{
+	int side = 1;
+	// case depart de la couleur de l'equipe
+	if( green )
+	{
+		side = -1;
+		glColor3f(1, 1, 0);
+	}
+	else
+	{
+		glColor3f(0, 1, 0);
+	}
+	plot_pave(side * 1300, 0, -22, 400, 444, 22);
+	plot_pave(side * 1075, 0, -22, 50, 400, 22);
+
+	// demi-cercle
+	plot_circle(side *1050, 0, 0, 200, side*M_PI/2, M_PI, 16);
+
+	// cotes de la case depart de la couleur adverse
+	if( green )
+	{
+		side = -1;
+		glColor3f(0, 1, 0);
+	}
+	else
+	{
+		glColor3f(1, 1, 0);
+	}
+	plot_pave(side * 1300, 411, -22, 400, 378, 22);
+	plot_pave(side * 1300, -411, -22, 400, 378, 22);
+}
+
 void plot_table(Graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
@@ -719,25 +772,46 @@ void plot_table(Graphique* graph)
 			glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
 			glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 
+			// sol
 			glColor3f(0, 0, 1);
-			plot_pave(0, 0, -11, 3000, 2000, 22);
+			plot_pave(0, 0, -22, 3000, 2000, 20);
 
+			// bordures
 			glColor3f(1, 0, 0);
-			plot_pave(0, 1011, 35, 3000, 22, 70);
-			plot_pave(0, -1011, 35, 3000, 22, 70);
-			plot_pave(-1511, 0, 35, 22, 2000, 70);
-			plot_pave(1511, 0, 35, 22, 2000, 70);
+			plot_pave(0, 1011, 20, 3000, 22, 100);
+			plot_pave(0, -1011, 20, 3000, 22, 100);
+			plot_pave(-1511, 0, 20, 22, 2000, 100);
+			plot_pave(1511, 0, 20, 22, 2000, 100);
 
+			// marches
 			glColor3f(1, 1, 0);
-			plot_pave(-266.5, 705, 11, 500, 590, 22);
-			plot_pave(-266.5, 740, 33, 500, 520, 22);
-			plot_pave(-266.5, 775, 55, 500, 450, 22);
-			plot_pave(-266.5, 810, 77, 500, 380, 22);
+			plot_pave(-266.5, 694, 11, 500, 568, 22);
+			plot_pave(-266.5, 729, 33, 500, 498, 22);
+			plot_pave(-266.5, 764, 55, 500, 428, 22);
+			plot_pave(-266.5, 799, 77, 500, 358, 22);
 			glColor3f(0, 1, 0);
-			plot_pave(266.5, 705, 11, 500, 590, 22);
-			plot_pave(266.5, 740, 33, 500, 520, 22);
-			plot_pave(266.5, 775, 55, 500, 450, 22);
-			plot_pave(266.5, 810, 77, 500, 380, 22);
+			plot_pave(266.5, 694, 11, 500, 568, 22);
+			plot_pave(266.5, 729, 33, 500, 498, 22);
+			plot_pave(266.5, 764, 55, 500, 428, 22);
+			plot_pave(266.5, 799, 77, 500, 358, 22);
+			glColor3f(0, 0, 0.8);
+			plot_pave(0, 989, 55, 1066, 22, 110);
+
+			// cases depart
+			plot_start_position(true);
+			plot_start_position(false);
+
+			// centre
+			glColor3f(1, 0, 0);
+			plot_pave(0, 0, -22, 1180, 300, 22);
+			plot_pave(0, -200, -22, 980, 100, 22);
+			plot_pave(0, 200, -22, 980, 100, 22);
+
+			// centre bas
+			plot_pave(0, -950, -22, 800, 100, 22);
+			plot_pave(0, -850, -22, 605, 100, 22);
+			plot_circle(300, -900, 0, 100, 0, M_PI_2, 16);
+			plot_circle(-300, -900, 0, 100, M_PI_2, M_PI_2, 16);
 		}
 
 		glColor3f(0, 0, 0);
