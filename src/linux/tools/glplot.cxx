@@ -764,23 +764,6 @@ void plot_table(Graphique* graph)
 		}
 		glEnd();
 		glPopMatrix();
-
-		// couleurs sur les bords des cases de depart
-		glLineWidth(3);
-		glColor3f(1, 0, 0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(-1100, 1000);
-		glVertex2f(-1500, 1000);
-		glVertex2f(-1500,  310);
-		glEnd();
-
-		glColor3f(1, 0.9 ,0);
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(1100, 1000);
-		glVertex2f(1500, 1000);
-		glVertex2f(1500,  310);
-		glEnd();
-		glLineWidth(1);
 	}
 
 	/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
@@ -891,7 +874,7 @@ void plot_table(Graphique* graph)
 			glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x, ratio_y, font_base, "%d", i);
 		}
 	}
-
+#if 0
 	// affichage du repère robot
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
@@ -909,7 +892,7 @@ void plot_table(Graphique* graph)
 		glEnd();
 
 		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
-		// TODO : test, centraliser info tourelles
+
 		VectPlan Turret[3] =
 		{
 			VectPlan(   0,  155, 0),
@@ -1005,9 +988,9 @@ void plot_table(Graphique* graph)
 
 			glPopMatrix();
 		}
-
 		glPopMatrix();
 	}
+#endif
 	glPopMatrix();
 }
 
