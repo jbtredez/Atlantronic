@@ -153,7 +153,7 @@ struct polyline oponent_robot =
 		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
 };
 
-struct VectPlan opponent_robot_pos(1800, 800, 0);
+struct VectPlan opponent_robot_pos(1300, 0, M_PI);
 
 int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
 {
@@ -826,31 +826,6 @@ void plot_table(Graphique* graph)
 				glEnd();
 			}
 		}
-
-		if( glplot_3d )
-		{
-			glColor3f(0, 1, 0);
-			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 175, 300, 300, 350);
-			glColor3f(0, 0, 0);
-			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 390, 80, 80, 80);
-			glColor3f(1, 1, 0);
-			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 470, 80, 80, 80);
-		}
-		else
-		{
-			// robot adverse
-			glPushMatrix();
-			glColor3f(1, 0, 0);
-			glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
-			glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
-			glBegin(GL_LINE_STRIP);
-			for(i = 0; i < oponent_robot.size; i++)
-			{
-				glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
-			}
-			glEnd();
-			glPopMatrix();
-		}
 	}
 
 	/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
@@ -961,123 +936,75 @@ void plot_table(Graphique* graph)
 			glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x, ratio_y, font_base, "%d", i);
 		}
 	}
-#if 0
-	// affichage du repère robot
+
+	// robot adverse
+	if( glplot_3d )
+	{
+		glColor3f(0, 1, 0);
+		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 175, 300, 300, 350);
+		glColor3f(0, 0, 0);
+		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 390, 80, 80, 80);
+		glColor3f(1, 1, 0);
+		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 470, 80, 80, 80);
+	}
+	else
+	{
+		glPushMatrix();
+		glColor3f(1, 0, 0);
+		glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
+		glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
+		glBegin(GL_LINE_STRIP);
+		for(i = 0; i < oponent_robot.size; i++)
+		{
+			glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
+		}
+		glEnd();
+		glPopMatrix();
+	}
+
+	// affichage du robot
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
-		glColor3f(0, 0, 0);
+		// robot
 		VectPlan pos_robot = robotItf->control_usb_data[max-1].pos;
-
 		glPushMatrix();
 		glTranslatef(pos_robot.x, pos_robot.y, 0);
 		glRotatef(pos_robot.theta * 180 / M_PI, 0, 0, 1);
-		glBegin(GL_LINES);
-		glVertex2f(0, 0);
-		glVertex2f(50, 0);
-		glVertex2f(0, 0);
-		glVertex2f(0, 50);
-		glEnd();
-
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_ROBOT]);
-
-		VectPlan Turret[3] =
-		{
-			VectPlan(   0,  155, 0),
-			VectPlan(   0, -155, 0),
-			VectPlan(-175,    0, 0)
-		};
-		Turret[0].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING1].pos;
-		Turret[1].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING2].pos;
-		Turret[2].theta = robotItf->control_usb_data[max-1].mes_motors[CAN_MOTOR_STEERING3].pos;
-
-		for(int i = 0; i < 3; i++)
-		{
-			glPushMatrix();
-			glTranslatef(Turret[i].x, Turret[i].y, 0);
-			glRotatef(Turret[i].theta * 180 / M_PI, 0, 0, 1);
-
-			glBegin(GL_TRIANGLE_STRIP);
-			glVertex2f(-50, -10);
-			glVertex2f(50, -10);
-			glVertex2f(-50, 10);
-			glVertex2f(50, 10);
-			glEnd();
-			glPopMatrix();
-		}
-
-		glBegin(GL_LINE_STRIP);
-		/*glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
-		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
-		glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
-		glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
-		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);*/
-		glVertex2f(Turret[0].x, Turret[0].y);
-		glVertex2f(Turret[1].x, Turret[1].y);
-		glVertex2f(Turret[2].x, Turret[2].y);
-		glVertex2f(Turret[0].x, Turret[0].y);
-		glEnd();
 		if( glplot_3d )
 		{
-			glBegin(GL_LINE_STRIP);
-			glVertex3f(Turret[0].x, Turret[0].y, 0);
-			glVertex3f(Turret[0].x, Turret[0].y, 350);
-			glVertex3f(Turret[1].x, Turret[1].y, 350);
-			glVertex3f(Turret[1].x, Turret[1].y, 0);
-			glEnd();
-
-			glBegin(GL_LINE_STRIP);
-			VectPlan med = (Turret[0] + Turret[1]) / 2;
-			glVertex3f(med.x, med.y, 0);
-			glVertex3f(med.x, med.y, 350);
-			glEnd();
-
-			glBegin(GL_LINE_STRIP);
-			glVertex3f(Turret[1].x, Turret[1].y, 0);
-			glVertex3f(Turret[1].x, Turret[1].y, 350);
-			glVertex3f(Turret[2].x, Turret[2].y, 350);
-			glVertex3f(Turret[2].x, Turret[2].y, 0);
-			glEnd();
-
-			glBegin(GL_LINE_STRIP);
-			glVertex3f(Turret[0].x, Turret[0].y, 0);
-			glVertex3f(Turret[0].x, Turret[0].y, 350);
-			glVertex3f(Turret[2].x, Turret[2].y, 350);
-			glVertex3f(Turret[2].x, Turret[2].y, 0);
-			glEnd();
+			glColor3f(1, 1, 0);
+			plot_pave(0, 0, 175, 300, 300, 350);
+			glColor3f(0, 0, 0);
+			plot_pave(0, 0, 390, 80, 80, 80);
+			glColor3f(0, 1, 0);
+			plot_pave(0, 0, 470, 80, 80, 80);
 		}
-
-		// dessin du bras
-		if( glplot_3d )
+		else
 		{
-			glPushMatrix();
+			glColor3f(0, 0, 0);
+			glBegin(GL_LINES);
+			glVertex2f(0, 0);
+			glVertex2f(50, 0);
+			glVertex2f(0, 0);
+			glVertex2f(0, 50);
+			glEnd();
 
-			glTranslatef(0, 0, robotItf->last_control_usb_data.arm_matrix.val[11]);
-
-			glColor3f(0, 1, 1);
-			glTranslatef(ARM_SHOULDER_POSITION_X, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER].pos*180/M_PI, 0, -1, 0);
-			plot_pave(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW/2, 0, 0, ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 40, 40);
-
-			glColor3f(1, 0, 1);
-			glTranslatef(ARM_DIST_SHOULDER_TO_SHOULDER_ELBOW, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_SHOULDER_ELBOW].pos*180/M_PI, 0, 0, 1);
-			plot_pave(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW/2, 0, 0, ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 40, 40);
-
-			glColor3f(0, 1, 1);
-			glTranslatef(ARM_DIST_SHOULDER_ELBOW_TO_WRIST_ELBOW, 0, 0);
-			glRotatef(robotItf->ax12[AX12_ARM_WRIST_ELBOW].pos*180/M_PI, 0, -1, 0);
-			plot_pave(ARM_DIST_WRIST_ELBOW_TO_WRIST/2, 0, 0, ARM_DIST_WRIST_ELBOW_TO_WRIST, 40, 40);
-
-			glColor3f(1, 0, 1);
-			glTranslatef(ARM_DIST_WRIST_ELBOW_TO_WRIST, 0, 0);
-			glRotatef(-robotItf->ax12[AX12_ARM_WRIST].pos*180/M_PI, 0, 0, 1);
-			plot_pave(ARM_DIST_WRIST_TO_SUCKER/2, 0, 0, ARM_DIST_WRIST_TO_SUCKER, 40, 40);
-
-			glPopMatrix();
+			glBegin(GL_LINE_STRIP);
+			/*glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+			glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
+			glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
+			glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
+			glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);*/
+			glVertex2f(-150, -150);
+			glVertex2f(-150,  150);
+			glVertex2f( 150,  150);
+			glVertex2f( 150, -150);
+			glVertex2f(-150, -150);
+			glEnd();
 		}
 		glPopMatrix();
 	}
-#endif
+
 	glPopMatrix();
 }
 

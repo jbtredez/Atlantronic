@@ -9,7 +9,7 @@
 #include "kernel/geometric_model/geometric_model.h"
 
 static void location_cmd_set_position(void* arg);
-VectPlan location_pos(0, 700, -M_PI/2);
+VectPlan location_pos(-1300, 0, 0);
 VectPlan location_speed;
 
 static int location_module_init()
