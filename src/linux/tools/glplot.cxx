@@ -761,7 +761,6 @@ void plot_table(Graphique* graph)
 
 	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
-		// pb / lumiere sur la 3d
 		if( glplot_3d )
 		{
 			GLfloat mat_specular[] = { 1, 1, 1, 1 };
@@ -813,31 +812,45 @@ void plot_table(Graphique* graph)
 			plot_circle(300, -900, 0, 100, 0, M_PI_2, 16);
 			plot_circle(-300, -900, 0, 100, M_PI_2, M_PI_2, 16);
 		}
-
-		glColor3f(0, 0, 0);
-		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
-		for(i = 0; i < TABLE_OBJ_SIZE; i++)
+		else
 		{
-			glBegin(GL_LINE_STRIP);
-			for(j = 0; j < table_obj[i].size; j++)
+			glColor3f(0, 0, 0);
+			// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
+			for(i = 0; i < TABLE_OBJ_SIZE; i++)
 			{
-				glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
+				glBegin(GL_LINE_STRIP);
+				for(j = 0; j < table_obj[i].size; j++)
+				{
+					glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
+				}
+				glEnd();
+			}
+		}
+
+		if( glplot_3d )
+		{
+			glColor3f(0, 1, 0);
+			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 175, 300, 300, 350);
+			glColor3f(0, 0, 0);
+			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 390, 80, 80, 80);
+			glColor3f(1, 1, 0);
+			plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 470, 80, 80, 80);
+		}
+		else
+		{
+			// robot adverse
+			glPushMatrix();
+			glColor3f(1, 0, 0);
+			glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
+			glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
+			glBegin(GL_LINE_STRIP);
+			for(i = 0; i < oponent_robot.size; i++)
+			{
+				glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
 			}
 			glEnd();
+			glPopMatrix();
 		}
-
-		// robot adverse
-		glPushMatrix();
-		glColor3f(1, 0, 0);
-		glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
-		glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
-		glBegin(GL_LINE_STRIP);
-		for(i = 0; i < oponent_robot.size; i++)
-		{
-			glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
-		}
-		glEnd();
-		glPopMatrix();
 	}
 
 	/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
