@@ -17,12 +17,10 @@ static KinematicsParameters paramDriving = {1500, 1500, 1500};
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float geometric_model_compute_actuator_cmd(VectPlan /*cp*/, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, int* wheelReady)
+float geometric_model_compute_actuator_cmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
 {
 	float kmin = 1;
 
-	// pas de rotation de roue
-	*wheelReady = 1;
 	float vx = u.x * speed;
 	float vtheta = u.theta * speed;
 	float v[2];
@@ -37,30 +35,28 @@ float geometric_model_compute_actuator_cmd(VectPlan /*cp*/, VectPlan u, float sp
 		kinematics.setSpeed(v[i], paramDriving, dt);
 
 		// reduction si saturation
-		float k = fabsf(kinematics.v / v[i]);
-		if( k < kmin )
+		if( v[i] > 1)
 		{
-			kmin = k;
+			float k = fabsf(kinematics.v / v[i]);
+			if( k < kmin )
+			{
+				kmin = k;
+			}
 		}
 	}
 
-	kinematics_cmd[0].setSpeed(v[0], paramDriving, dt);
-	kinematics_cmd[1].setSpeed(v[1], paramDriving, dt);
+	kinematics_cmd[0].setSpeed(kmin * v[0], paramDriving, dt);
+	kinematics_cmd[1].setSpeed(kmin * v[1], paramDriving, dt);
 
 	return kmin;
 }
 
-VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes, float* slippageSpeed)
+VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes)
 {
 	VectPlan v;
 	v.x = 0.5 * (kinematics_mes[0].v + kinematics_mes[1].v);
 	v.y = 0;
 	v.theta = VOIE_INVERSE * (kinematics_mes[1].v -  kinematics_mes[0].v);
-
-	if( slippageSpeed )
-	{
-		*slippageSpeed = 0;
-	}
 
 	return v;
 }

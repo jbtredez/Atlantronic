@@ -112,12 +112,11 @@ class RobotInterface
 		int set_match_time(uint32_t time);
 
 		// ---------- gestion motion --------------------------------------------------
-		int motion_homing();
 		int motion_enable(bool enable);
 		int motion_set_max_driving_current(float maxCurrent);
 		int motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
-		int motion_set_speed(VectPlan cp, VectPlan u, float v);
-		int motion_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam);
+		int motion_set_speed(VectPlan u, float v);
+		int motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam);
 
 		// ---------- gestion control --------------------------------------------------
 		int control_print_param();

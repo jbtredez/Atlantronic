@@ -19,7 +19,6 @@ enum motion_state
 	MOTION_DISABLED = 0,         //!< pas de puissance sur les moteurs
 	MOTION_TRY_ENABLE,           //!< mise en puissance des moteurs
 	MOTION_ENABLED,              //!< moteurs avec puissance
-	MOTION_HOMING,               //!< homing des moteurs
 	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
 	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_TRAJECTORY,           //!< trajectoire en cours
@@ -33,8 +32,14 @@ enum motion_status
 	MOTION_TARGET_NOT_REACHED,   //!< cible non atteinte
 	MOTION_COLSISION,            //!< collision
 	MOTION_TIMEOUT,              //!< timeout
-	MOTION_PREPARING_MOTION,     //!< mise en place des tourelles
 	MOTION_IN_MOTION,            //!< trajectorie en cours
+};
+
+enum motion_trajectory_step
+{
+	MOTION_TRAJECTORY_PRE_ROTATE = 0,
+	MOTION_TRAJECTORY_STRAIGHT,
+	MOTION_TRAJECTORY_ROTATE,
 };
 
 enum motion_speed
@@ -45,29 +50,27 @@ enum motion_speed
 	MOTION_WRONG_WAY,
 };
 
-// TODO
 enum trajectory_way
 {
-	TRAJECTORY_ANY_WAY,
-	TRAJECTORY_FORWARD,
-	TRAJECTORY_BACKWARD
+	TRAJECTORY_BACKWARD = -1,    //!< marche arriere
+	TRAJECTORY_ANY_WAY  = 0,    //!< marche avant ou marche arriere (selon le plus rapide)
+	TRAJECTORY_FORWARD  = 1,    //!< marche avant
 };
 
-// TODO
-enum motion_type
+enum motion_trajectory_type
 {
-	MOTION_LINE_A,     //!< rotation sur place
-	MOTION_LINE_XY,    //!< aller a la position x,y en ligne droite (=> rotation puis avance)
-	MOTION_LINE_XYA,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
+	MOTION_AXIS_XYA = 0,   //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
+	MOTION_AXIS_A,         //!< rotation sur place
+	MOTION_AXIS_XY,        //!< aller a la position x,y en ligne droite (=> rotation puis avance)
 };
 
 void motion_enable(bool enable);
 
 //!< demande de trajectoire
-void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
+void motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
 
 //!< demande de vitesse
-void motion_set_cp_speed(VectPlan cp, VectPlan u, float v);
+void motion_set_speed(VectPlan u, float v);
 
 //!< demande de cinematique actionneur (debug)
 void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
@@ -76,8 +79,6 @@ void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_ar
 void motion_compute() WEAK_MOTION;
 
 void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
-
-void motion_homing();
 
 void motion_set_max_driving_current(float maxCurrent);
 
@@ -104,21 +105,14 @@ struct motion_cmd_goto_arg
 {
 	VectPlan dest;
 	VectPlan cp;
-	KinematicsParameters linearParam;
-	KinematicsParameters angularParam;
-}  __attribute__((packed));
-
-struct motion_cmd_speed_arg
-{
-	VectPlan dest;
-	VectPlan cp;
+	int8_t way;
+	int8_t type;
 	KinematicsParameters linearParam;
 	KinematicsParameters angularParam;
 }  __attribute__((packed));
 
 struct motion_cmd_set_speed_arg
 {
-	VectPlan cp;
 	VectPlan u;
 	float v;
 }  __attribute__((packed));

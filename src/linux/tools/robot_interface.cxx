@@ -916,11 +916,6 @@ int RobotInterface::pump(uint8_t id, uint8_t val)
 	return usb_write(USB_CMD_PUMP, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::motion_homing()
-{
-	return usb_write(USB_CMD_MOTION_HOMING, NULL, 0);
-}
-
 int RobotInterface::control_print_param()
 {
 	return usb_write(USB_CMD_MOTION_PRINT_PARAM, NULL, 0);
@@ -943,23 +938,24 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, KinematicsParameters linearParam, KinematicsParameters angularParam)
+int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	struct motion_cmd_goto_arg cmd_arg;
 
 	cmd_arg.dest = dest;
 	cmd_arg.cp = cp;
+	cmd_arg.type = way;
+	cmd_arg.way = type;
 	cmd_arg.linearParam = linearParam;
 	cmd_arg.angularParam = angularParam;
 
 	return usb_write(USB_CMD_MOTION_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::motion_set_speed(VectPlan cp, VectPlan u, float v)
+int RobotInterface::motion_set_speed(VectPlan u, float v)
 {
 	struct motion_cmd_set_speed_arg cmd_arg;
 
-	cmd_arg.cp = cp;
 	cmd_arg.v = v;
 	cmd_arg.u = u;
 

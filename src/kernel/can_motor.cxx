@@ -33,16 +33,6 @@ const struct canopen_configuration can_motor_driving_configuration[] =
 	{0x6084, 0, 4, 1500},            // deceleration
 };
 
-const struct canopen_configuration can_motor_steering_configuration[] =
-{
-	{0x1802, 2, 1, 1},               // pdo 3 sur SYNC
-	{0x2303, 1, 1, 0xc8},            // pdo 3 - position en parametre 1
-	{0x2303, 2, 1, 4},               // pdo 3 - courant en parametre 2
-	{0x6060, 0, 1, 0xffffffff},      // mode faulhaber
-	{0x6083, 0, 4, 500},             // acceleration
-	{0x6084, 0, 4, 500},             // deceleration
-};
-
 CanMotor can_motor[CAN_MOTOR_MAX];
 
 int can_motor_module_init()
@@ -55,50 +45,15 @@ int can_motor_module_init()
 	can_motor[0].name = "driving 1 (gauche)";
 	can_motor[0].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
 
-	can_motor[1].nodeid = CAN_MOTOR_STEERING1_NODEID;
-	can_motor[1].static_conf = can_motor_steering_configuration;
-	can_motor[1].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
-	can_motor[1].inputGain = 60 * MOTOR_STEERING1_RED / (float)(2 * M_PI);
-	can_motor[1].outputGain = 2 * M_PI / (float)(MOTOR_STEERING1_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[1].positionOffset = MOTOR_STEERING1_OFFSET;
-	can_motor[1].name = "steering 1 (gauche)";
-	can_motor[1].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_1;
+	can_motor[1].nodeid = CAN_MOTOR_DRIVING2_NODEID;
+	can_motor[1].static_conf = can_motor_driving_configuration;
+	can_motor[1].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
+	can_motor[1].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
+	can_motor[1].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * MOTOR_ENCODER_RESOLUTION);
+	can_motor[1].name = "driving 2 (droite)";
+	can_motor[1].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_2;
 
-	can_motor[2].nodeid = CAN_MOTOR_DRIVING2_NODEID;
-	can_motor[2].static_conf = can_motor_driving_configuration;
-	can_motor[2].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
-	can_motor[2].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
-	can_motor[2].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_DRIVING2_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[2].name = "driving 2 (droite)";
-	can_motor[2].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_2;
-
-	can_motor[3].nodeid = CAN_MOTOR_STEERING2_NODEID;
-	can_motor[3].static_conf = can_motor_steering_configuration;
-	can_motor[3].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
-	can_motor[3].inputGain = 60 * MOTOR_STEERING2_RED / (float)(2 * M_PI);
-	can_motor[3].outputGain = 2 * M_PI / (float)(MOTOR_STEERING2_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[3].positionOffset = MOTOR_STEERING2_OFFSET;
-	can_motor[3].name = "steering 2 (droite)";
-	can_motor[3].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_3;
-
-	can_motor[4].nodeid = CAN_MOTOR_DRIVING3_NODEID;
-	can_motor[4].static_conf = can_motor_driving_configuration;
-	can_motor[4].conf_size = ARRAY_SIZE(can_motor_driving_configuration);
-	can_motor[4].inputGain = 60 * MOTOR_DRIVING3_RED / (float)(2 * M_PI * DRIVING3_WHEEL_RADIUS);
-	can_motor[4].outputGain = 2 * M_PI * DRIVING3_WHEEL_RADIUS / (float)(MOTOR_DRIVING3_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[4].name = "driving 3 (arriere)";
-	can_motor[4].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_4;
-
-	can_motor[5].nodeid = CAN_MOTOR_STEERING3_NODEID;
-	can_motor[5].static_conf = can_motor_steering_configuration;
-	can_motor[5].conf_size = ARRAY_SIZE(can_motor_steering_configuration);
-	can_motor[5].inputGain = 60 * MOTOR_STEERING3_RED / (float)(2 * M_PI);
-	can_motor[5].outputGain = 2 * M_PI / (float)(MOTOR_STEERING3_RED * MOTOR_ENCODER_RESOLUTION);
-	can_motor[5].positionOffset = MOTOR_STEERING3_OFFSET;
-	can_motor[5].name = "steering 3 (arriere)";
-	can_motor[5].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_5;
-
-	for(int i = 0; i < 6; i++)
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		canopen_register_node(&can_motor[i]);
 	}

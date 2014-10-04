@@ -9,7 +9,7 @@
 #include "kernel/math/vect_plan.h"
 #include "kernel/control/kinematics.h"
 
-void location_update(Kinematics* kinematics_mes, int motorNum, float dt);
+void location_update(Kinematics* kinematics_mes, float dt);
 
 VectPlan location_get_position();
 

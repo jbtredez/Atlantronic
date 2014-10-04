@@ -9,11 +9,11 @@
 #include "kernel/math/vect_plan.h"
 #include "kernel/control/kinematics.h"
 
-VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes, float* slippageSpeed);
+VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes);
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float geometric_model_compute_actuator_cmd(VectPlan cp, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, int* wheelReady);
+float geometric_model_compute_actuator_cmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd);
 
 
 #endif

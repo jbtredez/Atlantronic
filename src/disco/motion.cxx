@@ -11,7 +11,6 @@
 #include "kernel/location/location.h"
 #include "kernel/geometric_model/geometric_model.h"
 #include "kernel/driver/usb.h"
-#include "kernel/driver/gyro.h"
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
 #include "kernel/state_machine/state_machine.h"
@@ -26,28 +25,27 @@ enum
 enum
 {
 	MOTION_WANTED_STATE_UNKNOWN = 0,
-	MOTION_WANTED_STATE_HOMING,
 	MOTION_WANTED_STATE_ACTUATOR_KINEMATICS,
 	MOTION_WANTED_STATE_SPEED,
 	MOTION_WANTED_STATE_TRAJECTORY,
 };
 
 static enum motion_status motion_status;
+static enum motion_trajectory_step motion_traj_step;
 static struct motion_cmd_set_actuator_kinematics_arg motion_wanted_kinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)
 static Kinematics motion_kinematics[CAN_MOTOR_MAX];
 static Kinematics motion_kinematics_mes[CAN_MOTOR_MAX];
 static xSemaphoreHandle motion_mutex;
 static VectPlan motion_wanted_dest;
-static VectPlan motion_wanted_cp;
+enum trajectory_way motion_wanted_way;
+enum motion_trajectory_type motion_wanted_trajectory_type;
 static KinematicsParameters motion_wanted_linearParam;
 static KinematicsParameters motion_wanted_angularParam;
-static float motion_ds;
+static float motion_ds[3];
 static float motion_v;
 static VectPlan motion_u;
-static VectPlan motion_cp;
-static KinematicsParameters motion_curvilinearKinematicsParam;
 static Kinematics motion_curvilinearKinematics;
-static VectPlan motion_cp_cmd;
+static VectPlan motion_np_cmd;
 static VectPlan motion_pos_mes;
 static VectPlan motion_dest;  //!< destination
 
@@ -67,9 +65,6 @@ static void motion_state_enabled_entry();
 static void motion_state_enabled_run();
 static unsigned int motion_state_enabled_transition(unsigned int currentState);
 
-static void motion_state_homing_run();
-static unsigned int motion_state_homing_transition(unsigned int currentState);
-
 static void motion_state_actuator_kinematics_run();
 
 static void motion_state_speed_run();
@@ -85,7 +80,6 @@ StateMachineState motionStates[MOTION_MAX_STATE] = {
 		{ "MOTION_DISABLED", &motion_state_disabled_entry, &motion_state_disabled_run, &motion_state_disabled_transition},
 		{ "MOTION_TRY_ENABLE", &nop_function, &motion_state_try_enabled_run, &motion_state_try_enable_transition },
 		{ "MOTION_ENABLED", &motion_state_enabled_entry, &motion_state_enabled_run, &motion_state_enabled_transition},
-		{ "MOTION_HOMING", &nop_function, &motion_state_homing_run, &motion_state_homing_transition},
 		{ "MOTION_ACTUATOR_KINEMATICS", &nop_function, &motion_state_actuator_kinematics_run, &motion_state_generic_power_transition},
 		{ "MOTION_SPEED", &motion_state_speed_entry, &motion_state_speed_run, &motion_state_generic_power_transition},
 		{ "MOTION_TRAJECTORY", &motion_state_trajectory_entry, &motion_state_trajectory_run, &motion_state_trajectory_transition},
@@ -97,7 +91,6 @@ void motion_cmd_goto(void* arg);
 void motion_cmd_set_speed(void* arg);
 void motion_cmd_enable(void* arg);
 void motion_cmd_set_actuator_kinematics(void* arg);
-void motion_cmd_homing(void* arg);
 void motion_cmd_set_max_current(void* arg);
 
 static int motion_module_init()
@@ -114,7 +107,6 @@ static int motion_module_init()
 	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &motion_cmd_set_max_current);
 	usb_add_cmd(USB_CMD_MOTION_ENABLE, &motion_cmd_enable);
 	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &motion_cmd_set_actuator_kinematics);
-	usb_add_cmd(USB_CMD_MOTION_HOMING, &motion_cmd_homing);
 
 	return 0;
 }
@@ -137,10 +129,10 @@ void motion_compute()
 		motion_kinematics_mes[i] = can_motor[i].kinematics;
 	}
 
-	if( motor_mes_valid && motionStateMachine.getCurrentState() != MOTION_HOMING )
+	if( motor_mes_valid )
 	{
 		// mise à jour de la position
-		location_update(motion_kinematics_mes, CAN_MOTOR_MAX, CONTROL_DT);
+		location_update(motion_kinematics_mes, CONTROL_DT);
 	}
 
 	motion_pos_mes = location_get_position();
@@ -266,9 +258,6 @@ static unsigned int motion_state_enabled_transition(unsigned int currentState)
 
 	switch(motion_wanted_state)
 	{
-		case MOTION_WANTED_STATE_HOMING:
-			return MOTION_HOMING;
-			break;
 		case MOTION_WANTED_STATE_ACTUATOR_KINEMATICS:
 			return MOTION_ACTUATOR_KINEMATICS;
 			break;
@@ -277,50 +266,6 @@ static unsigned int motion_state_enabled_transition(unsigned int currentState)
 			break;
 		default:
 			break;
-	}
-
-	return currentState;
-}
-
-//---------------------- Etat MOTION_HOMING -----------------------------------
-static void motion_state_homing_run()
-{
-	for(int i = 0; i < 3; i++)
-	{
-		if(can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE && can_motor[2*i+1].is_op_enable())
-		{
-			can_motor[2*i+1].update_homing(1);
-		}
-	}
-}
-
-static unsigned int motion_state_homing_transition(unsigned int currentState)
-{
-	bool all_op_enable = true;
-	bool homingDone = true;
-
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
-	{
-		all_op_enable &= can_motor[i].is_op_enable();
-	}
-
-	if( power_get() || ! all_op_enable || motion_enable_wanted == MOTION_ENABLE_WANTED_OFF)
-	{
-		return MOTION_DISABLED;
-	}
-
-	for(int i = 0; i < 3; i++)
-	{
-		if( can_motor[2*i+1].homingStatus != CAN_MOTOR_HOMING_DONE )
-		{
-			can_motor[2*i+1].update_homing(1);
-			homingDone = false;
-		}
-	}
-
-	if( homingDone )
-	{
-		return MOTION_ENABLED;
 	}
 
 	return currentState;
@@ -349,127 +294,204 @@ static void motion_state_actuator_kinematics_run()
 //---------------------- Etat MOTION_SPEED ------------------------------------
 static void motion_state_speed_entry()
 {
-	motion_status = MOTION_PREPARING_MOTION;
-	log(LOG_INFO, "PREPARING_MOTION");
+	motion_status = MOTION_IN_MOTION;
+	log(LOG_INFO, "IN_MOTION");
 }
 
 static void motion_state_speed_run()
 {
-	int wheelReady = 0;
-	float v = 0;
-	if( motion_status != MOTION_PREPARING_MOTION )
-	{
-		v = motion_v;
-	}
-
-	geometric_model_compute_actuator_cmd(motion_cp, motion_u, v, CONTROL_DT, motion_kinematics, &wheelReady);
-
-	if( motion_status == MOTION_PREPARING_MOTION && wheelReady)
-	{
-		log(LOG_INFO, "IN_MOTION");
-		motion_status = MOTION_IN_MOTION;
-	}
-
+	geometric_model_compute_actuator_cmd(motion_u, motion_v, CONTROL_DT, motion_kinematics);
 	motion_update_motors();
 }
 
 //---------------------- Etat MOTION_TRAJECTORY -------------------------------
+float motion_find_rotate(float start, float end)
+{
+	float dtheta = end - start;
+	bool neg = dtheta < 0;
+
+	// modulo 1 tour => retour dans [ 0 ; 2*M_PI [
+	dtheta = fmodf(dtheta, 2*M_PI);
+	if( neg )
+	{
+		dtheta += 2*M_PI;
+	}
+
+	// retour dans ] -M_PI ; M_PI ] tour
+	if( dtheta > M_PI )
+	{
+		dtheta -= 2*M_PI;
+	}
+
+	return dtheta;
+}
+
+static float motion_compute_time(float ds, KinematicsParameters param)
+{
+	ds = fabsf(ds);
+	float ainv = 1 / param.aMax + 1 / param.dMax;
+	float v = sqrtf( 2 * ds / ainv); // vitesse si pas de palier a vMax
+	if( v  < param.vMax )
+	{
+		// on n'a pas le temps d'atteindre vMax
+		return v * ainv;
+	}
+
+	return ds / param.vMax + 0.5f * param.vMax * ainv;
+}
+
 static void motion_state_trajectory_entry()
 {
-	VectPlan A = loc_to_abs(motion_pos_mes, motion_wanted_cp);
-	VectPlan B = loc_to_abs(motion_wanted_dest, motion_wanted_cp);
-	VectPlan ab = B - A;
-	float nab = ab.norm();
+	float dtheta1 = 0;
+	float ds = 0;
+	float dtheta2 = 0;
 	float t = 0;
 
-	motion_ds = 0;
-	motion_cp = motion_wanted_cp;
-
-	if( nab > EPSILON)
+	if( motion_wanted_trajectory_type == MOTION_AXIS_A)
 	{
-		// translation - rotation combinee
-		motion_u = ab / nab;
-		motion_ds = nab;
-		motion_curvilinearKinematicsParam = motion_wanted_linearParam;
-		float sigmaAbs = fabsf(motion_u.theta);
-		if( sigmaAbs > EPSILON)
-		{
-			float vmax = motion_wanted_angularParam.vMax / sigmaAbs;
-			if(motion_curvilinearKinematicsParam.vMax > vmax)
-			{
-				motion_curvilinearKinematicsParam.vMax = vmax;
-			}
-
-			float aMax = motion_wanted_angularParam.aMax / sigmaAbs;
-			if(motion_curvilinearKinematicsParam.aMax > aMax)
-			{
-				motion_curvilinearKinematicsParam.aMax = aMax;
-			}
-
-			float dMax = motion_wanted_angularParam.dMax / sigmaAbs;
-			if(motion_curvilinearKinematicsParam.dMax > dMax)
-			{
-				motion_curvilinearKinematicsParam.dMax = dMax;
-			}
-		}
+		motion_wanted_dest.x = motion_pos_mes.x;
+		motion_wanted_dest.y = motion_pos_mes.y;
+		dtheta2 = motion_wanted_dest.theta - motion_pos_mes.theta;
 	}
 	else
 	{
-		// rotation pure
-		motion_u.x = 0;
-		motion_u.y = 0;
-		motion_u.theta = ab.theta / fabsf(ab.theta);
-		motion_curvilinearKinematicsParam = motion_wanted_angularParam;
-		motion_ds = fabsf(ab.theta);
+		VectPlan ab = motion_wanted_dest - motion_pos_mes;
+		float nab = ab.norm();
+
+		// distance minimale de translation TODO 1mm en dur
+		if( nab > 1 )
+		{
+			float theta1 = atan2f(ab.y, ab.x);
+			ds = nab;
+			motion_u = ab / nab;
+			motion_u.theta = 0;
+
+			if(motion_wanted_way == TRAJECTORY_FORWARD)
+			{
+				dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1);
+				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
+				{
+					dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
+				}
+			}
+			else if( motion_wanted_way == TRAJECTORY_BACKWARD)
+			{
+				dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
+				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
+				{
+					dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
+				}
+			}
+			else
+			{
+				float dtheta1_forward = motion_find_rotate(motion_pos_mes.theta, theta1);
+				float dtheta1_backward = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
+				float dtheta2_forward = 0;
+				float dtheta2_backward = 0;
+
+				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
+				{
+					dtheta2_forward = motion_find_rotate(motion_pos_mes.theta + dtheta1_forward, motion_wanted_dest.theta);
+					dtheta2_backward = motion_find_rotate(motion_pos_mes.theta + dtheta1_backward, motion_wanted_dest.theta);
+				}
+
+				if ( fabsf(dtheta1_forward) + fabsf(dtheta2_forward) > fabsf(dtheta1_backward) + fabsf(dtheta2_backward))
+				{
+					dtheta1 = dtheta1_backward;
+					dtheta2 = dtheta2_backward;
+				}
+				else
+				{
+					dtheta1 = dtheta1_forward;
+					dtheta2 = dtheta2_forward;
+				}
+			}
+		}
+
+		if( motion_wanted_trajectory_type == MOTION_AXIS_XY )
+		{
+			motion_wanted_dest.theta = motion_pos_mes.theta + dtheta1;
+		}
 	}
 
-	t = motion_ds / motion_curvilinearKinematicsParam.vMax + 0.5f * motion_curvilinearKinematicsParam.vMax * ( 1 / motion_curvilinearKinematicsParam.aMax + 1 / motion_curvilinearKinematicsParam.dMax);
+	t = motion_compute_time(dtheta1, motion_wanted_angularParam);
+	t += motion_compute_time(ds, motion_wanted_linearParam);
+	t += motion_compute_time(dtheta2, motion_wanted_angularParam);
+
 	log_format(LOG_INFO, "goto %d %d %d t %d ms", (int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI), (int)(1000*t));
-	motion_cp_cmd = A;
-	motion_curvilinearKinematics.pos = 0;
-	motion_status = MOTION_PREPARING_MOTION;
+	log_format(LOG_INFO, "rotate %d translate %d, rotate %d", (int)(dtheta1 * 180 / M_PI), (int)ds, (int)(dtheta2 * 180 / M_PI));
+
+	motion_ds[0] = dtheta1;
+	motion_ds[1] = ds;
+	motion_ds[2] = dtheta2;
+
+	motion_curvilinearKinematics.reset();
+	motion_traj_step = MOTION_TRAJECTORY_PRE_ROTATE;
+	log(LOG_INFO, "IN_MOTION");
+	motion_status = MOTION_IN_MOTION;
+	motion_np_cmd = motion_pos_mes;
+
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		motion_kinematics[i] = motion_kinematics_mes[i];
 	}
 
 	motion_dest = motion_wanted_dest;
-	log(LOG_INFO, "PREPARING_MOTION");
 }
 
 static void motion_state_trajectory_run()
 {
 	Kinematics kinematics = motion_curvilinearKinematics;
-	int wheelReady = 0;
-	if( motion_status != MOTION_PREPARING_MOTION )
+	KinematicsParameters curvilinearKinematicsParam;
+	VectPlan u;
+	float ds = 0;
+
+	ds = motion_ds[motion_traj_step];
+	if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
 	{
-		kinematics.setPosition(motion_ds, 0, motion_curvilinearKinematicsParam, CONTROL_DT);
+		u = VectPlan(0, 0, 1);
+		curvilinearKinematicsParam = motion_wanted_angularParam;
+	}
+	else
+	{
+		u = motion_u;
+		curvilinearKinematicsParam = motion_wanted_linearParam;
 	}
 
-	VectPlan u_loc = abs_to_loc_speed(motion_pos_mes.theta, motion_u);
-
-	float k = geometric_model_compute_actuator_cmd(motion_cp, u_loc, kinematics.v, CONTROL_DT, motion_kinematics, &wheelReady);
+	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
+	VectPlan u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
+	float k = geometric_model_compute_actuator_cmd(u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
 	motion_curvilinearKinematics.v = k * kinematics.v;
 	motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
 
-	motion_cp_cmd = motion_cp_cmd + CONTROL_DT * motion_curvilinearKinematics.v * motion_u;
+	motion_np_cmd = motion_np_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
 
-	if( motion_status == MOTION_PREPARING_MOTION && wheelReady)
+	if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
 	{
-		log(LOG_INFO, "IN_MOTION");
-		motion_status = MOTION_IN_MOTION;
-	}
-
-	if(fabsf(motion_curvilinearKinematics.pos - motion_ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
-	{
-		// TODO regarder en fonction des tolerances si c'est reached ou non
-		log(LOG_INFO, "MOTION_TARGET_REACHED");
-		motion_status = MOTION_TARGET_REACHED;
-		motion_curvilinearKinematics.v = 0;
-		motion_curvilinearKinematics.a = 0;
 		for(int i = 0; i < CAN_MOTOR_MAX; i++)
 		{
 			motion_kinematics[i].v = 0;
+		}
+
+		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
+		{
+			log_format(LOG_INFO, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
+			motion_curvilinearKinematics.reset();
+			motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
+		}
+		else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
+		{
+			motion_curvilinearKinematics.reset();
+			motion_traj_step = MOTION_TRAJECTORY_ROTATE;
+		}
+		else
+		{
+			// TODO regarder en fonction des tolerances si c'est reached ou non
+			motion_curvilinearKinematics.v = 0;
+			motion_curvilinearKinematics.a = 0;
+
+			log(LOG_INFO, "MOTION_TARGET_REACHED");
+			motion_status = MOTION_TARGET_REACHED;
 		}
 	}
 
@@ -520,13 +542,13 @@ static unsigned int motion_state_generic_power_transition(unsigned int currentSt
 void motion_cmd_goto(void* arg)
 {
 	struct motion_cmd_goto_arg* cmd = (struct motion_cmd_goto_arg*) arg;
-	motion_goto(cmd->dest, cmd->cp, cmd->linearParam, cmd->angularParam);
+	motion_goto(cmd->dest, cmd->cp, (enum trajectory_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
 }
 
 void motion_cmd_set_speed(void* arg)
 {
 	struct motion_cmd_set_speed_arg* cmd = (struct motion_cmd_set_speed_arg*) arg;
-	motion_set_cp_speed(cmd->cp, cmd->u, cmd->v);
+	motion_set_speed(cmd->u, cmd->v);
 }
 
 void motion_cmd_set_max_current(void* arg)
@@ -548,19 +570,6 @@ void motion_cmd_set_actuator_kinematics(void* arg)
 	motion_set_actuator_kinematics(*cmd);
 }
 
-void motion_cmd_homing(void* arg)
-{
-	(void) arg;
-	motion_homing();
-}
-
-void motion_homing()
-{
-	xSemaphoreTake(motion_mutex, portMAX_DELAY);
-	motion_wanted_state = MOTION_WANTED_STATE_HOMING;
-	xSemaphoreGive(motion_mutex);
-}
-
 void motion_enable(bool enable)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
@@ -577,28 +586,27 @@ void motion_enable(bool enable)
 
 void motion_set_max_driving_current(float maxCurrent)
 {
-	can_motor[CAN_MOTOR_DRIVING1].set_max_current(maxCurrent);
-	can_motor[CAN_MOTOR_DRIVING2].set_max_current(maxCurrent);
-	can_motor[CAN_MOTOR_DRIVING3].set_max_current(maxCurrent);
+	can_motor[0].set_max_current(maxCurrent);
+	can_motor[1].set_max_current(maxCurrent);
 }
 
-void motion_goto(VectPlan dest, VectPlan cp, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 	motion_wanted_state = MOTION_WANTED_STATE_TRAJECTORY;
-	motion_wanted_dest = dest;
-	motion_wanted_cp = cp;
+	motion_wanted_dest = loc_to_abs(dest, -cp);
+	motion_wanted_trajectory_type = type;
+	motion_wanted_way = way;
 	motion_wanted_linearParam = linearParam;
 	motion_wanted_angularParam = angularParam;
 	xSemaphoreGive(motion_mutex);
 }
 
-void motion_set_cp_speed(VectPlan cp, VectPlan u, float v)
+void motion_set_speed(VectPlan u, float v)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	motion_wanted_state = MOTION_WANTED_STATE_SPEED;
-	motion_cp = cp;
 	motion_u = u;
 	motion_v = v;
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -633,24 +641,16 @@ void motion_update_usb_data(struct control_usb_data* data)
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	data->motion_state = motionStateMachine.getCurrentState();
-	data->cons = motion_cp_cmd;
-	data->cons_v1 = motion_kinematics[CAN_MOTOR_DRIVING1].v;
-	data->cons_v2 = motion_kinematics[CAN_MOTOR_DRIVING2].v;
-	data->cons_v3 = motion_kinematics[CAN_MOTOR_DRIVING3].v;
-	data->cons_theta1 = motion_kinematics[CAN_MOTOR_STEERING1].pos;
-	data->cons_theta2 = motion_kinematics[CAN_MOTOR_STEERING2].pos;
-	data->cons_theta3 = motion_kinematics[CAN_MOTOR_STEERING3].pos;
+	data->cons = motion_np_cmd;
+
 	data->wanted_pos = motion_dest;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
+		data->cons_motors_v[i] = motion_kinematics[i].v;
 		data->mes_motors[i] = motion_kinematics_mes[i];
 		data->mes_motor_current[i] = can_motor[i].current;
 	}
-
-	data->homingDone = can_motor[CAN_MOTOR_STEERING1].homingStatus == CAN_MOTOR_HOMING_DONE;
-	data->homingDone &= can_motor[CAN_MOTOR_STEERING2].homingStatus == CAN_MOTOR_HOMING_DONE;
-	data->homingDone &= can_motor[CAN_MOTOR_STEERING3].homingStatus == CAN_MOTOR_HOMING_DONE;
 
 	xSemaphoreGive(motion_mutex);
 }

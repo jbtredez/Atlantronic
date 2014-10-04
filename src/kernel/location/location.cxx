@@ -21,10 +21,9 @@ static int location_module_init()
 
 module_init(location_module_init, INIT_LOCATION);
 
-void location_update(Kinematics* kinematics_mes, int /*motorNum*/, float dt)
+void location_update(Kinematics* kinematics_mes, float dt)
 {
-	float slippageSpeed;
-	VectPlan speed = geometric_model_compute_speed(kinematics_mes, &slippageSpeed);
+	VectPlan speed = geometric_model_compute_speed(kinematics_mes);
 
 	portENTER_CRITICAL();
 	location_speed = speed;

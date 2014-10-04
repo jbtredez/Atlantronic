@@ -51,7 +51,6 @@ int cmd_gyro_set_calibration_values(const char* arg);
 int cmd_heartbeat_disable(const char* arg);
 int cmd_heartbeat_update(const char* arg);
 int cmd_help(const char* arg);
-int cmd_homing(const char* arg);
 int cmd_led_ready_for_init(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
@@ -100,7 +99,7 @@ COMMAND usb_commands[] = {
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
 	{ "go_enable", cmd_go_enable, "go_enable" },
-	{ "goto", cmd_goto, "goto x y theta cpx cpy cptheta" },
+	{ "goto", cmd_goto, "goto x y theta way type cpx cpy cptheta" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
 	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
 	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
@@ -111,7 +110,6 @@ COMMAND usb_commands[] = {
 	{ "help", cmd_help, "Display this text" },
 	{ "heartbeat_disable", cmd_heartbeat_disable, "heartbeat_disable" },
 	{ "heartbeat_update", cmd_heartbeat_update, "heartbeat_update"},
-	{ "homing", cmd_homing, "homing" },
 	{ "led_ready_for_init", cmd_led_ready_for_init, "led_ready_for_init"},
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
@@ -425,13 +423,6 @@ int cmd_help(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_homing(const char* arg)
-{
-	(void) arg;
-	cmd_robot->motion_homing();
-	return CMD_SUCESS;
-}
-
 int cmd_qemu_set_clock_factor(const char* arg)
 {
 	unsigned int system_clock_factor;
@@ -678,18 +669,20 @@ int cmd_goto(const char* arg)
 {
 	VectPlan dest;
 	VectPlan cp;
+	int way = TRAJECTORY_ANY_WAY;
+	int type = MOTION_AXIS_XYA;
 
-	int count = sscanf(arg, "%f %f %f %f %f %f", &dest.x, &dest.y, &dest.theta, &cp.x, &cp.y, &cp.theta);
+	int count = sscanf(arg, "%f %f %f %d %d %f %f %f", &dest.x, &dest.y, &dest.theta, &way, &type, &cp.x, &cp.y, &cp.theta);
 
-	if(count != 6 && count != 3)
+	if(count != 8 && count != 5 && count != 4 && count != 3)
 	{
 		return CMD_ERROR;
 	}
 
 	KinematicsParameters linearParam = {1000, 1000, 1000}; // TODO
-	KinematicsParameters angularParam = {1, 1, 1}; // TODO
+	KinematicsParameters angularParam = {M_PI, 2*M_PI, 2*M_PI}; // TODO
 
-	cmd_robot->motion_goto(dest, cp, linearParam, angularParam);
+	cmd_robot->motion_goto(dest, cp, (enum trajectory_way)way, (enum motion_trajectory_type)type, linearParam, angularParam);
 	return CMD_SUCESS;
 }
 
@@ -882,17 +875,16 @@ int cmd_set_color(const char* arg)
 int cmd_motion_set_speed(const char* arg)
 {
 	VectPlan u;
-	VectPlan cp;
 	float v;
 
-	int count = sscanf(arg, "%f %f %f %f %f %f %f", &u.x, &u.y, &u.theta, &v, &cp.x, &cp.y, &cp.theta);
+	int count = sscanf(arg, "%f %f %f %f", &u.x, &u.y, &u.theta, &v);
 
-	if(count != 6 && count != 4)
+	if(count != 4)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_speed(cp, u, v);
+	cmd_robot->motion_set_speed(u, v);
 	return CMD_SUCESS;
 }
 
@@ -900,15 +892,11 @@ int cmd_motion_set_actuator_kinematics(const char* arg)
 {
 	struct motion_cmd_set_actuator_kinematics_arg cmd;
 
-	int count = sscanf(arg, "%d %f %d %f %d %f %d %f %d %f %d %f",
+	int count = sscanf(arg, "%d %f %d %f",
 			&cmd.mode[0], &cmd.val[0],
-			&cmd.mode[1], &cmd.val[1],
-			&cmd.mode[2], &cmd.val[2],
-			&cmd.mode[3], &cmd.val[3],
-			&cmd.mode[4], &cmd.val[4],
-			&cmd.mode[5], &cmd.val[5]);
+			&cmd.mode[1], &cmd.val[1]);
 
-	if(count != 12)
+	if(count != 4)
 	{
 		return CMD_ERROR;
 	}
