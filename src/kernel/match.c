@@ -15,7 +15,7 @@
 
 #define MATCH_STACK_SIZE           100
 uint32_t match_time = 90000; //!< duree du match en ms
-volatile uint32_t match_color;
+volatile int match_color;
 volatile uint8_t match_go;
 volatile uint8_t match_color_change_enable;
 volatile uint8_t match_enable_go = 0;
@@ -124,10 +124,10 @@ static void match_cmd_color(void* arg)
 	uint8_t new_color = *((uint8_t*) arg);
 	if(match_go == 0 && match_color_change_enable)
 	{
-		if(new_color == COLOR_RED)
+		if(new_color == COLOR_GREEN)
 		{
-			match_color = COLOR_RED;
-			log(LOG_INFO, "couleur => rouge");
+			match_color = COLOR_GREEN;
+			log(LOG_INFO, "couleur => vert");
 		}
 		else
 		{
@@ -162,7 +162,7 @@ portBASE_TYPE match_set_color_from_isr(void)
 			match_color_change_time = t;
 			if(match_color == COLOR_YELLOW)
 			{
-				match_color = COLOR_RED;
+				match_color = COLOR_GREEN;
 			}
 			else
 			{

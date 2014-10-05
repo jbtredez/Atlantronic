@@ -3,11 +3,15 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern volatile int match_end;
 
-#define COLOR_UNKNOWN     0
-#define COLOR_RED         1
-#define COLOR_YELLOW      2
+#define COLOR_YELLOW     -1     //!< couleur avec x negatif (=> -1)
+#define COLOR_UNKNOWN     0     //!< couelur inconnue (non choisie)
+#define COLOR_GREEN       1     //!< couleur avec x positif (=> 1)
 
 portBASE_TYPE match_go_from_isr(void);
 portBASE_TYPE match_set_color_from_isr(void);
@@ -19,9 +23,9 @@ static inline void match_color_change_disable()
 	match_color_change_enable = 0;
 }
 
-static inline uint32_t match_get_color()
+static inline int match_get_color()
 {
-	extern volatile uint32_t match_color;
+	extern volatile int match_color;
 	return match_color;
 }
 
@@ -50,5 +54,9 @@ struct gpio_cmd_go_arg
 {
 	uint8_t cmd;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
