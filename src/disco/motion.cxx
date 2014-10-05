@@ -351,67 +351,68 @@ static void motion_state_trajectory_entry()
 	{
 		motion_wanted_dest.x = motion_pos_mes.x;
 		motion_wanted_dest.y = motion_pos_mes.y;
-		dtheta2 = motion_wanted_dest.theta - motion_pos_mes.theta;
 	}
-	else
+
+	VectPlan ab = motion_wanted_dest - motion_pos_mes;
+	float nab = ab.norm();
+
+	// distance minimale de translation TODO 5mm en dur
+	if( nab > 5 )
 	{
-		VectPlan ab = motion_wanted_dest - motion_pos_mes;
-		float nab = ab.norm();
+		float theta1 = atan2f(ab.y, ab.x);
+		ds = nab;
+		motion_u = ab / nab;
+		motion_u.theta = 0;
 
-		// distance minimale de translation TODO 1mm en dur
-		if( nab > 1 )
+		if(motion_wanted_way == TRAJECTORY_FORWARD)
 		{
-			float theta1 = atan2f(ab.y, ab.x);
-			ds = nab;
-			motion_u = ab / nab;
-			motion_u.theta = 0;
-
-			if(motion_wanted_way == TRAJECTORY_FORWARD)
+			dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1);
+			if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
 			{
-				dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1);
-				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
-				{
-					dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
-				}
+				dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
 			}
-			else if( motion_wanted_way == TRAJECTORY_BACKWARD)
+		}
+		else if( motion_wanted_way == TRAJECTORY_BACKWARD)
+		{
+			dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
+			if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
 			{
-				dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
-				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
-				{
-					dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
-				}
+				dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
+			}
+		}
+		else
+		{
+			float dtheta1_forward = motion_find_rotate(motion_pos_mes.theta, theta1);
+			float dtheta1_backward = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
+			float dtheta2_forward = 0;
+			float dtheta2_backward = 0;
+
+			if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
+			{
+				dtheta2_forward = motion_find_rotate(motion_pos_mes.theta + dtheta1_forward, motion_wanted_dest.theta);
+				dtheta2_backward = motion_find_rotate(motion_pos_mes.theta + dtheta1_backward, motion_wanted_dest.theta);
+			}
+
+			if ( fabsf(dtheta1_forward) + fabsf(dtheta2_forward) > fabsf(dtheta1_backward) + fabsf(dtheta2_backward))
+			{
+				dtheta1 = dtheta1_backward;
+				dtheta2 = dtheta2_backward;
 			}
 			else
 			{
-				float dtheta1_forward = motion_find_rotate(motion_pos_mes.theta, theta1);
-				float dtheta1_backward = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
-				float dtheta2_forward = 0;
-				float dtheta2_backward = 0;
-
-				if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
-				{
-					dtheta2_forward = motion_find_rotate(motion_pos_mes.theta + dtheta1_forward, motion_wanted_dest.theta);
-					dtheta2_backward = motion_find_rotate(motion_pos_mes.theta + dtheta1_backward, motion_wanted_dest.theta);
-				}
-
-				if ( fabsf(dtheta1_forward) + fabsf(dtheta2_forward) > fabsf(dtheta1_backward) + fabsf(dtheta2_backward))
-				{
-					dtheta1 = dtheta1_backward;
-					dtheta2 = dtheta2_backward;
-				}
-				else
-				{
-					dtheta1 = dtheta1_forward;
-					dtheta2 = dtheta2_forward;
-				}
+				dtheta1 = dtheta1_forward;
+				dtheta2 = dtheta2_forward;
 			}
 		}
+	}
+	else if( motion_wanted_trajectory_type != MOTION_AXIS_XY)
+	{
+		dtheta2 = motion_find_rotate(motion_pos_mes.theta, motion_wanted_dest.theta);
+	}
 
-		if( motion_wanted_trajectory_type == MOTION_AXIS_XY )
-		{
-			motion_wanted_dest.theta = motion_pos_mes.theta + dtheta1;
-		}
+	if( motion_wanted_trajectory_type == MOTION_AXIS_XY )
+	{
+		motion_wanted_dest.theta = motion_pos_mes.theta + dtheta1;
 	}
 
 	t = motion_compute_time(dtheta1, motion_wanted_angularParam);
