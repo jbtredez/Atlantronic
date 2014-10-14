@@ -5,7 +5,7 @@ Requirements :
 "arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
 	- binutils-2.24
 	- gcc-4.8.3 (patch t-arm-elf, cf dossier toolchain)
-	- gdb-7.7.1
+	- gdb-7.8
 	- newlib-2.1.0 (cf ebuild dans toolchain avec flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
 
 cible linux :
@@ -18,15 +18,15 @@ doc :
 		- graphviz >= 2.28
 
 jtag :
-	- openocd 0.7.0
+	- openocd 0.8.0
 	- libftdi 1.0
 
 ---------------------------------------------------------
 Organisation des dossiers :
 src/kernel : Code générique ou commun aux cartes
-src/foo : Code de la carte Foo.
-src/bar : Code de la carte bar
-src/discovery : Code pour la carte discovery
+src/foo : Code pour la carte foo (obsolete)
+src/discovery : Code pour la carte discovery (obsolete)
+src/disco : Code pour la carte disco
 src/linux : Code utilitaire pour linux
 	- src/linux/modules : module usb pour les cartes foo et bar
 	- src/linu/test : tests unitaires réalisables sous linux
@@ -34,6 +34,7 @@ src/linux : Code utilitaire pour linux
 qemu : qemu modifié pour la simulation
 
 --------------------------------------------------------
-exemple simulation avec le binaire arm strat5 :
+exemple simulation avec le binaire arm homologation :
 cd Atlantronic
-./bin/linux/glplot -s bin/discovery/baz
+./bin/linux/glplot -s bin/disco/homologation
+
