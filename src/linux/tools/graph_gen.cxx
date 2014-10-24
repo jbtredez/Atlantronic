@@ -3,7 +3,7 @@
 #include <math.h>
 #include "kernel/math/vect2.h"
 #include "kernel/math/fx_math.h"
-#include "discovery/graph.h"
+#include "kernel/motion/graph.h"
 
 //!< le but est de générer les données du graph du code du robot
 //!< à partir d'une liste de noeud et des liens bidirectionels

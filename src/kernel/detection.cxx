@@ -25,7 +25,6 @@ enum
 {
 	DETECTION_EVENT_HOKUYO_1,
 	DETECTION_EVENT_HOKUYO_2,
-	DETECTION_EVENT_SICK
 };
 
 static void detection_task(void* arg);
@@ -318,12 +317,8 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 //méthode heuristique pour estimer une resemblance entre deux segments
 static float detection_get_segment_similarity(const vect2* a, const vect2* b, const vect2* m, const vect2* n)
 {
-	float similarity = 0;
-//	vect2 ab = b - a;
-//	vect2 mn = n - m;
-	similarity += distance_point_to_segment(*a, *m, *n);
+	float similarity = distance_point_to_segment(*a, *m, *n);
 	similarity += distance_point_to_segment(*b, *m, *n);
-//	similarity += cross_product_z(ab, mn)/mn.norm2();
 
 	return similarity;
 }

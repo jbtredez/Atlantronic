@@ -20,7 +20,7 @@
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
 #include "kernel/math/matrix_homogeneous.h"
-#include "discovery/graph.h"
+#include "kernel/motion/graph.h"
 #include "kernel/table.h"
 
 // limitation du rafraichissement

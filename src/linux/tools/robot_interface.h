@@ -21,7 +21,7 @@
 #include "kernel/arm.h"
 #include "kernel/heartbeat.h"
 #include "kernel/control.h"
-#include "discovery/detection.h"
+#include "kernel/detection.h"
 #include "kernel/driver/io.h"
 #include "foo/pince.h"
 #include "server_tcp.h"
