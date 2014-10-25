@@ -37,7 +37,7 @@ static Kinematics motion_kinematics[CAN_MOTOR_MAX];
 static Kinematics motion_kinematics_mes[CAN_MOTOR_MAX];
 static xSemaphoreHandle motion_mutex;
 static VectPlan motion_wanted_dest;
-enum trajectory_way motion_wanted_way;
+enum motion_way motion_wanted_way;
 enum motion_trajectory_type motion_wanted_trajectory_type;
 static KinematicsParameters motion_wanted_linearParam;
 static KinematicsParameters motion_wanted_angularParam;
@@ -364,7 +364,7 @@ static void motion_state_trajectory_entry()
 		motion_u = ab / nab;
 		motion_u.theta = 0;
 
-		if(motion_wanted_way == TRAJECTORY_FORWARD)
+		if(motion_wanted_way == WAY_FORWARD)
 		{
 			dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1);
 			if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
@@ -372,7 +372,7 @@ static void motion_state_trajectory_entry()
 				dtheta2 = motion_find_rotate(motion_pos_mes.theta + dtheta1, motion_wanted_dest.theta);
 			}
 		}
-		else if( motion_wanted_way == TRAJECTORY_BACKWARD)
+		else if( motion_wanted_way == WAY_BACKWARD)
 		{
 			dtheta1 = motion_find_rotate(motion_pos_mes.theta, theta1 + M_PI);
 			if( motion_wanted_trajectory_type == MOTION_AXIS_XYA )
@@ -543,7 +543,7 @@ static unsigned int motion_state_generic_power_transition(unsigned int currentSt
 void motion_cmd_goto(void* arg)
 {
 	struct motion_cmd_goto_arg* cmd = (struct motion_cmd_goto_arg*) arg;
-	motion_goto(cmd->dest, cmd->cp, (enum trajectory_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
+	motion_goto(cmd->dest, cmd->cp, (enum motion_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
 }
 
 void motion_cmd_set_speed(void* arg)
@@ -591,7 +591,7 @@ void motion_set_max_driving_current(float maxCurrent)
 	can_motor[1].set_max_current(maxCurrent);
 }
 
-void motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 	motion_wanted_state = MOTION_WANTED_STATE_TRAJECTORY;

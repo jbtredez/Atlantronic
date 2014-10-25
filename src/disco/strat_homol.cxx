@@ -6,6 +6,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
+#include "kernel/motion/trajectory.h"
 
 #define STRAT_STACK_SIZE       300
 
@@ -71,6 +72,8 @@ static int strat_clap(void* arg)
 {
 	(void) arg;
 	// TODO
+	trajectory_goto(VectPlan(0,0,0), WAY_ANY, AVOIDANCE_STOP);
+
 	return 0;
 }
 

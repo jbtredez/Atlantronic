@@ -938,7 +938,7 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam)
+int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	struct motion_cmd_goto_arg cmd_arg;
 
@@ -973,7 +973,7 @@ int RobotInterface::straight(float dist)
 
 	cmd_arg.dist = dist;
 	cmd_arg.type = TRAJECTORY_STRAIGHT;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
@@ -983,7 +983,7 @@ int RobotInterface::straight_to_wall()
 	struct trajectory_cmd_arg cmd_arg;
 
 	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
@@ -994,7 +994,7 @@ int RobotInterface::rotate(float theta)
 
 	cmd_arg.dest.theta = theta;
 	cmd_arg.type = TRAJECTORY_ROTATE;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
@@ -1005,7 +1005,7 @@ int RobotInterface::rotate_to(float theta)
 
 	cmd_arg.dest.theta = theta;
 	cmd_arg.type = TRAJECTORY_ROTATE_TO;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
@@ -1058,7 +1058,7 @@ int RobotInterface::goto_graph()
 	struct trajectory_cmd_arg cmd_arg;
 
 	cmd_arg.type = TRAJECTORY_GOTO_GRAPH;
-	cmd_arg.avoidance_type = TRAJECTORY_AVOIDANCE_STOP;
+	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }

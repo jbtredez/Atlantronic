@@ -20,10 +20,10 @@ enum trajectory_cmd_type
 	TRAJECTORY_GOTO_GRAPH,
 };
 
-enum trajectory_avoidance_type
+enum avoidance_type
 {
-	TRAJECTORY_AVOIDANCE_STOP,        //!< arrêt en cas d'obstacle
-	TRAJECTORY_AVOIDANCE_GRAPH,       //!< passage par le graph en cas d'obstacle
+	AVOIDANCE_STOP,        //!< arrêt en cas d'obstacle
+	AVOIDANCE_GRAPH,       //!< passage par le graph en cas d'obstacle
 };
 
 enum trajectory_state
@@ -52,11 +52,13 @@ void trajectory_free();
 //!< rejoindre le graph
 void trajectory_goto_graph();
 
-void trajectory_goto_graph_node(uint32_t node_id, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_graph_node(uint32_t node_id, float dist, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_goto_near_xy(float x, float y, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_near_xy(float x, float y, float dist, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_goto_near(VectPlan dest, float dist, enum trajectory_way way, enum trajectory_avoidance_type avoidance_type);
+void trajectory_goto_near(VectPlan dest, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+
+void trajectory_goto(VectPlan dest, enum motion_way way, enum avoidance_type avoidance_type);
 
 void trajectory_rotate(float theta);
 

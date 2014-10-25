@@ -51,11 +51,11 @@ enum motion_speed
 	MOTION_WRONG_WAY,
 };
 
-enum trajectory_way
+enum motion_way
 {
-	TRAJECTORY_BACKWARD = -1,    //!< marche arriere
-	TRAJECTORY_ANY_WAY  = 0,    //!< marche avant ou marche arriere (selon le plus rapide)
-	TRAJECTORY_FORWARD  = 1,    //!< marche avant
+	WAY_BACKWARD = -1,    //!< marche arriere
+	WAY_ANY  = 0,         //!< marche avant ou marche arriere (selon le plus rapide)
+	WAY_FORWARD  = 1,     //!< marche avant
 };
 
 enum motion_trajectory_type
@@ -68,7 +68,7 @@ enum motion_trajectory_type
 void motion_enable(bool enable);
 
 //!< demande de trajectoire
-void motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
+void motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
 
 //! arret du mouvement en cours
 void motion_stop();

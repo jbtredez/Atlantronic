@@ -18,7 +18,7 @@ static int strat_dir;
 
 static void strat_task();
 static void strat_sortie();
-int strat_parcours_graph(enum trajectory_way);
+int strat_parcours_graph(enum motion_way);
 
 int strat_module_init();
 
@@ -79,7 +79,7 @@ void strat_sortie()
 	
 }
 
-int strat_parcours_graph(enum trajectory_way way)
+int strat_parcours_graph(enum motion_way way)
 {
 	static const uint32_t node_list[]={2, 0, 5, 4, 1, 0, 3, 6, 8, 10, 11, 14, 17, 15, 18, 19, 16, 12, 13, 9, 7, 2};
 	static const uint32_t node_list_size = sizeof(node_list)/sizeof(node_list[0]);

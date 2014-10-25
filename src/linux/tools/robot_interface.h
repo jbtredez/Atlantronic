@@ -116,7 +116,16 @@ class RobotInterface
 		int motion_set_max_driving_current(float maxCurrent);
 		int motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 		int motion_set_speed(VectPlan u, float v);
-		int motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam);
+		int motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam);
+
+		// ---------- gestion trajectoire ----------------------------------------------
+		int straight(float dist);
+		int straight_to_wall();
+		int rotate(float theta);
+		int rotate_to(float theta);
+		int goto_graph();
+		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
+		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
 
 		// ---------- gestion control --------------------------------------------------
 		int control_print_param();
@@ -157,15 +166,6 @@ class RobotInterface
 		int arm_xyz(float x, float y, float z, enum arm_cmd_type type);
 		int arm_abz(float a, float b, float z);
 		int arm_ventouse(float x1, float y1, float x2, float y2, float z, int8_t tool_way);
-
-		// ---------- gestion trajectoire ----------------------------------------------
-		int straight(float dist);
-		int straight_to_wall();
-		int rotate(float theta);
-		int rotate_to(float theta);
-		int goto_graph();
-		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
-		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
 
 		//!< vitesse en % de vmax de configuration du robot
 		int set_max_speed(float vmax_av, float vmax_rot);
