@@ -1,7 +1,7 @@
 #ifndef REGRESSION_H
 #define REGRESSION_H
 
-#include "kernel/vect_pos.h"
+#include "kernel/math/vect2.h"
 
 //! @file regression.h
 //! @brief Calcul d'une régression linéaire
@@ -14,6 +14,6 @@
 int regression_linear(float* x, float* y, float* w, int size, float* a, float* b);
 #endif
 
-int regression_poly(struct vect2* pt, int size, int seuil, struct vect2* regression_pt, int reg_size);
+int regression_poly(Vect2* pt, int size, int seuil, Vect2* regression_pt, int reg_size);
 
 #endif

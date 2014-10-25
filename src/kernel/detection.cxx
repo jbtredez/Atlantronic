@@ -31,19 +31,19 @@ static void detection_task(void* arg);
 static int detection_module_init();
 static void detection_compute(int id);
 static void detection_remove_static_elements_from_dynamic_list(int id);
-static float detection_get_segment_similarity(const vect2* a, const vect2* b, const vect2* m, const vect2* n);
+static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, const Vect2* m, const Vect2* n);
 static void detection_hokuyo1_callback();
 static void detection_hokuyo2_callback();
 static xQueueHandle detection_queue;
 static detection_callback detection_callback_function = (detection_callback)nop_function;
 
 // données privées à la tache detection
-static vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
+static Vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS];
 static int detection_reg_ecart = 25;
 
 // données partagées par la tache et des méthodes d'accés
 static xSemaphoreHandle detection_mutex;
-static vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
+static Vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
 static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT];
 static struct detection_object detection_obj1[DETECTION_NUM_OBJECT];
@@ -315,10 +315,146 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 }
 
 //méthode heuristique pour estimer une resemblance entre deux segments
-static float detection_get_segment_similarity(const vect2* a, const vect2* b, const vect2* m, const vect2* n)
+static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, const Vect2* m, const Vect2* n)
 {
 	float similarity = distance_point_to_segment(*a, *m, *n);
 	similarity += distance_point_to_segment(*b, *m, *n);
 
 	return similarity;
+}
+
+static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b, float dist_min)
+{
+	Vect2 a1( dist_min,  PARAM_LEFT_CORNER_Y );
+	Vect2 b1( 1e30,  PARAM_LEFT_CORNER_Y );
+	Vect2 a2( dist_min, PARAM_RIGHT_CORNER_Y );
+	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y );
+
+	Vect2 c;
+	Vect2 d;
+	Vect2 h;
+
+	int i;
+	int j;
+	float x_min = 1e30;
+	float y_c = 0;
+	float y_d = 0;
+
+	for(i = 0; i < size; i++)
+	{
+		c = abs_to_loc(pos, polyline[i].pt[0]);
+		for(j = 1; j < polyline[i].size; j++)
+		{
+			d = abs_to_loc(pos, polyline[i].pt[j]);
+
+			// point c devant le robot et dans le tube
+			if( c.x > dist_min && c.y > a1.y && c.y < a2.y)
+			{
+				if( c.x < x_min)
+				{
+					x_min = c.x;
+					y_c = c.y;
+					y_d = d.y;
+				}
+			}
+
+			// point d devant le robot et dans le tube
+			if( d.x > dist_min && d.y > a1.y && d.y < a2.y)
+			{
+				if( d.x < x_min)
+				{
+					x_min = d.x;
+					y_c = c.y;
+					y_d = d.y;
+				}
+			}
+
+			// gestion du cas c et/ou d ne sont pas dans le tube
+			int err1 = segment_intersection(a1, b1, c, d, &h);
+			if(err1 == 0)
+			{
+				if( h.x < x_min)
+				{
+					x_min = h.x;
+					y_c = c.y;
+					y_d = d.y;
+				}
+			}
+
+			int err2 = segment_intersection(a2, b2, c, d, &h);
+			if(err2 == 0)
+			{
+				if( h.x < x_min)
+				{
+					x_min = h.x;
+					y_c = c.y;
+					y_d = d.y;
+				}
+			}
+
+			c = d;
+		}
+	}
+
+	if(y_c != y_d)
+	{
+		b1.x = x_min;
+		b2.x = x_min;
+
+		if( y_c < y_d)
+		{
+			b1.y = y_c;
+			b2.y = y_d;
+		}
+		else
+		{
+			b1.y = y_d;
+			b2.y = y_c;
+		}
+	}
+
+	*a = loc_to_abs(pos, b1);
+	*b = loc_to_abs(pos, b2);
+
+	return x_min;
+}
+
+float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b, float dist_min)
+{
+	float x_min = 1e30;
+	float x_min_table = 1e30;
+	Vect2 c;
+	Vect2 d;
+
+	if(type == DETECTION_FULL || type == DETECTION_DYNAMIC_OBJ)
+	{
+		xSemaphoreTake(detection_mutex, portMAX_DELAY);
+		//x_min = detection_compute_object_on_trajectory(pos, detection_object_polyline, detection_num_obj[1], a, b, dist_min); // TODO regrouper obj1 et 2 ?
+		xSemaphoreGive(detection_mutex);
+	}
+	else
+	{
+		c.x = x_min;
+		d.y = PARAM_LEFT_CORNER_Y;
+
+		d.x = x_min;
+		d.y = PARAM_RIGHT_CORNER_Y;
+
+		*a = loc_to_abs(pos, c);
+		*b = loc_to_abs(pos, d);
+	}
+
+	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
+	{
+		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d, dist_min);
+
+		if(x_min_table < x_min)
+		{
+			x_min = x_min_table;
+			*a = c;
+			*b = d;
+		}
+	}
+
+	return x_min;
 }

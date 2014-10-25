@@ -30,7 +30,7 @@
 
 enum
 {
-	COM_FOO,
+	COM_DISCO,
 	COM_MAX
 };
 
@@ -190,11 +190,11 @@ class RobotInterface
 		/*int detection_dynamic_object_id;
 		int detection_dynamic_object_pt_tmp_size;
 		int16_t detection_dynamic_object_size_tmp;
-		struct vect2 detection_dynamic_object_pt_tmp[HOKUYO_NUM_POINTS];
+		struct Vect2 detection_dynamic_object_pt_tmp[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj_tmp[HOKUYO_NUM_POINTS];
 
 		int16_t detection_dynamic_object_size;
-		struct vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
+		struct Vect2 detection_dynamic_object_pt[HOKUYO_NUM_POINTS];
 		struct polyline detection_dynamic_obj[HOKUYO_NUM_POINTS];
 */
 		// detection adverse
@@ -207,8 +207,8 @@ class RobotInterface
 		struct dynamixel_data rx24[RX24_MAX_ID];
 
 		// calculs
-		struct vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];
-		struct vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
+		struct Vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];
+		struct Vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
 		int detection_reg_num[HOKUYO_MAX];
 
 		RobotVersion versionCompatible;

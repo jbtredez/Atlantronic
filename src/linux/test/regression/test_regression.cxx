@@ -46,8 +46,8 @@ int main()
 	float* x = new float[total_size];
 	float* y = new float[total_size];
 	float* w = new float[total_size];
-	vect2* points = new vect2[total_size];
-	vect2* reg = new vect2[total_size];
+	Vect2* points = new Vect2[total_size];
+	Vect2* reg = new Vect2[total_size];
 	float epsilon;
 
 	int id = 0;

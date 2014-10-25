@@ -147,7 +147,7 @@ int Qemu::add_object(const struct polyline polyline)
 	return com.write((void*) &event, sizeof(event));
 }
 
-int Qemu::move_object(int id, struct vect2 origin, VectPlan delta)
+int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
 {
 	struct atlantronic_model_tx_event event;
 

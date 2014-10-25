@@ -51,7 +51,7 @@ end:
 }
 #endif
 
-int regression_poly(struct vect2* pt, int size, int seuil, struct vect2* regression_pt, int reg_size)
+int regression_poly(Vect2* pt, int size, int seuil, Vect2* regression_pt, int reg_size)
 {
 	int a = 0;
 	int b = size-1;
@@ -60,8 +60,8 @@ int regression_poly(struct vect2* pt, int size, int seuil, struct vect2* regress
 	float dist = 0;
 	float dist_max = -1;
 	float nab = 0;
-	vect2 ab;
-	vect2 ac;
+	Vect2 ab;
+	Vect2 ac;
 
 	int regression_num = 0;
 	int pta = 0;

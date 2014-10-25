@@ -8,28 +8,28 @@
 //!< le but est de générer les données du graph du code du robot
 //!< à partir d'une liste de noeud et des liens bidirectionels
 
-const struct vect2 pt[] =
+const Vect2 pt[] =
 {
-	vect2(  -600  ,  700  ),
-	vect2(     0  ,  700  ),
-	vect2(   600  ,  700  ),
-	vect2(  -600  ,  450  ),
-	vect2(     0  ,  450  ),
-	vect2(   600  ,  450  ),
-	vect2( -762.5f,  312.5f),
-	vect2(  762.5f, 312.5f),
-	vect2( -1250  ,  250  ),
-	vect2(  1250  ,  250  ),
-	vect2( -1250  ,      0),
-	vect2(  -800  ,      0),
-	vect2(   800  ,      0),
-	vect2( 1250   ,      0),
-	vect2( -860   , -400  ),
-	vect2(     0  , -400  ),
-	vect2(  860   , -400  ),
-	vect2( -860   , -700  ),
-	vect2(     0  , -700  ),
-	vect2(  860   , -700  ),
+	Vect2(  -600  ,  700  ),
+	Vect2(     0  ,  700  ),
+	Vect2(   600  ,  700  ),
+	Vect2(  -600  ,  450  ),
+	Vect2(     0  ,  450  ),
+	Vect2(   600  ,  450  ),
+	Vect2( -762.5f,  312.5f),
+	Vect2(  762.5f, 312.5f),
+	Vect2( -1250  ,  250  ),
+	Vect2(  1250  ,  250  ),
+	Vect2( -1250  ,      0),
+	Vect2(  -800  ,      0),
+	Vect2(   800  ,      0),
+	Vect2( 1250   ,      0),
+	Vect2( -860   , -400  ),
+	Vect2(     0  , -400  ),
+	Vect2(  860   , -400  ),
+	Vect2( -860   , -700  ),
+	Vect2(     0  , -700  ),
+	Vect2(  860   , -700  ),
 };
 
 struct link
@@ -159,7 +159,7 @@ int main()
 	printf("const struct graph_node graph_node[GRAPH_NUM_NODE] =\n{\n");
 	for( i = 0; i < num_nodes; i++)
 	{
-		printf("\t{{ %8.2ff, %8.2ff}, %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
+		printf("\t{Vect2( %8.2ff, %8.2ff), %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
 	}
 	printf("};\n");
 

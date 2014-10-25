@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/vect_pos.h"
+#include "kernel/math/vect_plan.h"
 
 #define DETECTION_NUM_OBJECT         100
 #define DETECTION_NUM_OBJECT_USB      10
@@ -37,6 +37,6 @@ void detection_register_callback(detection_callback callback);
 //!< attention, prise de mutex sur l'ensemble des segments
 //!<
 //!< @return distance maximale d'avance avant collision
-float detection_compute_front_object(enum detection_type type, const VectPlan* pos, const vect2* a, const vect2* b, float dist_min);
+float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b, float dist_min);
 
 #endif

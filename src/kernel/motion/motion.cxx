@@ -476,7 +476,7 @@ static void motion_state_trajectory_run()
 
 		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
 		{
-			log_format(LOG_INFO, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
+			log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
 			motion_curvilinearKinematics.reset();
 			motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
 		}
@@ -616,6 +616,11 @@ void motion_set_speed(VectPlan u, float v)
 	}
 
 	xSemaphoreGive(motion_mutex);
+}
+
+void motion_stop()
+{
+	motion_set_speed(VectPlan(1,0,0), 0);
 }
 
 void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd)

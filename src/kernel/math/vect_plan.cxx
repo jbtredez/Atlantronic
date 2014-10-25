@@ -29,6 +29,19 @@ VectPlan loc_to_abs(const VectPlan& origin, const VectPlan& pos)
 	return res;
 }
 
+//! changement de repere du repère local au repere absolu
+//! origin : origine du repère local dans le repère absolu
+Vect2 loc_to_abs(const VectPlan& origin, const Vect2& pos)
+{
+	Vect2 res;
+	float c = cosf(origin.theta);
+	float s = sinf(origin.theta);
+	res.x = origin.x + c * pos.x - s * pos.y;
+	res.y = origin.y + s * pos.x + c * pos.y;
+
+	return res;
+}
+
 //! changement de repere du repère absolu au repere local
 //! origin : origine du repère local dans le repère absolu
 VectPlan abs_to_loc(const VectPlan& origin, const VectPlan& pos)
@@ -42,6 +55,22 @@ VectPlan abs_to_loc(const VectPlan& origin, const VectPlan& pos)
 	res.x =  c * dx + s * dy;
 	res.y = -s * dx + c * dy;
 	res.theta = pos.theta - origin.theta;
+
+	return res;
+}
+
+//! changement de repere du repère absolu au repere local
+//! origin : origine du repère local dans le repère absolu
+Vect2 abs_to_loc(const VectPlan& origin, const Vect2& pos)
+{
+	Vect2 res;
+	float c = cosf(origin.theta);
+	float s = sinf(origin.theta);
+
+	float dx = pos.x - origin.x;
+	float dy = pos.y - origin.y;
+	res.x =  c * dx + s * dy;
+	res.y = -s * dx + c * dy;
 
 	return res;
 }

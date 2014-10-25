@@ -130,17 +130,17 @@ void gtk_end();
 
 #define OPPONENT_PERIMETER         128.0f
 
-struct vect2 opponent_robot_pt[] =
+Vect2 opponent_robot_pt[] =
 {
-	vect2( OPPONENT_PERIMETER, 0),
-	vect2( OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
-	vect2( 0, OPPONENT_PERIMETER),
-	vect2( -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
-	vect2( -OPPONENT_PERIMETER, 0),
-	vect2( -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
-	vect2( 0, -OPPONENT_PERIMETER),
-	vect2( OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
-	vect2( OPPONENT_PERIMETER, 0),
+	Vect2( OPPONENT_PERIMETER, 0),
+	Vect2( OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
+	Vect2( 0, OPPONENT_PERIMETER),
+	Vect2( -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
+	Vect2( -OPPONENT_PERIMETER, 0),
+	Vect2( -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
+	Vect2( 0, -OPPONENT_PERIMETER),
+	Vect2( OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
+	Vect2( OPPONENT_PERIMETER, 0),
 };
 
 struct polyline oponent_robot =
@@ -173,8 +173,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_CONS, "Position (consigne)", 1, 0, 0, 1);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_MES, "Position (mesure)", 1, 0, 1, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH, "Graph", 0, 0, 0, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 0, 0, 1, 1);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH, "Graph", 1, 1, 1, 1);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_GRAPH_LINK, "Graph links", 1, 0, 1, 1);
 
 	graph[GRAPH_HOKUYO_HIST].init("Hokuyo", 0, 682, 0, 4100, 800, 600, 0, 0);
 	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO1_HIST, "Hokuyo 1", 1, 1, 0, 0);
@@ -356,7 +356,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 		qemu->add_object(oponent_robot);
 
 		// on le met a sa position de depart
-		vect2 origin(0, 0);
+		Vect2 origin(0, 0);
 		qemu->move_object(QEMU_OPPONENT_ID, origin, opponent_robot_pos);
 	}
 
@@ -830,7 +830,7 @@ void plot_table(Graphique* graph)
 				glBegin(GL_LINE_STRIP);
 				for(j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
 				{
-					struct vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
+					Vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
 					glVertex2f(pt.x, pt.y);
 				}
 				glEnd();
@@ -1464,7 +1464,7 @@ static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
+			Vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
 			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;
@@ -1509,7 +1509,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
 
 			// on le met a sa position de depart
-			vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
+			Vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
 			VectPlan delta(x2 - x1, y1 - y2, 0);
 			opponent_robot_pos.x += delta.x;
 			opponent_robot_pos.y += delta.y;

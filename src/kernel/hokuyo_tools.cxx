@@ -5,7 +5,7 @@
 #include "kernel/hokuyo_tools.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/systick.h"
-#include "kernel/vect_pos.h"
+#include "kernel/math/vect2.h"
 #include "kernel/error_codes.h"
 #include "kernel/math/fx_math.h"
 
@@ -15,7 +15,7 @@
 #define GAP 90 //150
 #define HOKUYO_TABLE_DELTA       200
 
-void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
+void hokuyo_compute_xy(struct hokuyo_scan* scan, Vect2 *pos)
 {
 	int size = HOKUYO_NUM_POINTS;
 	uint16_t* distance = scan->distance;
@@ -44,7 +44,7 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, struct vect2 *pos)
 	}
 }
 
-int hokuyo_find_objects(struct hokuyo_scan* scan, struct vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size)
+int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size)
 {
 	int res = 0;
 	unsigned int i = 0;

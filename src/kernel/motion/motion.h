@@ -9,6 +9,7 @@
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor.h"
+#include "kernel/math/vect_plan.h"
 
 #ifndef WEAK_MOTION
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
@@ -68,6 +69,9 @@ void motion_enable(bool enable);
 
 //!< demande de trajectoire
 void motion_goto(VectPlan dest, VectPlan cp, enum trajectory_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
+
+//! arret du mouvement en cours
+void motion_stop();
 
 //!< demande de vitesse
 void motion_set_speed(VectPlan u, float v);

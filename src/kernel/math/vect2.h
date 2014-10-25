@@ -8,22 +8,16 @@
 #include <stdint.h>
 #include <math.h>
 
-struct fx_vect2
-{
-	int32_t x;
-	int32_t y;
-};
-
-class vect2
+class Vect2
 {
 	public:
-		vect2()
+		Vect2()
 		{
 			x = 0;
 			y = 0;
 		}
 
-		vect2(float X, float Y)
+		Vect2(float X, float Y)
 		{
 			x = X;
 			y = Y;
@@ -43,56 +37,56 @@ class vect2
 		float y;
 };
 
-inline vect2 operator+(vect2 a, vect2 b)
+inline Vect2 operator+(Vect2 a, Vect2 b)
 {
-	return vect2(a.x + b.x, a.y + b.y);
+	return Vect2(a.x + b.x, a.y + b.y);
 }
 
-inline vect2 operator-(vect2 a, vect2 b)
+inline Vect2 operator-(Vect2 a, Vect2 b)
 {
-	return vect2(a.x - b.x, a.y - b.y);
+	return Vect2(a.x - b.x, a.y - b.y);
 }
 
-inline vect2 operator*(float k, vect2 a)
+inline Vect2 operator*(float k, Vect2 a)
 {
-	return vect2(k * a.x, k * a.y);
+	return Vect2(k * a.x, k * a.y);
 }
 
-inline vect2 operator*(vect2 a, float k)
+inline Vect2 operator*(Vect2 a, float k)
 {
-	return vect2(k * a.x, k * a.y);
+	return Vect2(k * a.x, k * a.y);
 }
 
-inline vect2 operator/(vect2 a, float k)
+inline Vect2 operator/(Vect2 a, float k)
 {
-	return vect2(a.x / k, a.y / k);
+	return Vect2(a.x / k, a.y / k);
 }
 
-inline vect2 operator-(vect2 a)
+inline Vect2 operator-(Vect2 a)
 {
-	return vect2(-a.x, -a.y);
+	return Vect2(-a.x, -a.y);
 }
 
-//!< @function fx_vect2_scalar_product
+//!< @function fx_Vect2_scalar_product
 //!< @brief calcul le produit scalaire de deux vecteurs u et v
 //!< @param vecteur u
 //!< @param vecteur v
 //!< @return produit scalaire calculé avec les positions en mm
-inline float scalar_product(const vect2& u, const vect2& v)
+inline float scalar_product(const Vect2& u, const Vect2& v)
 {
 	return u.x * v.x +u.y * v.y;
 }
 
-//!< @function fx_vect2_vector_product_z
+//!< @function fx_Vect2_vector_product_z
 //!< @brief calcule la compose sur Oz du produit vectoriel de u et v (appartenant à (Ox,Ox))
 //!< @param vecteur u
 //!< @param vecteur v
 //!< @return composante sur Oz du produit vectoriel calculé avec les positions en mm
-inline float cross_product_z(const vect2& u, const vect2& v)
+inline float cross_product_z(const Vect2& u, const Vect2& v)
 {
 	return u.x * v.y - u.y * v.x;
 }
 
-float distance_point_to_segment(const vect2& m, const vect2& a, const vect2& b);
+float distance_point_to_segment(const Vect2& m, const Vect2& a, const Vect2& b);
 
 #endif

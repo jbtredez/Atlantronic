@@ -11,13 +11,13 @@
 //!< @param a coordonnées du point A
 //!< @param b coordonnées du point B
 //!< @return distance
-float distance_point_to_segment(const vect2& m, const vect2& a, const vect2& b)
+float distance_point_to_segment(const Vect2& m, const Vect2& a, const Vect2& b)
 {
 	// Soit P la projection orthogonale de M sur (AB)
 	// Soit t un scalaire tel que vect(AP) = t*(vect(AB))
 	// t = (vect(AM).vect(AB))/((AB)^2)
-	vect2 am = m - a;
-	vect2 ab = b - a;
+	Vect2 am = m - a;
+	Vect2 ab = b - a;
 	float scalaire_am_ab = scalar_product(am, ab);
 	float nab2 = ab.norm2();
 
@@ -27,7 +27,7 @@ float distance_point_to_segment(const vect2& m, const vect2& a, const vect2& b)
 	}
 	else if( scalaire_am_ab >= nab2 )
 	{
-		vect2 bm = m - b;
+		Vect2 bm = m - b;
 		return bm.norm(); // M est après B
 	}
 	else

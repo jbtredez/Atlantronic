@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <math.h>
+#include "vect2.h"
 
 //! @struct VectPlan
 //! représentation d'un vecteur sur la table
@@ -75,8 +76,10 @@ inline VectPlan operator-(VectPlan a)
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed);
 
 VectPlan loc_to_abs(const VectPlan& origin, const VectPlan& pos);
+Vect2 loc_to_abs(const VectPlan& origin, const Vect2& pos);
 
 VectPlan abs_to_loc(const VectPlan& origin, const VectPlan& pos);
+Vect2 abs_to_loc(const VectPlan& origin, const Vect2& pos);
 
 VectPlan loc_to_abs_speed(const double theta, const VectPlan &speed);
 

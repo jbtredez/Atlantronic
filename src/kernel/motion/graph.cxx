@@ -9,26 +9,26 @@
 //!< noeuds du graph
 const struct graph_node graph_node[GRAPH_NUM_NODE] =
 {
-	{vect2(  -600.00f,   700.00f),  0,  2},
-	{vect2(     0.00f,   700.00f),  2,  3},
-	{vect2(   600.00f,   700.00f),  5,  2},
-	{vect2(  -600.00f,   450.00f),  7,  3},
-	{vect2(     0.00f,   450.00f), 10,  3},
-	{vect2(   600.00f,   450.00f), 13,  3},
-	{vect2(  -762.50f,   312.50f), 16,  3},
-	{vect2(   762.50f,   312.50f), 19,  3},
-	{vect2( -1250.00f,   250.00f), 22,  3},
-	{vect2(  1250.00f,   250.00f), 25,  3},
-	{vect2( -1250.00f,     0.00f), 28,  2},
-	{vect2(  -800.00f,     0.00f), 30,  4},
-	{vect2(   800.00f,     0.00f), 34,  4},
-	{vect2(  1250.00f,     0.00f), 38,  2},
-	{vect2(  -860.00f,  -400.00f), 40,  3},
-	{vect2(     0.00f,  -400.00f), 43,  3},
-	{vect2(   860.00f,  -400.00f), 46,  3},
-	{vect2(  -860.00f,  -700.00f), 49,  2},
-	{vect2(     0.00f,  -700.00f), 51,  3},
-	{vect2(   860.00f,  -700.00f), 54,  2},
+	{Vect2(  -600.00f,   700.00f),  0,  2},
+	{Vect2(     0.00f,   700.00f),  2,  3},
+	{Vect2(   600.00f,   700.00f),  5,  2},
+	{Vect2(  -600.00f,   450.00f),  7,  3},
+	{Vect2(     0.00f,   450.00f), 10,  3},
+	{Vect2(   600.00f,   450.00f), 13,  3},
+	{Vect2(  -762.50f,   312.50f), 16,  3},
+	{Vect2(   762.50f,   312.50f), 19,  3},
+	{Vect2( -1250.00f,   250.00f), 22,  3},
+	{Vect2(  1250.00f,   250.00f), 25,  3},
+	{Vect2( -1250.00f,     0.00f), 28,  2},
+	{Vect2(  -800.00f,     0.00f), 30,  4},
+	{Vect2(   800.00f,     0.00f), 34,  4},
+	{Vect2(  1250.00f,     0.00f), 38,  2},
+	{Vect2(  -860.00f,  -400.00f), 40,  3},
+	{Vect2(     0.00f,  -400.00f), 43,  3},
+	{Vect2(   860.00f,  -400.00f), 46,  3},
+	{Vect2(  -860.00f,  -700.00f), 49,  2},
+	{Vect2(     0.00f,  -700.00f), 51,  3},
+	{Vect2(   860.00f,  -700.00f), 54,  2},
 };
 
 //!< liens du graph.
@@ -152,7 +152,7 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 	return 0;
 }
 
-int graph_compute_node_distance(struct vect2 pos, struct graph_node_dist* node_dist )
+int graph_compute_node_distance(struct Vect2 pos, struct graph_node_dist* node_dist )
 {
 	int i;
 	int j;

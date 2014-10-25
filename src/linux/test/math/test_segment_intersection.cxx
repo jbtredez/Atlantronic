@@ -7,9 +7,9 @@
 
 int error_count;
 
-void check_segment_intersection(int id, vect2 a, vect2 b, vect2 c, vect2 d, int res_expected, vect2 h_expected)
+void check_segment_intersection(int id, Vect2 a, Vect2 b, Vect2 c, Vect2 d, int res_expected, Vect2 h_expected)
 {
-	vect2 h;
+	Vect2 h;
 	int res = segment_intersection(a, b, c, d, &h);
 
 	if(res == res_expected && (( res == 0 && h.x == h_expected.x && h.y == h_expected.y) || res != 0) )
@@ -27,11 +27,11 @@ void check_segment_intersection(int id, vect2 a, vect2 b, vect2 c, vect2 d, int 
 
 int main()
 {
-	vect2 a;
-	vect2 b;
-	vect2 c;
-	vect2 d;
-	vect2 h;
+	Vect2 a;
+	Vect2 b;
+	Vect2 c;
+	Vect2 d;
+	Vect2 h;
 
 	error_count = 0;
 

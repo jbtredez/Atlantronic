@@ -19,7 +19,7 @@ class Qemu
 		void destroy();
 		int set_clock_factor(unsigned int factor, unsigned int icount);
 		int add_object(const struct polyline polyline);
-		int move_object(int id, struct vect2 origin, VectPlan delta);
+		int move_object(int id, Vect2 origin, VectPlan delta);
 		int manage_canopen_connexion(int nodeId, bool connected);
 		int set_io(uint32_t id, bool val);
 };

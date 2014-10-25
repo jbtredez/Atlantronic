@@ -21,7 +21,7 @@ struct graph_link
 
 struct graph_node
 {
-	struct vect2 pos;
+	struct Vect2 pos;
 	uint8_t link_id;
 	uint8_t link_num;
 };
@@ -48,6 +48,6 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 
 //! calcule la distance entre le point et tout les noeuds du graph
 //! resultat dans un tableau trié de la plus petite distance à la plus grande
-int graph_compute_node_distance(struct vect2 pos, struct graph_node_dist* node_dist );
+int graph_compute_node_distance(struct Vect2 pos, struct graph_node_dist* node_dist );
 
 #endif
