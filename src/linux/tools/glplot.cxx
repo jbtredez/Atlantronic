@@ -707,6 +707,11 @@ void plot_start_position(bool green)
 	}
 	plot_pave(side * 1300, 0, -22, 400, 444, 22);
 	plot_pave(side * 1075, 0, -22, 50, 400, 22);
+	plot_pave(side * 1300, -211, 11, 400, 22, 22);
+	plot_pave(side * 1441, -117.5, 11, 22, 165, 22);
+	plot_pave(side * 1300, 211, 11, 400, 22, 22);
+	plot_pave(side * 1441, 117.5, 11, 22, 165, 22);
+	plot_pave(side * 1465, 0, 11, 70, 70, 22);
 
 	// demi-cercle
 	plot_circle(side *1050, 0, 0, 200, side*M_PI/2, M_PI, 16);
