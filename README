@@ -12,6 +12,7 @@ cible linux :
 	- readline
 	- gtk+-2
 	- gtkglext-1
+	- assimp
 
 doc : 
 	- doxygen >= 1.8.4
