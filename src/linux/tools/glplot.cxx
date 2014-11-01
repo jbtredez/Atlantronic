@@ -16,6 +16,7 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/joystick.h"
+#include "linux/tools/table3d.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/fx_math.h"
@@ -98,7 +99,8 @@ static char* atlantronicPath;
 static bool glplot_show_legend = false;
 static bool glplot_3d = false;
 static MatrixHomogeneous glplot_view;
-
+static Table3d table3d;
+static Object3d robot3d;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 
@@ -506,9 +508,22 @@ static void init(GtkWidget* widget, gpointer arg)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-	glShadeModel(GL_SMOOTH);
 	glEnable(GL_COLOR_MATERIAL);
+	glShadeModel(GL_SMOOTH);
+
+	if( ! table3d.init() )
+	{
+		fprintf(stderr, "table3d.init() error - Exiting.\n");
+		exit(-1);
+	}
+
+	if( ! robot3d.init("media/robot2011.3ds") )
+	{
+		fprintf(stderr, "table3d.init() error - Exiting.\n");
+		exit(-1);
+	}
 	gdk_gl_drawable_gl_end(gldrawable);
 }
 
@@ -672,64 +687,6 @@ void plot_pave(float x, float y, float z, float dx, float dy, float dz)
 	glTranslatef(-x, -y, -z);
 }
 
-void plot_circle(float x, float y, float z, float radius, float startAngle, float angle, int res)
-{
-	glPushMatrix();
-	glTranslatef(x, y, z);
-
-	float theta = 0;
-	glBegin(GL_TRIANGLE_STRIP);
-	glNormal3f(0, 0, 1);
-	for(int i = 0; i < res; i++)
-	{
-		glVertex3f(0, 0, 0);
-		theta = startAngle + i * angle / res;
-		glVertex3f(radius * cos(theta), radius * sin(theta), 0);
-		theta = startAngle + (i+1) * angle / res;
-		glVertex3f(radius * cos(theta), radius * sin(theta), 0);
-	}
-	glEnd();
-	glPopMatrix();
-}
-
-void plot_start_position(bool green)
-{
-	int side = 1;
-	// case depart de la couleur de l'equipe
-	if( green )
-	{
-		side = -1;
-		glColor3f(1, 1, 0);
-	}
-	else
-	{
-		glColor3f(0, 1, 0);
-	}
-	plot_pave(side * 1300, 0, -22, 400, 444, 22);
-	plot_pave(side * 1075, 0, -22, 50, 400, 22);
-	plot_pave(side * 1300, -211, 11, 400, 22, 22);
-	plot_pave(side * 1441, -117.5, 11, 22, 165, 22);
-	plot_pave(side * 1300, 211, 11, 400, 22, 22);
-	plot_pave(side * 1441, 117.5, 11, 22, 165, 22);
-	plot_pave(side * 1465, 0, 11, 70, 70, 22);
-
-	// demi-cercle
-	plot_circle(side *1050, 0, 0, 200, side*M_PI/2, M_PI, 16);
-
-	// cotes de la case depart de la couleur adverse
-	if( green )
-	{
-		side = -1;
-		glColor3f(0, 1, 0);
-	}
-	else
-	{
-		glColor3f(1, 1, 0);
-	}
-	plot_pave(side * 1300, 411, -22, 400, 378, 22);
-	plot_pave(side * 1300, -411, -22, 400, 378, 22);
-}
-
 void plot_table(Graphique* graph)
 {
 	float ratio_x = graph->ratio_x;
@@ -760,54 +717,10 @@ void plot_table(Graphique* graph)
 	{
 		if( glplot_3d )
 		{
-			GLfloat mat_specular[] = { 1, 1, 1, 1 };
-			GLfloat mat_emission[] = { 0, 0, 0, 0 };
-			GLfloat mat_shininess[] = { 96.0 };
-
-			glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-			glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
-			glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-
-			// sol
-			glColor3f(0, 0, 1);
-			plot_pave(0, 0, -22, 3000, 2000, 20);
-
-			// bordures
-			glColor3f(1, 0, 0);
-			plot_pave(0, 1011, 20, 3000, 22, 100);
-			plot_pave(0, -1011, 20, 3000, 22, 100);
-			plot_pave(-1511, 0, 20, 22, 2000, 100);
-			plot_pave(1511, 0, 20, 22, 2000, 100);
-
-			// marches
-			glColor3f(1, 1, 0);
-			plot_pave(-266.5, 694, 11, 500, 568, 22);
-			plot_pave(-266.5, 729, 33, 500, 498, 22);
-			plot_pave(-266.5, 764, 55, 500, 428, 22);
-			plot_pave(-266.5, 799, 77, 500, 358, 22);
-			glColor3f(0, 1, 0);
-			plot_pave(266.5, 694, 11, 500, 568, 22);
-			plot_pave(266.5, 729, 33, 500, 498, 22);
-			plot_pave(266.5, 764, 55, 500, 428, 22);
-			plot_pave(266.5, 799, 77, 500, 358, 22);
-			glColor3f(0, 0, 0.8);
-			plot_pave(0, 989, 55, 1066, 22, 110);
-
-			// cases depart
-			plot_start_position(true);
-			plot_start_position(false);
-
-			// centre
-			glColor3f(1, 0, 0);
-			plot_pave(0, 0, -22, 1180, 300, 22);
-			plot_pave(0, -200, -22, 980, 100, 22);
-			plot_pave(0, 200, -22, 980, 100, 22);
-
-			// centre bas
-			plot_pave(0, -950, -22, 800, 100, 22);
-			plot_pave(0, -850, -22, 605, 100, 22);
-			plot_circle(300, -900, 0, 100, 0, M_PI_2, 16);
-			plot_circle(-300, -900, 0, 100, M_PI_2, M_PI_2, 16);
+			glDisable(GL_COLOR_MATERIAL);
+			table3d.draw();
+			glEnable(GL_COLOR_MATERIAL);
+			glDisable(GL_CULL_FACE);
 		}
 		else
 		{
@@ -969,12 +882,11 @@ void plot_table(Graphique* graph)
 		glRotatef(pos_robot.theta * 180 / M_PI, 0, 0, 1);
 		if( glplot_3d )
 		{
-			glColor3f(1, 1, 0);
-			plot_pave(0, 0, 175, 300, 300, 350);
-			glColor3f(0, 0, 0);
-			plot_pave(0, 0, 390, 80, 80, 80);
-			glColor3f(0, 1, 0);
-			plot_pave(0, 0, 470, 80, 80, 80);
+			glColor3f(0.8, 0.8, 0.8);
+			glPushMatrix();
+			glRotatef(90, 1, 0, 0);
+			robot3d.draw();
+			glPopMatrix();
 		}
 		else
 		{
@@ -1187,23 +1099,36 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 			glEnable(GL_LIGHTING);
 			glEnable(GL_DEPTH_TEST);
+
 			//GLfloat global_ambient[] = { 0.5, 0.5, 0.5, 1 };
-			GLfloat ambientLight[] = { 0.5, 0.5, 0.5, 1 };
-			GLfloat diffuseLight[] = { 0.8, 0.8, 0.8, 1 };
+			GLfloat ambientLight[] = { 0.4, 0.4, 0.4, 1 };
+			GLfloat diffuseLight[] = { 0.6, 0.6, 0.6, 1 };
 			GLfloat specularLight[] = { 1, 1, 1, 1 };
-			//GLfloat light_position[] = { 0, 0, 1000, 1 };
-			GLfloat light_position[] = { 1000, 1000, 1000, 1 };
-			GLfloat light_direction[] = { -1, -1, -1, 0};
+			GLfloat light_position0[] = { 1500, 1000, 1000, 1 };
+			GLfloat light_direction0[] = { -1500, -1000, -1000, 0};
+			GLfloat light_position1[] = { -1500, 1000, 1000, 1 };
+			GLfloat light_direction1[] = { 1500, -1000, -1000, 0};
+
 			//glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 			glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
 			glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuseLight);
 			glLightfv(GL_LIGHT0, GL_SPECULAR, specularLight);
-			glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-			glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction);
+			glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
+			glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_direction0);
 			//glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45.0);
 			//glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 2.0);
 			//glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.00001f);
 			//glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1);
+
+			glLightfv(GL_LIGHT1, GL_AMBIENT, ambientLight);
+			glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuseLight);
+			glLightfv(GL_LIGHT1, GL_SPECULAR, specularLight);
+			glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
+			glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_direction1);
+			//glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45.0);
+			//glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 2.0);
+			//glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.00001f);
+			//glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1);
 		}
 		else
 		{

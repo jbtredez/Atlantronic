@@ -15,6 +15,8 @@ lib-linux-usb_interface += -lm -lreadline
 bin-linux += usb_interface
 
 obj-linux-glplot += linux/tools/glplot.o
+obj-linux-glplot += linux/tools/object3d.o
+obj-linux-glplot += linux/tools/table3d.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/com.o
 obj-linux-glplot += linux/tools/server_tcp.o
@@ -32,7 +34,7 @@ obj-linux-glplot += linux/tools/robot_interface.o
 obj-linux-glplot += linux/tools/qemu.o
 cflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
 cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
-lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0) -lreadline -lm
+lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0) -lreadline -lm -lassimp
 bin-linux += glplot
 
 obj-linux-sin_table_gen += linux/tools/sin_table_gen.o
