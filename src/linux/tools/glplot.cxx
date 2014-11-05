@@ -103,6 +103,7 @@ static Table3d table3d;
 static Object3d robot3d;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
+static int glplot_init_done = 0;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -383,7 +384,7 @@ void glplot_update()
 	static struct timespec last_plot = {0, 0};
 	struct timespec current;
 
-	if( opengl_window )
+	if( opengl_window && glplot_init_done )
 	{
 		clock_gettime(CLOCK_MONOTONIC, &current);
 		double delta = (current.tv_sec - last_plot.tv_sec) + (current.tv_nsec - last_plot.tv_nsec) / ((double)1000000000.0f);
@@ -524,7 +525,9 @@ static void init(GtkWidget* widget, gpointer arg)
 		fprintf(stderr, "table3d.init() error - Exiting.\n");
 		exit(-1);
 	}
+
 	gdk_gl_drawable_gl_end(gldrawable);
+	glplot_init_done = 1;
 }
 
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
