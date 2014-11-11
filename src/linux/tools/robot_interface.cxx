@@ -11,7 +11,6 @@
 #include "kernel/systick.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/xbee.h"
-#include "kernel/motion/trajectory.h"
 #include "kernel/pump.h"
 #include "kernel/match.h"
 

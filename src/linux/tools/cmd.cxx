@@ -41,8 +41,8 @@ int cmd_quit(const char* arg);
 int cmd_go(const char* arg);
 int cmd_go_enable(const char* arg);
 int cmd_goto_graph(const char* arg);
-int cmd_goto_near(const char* arg);
-int cmd_goto_near_xy(const char* arg);
+int cmd_goto(const char* arg);
+int cmd_goto_xy(const char* arg);
 int cmd_gyro_calib_start(const char* arg);
 int cmd_gyro_calib_stop(const char* arg);
 int cmd_gyro_set_theta(const char* arg);
@@ -100,8 +100,8 @@ COMMAND usb_commands[] = {
 	{ "go", cmd_go, "go" },
 	{ "go_enable", cmd_go_enable, "go_enable" },
 	{ "goto_graph", cmd_goto_graph, "goto_graph" },
-	{ "goto_near", cmd_goto_near, "goto_near x y alpha dist way avoidance_type" },
-	{ "goto_near_xy", cmd_goto_near_xy, "goto_near_xy x y dist way avoidance_type"},
+	{ "goto", cmd_goto, "goto x y alpha dist way avoidance_type" },
+	{ "goto_xy", cmd_goto_xy, "goto_xy x y dist way avoidance_type"},
 	{ "gyro_calib_start", cmd_gyro_calib_start, "cmd_gyro_calib_start"},
 	{ "gyro_calib_stop", cmd_gyro_calib_stop, "cmd_gyro_calib_stop"},
 	{ "gyro_set_theta", cmd_gyro_set_theta, "cmd_gyro_set_theta theta"},
@@ -628,15 +628,15 @@ int cmd_motion_set_max_driving_current(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_goto_near(const char* arg)
+int cmd_goto(const char* arg)
 {
 	VectPlan dest;
-	float dist;
-	unsigned int way;
-	unsigned int avoidance_type;
+	float dist = 0;
+	unsigned int way = WAY_ANY;
+	unsigned int avoidance_type = AVOIDANCE_STOP;
 	int count = sscanf(arg, "%f %f %f %f %u %u", &dest.x, &dest.y, &dest.theta, &dist, &way, &avoidance_type);
 
-	if(count != 6)
+	if(count < 3 || count  > 6 )
 	{
 		return CMD_ERROR;
 	}
@@ -646,16 +646,16 @@ int cmd_goto_near(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_goto_near_xy(const char* arg)
+int cmd_goto_xy(const char* arg)
 {
 	float x;
 	float y;
-	float dist;
-	unsigned int way;
-	unsigned int avoidance_type;
+	float dist = 0;
+	unsigned int way = WAY_ANY;
+	unsigned int avoidance_type = AVOIDANCE_STOP;
 	int count = sscanf(arg, "%f %f %f %u %u", &x, &y, &dist, &way, &avoidance_type);
 
-	if(count != 5)
+	if(count > 5 || count < 2)
 	{
 		return CMD_ERROR;
 	}

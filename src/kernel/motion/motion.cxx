@@ -22,14 +22,6 @@ enum
 	MOTION_ENABLE_WANTED_ON = 1
 };
 
-enum
-{
-	MOTION_WANTED_STATE_UNKNOWN = 0,
-	MOTION_WANTED_STATE_ACTUATOR_KINEMATICS,
-	MOTION_WANTED_STATE_SPEED,
-	MOTION_WANTED_STATE_TRAJECTORY,
-};
-
 static enum motion_status motion_status;
 static enum motion_trajectory_step motion_traj_step;
 static struct motion_cmd_set_actuator_kinematics_arg motion_wanted_kinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)
@@ -60,7 +52,7 @@ static unsigned int motion_state_disabled_transition(unsigned int currentState);
 static void motion_state_try_enabled_run();
 static unsigned int motion_state_try_enable_transition(unsigned int currentState);
 
-static uint8_t motion_wanted_state = MOTION_WANTED_STATE_UNKNOWN;
+static enum motion_wanted_state motion_wanted_state = MOTION_WANTED_STATE_UNKNOWN;
 static void motion_state_enabled_entry();
 static void motion_state_enabled_run();
 static unsigned int motion_state_enabled_transition(unsigned int currentState);
@@ -264,6 +256,9 @@ static unsigned int motion_state_enabled_transition(unsigned int currentState)
 		case MOTION_WANTED_STATE_TRAJECTORY:
 			return MOTION_TRAJECTORY;
 			break;
+		case MOTION_WANTED_STATE_SPEED:
+			return MOTION_SPEED;
+		case MOTION_WANTED_STATE_UNKNOWN:
 		default:
 			break;
 	}
@@ -639,6 +634,16 @@ void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_ar
 		}
 	}
 
+	xSemaphoreGive(motion_mutex);
+}
+
+void motion_get_state(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state)
+{
+	xSemaphoreTake(motion_mutex, portMAX_DELAY);
+	*state = (enum motion_state)motionStateMachine.getCurrentState();
+	*status = motion_status;
+	*step = motion_traj_step;
+	*wanted_state = motion_wanted_state;
 	xSemaphoreGive(motion_mutex);
 }
 

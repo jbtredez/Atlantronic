@@ -323,11 +323,11 @@ static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, co
 	return similarity;
 }
 
-static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b, float dist_min)
+static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b)
 {
-	Vect2 a1( dist_min,  PARAM_LEFT_CORNER_Y );
+	Vect2 a1( 0,  PARAM_LEFT_CORNER_Y );
 	Vect2 b1( 1e30,  PARAM_LEFT_CORNER_Y );
-	Vect2 a2( dist_min, PARAM_RIGHT_CORNER_Y );
+	Vect2 a2( 0, PARAM_RIGHT_CORNER_Y );
 	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y );
 
 	Vect2 c;
@@ -348,7 +348,7 @@ static float detection_compute_object_on_trajectory(const VectPlan& pos, const s
 			d = abs_to_loc(pos, polyline[i].pt[j]);
 
 			// point c devant le robot et dans le tube
-			if( c.x > dist_min && c.y > a1.y && c.y < a2.y)
+			if( c.x > 0 && c.y > a1.y && c.y < a2.y)
 			{
 				if( c.x < x_min)
 				{
@@ -359,7 +359,7 @@ static float detection_compute_object_on_trajectory(const VectPlan& pos, const s
 			}
 
 			// point d devant le robot et dans le tube
-			if( d.x > dist_min && d.y > a1.y && d.y < a2.y)
+			if( d.x > 0 && d.y > a1.y && d.y < a2.y)
 			{
 				if( d.x < x_min)
 				{
@@ -419,17 +419,17 @@ static float detection_compute_object_on_trajectory(const VectPlan& pos, const s
 	return x_min;
 }
 
-float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b, float dist_min)
+float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b)
 {
 	float x_min = 1e30;
 	float x_min_table = 1e30;
 	Vect2 c;
 	Vect2 d;
-
+#if 0
 	if(type == DETECTION_FULL || type == DETECTION_DYNAMIC_OBJ)
 	{
 		xSemaphoreTake(detection_mutex, portMAX_DELAY);
-		//x_min = detection_compute_object_on_trajectory(pos, detection_object_polyline, detection_num_obj[1], a, b, dist_min); // TODO regrouper obj1 et 2 ?
+		//x_min = detection_compute_object_on_trajectory(pos, detection_object_polyline, detection_num_obj[1], a, b); // TODO regrouper obj1 et 2 ?
 		xSemaphoreGive(detection_mutex);
 	}
 	else
@@ -443,10 +443,10 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 		*a = loc_to_abs(pos, c);
 		*b = loc_to_abs(pos, d);
 	}
-
+#endif
 	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
 	{
-		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d, dist_min);
+		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
 
 		if(x_min_table < x_min)
 		{

@@ -36,6 +36,8 @@ int StateMachine::execute()
 	{
 		currentStateId = wantedStateId;
 		log_format(LOG_INFO, "%s", states[currentStateId].name);
+		states[currentStateId].entry();
+		lastStateId = currentStateId;
 	}
 
 	return 0;

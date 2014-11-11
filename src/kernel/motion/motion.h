@@ -43,6 +43,14 @@ enum motion_trajectory_step
 	MOTION_TRAJECTORY_ROTATE,
 };
 
+enum motion_wanted_state
+{
+	MOTION_WANTED_STATE_UNKNOWN = 0,
+	MOTION_WANTED_STATE_ACTUATOR_KINEMATICS,
+	MOTION_WANTED_STATE_SPEED,
+	MOTION_WANTED_STATE_TRAJECTORY,
+};
+
 enum motion_speed
 {
 	MOTION_SPEED_OK,
@@ -65,6 +73,8 @@ enum motion_trajectory_type
 	MOTION_AXIS_XY,        //!< aller a la position x,y en ligne droite (=> rotation puis avance)
 };
 
+void motion_get_state(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state);
+
 void motion_enable(bool enable);
 
 //!< demande de trajectoire
@@ -85,6 +95,8 @@ void motion_compute() WEAK_MOTION;
 void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
 
 void motion_set_max_driving_current(float maxCurrent);
+
+float motion_find_rotate(float start, float end);
 
 struct motion_cmd_param_arg
 {
