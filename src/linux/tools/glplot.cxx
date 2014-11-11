@@ -888,7 +888,10 @@ void plot_table(Graphique* graph)
 			glColor3f(0.8, 0.8, 0.8);
 			glPushMatrix();
 			glRotatef(90, 1, 0, 0);
+			glDisable(GL_COLOR_MATERIAL);
 			robot3d.draw();
+			glEnable(GL_COLOR_MATERIAL);
+			glDisable(GL_CULL_FACE);
 			glPopMatrix();
 		}
 		else
