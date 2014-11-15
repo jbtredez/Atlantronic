@@ -23,7 +23,8 @@ class Table3d
 		Object3d dispenser;
 		Object3d clapYellow;
 		Object3d clapGreen;
-		Object3d feet;
+		Object3d feetYellow;
+		Object3d feetGreen;
 		Object3d glass;
 		aiVector3D feetPosition[16];
 		int glSelectFeetName[16];

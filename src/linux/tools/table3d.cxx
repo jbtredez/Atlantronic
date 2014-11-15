@@ -6,7 +6,8 @@ bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
 	res &= dispenser.init("media/distributeur.obj");
 	res &= clapYellow.init("media/clap_jaune.obj");
 	res &= clapGreen.init("media/clap_vert.obj");
-	res &= feet.init("media/pied.obj");
+	res &= feetYellow.init("media/pied_jaune.obj");
+	res &= feetGreen.init("media/pied_vert.obj");
 	res &= glass.init("media/verre.obj");
 
 	feetPosition[0] = aiVector3D(-1410, -850, 0);
@@ -130,13 +131,18 @@ void Table3d::drawClap(float x, bool yellow)
 
 void Table3d::drawFeets()
 {
+	Object3d* feet = &feetYellow;
 	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
 	{
+		if( i >= sizeof(feetPosition) / (2*sizeof(feetPosition[0])) )
+		{
+			feet = &feetGreen;
+		}
 		glPushName(glSelectFeetName[i]);
 		glPushMatrix();
-		glTranslatef( -feet.sceneCenter.x + feetPosition[i].x, -feet.sceneCenter.y + feetPosition[i].y, -feet.sceneMin.z + feetPosition[i].z );
-		feet.selected = feetSelected[i];
-		feet.draw();
+		glTranslatef( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z );
+		feet->selected = feetSelected[i];
+		feet->draw();
 		glPopMatrix();
 		glPopName();
 	}

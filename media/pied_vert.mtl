@@ -1,9 +1,9 @@
 # num_materials: 1 
 
 newmtl 1 
-Ka  0.65   0.65   0.65 
-Kd  0.65   0.65   0.65 
-Ks  0.65   0.65   0.65 
+Ka  0   0.33   0
+Kd  0   0.33   0
+Ks  0   0.33   0
 d 1.0
 Tf 1.0
 illum 2

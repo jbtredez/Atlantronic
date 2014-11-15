@@ -11,6 +11,7 @@
 #define PARAM_LEFT_CORNER_Y                    175
 #define PARAM_RIGHT_CORNER_X                   190
 #define PARAM_RIGHT_CORNER_Y                  -175
+#define PARAM_NP_X                            -103
 
 #define DRIVING1_WHEEL_RADIUS       33
 #define DRIVING2_WHEEL_RADIUS       33

@@ -68,8 +68,8 @@ enum
 enum
 {
 	SUBGRAPH_TABLE_POS_ROBOT = 0,
-	SUBGRAPH_TABLE_TEXTURE,
 	SUBGRAPH_TABLE_STATIC_ELM,
+	SUBGRAPH_TABLE_TABLE,
 	SUBGRAPH_TABLE_HOKUYO1,
 	SUBGRAPH_TABLE_HOKUYO2,
 	SUBGRAPH_TABLE_HOKUYO1_SEG,
@@ -104,7 +104,6 @@ enum
 };
 
 static GLuint font_base;
-static GLuint table_texture;
 static char font_name[] = "fixed";
 static int font_height = 0;
 static int font_digit_height = 0;
@@ -126,19 +125,18 @@ static GtkWidget* main_window = NULL;
 static int simulation = 0;
 static char* atlantronicPath;
 static bool glplot_show_legend = false;
-static bool glplot_3d = false;
 static MatrixHomogeneous glplot_view;
 static Table3d table3d;
 static Object3d robot3d;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
+static float glplot_table_scale = 1;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
-static void enable3d(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
@@ -151,6 +149,7 @@ static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg);
 static void simu_go(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
+static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
 static int init_font(GLuint base, char* f);
 static void draw_plus(float x, float y, float rx, float ry);
 static void glPrintf(float x, float y, GLuint base, const char* s, ...);
@@ -199,8 +198,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TEXTURE, "Texture", 0, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TABLE, "Table", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1, "Hokuyo 1", 1, 1, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1_SEG, "Hokuyo 1 - poly", 1, 0, 1, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
@@ -270,6 +269,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mounse_press), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mounse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "scroll-event", G_CALLBACK(mouse_scroll), NULL);
 	g_signal_connect_swapped(G_OBJECT(main_window), "key_press_event", G_CALLBACK(keyboard_press), opengl_window);
 	g_signal_connect_swapped(G_OBJECT(main_window), "key_release_event", G_CALLBACK(keyboard_release), opengl_window);
 
@@ -335,12 +335,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(show_legend), NULL);
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
-
-	menuObj = gtk_check_menu_item_new_with_label("3D");
-	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
-	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(enable3d), NULL);
-	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), TRUE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
 	if(simulation)
@@ -477,14 +471,6 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg)
 	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
 }
 
-static void enable3d(GtkWidget* widget, gpointer arg)
-{
-	(void) widget;
-	(void) arg;
-
-	glplot_3d = ! glplot_3d;
-}
-
 static void init(GtkWidget* widget, gpointer arg)
 {
 	(void) arg;
@@ -497,12 +483,12 @@ static void init(GtkWidget* widget, gpointer arg)
 
 	font_base = glGenLists(256);
 	// la verif ne passe pas sur une vm de virtualbox
-	/*if (!glIsList(font_base))
+	if (!glIsList(font_base))
 	{
 		fprintf(stderr, "my_init(): Out of display lists. - Exiting.\n");
 		exit(-1);
 	}
-	else*/
+	else
 	{
 		int res = init_font(font_base, font_name);
 		if(res != 0)
@@ -517,25 +503,6 @@ static void init(GtkWidget* widget, gpointer arg)
 		graph[i].set_border(10 * font_width, font_height*3);
 	}
 
-	GError *error = NULL;
-	char buffer[1024];
-	snprintf(buffer, sizeof(buffer), "%simg/table_2014.jpg", atlantronicPath);
-	GdkPixbuf *pix = gdk_pixbuf_new_from_file(buffer, &error);
-	if( ! pix )
-	{
-		g_printerr ("Error loading file: #%d %s\n", error->code, error->message);
-		g_error_free (error);
-		exit(-1);
-	}
-
-	glEnable(GL_TEXTURE_2D);
-	glGenTextures(1, &table_texture);
-	glBindTexture(GL_TEXTURE_2D, table_texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), 0, GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, gdk_pixbuf_get_width(pix), gdk_pixbuf_get_height(pix), GL_RGB, GL_UNSIGNED_BYTE, gdk_pixbuf_get_pixels(pix));
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -759,42 +726,26 @@ void plot_table(Graphique* graph)
 	glPushMatrix();
 	glColor3f(0,0,0);
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_TEXTURE] )
+	if(graph->courbes_activated[SUBGRAPH_TABLE_TABLE])
 	{
-		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, table_texture);
-		glBegin(GL_QUADS);
-		glTexCoord2i(1,1); glVertex2f( 1500, -1000);
-		glTexCoord2i(0,1); glVertex2f(-1500, -1000);
-		glTexCoord2i(0,0); glVertex2f(-1500,  1000);
-		glTexCoord2i(1,0); glVertex2f( 1500,  1000);
-		glEnd();
-		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_COLOR_MATERIAL);
+		table3d.draw();
+		glEnable(GL_COLOR_MATERIAL);
+		glDisable(GL_CULL_FACE);
 	}
 
 	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 	{
-		if( glplot_3d )
+		glColor3f(0, 0, 0);
+		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
+		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			glDisable(GL_COLOR_MATERIAL);
-			table3d.draw();
-			glEnable(GL_COLOR_MATERIAL);
-			glDisable(GL_CULL_FACE);
-		}
-		else
-		{
-			glColor3f(0, 0, 0);
-			// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
-			for(i = 0; i < TABLE_OBJ_SIZE; i++)
+			glBegin(GL_LINE_STRIP);
+			for(j = 0; j < table_obj[i].size; j++)
 			{
-				glBegin(GL_LINE_STRIP);
-				for(j = 0; j < table_obj[i].size; j++)
-				{
-					glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
-				}
-				glEnd();
+				glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
 			}
+			glEnd();
 		}
 	}
 
@@ -909,29 +860,28 @@ void plot_table(Graphique* graph)
 
 	glPushName(GL_NAME_OPPONENT);
 	// robot adverse
-	if( glplot_3d )
+	glPushMatrix();
+	glColor3f(1, 0, 0);
+	glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
+	glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
+#if 0
+	glBegin(GL_LINE_STRIP);
+	for(i = 0; i < oponent_robot.size; i++)
 	{
-		glColor3f(0, 1, 0);
-		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 175, 300, 300, 350);
-		glColor3f(0, 0, 0);
-		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 390, 80, 80, 80);
-		glColor3f(1, 1, 0);
-		plot_pave(opponent_robot_pos.x, opponent_robot_pos.y, 470, 80, 80, 80);
+		glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
 	}
-	else
-	{
-		glPushMatrix();
-		glColor3f(1, 0, 0);
-		glTranslatef(opponent_robot_pos.x, opponent_robot_pos.y, 0);
-		glRotated(opponent_robot_pos.theta * 360.0f / (2*M_PI), 0, 0, 1);
-		glBegin(GL_LINE_STRIP);
-		for(i = 0; i < oponent_robot.size; i++)
-		{
-			glVertex2f(oponent_robot.pt[i].x, oponent_robot.pt[i].y);
-		}
-		glEnd();
-		glPopMatrix();
-	}
+	glEnd();
+#endif
+	glPushMatrix();
+	glRotatef(90, 1, 0, 0);
+	glDisable(GL_COLOR_MATERIAL);
+	robot3d.draw();
+	glEnable(GL_COLOR_MATERIAL);
+	glDisable(GL_CULL_FACE);
+	glPopMatrix();
+
+	glPopMatrix();
+
 	glPopName();
 
 	glPushName(GL_NAME_ROBOT);
@@ -943,40 +893,31 @@ void plot_table(Graphique* graph)
 		glPushMatrix();
 		glTranslatef(pos_robot.x, pos_robot.y, 0);
 		glRotatef(pos_robot.theta * 180 / M_PI, 0, 0, 1);
-		if( glplot_3d )
-		{
-			glColor3f(0.8, 0.8, 0.8);
-			glPushMatrix();
-			glRotatef(90, 1, 0, 0);
-			glDisable(GL_COLOR_MATERIAL);
-			robot3d.draw();
-			glEnable(GL_COLOR_MATERIAL);
-			glDisable(GL_CULL_FACE);
-			glPopMatrix();
-		}
-		else
-		{
-			glColor3f(0, 0, 0);
-			glBegin(GL_LINES);
-			glVertex2f(0, 0);
-			glVertex2f(50, 0);
-			glVertex2f(0, 0);
-			glVertex2f(0, 50);
-			glEnd();
 
-			glBegin(GL_LINE_STRIP);
-			/*glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
-			glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
-			glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
-			glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
-			glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);*/
-			glVertex2f(-150, -150);
-			glVertex2f(-150,  150);
-			glVertex2f( 150,  150);
-			glVertex2f( 150, -150);
-			glVertex2f(-150, -150);
-			glEnd();
-		}
+		glColor3f(0, 0, 0);
+		glBegin(GL_LINES);
+		glVertex2f(0, 0);
+		glVertex2f(50, 0);
+		glVertex2f(0, 0);
+		glVertex2f(0, 50);
+		glEnd();
+
+		glBegin(GL_LINE_STRIP);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y);
+		glVertex2f(PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y);
+		glVertex2f(PARAM_NP_X, PARAM_RIGHT_CORNER_Y);
+		glEnd();
+
+		glPushMatrix();
+		glRotatef(90, 1, 0, 0);
+		glDisable(GL_COLOR_MATERIAL);
+		robot3d.draw();
+		glEnable(GL_COLOR_MATERIAL);
+		glDisable(GL_CULL_FACE);
+		glPopMatrix();
+
 		glPopMatrix();
 	}
 	glPopName();
@@ -1203,7 +1144,7 @@ static void drawScene(GLenum mode)
 			gluPickMatrix((GLdouble) mouse_x1, (GLdouble) (viewport[3] - mouse_y1), 5.0, 5.0, viewport);
 		}
 
-		if( glplot_3d && current_graph == GRAPH_TABLE)
+		if( current_graph == GRAPH_TABLE)
 		{
 			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
 		}
@@ -1214,9 +1155,9 @@ static void drawScene(GLenum mode)
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		if( glplot_3d && current_graph == GRAPH_TABLE)
+		if( current_graph == GRAPH_TABLE)
 		{
-			gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1);
+			gluLookAt(0, -1000*glplot_table_scale, 2000*glplot_table_scale, 0, 0, 0, 0, 0, 1);
 			float mat[16];
 			mat[0] = glplot_view.val[0];
 			mat[1] = glplot_view.val[4];
@@ -1240,9 +1181,9 @@ static void drawScene(GLenum mode)
 			glEnable(GL_DEPTH_TEST);
 
 			//GLfloat global_ambient[] = { 0.5, 0.5, 0.5, 1 };
-			GLfloat ambientLight[] = { 0.4, 0.4, 0.4, 1 };
-			GLfloat diffuseLight[] = { 0.6, 0.6, 0.6, 1 };
-			GLfloat specularLight[] = { 1, 1, 1, 1 };
+			GLfloat ambientLight[] = { 0.3, 0.3, 0.3, 1 };
+			GLfloat diffuseLight[] = { 0.4, 0.4, 0.4, 1 };
+			GLfloat specularLight[] = { 0.4, 0.4, 0.4, 1 };
 			GLfloat light_position0[] = { 1500, 1000, 1000, 1 };
 			GLfloat light_direction0[] = { -1500, -1000, -1000, 0};
 			GLfloat light_position1[] = { -1500, 1000, 1000, 1 };
@@ -1447,9 +1388,12 @@ static int init_font(GLuint base, char* f)
 
 static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 {
-	if(event->button == 1)
+	if(event->button == 1 )
 	{
-		drawing_zoom_selection = 1;
+		if( current_graph != GRAPH_TABLE )
+		{
+			drawing_zoom_selection = 1;
+		}
 		mouse_x1 = event->x;
 		mouse_y1 = event->y;
 		mouse_x2 = mouse_x1;
@@ -1491,7 +1435,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 
 static void mounse_release(GtkWidget* widget, GdkEventButton* event)
 {
-	if(event->button == 1)
+	if(event->button == 1 && current_graph != GRAPH_TABLE)
 	{
 		if( drawing_zoom_selection && mouse_x1 != mouse_x2 && mouse_y1 != mouse_y2)
 		{
@@ -1576,6 +1520,23 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			mouse_x1 = event->x;
 			mouse_y1 = event->y;
 			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
+	}
+}
+
+static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event)
+{
+	if(current_graph == GRAPH_TABLE)
+	{
+		if( event->direction == GDK_SCROLL_UP )
+		{
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+			glplot_table_scale *= 1.25;
+		}
+		else if( event->direction == GDK_SCROLL_DOWN )
+		{
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+			glplot_table_scale /= 1.25;
 		}
 	}
 }
