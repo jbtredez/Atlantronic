@@ -117,6 +117,10 @@ static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
 static float mouse_y2 = 0;
+static float mouse_scroll_x1 = 0;
+static float mouse_scroll_y1 = 0;
+static float mouse_scroll_x2 = 0;
+static float mouse_scroll_y2 = 0;
 static int drawing_zoom_selection = 0;
 static int move_oponent_robot = 0;
 static int current_graph = GRAPH_TABLE;
@@ -1399,6 +1403,13 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 		mouse_x2 = mouse_x1;
 		mouse_y2 = mouse_y1;
 	}
+	else if(event->button == 2)
+	{
+		mouse_scroll_x1 = event->x;
+		mouse_scroll_y1 = event->y;
+		mouse_scroll_x2 = mouse_scroll_x1;
+		mouse_scroll_y2 = mouse_scroll_y1;
+	}
 	else if(event->button == 3 && current_graph == GRAPH_TABLE)
 	{
 		Graphique* gr = &graph[current_graph];
@@ -1449,6 +1460,13 @@ static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 		mouse_y2 = 0;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 	}
+	else if(event->button == 2)
+	{
+		mouse_scroll_x1 = 0;
+		mouse_scroll_y1 = 0;
+		mouse_scroll_x2 = 0;
+		mouse_scroll_y2 = 0;
+	}
 	else if(event->button == 3)
 	{
 		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
@@ -1490,6 +1508,19 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 		mouse_x2 = event->x;
 		mouse_y2 = event->y;
 		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	}
+	else if(event->state & GDK_BUTTON2_MASK)
+	{
+		if( current_graph == GRAPH_TABLE )
+		{
+			mouse_scroll_x2 = event->x;
+			mouse_scroll_y2 = event->y;
+			glplot_view.rotateX((mouse_scroll_y2 - mouse_scroll_y1) / graph[current_graph].screen_height);
+			glplot_view.rotateZ((mouse_scroll_x2 - mouse_scroll_x1) / graph[current_graph].screen_width);
+			mouse_scroll_x1 = mouse_scroll_x2;
+			mouse_scroll_y1 = mouse_scroll_y2;
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
 	}
 	else if(event->state & GDK_BUTTON3_MASK)
 	{
