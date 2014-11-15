@@ -141,8 +141,8 @@ static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
 static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
 static void drawScene(GLenum mode);
-static void mounse_press(GtkWidget* widget, GdkEventButton* event);
-static void mounse_release(GtkWidget* widget, GdkEventButton* event);
+static void mouse_press(GtkWidget* widget, GdkEventButton* event);
+static void mouse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg);
@@ -266,8 +266,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect_after(G_OBJECT(opengl_window), "realize", G_CALLBACK(init), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "configure_event", G_CALLBACK(config), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(display), NULL);
-	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mounse_press), NULL);
-	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mounse_release), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mouse_press), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mouse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "scroll-event", G_CALLBACK(mouse_scroll), NULL);
 	g_signal_connect_swapped(G_OBJECT(main_window), "key_press_event", G_CALLBACK(keyboard_press), opengl_window);
@@ -1386,7 +1386,7 @@ static int init_font(GLuint base, char* f)
 	return 0;
 }
 
-static void mounse_press(GtkWidget* widget, GdkEventButton* event)
+static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1 )
 	{
@@ -1433,7 +1433,7 @@ static void mounse_press(GtkWidget* widget, GdkEventButton* event)
 	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 }
 
-static void mounse_release(GtkWidget* widget, GdkEventButton* event)
+static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1 && current_graph != GRAPH_TABLE)
 	{
