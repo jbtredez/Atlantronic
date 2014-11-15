@@ -7,6 +7,7 @@ Object3d::Object3d()
 {
 	scene = NULL;
 	glListId = 0;
+	selected = false;
 }
 
 bool Object3d::init(const char* filename)
@@ -104,12 +105,20 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	{
 		color4ToFloat4(&diffuse, c);
 	}
+
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, c);
 
-	setFloat4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-	if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular) == AI_SUCCESS)
+	if( ! selected )
 	{
-		color4ToFloat4(&specular, c);
+		setFloat4(c, 0.0f, 0.0f, 0.0f, 1.0f);
+		if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular) == AI_SUCCESS)
+		{
+			color4ToFloat4(&specular, c);
+		}
+	}
+	else
+	{
+		setFloat4(c, 0.0f, 0.2f, 0.8f, 1.0f);
 	}
 	glMaterialfv(GL_FRONT, GL_SPECULAR, c);
 
@@ -229,18 +238,25 @@ void Object3d::render(const struct aiNode* nd)
 
 void Object3d::draw()
 {
-	if( ! glListId )
+	if( ! selected )
 	{
-		glListId = glGenLists(1);
-		if( glListId )
+		if( ! glListId )
 		{
-			glNewList(glListId, GL_COMPILE_AND_EXECUTE);
-			render(scene->mRootNode);
-			glEndList();
+			glListId = glGenLists(1);
+			if( glListId )
+			{
+				glNewList(glListId, GL_COMPILE_AND_EXECUTE);
+				render(scene->mRootNode);
+				glEndList();
+			}
+		}
+		else
+		{
+			glCallList(glListId);
 		}
 	}
 	else
 	{
-		glCallList(glListId);
+		render(scene->mRootNode);
 	}
 }

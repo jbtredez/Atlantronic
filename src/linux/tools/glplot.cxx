@@ -28,6 +28,35 @@
 // hokuyo => 10fps. On met juste un peu plus
 #define MAX_FPS    11
 #define QEMU_OPPONENT_ID   (TABLE_OBJ_SIZE+1)
+
+enum
+{
+	GL_NAME_NONE = 0,
+	GL_NAME_ROBOT,
+	GL_NAME_OPPONENT,
+	GL_NAME_FEET_0,
+	GL_NAME_FEET_1,
+	GL_NAME_FEET_2,
+	GL_NAME_FEET_3,
+	GL_NAME_FEET_4,
+	GL_NAME_FEET_5,
+	GL_NAME_FEET_6,
+	GL_NAME_FEET_7,
+	GL_NAME_FEET_8,
+	GL_NAME_FEET_9,
+	GL_NAME_FEET_10,
+	GL_NAME_FEET_11,
+	GL_NAME_FEET_12,
+	GL_NAME_FEET_13,
+	GL_NAME_FEET_14,
+	GL_NAME_FEET_15,
+	GL_NAME_GLASS_0,
+	GL_NAME_GLASS_1,
+	GL_NAME_GLASS_2,
+	GL_NAME_GLASS_3,
+	GL_NAME_GLASS_4,
+};
+
 enum
 {
 	GRAPH_TABLE = 0,
@@ -112,7 +141,8 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg);
 static void enable3d(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
-static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
+static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
+static void drawScene(GLenum mode);
 static void mounse_press(GtkWidget* widget, GdkEventButton* event);
 static void mounse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
@@ -236,7 +266,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	g_signal_connect_after(G_OBJECT(opengl_window), "realize", G_CALLBACK(init), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "configure_event", G_CALLBACK(config), NULL);
-	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(afficher), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(display), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mounse_press), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mounse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
@@ -514,7 +544,34 @@ static void init(GtkWidget* widget, gpointer arg)
 	glEnable(GL_COLOR_MATERIAL);
 	glShadeModel(GL_SMOOTH);
 
-	if( ! table3d.init() )
+	int glSelectFeetName[16] =
+	{
+		GL_NAME_FEET_0,
+		GL_NAME_FEET_1,
+		GL_NAME_FEET_2,
+		GL_NAME_FEET_3,
+		GL_NAME_FEET_4,
+		GL_NAME_FEET_5,
+		GL_NAME_FEET_6,
+		GL_NAME_FEET_7,
+		GL_NAME_FEET_8,
+		GL_NAME_FEET_9,
+		GL_NAME_FEET_10,
+		GL_NAME_FEET_11,
+		GL_NAME_FEET_12,
+		GL_NAME_FEET_13,
+		GL_NAME_FEET_14,
+		GL_NAME_FEET_15,
+	};
+	int glSelectGlassName[5] =
+	{
+		GL_NAME_GLASS_0,
+		GL_NAME_GLASS_1,
+		GL_NAME_GLASS_2,
+		GL_NAME_GLASS_3,
+		GL_NAME_GLASS_4,
+	};
+	if( ! table3d.init(glSelectFeetName, glSelectGlassName) )
 	{
 		fprintf(stderr, "table3d.init() error - Exiting.\n");
 		exit(-1);
@@ -850,6 +907,7 @@ void plot_table(Graphique* graph)
 		}
 	}
 
+	glPushName(GL_NAME_OPPONENT);
 	// robot adverse
 	if( glplot_3d )
 	{
@@ -874,7 +932,9 @@ void plot_table(Graphique* graph)
 		glEnd();
 		glPopMatrix();
 	}
+	glPopName();
 
+	glPushName(GL_NAME_ROBOT);
 	// affichage du robot
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
 	{
@@ -919,7 +979,7 @@ void plot_table(Graphique* graph)
 		}
 		glPopMatrix();
 	}
-
+	glPopName();
 	glPopMatrix();
 }
 
@@ -1044,8 +1104,44 @@ void plot_speed_dist(Graphique* graph)
 	}
 }
 
-static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
+void processHits(GLint hits, GLuint buffer[])
 {
+	GLuint names, *ptr;
+
+	ptr = (GLuint *) buffer;
+	for(int i = 0; i < hits; i++)
+	{
+		names = *ptr;
+		ptr+= 3;
+		if( names )
+		{
+			ptr += names - 1;
+			int name_id = *ptr;
+			if( name_id >= GL_NAME_FEET_0 && name_id <= GL_NAME_FEET_15)
+			{
+				table3d.unselectAll();
+				table3d.selectFeet(name_id - GL_NAME_FEET_0);
+			}
+			else if( name_id >= GL_NAME_GLASS_0 && name_id <= GL_NAME_GLASS_4)
+			{
+				table3d.unselectAll();
+				table3d.selectGlass(name_id - GL_NAME_GLASS_0);
+			}
+#if 0
+			if( name_id != GL_NAME_NONE )
+			{
+				printf("name %d\n", name_id);
+			}
+#endif
+			ptr++;
+		}
+	}
+}
+
+static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
+{
+	static GLuint openglSelectBuffer[1024];
+
 	(void) ev;
 	(void) arg;
 	GdkGLContext* glcontext = gtk_widget_get_gl_context(widget);
@@ -1060,6 +1156,35 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	glClearColor(1,1,1,1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	drawScene(GL_RENDER);
+
+	glSelectBuffer(sizeof(openglSelectBuffer)/sizeof(openglSelectBuffer[0]), openglSelectBuffer);
+	glRenderMode(GL_SELECT);
+	glInitNames();
+	glPushName(GL_NAME_NONE);
+
+	drawScene(GL_SELECT);
+	GLint hits = glRenderMode(GL_RENDER);
+	processHits(hits, openglSelectBuffer);
+
+	if(gdk_gl_drawable_is_double_buffered(gldrawable))
+	{
+		gdk_gl_drawable_swap_buffers(gldrawable);
+	}
+	else
+	{
+		glFlush();
+	}
+
+	glDisable(GL_COLOR_LOGIC_OP);
+	glDepthFunc(GL_LESS);
+	gdk_gl_drawable_gl_end(gldrawable);
+
+	return TRUE;
+}
+
+static void drawScene(GLenum mode)
+{
 	int res = pthread_mutex_lock(&robotItf->mutex);
 	if(res == 0)
 	{
@@ -1070,18 +1195,26 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
-		if( ! glplot_3d )
+
+		if( mode == GL_SELECT)
 		{
-			glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
+			GLint viewport[4];;
+			glGetIntegerv(GL_VIEWPORT, viewport);
+			gluPickMatrix((GLdouble) mouse_x1, (GLdouble) (viewport[3] - mouse_y1), 5.0, 5.0, viewport);
+		}
+
+		if( glplot_3d && current_graph == GRAPH_TABLE)
+		{
+			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
 		}
 		else
 		{
-			gluPerspective(70, (float)graph[current_graph].screen_width/(float)graph[current_graph].screen_height, 1, 10000);
+			glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
 		}
 
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		if( glplot_3d )
+		if( glplot_3d && current_graph == GRAPH_TABLE)
 		{
 			gluLookAt(0, -1000, 2000, 0, 0, 0, 0, 0, 1);
 			float mat[16];
@@ -1275,19 +1408,6 @@ static gboolean afficher(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		glVertex2f(mouse_x1, mouse_y1);
 		glEnd();
 	}
-
-	if(gdk_gl_drawable_is_double_buffered(gldrawable))
-	{
-		gdk_gl_drawable_swap_buffers(gldrawable);
-	}
-	else
-	{
-		glFlush();
-	}
-
-	gdk_gl_drawable_gl_end(gldrawable);
-
-	return TRUE;
 }
 
 static int init_font(GLuint base, char* f)

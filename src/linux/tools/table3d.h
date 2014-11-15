@@ -6,8 +6,12 @@
 class Table3d
 {
 	public:
-		bool init();
+		bool init(int glSelectFeetName[16], int glSelectGlassName[5]);
 		void draw();
+
+		void unselectAll();
+		void selectFeet(unsigned int id);
+		void selectGlass(unsigned int id);
 
 	protected:
 		void drawDispenser(float x);
@@ -22,7 +26,11 @@ class Table3d
 		Object3d feet;
 		Object3d glass;
 		aiVector3D feetPosition[16];
+		int glSelectFeetName[16];
+		bool feetSelected[16];
 		aiVector3D glassPosition[5];
+		int glSelectGlassName[5];
+		bool glassSelected[5];
 };
 
 #endif

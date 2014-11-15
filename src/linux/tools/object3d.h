@@ -21,6 +21,7 @@ class Object3d
 		aiVector3D sceneMin;
 		aiVector3D sceneMax;
 		aiVector3D sceneCenter;
+		bool selected;
 
 	protected:
 		void getBoundingBoxForNode(const aiNode* nd, aiMatrix4x4* trafo);

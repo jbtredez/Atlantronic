@@ -1,6 +1,6 @@
 #include "table3d.h"
 
-bool Table3d::init()
+bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
 {
 	bool res = table.init("media/table2015.obj");
 	res &= dispenser.init("media/distributeur.obj");
@@ -33,9 +33,42 @@ bool Table3d::init()
 	glassPosition[3] = aiVector3D(  590,  170, 0);
 	glassPosition[4] = aiVector3D( 1250, -750, 0);
 
+	for(unsigned int i = 0; i < sizeof(feetSelected) / sizeof(feetSelected[0]); i++)
+	{
+		feetSelected[i] = 0;
+		glSelectFeetName[i] = _glSelectFeetName[i];
+	}
+
+	for(unsigned int i = 0; i < sizeof(glassSelected) / sizeof(glassSelected[0]); i++)
+	{
+		glassSelected[i] = 0;
+		glSelectGlassName[i] = _glSelectGlassName[i];
+	}
+
 	return res;
 }
 
+void Table3d::selectFeet(unsigned int id)
+{
+	if( id < sizeof(feetSelected) / sizeof(feetSelected[0]))
+	{
+		feetSelected[id] = true;
+	}
+}
+
+void Table3d::selectGlass(unsigned int id)
+{
+	if( id < sizeof(glassSelected) / sizeof(glassSelected[0]))
+	{
+		glassSelected[id] = true;
+	}
+}
+
+void Table3d::unselectAll()
+{
+	memset(feetSelected, 0, sizeof(feetSelected));
+	memset(glassSelected, 0, sizeof(glassSelected));
+}
 void Table3d::draw()
 {
 	glPushMatrix();
@@ -99,10 +132,13 @@ void Table3d::drawFeets()
 {
 	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
 	{
+		glPushName(glSelectFeetName[i]);
 		glPushMatrix();
 		glTranslatef( -feet.sceneCenter.x + feetPosition[i].x, -feet.sceneCenter.y + feetPosition[i].y, -feet.sceneMin.z + feetPosition[i].z );
+		feet.selected = feetSelected[i];
 		feet.draw();
 		glPopMatrix();
+		glPopName();
 	}
 }
 
@@ -110,9 +146,12 @@ void Table3d::drawGlass()
 {
 	for(unsigned int i = 0; i < sizeof(glassPosition) / sizeof(glassPosition[0]); i++)
 	{
+		glPushName(glSelectGlassName[i]);
 		glPushMatrix();
 		glTranslatef( -glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z );
+		glass.selected = glassSelected[i];
 		glass.draw();
 		glPopMatrix();
+		glPopName();
 	}
 }
