@@ -100,10 +100,17 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	int wireframe;
 	unsigned int max;
 
-	setFloat4(c, 0.8f, 0.8f, 0.8f, 1.0f);
-	if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == AI_SUCCESS)
+	if( ! selected )
 	{
-		color4ToFloat4(&diffuse, c);
+		setFloat4(c, 0.8f, 0.8f, 0.8f, 1.0f);
+		if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == AI_SUCCESS)
+		{
+			color4ToFloat4(&diffuse, c);
+		}
+	}
+	else
+	{
+		setFloat4(c, 0.0f, 0.2f, 1, 1.0f);
 	}
 
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, c);
@@ -118,7 +125,7 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	}
 	else
 	{
-		setFloat4(c, 0.0f, 0.2f, 0.8f, 1.0f);
+		setFloat4(c, 0.0f, 0.2f, 1, 1.0f);
 	}
 	glMaterialfv(GL_FRONT, GL_SPECULAR, c);
 

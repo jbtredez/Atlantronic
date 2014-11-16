@@ -12,6 +12,7 @@ class Table3d
 		void unselectAll();
 		void selectFeet(unsigned int id);
 		void selectGlass(unsigned int id);
+		void moveSelected(float dx, float dy);
 
 	protected:
 		void drawDispenser(float x);

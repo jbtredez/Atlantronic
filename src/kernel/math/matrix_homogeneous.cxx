@@ -24,6 +24,37 @@ void MatrixHomogeneous::translate(float x, float y, float z)
 	val[11] += val[8] * x + val[9] * y + val[10] * z;
 }
 
+void MatrixHomogeneous::scale(float s)
+{
+	for(int i = 0; i < 12; i++)
+	{
+		val[i] *= s;
+	}
+}
+
+MatrixHomogeneous MatrixHomogeneous::invert()
+{
+	MatrixHomogeneous m;
+
+	// rotation R2 = Rt
+	m.val[0] = val[0];
+	m.val[1] = val[4];
+	m.val[2] = val[8];
+	m.val[4] = val[1];
+	m.val[5] = val[5];
+	m.val[6] = val[9];
+	m.val[8] = val[2];
+	m.val[9] = val[6];
+	m.val[10] = val[10];
+
+	// translation T2 = -R2 * T
+	m.val[3] = m.val[0] * val[3] + m.val[1] * val[7] + m.val[2] * val[11];
+	m.val[7] = m.val[4] * val[3] + m.val[5] * val[7] + m.val[6] * val[11];
+	m.val[11] = m.val[8] * val[3] + m.val[9] * val[7] + m.val[10] * val[11];
+
+	return m;
+}
+
 void MatrixHomogeneous::rotateX(float theta)
 {
 	float c = cosf(theta);

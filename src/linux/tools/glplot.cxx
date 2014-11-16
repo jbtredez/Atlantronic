@@ -103,6 +103,10 @@ enum
 	SUBGRAPH_MOTION_NUM,
 };
 
+#define GLPLOT_CAM_X          0
+#define GLPLOT_CAM_Y          0
+#define GLPLOT_CAM_Z       2800
+
 static GLuint font_base;
 static char font_name[] = "fixed";
 static int font_height = 0;
@@ -122,7 +126,6 @@ static float mouse_scroll_y1 = 0;
 static float mouse_scroll_x2 = 0;
 static float mouse_scroll_y2 = 0;
 static int drawing_zoom_selection = 0;
-static int move_oponent_robot = 0;
 static int current_graph = GRAPH_TABLE;
 static GtkWidget* opengl_window = NULL;
 static GtkWidget* main_window = NULL;
@@ -132,10 +135,12 @@ static bool glplot_show_legend = false;
 static MatrixHomogeneous glplot_view;
 static Table3d table3d;
 static Object3d robot3d;
+static Object3d opponentRobot3d;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
-static float glplot_table_scale = 1;
+GLdouble table_modelview[16];
+GLdouble table_projection[16];
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -514,6 +519,8 @@ static void init(GtkWidget* widget, gpointer arg)
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	glShadeModel(GL_SMOOTH);
+	glplot_view.rotateX(-M_PI/6);
+	glplot_view.scale(1/1.25);
 
 	int glSelectFeetName[16] =
 	{
@@ -550,7 +557,13 @@ static void init(GtkWidget* widget, gpointer arg)
 
 	if( ! robot3d.init("media/robot2011.3ds") )
 	{
-		fprintf(stderr, "table3d.init() error - Exiting.\n");
+		fprintf(stderr, "robot2011.init() error - Exiting.\n");
+		exit(-1);
+	}
+
+	if( ! opponentRobot3d.init("media/robot2011.3ds") )
+	{
+		fprintf(stderr, "opponentRobot3d.init() error - Exiting.\n");
 		exit(-1);
 	}
 
@@ -879,7 +892,7 @@ void plot_table(Graphique* graph)
 	glPushMatrix();
 	glRotatef(90, 1, 0, 0);
 	glDisable(GL_COLOR_MATERIAL);
-	robot3d.draw();
+	opponentRobot3d.draw();
 	glEnable(GL_COLOR_MATERIAL);
 	glDisable(GL_CULL_FACE);
 	glPopMatrix();
@@ -1052,7 +1065,8 @@ void plot_speed_dist(Graphique* graph)
 void processHits(GLint hits, GLuint buffer[])
 {
 	GLuint names, *ptr;
-
+	table3d.unselectAll();
+	opponentRobot3d.selected = false;
 	ptr = (GLuint *) buffer;
 	for(int i = 0; i < hits; i++)
 	{
@@ -1064,13 +1078,15 @@ void processHits(GLint hits, GLuint buffer[])
 			int name_id = *ptr;
 			if( name_id >= GL_NAME_FEET_0 && name_id <= GL_NAME_FEET_15)
 			{
-				table3d.unselectAll();
 				table3d.selectFeet(name_id - GL_NAME_FEET_0);
 			}
 			else if( name_id >= GL_NAME_GLASS_0 && name_id <= GL_NAME_GLASS_4)
 			{
-				table3d.unselectAll();
 				table3d.selectGlass(name_id - GL_NAME_GLASS_0);
+			}
+			else if( name_id == GL_NAME_OPPONENT )
+			{
+				opponentRobot3d.selected = true;
 			}
 #if 0
 			if( name_id != GL_NAME_NONE )
@@ -1085,8 +1101,6 @@ void processHits(GLint hits, GLuint buffer[])
 
 static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 {
-	static GLuint openglSelectBuffer[1024];
-
 	(void) ev;
 	(void) arg;
 	GdkGLContext* glcontext = gtk_widget_get_gl_context(widget);
@@ -1103,15 +1117,6 @@ static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 	drawScene(GL_RENDER);
 
-	glSelectBuffer(sizeof(openglSelectBuffer)/sizeof(openglSelectBuffer[0]), openglSelectBuffer);
-	glRenderMode(GL_SELECT);
-	glInitNames();
-	glPushName(GL_NAME_NONE);
-
-	drawScene(GL_SELECT);
-	GLint hits = glRenderMode(GL_RENDER);
-	processHits(hits, openglSelectBuffer);
-
 	if(gdk_gl_drawable_is_double_buffered(gldrawable))
 	{
 		gdk_gl_drawable_swap_buffers(gldrawable);
@@ -1121,8 +1126,6 @@ static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		glFlush();
 	}
 
-	glDisable(GL_COLOR_LOGIC_OP);
-	glDepthFunc(GL_LESS);
 	gdk_gl_drawable_gl_end(gldrawable);
 
 	return TRUE;
@@ -1161,25 +1164,14 @@ static void drawScene(GLenum mode)
 		glLoadIdentity();
 		if( current_graph == GRAPH_TABLE)
 		{
-			gluLookAt(0, -1000*glplot_table_scale, 2000*glplot_table_scale, 0, 0, 0, 0, 0, 1);
-			float mat[16];
-			mat[0] = glplot_view.val[0];
-			mat[1] = glplot_view.val[4];
-			mat[2] = glplot_view.val[8];
-			mat[3] = 0;
-			mat[4] = glplot_view.val[1];
-			mat[5] = glplot_view.val[5];
-			mat[6] = glplot_view.val[9];
-			mat[7] = 0;
-			mat[8] = glplot_view.val[2];
-			mat[9] = glplot_view.val[6];
-			mat[10] = glplot_view.val[10];
-			mat[11] = 0;
-			mat[12] = glplot_view.val[3];
-			mat[13] = glplot_view.val[7];
-			mat[14] = glplot_view.val[11];
-			mat[15] = 1;
-			glMultMatrixf(mat);
+			MatrixHomogeneous m = glplot_view.invert();
+			float ax = m.val[3] + m.val[0] * GLPLOT_CAM_X + m.val[1] * GLPLOT_CAM_Y + m.val[2] * GLPLOT_CAM_Z;
+			float ay = m.val[7] + m.val[4] * GLPLOT_CAM_X + m.val[5] * GLPLOT_CAM_Y + m.val[6] * GLPLOT_CAM_Z;
+			float az = m.val[11] + m.val[8] * GLPLOT_CAM_X + m.val[9] * GLPLOT_CAM_Y + m.val[10] * GLPLOT_CAM_Z;
+
+			gluLookAt(ax, ay, az, 0, 0, 0, 0, 1, 0);
+			glGetDoublev( GL_MODELVIEW_MATRIX, table_modelview );
+			glGetDoublev( GL_PROJECTION_MATRIX, table_projection );
 
 			glEnable(GL_LIGHTING);
 			glEnable(GL_DEPTH_TEST);
@@ -1392,6 +1384,8 @@ static int init_font(GLuint base, char* f)
 
 static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 {
+	static GLuint openglSelectBuffer[1024];
+
 	if(event->button == 1 )
 	{
 		if( current_graph != GRAPH_TABLE )
@@ -1402,6 +1396,15 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 		mouse_y1 = event->y;
 		mouse_x2 = mouse_x1;
 		mouse_y2 = mouse_y1;
+
+		glSelectBuffer(sizeof(openglSelectBuffer)/sizeof(openglSelectBuffer[0]), openglSelectBuffer);
+		glRenderMode(GL_SELECT);
+		glInitNames();
+		glPushName(GL_NAME_NONE);
+
+		drawScene(GL_SELECT);
+		GLint hits = glRenderMode(GL_RENDER);
+		processHits(hits, openglSelectBuffer);
 	}
 	else if(event->button == 2)
 	{
@@ -1409,33 +1412,6 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 		mouse_scroll_y1 = event->y;
 		mouse_scroll_x2 = mouse_scroll_x1;
 		mouse_scroll_y2 = mouse_scroll_y1;
-	}
-	else if(event->button == 3 && current_graph == GRAPH_TABLE)
-	{
-		Graphique* gr = &graph[current_graph];
-		float xrange = gr->roi_xmax - gr->roi_xmin;
-		float yrange = gr->roi_ymax - gr->roi_ymin;
-
-		float x1 = gr->roi_xmin + (event->x - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
-		float y1 = gr->roi_ymin + (event->y - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
-
-		double dx = x1 - opponent_robot_pos.x;
-		double dy = -y1 - opponent_robot_pos.y;
-
-		// on verifie qu'on clic a peu pres sur le robot
-		if( sqrt(dx*dx+dy*dy) < OPPONENT_PERIMETER )
-		{
-			move_oponent_robot = 1;
-			mouse_x1 = event->x;
-			mouse_y1 = event->y;
-			mouse_x2 = mouse_x1;
-			mouse_y2 = mouse_y1;
-		}
-		else
-		{
-			// c'est pas un robot, on reset la roi
-			graph[current_graph].reset_roi();
-		}
 	}
 	else
 	{
@@ -1467,38 +1443,33 @@ static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 		mouse_scroll_x2 = 0;
 		mouse_scroll_y2 = 0;
 	}
-	else if(event->button == 3)
-	{
-		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
-		{
-			Graphique* gr = &graph[current_graph];
+}
 
-			float xrange = gr->roi_xmax - gr->roi_xmin;
-			float yrange = gr->roi_ymax - gr->roi_ymin;
+VectPlan projectMouseOnTable(int x, int y)
+{
+	VectPlan posTable;
+	GLint viewport[4];
+	GLdouble posX, posY, posZ;
+	GLfloat winX, winY;
 
-			float x1 = (mouse_x1 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
-			float x2 = (mouse_x2 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
-			float y1 = (mouse_y1 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
-			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
+	glGetIntegerv( GL_VIEWPORT, viewport );
 
-			// on le met a sa position de depart
-			Vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
-			VectPlan delta(x2 - x1, y1 - y2, 0);
-			opponent_robot_pos.x += delta.x;
-			opponent_robot_pos.y += delta.y;
-			if(simulation)
-			{
-				qemu->move_object(QEMU_OPPONENT_ID, origin, delta);
-			}
+	winX = (float)x;
+	winY = (float)viewport[3] - (float)y;
 
-			move_oponent_robot = 0;
-			mouse_x1 = 0;
-			mouse_y1 = 0;
-			mouse_x2 = 0;
-			mouse_y2 = 0;
-			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
-		}
-	}
+	gluUnProject( winX, winY, 0, table_modelview, table_projection, viewport, &posX, &posY, &posZ);
+
+	// calcul de l'intersection entre la droite AB (A = position camera, B = (posX, posY, posZ) avec le plan z=0
+	MatrixHomogeneous m = glplot_view.invert();
+	float ax = m.val[3] + m.val[0] * GLPLOT_CAM_X + m.val[1] * GLPLOT_CAM_Y + m.val[2] * GLPLOT_CAM_Z;
+	float ay = m.val[7] + m.val[4] * GLPLOT_CAM_X + m.val[5] * GLPLOT_CAM_Y + m.val[6] * GLPLOT_CAM_Z;
+	float az = m.val[11] + m.val[8] * GLPLOT_CAM_X + m.val[9] * GLPLOT_CAM_Y + m.val[10] * GLPLOT_CAM_Z;
+
+	float t = -az / (posZ - az);
+	posTable.x = t * (posX - ax) + ax;
+	posTable.y = t * (posY - ay) + ay;
+	posTable.theta = 0;
+	return posTable;
 }
 
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
@@ -1507,7 +1478,27 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 	{
 		mouse_x2 = event->x;
 		mouse_y2 = event->y;
-		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		if(current_graph == GRAPH_TABLE)
+		{
+			VectPlan p1 = projectMouseOnTable(mouse_x1, mouse_y1);
+			VectPlan p2 = projectMouseOnTable(mouse_x2, mouse_y2);
+			VectPlan delta = p2 - p1;
+
+			if( opponentRobot3d.selected )
+			{
+				opponent_robot_pos = opponent_robot_pos + delta;
+				if(simulation)
+				{
+					Vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
+					qemu->move_object(QEMU_OPPONENT_ID, origin, delta);
+				}
+			}
+			table3d.moveSelected(delta.x, delta.y);
+
+			mouse_x1 = mouse_x2;
+			mouse_y1 = mouse_y2;
+			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		}
 	}
 	else if(event->state & GDK_BUTTON2_MASK)
 	{
@@ -1522,37 +1513,6 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 		}
 	}
-	else if(event->state & GDK_BUTTON3_MASK)
-	{
-		mouse_x2 = event->x;
-		mouse_y2 = event->y;
-
-		if(current_graph == GRAPH_TABLE && move_oponent_robot == 1)
-		{
-			Graphique* gr = &graph[current_graph];
-
-			float xrange = gr->roi_xmax - gr->roi_xmin;
-			float yrange = gr->roi_ymax - gr->roi_ymin;
-
-			float x1 = (mouse_x1 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
-			float x2 = (mouse_x2 - gr->bordure_pixel_x) / (gr->screen_width - 2 * gr->bordure_pixel_x) * xrange;
-			float y1 = (mouse_y1 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
-			float y2 = (mouse_y2 - gr->bordure_pixel_y) / (gr->screen_height - 2 * gr->bordure_pixel_y) * yrange;
-
-			// on le met a sa position de depart
-			Vect2 origin(opponent_robot_pos.x, opponent_robot_pos.y);
-			VectPlan delta(x2 - x1, y1 - y2, 0);
-			opponent_robot_pos.x += delta.x;
-			opponent_robot_pos.y += delta.y;
-			if(simulation)
-			{
-				qemu->move_object(QEMU_OPPONENT_ID, origin, delta);
-			}
-			mouse_x1 = event->x;
-			mouse_y1 = event->y;
-			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
-		}
-	}
 }
 
 static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event)
@@ -1562,12 +1522,12 @@ static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event)
 		if( event->direction == GDK_SCROLL_UP )
 		{
 			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
-			glplot_table_scale *= 1.25;
+			glplot_view.scale(1.25);
 		}
 		else if( event->direction == GDK_SCROLL_DOWN )
 		{
 			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
-			glplot_table_scale /= 1.25;
+			glplot_view.scale(1/1.25);
 		}
 	}
 }

@@ -36,13 +36,13 @@ bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
 
 	for(unsigned int i = 0; i < sizeof(feetSelected) / sizeof(feetSelected[0]); i++)
 	{
-		feetSelected[i] = 0;
+		feetSelected[i] = false;
 		glSelectFeetName[i] = _glSelectFeetName[i];
 	}
 
 	for(unsigned int i = 0; i < sizeof(glassSelected) / sizeof(glassSelected[0]); i++)
 	{
-		glassSelected[i] = 0;
+		glassSelected[i] = false;
 		glSelectGlassName[i] = _glSelectGlassName[i];
 	}
 
@@ -70,6 +70,29 @@ void Table3d::unselectAll()
 	memset(feetSelected, 0, sizeof(feetSelected));
 	memset(glassSelected, 0, sizeof(glassSelected));
 }
+
+void Table3d::moveSelected(float dx, float dy)
+{
+	for(unsigned int i = 0; i < sizeof(feetSelected) / sizeof(feetSelected[0]); i++)
+	{
+		if( feetSelected[i] )
+		{
+			feetPosition[i].x += dx;
+			feetPosition[i].y += dy;
+		}
+	}
+
+	for(unsigned int i = 0; i < sizeof(glassSelected) / sizeof(glassSelected[0]); i++)
+	{
+		if( glassSelected[i] )
+		{
+			glassPosition[i].x += dx;
+			glassPosition[i].y += dy;
+		}
+	}
+
+}
+
 void Table3d::draw()
 {
 	glPushMatrix();

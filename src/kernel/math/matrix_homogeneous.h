@@ -11,6 +11,9 @@ class MatrixHomogeneous
 		void rotateX(float theta);
 		void rotateY(float theta);
 		void rotateZ(float theta);
+		void scale(float s);
+
+		MatrixHomogeneous invert();
 
 		inline float getX()
 		{
