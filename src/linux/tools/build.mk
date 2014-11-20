@@ -15,8 +15,10 @@ lib-linux-usb_interface += -lm -lreadline
 bin-linux += usb_interface
 
 obj-linux-glplot += linux/tools/glplot.o
-obj-linux-glplot += linux/tools/object3d.o
-obj-linux-glplot += linux/tools/table3d.o
+obj-linux-glplot += linux/tools/opengl/object3d.o
+obj-linux-glplot += linux/tools/opengl/table3d.o
+obj-linux-glplot += linux/tools/opengl/gl_font.o
+obj-linux-glplot += linux/tools/opengl/table_scene.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/com.o
 obj-linux-glplot += linux/tools/server_tcp.o

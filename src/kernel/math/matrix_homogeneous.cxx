@@ -117,3 +117,41 @@ void MatrixHomogeneous::rotateZ(float theta)
 	val[8] = a * c + b * s;
 	val[9] = -a * s + b * c;
 }
+
+void MatrixHomogeneous::rotate(float theta, float x, float y, float z)
+{
+	// TODO on suppose |x, y, z| norme
+	float v[9];
+	float c = cosf(theta);
+	float s = sinf(theta);
+	v[0] = x * x * (1-c) + c;
+	v[1] = x * y * (1-c) - z * s;
+	v[2] = x * z * (1-c) + y * s;
+	v[3] = y * x * (1-c) + z * s;
+	v[4] = y * y * (1-c) + c;
+	v[5] = y * z * (1-c) - x * s;
+	v[6] = x * z * (1-c) - y * s;
+	v[7] = y * z * (1-c) + x * s;
+	v[8] = z * z * (1-c) + c;
+
+	float v0 = val[0];
+	float v1 = val[1];
+	float v2 = val[2];
+	val[0] = v0 * v[0] + v1 * v[3] + v2 * v[6];
+	val[1] = v0 * v[1] + v1 * v[4] + v2 * v[7];
+	val[2] = v0 * v[2] + v1 * v[5] + v2 * v[8];
+
+	v0 = val[4];
+	v1 = val[5];
+	v2 = val[6];
+	val[4] = v0 * v[0] + v1 * v[3] + v2 * v[6];
+	val[5] = v0 * v[1] + v1 * v[4] + v2 * v[7];
+	val[6] = v0 * v[2] + v1 * v[5] + v2 * v[8];
+
+	v0 = val[8];
+	v1 = val[9];
+	v2 = val[10];
+	val[8]  = v0 * v[0] + v1 * v[3] + v2 * v[6];
+	val[9]  = v0 * v[1] + v1 * v[4] + v2 * v[7];
+	val[10] = v0 * v[2] + v1 * v[5] + v2 * v[8];
+}

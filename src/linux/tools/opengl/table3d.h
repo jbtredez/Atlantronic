@@ -1,7 +1,7 @@
 #ifndef TABLE_3D_H
 #define TABLE_3D_H
 
-#include "linux/tools/object3d.h"
+#include "linux/tools/opengl/object3d.h"
 
 class Table3d
 {
