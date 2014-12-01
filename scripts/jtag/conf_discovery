@@ -4,3 +4,6 @@ tcl_port 6666
 
 source [find interface/stlink-v2.cfg]
 source [find target/stm32f4x_stlink.cfg]
+
+# use hardware reset, connect under reset supported
+reset_config srst_only srst_nogate
