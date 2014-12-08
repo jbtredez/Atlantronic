@@ -1134,11 +1134,6 @@ int RobotInterface::arm_cmd(uint32_t cmdType)
 	return usb_write(USB_CMD_ARM, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::led_ready_for_init()
-{
-	return usb_write(USB_CMD_LED_READY_FOR_INIT, NULL, 0);
-}
-
 int RobotInterface::arm_xyz(float x, float y, float z, enum arm_cmd_type type)
 {
 	(void) x;
