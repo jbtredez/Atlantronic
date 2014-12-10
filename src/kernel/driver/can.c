@@ -27,10 +27,10 @@ static xSemaphoreHandle can_write_sem;
 __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_read_queue)
 {
 	// CAN1 :
-	// CAN_RX : PD0
-	// CAN_TX : PD1
+	// CAN1_RX : PB8
+	// CAN1_TX : PB9
 
-	// activation GPIOD
+	// activation GPIOB
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 	gpio_pin_init(GPIOB, 8, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
 	gpio_pin_init(GPIOB, 9, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_NOPULL);
@@ -48,9 +48,6 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	NVIC_EnableIRQ(CAN1_TX_IRQn);
 	NVIC_EnableIRQ(CAN1_RX0_IRQn);
 //	NVIC_EnableIRQ(CAN1_SCE_IRQn);
-
-	// sortie automatique de bus off
-	CAN1->MCR |= CAN_MCR_ABOM;
 
 	// sortie du mode sleep
 	CAN1->MCR &= ~CAN_MCR_SLEEP;
@@ -120,11 +117,41 @@ static int can_set_mask(int id, uint32_t mask)
 	return 0;
 }
 
-
+//! tbs1 dans [1 -   16]
+//! tbs2 dans [1 -    8]
+//! tq   dans [1 - 1024]
+//! sjw  dans [1 -    4]
 static void can_set_btr(int tbs1, int tbs2, int tq, int sjw)
 {
+	if( tbs1 < 1 || tbs1 > 16)
+	{
+		log_format(LOG_ERROR, "tbs1 = %d out of range [1 16]", tbs1);
+		return;
+	}
+
+	if( tbs2 < 1 || tbs2 > 8)
+	{
+		log_format(LOG_ERROR, "tbs2 = %d out of range [1 8]", tbs2);
+		return;
+	}
+
+	if( tq < 1 || tq > 1024)
+	{
+		log_format(LOG_ERROR, "tq = %d out of range [1 1024]", tq);
+		return;
+	}
+
+	if( sjw < 1 || sjw > 4)
+	{
+		log_format(LOG_ERROR, "sjw = %d out of range [1 1024]", tq);
+		return;
+	}
+
 	CAN1->BTR &= ~ ( CAN_BTR_SJW | CAN_BTR_TS2 | CAN_BTR_TS1 | CAN_BTR_BRP );
 	CAN1->BTR |= (((sjw-1) << 24) & CAN_BTR_SJW) | (((tbs2-1) << 20) & CAN_BTR_TS2) | (((tbs1-1) << 16) & CAN_BTR_TS1) | ((tq-1) & CAN_BTR_BRP);
+	int tq_count = 1 + tbs1 + tbs2;
+	int samplePoint = (10000*(1+tbs1)) / tq_count;
+	log_format(LOG_INFO, "can set baudrate to %d, sample point %d.%d %%", (RCC_PCLK1_MHZ * 1000000 ) / (tq * tq_count), samplePoint/100, samplePoint%100);
 }
 
 static void can_set_baudrate(enum can_baudrate speed, int debug)
@@ -139,6 +166,9 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 	// attente fin init
 	// TODO timeout a ajouter
 	while( ! (CAN1->MSR & CAN_MSR_INAK) ) ;
+
+	// sortie automatique de bus off
+	CAN1->MCR |= CAN_MCR_ABOM;
 
 	// TBS1 = 13 TQ
 	// TBS2 =  2 TQ
@@ -173,6 +203,9 @@ static void can_set_baudrate(enum can_baudrate speed, int debug)
 			break;
 		case CAN_10:
 			can_set_btr(13, 2, 300, 1);
+			break;
+		case CAN_410:
+			can_set_btr(7, 5, 9, 4);
 			break;
 		case CAN_RESERVED:
 		default:
@@ -218,7 +251,7 @@ static void can_write_task(void *arg)
 		if(xQueueReceive(can_write_queue, &req, portMAX_DELAY))
 		{
 			can_write_mailbox(&req);
-			xSemaphoreTake(can_write_sem, portMAX_DELAY);
+			xSemaphoreTake(can_write_sem, portMAX_DELAY); // TODO timeout
 // TODO : check error
 		}
 	}
