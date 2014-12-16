@@ -343,7 +343,7 @@ void can_write_mailbox(struct can_msg *msg)
 {
 	if( CAN1->TSR & CAN_TSR_TME0 )
 	{
-		CAN1->sTxMailBox[0].TIR  = 0;
+		CAN1->sTxMailBox[0].TIR  &= CAN_TI0R_TXRQ;
 
 		if (msg->format == CAN_STANDARD_FORMAT)
 		{
@@ -351,12 +351,12 @@ void can_write_mailbox(struct can_msg *msg)
 		}
 		else
 		{
-			CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id <<  3) | 0x04;
+			CAN1->sTxMailBox[0].TIR |= (unsigned int)(msg->id <<  3) | CAN_TI0R_IDE;
 		}
 
 		if (msg->type == CAN_REMOTE_FRAME)
 		{
-			CAN1->sTxMailBox[0].TIR |= 0x02;
+			CAN1->sTxMailBox[0].TIR |= CAN_TI0R_RTR;
 		}
 
 		CAN1->sTxMailBox[0].TDLR = msg->_data.low;
