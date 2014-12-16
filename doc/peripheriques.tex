@@ -5,71 +5,85 @@
 L'électronique se compose principalement d'une carte à 3 étages :
 \begin{itemize}
 	\item étage alimentation fait maison
-	\item étage connecteurs fait maison
-	\item étage CPU achetée (carte discovery basée sur un stm32f407)
+	\item étage logique fait maison
+	\item étage CPU achetée (carte disco basée sur un stm32f427)
 \end{itemize}
 
 \section{Caractéristiques techniques}
-
+\subsection{Carte alimentation}
 Les caractéristiques de la carte sont :
 \begin{itemize}
 	\item alimentation de 15V à 40V (noté VBAT).
 		\begin{itemize}
-			\item alimentation correcte de la logique à partir de 8V
-			\item cramage entrée analogique de mesure tension batterie à partir de 43V et de l'alimentation à partir de 45V.
+			\item[•] alimentation correcte de la logique à partir de 8V
+			\item[•] cramage entrée analogique de mesure tension batterie à partir de 43V et de l'alimentation à partir de 45V.
 		\end{itemize}
 	\item ARU qui coupe la puissance
-	\item alimentation logique 5V / 3A
+	\item alimentation logique 5.03V / 3A
 		\begin{itemize}
-			\item jusqu'a 3.5A si VBAT > 25V
+			\item[•] jusqu'a 3.5A si VBAT > 25V
 		\end{itemize}
-	\item alimentation puissance 5V / 3A (peut être coupée par le logiciel)
+	\item alimentation puissance 5.03V / 3A (peut être coupée par le logiciel)
 		\begin{itemize}
-			\item jusqu'a 3.5A si VBAT > 25V
+			\item[•] jusqu'a 3.5A si VBAT > 25V
 		\end{itemize}
-	\item 3 alimentation puissance 11.3V / 3A (peut être coupée par le logiciel)
+	\item 3 alimentation puissance 11.88V / 3A (peut être coupée par le logiciel)
 		\begin{itemize}
-			\item jusqu'a 3.4A si VBAT > 25V
+			\item[•] jusqu'a 3.4A si VBAT > 25V
 		\end{itemize}
+	\item fusible 5V logique
+	\item fusible puissance (alim 5V puissance et 3 alim 11.88V puissance)
 	\item 4 PWM sur VBAT avec retour intensité, 3A par sortie (6A en pic sur 200ms)
 		\begin{itemize}
-			\item retour intensité avec un facteur théorique de 0.377 V/A
-			\item 4 pompes 1A
+			\item[•] retour intensité avec un facteur théorique de 0.377 V/A
 		\end{itemize}
+\end{itemize}
+
+\subsection{Carte logique + carte CPU}
+Les caractéristiques de la carte sont :
+\begin{itemize}
 	\item 1 CAN alimenté en 5V logique
 		\begin{itemize}
-			\item 6 moteurs de propulsion/direction
+			\item[•] 2 moteurs de propulsion
 		\end{itemize}
-	\item 2 liens RS232 1Mb/s (USART2 et UART4) avec alimentation 5V de puissance
+	\item 2 liens RS232 1Mb/s (USART1 et USART3) avec alimentation 5V de puissance
 		\begin{itemize}
-			\item 2 hokuyos à 750kb/s
+			\item[•] 2 hokuyos à 750kb/s
 		\end{itemize}
-	\item 2 bus séries UART TTL half duplex (UART6) et RS485 20Mb/s (UART5) répartis sur 3 connecteurs (alimentations puissance 11.3V séparées)
+	\item 2 bus séries UART TTL half duplex (UART5) et RS485 20Mb/s (UART4) répartis sur 3 connecteurs (alimentations puissance 11.88V séparées)
 		\begin{itemize}
-			\item bus ax12 et rx24f 1Mb/s
+			\item[•] bus ax12 et rx24f 1Mb/s
 		\end{itemize}
-	\item 1 lien série TTL (USART3) avec alimentation 3V logique
+	\item 2 liens série TTL (USART2 et USART6) avec alimentation 3V logique
 		\begin{itemize}
-			\item module xbee
+			\item[•] USART2 : module xbee
+			\item[•] USART6 : non utilisé
 		\end{itemize}
-	\item 3 liens SPI avec alimentation 3V
+	\item 2 bus SPI avec alimentation 3V
 		\begin{itemize}
-			\item accéléromètre 3 axes (branché sur la carte CPU)
-			\item gyro 1 axe
-			\item 1 lien SPI libre
+			\item[•] bus 1 (SPI5)
+				\begin{itemize}
+					\item gyromètre 3 axes (branché sur la carte CPU)
+					\item lcd (branché sur la carte CPU)
+					\item 1 lien SPI libre
+				\end{itemize}
+			\item[•] bus 2 (SPI6)
+				\begin{itemize}
+					\item 2 liens SPI libres
+				\end{itemize}
 		\end{itemize}
-	\item micro usb OTG 12Mb
+	\item micro usb OTG 12Mb (carte CPU)
 		\begin{itemize}
 			\item uniquement mode device programmé pour le moment
 		\end{itemize}
-	\item mini usb : jtag (stlink v2) embarqué pour programmation/débug de la carte
+	\item mini usb device 12Mb (carte logique)
+	\item mini usb : jtag (stlink v2) embarqué pour programmation/débug de la carte (carte logique)
 	\item 3 entrées encodeurs analogiques (signaux A/B) avec alimentation logique 5V
 	\item 1 io de contrôle des alimentations de puissance
 	\item 1 entrée analogique de mesure de la tension batterie (facteur théorique 1/13 )
 	\item 1 bouton go déporté
-	\item 10 entrées réparties sur 5 connecteurs avec alimentation 5V logique et 11.3V puissance
-	\item 4 led (vert, orange, rouge, bleue) sur la carte CPU
-	\item 5 led (vert, jaune, 2 rouges et bleue) et 2 boutons déportées
+	\item 12 entrées réparties sur 6 connecteurs avec alimentation 5V logique et 11.88V puissance
+	\item 4 AN libres
 \end{itemize}
 
 \clearpage
