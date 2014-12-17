@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
-#include "kernel/can_motor.h"
+#include "kernel/can_motor_faulhaber.h"
 #include "kernel/math/vect_plan.h"
 
 #ifndef WEAK_MOTION

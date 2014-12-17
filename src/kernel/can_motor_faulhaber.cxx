@@ -1,4 +1,4 @@
-#include "can_motor.h"
+#include "can_motor_faulhaber.h"
 #include "canopen.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
