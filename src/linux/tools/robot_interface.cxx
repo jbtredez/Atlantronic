@@ -33,12 +33,8 @@ const char* fault_description[FAULT_MAX] =
 	"can : queue de lecture pleine",
 	"can : fifo de lecture qui deborde - perte de messages",
 
-	"can motor 0 disconnected",
-	"can motor 1 disconnected",
-	"can motor 2 disconnected",
-	"can motor 3 disconnected",
-	"can motor 4 disconnected",
-	"can motor 5 disconnected",
+	"can motor 0 (right) disconnected",
+	"can motor 1 (left) disconnected",
 
 	// Gyro
 	"gyro disconnected",
@@ -606,12 +602,13 @@ int RobotInterface::can_trace(char* msg, uint16_t size)
 
 	if( can_msg->size > 8 )
 	{
+		log_error("can msg size %d > 8", can_msg->size);
 		can_msg->size = 8;
 	}
 
 	char buffer[1024];
-	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x size %u data", name, can_msg->time.ms/1000.0f + can_msg->time.ns/1000000000.0f,
-			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->size);
+	res = snprintf(buffer, sizeof(buffer), "%4s %13.6f %8s   id %6x format %d rtr %d size %u data", name, can_msg->time.ms/1000.0f + can_msg->time.ns/1000000000.0f,
+			log_level_description[LOG_DEBUG1], (unsigned int)can_msg->id, can_msg->format, can_msg->type, can_msg->size);
 	for(i=0; i < can_msg->size && res > 0; i++)
 	{
 		res += snprintf(buffer + res, sizeof(buffer) - res, " %2.2x", can_msg->data[i]);

@@ -58,12 +58,13 @@ core_baz += kernel/table.o
 #core_baz += kernel/driver/gyro/adxrs453.o
 #core_baz += kernel/math/simpson_integrator.o
 core_baz += kernel/state_machine/state_machine.o
-core_baz += kernel/canopen.o
-#core_baz += kernel/can_mip.o
-core_baz += kernel/can_motor_faulhaber.o
-core_baz += kernel/motion/motion.o
-core_baz += kernel/motion/graph.o
-core_baz += kernel/motion/trajectory.o
+#core_baz += kernel/canopen.o
+core_baz += kernel/can_mip.o
+core_baz += kernel/can_motor_mip.o
+#core_baz += kernel/can_motor_faulhaber.o
+#core_baz += kernel/motion/motion.o
+#core_baz += kernel/motion/graph.o
+#core_baz += kernel/motion/trajectory.o
 #core_baz += kernel/pump.o
 #core_baz += kernel/arm.o
 
@@ -79,7 +80,7 @@ obj-disco-core += ${core_baz}
 bin-disco += core
 
 obj-disco-homologation += $(core_baz)
-obj-disco-homologation += disco/strat_homol.o
+#obj-disco-homologation += disco/strat_homol.o
 bin-disco += homologation
 
 
