@@ -16,6 +16,7 @@
 #include "linux/tools/joystick.h"
 #include "linux/tools/opengl/table_scene.h"
 #include "linux/tools/opengl/gl_font.h"
+#include "linux/tools/opengl/gltools.h"
 #include "kernel/math/matrix_homogeneous.h"
 
 // limitation du rafraichissement
@@ -95,7 +96,6 @@ static void simu_go(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
-static void draw_plus(float x, float y, float rx, float ry);
 void gtk_end();
 
 #define OPPONENT_PERIMETER         128.0f
@@ -478,16 +478,6 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	return TRUE;
 }
 
-static void draw_plus(float x, float y, float rx, float ry)
-{
-	glBegin(GL_LINES);
-	glVertex2f(x-rx, y);
-	glVertex2f(x+rx, y);
-	glVertex2f(x, y-ry);
-	glVertex2f(x, y+ry);
-	glEnd();
-}
-
 void plot_axes(Graphique* graph)
 {
 	float roi_xmin = graph->roi_xmin;
@@ -546,64 +536,6 @@ void plot_legende(Graphique* graph)
 			dy -= 2*glfont.digitHeight * graph->ratio_y;
 		}
 	}
-}
-
-void plot_pave(float x, float y, float z, float dx, float dy, float dz)
-{
-	glTranslatef(x, y, z);
-	dx /= 2;
-	dy /= 2;
-	dz /= 2;
-
-	glBegin(GL_QUADS);
-	glNormal3f(-1, 0, 0);
-	glVertex3f(-dx, -dy, -dz);
-	glVertex3f(-dx,  dy, -dz);
-	glVertex3f(-dx,  dy,  dz);
-	glVertex3f(-dx, -dy,  dz);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glNormal3f(1, 0, 0);
-	glVertex3f( dx, -dy, -dz);
-	glVertex3f( dx,  dy, -dz);
-	glVertex3f( dx,  dy,  dz);
-	glVertex3f( dx, -dy,  dz);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glNormal3f(0, -1, 0);
-	glVertex3f(-dx, -dy, -dz);
-	glVertex3f(-dx, -dy,  dz);
-	glVertex3f( dx, -dy,  dz);
-	glVertex3f( dx, -dy, -dz);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glNormal3f(0, 1, 0);
-	glVertex3f(-dx,  dy, -dz);
-	glVertex3f(-dx,  dy,  dz);
-	glVertex3f( dx,  dy,  dz);
-	glVertex3f( dx,  dy, -dz);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glNormal3f(0, 0, -1);
-	glVertex3f(-dx, -dy, -dz);
-	glVertex3f( dx, -dy, -dz);
-	glVertex3f( dx,  dy, -dz);
-	glVertex3f(-dx,  dy, -dz);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glNormal3f(0, 0, 1);
-	glVertex3f(-dx, -dy, dz);
-	glVertex3f( dx, -dy, dz);
-	glVertex3f( dx,  dy, dz);
-	glVertex3f(-dx,  dy, dz);
-	glEnd();
-
-	glTranslatef(-x, -y, -z);
 }
 
 void plot_hokuyo_hist(Graphique* graph)
@@ -900,8 +832,8 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 				qemu->move_object(QEMU_OPPONENT_ID, origin, newOpponentPos - opponentPos);
 				opponentPos = newOpponentPos;
 			}
-			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 		}
+		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
 	}
 	else if(event->state & GDK_BUTTON2_MASK)
 	{
