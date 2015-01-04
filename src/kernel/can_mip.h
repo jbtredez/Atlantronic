@@ -9,12 +9,6 @@
 #ifndef WEAK_CAN_MIP
 #define WEAK_CAN_MIP __attribute__((weak, alias("nop_function") ))
 #endif
-/*
-struct canmip_configuration
-{
-	uint16_t index;
-	uint32_t data;
-};*/
 
 class CanMipNode
 {
@@ -24,14 +18,13 @@ class CanMipNode
 		uint8_t nodeId;
 
 		xSemaphoreHandle sem;
-/*		systime last_communication_time;
-		systime last_reset_node_time;
+		systime last_communication_time;
+//		systime last_reset_node_time;
 
-		virtual void rx_pdo(struct can_msg *msg, int type);
-*/
+		virtual void rxMsg(struct can_msg *msg);
 		virtual void update(portTickType absTimeout);
-/*		int wait_update_until(portTickType t);
-		void resetNode();*/
+		int wait_update_until(portTickType t);
+//		void resetNode();
 };
 
 void can_mip_update(portTickType absTimeout) WEAK_CAN_MIP;
@@ -39,8 +32,5 @@ void can_mip_update(portTickType absTimeout) WEAK_CAN_MIP;
 int can_mip_register_node(CanMipNode* node);
 
 int can_mip_reset_node(int node);
-/*
-int can_mip_sdo_write(int node, int size, int index, int subindex, uint32_t data);
 
-*/
 #endif

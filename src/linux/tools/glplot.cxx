@@ -47,6 +47,8 @@ enum
 	SUBGRAPH_MOTION_SPEED_ROT_CONS,
 	SUBGRAPH_MOTION_V1,
 	SUBGRAPH_MOTION_V2,
+	SUBGRAPH_MOTION_V1_MES,
+	SUBGRAPH_MOTION_V2_MES,
 	SUBGRAPH_MOTION_VBAT,
 	SUBGRAPH_MOTION_I1,
 	SUBGRAPH_MOTION_I2,
@@ -155,6 +157,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2, "v2", 0, 0.5, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1_MES, "v1_mes", 0, 0, 1, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2_MES, "v2_mes", 0, 0, 0.5, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_VBAT, "vBat", 0, 1, 0, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I1, "i1", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);
@@ -631,6 +635,14 @@ void plot_speed_dist(Graphique* graph)
 			for(i=0; i < robotItf->control_usb_data_count; i++)
 			{
 				draw_plus(5*i, robotItf->control_usb_data[i].cons_motors_v[j], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			}
+		}
+		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
+		{
+			glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
+			for(i=0; i < robotItf->control_usb_data_count; i++)
+			{
+				draw_plus(5*i, robotItf->control_usb_data[i].mes_motors[j].v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			}
 		}
 	}

@@ -14,32 +14,90 @@ enum
 	CAN_MOTOR_MAX,
 };
 
+enum MotorState
+{
+	CAN_MOTOR_MIP_DISCONNECTED,
+	CAN_MOTOR_MIP_INIT,
+	CAN_MOTOR_MIP_READY,
+};
+
+enum MotorWriteConfIndex
+{
+	MOTOR_CONF_IDX_ZERO_CODER = 0,
+	MOTOR_CONF_IDX_MAX_VOLTAGE,
+	MOTOR_CONF_IDX_MIN_VOLTAGE,
+	MOTOR_CONF_IDX_TRAJECTORY_VOLTAGE,
+	MOTOR_CONF_IDX_STOP_VOLTAGE,
+	MOTOR_CONF_IDX_INIT_VOLTAGE,
+	MOTOR_CONF_IDX_TARGET_ACCURACY,
+	MOTOR_CONF_IDX_RESERVED_7,
+	MOTOR_CONF_IDX_SCREW_STEP,
+	MOTOR_CONF_IDX_MANUAL_VOLTAGE,
+	MOTOR_CONF_IDX_POSITION_CONTROL,
+	MOTOR_CONF_IDX_RESERVED_B,
+	MOTOR_CONF_IDX_INIT_WAY,
+	MOTOR_CONF_IDX_MAX_POSITION,          //!< position max (32 bits)
+	MOTOR_CONF_IDX_MIN_POSITION,          //!< position min (32 bits)
+	MOTOR_CONF_IDX_INIT_POSITION,
+	MOTOR_CONF_IDX_KP_VOLTAGE,
+	MOTOR_CONF_IDX_TRAJECTORY_TIMEOUT,
+	MOTOR_CONF_IDX_SEND_MSG_ON_TRAJ_END,
+	MOTOR_CONF_IDX_UNCOUPLING_THRESHOLD,
+	MOTOR_CONF_IDX_STOP_UNCOUPLING_THRESHOLD,
+};
+
+#define CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL         0x01
+#define CAN_MIP_MOTOR_STATE_IN_MOTION             0x02
+#define CAN_MIP_MOTOR_STATE_POWERED               0x04
+#define CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN      0x08
+#define CAN_MIP_MOTOR_STATE_ERR_RANGE             0x10
+#define CAN_MIP_MOTOR_STATE_ERR_TRAJ              0x20
+#define CAN_MIP_MOTOR_STATE_ERR_TEMPERATURE       0x40
+#define CAN_MIP_MOTOR_STATE_ERR_CMD_VS_MES        0x80
+#define CAN_MIP_MOTOR_STATE_ERROR                 0xf0
+
+#define CAN_MIP_MOTOR_HISTORY_SIZE                  (32*5)
+
 class CanMipMotor : public CanMipNode
 {
 	public:
 		CanMipMotor();
 
 		const char* name;
-#if 0
 		// donnees brutes
-		uint16_t last_status_word;
-		uint16_t status_word;
+		uint8_t mipState;
+		uint32_t old_raw_position;
 		uint32_t raw_position; //!< position brute (en increments encodeurs)
-		uint16_t current;
+		uint16_t current; // TODO pas utilise
 		Kinematics kinematics;
-#endif
+
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
 		float outputGain;   //!< gain pour convertir la position en unites robot
-		bool connected;
 		enum fault fault_disconnected_id;
-#if 0
+		MotorState state;
+
 		void update(portTickType absTimeout);
-		void update_state();
+		void rxMsg(struct can_msg *msg);
 		void set_speed(float v);
 		void set_position(float pos);
-		void set_max_current(float val);
 		void enable(bool enable);
-#endif
+
+		inline bool is_op_enable()
+		{
+			return mipState & CAN_MIP_MOTOR_STATE_POWERED;
+		}
+		inline void set_max_current(float val)
+		{
+			(void) val;
+		}
+
+		uint16_t posHistory[CAN_MIP_MOTOR_HISTORY_SIZE];
+		uint16_t posMotorBuffer[CAN_MIP_MOTOR_HISTORY_SIZE];
+		unsigned int posHistorySize;
+		unsigned int posHistoryEnd;
+	protected:
+		uint32_t configure16(MotorWriteConfIndex idx, uint16_t val);
+		uint32_t configure32(MotorWriteConfIndex idx, uint32_t val);
 };
 
 extern CanMipMotor can_motor[CAN_MOTOR_MAX];

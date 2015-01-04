@@ -52,16 +52,36 @@ static void can_task(void *arg)
 
 	// reset de tout les noeuds can au boot
 //	log(LOG_INFO, "reset all nodes");
+//	can_mip_reset_node(0);
 
 	while(1)
 	{
 		if(xQueueReceive(can_read_queue, &msg, portMAX_DELAY))
 		{
 			// traces CAN pour le debug
-			usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
+			//usb_add(USB_CAN_TRACE, &msg, sizeof(msg));
 
 			// TODO a voir / defauts
 			//fault(ERR_CAN_READ_QUEUE_FULL, FAULT_CLEAR);
+
+			if( msg.id == 0x79 )
+			{
+				int nodeid = msg.data[1];
+				int i = 0;
+				while( i < can_mip_max_node && can_mip_nodes[i]->nodeId != nodeid )
+				{
+					i++;
+				}
+
+				/*if( i < can_mip_max_node )
+				{
+					// c'est un noeud can enregistre
+					can_mip_nodes[i]->rxMsg(&msg);
+				}*/
+				// TODO TESTS avec 1 seul moteur
+				can_mip_nodes[0]->rxMsg(&msg);
+				can_mip_nodes[1]->rxMsg(&msg);
+			}
 		}
 	}
 }
@@ -84,7 +104,7 @@ int can_mip_register_node(CanMipNode* node)
 	return res;
 }
 
-int can_mip_reset_node(int node)
+/*int can_mip_reset_node(int node)
 {
 	struct can_msg msg;
 
@@ -95,13 +115,14 @@ int can_mip_reset_node(int node)
 	msg.data[0] = 0x60;
 	msg.data[1] = 0x01;
 
-	return can_write(&msg, 0);
-}
+	return 0;//can_write(&msg, 0);
+}*/
 
 int can_mip_sync()
 {
 	struct can_msg msg;
 
+	//log(LOG_INFO, "sync");
 	msg.id = 0x01;
 	msg.size = 1;
 	msg.format = CAN_STANDARD_FORMAT;
@@ -113,22 +134,13 @@ int can_mip_sync()
 
 void can_mip_update(portTickType absTimeout)
 {
-	//bool all_nmt_op = true;
 	for(int i = 0; i < can_mip_max_node; i++)
 	{
-		//if( canopen_nodes[i]->state != NMT_OPERATIONAL )
-		//{
-			//all_nmt_op = false;
-		//}
 		// mise a 0 de la semaphore avant le sync
 		xSemaphoreTake(can_mip_nodes[i]->sem, 0);
 	}
 
-	//if( all_nmt_op )
-	//{
-		log(LOG_INFO, "sync");
-		can_mip_sync();
-	//}
+	can_mip_sync();
 
 	for(int i = 0; i < can_mip_max_node; i++)
 	{
@@ -146,4 +158,37 @@ CanMipNode::CanMipNode()
 void CanMipNode::update(portTickType /*absTimeout*/)
 {
 
+}
+
+void CanMipNode::rxMsg(struct can_msg */*msg*/)
+{
+	last_communication_time = systick_get_time();
+}
+/*
+void CanMipNode::resetNode()
+{
+	//log_format(LOG_INFO, "reset node %x", nodeId);
+	last_reset_node_time = systick_get_time();
+	can_mip_reset_node(nodeId);
+}*/
+
+//! attente de la mise a jour du noeud
+//! @return 0 si c'est bon -1 si timeout
+int CanMipNode::wait_update_until(portTickType t)
+{
+	int res = 0;
+
+	systime currentTime = systick_get_time();
+	int timeout = t - currentTime.ms;
+	if( timeout < 0)
+	{
+		timeout = 0;
+	}
+
+	if( xSemaphoreTake(sem, timeout) == pdFALSE )
+	{
+		res = -1;
+	}
+
+	return res;
 }

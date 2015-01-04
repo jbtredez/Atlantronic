@@ -34,7 +34,7 @@ const char* fault_description[FAULT_MAX] =
 	"can : fifo de lecture qui deborde - perte de messages",
 
 	"can motor 0 (right) disconnected",
-	"can motor 1 (left) disconnected",
+	"can motor 1 (left ) disconnected",
 
 	// Gyro
 	"gyro disconnected",
@@ -386,7 +386,7 @@ int RobotInterface::process_fault(char* msg, uint16_t size)
 		unsigned char state = fault_list[i].state;
 		if(state != fault_status[i].state)
 		{
-			log_info("%s%4s %13.6f    Fault\t%s (%d) : %s, num %d status %d\033[0m", fault_color[state & 0x01], name, fault_list[i].time / 1000.0f, fault_description[i], i, fault_list[i].debugtext, state >> 1, state & 0x01);
+			log_info("%s%4s %13.6f    Fault\t%s (%d) : %s num %d status %d\033[0m", fault_color[state & 0x01], name, fault_list[i].time / 1000.0f, fault_description[i], i, fault_list[i].debugtext, state >> 1, state & 0x01);
 			fault_status[i] = fault_list[i];
 		}
 	}
