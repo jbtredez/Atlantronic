@@ -234,6 +234,7 @@ static void motion_state_enabled_run()
 	{
 		motion_kinematics[i].v = 0;
 	}
+	motion_update_motors();
 }
 
 static unsigned int motion_state_enabled_transition(unsigned int currentState)

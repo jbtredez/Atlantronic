@@ -45,8 +45,8 @@ CanMipMotor::CanMipMotor()
 	kinematics.pos = 0;
 	kinematics.v = 0;
 	kinematics.a = 0;
-	posHistorySize = 0;
 	posHistoryEnd = 0;
+	testCount = 0;
 }
 
 uint32_t CanMipMotor::configure16(MotorWriteConfIndex idx, uint16_t val)
@@ -139,21 +139,29 @@ void CanMipMotor::enable(bool enable)
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
 
-	if( enable && ! (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
+	if( enable )
 	{
-		if( mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN )
+		if( ! (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
 		{
-			// init position + enable
-			msg.size = 2;
-			msg.data[0] = 0x60;
-			msg.data[1] = 0x01;
-			can_write(&msg, 0);
+			if( mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN )
+			{
+				// init position + enable
+				msg.size = 2;
+				msg.data[0] = 0x60;
+				msg.data[1] = 0x01;
+				can_write(&msg, 0);
+			}
+			else
+			{
+				msg.size = 1;
+				msg.data[0] = 0x80;
+				can_write(&msg, 0);
+			}
 		}
-		else
+
+		if( (mipState & CAN_MIP_MOTOR_STATE_POWERED) && !(mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN) && ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
 		{
-			msg.size = 1;
-			msg.data[0] = 0x80;
-			can_write(&msg, 0);
+			start();
 		}
 	}
 	else if( ! enable && (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
@@ -162,6 +170,25 @@ void CanMipMotor::enable(bool enable)
 		msg.data[0] = 0x70;
 		can_write(&msg, 0);
 	}
+}
+
+void CanMipMotor::start()
+{
+	struct can_msg msg;
+
+	for(int i = 0; i < /*8*/2; i++)
+	{
+		set_position(0);
+		set_position(0);
+		set_position(0);
+		set_position(0, true);
+	}
+
+	msg.id = 0x01 + (nodeId << 3);
+	msg.size = 1;
+	msg.data[0] = 0xa0;
+	can_write(&msg, 0);
+	log_format(LOG_INFO, "start motion %x", nodeId);
 }
 
 void CanMipMotor::set_speed(float v)
@@ -178,11 +205,11 @@ void CanMipMotor::set_speed(float v)
 	msg.data[1] = speed & 0xff;
 	msg.data[2] = (speed >> 8) & 0xff;
 	msg.data[3] = v > 0 ? 1 : 0;
-	if( nodeId == 1) log_format(LOG_INFO, "set speed %x : %d", nodeId, (int)v);
+
 	can_write(&msg, 0);
 }
 
-void CanMipMotor::set_position(float pos)
+void CanMipMotor::set_position(float pos, bool forceEndMsg)
 {
 	struct can_msg msg;
 	pos /= -outputGain;
@@ -205,7 +232,6 @@ void CanMipMotor::set_position(float pos)
 		// TODO hack fin de trajectoire
 		p16 = 0x7FFF;
 	}*/
-//	if( nodeId == 1) log_format(LOG_INFO, "set position %x : %x", nodeId, (int)p);
 
 	posHistory[posHistoryEnd] = p16;
 	posHistoryEnd++;
@@ -217,26 +243,18 @@ void CanMipMotor::set_position(float pos)
 
 	if( posHistoryEnd % 4 == 0)
 	{
-		int begin = posHistoryEnd - 4;
+		writeDataSize = 1;
+		int begin = posHistoryEnd - 4*writeDataSize;
 		if( begin < 0)
 		{
 			begin += CAN_MIP_MOTOR_HISTORY_SIZE;
 		}
 
-		for(int i = 0; i < 4; i++)
+		for(int i = 0; i < 4*writeDataSize; i++)
 		{
 			posMotorBuffer[i] = posHistory[(begin + i)%CAN_MIP_MOTOR_HISTORY_SIZE];
 		}
-		writeDataSize = 1;
 	}
-	posHistorySize++;
-	if( posHistorySize > CAN_MIP_MOTOR_HISTORY_SIZE)
-	{
-		posHistorySize = CAN_MIP_MOTOR_HISTORY_SIZE;
-	}
-
-//	bool trajPtsFull = mipState & CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL;
-	bool inMotion = mipState & CAN_MIP_MOTOR_STATE_IN_MOTION;
 
 	if( writeDataSize )
 	{
@@ -246,7 +264,7 @@ void CanMipMotor::set_position(float pos)
 
 		for(int i = 0; i < writeDataSize; i++)
 		{
-			if( i == writeDataSize - 1 )
+			if( (i == writeDataSize - 1 && posHistoryEnd%28 == 0) || forceEndMsg )
 			{
 				msg.id = 0x06 + (nodeId << 3);
 			}
@@ -264,18 +282,9 @@ void CanMipMotor::set_position(float pos)
 			msg.data[6] = posMotorBuffer[4*i+3] & 0xff;
 			msg.data[7] = (posMotorBuffer[4*i+3] >> 8) & 0xff;
 			can_write(&msg, 0);
-			if( nodeId == 1) log_format(LOG_INFO, "set positions %4x %4x %4x %4x", posMotorBuffer[4*i], posMotorBuffer[4*i+1], posMotorBuffer[4*i+2], posMotorBuffer[4*i+3]);
+			testCount += 4;
+			if( nodeId == 1) log_format(LOG_INFO, "set positions %4x %4x %4x %4x count %d end %d", posMotorBuffer[4*i], posMotorBuffer[4*i+1], posMotorBuffer[4*i+2], posMotorBuffer[4*i+3], testCount, (int)((~msg.id)&0x01));
 		}
-	}
-
-	if( posHistorySize>4 && !inMotion)
-	{
-		if( nodeId == 1) log_format(LOG_INFO, "start motion %x", nodeId);
-
-		msg.id = 0x01 + (nodeId << 3);
-		msg.size = 1;
-		msg.data[0] = 0xa0;
-		can_write(&msg, 0);
 	}
 }
 
