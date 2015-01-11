@@ -142,11 +142,11 @@ static void motion_update_motors()
 		{
 			//can_motor[i].set_speed(motion_kinematics[i].v);
 			//can_motor[i].set_position(motion_kinematics_mes[i].pos + motion_kinematics[i].v * CONTROL_DT);
-			can_motor[i].set_position(motion_kinematics[i].pos);
+			can_motor[i].set_position(motion_kinematics[i].pos, motion_status == MOTION_TARGET_REACHED);
 		}
 		else if( motion_kinematics[i].mode == KINEMATICS_POSITION )
 		{
-			can_motor[i].set_position(motion_kinematics[i].pos);
+			can_motor[i].set_position(motion_kinematics[i].pos, motion_status == MOTION_TARGET_REACHED);
 		}
 	}
 }
@@ -234,7 +234,6 @@ static void motion_state_enabled_run()
 	{
 		motion_kinematics[i].v = 0;
 	}
-	motion_update_motors();
 }
 
 static unsigned int motion_state_enabled_transition(unsigned int currentState)

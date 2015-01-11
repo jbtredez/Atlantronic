@@ -56,7 +56,7 @@ enum MotorWriteConfIndex
 #define CAN_MIP_MOTOR_STATE_ERR_CMD_VS_MES        0x80
 #define CAN_MIP_MOTOR_STATE_ERROR                 0xf0
 
-#define CAN_MIP_MOTOR_HISTORY_SIZE                  (28*32)
+#define CAN_MIP_MOTOR_HISTORY_SIZE                  28
 
 class CanMipMotor : public CanMipNode
 {
@@ -79,21 +79,20 @@ class CanMipMotor : public CanMipNode
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);
 		void set_speed(float v);
-		void set_position(float pos, bool forceEndMsg = false);
+		void set_position(float pos, bool endTraj);
 		void enable(bool enable);
-		void start();
 
 		inline bool is_op_enable()
 		{
-			return (mipState & CAN_MIP_MOTOR_STATE_POWERED) && !(mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN) && (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION);
+			return (mipState & CAN_MIP_MOTOR_STATE_POWERED) && !(mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN);
 		}
+
 		inline void set_max_current(float val)
 		{
 			(void) val;
 		}
 
 		uint16_t posHistory[CAN_MIP_MOTOR_HISTORY_SIZE];
-		uint16_t posMotorBuffer[CAN_MIP_MOTOR_HISTORY_SIZE];
 		unsigned int posHistoryEnd;
 		int testCount;
 

@@ -158,11 +158,6 @@ void CanMipMotor::enable(bool enable)
 				can_write(&msg, 0);
 			}
 		}
-
-		if( (mipState & CAN_MIP_MOTOR_STATE_POWERED) && !(mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN) && ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
-		{
-			start();
-		}
 	}
 	else if( ! enable && (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
 	{
@@ -170,25 +165,6 @@ void CanMipMotor::enable(bool enable)
 		msg.data[0] = 0x70;
 		can_write(&msg, 0);
 	}
-}
-
-void CanMipMotor::start()
-{
-	struct can_msg msg;
-
-	for(int i = 0; i < /*8*/2; i++)
-	{
-		set_position(0);
-		set_position(0);
-		set_position(0);
-		set_position(0, true);
-	}
-
-	msg.id = 0x01 + (nodeId << 3);
-	msg.size = 1;
-	msg.data[0] = 0xa0;
-	can_write(&msg, 0);
-	log_format(LOG_INFO, "start motion %x", nodeId);
 }
 
 void CanMipMotor::set_speed(float v)
@@ -206,12 +182,18 @@ void CanMipMotor::set_speed(float v)
 	msg.data[2] = (speed >> 8) & 0xff;
 	msg.data[3] = v > 0 ? 1 : 0;
 
+	if( nodeId == 1) log_format(LOG_INFO, "set speed %4x %4x sgn %x", msg.data[2], msg.data[1],msg.data[3]);
+
 	can_write(&msg, 0);
 }
 
-void CanMipMotor::set_position(float pos, bool forceEndMsg)
+void CanMipMotor::set_position(float pos, bool endTraj)
 {
 	struct can_msg msg;
+	msg.size = 8;
+	msg.format = CAN_STANDARD_FORMAT;
+	msg.type = CAN_DATA_FRAME;
+
 	pos /= -outputGain;
 	int32_t p = (int32_t)pos;
 	uint16_t p16 = (uint16_t)p;
@@ -222,20 +204,47 @@ void CanMipMotor::set_position(float pos, bool forceEndMsg)
 		p16 = 0x7FFE;
 	}
 
-	int lastPos = posHistoryEnd - 1;
-	if( lastPos < 0)
+	if( ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
 	{
-		lastPos += CAN_MIP_MOTOR_HISTORY_SIZE;
+		msg.id = 0x06 + (nodeId << 3);
+		msg.data[0] = 0;
+		msg.data[1] = 0;
+		msg.data[2] = 0;
+		msg.data[3] = 0;
+		msg.data[4] = 0;
+		msg.data[5] = 0;
+		msg.data[6] = 0;
+		msg.data[7] = 0;
+		can_write(&msg, 0);
+		testCount += 4;
+		posHistoryEnd = 4;
+
+		msg.id = 0x01 + (nodeId << 3);
+		msg.size = 1;
+		msg.data[0] = 0xa0;
+		can_write(&msg, 0);
+		log_format(LOG_INFO, "start motion %x", nodeId);
 	}
-	/*if( p16 == posHistory[lastPos])
+
+	if( endTraj )
 	{
-		// TODO hack fin de trajectoire
-		p16 = 0x7FFF;
-	}*/
+		// code special fin de trajectoire
+		msg.id = 0x06 + (nodeId << 3);
+		msg.data[0] = 0xff;
+		msg.data[1] = 0x7f;
+		msg.data[2] = 0xff;
+		msg.data[3] = 0x7f;
+		msg.data[4] = 0xff;
+		msg.data[5] = 0x7f;
+		msg.data[6] = 0xff;
+		msg.data[7] = 0x7f;
+		can_write(&msg, 0);
+		log_format(LOG_INFO, "stop motion %x", nodeId);
+		return;
+	}
 
 	posHistory[posHistoryEnd] = p16;
 	posHistoryEnd++;
-	int writeDataSize = 0;
 	if( posHistoryEnd >= CAN_MIP_MOTOR_HISTORY_SIZE)
 	{
 		posHistoryEnd = 0;
@@ -243,48 +252,37 @@ void CanMipMotor::set_position(float pos, bool forceEndMsg)
 
 	if( posHistoryEnd % 4 == 0)
 	{
-		writeDataSize = 1;
-		int begin = posHistoryEnd - 4*writeDataSize;
+		int begin = posHistoryEnd - 4;
 		if( begin < 0)
 		{
 			begin += CAN_MIP_MOTOR_HISTORY_SIZE;
 		}
 
-		for(int i = 0; i < 4*writeDataSize; i++)
+		uint16_t p0 = posHistory[begin];
+		uint16_t p1 = posHistory[(begin+1)%CAN_MIP_MOTOR_HISTORY_SIZE];
+		uint16_t p2 = posHistory[(begin+2)%CAN_MIP_MOTOR_HISTORY_SIZE];
+		uint16_t p3 = posHistory[(begin+3)%CAN_MIP_MOTOR_HISTORY_SIZE];
+
+		if( posHistoryEnd%28 == 0 )
 		{
-			posMotorBuffer[i] = posHistory[(begin + i)%CAN_MIP_MOTOR_HISTORY_SIZE];
+			msg.id = 0x06 + (nodeId << 3);
 		}
-	}
-
-	if( writeDataSize )
-	{
-		msg.size = 8;
-		msg.format = CAN_STANDARD_FORMAT;
-		msg.type = CAN_DATA_FRAME;
-
-		for(int i = 0; i < writeDataSize; i++)
+		else
 		{
-			if( (i == writeDataSize - 1 && posHistoryEnd%28 == 0) || forceEndMsg )
-			{
-				msg.id = 0x06 + (nodeId << 3);
-			}
-			else
-			{
-				msg.id = 0x05 + (nodeId << 3);
-			}
-
-			msg.data[0] = posMotorBuffer[4*i] & 0xff;
-			msg.data[1] = (posMotorBuffer[4*i] >> 8) & 0xff;
-			msg.data[2] = posMotorBuffer[4*i+1] & 0xff;
-			msg.data[3] = (posMotorBuffer[4*i+1] >> 8) & 0xff;
-			msg.data[4] = posMotorBuffer[4*i+2] & 0xff;
-			msg.data[5] = (posMotorBuffer[4*i+2] >> 8) & 0xff;
-			msg.data[6] = posMotorBuffer[4*i+3] & 0xff;
-			msg.data[7] = (posMotorBuffer[4*i+3] >> 8) & 0xff;
-			can_write(&msg, 0);
-			testCount += 4;
-			if( nodeId == 1) log_format(LOG_INFO, "set positions %4x %4x %4x %4x count %d end %d", posMotorBuffer[4*i], posMotorBuffer[4*i+1], posMotorBuffer[4*i+2], posMotorBuffer[4*i+3], testCount, (int)((~msg.id)&0x01));
+			msg.id = 0x05 + (nodeId << 3);
 		}
+
+		msg.data[0] = p0 & 0xff;
+		msg.data[1] = (p0 >> 8) & 0xff;
+		msg.data[2] = p1 & 0xff;
+		msg.data[3] = (p1 >> 8) & 0xff;
+		msg.data[4] = p2 & 0xff;
+		msg.data[5] = (p2 >> 8) & 0xff;
+		msg.data[6] = p3 & 0xff;
+		msg.data[7] = (p3 >> 8) & 0xff;
+		can_write(&msg, 0);
+		testCount += 4;
+		if( nodeId == 1) log_format(LOG_INFO, "set positions %4x %4x %4x %4x count %d end %d", p0, p1, p2, p3, testCount, (int)((~msg.id)&0x01));
 	}
 }
 
