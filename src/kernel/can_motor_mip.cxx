@@ -207,23 +207,23 @@ void CanMipMotor::set_position(float pos, bool endTraj)
 	if( ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
 	{
 		msg.id = 0x06 + (nodeId << 3);
-		msg.data[0] = 0;
-		msg.data[1] = 0;
-		msg.data[2] = 0;
-		msg.data[3] = 0;
-		msg.data[4] = 0;
-		msg.data[5] = 0;
-		msg.data[6] = 0;
-		msg.data[7] = 0;
+		msg.data[0] = raw_position & 0xff;
+		msg.data[1] = (raw_position >> 8) & 0xff;
+		msg.data[2] = raw_position & 0xff;
+		msg.data[3] = (raw_position >> 8) & 0xff;
+		msg.data[4] = raw_position & 0xff;
+		msg.data[5] = (raw_position >> 8) & 0xff;
+		msg.data[6] = raw_position & 0xff;
+		msg.data[7] = (raw_position >> 8) & 0xff;
 		can_write(&msg, 0);
-		testCount += 4;
+		testCount = 4;
 		posHistoryEnd = 4;
 
 		msg.id = 0x01 + (nodeId << 3);
 		msg.size = 1;
 		msg.data[0] = 0xa0;
 		can_write(&msg, 0);
-		log_format(LOG_INFO, "start motion %x", nodeId);
+		log_format(LOG_INFO, "start motion %x pos %x", nodeId, (unsigned int)raw_position);
 	}
 
 	if( endTraj )
