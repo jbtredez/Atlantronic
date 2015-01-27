@@ -140,13 +140,11 @@ static void motion_update_motors()
 	{
 		if( motion_kinematics[i].mode == KINEMATICS_SPEED )
 		{
-			//can_motor[i].set_speed(motion_kinematics[i].v);
-			//can_motor[i].set_position(motion_kinematics_mes[i].pos + motion_kinematics[i].v * CONTROL_DT);
-			can_motor[i].set_position(motion_kinematics[i].pos, motion_status == MOTION_TARGET_REACHED);
+			can_motor[i].set_speed(motion_kinematics[i].v);
 		}
 		else if( motion_kinematics[i].mode == KINEMATICS_POSITION )
 		{
-			can_motor[i].set_position(motion_kinematics[i].pos, motion_status == MOTION_TARGET_REACHED);
+			can_motor[i].set_position(motion_kinematics[i].pos);
 		}
 	}
 }

@@ -2,6 +2,7 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/control.h"
 
 #include <math.h>
 
@@ -45,8 +46,6 @@ CanMipMotor::CanMipMotor()
 	kinematics.pos = 0;
 	kinematics.v = 0;
 	kinematics.a = 0;
-	posHistoryEnd = 0;
-	testCount = 0;
 }
 
 uint32_t CanMipMotor::configure16(MotorWriteConfIndex idx, uint16_t val)
@@ -100,10 +99,10 @@ void CanMipMotor::update(portTickType absTimeout)
 	else
 	{
 		fault(fault_disconnected_id, FAULT_CLEAR);
-		float dt = 0.005f; // TODO
+		float dt = CONTROL_DT; // TODO
 		float v = ((int)(old_raw_position - raw_position)) * outputGain / dt;
 		old_raw_position = raw_position;
-		//if( nodeId == 1 && v != 0) log_format(LOG_INFO, "v %d state %x", (int)(v*inputGain), state);
+		if( nodeId == 1 && v != 0) log_format(LOG_INFO, "v %d state %x", (int)(v*inputGain), state);
 
 		kinematics.a = (v - kinematics.v) / dt;
 		kinematics.v = v;
@@ -115,6 +114,8 @@ void CanMipMotor::update(portTickType absTimeout)
 		case CAN_MOTOR_MIP_INIT:
 			fault(fault_disconnected_id, FAULT_CLEAR);
 			//configure16(MOTOR_CONF_IDX_SEND_MSG_ON_TRAJ_END, 0);
+			//configure16(MOTOR_CONF_IDX_MAX_POSITION, 0x80000000);
+			//configure16(MOTOR_CONF_IDX_MIN_POSITION, 0x80000000);
 			state = CAN_MOTOR_MIP_READY;
 			break;
 		case CAN_MOTOR_MIP_DISCONNECTED:
@@ -174,116 +175,19 @@ void CanMipMotor::set_speed(float v)
 	uint16_t speed = fabsf(v);
 
 	msg.id = 0x01 + (nodeId << 3);
-	msg.size = 4;
+	msg.size = 6;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
 	msg.data[0] = 0x40;
 	msg.data[1] = speed & 0xff;
 	msg.data[2] = (speed >> 8) & 0xff;
-	msg.data[3] = v > 0 ? 1 : 0;
+	msg.data[3] = v < 0 ? 1 : 0;
+	msg.data[4] = 0;
+	msg.data[5] = 100;
 
 	if( nodeId == 1) log_format(LOG_INFO, "set speed %4x %4x sgn %x", msg.data[2], msg.data[1],msg.data[3]);
 
 	can_write(&msg, 0);
-}
-
-void CanMipMotor::set_position(float pos, bool endTraj)
-{
-	struct can_msg msg;
-	msg.size = 8;
-	msg.format = CAN_STANDARD_FORMAT;
-	msg.type = CAN_DATA_FRAME;
-
-	pos /= -outputGain;
-	int32_t p = (int32_t)pos;
-	uint16_t p16 = (uint16_t)p;
-
-	// code special de fin de trajectorie a eviter
-	if( p16 == 0x7FFF )
-	{
-		p16 = 0x7FFE;
-	}
-
-	if( ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
-	{
-		msg.id = 0x06 + (nodeId << 3);
-		msg.data[0] = raw_position & 0xff;
-		msg.data[1] = (raw_position >> 8) & 0xff;
-		msg.data[2] = raw_position & 0xff;
-		msg.data[3] = (raw_position >> 8) & 0xff;
-		msg.data[4] = raw_position & 0xff;
-		msg.data[5] = (raw_position >> 8) & 0xff;
-		msg.data[6] = raw_position & 0xff;
-		msg.data[7] = (raw_position >> 8) & 0xff;
-		can_write(&msg, 0);
-		testCount = 4;
-		posHistoryEnd = 4;
-
-		msg.id = 0x01 + (nodeId << 3);
-		msg.size = 1;
-		msg.data[0] = 0xa0;
-		can_write(&msg, 0);
-		log_format(LOG_INFO, "start motion %x pos %x", nodeId, (unsigned int)raw_position);
-	}
-
-	if( endTraj )
-	{
-		// code special fin de trajectoire
-		msg.id = 0x06 + (nodeId << 3);
-		msg.data[0] = 0xff;
-		msg.data[1] = 0x7f;
-		msg.data[2] = 0xff;
-		msg.data[3] = 0x7f;
-		msg.data[4] = 0xff;
-		msg.data[5] = 0x7f;
-		msg.data[6] = 0xff;
-		msg.data[7] = 0x7f;
-		can_write(&msg, 0);
-		log_format(LOG_INFO, "stop motion %x", nodeId);
-		return;
-	}
-
-	posHistory[posHistoryEnd] = p16;
-	posHistoryEnd++;
-	if( posHistoryEnd >= CAN_MIP_MOTOR_HISTORY_SIZE)
-	{
-		posHistoryEnd = 0;
-	}
-
-	if( posHistoryEnd % 4 == 0)
-	{
-		int begin = posHistoryEnd - 4;
-		if( begin < 0)
-		{
-			begin += CAN_MIP_MOTOR_HISTORY_SIZE;
-		}
-
-		uint16_t p0 = posHistory[begin];
-		uint16_t p1 = posHistory[(begin+1)%CAN_MIP_MOTOR_HISTORY_SIZE];
-		uint16_t p2 = posHistory[(begin+2)%CAN_MIP_MOTOR_HISTORY_SIZE];
-		uint16_t p3 = posHistory[(begin+3)%CAN_MIP_MOTOR_HISTORY_SIZE];
-
-		if( posHistoryEnd%28 == 0 )
-		{
-			msg.id = 0x06 + (nodeId << 3);
-		}
-		else
-		{
-			msg.id = 0x05 + (nodeId << 3);
-		}
-
-		msg.data[0] = p0 & 0xff;
-		msg.data[1] = (p0 >> 8) & 0xff;
-		msg.data[2] = p1 & 0xff;
-		msg.data[3] = (p1 >> 8) & 0xff;
-		msg.data[4] = p2 & 0xff;
-		msg.data[5] = (p2 >> 8) & 0xff;
-		msg.data[6] = p3 & 0xff;
-		msg.data[7] = (p3 >> 8) & 0xff;
-		can_write(&msg, 0);
-		testCount += 4;
-		if( nodeId == 1) log_format(LOG_INFO, "set positions %4x %4x %4x %4x count %d end %d", p0, p1, p2, p3, testCount, (int)((~msg.id)&0x01));
-	}
 }
 
 void CanMipMotor::rxMsg(struct can_msg *msg)

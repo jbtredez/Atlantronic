@@ -79,7 +79,6 @@ class CanMipMotor : public CanMipNode
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);
 		void set_speed(float v);
-		void set_position(float pos, bool endTraj);
 		void enable(bool enable);
 
 		inline bool is_op_enable()
@@ -87,14 +86,15 @@ class CanMipMotor : public CanMipNode
 			return (mipState & CAN_MIP_MOTOR_STATE_POWERED) && !(mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN);
 		}
 
+		inline void set_position(float pos)
+		{
+			(void) pos;
+		}
+
 		inline void set_max_current(float val)
 		{
 			(void) val;
 		}
-
-		uint16_t posHistory[CAN_MIP_MOTOR_HISTORY_SIZE];
-		unsigned int posHistoryEnd;
-		int testCount;
 
 	protected:
 		uint32_t configure16(MotorWriteConfIndex idx, uint16_t val);
