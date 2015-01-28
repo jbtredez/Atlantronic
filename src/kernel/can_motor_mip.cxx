@@ -89,6 +89,8 @@ void CanMipMotor::update(portTickType absTimeout)
 	{
 		// defaut, moteur ne repond pas
 		fault(fault_disconnected_id, FAULT_ACTIVE);
+		kinematics.a = 0;
+		kinematics.v = 0;
 		/*systime t = systick_get_time();
 		if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
 		{
@@ -99,7 +101,7 @@ void CanMipMotor::update(portTickType absTimeout)
 	else
 	{
 		fault(fault_disconnected_id, FAULT_CLEAR);
-		float dt = CONTROL_DT; // TODO
+		float dt = CONTROL_DT;
 		float v = ((int)(old_raw_position - raw_position)) * outputGain / dt;
 		old_raw_position = raw_position;
 		if( nodeId == 1 && v != 0) log_format(LOG_INFO, "v %d state %x", (int)(v*inputGain), state);
@@ -185,7 +187,7 @@ void CanMipMotor::set_speed(float v)
 	msg.data[4] = 0;
 	msg.data[5] = 100;
 
-	if( nodeId == 1) log_format(LOG_INFO, "set speed %4x %4x sgn %x", msg.data[2], msg.data[1],msg.data[3]);
+	if( nodeId == 1) log_format(LOG_INFO, "set speed %d sgn %x", speed ,msg.data[3]);
 
 	can_write(&msg, 0);
 }
