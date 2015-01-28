@@ -343,7 +343,7 @@ void can_write_mailbox(struct can_msg *msg)
 {
 	if( CAN1->TSR & CAN_TSR_TME0 )
 	{
-		CAN1->sTxMailBox[0].TIR  &= CAN_TI0R_TXRQ;
+		CAN1->sTxMailBox[0].TIR = 0;
 
 		if (msg->format == CAN_STANDARD_FORMAT)
 		{

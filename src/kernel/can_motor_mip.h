@@ -46,6 +46,11 @@ enum MotorWriteConfIndex
 	MOTOR_CONF_IDX_STOP_UNCOUPLING_THRESHOLD,
 };
 
+#define CAN_MIP_CMD_SPEED                  0x40
+#define CAN_MIP_CMD_RAZ                    0x60
+#define CAN_MIP_CMD_DISABLE                0x70
+#define CAN_MIP_CMD_ENABLE                 0x80
+
 #define CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL         0x01
 #define CAN_MIP_MOTOR_STATE_IN_MOTION             0x02
 #define CAN_MIP_MOTOR_STATE_POWERED               0x04

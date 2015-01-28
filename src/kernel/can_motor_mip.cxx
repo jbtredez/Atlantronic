@@ -102,7 +102,7 @@ void CanMipMotor::update(portTickType absTimeout)
 	{
 		fault(fault_disconnected_id, FAULT_CLEAR);
 		float dt = CONTROL_DT;
-		float v = ((int)(old_raw_position - raw_position)) * outputGain / dt;
+		float v = ((int)(raw_position - old_raw_position)) * outputGain / dt;
 		old_raw_position = raw_position;
 		if( nodeId == 1 && v != 0) log_format(LOG_INFO, "v %d state %x", (int)(v*inputGain), state);
 
@@ -150,14 +150,14 @@ void CanMipMotor::enable(bool enable)
 			{
 				// init position + enable
 				msg.size = 2;
-				msg.data[0] = 0x60;
+				msg.data[0] = CAN_MIP_CMD_RAZ;
 				msg.data[1] = 0x01;
 				can_write(&msg, 0);
 			}
 			else
 			{
 				msg.size = 1;
-				msg.data[0] = 0x80;
+				msg.data[0] = CAN_MIP_CMD_ENABLE;
 				can_write(&msg, 0);
 			}
 		}
@@ -165,7 +165,7 @@ void CanMipMotor::enable(bool enable)
 	else if( ! enable && (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
 	{
 		msg.size = 1;
-		msg.data[0] = 0x70;
+		msg.data[0] = CAN_MIP_CMD_DISABLE;
 		can_write(&msg, 0);
 	}
 }
@@ -180,10 +180,10 @@ void CanMipMotor::set_speed(float v)
 	msg.size = 6;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0x40;
+	msg.data[0] = CAN_MIP_CMD_SPEED;
 	msg.data[1] = speed & 0xff;
 	msg.data[2] = (speed >> 8) & 0xff;
-	msg.data[3] = v < 0 ? 1 : 0;
+	msg.data[3] = v >= 0 ? 1 : 0;
 	msg.data[4] = 0;
 	msg.data[5] = 100;
 

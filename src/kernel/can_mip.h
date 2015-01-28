@@ -10,6 +10,8 @@
 #define WEAK_CAN_MIP __attribute__((weak, alias("nop_function") ))
 #endif
 
+#define CAN_MIP_CMD_SYNC                   0x20
+
 class CanMipNode
 {
 	public:

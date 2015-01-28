@@ -127,7 +127,7 @@ int can_mip_sync()
 	msg.size = 1;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0x20;
+	msg.data[0] = CAN_MIP_CMD_SYNC;
 
 	return can_write(&msg, 0);
 }
