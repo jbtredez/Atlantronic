@@ -73,14 +73,11 @@ static void can_task(void *arg)
 					i++;
 				}
 
-				/*if( i < can_mip_max_node )
+				if( i < can_mip_max_node )
 				{
 					// c'est un noeud can enregistre
 					can_mip_nodes[i]->rxMsg(&msg);
-				}*/
-				// TODO TESTS avec 1 seul moteur
-				can_mip_nodes[0]->rxMsg(&msg);
-				can_mip_nodes[1]->rxMsg(&msg);
+				}
 			}
 		}
 	}

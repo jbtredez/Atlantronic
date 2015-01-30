@@ -51,6 +51,8 @@ enum MotorWriteConfIndex
 #define CAN_MIP_CMD_DISABLE                0x70
 #define CAN_MIP_CMD_ENABLE                 0x80
 
+#define CAN_MIP_MOTOR_MAX_SPEED            2800
+
 #define CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL         0x01
 #define CAN_MIP_MOTOR_STATE_IN_MOTION             0x02
 #define CAN_MIP_MOTOR_STATE_POWERED               0x04
@@ -102,8 +104,7 @@ class CanMipMotor : public CanMipNode
 		}
 
 	protected:
-		uint32_t configure16(MotorWriteConfIndex idx, uint16_t val);
-		uint32_t configure32(MotorWriteConfIndex idx, uint32_t val);
+		uint32_t configure(MotorWriteConfIndex idx, uint32_t val);
 };
 
 extern CanMipMotor can_motor[CAN_MOTOR_MAX];

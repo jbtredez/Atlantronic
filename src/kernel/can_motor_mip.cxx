@@ -48,22 +48,7 @@ CanMipMotor::CanMipMotor()
 	kinematics.a = 0;
 }
 
-uint32_t CanMipMotor::configure16(MotorWriteConfIndex idx, uint16_t val)
-{
-	struct can_msg msg;
-	msg.id = 0x01 + (nodeId << 3);
-	msg.size = 4;
-	msg.format = CAN_STANDARD_FORMAT;
-	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0xb0;
-	msg.data[1] = idx;
-	msg.data[2] = val & 0xff;
-	msg.data[3] = (val >> 8) & 0xff;
-
-	return can_write(&msg, 0);
-}
-
-uint32_t CanMipMotor::configure32(MotorWriteConfIndex idx, uint32_t val)
+uint32_t CanMipMotor::configure(MotorWriteConfIndex idx, uint32_t val)
 {
 	struct can_msg msg;
 	msg.id = 0x01 + (nodeId << 3);
@@ -104,7 +89,6 @@ void CanMipMotor::update(portTickType absTimeout)
 		float dt = CONTROL_DT;
 		float v = ((int)(raw_position - old_raw_position)) * outputGain / dt;
 		old_raw_position = raw_position;
-		if( nodeId == 1 && v != 0) log_format(LOG_INFO, "v %d state %x", (int)(v*inputGain), state);
 
 		kinematics.a = (v - kinematics.v) / dt;
 		kinematics.v = v;
@@ -115,9 +99,7 @@ void CanMipMotor::update(portTickType absTimeout)
 	{
 		case CAN_MOTOR_MIP_INIT:
 			fault(fault_disconnected_id, FAULT_CLEAR);
-			//configure16(MOTOR_CONF_IDX_SEND_MSG_ON_TRAJ_END, 0);
-			//configure16(MOTOR_CONF_IDX_MAX_POSITION, 0x80000000);
-			//configure16(MOTOR_CONF_IDX_MIN_POSITION, 0x80000000);
+			configure(MOTOR_CONF_IDX_MANUAL_VOLTAGE, 28300);
 			state = CAN_MOTOR_MIP_READY;
 			break;
 		case CAN_MOTOR_MIP_DISCONNECTED:
@@ -176,6 +158,19 @@ void CanMipMotor::set_speed(float v)
 	v *= inputGain;
 	uint16_t speed = fabsf(v);
 
+	if( speed == 0 && (state & CAN_MIP_MOTOR_STATE_IN_MOTION) )
+	{
+		// 0 lance une fonction d'arret speciale cote moteur
+		// si on n est pas IN_MOTION, pas besoin de faire un arret (cela pose un pb cote moteur sinon)
+		return;
+	}
+
+	if( speed > CAN_MIP_MOTOR_MAX_SPEED )
+	{
+		log_format(LOG_ERROR, "motor %x : set speed %d sgn %x - overspeed (max %d)", nodeId, speed , v >= 0 ? 1 : 0, (int)CAN_MIP_MOTOR_MAX_SPEED);
+		speed = CAN_MIP_MOTOR_MAX_SPEED;
+	}
+
 	msg.id = 0x01 + (nodeId << 3);
 	msg.size = 6;
 	msg.format = CAN_STANDARD_FORMAT;
@@ -186,8 +181,6 @@ void CanMipMotor::set_speed(float v)
 	msg.data[3] = v >= 0 ? 1 : 0;
 	msg.data[4] = 0;
 	msg.data[5] = 100;
-
-	if( nodeId == 1) log_format(LOG_INFO, "set speed %d sgn %x", speed ,msg.data[3]);
 
 	can_write(&msg, 0);
 }
@@ -207,6 +200,10 @@ void CanMipMotor::rxMsg(struct can_msg *msg)
 		log_format(LOG_INFO, "motor %x : new state %x => %x", nodeId, mipState, msg->data[0]);
 		mipState = msg->data[0];
 	}
-	memcpy(&raw_position, &msg->data[2], 4);
+	if( state != CAN_MOTOR_MIP_INIT )
+	{
+		memcpy(&raw_position, &msg->data[2], 4);
+	}
+
 	xSemaphoreGive(sem);
 }
