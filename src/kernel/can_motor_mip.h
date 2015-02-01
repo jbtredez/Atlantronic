@@ -77,6 +77,7 @@ class CanMipMotor : public CanMipNode
 		uint32_t raw_position; //!< position brute (en increments encodeurs)
 		uint16_t current; // TODO pas utilise
 		Kinematics kinematics;
+		uint16_t lastSpeedCmd;
 
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
 		float outputGain;   //!< gain pour convertir la position en unites robot

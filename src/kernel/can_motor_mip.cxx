@@ -42,6 +42,7 @@ CanMipMotor::CanMipMotor()
 	state = CAN_MOTOR_MIP_DISCONNECTED;
 	old_raw_position = 0;
 	raw_position = 0;
+	lastSpeedCmd = 0;
 
 	kinematics.pos = 0;
 	kinematics.v = 0;
@@ -73,11 +74,17 @@ void CanMipMotor::update(portTickType absTimeout)
 	if( res )
 	{
 		// defaut, moteur ne repond pas
+		systime t = systick_get_time();
+		if( lastSpeedCmd == 0 && (t - last_communication_time).ms < 10 )
+		{
+			// patch : le moteur rate un cycle apres une commande a 0
+			return;
+		}
+
 		fault(fault_disconnected_id, FAULT_ACTIVE);
 		kinematics.a = 0;
 		kinematics.v = 0;
-		/*systime t = systick_get_time();
-		if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
+		/*if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
 		{
 			resetNode();
 		}*/
@@ -158,7 +165,7 @@ void CanMipMotor::set_speed(float v)
 	v *= inputGain;
 	uint16_t speed = fabsf(v);
 
-	if( speed == 0 && (state & CAN_MIP_MOTOR_STATE_IN_MOTION) )
+	if( speed == 0 && ( lastSpeedCmd == 0 || ! (state & CAN_MIP_MOTOR_STATE_IN_MOTION) ) )
 	{
 		// 0 lance une fonction d'arret speciale cote moteur
 		// si on n est pas IN_MOTION, pas besoin de faire un arret (cela pose un pb cote moteur sinon)
@@ -170,6 +177,8 @@ void CanMipMotor::set_speed(float v)
 		log_format(LOG_ERROR, "motor %x : set speed %d sgn %x - overspeed (max %d)", nodeId, speed , v >= 0 ? 1 : 0, (int)CAN_MIP_MOTOR_MAX_SPEED);
 		speed = CAN_MIP_MOTOR_MAX_SPEED;
 	}
+
+	lastSpeedCmd = speed;
 
 	msg.id = 0x01 + (nodeId << 3);
 	msg.size = 6;
