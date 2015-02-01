@@ -3,9 +3,6 @@
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
-#include "kernel/can_motor.h"
-#include "kernel/can/can_id.h"
-#include "kernel/canopen.h"
 #include "kernel/control.h"
 #include "kernel/location/location.h"
 #include "kernel/geometric_model/geometric_model.h"
@@ -50,7 +47,8 @@ static void control_task(void* /*arg*/)
 		adc_update();
 
 		// mise a jour du can
-		canopen_update(wake_time + 3);
+		//canopen_update(wake_time + 3);
+		can_mip_update(wake_time + 3);
 
 		// mise a jour de la loc et calcul asservissement
 		motion_compute();

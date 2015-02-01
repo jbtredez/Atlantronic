@@ -195,7 +195,12 @@ void adc_update()
 
 	if( adc_filtered_data.vBat < ADC_VBAT_AU)
 	{
-		power_set(POWER_OFF_AU);
+		// pas de detection d'AU au demarrage, le temps de charger le filtre
+		systime t = systick_get_time();
+		if( t.ms > 100 )
+		{
+			power_set(POWER_OFF_AU);
+		}
 	}
 	else if ( adc_filtered_data.vBat > ADC_VBAT_AU_CLEAR)
 	{

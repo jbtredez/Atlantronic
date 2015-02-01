@@ -231,7 +231,10 @@ static void motion_state_enabled_run()
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		motion_kinematics[i].v = 0;
+		motion_kinematics[i].mode = KINEMATICS_SPEED;
 	}
+
+	motion_update_motors();
 }
 
 static unsigned int motion_state_enabled_transition(unsigned int currentState)

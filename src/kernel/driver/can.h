@@ -40,7 +40,9 @@ enum can_baudrate
 	CAN_RESERVED,
 	CAN_50,
 	CAN_20,
-	CAN_10
+	CAN_10,
+	// valeurs speciales non canopen
+	CAN_410,
 };
 
 struct can_msg

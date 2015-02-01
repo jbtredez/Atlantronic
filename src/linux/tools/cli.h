@@ -1,6 +1,7 @@
 #ifndef CLI_H
 #define CLI_H
 
+#include <stdio.h>
 #include <readline/readline.h>
 #include <errno.h>
 

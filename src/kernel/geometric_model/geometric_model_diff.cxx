@@ -10,7 +10,7 @@
 
 #define EPSILON                                 1e-4
 
-static KinematicsParameters paramDriving = {1500, 1500, 1500};
+static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
 #define VOIE                       200
 #define VOIE_INVERSE             0.005 //  = 1/200
