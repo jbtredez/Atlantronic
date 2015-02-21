@@ -17,6 +17,9 @@
 
 // macro pour optimiser les fonctions d'init en fonction de la taille
 #define __OPTIMIZE_SIZE__ __attribute__((optimize("-Os")))
+#define __OPTIMIZE_ZERO__ __attribute__((optimize("-O0")))
+#define __OPTIMIZE_O2__   __attribute__((optimize("-O2")))
+
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x)   __builtin_expect(!!(x), 0)
 

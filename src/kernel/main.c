@@ -34,7 +34,7 @@ void vApplicationMallocFailedHook( void )
 	kernel_panic(0);
 }
 
-void vApplicationStackOverflowHook( xTaskHandle pxTask, signed char *pcTaskName )
+__OPTIMIZE_ZERO__ void vApplicationStackOverflowHook( xTaskHandle pxTask, signed char *pcTaskName )
 {
 	( void ) pcTaskName;
 	( void ) pxTask;
