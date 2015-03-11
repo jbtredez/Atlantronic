@@ -116,7 +116,7 @@ void Hokuyo::fault_update(uint32_t err)
 
 	if( err & (ERR_HOKUYO_USART_FE | ERR_HOKUYO_USART_NE | ERR_HOKUYO_USART_ORE | ERR_HOKUYO_CHECK_CMD | ERR_HOKUYO_CHECKSUM | ERR_HOKUYO_UNKNOWN_STATUS))
 	{
-		log_format(LOG_ERROR, "%s data corruption", pcTaskGetTaskName(NULL));
+		log_format(LOG_ERROR, "%s data corruption %x", pcTaskGetTaskName(NULL), (unsigned int)err);
 		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_ACTIVE);
 	}
 	else
@@ -414,7 +414,9 @@ uint32_t Hokuyo::hs()
 {
 	uint32_t err = 0;
 
-	err = transaction((unsigned char*) hokuyo_hs_cmd, 4, 9, ms_to_tick(100));
+	log_format(LOG_INFO, "%s - hs", pcTaskGetTaskName(NULL));
+
+	err = transaction((unsigned char*) hokuyo_hs_cmd, 4, 9, ms_to_tick(200));
 
 	if(err)
 	{
@@ -441,7 +443,9 @@ uint32_t Hokuyo::laser_on()
 {
 	uint32_t err = 0;
 
-	err = transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(100));
+	log_format(LOG_INFO, "%s - laser on", pcTaskGetTaskName(NULL));
+
+	err = transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(300));
 
 	if(err)
 	{
@@ -451,6 +455,7 @@ uint32_t Hokuyo::laser_on()
 	if( read_dma_buffer[3] != '0')
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
+		log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
 		goto end;
 	}
 
@@ -465,6 +470,7 @@ uint32_t Hokuyo::laser_on()
 			goto end;
 		default:
 			err = ERR_HOKUYO_UNKNOWN_STATUS;
+			log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
 			goto end;
 	}
 
