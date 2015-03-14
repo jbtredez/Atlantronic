@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "linux/tools/com.h"
+#include "linux/tools/com/com.h"
 #include "linux/tools/cmd.h"
 #include "linux/tools/cli.h"
 #include "kernel/driver/usb.h"

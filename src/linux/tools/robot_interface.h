@@ -6,7 +6,7 @@
 #endif
 
 #include <pthread.h>
-#include "linux/tools/com.h"
+#include "linux/tools/com/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/can.h"
 #include "kernel/driver/gyro/gyro.h"
@@ -52,7 +52,7 @@ struct dynamixel_data
 class RobotInterface
 {
 	public:
-		int init(const char* name, const char* file_read, const char* file_write, const char* ip, void (*callback)(void*), void* callback_arg);
+		int init(const char* name, Com* com, bool server_tcp, void (*callback)(void*), void* callback_arg);
 		void destroy();
 
 		inline bool isConnected()
@@ -220,7 +220,7 @@ class RobotInterface
 		volatile int stop_task;
 		void (*callback)(void*);
 		void* callback_arg;
-		Com com; //!< communication
+		Com* com; //!< communication
 		bool connected;
 		ServerTcp serverTcp;
 

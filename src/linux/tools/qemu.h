@@ -1,7 +1,7 @@
 #ifndef QEMU_H
 #define QEMU_H
 
-#include "linux/tools/com.h"
+#include "linux/tools/com/com_usb.h"
 #include "kernel/math/polyline.h"
 #include "kernel/math/vect_plan.h"
 
@@ -12,7 +12,7 @@ class Qemu
 		char file_qemu_write[64];
 		char file_board_read[64];
 		char file_board_write[64];
-		Com com; //!< communication avec qemu
+		Com* com; //!< communication avec qemu
 		pid_t pid; //!< pid de qemu
 
 		int init(const char* qemu_path, const char* prog_name, int gdb_port);

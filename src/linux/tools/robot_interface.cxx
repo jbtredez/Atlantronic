@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "linux/tools/robot_interface.h"
-#include "linux/tools/com.h"
 #include "linux/tools/cli.h"
 #include "kernel/hokuyo_tools.h"
 #include "kernel/math/regression.h"
@@ -67,7 +66,7 @@ const char* log_level_color_end[LOG_MAX] =
 
 const char RobotInterface::expected_version[41] = VERSION;
 
-int RobotInterface::init(const char* _name, const char* file_read, const char* file_write, const char* ip, void (*_callback)(void*), void* _callback_arg)
+int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_callback)(void*), void* _callback_arg)
 {
 	int i;
 	int err = 0;
@@ -80,20 +79,7 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	start_time = 0;
 	current_time = 0;
 	connected = false;
-
-	if(file_read)
-	{
-		com.init(file_read, file_write, NULL);
-	}
-	else if(ip)
-	{
-		com.init(NULL, NULL, ip);
-	}
-	else
-	{
-		com.init("/dev/discovery0", "/dev/discovery0", NULL);
-	}
-
+	com = _com;
 	control_usb_data_count = 0;
 	memset(fault_status, 0x00, sizeof(fault_status));
 
@@ -133,9 +119,9 @@ int RobotInterface::init(const char* _name, const char* file_read, const char* f
 	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
 	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);
 
-	if( ip == NULL )
+	if(server_tcp )
 	{
-		serverTcp.configure(&com, 41666);
+		serverTcp.configure(com, 41666);
 		serverTcp.start();
 	}
 
@@ -154,8 +140,7 @@ void RobotInterface::destroy()
 	pthread_cancel(tid);
 
 	serverTcp.stop();
-	com.close();
-	com.destroy();
+	com->close();
 
 	rl_free_line_state();
 	rl_cleanup_after_signal();
@@ -184,7 +169,7 @@ void* RobotInterface::task()
 	unsigned char lost[1024];
 	unsigned int lost_count = 0;
 
-	com.open_block();
+	com->open_block();
 	get_stm_code_version();
 
 	while( !stop_task)
@@ -192,7 +177,7 @@ void* RobotInterface::task()
 		struct usb_header header;
 
 		// lecture entete
-		res = com.read_header(&header);
+		res = com->read_header(&header);
 
 		if( stop_task)
 		{
@@ -203,7 +188,7 @@ void* RobotInterface::task()
 		{
 			fault_reset();
 			connected = false;
-			com.open_block();
+			com->open_block();
 			get_stm_code_version();
 			continue;
 		}
@@ -212,7 +197,7 @@ void* RobotInterface::task()
 		serverTcp.write(&header, sizeof(header));
 
 		// lecture du message
-		res = com.read(header.size + 4);
+		res = com->read(header.size + 4);
 		if( stop_task)
 		{
 			goto end;
@@ -222,13 +207,13 @@ void* RobotInterface::task()
 		{
 			fault_reset();
 			connected = false;
-			com.open_block();
+			com->open_block();
 			get_stm_code_version();
 			continue;
 		}
 
 		// copie du message (vers un buffer non circulaire)
-		com.copy(msg, 4, header.size);
+		com->copy(msg, 4, header.size);
 		msg[header.size] = 0;
 
 		// traitement du message
@@ -251,7 +236,7 @@ void* RobotInterface::task()
 				// premiere perte : log header
 				log_error("com error, header = %d %d", header.type, header.size);
 			}
-			unsigned char byte = com.buffer[com.buffer_begin];
+			unsigned char byte = com->buffer[com->buffer_begin];
 			if(lost_count >= sizeof(lost)-2)
 			{
 				lost[lost_count+1] = 0;
@@ -274,7 +259,7 @@ void* RobotInterface::task()
 			lost_count ++;
 
 			//printf("wrong format, type : %i, size = %i, - skip %#.2x (%c)\n", type, size, com->buffer[com->buffer_begin], com->buffer[com->buffer_begin]);
-			com.skip(1);
+			com->skip(1);
 		}
 		else
 		{
@@ -296,10 +281,10 @@ void* RobotInterface::task()
 				lost_count = 0;
 			}
 
-			com.copy(msg, 4, header.size);
+			com->copy(msg, 4, header.size);
 			serverTcp.write(msg, header.size);
 			header.size += 4;
-			com.skip(header.size);
+			com->skip(header.size);
 			if(callback)
 			{
 				callback(callback_arg);
@@ -780,7 +765,7 @@ int RobotInterface::usb_write(unsigned char cmd, void* data, int size)
 		memcpy(buffer+2, data, size);
 	}
 
-	return com.write(buffer, buffer[1]);
+	return com->write(buffer, buffer[1]);
 }
 
 int RobotInterface::ptask()

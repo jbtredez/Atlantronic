@@ -16,6 +16,9 @@ static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr
 static void xbee_cmd(void* arg);
 static XbeeStatus xbee_init();
 
+// TEST
+void xbee_add_log(unsigned char level, const char* func, uint16_t line, const char* msg);
+
 XbeeStatus xbee_status;
 
 int xbee_module_init()
@@ -53,7 +56,8 @@ void xbee_task(void* /*arg*/)
 			}
 		}
 
-		xbee_send_data_api("toto", 4, XBEE_ADDR_PC_H, XBEE_ADDR_PC_L);
+		// TODO TEST
+		xbee_add_log(LOG_INFO, __FUNCTION__, __LINE__, "toto");
 		vTaskDelay(ms_to_tick(2000));
 	}
 }
@@ -143,6 +147,46 @@ static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 	return res;
 }
 
+// TODO TEST
+void xbee_add_log(unsigned char level, const char* func, uint16_t line, const char* msg)
+{
+	uint16_t msg_size = strlen(msg);
+	char log_header[32];
+
+	if(msg_size == 0)
+	{
+		return;
+	}
+
+	struct systime current_time = systick_get_time();
+	memcpy(log_header, &current_time, 8);
+	log_header[8] = level;
+	memcpy(log_header+9, &line, 2);
+
+	int len = strlen(func);
+
+	if(len > 20)
+	{
+		len = 20;
+	}
+
+	memcpy(log_header + 11, func, len);
+	len += 11;
+	log_header[len] = ':';
+	len++;
+
+	uint16_t size = msg_size + len + 1;
+	struct usb_header usb_header = {USB_LOG, size};
+
+	static char buffer[2048];
+	memcpy(buffer, &usb_header, sizeof(usb_header));
+	memcpy(buffer + sizeof(usb_header), log_header, len);
+	memcpy(buffer + sizeof(usb_header) + len, msg, msg_size);
+	buffer[sizeof(usb_header) + len + msg_size] = '\n';
+
+	xbee_send_data_api(buffer, sizeof(usb_header) + len + msg_size + 1, XBEE_ADDR_PC_H, XBEE_ADDR_PC_L);
+}
+
 static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l)
 {
 	uint16_t api_specific_size = size + 14;
@@ -175,23 +219,7 @@ static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr
 	xbee_tx_buffer_dma[size+17] = 0xff - checksum;
 	usart_set_read_dma_size(XBEE_USART, 11);
 	usart_send_dma_buffer(XBEE_USART, size + 18);
-#if 0
-	static char buffer[1024];
-	int offset = snprintf(buffer, sizeof(buffer), "size %d : ", size + 18);
-	for(int i = 0; i < size + 17; i++)
-	{
-		int res = snprintf(buffer + offset, sizeof(buffer), " %x", xbee_tx_buffer_dma[i]);
-		if( res > 0)
-		{
-			offset += res;
-		}
-		else
-		{
-			break;
-		}
-	}
-	log(LOG_INFO, buffer);
-#endif
+
 	int ret = usart_wait_read(XBEE_USART, 500);
 	if( ret != 0)
 	{

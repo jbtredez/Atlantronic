@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#include "linux/tools/com.h"
+#include "linux/tools/com/com_usb.h"
+#include "linux/tools/com/com_tcp.h"
+#include "linux/tools/com/com_xbee.h"
 #include "linux/tools/cmd.h"
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
@@ -24,6 +26,9 @@ int main(int argc, char** argv)
 	const char* ip = NULL;
 	int gdb_port = 0;
 	int simulation = 0;
+	bool serverTcp = false;
+	bool xbee = false;
+	Com* com;
 
 	pthread_mutex_init(&quitMutex, NULL);
 	pthread_cond_init(&quitCond, NULL);
@@ -35,15 +40,18 @@ int main(int argc, char** argv)
 		{
 			switch(option)
 			{
-				case 's':
-					simulation = 1;
-					prog_stm = optarg;
-					break;
 				case 'g':
 					gdb_port = 1235;
 					break;
 				case 'i':
 					ip = optarg;
+					break;
+				case 's':
+					simulation = 1;
+					prog_stm = optarg;
+					break;
+				case 'x':
+					xbee = true;
 					break;
 				default:
 					fprintf(stderr, "option %c inconnue", (char)option);
@@ -78,7 +86,24 @@ int main(int argc, char** argv)
 		}
 	}
 
-	robotItf.init("discovery", file_stm_read, file_stm_write, ip, NULL, NULL);
+	if(file_stm_read)
+	{
+		com = new ComUsb(file_stm_read, file_stm_write);
+	}
+	else if(ip)
+	{
+		com = new ComTcp(ip);
+	}
+	else if( xbee )
+	{
+		com = new ComXbee("/dev/ttyUSB0");
+	}
+	else
+	{
+		com = new ComUsb("/dev/discovery0", "/dev/discovery0");
+	}
+
+	robotItf.init("discovery", com, serverTcp, NULL, NULL);
 
 	pthread_mutex_lock(&quitMutex);
 	cmd_init(&robotItf, &qemu, cli_quit);

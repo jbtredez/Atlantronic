@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <list>
-#include "linux/tools/com.h"
+#include "linux/tools/com/com.h"
 
 class ServerTcp;
 

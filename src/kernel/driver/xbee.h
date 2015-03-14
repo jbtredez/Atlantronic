@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define XBEE_CMD_AT                        0x08      //!< commande AT
 #define XBEE_CMD_AT_QUEUE_PARAM_VALUE      0x09      //!< commande AT avec effet retarde
 #define XBEE_CMD_TX                        0x10      //!< envoi
@@ -46,5 +50,9 @@ struct xbee_cmd_param
 	uint8_t cmd_id;         //!< id de la commande
 	float param;            //!< parametre
 } __attribute((packed));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

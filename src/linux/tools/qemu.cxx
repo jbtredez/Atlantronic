@@ -93,9 +93,9 @@ int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 		return -1;
 	}
 
-	com.init(file_qemu_read, file_qemu_write, NULL);
+	com = new ComUsb(file_qemu_read, file_qemu_write);
 
-	com.open_block();
+	com->open_block();
 
 	return 0;
 }
@@ -108,8 +108,10 @@ void Qemu::destroy()
 		kill(pid, SIGILL);
 	}
 
-	com.close();
-	com.destroy();
+	if( com )
+	{
+		com->close();
+	}
 
 	unlink(file_qemu_read);
 	unlink(file_qemu_write);
@@ -125,7 +127,7 @@ int Qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 	event.data32[0] = factor;
 	event.data32[1] = icount;
 
-	return com.write((void*) &event, sizeof(event));
+	return com->write((void*) &event, sizeof(event));
 }
 
 int Qemu::add_object(const struct polyline polyline)
@@ -144,7 +146,7 @@ int Qemu::add_object(const struct polyline polyline)
 		f += 2;
 	}
 
-	return com.write((void*) &event, sizeof(event));
+	return com->write((void*) &event, sizeof(event));
 }
 
 int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
@@ -161,7 +163,7 @@ int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
 	f[3] = delta.y;
 	f[4] = delta.theta;
 
-	return com.write((void*) &event, sizeof(event));
+	return com->write((void*) &event, sizeof(event));
 }
 
 //! @param nodeId : nodeId ou 0 pour tous
@@ -180,7 +182,7 @@ int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 		event.data32[1] = EVENT_MANAGE_CAN_MOTOR_DISCONNECT;
 	}
 
-	return com.write((void*) &event, sizeof(event));
+	return com->write((void*) &event, sizeof(event));
 }
 
 int Qemu::set_io(uint32_t id, bool val)
@@ -190,5 +192,5 @@ int Qemu::set_io(uint32_t id, bool val)
 	event.data32[0] = id;
 	event.data32[1] = val?1:0;
 
-	return com.write((void*) &event, sizeof(event));
+	return com->write((void*) &event, sizeof(event));
 }
