@@ -8,6 +8,32 @@
 
 #include <stdint.h>
 
+#define XBEE_CMD_AT                        0x08      //!< commande AT
+#define XBEE_CMD_AT_QUEUE_PARAM_VALUE      0x09      //!< commande AT avec effet retarde
+#define XBEE_CMD_TX                        0x10      //!< envoi
+#define XBEE_CMD_REMOTE_AT                 0x17
+#define XBEE_CMD_RX_MASK                   0x80
+#define XBEE_CMD_MODEM_STATUS              0x8a
+
+#define XBEE_AT_BAUDRATE                   (('B' << 8) + 'D')
+#define XBEE_AT_WRITE_EEPROM               (('W' << 8) + 'R')
+#define XBEE_AT_SW_RESET                   (('F' << 8) + 'R')
+#define XBEE_AT_NETWORK_ID                 (('I' << 8) + 'D')
+
+#define XBEE_OP_BAUDRATE                   115200
+#define XBEE_TIMEOUT                           50
+#define XBEE_NETWORK_ID                    0x1818
+#define XBEE_ADDR_DISCOVERY_H            0x13a200
+#define XBEE_ADDR_DISCOVERY_L          0x40991d2f
+#define XBEE_ADDR_PC_H                   0x13a200
+#define XBEE_ADDR_PC_L                 0x409e0da5
+
+enum XbeeStatus
+{
+	XBEE_STATUS_DISCONNECTED = 0,
+	XBEE_STATUS_CONNECTED,
+};
+
 enum
 {
 	XBEE_CMD_SET_MANAGER_BAUDRATE = 1,
