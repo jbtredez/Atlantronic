@@ -24,6 +24,7 @@ obj-linux-glplot += $(obj-linux-itf-core)
 obj-linux-glplot += linux/tools/glplot.o
 obj-linux-glplot += linux/tools/opengl/object3d.o
 obj-linux-glplot += linux/tools/opengl/table3d.o
+obj-linux-glplot += linux/tools/opengl/robot3d.o
 obj-linux-glplot += linux/tools/opengl/gl_font.o
 obj-linux-glplot += linux/tools/opengl/table_scene.o
 obj-linux-glplot += linux/tools/opengl/gltools.o

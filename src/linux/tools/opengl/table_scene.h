@@ -2,6 +2,7 @@
 #define TABLE_SCENE_H
 
 #include "linux/tools/opengl/table3d.h"
+#include "linux/tools/opengl/robot3d.h"
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/robot_interface.h"
@@ -78,7 +79,7 @@ class TableScene
 
 		RobotInterface* robotItf;
 		Table3d table3d;
-		Object3d robot3d;
+		Robot3d robot3d;
 		Object3d opponentRobot3d;
 		VectPlan opponentRobotPos;
 		GlFont* glfont;

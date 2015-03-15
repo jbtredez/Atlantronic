@@ -48,13 +48,13 @@ bool TableScene::init(GlFont* font, RobotInterface* robot)
 		return false;
 	}
 
-	if( ! robot3d.init("media/robot2011.3ds") )
+	if( ! robot3d.init() )
 	{
-		fprintf(stderr, "robot2011.init() error - Exiting.\n");
+		fprintf(stderr, "robot3d.init() error - Exiting.\n");
 		return false;
 	}
 
-	if( ! opponentRobot3d.init("media/robot2011.3ds") )
+	if( ! opponentRobot3d.init("media/robot2015.obj") )
 	{
 		fprintf(stderr, "opponentRobot3d.init() error - Exiting.\n");
 		return false;
@@ -186,7 +186,7 @@ void TableScene::drawOpponentRobot()
 	glPushName(GL_NAME_OPPONENT);
 	glPushMatrix();
 
-	glColor3f(1, 0, 0);
+	glColor3f(0, 0, 0);
 	glTranslatef(opponentRobotPos.x, opponentRobotPos.y, 0);
 	glRotated(opponentRobotPos.theta * 360.0f / (2*M_PI), 0, 0, 1);
 #if 0
@@ -197,7 +197,7 @@ void TableScene::drawOpponentRobot()
 	}
 	glEnd();
 #endif
-	glRotatef(90, 1, 0, 0);
+	glRotatef(90, 0, 0, 1);
 	glDisable(GL_COLOR_MATERIAL);
 	opponentRobot3d.draw();
 	glEnable(GL_COLOR_MATERIAL);
@@ -236,7 +236,6 @@ void TableScene::drawRobot(Graphique* graph)
 		glEnd();
 
 		glPushMatrix();
-		glRotatef(90, 1, 0, 0);
 		glDisable(GL_COLOR_MATERIAL);
 		robot3d.draw();
 		glEnable(GL_COLOR_MATERIAL);
