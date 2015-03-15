@@ -50,15 +50,15 @@ int hokuyo_module_init()
 		goto done;
 	}
 
-	hokuyo[0].setPosition(VectPlan( -51, 0, 0), 1);
+	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
 	hokuyo[0].scan.theta_min = -M_PI;
 	hokuyo[0].scan.theta_max = M_PI;
 	hokuyo[0].scan.min_object_size = 1;
 	hokuyo[0].scan.min_distance = 100;
-	hokuyo[1].setPosition(VectPlan(-154, 0, M_PI), 1);
-	hokuyo[1].scan.theta_min = -M_PI_2;
-	hokuyo[1].scan.theta_max = M_PI_2;
-	hokuyo[1].scan.min_object_size = 3;
+	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
+	hokuyo[1].scan.theta_min = -M_PI;
+	hokuyo[1].scan.theta_max = M_PI;
+	hokuyo[1].scan.min_object_size = 1;
 	hokuyo[1].scan.min_distance = 100;
 
 done:
