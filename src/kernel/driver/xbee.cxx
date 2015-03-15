@@ -57,7 +57,7 @@ void xbee_task(void* /*arg*/)
 		}
 
 		// TODO TEST
-		xbee_add_log(LOG_INFO, __FUNCTION__, __LINE__, "toto");
+		//xbee_add_log(LOG_INFO, __FUNCTION__, __LINE__, "toto");
 		vTaskDelay(ms_to_tick(2000));
 	}
 }
@@ -77,8 +77,6 @@ static XbeeStatus xbee_init()
 static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 {
 	uint16_t api_specific_size = 8;
-
-	log_format(LOG_INFO, "xbee AT %c%c : %.4x", at_cmd>>8, at_cmd&0xff, (unsigned int)val);
 
 	xbee_tx_buffer_dma[0] = 0x7e;
 	xbee_tx_buffer_dma[1] = (api_specific_size >> 8) & 0xff;
@@ -107,7 +105,10 @@ static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 	int error = usart_wait_read(XBEE_USART, XBEE_TIMEOUT);
 	if( error )
 	{
-		log_format(LOG_ERROR, "xbee - usart error %d", error);
+		if( error != ERR_USART_TIMEOUT )
+		{
+			log_format(LOG_ERROR, "xbee - usart error %d", error);
+		}
 		return error;
 	}
 
@@ -128,6 +129,7 @@ static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 	switch( xbee_rx_buffer_dma[7] )
 	{
 		case 0:
+			log_format(LOG_INFO, "xbee AT %c%c : %.4x - OK", at_cmd>>8, at_cmd&0xff, (unsigned int)val);
 			// OK
 			res = 0;
 			break;
