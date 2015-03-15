@@ -89,12 +89,12 @@ static void lcd_init()
 	lcd_write8_data(0xA2);
 
 	lcd_write_reg(LCD_POWER1);
-	lcd_write8_data(0x10);
+	lcd_write8_data(0x10);          // GVDD = 3.65V
 	lcd_write_reg(LCD_POWER2);
-	lcd_write8_data(0x10);
+	lcd_write8_data(0x10);         // DDVDH = 2 VCI ; VGH = 7 CVI ; VGL = -4 VCI
 	lcd_write_reg(LCD_VCOM1);
-	lcd_write8_data(0x45);
-	lcd_write8_data(0x15);
+	lcd_write8_data(0x45);        // VCOMH = 4.425 V
+	lcd_write8_data(0x15);        // VCOML = -1.975 V
 	lcd_write_reg(LCD_VCOM2);
 	lcd_write8_data(0x90);
 
