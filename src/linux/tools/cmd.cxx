@@ -98,7 +98,7 @@ COMMAND usb_commands[] = {
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
 	{ "go_enable", cmd_go_enable, "go_enable" },
-	{ "goto_graph", cmd_goto_graph, "goto_graph" },
+	{ "goto_graph", cmd_goto_graph, "goto_graph node" },
 	{ "goto", cmd_goto, "goto x y alpha dist way avoidance_type" },
 	{ "goto_xy", cmd_goto_xy, "goto_xy x y dist way avoidance_type"},
 	{ "gyro_calib_start", cmd_gyro_calib_start, "cmd_gyro_calib_start"},
@@ -680,7 +680,22 @@ int cmd_motion_goto(const char* arg)
 int cmd_goto_graph(const char* arg)
 {
 	(void) arg;
-	cmd_robot->goto_graph();
+	int node = -1;
+
+	int count = sscanf(arg, "%d", &node);
+	if(count != 1)
+	{
+		node = -1;
+	}
+
+	if( node < 0 )
+	{
+		cmd_robot->goto_graph();
+	}
+	else
+	{
+		cmd_robot->goto_graph_node(node);
+	}
 
 	return CMD_SUCESS;
 }

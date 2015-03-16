@@ -12,6 +12,7 @@
 #include "kernel/driver/xbee.h"
 #include "kernel/pump.h"
 #include "kernel/match.h"
+#include "kernel/motion/graph.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -1042,6 +1043,11 @@ int RobotInterface::goto_graph()
 	cmd_arg.avoidance_type = AVOIDANCE_STOP;
 
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::goto_graph_node(int id)
+{
+	return goto_near_xy(graph_node[id].pos.x, graph_node[id].pos.y, 0, WAY_ANY, AVOIDANCE_GRAPH);
 }
 
 int RobotInterface::set_position(VectPlan pos)

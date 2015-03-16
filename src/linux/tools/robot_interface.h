@@ -125,6 +125,7 @@ class RobotInterface
 		int rotate(float theta);
 		int rotate_to(float theta);
 		int goto_graph();
+		int goto_graph_node(int id);
 		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
 		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
 
