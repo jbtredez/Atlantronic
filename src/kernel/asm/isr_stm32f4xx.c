@@ -5,6 +5,7 @@
 #include "kernel/FreeRTOS.h"
 #include "priority.h"
 #include "kernel/fault.h"
+#include "kernel/module.h"
 
 struct stack_t
 {
@@ -354,7 +355,7 @@ static void isr_nmi(void)
 	}
 }
 
-void isr_hard_fault_stack(struct stack_t* fault_stack)
+__OPTIMIZE_ZERO__ void isr_hard_fault_stack(struct stack_t* fault_stack)
 {
 	(void)fault_stack;
 	// regarder fault_stack->pc pour voir d'ou vient le probleme
