@@ -7,11 +7,11 @@
 
 #include <math.h>
 
-#define PARAM_LEFT_CORNER_X                    190
-#define PARAM_LEFT_CORNER_Y                    175
-#define PARAM_RIGHT_CORNER_X                   190
-#define PARAM_RIGHT_CORNER_Y                  -175
-#define PARAM_NP_X                            -103
+#define PARAM_LEFT_CORNER_X                    125
+#define PARAM_LEFT_CORNER_Y                    155
+#define PARAM_RIGHT_CORNER_X                   125
+#define PARAM_RIGHT_CORNER_Y                  -155
+#define PARAM_NP_X                            -125
 
 #define DRIVING1_WHEEL_RADIUS                   33
 #define DRIVING2_WHEEL_RADIUS                   33
