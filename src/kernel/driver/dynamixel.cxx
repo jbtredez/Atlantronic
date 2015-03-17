@@ -57,11 +57,14 @@ int DynamixelManager::init(const char* name, enum usart_id usart_id, uint32_t fr
 		return -1;
 	}
 
-	portBASE_TYPE err = xTaskCreate(task_wrapper, name, DYNAMIXEL_STACK_SIZE, this, PRIORITY_TASK_DYNAMIXEL, NULL);
-
-	if(err != pdPASS)
+	if( Max_devices_id > 2)
 	{
-		return ERR_INIT_DYNAMIXEL;
+		portBASE_TYPE err = xTaskCreate(task_wrapper, name, DYNAMIXEL_STACK_SIZE, this, PRIORITY_TASK_DYNAMIXEL, NULL);
+
+		if(err != pdPASS)
+		{
+			return ERR_INIT_DYNAMIXEL;
+		}
 	}
 
 	mutex = xSemaphoreCreateMutex();
