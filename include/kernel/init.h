@@ -53,7 +53,7 @@
 #define INIT_END                      "39"
 #define INIT_MOTION                   "40"
 #define INIT_CONTROL                  "41"
-#define INIT_PINCE                    "42"
+#define INIT_WING                     "42"
 #define INIT_ARM                      "43"
 #define INIT_TRAJECTORY               "44"
 #define INIT_PUMP                     "45"

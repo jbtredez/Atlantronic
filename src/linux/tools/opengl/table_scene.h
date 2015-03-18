@@ -72,6 +72,7 @@ class TableScene
 		}
 
 	protected:
+		void printInfos(Graphique* graph);
 		void draw_plus(float x, float y, float rx, float ry);
 		void drawOpponentRobot();
 		void drawRobot(Graphique* graph);

@@ -57,7 +57,6 @@ int cmd_motion_goto(const char*arg);
 int cmd_motion_set_max_driving_current(const char* arg);
 int cmd_motion_set_actuator_kinematics(const char* arg);
 int cmd_motion_set_speed(const char* arg);
-int cmd_pince_set_position(const char* arg);
 int cmd_ptask(const char* arg);
 int cmd_reboot(const char* arg);
 int cmd_recalage(const char* arg);
@@ -69,6 +68,7 @@ int cmd_straight(const char* arg);
 int cmd_straight_to_wall(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
+int cmd_wing_set_position(const char* arg);
 int cmd_xbee_set_op_baudrate(const char* arg);
 int cmd_xbee_set_manager_baudrate(const char* arg);
 
@@ -115,7 +115,6 @@ COMMAND usb_commands[] = {
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
 	{ "motion_set_actuator_kinematics", cmd_motion_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
 	{ "motion_set_speed", cmd_motion_set_speed, "set speed direction valeur"},
-	{ "pince_set_position", cmd_pince_set_position, "gestion des pinces: gauche droite"},
 	{ "ptask", cmd_ptask, "print tasks"},
 	{ "power_off", cmd_power_off, "power off {0,1}"},
 	{ "pwm_set", cmd_pwm_set, "pwm_set id val"},
@@ -132,6 +131,7 @@ COMMAND usb_commands[] = {
 	{ "set_color", cmd_set_color, "set color"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
+	{ "wing_set_position", cmd_wing_set_position, "wing_set_position gauche droite"},
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
 	{ "xbee_set_manager_baudrate", cmd_xbee_set_manager_baudrate, "xbee_set_manager_baudrate baudrate"},
 	{ "?", cmd_help, "Synonym for `help'" },
@@ -759,18 +759,18 @@ int cmd_max_speed(const char* arg)
 	return CMD_SUCESS;
 }
 
-int cmd_pince_set_position (const char* arg)
+int cmd_wing_set_position(const char* arg)
 {
-	int pince_left;
-	int pince_right;
-	int count = sscanf(arg, "%d %d", &pince_left, &pince_right);
+	int wing_left;
+	int wing_right;
+	int count = sscanf(arg, "%d %d", &wing_left, &wing_right);
 
 	if(count != 2)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->pince((pince_cmd_type)pince_left, (pince_cmd_type)pince_right);
+	cmd_robot->wing((wing_cmd_type)wing_left, (wing_cmd_type)wing_right);
 	return CMD_SUCESS;
 }
 

@@ -68,6 +68,8 @@ core_baz += kernel/motion/trajectory.o
 #core_baz += kernel/pump.o
 #core_baz += kernel/arm.o
 
+core_robot += disco/wing.o
+
 obj-disco-core_os += ${core_os}
 bin-disco += core_os
 
@@ -80,6 +82,7 @@ obj-disco-core += ${core_baz}
 bin-disco += core
 
 obj-disco-homologation += $(core_baz)
+obj-disco-homologation += $(core_robot)
 #obj-disco-homologation += disco/strat_homol.o
 bin-disco += homologation
 

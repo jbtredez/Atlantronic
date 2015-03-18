@@ -1103,14 +1103,14 @@ int RobotInterface::gyro_set_calibration_values(float scale, float bias, float d
 	return usb_write(USB_CMD_GYRO_SET_CALIBRATION_VALUES, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right)
+int RobotInterface::wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right)
 {
-	struct pince_cmd_arg cmd_arg;
+	struct wing_cmd_arg cmd_arg;
 
 	cmd_arg.type_left = cmd_type_left;
 	cmd_arg.type_right = cmd_type_right;
 
-	return usb_write(USB_CMD_PINCE, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_WING, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_cmd(uint32_t cmdType)

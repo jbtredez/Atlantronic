@@ -24,7 +24,7 @@
 #include "kernel/detection.h"
 #include "kernel/driver/io.h"
 #include "kernel/motion/trajectory.h"
-#include "foo/pince.h"
+#include "disco/wing.h"
 #include "server_tcp.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
@@ -157,10 +157,10 @@ class RobotInterface
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);
 
-/////////////////// TODO a mettre a jour
 		// ---------- gestion des pinces -----------------------------------------------
-		int pince(enum pince_cmd_type cmd_type_left, enum pince_cmd_type cmd_type_right);
+		int wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right);
 
+/////////////////// TODO a mettre a jour
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_xyz(float x, float y, float z, enum arm_cmd_type type);
 		int arm_abz(float a, float b, float z);

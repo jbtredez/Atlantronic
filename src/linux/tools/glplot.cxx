@@ -749,6 +749,13 @@ static void drawScene(GLenum mode)
 
 	glColor3f(0,0,0);
 	plot_axes(&graph[current_graph]);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(graph[current_graph].roi_xmin, graph[current_graph].roi_xmax, graph[current_graph].roi_ymin, graph[current_graph].roi_ymax, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 	if( glplot_show_legend )
 	{
 		plot_legende(&graph[current_graph]);
@@ -960,21 +967,13 @@ static void joystick_event(int event, float val)
 {
 	if(event & JOYSTICK_BTN_BASE)
 	{
-		int v = rint(val);
+		//int v = rint(val);
 		// c'est un bouton
 		switch(event & ~JOYSTICK_BTN_BASE)
 		{
 			case 0: // A (xbox)
-				if( v )
-				{
-					robotItf->pince(PINCE_OPEN, PINCE_OPEN);
-				}
 				break;
 			case 1: // B (xbox)
-				if( v )
-				{
-					robotItf->pince(PINCE_CLOSE, PINCE_CLOSE);
-				}
 				break;
 			case 2: // X (xbox)
 				break;

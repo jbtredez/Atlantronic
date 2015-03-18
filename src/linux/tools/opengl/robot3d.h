@@ -9,14 +9,14 @@ class Robot3d
 		bool init();
 		void draw();
 
-		float rightClapArmTheta;
-		float leftClapArmTheta;
+		float rightWingTheta;
+		float leftWingTheta;
 
 	protected:
-		void drawClapArm(bool right);
+		void drawWing(bool right);
 
 		Object3d mobileBase;
-		Object3d clapArm;
+		Object3d wing;
 };
 
 #endif

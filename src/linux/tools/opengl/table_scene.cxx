@@ -237,6 +237,8 @@ void TableScene::drawRobot(Graphique* graph)
 
 		glPushMatrix();
 		glDisable(GL_COLOR_MATERIAL);
+		robot3d.rightWingTheta = robotItf->ax12[AX12_RIGHT_WING].pos;
+		robot3d.leftWingTheta = robotItf->ax12[AX12_LEFT_WING].pos;
 		robot3d.draw();
 		glEnable(GL_COLOR_MATERIAL);
 		glDisable(GL_CULL_FACE);
@@ -247,6 +249,104 @@ void TableScene::drawRobot(Graphique* graph)
 	}
 }
 
+void TableScene::printInfos(Graphique* graph)
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(graph->roi_xmin, graph->roi_xmax, graph->roi_ymin, graph->roi_ymax, 0, 1);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glColor3f(0,0,0);
+	glPushMatrix();
+	int lineHeight = -1.5*glfont->digitHeight * graph->ratio_y;
+	float x = graph->roi_xmax - 45*glfont->width * graph->ratio_x;
+	float y = graph->roi_ymax + lineHeight;
+	glfont->glPrintf(x, y, "time  %13.6f", robotItf->current_time);
+	y += lineHeight;
+	struct control_usb_data* data = &robotItf->last_control_usb_data;
+	double match_time = 0;
+	if( robotItf->start_time )
+	{
+		match_time = robotItf->current_time - robotItf->start_time;
+	}
+	glfont->glPrintf(x, y, "match %13.6f", match_time);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "power off %#9x", data->power_state);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "pos  %6.0f %6.0f %6.2f",
+			data->pos.x, data->pos.y,
+			data->pos.theta * 180 / M_PI);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "wpos %6.0f %6.0f %6.2f",
+			data->wanted_pos.x, data->wanted_pos.y,
+			data->wanted_pos.theta * 180 / M_PI);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "v %5.2f %5.2f (wanted %5.2f %5.2f)",
+			data->mes_motors[0].v, data->mes_motors[1].v, data->cons_motors_v[0], data->cons_motors_v[1]);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "gyro %6.2f",
+					data->pos_theta_gyro_euler * 180 / M_PI);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "vBat  %6.3f", data->vBat);
+	y += lineHeight;
+	for(int i = 0; i < 4; i++)
+	{
+		glfont->glPrintf(x, y, "iPwm%i  %6.3f", i, data->iPwm[i]);
+		y += lineHeight;
+	}
+	glfont->glPrintf(x, y, "cod  %6d %6d %6d", data->encoder[0], data->encoder[1], data->encoder[2]);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "io %d%d %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
+			data->gpio & 0x01,
+			(data->gpio >> 1) & 0x01,
+			(data->gpio >> 2) & 0x01,
+			(data->gpio >> 3) & 0x01,
+			(data->gpio >> 4) & 0x01,
+			(data->gpio >> 5) & 0x01,
+			(data->gpio >> 6) & 0x01,
+			(data->gpio >> 7) & 0x01,
+			(data->gpio >> 8) & 0x01,
+			(data->gpio >> 9) & 0x01,
+			(data->gpio >> 10) & 0x01,
+			(data->gpio >> 11) & 0x01,
+			(data->gpio >> 12) & 0x01,
+			(data->gpio >> 13) & 0x01);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "pump blocked %d %d %d %d",
+			(data->pumpState & 0x01),
+			((data->pumpState >> 1) & 0x01),
+			((data->pumpState >> 2) & 0x01),
+			((data->pumpState >> 3) & 0x01));
+	y += lineHeight;
+	for(int i = 2; i < AX12_MAX_ID; i++)
+	{
+		glfont->glPrintf(x, y, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
+				robotItf->ax12[i].pos * 180 / M_PI,
+				(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+				(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+				(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
+		y += lineHeight;
+	}
+	for(int i = 2; i < RX24_MAX_ID; i++)
+	{
+		glfont->glPrintf(x, y, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
+				robotItf->rx24[i].pos * 180 / M_PI,
+				(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+				(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+				(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
+		y += lineHeight;
+	}
+	/*float* mat = data->arm_matrix.val;
+	glfont->glPrintf(x, y, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);
+	y += lineHeight;
+	glfont->glPrintf(x, y, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[8], mat[9], mat[10], mat[11]);
+	y += lineHeight;*/
+	glPopMatrix();
+}
 void TableScene::draw(GLenum mode, Graphique* graph)
 {
 	int res = pthread_mutex_lock(&robotItf->mutex);
@@ -264,6 +364,7 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 	float plus_dx = 2 * ratio_x;
 	float plus_dy = 2 * ratio_y;
 
+	printInfos(graph);
 	MatrixHomogeneous m = viewMatrix;
 	float ax = m.val[3];
 	float ay = m.val[7];
@@ -461,94 +562,6 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 
 	// affichage du robot
 	drawRobot(graph);
-
-	glColor3f(0,0,0);
-	glPushMatrix();
-	int lineHeight = -2*glfont->digitHeight * graph->ratio_y;
-	int lineId = 0;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "time  %13.6f", robotItf->current_time);
-	lineId++;
-	struct control_usb_data* data = &robotItf->last_control_usb_data;
-	double match_time = 0;
-	if( robotItf->start_time )
-	{
-		match_time = robotItf->current_time - robotItf->start_time;
-	}
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "match %13.6f", match_time);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "power off %#9x", data->power_state);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "pos  %6.0f %6.0f %6.2f",
-			data->pos.x, data->pos.y,
-			data->pos.theta * 180 / M_PI);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "wpos %6.0f %6.0f %6.2f",
-			data->wanted_pos.x, data->wanted_pos.y,
-			data->wanted_pos.theta * 180 / M_PI);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "v %5.2f %5.2f (wanted %5.2f %5.2f)",
-			data->mes_motors[0].v, data->mes_motors[1].v, data->cons_motors_v[0], data->cons_motors_v[1]);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "gyro %6.2f",
-					data->pos_theta_gyro_euler * 180 / M_PI);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "vBat  %6.3f", data->vBat);
-	lineId++;
-	for(int i = 0; i < 4; i++)
-	{
-		glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "iPwm%i  %6.3f", i, data->iPwm[i]);
-		lineId++;
-	}
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "cod  %6d %6d %6d", data->encoder[0], data->encoder[1], data->encoder[2]);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "io %d%d %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
-			data->gpio & 0x01,
-			(data->gpio >> 1) & 0x01,
-			(data->gpio >> 2) & 0x01,
-			(data->gpio >> 3) & 0x01,
-			(data->gpio >> 4) & 0x01,
-			(data->gpio >> 5) & 0x01,
-			(data->gpio >> 6) & 0x01,
-			(data->gpio >> 7) & 0x01,
-			(data->gpio >> 8) & 0x01,
-			(data->gpio >> 9) & 0x01,
-			(data->gpio >> 10) & 0x01,
-			(data->gpio >> 11) & 0x01,
-			(data->gpio >> 12) & 0x01,
-			(data->gpio >> 13) & 0x01);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "pump blocked %d %d %d %d",
-			(data->pumpState & 0x01),
-			((data->pumpState >> 1) & 0x01),
-			((data->pumpState >> 2) & 0x01),
-			((data->pumpState >> 3) & 0x01));
-	lineId++;
-	for(int i = 2; i < AX12_MAX_ID; i++)
-	{
-		glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
-				robotItf->ax12[i].pos * 180 / M_PI,
-				(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-				(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-				(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
-		lineId++;
-	}
-	for(int i = 2; i < RX24_MAX_ID; i++)
-	{
-		glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
-				robotItf->rx24[i].pos * 180 / M_PI,
-				(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-				(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-				(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
-		lineId++;
-	}
-	float* mat = data->arm_matrix.val;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);
-	lineId++;
-	glfont->glPrintf(1600, graph->roi_ymax + lineId*lineHeight, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[8], mat[9], mat[10], mat[11]);
-	lineId++;
-	glPopMatrix();
 
 	pthread_mutex_unlock(&robotItf->mutex);
 }

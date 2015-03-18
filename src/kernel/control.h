@@ -42,7 +42,7 @@ struct control_usb_data
 	uint8_t color;
 	uint32_t power_state;
 	struct dynamixel_usb_data dynamixel;
-	MatrixHomogeneous arm_matrix;
+	//MatrixHomogeneous arm_matrix;
 } __attribute__((packed));
 
 #endif

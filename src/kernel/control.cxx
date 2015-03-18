@@ -76,7 +76,7 @@ static void control_task(void* /*arg*/)
 		control_usb_data.gpio = gpio_get_state();
 		control_usb_data.power_state = power_get();
 		control_usb_data.color = match_get_color();
-		arm_get_matrix(&control_usb_data.arm_matrix);
+//		arm_get_matrix(&control_usb_data.arm_matrix);
 
 		dynamixel_update_usb_data(&control_usb_data.dynamixel);
 
