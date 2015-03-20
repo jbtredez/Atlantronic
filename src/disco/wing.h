@@ -1,7 +1,7 @@
 #ifndef WING_H
 #define WING_H
 
-//! @file pince.h
+//! @file wing.h
 //! @brief Gestion des ailes
 //! @author Atlantronic
 
