@@ -11,33 +11,44 @@
 extern "C" {
 #endif
 
-#define GPIO_IN_0          0x01 // IN_0
-#define GPIO_IN_1          0x02 // IN_1
-#define GPIO_IN_2          0x04 // IN_2
-#define GPIO_IN_3          0x08 // IN_3
-#define GPIO_IN_4          0x10 // IN_4
-#define GPIO_IN_5          0x20 // IN_5
-#define GPIO_IN_6          0x40 // IN_6
-#define GPIO_IN_7          0x80 // IN_7
-#define GPIO_IN_8         0x100 // IN_8
-#define GPIO_IN_9         0x200 // IN_9
-#define GPIO_IN_10        0x400 // IN_10
-#define GPIO_IN_11        0x800 // IN_11
-#if defined(__discovery__)
-#define GPIO_IN_12       0x1000  // IN_12
-#define GPIO_IN_13       0x2000  // IN_13
-#define GPIO_IN_BTN1     0x4000  // IN_BTN1 (etat pin)
-#define GPIO_IN_BTN2     0x8000  // IN_BTN2 (etat pin)
-#define GPIO_IN_GO      0x10000  // IN_GO (etat pin)
-#define GPIO_GO         0x20000  // GO : match lance
-#elif defined(__disco__)
-#define GPIO_IN_GO       0x1000 // IN_GO (etat pin)
-#define GPIO_GO          0x2000 // GO : match lance
-#else
-#error unknown card
-#endif
+typedef enum io
+{
+	GPIO_0 = 0, // IO_0
+	GPIO_1,     // IO_1
+	GPIO_2,     // IO_2
+	GPIO_3,     // IO_3
+	GPIO_4,     // IO_4
+	GPIO_5,     // IO_5
+	GPIO_6,     // IO_6
+	GPIO_7,     // IO_7
+	GPIO_8,     // IO_8
+	GPIO_9,     // IO_9
+	GPIO_10,    // IO_10
+	GPIO_11,    // IO_11
+	GPIO_IN_GO, // IO_GO (etat pin)
+} Io;
+
+#define GPIO_MASK_0          0x01 // IO_0
+#define GPIO_MASK_1          0x02 // IO_1
+#define GPIO_MASK_2          0x04 // IO_2
+#define GPIO_MASK_3          0x08 // IO_3
+#define GPIO_MASK_4          0x10 // IO_4
+#define GPIO_MASK_5          0x20 // IO_5
+#define GPIO_MASK_6          0x40 // IO_6
+#define GPIO_MASK_7          0x80 // IO_7
+#define GPIO_MASK_8         0x100 // IO_8
+#define GPIO_MASK_9         0x200 // IO_9
+#define GPIO_MASK_10        0x400 // IO_10
+#define GPIO_MASK_11        0x800 // IO_11
+#define GPIO_MASK_IN_GO    0x1000 // IO_GO (etat pin)
+#define GPIO_MASK_GO       0x2000 // GO : match lance
+
 
 uint32_t gpio_get_state(void);
+
+void gpio_set(Io io);
+
+void gpio_reset(Io io);
 
 #ifdef __cplusplus
 }
