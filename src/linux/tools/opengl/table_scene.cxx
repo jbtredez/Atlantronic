@@ -54,7 +54,7 @@ bool TableScene::init(GlFont* font, RobotInterface* robot)
 		return false;
 	}
 
-	if( ! opponentRobot3d.init("media/robot2015.obj") )
+	if( ! opponentRobot3d.init("media/opponentRobot.obj") )
 	{
 		fprintf(stderr, "opponentRobot3d.init() error - Exiting.\n");
 		return false;
