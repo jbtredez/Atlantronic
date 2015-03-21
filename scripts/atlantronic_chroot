@@ -107,7 +107,12 @@ then
 		chroot ${CHROOT_DIR} /bin/bash -c "$*"
 	fi
 else
-	chroot ${CHROOT_DIR} /bin/bash --rcfile /root/.bashrc2
+	if [ "x$*" == "x" ]
+	then
+		chroot ${CHROOT_DIR} /bin/bash --rcfile /root/.bashrc2
+	else
+		chroot ${CHROOT_DIR} /bin/bash --rcfile /root/.bashrc2 -c "$*"
+	fi
 fi
 
 CPT=`cat ${MOUNT_MARK}`
