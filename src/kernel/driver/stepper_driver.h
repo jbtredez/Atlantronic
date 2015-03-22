@@ -12,9 +12,17 @@
 class StepperDriver
 {
 	public :
-		StepperDriver(Io ioStep, Io ioDir);
+		StepperDriver(Io ioStep, Io ioDir, float stepFactor, float vmax, float amax, float dmax);
 
-		void setPosition(float pos);
+		inline void setPosition(float pos)
+		{
+			m_wanted_pos = pos;
+		}
+
+		inline void setCurrentPosition(float pos)
+		{
+			m_currentStep = pos * m_stepFactor;
+		}
 
 		void step(float dt);
 

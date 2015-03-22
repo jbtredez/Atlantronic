@@ -9,4 +9,9 @@
 
 void elevator_set_position(float pos);
 
+struct elevator_cmd_arg
+{
+		float pos;
+}__attribute__((packed));
+
 #endif

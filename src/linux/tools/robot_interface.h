@@ -157,8 +157,9 @@ class RobotInterface
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);
 
-		// ---------- gestion des pinces -----------------------------------------------
+		// ---------- gestion robot 2015 -----------------------------------------------
 		int wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right);
+		int elevator_set_position(float pos);
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion du bras --------------------------------------------------

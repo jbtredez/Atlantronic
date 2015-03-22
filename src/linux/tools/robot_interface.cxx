@@ -13,6 +13,7 @@
 #include "kernel/pump.h"
 #include "kernel/match.h"
 #include "kernel/motion/graph.h"
+#include "disco/elevator.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -1111,6 +1112,13 @@ int RobotInterface::wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cm
 	cmd_arg.type_right = cmd_type_right;
 
 	return usb_write(USB_CMD_WING, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::elevator_set_position(float pos)
+{
+	struct elevator_cmd_arg cmd_arg;
+	cmd_arg.pos = pos;
+	return usb_write(USB_CMD_ELEVATOR, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_cmd(uint32_t cmdType)
