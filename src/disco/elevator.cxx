@@ -2,13 +2,14 @@
 #include "kernel/task.h"
 #include "kernel/module.h"
 
+#define WEAK_ELEVATOR
 #include "elevator.h"
 #include "kernel/driver/stepper_driver.h"
 #include "kernel/driver/io.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-static StepperDriver elevator_motor(GPIO_11, GPIO_10, 5, 100, 400, 400);
+static StepperDriver elevatorMotor(GPIO_11, GPIO_10, 5, 100, 400, 400);
 
 #define ELEVATOR_STACK_SIZE       350
 #define ELEVATOR_PERIOD             2
@@ -42,7 +43,7 @@ static void elevator_task(void* /*arg*/)
 	// TODO gestion butee + init
 	while(1)
 	{
-		elevator_motor.step(ELEVATOR_DT);
+		elevatorMotor.step(ELEVATOR_DT);
 		vTaskDelayUntil(&wake_time, ELEVATOR_PERIOD);
 	}
 }
@@ -59,7 +60,12 @@ void elevator_set_position(float pos)
 		log_format(LOG_ERROR, "pos out of range : %d > %d, moving to max", (int)pos, (int)ELEVATOR_MAX);
 		pos = ELEVATOR_MAX;
 	}
-	elevator_motor.setPosition(pos);
+	elevatorMotor.setPosition(pos);
+}
+
+float elevator_get_position()
+{
+	return elevatorMotor.getCurrentPosition();
 }
 
 static void elevator_cmd(void* arg)

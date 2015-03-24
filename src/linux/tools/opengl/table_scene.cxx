@@ -239,6 +239,7 @@ void TableScene::drawRobot(Graphique* graph)
 		glDisable(GL_COLOR_MATERIAL);
 		robot3d.rightWingTheta = robotItf->ax12[AX12_RIGHT_WING].pos;
 		robot3d.leftWingTheta = robotItf->ax12[AX12_LEFT_WING].pos;
+		robot3d.elevatorHeight = robotItf->last_control_usb_data.elevatorHeight;
 		robot3d.draw();
 		glEnable(GL_COLOR_MATERIAL);
 		glDisable(GL_CULL_FACE);
@@ -338,6 +339,8 @@ void TableScene::printInfos(Graphique* graph)
 				(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
 		y += lineHeight;
 	}
+	glfont->glPrintf(x, y, "elevator %5.2f", data->elevatorHeight);
+	y += lineHeight;
 	/*float* mat = data->arm_matrix.val;
 	glfont->glPrintf(x, y, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
 	y += lineHeight;

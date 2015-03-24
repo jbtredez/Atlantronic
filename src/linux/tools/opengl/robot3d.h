@@ -11,12 +11,19 @@ class Robot3d
 
 		float rightWingTheta;
 		float leftWingTheta;
+		float elevatorHeight;
+		float highFingerTheta;
+		float lowFingerTheta;
 
 	protected:
+		void drawMobileBase();
+		void drawElevator();
 		void drawWing(bool right);
 
-		Object3d mobileBase;
-		Object3d wing;
+		Object3d m_mobileBase;
+		Object3d m_wing;
+		Object3d m_elevator;
+		Object3d m_finger;
 };
 
 #endif

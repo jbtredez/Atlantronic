@@ -24,6 +24,11 @@ class StepperDriver
 			m_currentStep = pos * m_stepFactor;
 		}
 
+		inline float getCurrentPosition()
+		{
+			return m_currentStep * m_stepFactorInv;
+		}
+
 		void step(float dt);
 
 	protected:
@@ -33,6 +38,7 @@ class StepperDriver
 		KinematicsParameters m_kinematicsParam;
 		float m_wanted_pos;
 		float m_stepFactor;
+		float m_stepFactorInv;
 		int m_currentStep;
 };
 

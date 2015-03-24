@@ -10,6 +10,7 @@ StepperDriver::StepperDriver(Io ioStep, Io ioDir, float stepFactor, float vmax, 
 	m_wanted_pos = 0;
 	m_currentStep = 0;
 	m_stepFactor = stepFactor;
+	m_stepFactorInv = 1 / stepFactor;
 	m_kinematicsParam.vMax = vmax;
 	m_kinematicsParam.aMax = amax;
 	m_kinematicsParam.dMax = dmax;

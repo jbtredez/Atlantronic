@@ -41,6 +41,7 @@ struct control_usb_data
 	uint8_t pumpState;
 	uint8_t color;
 	uint32_t power_state;
+	float elevatorHeight;
 	struct dynamixel_usb_data dynamixel;
 	//MatrixHomogeneous arm_matrix;
 } __attribute__((packed));
