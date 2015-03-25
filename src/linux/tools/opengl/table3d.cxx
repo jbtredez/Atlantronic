@@ -1,4 +1,5 @@
 #include "table3d.h"
+#include "linux/tools/opengl/gltools.h"
 
 bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
 {
@@ -93,28 +94,31 @@ void Table3d::moveSelected(float dx, float dy)
 
 }
 
-void Table3d::draw()
+void Table3d::draw(GLenum mode)
 {
-	glPushMatrix();
-	glTranslatef( -table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22 );
-	table.draw();
-	glPopMatrix();
+	if(mode != GL_SELECT)
+	{
+		glPushMatrix();
+		glTranslatef( -table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22 );
+		table.draw();
+		glPopMatrix();
 
-	drawDispenser(-1200);
-	drawDispenser(- 900);
-	drawDispenser(  900);
-	drawDispenser( 1200);
+		drawDispenser(-1200);
+		drawDispenser(- 900);
+		drawDispenser(  900);
+		drawDispenser( 1200);
 
-	drawClap(-1100, true);
-	drawClap(- 800, false);
-	drawClap(- 500, true);
+		drawClap(-1100, true);
+		drawClap(- 800, false);
+		drawClap(- 500, true);
 
-	drawClap(  500, false);
-	drawClap(  800, true);
-	drawClap( 1100, false);
+		drawClap(  500, false);
+		drawClap(  800, true);
+		drawClap( 1100, false);
+	}
 
-	drawFeets();
-	drawGlass();
+	drawFeets(mode);
+	drawGlass(mode);
 }
 
 void Table3d::drawDispenser(float x)
@@ -152,7 +156,7 @@ void Table3d::drawClap(float x, bool yellow)
 	glPopMatrix();
 }
 
-void Table3d::drawFeets()
+void Table3d::drawFeets(GLenum mode)
 {
 	Object3d* feet = &feetYellow;
 	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
@@ -165,13 +169,20 @@ void Table3d::drawFeets()
 		glPushMatrix();
 		glTranslatef( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z );
 		feet->selected = feetSelected[i];
-		feet->draw();
+		if(mode != GL_SELECT)
+		{
+			feet->draw();
+		}
+		else
+		{
+			plot_boundingBox(feet->sceneMin.x, feet->sceneMin.y, feet->sceneMin.z, feet->sceneMax.x, feet->sceneMax.y, feet->sceneMax.z);
+		}
 		glPopMatrix();
 		glPopName();
 	}
 }
 
-void Table3d::drawGlass()
+void Table3d::drawGlass(GLenum mode)
 {
 	for(unsigned int i = 0; i < sizeof(glassPosition) / sizeof(glassPosition[0]); i++)
 	{
@@ -179,7 +190,14 @@ void Table3d::drawGlass()
 		glPushMatrix();
 		glTranslatef( -glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z );
 		glass.selected = glassSelected[i];
-		glass.draw();
+		if(mode != GL_SELECT)
+		{
+			glass.draw();
+		}
+		else
+		{
+			plot_boundingBox(glass.sceneMin.x, glass.sceneMin.y, glass.sceneMin.z, glass.sceneMax.x, glass.sceneMax.y, glass.sceneMax.z);
+		}
 		glPopMatrix();
 		glPopName();
 	}

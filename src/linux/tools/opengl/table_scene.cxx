@@ -433,140 +433,145 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 	if(graph->courbes_activated[SUBGRAPH_TABLE_TABLE])
 	{
 		glDisable(GL_COLOR_MATERIAL);
-		table3d.draw();
+		table3d.draw(mode);
 		glEnable(GL_COLOR_MATERIAL);
 		glDisable(GL_CULL_FACE);
 	}
-
-	if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
+	if( mode != GL_SELECT )
 	{
-		glColor3f(0, 0, 0);
-		// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
-		for(int i = 0; i < TABLE_OBJ_SIZE; i++)
+		if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])
 		{
-			glBegin(GL_LINE_STRIP);
-			for(int j = 0; j < table_obj[i].size; j++)
-			{
-				glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
-			}
-			glEnd();
-		}
-	}
-
-	/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
-		for(i = 0; i < robotItf->detection_dynamic_object_size; i++)
-		{
-			if(robotItf->detection_dynamic_obj[i].size > 1)
+			glColor3f(0, 0, 0);
+			// éléments statiques de la table partagés avec le code du robot (obstacles statiques)
+			for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 			{
 				glBegin(GL_LINE_STRIP);
-				for(j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
+				for(int j = 0; j < table_obj[i].size; j++)
 				{
-					Vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
-					glVertex2f(pt.x, pt.y);
+					glVertex2f(table_obj[i].pt[j].x, table_obj[i].pt[j].y);
 				}
 				glEnd();
 			}
 		}
-	}*/
 
-	for(int i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
-	{
-		glColor3f(0,0,1);
-		draw_plus(robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y, 50, 50);
-		//printf("obj_h1 : %7.2f %7.2f\n", robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y);
-	}
-
-	for(int i = 0; i < (int)robotItf->detection_dynamic_object_count2; i++)
-	{
-		glColor3f(0,1,1);
-		draw_plus(robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y, 50, 50);
-		//printf("obj_h2 : %7.2f %7.2f\n", robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y);
-	}
-
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
-		for(int i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
+		/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 		{
-			draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
-		}
-	}
-
-	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO2] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
-		for(int i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
-		{
-			draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
-		}
-	}
-
-	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
-
-	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
-		for(int i=0; i< max; i++)
-		{
-			if(robotItf->control_usb_data[i].motion_state != MOTION_ENABLED && robotItf->control_usb_data[i].motion_state != MOTION_DISABLED)
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
+			for(i = 0; i < robotItf->detection_dynamic_object_size; i++)
 			{
-				draw_plus(robotItf->control_usb_data[i].cons.x, robotItf->control_usb_data[i].cons.y, plus_dx, plus_dy);
+				if(robotItf->detection_dynamic_obj[i].size > 1)
+				{
+					glBegin(GL_LINE_STRIP);
+					for(j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
+					{
+						Vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
+						glVertex2f(pt.x, pt.y);
+					}
+					glEnd();
+				}
+			}
+		}*/
+
+		for(int i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
+		{
+			glColor3f(0,0,1);
+			draw_plus(robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y, 50, 50);
+			//printf("obj_h1 : %7.2f %7.2f\n", robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y);
+		}
+
+		for(int i = 0; i < (int)robotItf->detection_dynamic_object_count2; i++)
+		{
+			glColor3f(0,1,1);
+			draw_plus(robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y, 50, 50);
+			//printf("obj_h2 : %7.2f %7.2f\n", robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y);
+		}
+
+		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )
+		{
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
+			for(int i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
+			{
+				draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 			}
 		}
-	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_MES] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
-		for(int i=0; i < max; i++)
+		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO2] )
 		{
-			draw_plus(robotItf->control_usb_data[i].pos.x, robotItf->control_usb_data[i].pos.y, plus_dx, plus_dy);
-		}
-	}
-
-	if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH_LINK] )
-	{
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(1, 0xAAAA);
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK]);
-		for(int i=0; i < GRAPH_NUM_LINK; i++)
-		{
-			int a = graph_link[i].a;
-			int b = graph_link[i].b;
-			// on trace les liens une seule fois
-			if( a < b)
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
+			for(int i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 			{
-				float x1 = graph_node[a].pos.x;
-				float y1 = graph_node[a].pos.y;
-				float x2 = graph_node[b].pos.x;
-				float y2 = graph_node[b].pos.y;
-				glBegin(GL_LINES);
-				glVertex2f(x1, y1);
-				glVertex2f(x2, y2);
-				glEnd();
-				glfont->glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, "%d", graph_link[i].dist);
+				draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
 			}
 		}
-		glDisable(GL_LINE_STIPPLE);
-	}
 
-	if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH] )
-	{
-		glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
-		for(int i=0; i < GRAPH_NUM_NODE; i++)
+		int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
+
+		if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
 		{
-			draw_plus(graph_node[i].pos.x, graph_node[i].pos.y, plus_dx, plus_dy);
-			glfont->glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x, ratio_y, "%d", i);
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
+			for(int i=0; i< max; i++)
+			{
+				if(robotItf->control_usb_data[i].motion_state != MOTION_ENABLED && robotItf->control_usb_data[i].motion_state != MOTION_DISABLED)
+				{
+					draw_plus(robotItf->control_usb_data[i].cons.x, robotItf->control_usb_data[i].cons.y, plus_dx, plus_dy);
+				}
+			}
+		}
+
+		if( graph->courbes_activated[SUBGRAPH_TABLE_POS_MES] )
+		{
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
+			for(int i=0; i < max; i++)
+			{
+				draw_plus(robotItf->control_usb_data[i].pos.x, robotItf->control_usb_data[i].pos.y, plus_dx, plus_dy);
+			}
+		}
+
+		if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH_LINK] )
+		{
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0xAAAA);
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK]);
+			for(int i=0; i < GRAPH_NUM_LINK; i++)
+			{
+				int a = graph_link[i].a;
+				int b = graph_link[i].b;
+				// on trace les liens une seule fois
+				if( a < b)
+				{
+					float x1 = graph_node[a].pos.x;
+					float y1 = graph_node[a].pos.y;
+					float x2 = graph_node[b].pos.x;
+					float y2 = graph_node[b].pos.y;
+					glBegin(GL_LINES);
+					glVertex2f(x1, y1);
+					glVertex2f(x2, y2);
+					glEnd();
+					glfont->glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), ratio_x, ratio_y, "%d", graph_link[i].dist);
+				}
+			}
+			glDisable(GL_LINE_STIPPLE);
+		}
+
+		if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH] )
+		{
+			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
+			for(int i=0; i < GRAPH_NUM_NODE; i++)
+			{
+				draw_plus(graph_node[i].pos.x, graph_node[i].pos.y, plus_dx, plus_dy);
+				glfont->glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, ratio_x, ratio_y, "%d", i);
+			}
 		}
 	}
 
 	// robot adverse
 	drawOpponentRobot();
 
-	// affichage du robot
-	drawRobot(graph);
+	if( mode != GL_SELECT)
+	{
+		// affichage du robot
+		drawRobot(graph);
+	}
 
 	pthread_mutex_unlock(&robotItf->mutex);
 }
