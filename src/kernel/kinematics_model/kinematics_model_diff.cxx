@@ -1,8 +1,8 @@
-//! @file geometric_model.cxx
-//! @brief Geometric model
+//! @file kinematics_model_diff.cxx
+//! @brief Kinematics model
 //! @author Atlantronic
 
-#include "geometric_model.h"
+#include "kinematics_model.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/log.h"
 
@@ -12,12 +12,9 @@
 
 static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
-#define VOIE                       200
-#define VOIE_INVERSE             0.005 //  = 1/200
-
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float geometric_model_compute_actuator_cmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
+float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
 {
 	float kmin = 1;
 
@@ -25,8 +22,8 @@ float geometric_model_compute_actuator_cmd(VectPlan u, float speed, float dt, Ki
 	float vtheta = u.theta * speed;
 	float v[2];
 
-	v[0] = vx - 0.5 * VOIE * vtheta;
-	v[1] = vx + 0.5 * VOIE * vtheta;
+	v[0] = vx - 0.5 * voie * vtheta;
+	v[1] = vx + 0.5 * voie * vtheta;
 
 	int i;
 	for(i = 0; i < 2; i++)
@@ -51,12 +48,12 @@ float geometric_model_compute_actuator_cmd(VectPlan u, float speed, float dt, Ki
 	return kmin;
 }
 
-VectPlan geometric_model_compute_speed(Kinematics* kinematics_mes)
+VectPlan kinematics_model_compute_speed(double voie_inv, Kinematics* kinematics_mes)
 {
 	VectPlan v;
 	v.x = 0.5 * (kinematics_mes[0].v + kinematics_mes[1].v);
 	v.y = 0;
-	v.theta = VOIE_INVERSE * (kinematics_mes[1].v -  kinematics_mes[0].v);
+	v.theta = voie_inv * (kinematics_mes[1].v -  kinematics_mes[0].v);
 
 	return v;
 }

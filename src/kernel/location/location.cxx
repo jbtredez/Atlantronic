@@ -6,7 +6,7 @@
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
 #include "kernel/driver/usb.h"
-#include "kernel/geometric_model/geometric_model.h"
+#include "kernel/kinematics_model/kinematics_model.h"
 
 static void location_cmd_set_position(void* arg);
 VectPlan location_pos(-1300, 0, 0);
@@ -21,9 +21,9 @@ static int location_module_init()
 
 module_init(location_module_init, INIT_LOCATION);
 
-void location_update(Kinematics* kinematics_mes, float dt)
+void location_update(double voie_inv, Kinematics* kinematics_mes, float dt)
 {
-	VectPlan speed = geometric_model_compute_speed(kinematics_mes);
+	VectPlan speed = kinematics_model_compute_speed(voie_inv, kinematics_mes);
 
 	portENTER_CRITICAL();
 	location_speed = speed;

@@ -9,11 +9,12 @@
 #include "kernel/control.h"
 #include "kernel/motion/motion.h"
 #include "kernel/location/location.h"
-#include "kernel/geometric_model/geometric_model.h"
+#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
 #include "kernel/state_machine/state_machine.h"
+#include "kernel/robot_parameters.h"
 
 enum
 {
@@ -108,7 +109,7 @@ module_init(motion_module_init, INIT_MOTION);
 void motion_compute()
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
-
+#if 0
 	int motor_mes_valid = 1;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -124,9 +125,21 @@ void motion_compute()
 	if( motor_mes_valid )
 	{
 		// mise à jour de la position
-		location_update(motion_kinematics_mes, CONTROL_DT);
+		location_update(VOIE_MOT_INVERSE, motion_kinematics_mes, CONTROL_DT);
 	}
+#else
+	// mise à jour de la position
+	uint16_t p1 = encoder_get(ENCODER_1);
+	uint16_t p2 = encoder_get(ENCODER_2);
+	motion_kinematics_mes[0].v = (int16_t)((uint16_t) p1 - (uint16_t)motion_kinematics_mes[0].pos);
+	motion_kinematics_mes[0].v *= 2 * M_PI * ODO1_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
+	motion_kinematics_mes[1].v = (int16_t)((uint16_t) p2 - (uint16_t)motion_kinematics_mes[1].pos);
+	motion_kinematics_mes[1].v *= 2 * M_PI * ODO2_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
+	motion_kinematics_mes[0].pos = p1;
+	motion_kinematics_mes[1].pos = p2;
 
+	location_update(VOIE_ODO_INV, motion_kinematics_mes, CONTROL_DT);
+#endif
 	motion_pos_mes = location_get_position();
 
 	motionStateMachine.execute();
@@ -298,7 +311,7 @@ static void motion_state_speed_entry()
 
 static void motion_state_speed_run()
 {
-	geometric_model_compute_actuator_cmd(motion_u, motion_v, CONTROL_DT, motion_kinematics);
+	kinematics_model_compute_actuator_cmd(VOIE_MOT, motion_u, motion_v, CONTROL_DT, motion_kinematics);
 	motion_update_motors();
 }
 
@@ -459,7 +472,7 @@ static void motion_state_trajectory_run()
 
 	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
 	VectPlan u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
-	float k = geometric_model_compute_actuator_cmd(u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
+	float k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
 	motion_curvilinearKinematics.v = k * kinematics.v;
 	motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
 
