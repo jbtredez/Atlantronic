@@ -25,6 +25,7 @@
 #include "kernel/driver/io.h"
 #include "kernel/motion/trajectory.h"
 #include "disco/wing.h"
+#include "disco/finger.h"
 #include "server_tcp.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
@@ -160,6 +161,7 @@ class RobotInterface
 		// ---------- gestion robot 2015 -----------------------------------------------
 		int wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right);
 		int elevator_set_position(float pos);
+		int finger_set_position(enum finger_type low, enum finger_type high);
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion du bras --------------------------------------------------

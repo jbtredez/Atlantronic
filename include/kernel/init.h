@@ -56,6 +56,7 @@
 #define INIT_TRAJECTORY               "44"
 #define INIT_PUMP                     "45"
 #define INIT_ELEVATOR                 "46"
+#define INIT_FINGER                   "47"
 
 #define INIT_STRATEGY                 "60"
 
