@@ -12,7 +12,7 @@ static int wing_module_init()
 {
 	usb_add_cmd(USB_CMD_WING, &wing_cmd);
 
-	// configuration des pinces
+	// configuration des ax12
 	ax12.set_torque_limit(AX12_LEFT_WING, 0.8);
 	ax12.set_torque_limit(AX12_RIGHT_WING, 0.8);
 
