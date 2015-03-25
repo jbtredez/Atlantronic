@@ -10,6 +10,7 @@
 enum finger_type
 {
 	FINGER_CLOSE,
+	FINGER_HALF_CLOSE,
 	FINGER_OPEN,
 };
 

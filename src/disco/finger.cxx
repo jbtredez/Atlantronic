@@ -30,6 +30,9 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 		case FINGER_CLOSE:
 			ax12.set_goal_position(AX12_LOW_FINGER, 0);
 			break;
+		case FINGER_HALF_CLOSE:
+			ax12.set_goal_position(AX12_LOW_FINGER, 30*M_PI/180);
+			break;
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_LOW_FINGER, M_PI_2);
 			break;
@@ -41,6 +44,9 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 	{
 		case FINGER_CLOSE:
 			ax12.set_goal_position(AX12_HIGH_FINGER, 0);
+			break;
+		case FINGER_HALF_CLOSE:
+			ax12.set_goal_position(AX12_HIGH_FINGER, 30*M_PI/180);
 			break;
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_HIGH_FINGER, M_PI_2);
