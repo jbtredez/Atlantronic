@@ -22,7 +22,7 @@
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
 #define MAX_FPS    11
-#define QEMU_OPPONENT_ID   (TABLE_OBJ_SIZE+1)
+#define QEMU_OPPONENT_ID   (TABLE_OBJ_SIZE)
 
 enum
 {
