@@ -14,6 +14,9 @@ class Table3d
 		void selectGlass(unsigned int id);
 		void moveSelected(float dx, float dy);
 
+		bool showTable;
+		bool showElements;
+
 	protected:
 		void drawDispenser(float x);
 		void drawClap(float x, bool yellow);

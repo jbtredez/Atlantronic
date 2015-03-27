@@ -3,6 +3,9 @@
 
 bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
 {
+	showTable = true;
+	showElements = true;
+
 	bool res = table.init("media/table2015.obj");
 	res &= dispenser.init("media/distributeur.obj");
 	res &= clapYellow.init("media/clap_jaune.obj");
@@ -96,8 +99,8 @@ void Table3d::moveSelected(float dx, float dy)
 
 void Table3d::draw(GLenum mode)
 {
-	if(mode != GL_SELECT)
-	{
+	if(mode != GL_SELECT && showTable)
+	{	
 		glPushMatrix();
 		glTranslatef( -table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22 );
 		table.draw();
@@ -117,8 +120,11 @@ void Table3d::draw(GLenum mode)
 		drawClap( 1100, false);
 	}
 
-	drawFeets(mode);
-	drawGlass(mode);
+	if( showElements )
+	{
+		drawFeets(mode);
+		drawGlass(mode);
+	}
 }
 
 void Table3d::drawDispenser(float x)

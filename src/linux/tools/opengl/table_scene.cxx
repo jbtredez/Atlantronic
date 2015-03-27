@@ -430,13 +430,13 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 	//glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.00001f);
 	//glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1);
 
-	if(graph->courbes_activated[SUBGRAPH_TABLE_TABLE])
-	{
-		glDisable(GL_COLOR_MATERIAL);
-		table3d.draw(mode);
-		glEnable(GL_COLOR_MATERIAL);
-		glDisable(GL_CULL_FACE);
-	}
+	table3d.showTable = graph->courbes_activated[SUBGRAPH_TABLE_TABLE3D];
+	table3d.showElements = graph->courbes_activated[SUBGRAPH_TABLE_ELM3D];
+	glDisable(GL_COLOR_MATERIAL);
+	table3d.draw(mode);
+	glEnable(GL_COLOR_MATERIAL);
+	glDisable(GL_CULL_FACE);
+
 	if( mode != GL_SELECT )
 	{
 		if(graph->courbes_activated[SUBGRAPH_TABLE_STATIC_ELM])

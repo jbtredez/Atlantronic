@@ -136,8 +136,9 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Elements", 1, 0, 0, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TABLE, "Table", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Table 2d du robot", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TABLE3D, "Table 3d simu", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_ELM3D, "Elements 3d simu", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1, "Hokuyo 1", 1, 1, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO1_SEG, "Hokuyo 1 - poly", 1, 0, 1, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_HOKUYO2, "Hokuyo 2", 1, 0.5, 0.5, 0);
