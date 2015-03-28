@@ -319,7 +319,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	if( simulation )
 	{
-		VectPlan pos(1250, 0, M_PI/2);
+		VectPlan pos(1200, 0, M_PI/2);
 		pos.symetric(COLOR_GREEN);
 		qemu->setPosition(pos);
 

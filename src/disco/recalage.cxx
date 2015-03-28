@@ -10,7 +10,8 @@
 #include "kernel/match.h"
 #include "kernel/motion/trajectory.h"
 
-void recalage()
+// TODO voir / bug simu
+__OPTIMIZE_ZERO__ void recalage()
 {
 	VectPlan pos(1200, 0, M_PI_2);
 	int color = match_get_color();
@@ -54,21 +55,24 @@ void recalage()
 		goto free;
 	}
 
-#if 0
-	if(getcolor() == COLOR_BLUE)
+	vTaskDelay(ms_to_tick(100));
+	/*if( color == COLOR_GREEN )
 	{
-		trajectory_rotate_to(0);
+		trajectory_rotate_to(M_PI);
 	}
 	else
 	{
-		trajectory_rotate_to(1 << 25);
-	}
-
-	if( trajectory_wait( TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+		trajectory_rotate_to(0);
+	}*/
+	pos = VectPlan(1200, 0, 0);
+	pos.symetric(color);
+	trajectory_goto(pos, WAY_FORWARD, AVOIDANCE_STOP);
+	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
+#if 0
 	trajectory_straight(-2000 << 16);
 	if( trajectory_wait( TRAJECTORY_STATE_COLISION, 10000) )
 	{
