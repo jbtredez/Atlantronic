@@ -9,7 +9,7 @@
 #include "kernel/kinematics_model/kinematics_model.h"
 
 static void location_cmd_set_position(void* arg);
-VectPlan location_pos(-1300, 0, 0);
+VectPlan location_pos;
 VectPlan location_speed;
 
 static int location_module_init()

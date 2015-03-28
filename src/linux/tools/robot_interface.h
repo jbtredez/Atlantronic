@@ -23,6 +23,7 @@
 #include "kernel/control.h"
 #include "kernel/detection.h"
 #include "kernel/driver/io.h"
+#include "kernel/match.h"
 #include "kernel/motion/trajectory.h"
 #include "disco/wing.h"
 #include "disco/finger.h"

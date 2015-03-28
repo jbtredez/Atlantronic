@@ -3,7 +3,7 @@
 TableScene::TableScene()
 {
 	tableThetaZ = 0;
-	opponentRobotPos = VectPlan(1300, 0, M_PI);
+	opponentRobotPos = VectPlan(-2000, 1000, 0);//VectPlan(1300, 0, M_PI);
 	viewMatrix.rotateX(M_PI/6);
 	viewMatrix.translate(0, 0, 3800);
 }

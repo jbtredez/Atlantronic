@@ -6,6 +6,8 @@
 long exti_unwanted()
 {
 	while( 1 ) ;
+
+	return 0;
 }
 
 ExtiIsr exti_isr[16];
@@ -76,6 +78,9 @@ int exti_register(ExtiPort port, uint8_t pin, uint8_t type, ExtiIsr isr)
 
 	return 0;
 }
+
+extern "C"
+{
 
 void isr_exti0(void)
 {
@@ -238,4 +243,6 @@ void isr_exti15_10(void)
 	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
 }

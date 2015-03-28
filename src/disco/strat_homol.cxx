@@ -7,6 +7,7 @@
 #include "kernel/location/location.h"
 #include "kernel/match.h"
 #include "kernel/motion/trajectory.h"
+#include "disco/recalage.h"
 
 #define STRAT_STACK_SIZE       300
 

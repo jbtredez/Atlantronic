@@ -28,6 +28,15 @@ class VectPlan
 			theta = Theta;
 		}
 
+		inline void symetric(int color)
+		{
+			if( color != 1 )
+			{
+				x *= -1;
+				theta = M_PI - theta;
+			}
+		}
+
 		inline float norm()
 		{
 			return sqrtf(x * x + y * y);

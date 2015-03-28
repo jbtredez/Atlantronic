@@ -7,10 +7,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef enum io
 {
 	GPIO_0 = 0, // IO_0
@@ -43,15 +39,16 @@ typedef enum io
 #define GPIO_MASK_IN_GO    0x1000 // IO_GO (etat pin)
 #define GPIO_MASK_GO       0x2000 // GO : match lance
 
+// maping
+#define GPIO_MASK(a)       (1<<a)
+
+#define IO_COLOR           GPIO_0
+#define IO_RECAL           GPIO_1
 
 uint32_t gpio_get_state(void);
 
 void gpio_set(Io io);
 
 void gpio_reset(Io io);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -11,8 +11,8 @@
 #define portNVIC_INT_CTRL			( ( volatile unsigned long *) 0xe000ed04 )
 #define portNVIC_PENDSVSET			0x10000000
 
-static struct systime systick_time;
-static struct systime systick_time_start_match;
+static Systime systick_time;
+static Systime systick_time_start_match;
 void isr_systick( void );
 extern void vTaskIncrementTick( );
 
@@ -46,9 +46,9 @@ __attribute__((optimize("-O2"))) void isr_systick( void )
 	portCLEAR_INTERRUPT_MASK_FROM_ISR( 0 );
 }
 
-struct systime systick_get_time()
+Systime systick_get_time()
 {
-	struct systime t;
+	Systime t;
 	portENTER_CRITICAL();
 	t = systick_get_time_from_isr();
 	portEXIT_CRITICAL();
@@ -56,16 +56,16 @@ struct systime systick_get_time()
 	return t;
 }
 
-__attribute__((optimize("-O2"))) struct systime systick_get_time_from_isr()
+__attribute__((optimize("-O2"))) Systime systick_get_time_from_isr()
 {
 	// formule pour eviter les debordements sur 32 bits
 	systick_time.ns = (1000 * (SysTick->LOAD - SysTick->VAL)) / RCC_SYSCLK_MHZ;
 	return systick_time;
 }
 
-struct systime systick_get_match_time()
+Systime systick_get_match_time()
 {
-	struct systime t;
+	Systime t;
 	portENTER_CRITICAL();
 	t = systick_get_time_from_isr();
 	t = timediff(t, systick_time_start_match);
@@ -89,9 +89,9 @@ void systick_start_match()
 	portEXIT_CRITICAL();
 }
 
-struct systime timediff(const struct systime t2, const struct systime t1)
+Systime timediff(const Systime t2, const Systime t1)
 {
-	struct systime t;
+	Systime t;
 	if( t2.ns - t1.ns < 0 )
 	{
 		t.ms = t2.ms - t1.ms - 1;
@@ -105,9 +105,9 @@ struct systime timediff(const struct systime t2, const struct systime t1)
 	return t;
 }
 
-struct systime timeadd(const struct systime t1, const struct systime t2)
+Systime timeadd(const Systime t1, const Systime t2)
 {
-	struct systime t;
+	Systime t;
 	t.ms = t1.ms + t2.ms;
 	t.ns = t1.ns + t2.ns;
 	if( t.ns > 1000000 )

@@ -45,9 +45,9 @@ static int detection_reg_ecart = 25;
 static xSemaphoreHandle detection_mutex;
 static Vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
-static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT];
-static struct detection_object detection_obj1[DETECTION_NUM_OBJECT];
-static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
+static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT]; // TODO aligner
+static struct detection_object detection_obj1[DETECTION_NUM_OBJECT]; // TODO aligner
+static struct detection_object detection_obj2[DETECTION_NUM_OBJECT]; // TODO aligner
 static int32_t detection_num_obj[HOKUYO_MAX];
 
 int detection_module_init()

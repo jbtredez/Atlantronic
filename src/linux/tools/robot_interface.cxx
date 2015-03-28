@@ -1199,21 +1199,23 @@ int RobotInterface::arm_abz(float a, float b, float z)
 
 int RobotInterface::recalage()
 {
-	return usb_write(USB_CMD_RECALAGE, NULL, 0);
+	struct gpio_cmd_match_arg cmd_arg;
+	cmd_arg.cmd = MATCH_CMD_RECALAGE;
+	return usb_write(USB_CMD_MATCH, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::go()
 {
-	struct gpio_cmd_go_arg cmd_arg;
+	struct gpio_cmd_match_arg cmd_arg;
 	cmd_arg.cmd = MATCH_CMD_GO;
-	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MATCH, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::go_enable()
 {
-	struct gpio_cmd_go_arg cmd_arg;
+	struct gpio_cmd_match_arg cmd_arg;
 	cmd_arg.cmd = MATCH_CMD_ENABLE_GO;
-	return usb_write(USB_CMD_GO, &cmd_arg, sizeof(cmd_arg));
+	return usb_write(USB_CMD_MATCH, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::color(uint8_t color)

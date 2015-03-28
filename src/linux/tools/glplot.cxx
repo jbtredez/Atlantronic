@@ -93,26 +93,26 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event);
 static void mouse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
-static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg);
-static void simu_go(GtkWidget* widget, gpointer arg);
+static void toggle_color(GtkWidget* widget, gpointer arg);
+static void toggle_go(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
 void gtk_end();
 
-#define OPPONENT_PERIMETER         128.0f
+#define OPPONENT_R         150.0f
 
 Vect2 opponent_robot_pt[] =
 {
-	Vect2( OPPONENT_PERIMETER, 0),
-	Vect2( OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
-	Vect2( 0, OPPONENT_PERIMETER),
-	Vect2( -OPPONENT_PERIMETER * 0.707106781, OPPONENT_PERIMETER * 0.707106781),
-	Vect2( -OPPONENT_PERIMETER, 0),
-	Vect2( -OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
-	Vect2( 0, -OPPONENT_PERIMETER),
-	Vect2( OPPONENT_PERIMETER * 0.707106781, -OPPONENT_PERIMETER * 0.707106781),
-	Vect2( OPPONENT_PERIMETER, 0),
+	Vect2( OPPONENT_R, 0),
+	Vect2( OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
+	Vect2( 0, OPPONENT_R),
+	Vect2( -OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
+	Vect2( -OPPONENT_R, 0),
+	Vect2( -OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
+	Vect2( 0, -OPPONENT_R),
+	Vect2( OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
+	Vect2( OPPONENT_R, 0),
 };
 
 struct polyline oponent_robot =
@@ -218,7 +218,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	GtkWidget* menu0 = gtk_menu_bar_new();	// menu "niveau 0" (ie: barre de menu)
 	GtkWidget* menu1 = gtk_menu_new();	// menu "niveau 1"
 	GtkWidget* menuObj;
-
+#if 0
 	// menu Fichier
 	menuObj = gtk_menu_item_new_with_label("Fichier");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
@@ -227,7 +227,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	menuObj = gtk_menu_item_new_with_label("Quitter");
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
-
+#endif
 
 	// menu courbe
 	menu1 = gtk_menu_new();	// menu "niveau 1"
@@ -278,27 +278,32 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), FALSE);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
-	if(simulation)
-	{
-		menu1 = gtk_menu_new();	// menu "niveau 1"
-		menuObj = gtk_menu_item_new_with_label("Simulation");
-		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+	GtkWidget* toolbar = gtk_toolbar_new();
+	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+	gtk_container_set_border_width(GTK_CONTAINER(toolbar), 0);
+	gtk_toolbar_set_orientation(GTK_TOOLBAR(toolbar), GTK_ORIENTATION_VERTICAL);
+	gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
 
-		menuObj = gtk_menu_item_new_with_label("toggle BTN color");
-		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(simu_toggle_btn_color), NULL);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+	GtkToolItem* toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
-		menuObj = gtk_check_menu_item_new_with_label("go");
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
-		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(simu_go), NULL);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
-	}
+	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_COLOR);
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
+
+	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_go), NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
 	GtkWidget* main_vbox = gtk_vbox_new(FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(main_window), main_vbox);
+	GtkWidget* main_hbox = gtk_hbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(main_window), main_hbox);
+
+	gtk_box_pack_start(GTK_BOX(main_hbox), toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_hbox), main_vbox, TRUE, TRUE, 0);
 
 	gtk_box_pack_start(GTK_BOX(main_vbox), menu0, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), opengl_window, TRUE, TRUE, 0);
@@ -314,6 +319,10 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	if( simulation )
 	{
+		VectPlan pos(1250, 0, M_PI/2);
+		pos.symetric(COLOR_GREEN);
+		qemu->setPosition(pos);
+
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
@@ -941,26 +950,48 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 	return TRUE;
 }
 
-static void simu_toggle_btn_color(GtkWidget* widget, gpointer arg)
+static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 {
-	(void) widget;
-	(void) arg;
+	static int color = COLOR_GREEN;
+	static bool ioColor = false;
+
+	if( color == COLOR_GREEN )
+	{
+		color = COLOR_YELLOW;
+	}
+	else
+	{
+		color = COLOR_GREEN;
+	}
+
 	if(qemu)
 	{
-		//qemu->set_io(GPIO_IN_BTN1, true);
-		//qemu->set_io(GPIO_IN_BTN1, false);
+		// simulation : on change l'io
+		ioColor = !ioColor;
+		VectPlan pos(1250, 0, M_PI/2);
+		pos.symetric(color);
+		qemu->setPosition(pos);
+		qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
+	}
+	else
+	{
+		// en reel, on passe par l'interface de com
+		robotItf->color(color);
 	}
 }
 
-static void simu_go(GtkWidget* widget, gpointer arg)
+static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
 {
-	(void) widget;
-	(void) arg;
 	static bool go = false;
 	if(qemu)
 	{
+		// simulation
 		go = !go;
-		qemu->set_io(GPIO_IN_GO, go);
+		qemu->set_io(GPIO_MASK_IN_GO, go);
+	}
+	else
+	{
+		robotItf->go();
 	}
 }
 

@@ -12,15 +12,17 @@
 #include "kernel/queue.h"
 #include "kernel/driver/io.h"
 #include "match.h"
+#include "disco/recalage.h"
 
-#define MATCH_STACK_SIZE           100
+#define MATCH_STACK_SIZE           300
 uint32_t match_time = 90000; //!< duree du match en ms
 volatile int match_color;
 volatile uint8_t match_go;
 volatile uint8_t match_color_change_enable;
 volatile uint8_t match_enable_go = 0;
-static volatile struct systime match_color_change_time;
+static Systime match_color_change_time;
 static xQueueHandle match_queue_go;
+static xQueueHandle match_queue_recal;
 volatile int match_end;
 
 static void match_task(void *arg);
@@ -32,9 +34,10 @@ static void match_cmd_color(void* arg);
 static int match_module_init()
 {
 	match_end = 0;
-	match_color = COLOR_UNKNOWN;
+	match_color = COLOR_GREEN;
 	match_go = 0;
 	match_queue_go = xQueueCreate(1, 0);
+	match_queue_recal = xQueueCreate(1, 0);
 	match_color_change_enable = 1;
 
 	xTaskHandle xHandle;
@@ -45,7 +48,7 @@ static int match_module_init()
 		return ERR_INIT_END;
 	}
 
-	usb_add_cmd(USB_CMD_GO, &match_cmd_go);
+	usb_add_cmd(USB_CMD_MATCH, &match_cmd_go);
 	usb_add_cmd(USB_CMD_COLOR, &match_cmd_color);
 	usb_add_cmd(USB_CMD_MATCH_TIME, &match_cmd_set_time);
 
@@ -58,6 +61,9 @@ static void match_task(void *arg)
 {
 	(void) arg;
 
+	match_wait_recal();
+	recalage();
+	match_enable_go = true;
 	match_wait_go();
 	uint32_t msg[3];
 	struct systime t = systick_get_time();
@@ -80,6 +86,11 @@ void match_wait_go()
 	xQueuePeek(match_queue_go, NULL, portMAX_DELAY);
 }
 
+void match_wait_recal()
+{
+	xQueuePeek(match_queue_recal, NULL, portMAX_DELAY);
+}
+
 static void match_cmd_set_time(void* arg)
 {
 	// temps passé en ms
@@ -93,7 +104,7 @@ static void match_cmd_set_time(void* arg)
 
 static void match_cmd_go(void * arg)
 {
-	struct gpio_cmd_go_arg* cmd_arg = (struct gpio_cmd_go_arg*) arg;
+	struct gpio_cmd_match_arg* cmd_arg = (struct gpio_cmd_match_arg*) arg;
 
 	switch(cmd_arg->cmd)
 	{
@@ -113,6 +124,9 @@ static void match_cmd_go(void * arg)
 				xQueueSend(match_queue_go, NULL, 0);
 			}
 			break;
+		case MATCH_CMD_RECALAGE:
+			recalage();
+			break;
 		default:
 			log_format(LOG_ERROR, "unknown go cmd %d", cmd_arg->cmd);
 			break;
@@ -121,7 +135,7 @@ static void match_cmd_go(void * arg)
 
 static void match_cmd_color(void* arg)
 {
-	uint8_t new_color = *((uint8_t*) arg);
+	int8_t new_color = *((int8_t*) arg);
 	if(match_go == 0 && match_color_change_enable)
 	{
 		if(new_color == COLOR_GREEN)
@@ -147,6 +161,11 @@ portBASE_TYPE match_go_from_isr(void)
 		systick_start_match_from_isr();
 		xQueueSendFromISR(match_queue_go, NULL, &xHigherPriorityTaskWoken);
 	}
+	else
+	{
+		// recalage
+		xQueueSendFromISR(match_queue_recal, NULL, &xHigherPriorityTaskWoken);
+	}
 
 	return xHigherPriorityTaskWoken;
 }
@@ -155,8 +174,8 @@ portBASE_TYPE match_set_color_from_isr(void)
 {
 	if(match_go == 0 && match_color_change_enable)
 	{
-		struct systime t = systick_get_time_from_isr();
-		struct systime dt = timediff(t, match_color_change_time);
+		Systime t = systick_get_time_from_isr();
+		Systime dt = t - match_color_change_time;
 		if( dt.ms > 300)
 		{
 			match_color_change_time = t;

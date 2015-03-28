@@ -20,12 +20,12 @@ typedef struct
 // io sur les connecteurs io generiques
 static const IoParam io_param[] =
 {
-	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 - pull up pour les omron
-	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1 - pull up pour les omron
+	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 - couleur
+	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1
 	{GPIOE,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_2 - pull up pour les omron
 	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - pull up pour les omron
 	{GPIOG, 10, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_4 - pull up pour les omron
-	{GPIOG, 11, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_5 - pull up pour les omron
+	{GPIOG, 11, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_5
 	{GPIOD,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_6
 	{GPIOD,  7, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_7
 	{GPIOD,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_8

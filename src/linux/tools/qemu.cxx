@@ -14,6 +14,7 @@ enum
 	EVENT_MOVE_OBJECT,
 	EVENT_MANAGE_CAN_MOTOR,
 	EVENT_SET_IO,
+	EVENT_SET_POSITION,
 };
 
 enum
@@ -191,6 +192,15 @@ int Qemu::set_io(uint32_t id, bool val)
 	event.type = EVENT_SET_IO;
 	event.data32[0] = id;
 	event.data32[1] = val?1:0;
+
+	return com->write((void*) &event, sizeof(event));
+}
+
+int Qemu::setPosition(VectPlan pos)
+{
+	struct atlantronic_model_tx_event event;
+	event.type = EVENT_SET_POSITION;
+	memcpy(&event.data32[0], &pos, sizeof(pos));
 
 	return com->write((void*) &event, sizeof(event));
 }

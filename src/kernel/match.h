@@ -1,22 +1,17 @@
-#ifndef END_H
-#define END_H
+#ifndef MATCH_H
+#define MATCH_H
 
 #include <stdint.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern volatile int match_end;
 
 #define COLOR_YELLOW     -1     //!< couleur avec x negatif (=> -1)
-#define COLOR_UNKNOWN     0     //!< couelur inconnue (non choisie)
+//#define COLOR_UNKNOWN     0     //!< couelur inconnue (non choisie)
 #define COLOR_GREEN       1     //!< couleur avec x positif (=> 1)
 
 portBASE_TYPE match_go_from_isr(void);
 portBASE_TYPE match_set_color_from_isr(void);
 
-#ifndef LINUX
 static inline void match_color_change_disable()
 {
 	extern volatile uint8_t match_color_change_enable;
@@ -42,21 +37,19 @@ static inline uint8_t match_is_go_enable()
 }
 
 void match_wait_go();
-#endif
+void match_wait_recal();
+
 // ---------------- interface usb ------------
 enum
 {
+	MATCH_CMD_RECALAGE,
 	MATCH_CMD_ENABLE_GO,
 	MATCH_CMD_GO,
 };
 
-struct gpio_cmd_go_arg
+struct gpio_cmd_match_arg
 {
 	uint8_t cmd;
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

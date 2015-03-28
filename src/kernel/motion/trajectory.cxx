@@ -45,7 +45,6 @@ static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
 static uint8_t trajectory_graph_way[GRAPH_NUM_NODE];
 static int trajectory_graph_way_count;
 static uint8_t trajectory_graph_way_id;
-// TODO rendre parametrable
 KinematicsParameters trajectory_linear_param = {1000, 1500, 1500};
 KinematicsParameters trajectory_angular_param = {1, 1, 1};
 
@@ -422,6 +421,14 @@ static void trajectory_detection_callback()
 	// TODO
 }
 
+void trajectory_set_kinematics_param(KinematicsParameters linParam, KinematicsParameters angParam)
+{
+	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
+	trajectory_linear_param = linParam;
+	trajectory_angular_param = angParam;
+	xSemaphoreGive(trajectory_mutex);
+}
+
 void trajectory_cmd(void* arg)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
@@ -540,7 +547,7 @@ enum trajectory_state trajectory_get_state()
 {
 	return trajectory_state;
 }
-#if 0
+
 void trajectory_disable_static_check()
 {
 	trajectory_static_check_enable = 0;
@@ -561,7 +568,6 @@ void trajectory_enable_hokuyo()
 	trajectory_hokuyo_enable_check = 1;
 }
 
-#endif
 // TODO faire mieux pour eviter le polling
 int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout)
 {
