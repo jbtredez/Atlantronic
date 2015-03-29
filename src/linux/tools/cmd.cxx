@@ -67,7 +67,6 @@ int cmd_rotate_to(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
-int cmd_straight_to_wall(const char* arg);
 int cmd_control_param(const char* arg);
 int cmd_control_print_param(const char* arg);
 int cmd_wing_set_position(const char* arg);
@@ -134,7 +133,6 @@ COMMAND usb_commands[] = {
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "straight", cmd_straight, "straight dist" },
-	{ "straight_to_wall", cmd_straight_to_wall, "straight_to_wall" },
 	{ "wing_set_position", cmd_wing_set_position, "wing_set_position gauche droite"},
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
 	{ "xbee_set_manager_baudrate", cmd_xbee_set_manager_baudrate, "xbee_set_manager_baudrate baudrate"},
@@ -580,14 +578,6 @@ int cmd_straight(const char* arg)
 	}
 
 	cmd_robot->straight(dist);
-
-	return CMD_SUCESS;
-}
-
-int cmd_straight_to_wall(const char* arg)
-{
-	(void) arg;
-	cmd_robot->straight_to_wall();
 
 	return CMD_SUCESS;
 }

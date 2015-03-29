@@ -961,16 +961,6 @@ int RobotInterface::straight(float dist)
 	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::straight_to_wall()
-{
-	struct trajectory_cmd_arg cmd_arg;
-
-	cmd_arg.type = TRAJECTORY_STRAIGHT_TO_WALL;
-	cmd_arg.avoidance_type = AVOIDANCE_STOP;
-
-	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
-}
-
 int RobotInterface::rotate(float theta)
 {
 	struct trajectory_cmd_arg cmd_arg;

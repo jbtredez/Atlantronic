@@ -123,7 +123,6 @@ class RobotInterface
 
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);
-		int straight_to_wall();
 		int rotate(float theta);
 		int rotate_to(float theta);
 		int goto_graph();

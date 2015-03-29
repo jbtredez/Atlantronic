@@ -430,8 +430,9 @@ static void motion_state_trajectory_entry()
 	t += motion_compute_time(ds, motion_wanted_linearParam);
 	t += motion_compute_time(dtheta2, motion_wanted_angularParam);
 
-	log_format(LOG_INFO, "goto %d %d %d t %d ms", (int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI), (int)(1000*t));
-	log_format(LOG_INFO, "rotate %d translate %d, rotate %d", (int)(dtheta1 * 180 / M_PI), (int)ds, (int)(dtheta2 * 180 / M_PI));
+	log_format(LOG_INFO, "goto %d %d %d t %d ms : rotate %d translate %d, rotate %d",
+			(int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI), (int)(1000*t),
+			(int)(dtheta1 * 180 / M_PI), (int)ds, (int)(dtheta2 * 180 / M_PI));
 
 	motion_ds[0] = dtheta1;
 	motion_ds[1] = ds;

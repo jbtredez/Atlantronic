@@ -7,6 +7,7 @@
 #include "kernel/portmacro.h"
 #include "kernel/driver/usb.h"
 #include "kernel/kinematics_model/kinematics_model.h"
+#include "kernel/log.h"
 
 static void location_cmd_set_position(void* arg);
 VectPlan location_pos;
@@ -51,6 +52,7 @@ VectPlan location_get_speed()
 
 void location_set_position(VectPlan pos)
 {
+	log_format(LOG_INFO, "set position %d %d %d", (int)pos.x, (int)pos.y, (int)(pos.theta * 180 / M_PI));
 	portENTER_CRITICAL();
 	location_pos = pos;
 	portEXIT_CRITICAL();

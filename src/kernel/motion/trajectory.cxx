@@ -26,7 +26,7 @@ static int trajectory_find_way_to_graph(VectPlan pos, enum detection_type detect
 static void trajectory_detection_callback();
 
 // requete pour la tache trajectory + mutex
-struct trajectory_cmd_arg trajectory_request;
+static struct trajectory_cmd_arg trajectory_request;
 static bool trajectory_new_request;
 static xSemaphoreHandle trajectory_mutex;
 
@@ -105,6 +105,7 @@ static void trajectory_task(void* arg)
 				switch(trajectory_state)
 				{
 					default:
+					case TRAJECTORY_STATE_UPDATING_TRAJECTORY:
 					case TRAJECTORY_STATE_NONE:
 					case TRAJECTORY_STATE_TARGET_REACHED:
 					case TRAJECTORY_STATE_TARGET_NOT_REACHED:
@@ -213,10 +214,8 @@ static void trajectory_update()
 
 	switch(trajectory_type)
 	{
-		case TRAJECTORY_STRAIGHT_TO_WALL:
-			//control_back_to_wall(); // TODO
-			return;
 		case TRAJECTORY_STRAIGHT:
+			log_format(LOG_INFO, "straight %d", (int)req.dist);
 			trajectory_dest.x += cosf(trajectory_dest.theta) * req.dist;
 			trajectory_dest.y += sinf(trajectory_dest.theta) * req.dist;
 			if(req.dist > 0)
@@ -229,9 +228,11 @@ static void trajectory_update()
 			}
 			break;
 		case TRAJECTORY_ROTATE:
+			log_format(LOG_INFO, "rotate %d", (int)(req.dest.theta * 180 / M_PI));
 			trajectory_dest.theta += req.dest.theta;
 			break;
 		case TRAJECTORY_ROTATE_TO:
+			log_format(LOG_INFO, "rotate_to %d", (int)(req.dest.theta * 180 / M_PI));
 			trajectory_dest.theta += motion_find_rotate(trajectory_dest.theta, req.dest.theta);
 			break;
 		case TRAJECTORY_GOTO_XY:
@@ -421,6 +422,16 @@ static void trajectory_detection_callback()
 	// TODO
 }
 
+static void trajectory_update_request()
+{
+	if( trajectory_new_request )
+	{
+		log(LOG_ERROR, "trajectory - overiding trajectory");
+	}
+	trajectory_new_request = true;
+	trajectory_state = TRAJECTORY_STATE_UPDATING_TRAJECTORY;
+}
+
 void trajectory_set_kinematics_param(KinematicsParameters linParam, KinematicsParameters angParam)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
@@ -433,7 +444,7 @@ void trajectory_cmd(void* arg)
 {
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	memcpy(&trajectory_request, arg, sizeof(struct trajectory_cmd_arg));
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -442,16 +453,7 @@ void trajectory_free()
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_FREE;
 	trajectory_request.avoidance_type = AVOIDANCE_STOP;
-	trajectory_new_request = true;
-	xSemaphoreGive(trajectory_mutex);
-}
-
-void trajectory_straight_to_wall()
-{
-	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
-	trajectory_request.type = TRAJECTORY_STRAIGHT_TO_WALL;
-	trajectory_request.avoidance_type = AVOIDANCE_STOP;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -461,7 +463,7 @@ void trajectory_rotate(float theta)
 	trajectory_request.type = TRAJECTORY_ROTATE;
 	trajectory_request.avoidance_type = AVOIDANCE_STOP;
 	trajectory_request.dest.theta = theta;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -471,7 +473,7 @@ void trajectory_rotate_to(float theta)
 	trajectory_request.type = TRAJECTORY_ROTATE_TO;
 	trajectory_request.avoidance_type = AVOIDANCE_STOP;
 	trajectory_request.dest.theta = theta;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -481,7 +483,7 @@ void trajectory_straight(float dist)
 	trajectory_request.type = TRAJECTORY_STRAIGHT;
 	trajectory_request.avoidance_type = AVOIDANCE_STOP;
 	trajectory_request.dist = dist;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -494,7 +496,7 @@ void trajectory_goto_near_xy(float x, float y, float dist, enum motion_way way, 
 	trajectory_request.dest.y = y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -506,7 +508,7 @@ void trajectory_goto_near(VectPlan dest, float dist, enum motion_way way, enum a
 	trajectory_request.dest = dest;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -530,7 +532,7 @@ void trajectory_goto_graph_node(uint32_t node_id, float dist, enum motion_way wa
 	trajectory_request.dest.y = graph_node[node_id].pos.y;
 	trajectory_request.dist = dist;
 	trajectory_request.way = way;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
@@ -539,7 +541,7 @@ void trajectory_goto_graph()
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_request.type = TRAJECTORY_GOTO_GRAPH;
 	trajectory_request.avoidance_type = AVOIDANCE_STOP;
-	trajectory_new_request = true;
+	trajectory_update_request();
 	xSemaphoreGive(trajectory_mutex);
 }
 
