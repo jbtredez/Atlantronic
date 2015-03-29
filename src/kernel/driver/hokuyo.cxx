@@ -43,13 +43,13 @@ int hokuyo_module_init()
 		goto done;
 	}
 
-	err = hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2);
+/*	err = hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2);
 
 	if(err)
 	{
 		goto done;
 	}
-
+*/
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
 	hokuyo[0].scan.theta_min = -M_PI;
 	hokuyo[0].scan.theta_max = M_PI;
