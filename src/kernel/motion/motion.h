@@ -15,6 +15,9 @@
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
 #endif
 
+#define MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE          (10*10)
+#define MOTION_TARGET_REACHED_ANG_THRESHOLD                  0.02f
+
 enum motion_state
 {
 	MOTION_DISABLED = 0,         //!< pas de puissance sur les moteurs
@@ -29,11 +32,12 @@ enum motion_state
 
 enum motion_status
 {
-	MOTION_TARGET_REACHED = 0,   //!< cible atteinte
-	MOTION_TARGET_NOT_REACHED,   //!< cible non atteinte
-	MOTION_COLSISION,            //!< collision
-	MOTION_TIMEOUT,              //!< timeout
-	MOTION_IN_MOTION,            //!< trajectorie en cours
+	MOTION_UPDATING_TRAJECTORY = 0,  //!< mise a jour de la trajectoire en cours
+	MOTION_TARGET_REACHED,           //!< cible atteinte
+	MOTION_TARGET_NOT_REACHED,       //!< cible non atteinte
+	MOTION_COLSISION,                //!< collision
+	MOTION_TIMEOUT,                  //!< timeout
+	MOTION_IN_MOTION,                //!< trajectorie en cours
 };
 
 enum motion_trajectory_step
@@ -49,14 +53,6 @@ enum motion_wanted_state
 	MOTION_WANTED_STATE_ACTUATOR_KINEMATICS,
 	MOTION_WANTED_STATE_SPEED,
 	MOTION_WANTED_STATE_TRAJECTORY,
-};
-
-enum motion_speed
-{
-	MOTION_SPEED_OK,
-	MOTION_OVER_SPEED,
-	MOTION_UNDER_SPEED,
-	MOTION_WRONG_WAY,
 };
 
 enum motion_way

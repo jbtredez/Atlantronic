@@ -28,15 +28,13 @@ void recalage()
 
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
-	//trajectory_straight_to_wall();
 
 	motion_enable(true);
-	trajectory_straight(200);
+	trajectory_straight(500);
 
 	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
-// TODO bug detection collision
-//		goto free;
+		goto free;
 	}
 
 	pos = location_get_position();
@@ -67,8 +65,8 @@ void recalage()
 		goto free;
 	}
 
-	trajectory_straight(100);
-	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+	trajectory_straight(500);
+	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}

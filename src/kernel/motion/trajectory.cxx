@@ -98,91 +98,94 @@ static void trajectory_task(void* arg)
 			trajectory_update();
 		}
 
-		switch( motion_status )
+		/*if( motion_status == MOTION_COLSISION)
 		{
-			case MOTION_TARGET_REACHED:
-			case MOTION_TARGET_NOT_REACHED:
-				switch(trajectory_state)
-				{
-					default:
-					case TRAJECTORY_STATE_UPDATING_TRAJECTORY:
-					case TRAJECTORY_STATE_NONE:
-					case TRAJECTORY_STATE_TARGET_REACHED:
-					case TRAJECTORY_STATE_TARGET_NOT_REACHED:
-					case TRAJECTORY_STATE_COLISION:
-						break;
-					case TRAJECTORY_STATE_MOVING_TO_DEST:
-						if( motion_status == MOTION_TARGET_REACHED )
-						{
-							log(LOG_INFO, "target reached");
-							trajectory_state = TRAJECTORY_STATE_TARGET_REACHED;
-						}
-						else
-						{
-							log(LOG_ERROR, "target not reached");
-							trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
-							break;
-						}
-						break;
-					case TRAJECTORY_STATE_MOVE_TO_DEST:
-						if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
-						{
-							motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
-							trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
-						}
-						break;
-					case TRAJECTORY_STATE_USING_GRAPH:
-						if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
-						{
-							if( trajectory_graph_way_id < trajectory_graph_way_count - 1 )
-							{
-								trajectory_graph_way_id++;
-								int i = trajectory_graph_way[trajectory_graph_way_id];
-								log_format(LOG_INFO, "goto graph node %d", i);
-								VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
-								motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
-							}
-							else
-							{
-								motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
-								trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
-							}
-						}
-						break;
-					case TRAJECTORY_STATE_MOVE_TO_GRAPH:
-						if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN)
-						{
-							trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
-							int i = trajectory_graph_way[0];
-							log_format(LOG_INFO, "goto graph node %d", i);
-							VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
-							motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
-						}
-						break;
-				}
-				break;
 			case MOTION_COLSISION:
-				switch(trajectory_avoidance_type)
-				{
-					default:
-					case AVOIDANCE_STOP:
-						// pas d'évitement, fin de la trajectoire
-						log(LOG_INFO, "collision -> stop");
-						trajectory_state = TRAJECTORY_STATE_COLISION;
-						break;
-					case AVOIDANCE_GRAPH:
-						log(LOG_INFO, "collision -> graph");
-						// si on n'est pas sur le graph
-						// TODO retenter n fois puis recalculer une trajectoire ?
-						break;
-				}
+
 				break;
 			case MOTION_TIMEOUT:
 				// TODO
 				break;
-			case MOTION_IN_MOTION:
-				break;
+		}*/
+		switch(trajectory_state)
+		{
 			default:
+			case TRAJECTORY_STATE_UPDATING_TRAJECTORY:
+			case TRAJECTORY_STATE_NONE:
+			case TRAJECTORY_STATE_TARGET_REACHED:
+			case TRAJECTORY_STATE_TARGET_NOT_REACHED:
+			case TRAJECTORY_STATE_COLISION:
+				break;
+			case TRAJECTORY_STATE_MOVING_TO_DEST:
+				switch( motion_status )
+				{
+					case MOTION_TARGET_REACHED:
+						log(LOG_INFO, "TRAJECTORY_TARGET_REACHED");
+						trajectory_state = TRAJECTORY_STATE_TARGET_REACHED;
+						break;
+					case MOTION_TARGET_NOT_REACHED:
+						log(LOG_ERROR, "TRAJECTORY_TARGET_NOT_REACHED");
+						trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+						break;
+					case MOTION_COLSISION:
+						switch(trajectory_avoidance_type)
+						{
+							default:
+							case AVOIDANCE_STOP:
+								// pas d'évitement, fin de la trajectoire
+								log(LOG_INFO, "collision -> stop");
+								trajectory_state = TRAJECTORY_STATE_COLISION;
+								break;
+							case AVOIDANCE_GRAPH:
+								log(LOG_INFO, "collision -> graph");
+								// si on n'est pas sur le graph
+								// TODO retenter n fois puis recalculer une trajectoire ?
+								break;
+						}
+						break;
+						default:
+						case MOTION_TIMEOUT:
+							// TODO
+							break;
+						case MOTION_IN_MOTION:
+						case MOTION_UPDATING_TRAJECTORY:
+							break;
+				}
+				break;
+			case TRAJECTORY_STATE_MOVE_TO_DEST:
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				{
+					motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
+					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
+				}
+				break;
+			case TRAJECTORY_STATE_USING_GRAPH:
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				{
+					if( trajectory_graph_way_id < trajectory_graph_way_count - 1 )
+					{
+						trajectory_graph_way_id++;
+						int i = trajectory_graph_way[trajectory_graph_way_id];
+						log_format(LOG_INFO, "goto graph node %d", i);
+						VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
+						motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+					}
+					else
+					{
+						motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
+						trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
+					}
+				}
+				break;
+			case TRAJECTORY_STATE_MOVE_TO_GRAPH:
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN)
+				{
+					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
+					int i = trajectory_graph_way[0];
+					log_format(LOG_INFO, "goto graph node %d", i);
+					VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
+					motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+				}
 				break;
 		}
 
@@ -573,15 +576,14 @@ void trajectory_enable_hokuyo()
 // TODO faire mieux pour eviter le polling
 int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout)
 {
-	enum trajectory_state state;
+	enum trajectory_state state = trajectory_state;
 
-	do
+	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout)
 	{
 		vTaskDelay(1);
 		timeout --;
 		state = trajectory_state;
 	}
-	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout);
 
 	if( state != wanted_state )
 	{

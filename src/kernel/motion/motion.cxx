@@ -15,6 +15,7 @@
 #include "kernel/driver/power.h"
 #include "kernel/state_machine/state_machine.h"
 #include "kernel/robot_parameters.h"
+#include "motion_speed_check.h"
 
 enum
 {
@@ -38,9 +39,12 @@ static float motion_ds[3];
 static float motion_v;
 static VectPlan motion_u;
 static Kinematics motion_curvilinearKinematics;
-static VectPlan motion_np_cmd;
+static VectPlan motion_pos_cmd;
+static VectPlan motion_speed_cmd;
 static VectPlan motion_pos_mes;
+static VectPlan motion_speed_mes;
 static VectPlan motion_dest;  //!< destination
+static MotionSpeedCheck motion_linear_speed_check(100, 50);
 
 static void motion_update_motors();
 
@@ -125,7 +129,7 @@ void motion_compute()
 	if( motor_mes_valid )
 	{
 		// mise à jour de la position
-		location_update(VOIE_MOT_INVERSE, motion_kinematics_mes, CONTROL_DT);
+		location_update(VOIE_MOT_INV, motion_kinematics_mes, CONTROL_DT);
 	}
 #else
 	// mise à jour de la position
@@ -141,6 +145,7 @@ void motion_compute()
 	location_update(VOIE_ODO_INV, motion_kinematics_mes, CONTROL_DT);
 #endif
 	motion_pos_mes = location_get_position();
+	motion_speed_mes = location_get_speed();
 
 	motionStateMachine.execute();
 
@@ -160,6 +165,8 @@ static void motion_update_motors()
 			can_motor[i].set_position(motion_kinematics[i].pos);
 		}
 	}
+
+	motion_speed_cmd = kinematics_model_compute_speed(VOIE_MOT_INV, motion_kinematics);
 }
 
 //---------------------- Etat MOTION_DISABLED ---------------------------------
@@ -442,7 +449,7 @@ static void motion_state_trajectory_entry()
 	motion_traj_step = MOTION_TRAJECTORY_PRE_ROTATE;
 	log(LOG_INFO, "IN_MOTION");
 	motion_status = MOTION_IN_MOTION;
-	motion_np_cmd = motion_pos_mes;
+	motion_pos_cmd = motion_pos_mes;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
@@ -458,6 +465,20 @@ static void motion_state_trajectory_run()
 	KinematicsParameters curvilinearKinematicsParam;
 	VectPlan u;
 	float ds = 0;
+	VectPlan u_loc;
+	float k;
+
+	enum motion_check_speed res = motion_linear_speed_check.compute(motion_speed_cmd.x, motion_speed_mes.x);
+	if( res != MOTION_SPEED_OK )
+	{
+		log(LOG_INFO, "MOTION_COLSISION");
+		motion_status = MOTION_COLSISION;
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		{
+			motion_kinematics[i].v = 0;
+		}
+		goto end;
+	}
 
 	ds = motion_ds[motion_traj_step];
 	if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
@@ -472,12 +493,12 @@ static void motion_state_trajectory_run()
 	}
 
 	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
-	VectPlan u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
-	float k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
+	u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
+	k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
 	motion_curvilinearKinematics.v = k * kinematics.v;
 	motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
 
-	motion_np_cmd = motion_np_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
+	motion_pos_cmd = motion_pos_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
 
 	if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
 	{
@@ -499,15 +520,24 @@ static void motion_state_trajectory_run()
 		}
 		else
 		{
-			// TODO regarder en fonction des tolerances si c'est reached ou non
 			motion_curvilinearKinematics.v = 0;
 			motion_curvilinearKinematics.a = 0;
 
-			log(LOG_INFO, "MOTION_TARGET_REACHED");
-			motion_status = MOTION_TARGET_REACHED;
+			VectPlan err = motion_dest - motion_pos_mes;
+			if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+			{
+				log(LOG_INFO, "MOTION_TARGET_REACHED");
+				motion_status = MOTION_TARGET_REACHED;
+			}
+			else
+			{
+				log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
+				motion_status = MOTION_TARGET_NOT_REACHED;
+			}
 		}
 	}
 
+end:
 	motion_update_motors();
 }
 
@@ -519,7 +549,7 @@ static unsigned int motion_state_trajectory_transition(unsigned int currentState
 		return newState;
 	}
 
-	if( motion_status == MOTION_TARGET_REACHED )
+	if( motion_status != MOTION_IN_MOTION )
 	{
 		return MOTION_ENABLED;
 	}
@@ -612,6 +642,7 @@ void motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_tr
 	motion_wanted_way = way;
 	motion_wanted_linearParam = linearParam;
 	motion_wanted_angularParam = angularParam;
+	motion_status = MOTION_UPDATING_TRAJECTORY;
 	xSemaphoreGive(motion_mutex);
 }
 
@@ -669,7 +700,7 @@ void motion_update_usb_data(struct control_usb_data* data)
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	data->motion_state = motionStateMachine.getCurrentState();
-	data->cons = motion_np_cmd;
+	data->cons = motion_pos_cmd;
 
 	data->wanted_pos = motion_dest;
 

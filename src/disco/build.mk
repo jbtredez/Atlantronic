@@ -63,6 +63,7 @@ core_baz += kernel/can_mip.o
 core_baz += kernel/can_motor_mip.o
 #core_baz += kernel/can_motor_faulhaber.o
 core_baz += kernel/motion/motion.o
+core_baz += kernel/motion/motion_speed_check.o
 core_baz += kernel/motion/graph.o
 core_baz += kernel/motion/trajectory.o
 #core_baz += kernel/pump.o
