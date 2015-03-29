@@ -616,11 +616,11 @@ void motion_cmd_set_actuator_kinematics(void* arg)
 void motion_enable(bool enable)
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
-	if( enable )
+	if( enable && motionStateMachine.getCurrentState() != MOTION_ENABLED )
 	{
 		motion_enable_wanted = MOTION_ENABLE_WANTED_ON;
 	}
-	else
+	else if( ! enable && motionStateMachine.getCurrentState() != MOTION_DISABLED )
 	{
 		motion_enable_wanted = MOTION_ENABLE_WANTED_OFF;
 	}
