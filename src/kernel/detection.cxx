@@ -16,7 +16,7 @@
 #include "detection.h"
 
 //! @todo réglage au pif
-#define DETECTION_STACK_SIZE         400
+#define DETECTION_STACK_SIZE         600
 #define DETECTION_QUEUE_SIZE          20
 #define HOKUYO_REG_SEG               200
 #define SIMILARITY_ACCEPTANCE        200
