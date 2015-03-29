@@ -1,12 +1,18 @@
 CROSSCOMPILE:=arm-none-eabi-
 
 MCPU:=cortex-m4
+HW_FPU=1
 
 LDSCRIPT:=scripts/ld/stm32f429.ld
 
 CFLAGS:=-mcpu=$(MCPU)
+ifeq ($(HW_FPU),1)
 CFLAGS+=-mfloat-abi=hard
 CFLAGS+=-mfpu=fpv4-sp-d16
+else
+CFLAGS+=-msoft-float
+CFLAGS+=-mfpu=vfp
+endif
 CFLAGS+=-mthumb
 CFLAGS+=-mno-thumb-interwork
 CFLAGS+=-fomit-frame-pointer
@@ -39,8 +45,13 @@ CFLAGS+=-Wunsuffixed-float-constants
 
 LDFLAGS:=-mcpu=$(MCPU)
 LDFLAGS+=-nostartfiles
+ifeq ($(HW_FPU),1)
 LDFLAGS+=-mfloat-abi=hard
 LDFLAGS+=-mfpu=fpv4-sp-d16
+else
+LDFLAGS+=-msoft-float
+LDFLAGS+=-mfpu=vfp
+endif
 LDFLAGS+=-mthumb
 LDFLAGS+=-T $(LDSCRIPT)
 LDFLAGS+=-lsupc++
