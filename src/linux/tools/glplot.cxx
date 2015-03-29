@@ -80,6 +80,7 @@ static TableScene tableScene;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
+static VectPlan qemuStartPos(1200, 0, M_PI/2);
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -319,9 +320,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	if( simulation )
 	{
-		VectPlan pos(1200, 0, M_PI/2);
-		pos.symetric(COLOR_GREEN);
-		qemu->setPosition(pos);
+		qemu->setPosition(qemuStartPos);
 
 		// ajout de la table dans qemu
 		for(i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -968,9 +967,9 @@ static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 	{
 		// simulation : on change l'io
 		ioColor = !ioColor;
-		VectPlan pos(1250, 0, M_PI/2);
-		pos.symetric(color);
-		qemu->setPosition(pos);
+		VectPlan startPos = qemuStartPos;
+		startPos.symetric(color);
+		qemu->setPosition(startPos);
 		qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
 	}
 	else

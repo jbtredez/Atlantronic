@@ -93,5 +93,5 @@ void recalage()
 free:
 //	trajectory_free();
 	trajectory_enable_hokuyo();
-	trajectory_enable_static_check();;
+	trajectory_enable_static_check();
 }

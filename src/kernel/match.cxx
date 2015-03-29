@@ -20,7 +20,6 @@ volatile int match_color;
 volatile uint8_t match_go;
 volatile uint8_t match_color_change_enable;
 volatile uint8_t match_enable_go = 0;
-static Systime match_color_change_time;
 static xQueueHandle match_queue_go;
 static xQueueHandle match_queue_recal;
 volatile int match_end;
@@ -174,19 +173,14 @@ portBASE_TYPE match_set_color_from_isr(void)
 {
 	if(match_go == 0 && match_color_change_enable)
 	{
-		Systime t = systick_get_time_from_isr();
-		Systime dt = t - match_color_change_time;
-		if( dt.ms > 300)
+		int ioColor = GPIO_MASK(IO_COLOR) & gpio_get_state();
+		if(ioColor)
 		{
-			match_color_change_time = t;
-			if(match_color == COLOR_YELLOW)
-			{
-				match_color = COLOR_GREEN;
-			}
-			else
-			{
-				match_color = COLOR_YELLOW;
-			}
+			match_color = COLOR_YELLOW;
+		}
+		else
+		{
+			match_color = COLOR_GREEN;
 		}
 	}
 	return 0;

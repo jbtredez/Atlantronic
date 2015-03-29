@@ -49,6 +49,7 @@ static int io_module_init(void)
 
 	// boutons en IT sur front descendant sur le GO
 	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN, match_go_from_isr);
+	exti_register(EXTI_PC, 15, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_color_from_isr);
 
 	return 0;
 }
