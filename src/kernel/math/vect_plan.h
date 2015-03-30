@@ -28,12 +28,15 @@ class VectPlan
 			theta = Theta;
 		}
 
-		inline void symetric(int color)
+		inline VectPlan symetric(int color)
 		{
-			if( color != 1 )
+			if( color == 1)
 			{
-				x *= -1;
-				theta = M_PI - theta;
+				return *this;
+			}
+			else
+			{
+				return VectPlan(-x, y, M_PI - theta);
 			}
 		}
 

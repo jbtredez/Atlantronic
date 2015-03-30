@@ -10,16 +10,23 @@
 #include "kernel/match.h"
 #include "kernel/motion/trajectory.h"
 
+#include "disco/wing.h"
+#include "disco/elevator.h"
+#include "disco/finger.h"
+
 void recalage()
 {
 	VectPlan pos(1200, 0, M_PI_2);
 	int color = match_get_color();
-	pos.symetric(color);
 
 	log(LOG_INFO, "recalage...");
 
-	// TODO ranger les pince, ailes, ascenseur et porte tapis
-	location_set_position(pos);
+	location_set_position(pos.symetric(color));
+
+	wing_set_position(WING_PARK, WING_PARK);
+	elevator_set_position(100);
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
+	// TODO ranger porte tapis
 
 /*	KinematicsParameters linParam = {1000, 1500, 1500};
 	KinematicsParameters angParam = {1, 1, 1};
@@ -74,8 +81,7 @@ void recalage()
 	pos = location_get_position();
 	pos.x = 1430 - PARAM_LEFT_CORNER_X;
 	pos.theta = 0;
-	pos.symetric(color);
-	location_set_position(pos);
+	location_set_position(pos.symetric(color));
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position

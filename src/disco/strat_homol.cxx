@@ -7,7 +7,9 @@
 #include "kernel/location/location.h"
 #include "kernel/match.h"
 #include "kernel/motion/trajectory.h"
-#include "disco/recalage.h"
+#include "disco/wing.h"
+#include "disco/elevator.h"
+#include "disco/finger.h"
 
 #define STRAT_STACK_SIZE       300
 
@@ -21,11 +23,14 @@ typedef struct
 
 static void strat_task(void* arg);
 static void strat_cmd(void* arg);
+
+static int strat_start(void* arg);
 static int strat_clap(void* arg);
 
 static int strat_color;
 StratAction strat_action[ ] =
 {
+		{ "start", strat_start, NULL, -1},
 		{ "clap", strat_clap, NULL, -1},
 };
 
@@ -69,17 +74,40 @@ static void strat_task(void* arg)
 	}
 }
 
-static int strat_clap(void* arg)
+static int strat_start(void* /*arg*/)
 {
-	(void) arg;
-	// TODO
-	trajectory_goto(VectPlan(0,0,0), WAY_ANY, AVOIDANCE_STOP);
+	// prise ampoule
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	vTaskDelay(500);
+	elevator_set_position(50);
+	vTaskDelay(500);
+	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	vTaskDelay(1000);
+
+	// sortie case depart en marche arriere
+	VectPlan dest(1000, 0, 0);
+	trajectory_goto(dest.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+
+	// premier pied
+	trajectory_goto_near_xy(strat_color * 650, -355, 0, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
 
 	return 0;
 }
 
-static void strat_cmd(void* arg)
+static int strat_clap(void* /*arg*/)
 {
-	(void) arg;
+	/*VectPlan nextToClap(1200, -750, 0);
+	log_format(LOG_INFO, "color %d", strat_color);
+	trajectory_goto(nextToClap.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
+	wing_set_position(strat_color!=1, WING_PARK, WING_OPEN);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+*/
+	return 0;
+}
+
+static void strat_cmd(void* /*arg*/)
+{
 	// TODO test des actions unitairement
 }

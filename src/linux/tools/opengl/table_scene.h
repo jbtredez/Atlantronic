@@ -91,6 +91,8 @@ class TableScene
 		MatrixHomogeneous viewMatrix;
 		int mouseX;
 		int mouseY;
+		float theta1;
+		float theta2;
 };
 
 #endif

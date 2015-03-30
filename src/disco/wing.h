@@ -15,6 +15,8 @@ enum wing_cmd_type
 
 void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right);
 
+void wing_set_position(bool sym, enum wing_cmd_type left, enum wing_cmd_type right);
+
 struct wing_cmd_arg
 {
 	uint32_t type_left;

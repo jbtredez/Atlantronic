@@ -57,6 +57,18 @@ void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 	}
 }
 
+void wing_set_position(bool sym, enum wing_cmd_type left, enum wing_cmd_type right)
+{
+	if( sym )
+	{
+		wing_set_position(right, left);
+	}
+	else
+	{
+		wing_set_position(left, right);
+	}
+}
+
 static void wing_cmd(void* arg)
 {
 	struct wing_cmd_arg* cmd_arg = (struct wing_cmd_arg*) arg;

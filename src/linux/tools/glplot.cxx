@@ -967,9 +967,7 @@ static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 	{
 		// simulation : on change l'io
 		ioColor = !ioColor;
-		VectPlan startPos = qemuStartPos;
-		startPos.symetric(color);
-		qemu->setPosition(startPos);
+		qemu->setPosition(qemuStartPos.symetric(color));
 		qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
 	}
 	else

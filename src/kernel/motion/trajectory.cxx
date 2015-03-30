@@ -15,7 +15,7 @@
 #include "kernel/motion/graph.h"
 #include <stdlib.h>
 
-#define TRAJECTORY_STACK_SIZE       350
+#define TRAJECTORY_STACK_SIZE       400
 #define TRAJECTORY_APPROX_DIST      150      //!< distance d'approche d'un objet
 #define TRAJECTORY_PERIOD            10
 
@@ -182,8 +182,8 @@ static void trajectory_task(void* arg)
 				{
 					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
 					int i = trajectory_graph_way[0];
-					log_format(LOG_INFO, "goto graph node %d", i);
 					VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
+					log_format(LOG_INFO, "goto graph node %d : %d %d", i, (int)dest.x, (int)dest.y);
 					motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 				}
 				break;
@@ -241,6 +241,7 @@ static void trajectory_update()
 		case TRAJECTORY_GOTO_XY:
 			trajectory_dest.x = req.dest.x;
 			trajectory_dest.y = req.dest.y;
+			trajectory_dest.theta = atan2f(trajectory_dest.y - trajectory_pos.y, trajectory_dest.x - trajectory_pos.x);
 			trajectory_approx_dist = req.dist;
 			trajectory_way = (enum motion_way)req.way;
 			break;

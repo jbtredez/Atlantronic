@@ -562,6 +562,11 @@ int cmd_localization_set_position(const char* arg)
 		return CMD_ERROR;
 	}
 
+	if( cmd_qemu )
+	{
+		cmd_qemu->setPosition(pos);
+	}
+
 	cmd_robot->set_position(pos);
 
 	return CMD_SUCESS;
