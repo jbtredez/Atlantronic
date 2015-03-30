@@ -46,7 +46,7 @@ static uint8_t trajectory_graph_way[GRAPH_NUM_NODE];
 static int trajectory_graph_way_count;
 static uint8_t trajectory_graph_way_id;
 KinematicsParameters trajectory_linear_param = {1000, 1500, 1500};
-KinematicsParameters trajectory_angular_param = {1, 1, 1};
+KinematicsParameters trajectory_angular_param = {3, 10, 10};
 
 static int trajectory_module_init()
 {
