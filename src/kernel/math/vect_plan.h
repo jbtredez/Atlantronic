@@ -9,6 +9,8 @@
 #include <math.h>
 #include "vect2.h"
 
+#define EPSILON                                 1e-4
+
 //! @struct VectPlan
 //! représentation d'un vecteur sur la table
 class VectPlan

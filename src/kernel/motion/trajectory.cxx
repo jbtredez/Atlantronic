@@ -33,7 +33,7 @@ static xSemaphoreHandle trajectory_mutex;
 // donnees privees a la tache
 static VectPlan trajectory_pos; //!< position du robot au moment du reveil de la tache
 static VectPlan trajectory_dest;
-static int32_t trajectory_approx_dist;
+static float trajectory_approx_dist;
 static enum motion_way trajectory_way;
 static enum trajectory_cmd_type trajectory_type;
 static enum avoidance_type trajectory_avoidance_type;
@@ -98,15 +98,6 @@ static void trajectory_task(void* arg)
 			trajectory_update();
 		}
 
-		/*if( motion_status == MOTION_COLSISION)
-		{
-			case MOTION_COLSISION:
-
-				break;
-			case MOTION_TIMEOUT:
-				// TODO
-				break;
-		}*/
 		switch(trajectory_state)
 		{
 			default:
@@ -155,7 +146,16 @@ static void trajectory_task(void* arg)
 			case TRAJECTORY_STATE_MOVE_TO_DEST:
 				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
 				{
-					motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
+					VectPlan dest = trajectory_dest;
+					VectPlan u = trajectory_dest - trajectory_pos;
+					float ds = u.norm();
+					if( fabsf(ds) > EPSILON )
+					{
+						dest.x -= trajectory_approx_dist * u.x / ds;
+						dest.y -= trajectory_approx_dist * u.y / ds;
+					}
+
+					motion_goto(dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
 					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;

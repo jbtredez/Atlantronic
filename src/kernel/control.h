@@ -18,7 +18,6 @@
 #define CONTROL_PERIOD                             5
 #define CONTROL_DT                            0.005f
 #define CONTROL_HZ          (1000.0f/CONTROL_PERIOD)
-#define EPSILON                                 1e-4
 
 struct control_usb_data
 {

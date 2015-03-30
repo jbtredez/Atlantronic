@@ -2,8 +2,6 @@
 #include <math.h>
 #include <string.h>
 
-#define EPSILON                1e-6
-
 MatrixHomogeneous::MatrixHomogeneous()
 {
 	setIdentity();

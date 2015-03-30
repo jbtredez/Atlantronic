@@ -12,6 +12,7 @@
 #include "disco/finger.h"
 
 #define STRAT_STACK_SIZE       300
+#define FEET_APPROX_DIST       100
 
 typedef struct
 {
@@ -74,6 +75,16 @@ static void strat_task(void* arg)
 	}
 }
 
+static void strat_take_feet()
+{
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	vTaskDelay(500);
+	elevator_set_position(0);
+	vTaskDelay(500);
+	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	vTaskDelay(500);
+}
+
 static int strat_start(void* /*arg*/)
 {
 	// prise ampoule
@@ -82,7 +93,7 @@ static int strat_start(void* /*arg*/)
 	elevator_set_position(50);
 	vTaskDelay(500);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(1000);
+	vTaskDelay(500);
 
 	// sortie case depart en marche arriere
 	VectPlan dest(1000, 0, 0);
@@ -90,8 +101,10 @@ static int strat_start(void* /*arg*/)
 	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
 
 	// premier pied
-	trajectory_goto_near_xy(strat_color * 650, -355, 0, WAY_FORWARD, AVOIDANCE_STOP);
+	elevator_set_position(100);
+	trajectory_goto_near_xy(strat_color * 630, -355, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP);
 	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+	strat_take_feet();
 
 	return 0;
 }

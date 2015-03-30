@@ -3,7 +3,6 @@
 //! @author Atlantronic
 
 #include "kernel/math/vect2.h"
-#define EPSILON                 1e-5
 
 //!< @function distance_point_to_segment
 //!< @brief calcule la distance entre un point M et un segment [AB]

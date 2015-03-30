@@ -8,8 +8,6 @@
 
 #include <math.h>
 
-#define EPSILON                                 1e-4
-
 static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
 //!< calcul des consignes au niveau des moteurs avec saturations
