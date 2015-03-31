@@ -10,6 +10,7 @@
 #include "disco/wing.h"
 #include "disco/elevator.h"
 #include "disco/finger.h"
+#include "disco/recalage.h"
 
 #define STRAT_STACK_SIZE       300
 #define FEET_APPROX_DIST       100
@@ -80,9 +81,9 @@ static void strat_take_feet()
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	vTaskDelay(500);
 	elevator_set_position(0);
-	vTaskDelay(500);
+	vTaskDelay(800);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(500);
+	vTaskDelay(200);
 }
 
 static int strat_start(void* /*arg*/)
@@ -103,6 +104,18 @@ static int strat_start(void* /*arg*/)
 	// premier pied
 	elevator_set_position(100);
 	trajectory_goto_near_xy(strat_color * 630, -355, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+	strat_take_feet();
+
+	// second pied
+	elevator_set_position(100);
+	trajectory_goto_near_xy(strat_color * 200, -400, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+	strat_take_feet();
+
+	// pied 3
+	elevator_set_position(100);
+	trajectory_goto_near_xy(strat_color * 400, -750, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP);
 	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
 	strat_take_feet();
 
