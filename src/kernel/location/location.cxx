@@ -1,7 +1,7 @@
 //! @file location.c
 //! @brief Location
 //! @author Atlantronic
-
+#define WEAK_LOCATION
 #include "location.h"
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
