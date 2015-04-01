@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 
-		file_stm_read = qemu.file_board_read;
-		file_stm_write = qemu.file_board_write;
+		file_stm_read = qemu.m_file_board_read;
+		file_stm_write = qemu.m_file_board_write;
 	}
 
 	if(file_stm_read)

@@ -96,9 +96,11 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer arg);
 static void toggle_color(GtkWidget* widget, gpointer arg);
 static void toggle_go(GtkWidget* widget, gpointer arg);
+static void reboot_robot(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
+static void qemu_set_parameters();
 void gtk_end();
 
 #define OPPONENT_R         150.0f
@@ -219,16 +221,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	GtkWidget* menu0 = gtk_menu_bar_new();	// menu "niveau 0" (ie: barre de menu)
 	GtkWidget* menu1 = gtk_menu_new();	// menu "niveau 1"
 	GtkWidget* menuObj;
-#if 0
-	// menu Fichier
-	menuObj = gtk_menu_item_new_with_label("Fichier");
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
-
-	menuObj = gtk_menu_item_new_with_label("Quitter");
-	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
-#endif
 
 	// menu courbe
 	menu1 = gtk_menu_new();	// menu "niveau 1"
@@ -289,6 +281,10 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
+	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(reboot_robot), NULL);
+	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
+
 	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_COLOR);
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
@@ -320,20 +316,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	if( simulation )
 	{
-		qemu->setPosition(qemuStartPos);
-
-		// ajout de la table dans qemu
-		for(i = 0; i < TABLE_OBJ_SIZE; i++)
-		{
-			qemu->add_object(table_obj[i]);
-		}
-
-		// ajout d'un robot adverse
-		qemu->add_object(oponent_robot);
-
-		// on le met a sa position de depart
-		Vect2 origin(0, 0);
-		qemu->move_object(QEMU_OPPONENT_ID, origin, tableScene.getOpponentPosition());
+		qemu_set_parameters();
 	}
 
 	gtk_main();
@@ -343,6 +326,24 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	joystick_destroy(&joystick);
 
 	return 0;
+}
+
+void qemu_set_parameters()
+{
+	qemu->setPosition(qemuStartPos);
+
+	// ajout de la table dans qemu
+	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
+	{
+		qemu->add_object(table_obj[i]);
+	}
+
+	// ajout d'un robot adverse
+	qemu->add_object(oponent_robot);
+
+	// on le met a sa position de depart
+	Vect2 origin(0, 0);
+	qemu->move_object(QEMU_OPPONENT_ID, origin, tableScene.getOpponentPosition());
 }
 
 void gtk_end()
@@ -989,6 +990,20 @@ static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
 	else
 	{
 		robotItf->go();
+	}
+}
+
+static void reboot_robot(GtkWidget* /*widget*/, gpointer /*arg*/)
+{
+	if(qemu)
+	{
+		// simulation
+		qemu->reboot();
+		qemu_set_parameters();
+	}
+	else
+	{
+		robotItf->reboot();
 	}
 }
 
