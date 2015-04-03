@@ -998,6 +998,9 @@ static void reboot_robot(GtkWidget* /*widget*/, gpointer /*arg*/)
 	if(qemu)
 	{
 		// simulation
+		robotItf->current_time = 0;
+		robotItf->start_time = 0;
+		robotItf->control_usb_data_count = 0;
 		qemu->reboot();
 		qemu_set_parameters();
 	}

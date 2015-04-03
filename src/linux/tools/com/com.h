@@ -14,6 +14,7 @@ class Com
 {
 	public:
 		Com();
+		virtual ~Com(){};
 
 		virtual int open();
 		virtual int close() = 0;

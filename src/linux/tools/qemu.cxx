@@ -51,11 +51,6 @@ int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 	snprintf(m_file_board_read, sizeof(m_file_board_read), "/tmp/carte-%i.out", current_pid);
 	snprintf(m_file_board_write, sizeof(m_file_board_write), "/tmp/carte-%i.in", current_pid);
 
-	mkfifo(m_file_qemu_read, 0666);
-	mkfifo(m_file_qemu_write, 0666);
-	mkfifo(m_file_board_read, 0666);
-	mkfifo(m_file_board_write, 0666);
-
 	m_com = new ComUsb(m_file_qemu_read, m_file_qemu_write);
 
 	startQemu();
@@ -68,6 +63,12 @@ void Qemu::startQemu()
 	pid_t current_pid = getpid();
 
 	m_com->close();
+
+	mkfifo(m_file_qemu_read, 0666);
+	mkfifo(m_file_qemu_write, 0666);
+	mkfifo(m_file_board_read, 0666);
+	mkfifo(m_file_board_write, 0666);
+
 	m_pid = fork();
 
 	if(m_pid == 0)
@@ -125,6 +126,16 @@ void Qemu::stopQemu()
 		kill(m_pid, SIGILL);
 	}
 	m_pid = 0;
+
+	if( m_com )
+	{
+		m_com->close();
+	}
+
+	unlink(m_file_qemu_read);
+	unlink(m_file_qemu_write);
+	unlink(m_file_board_read);
+	unlink(m_file_board_write);
 }
 
 void Qemu::reboot()
@@ -136,16 +147,11 @@ void Qemu::reboot()
 void Qemu::destroy()
 {
 	stopQemu();
-
 	if( m_com )
 	{
-		m_com->close();
+		delete m_com;
+		m_com = NULL;
 	}
-
-	unlink(m_file_qemu_read);
-	unlink(m_file_qemu_write);
-	unlink(m_file_board_read);
-	unlink(m_file_board_write);
 }
 
 int Qemu::set_clock_factor(unsigned int factor, unsigned int icount)
