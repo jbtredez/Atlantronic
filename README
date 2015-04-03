@@ -3,10 +3,10 @@ Site : http://www.atlantronic.fr/
 
 Requirements :
 "arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
-	- binutils-2.24
-	- gcc-4.8.3 (patch t-arm-elf, cf dossier toolchain)
-	- gdb-7.8
-	- newlib-2.1.0 (cf ebuild dans toolchain avec flags -nls -unicode, --disable-newlib-supplied-syscalls --disable-newlib-atexit-alloc --disable-newlib-io-float)
+	- binutils-2.25
+	- gcc-4.9.2 (patch t-arm-elf, cf dossier toolchain)
+	- gdb-7.9
+	- newlib-2.2.0 (cf ebuild dans toolchain)
 
 cible linux :
 	- readline
