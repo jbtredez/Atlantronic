@@ -155,6 +155,7 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 
 	*pxTopOfStack = portINITIAL_XPSR;	/* xPSR */
 	pxTopOfStack--;
+
 	// mise à 0 du dernier bit. Lorsqu'on branche avec bx ou blx, c'est automatique mais ici on branche pas directement mais sur l'adresse spéciale 0xfffffffd et on va mettre la valeur dans pc.
 	// utile uniquement a cause d'un bug qemu
 	*pxTopOfStack = ( portSTACK_TYPE ) pxCode & 0xfffffffe;	/* PC */
@@ -164,7 +165,9 @@ portSTACK_TYPE *pxPortInitialiseStack( portSTACK_TYPE *pxTopOfStack, pdTASK_CODE
 	/* Save code space by skipping register initialisation. */
 	pxTopOfStack -= 5;	/* R12, R3, R2 and R1. */
 	*pxTopOfStack = ( portSTACK_TYPE ) pvParameters;	/* R0 */
-
+#ifdef WORKAROUND_QEMU_FPU
+	pxTopOfStack -= 16;
+#endif
 	/* A save method is being used that requires each task to maintain its
 	own exec return value. */
 	pxTopOfStack--;

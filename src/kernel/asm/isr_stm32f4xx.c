@@ -294,6 +294,9 @@ void isr_svc( void )
 		"	ldr r1, [r3]					\n" /* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
 		"	ldr r0, [r1]					\n" /* The first item in pxCurrentTCB is the task top of stack. */
 		"	ldmia r0!, {r4-r11, r14}		\n" /* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
+#ifdef WORKAROUND_QEMU_FPU
+		"	vldmia r0!, {s16-s31}			\n"
+#endif
 		"	msr psp, r0						\n" /* Restore the task stack pointer. */
 		"	mov r0, #0 						\n"
 		"	msr	basepri, r0					\n"
@@ -314,9 +317,13 @@ void isr_context_switch( void )
 		"	ldr	r2, [r3]						\n"
 		"										\n"
 #if defined (__VFP_FP__) && !defined(__SOFTFP__)
+#ifdef WORKAROUND_QEMU_FPU
+		"	vstmdb r0!, {s16-s31}				\n"
+#else
 		"	tst r14, #0x10						\n" /* Is the task using the FPU context?  If so, push high vfp registers. */
 		"	it eq								\n"
 		"	vstmdbeq r0!, {s16-s31}				\n"
+#endif
 #endif
 		"										\n"
 		"	stmdb r0!, {r4-r11, r14}			\n" /* Save the core registers. */
@@ -337,9 +344,13 @@ void isr_context_switch( void )
 		"	ldmia r0!, {r4-r11, r14}			\n" /* Pop the core registers. */
 		"										\n"
 #if defined (__VFP_FP__) && !defined(__SOFTFP__)
+#ifdef WORKAROUND_QEMU_FPU
+			"	vldmia r0!, {s16-s31}				\n"
+#else
 		"	tst r14, #0x10						\n" /* Is the task using the FPU context?  If so, pop the high vfp registers too. */
 		"	it eq								\n"
 		"	vldmiaeq r0!, {s16-s31}				\n"
+#endif
 #endif
 		"										\n"
 		"	msr psp, r0							\n"
