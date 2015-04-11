@@ -22,15 +22,22 @@ define pt
 	p *((tskTCB *) $arg0)
 end
 
+# arg0 : adresse tcb
+# arg1 : full ou pas
 define ps
-	p /x ((tskTCB*)  $arg0)->pxTopOfStack[0]@$arg1
-	set $i=0
-	while $i < $arg1
-		set $addr = ((tskTCB*)  $arg0)->pxTopOfStack[$i]
-		if $addr > 0x8000000 && $addr < 0x8040000
-			info symbol ((tskTCB*)  $arg0)->pxTopOfStack[$i]
+	set $stack = ((tskTCB*)$arg0)->pxTopOfStack
+	set $j = 0
+	while $j < ((tskTCB*)$arg0)->pxStackBegin - $stack
+		if $stack[$j] > 0x8000000 && $stack[$j] < &_etext
+			list *($stack[$j]),1
+		else
+			if $argc == 2
+				if $arg1 == 1
+					printf "%10x\n",  $stack[$j]
+				end
+			end
 		end
-		set $i++
+		set $j++
 	end
 end
 
@@ -150,20 +157,5 @@ define pTcb
 		printf " %8i |\n", $stack_min_free
 	else
 		printf "\n"
-	end
-end
-
-# arg0 : adresse tcb
-# arg1 : taille a afficher
-define pstack
-	set $stack = ((tskTCB*)$arg0)->pxTopOfStack
-	set $i = 0
-	while $i < $arg1
-		if $stack[$i] > 0x8000000 && $stack[$i] < &__text_end__
-			list *($stack[$i]),1
-		else
-			printf "%10x\n",  $stack[$i]
-		end
-		set $i++
 	end
 end
