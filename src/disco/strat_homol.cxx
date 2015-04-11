@@ -119,6 +119,13 @@ static int strat_start(void* /*arg*/)
 	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
 	strat_take_feet();
 
+	// depose case depart
+	trajectory_goto_near_xy(strat_color * 1000, 0.0f, 0.0f, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	vTaskDelay(500);
+	trajectory_straight(-100);
+
 	return 0;
 }
 
