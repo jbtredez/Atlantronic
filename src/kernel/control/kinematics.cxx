@@ -72,11 +72,12 @@ void Kinematics::setPosition(float wantedPos, float wantedSpeed, KinematicsParam
 	if( dv * dt > fabsf(d) && dv / dt <  2 * param.dMax)
 	{
 		vMaxSlowDown = wantedSpeed + fabsf(d) / dt;
-		param.dMax *= 2;
 	}
 
 	if(vMaxSlowDown < vMax)
 	{
+		// marge pour rattraper la rampe de deceleration
+		param.dMax *= 2;
 		vMax = vMaxSlowDown;
 	}
 

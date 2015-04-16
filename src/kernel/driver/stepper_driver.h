@@ -21,6 +21,7 @@ class StepperDriver
 
 		inline void setCurrentPosition(float pos)
 		{
+			m_kinematics.pos = pos;
 			m_currentStep = pos * m_stepFactor;
 		}
 
@@ -30,6 +31,11 @@ class StepperDriver
 		}
 
 		void step(float dt);
+
+		inline void setMaxSpeed(float vMax)
+		{
+			m_kinematicsParam.vMax = vMax;
+		}
 
 	protected:
 		Io m_ioStep;

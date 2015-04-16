@@ -21,7 +21,7 @@ typedef struct
 static const IoParam io_param[] =
 {
 	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 - couleur
-	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1
+	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1 - recalage
 	{GPIOE,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_2 - pull up pour les omron
 	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - pull up pour les omron
 	{GPIOG, 10, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_4 - pull up pour les omron
@@ -29,7 +29,7 @@ static const IoParam io_param[] =
 	{GPIOD,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_6
 	{GPIOD,  7, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_7
 	{GPIOD,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_8
-	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9
+	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9 - 
 	{GPIOG,  7, GPIO_MODE_OUT, GPIO_PUPD_UP}, // attention pull up 4k7 sur carte cpu - IO_10 - sortie
 	{GPIOG,  6, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_11 - sortie
 	{GPIOC, 14, GPIO_MODE_IN, GPIO_PUPD_DOWN}, // go
@@ -69,6 +69,11 @@ uint32_t gpio_get_state()
 	res |= (match_get_go()?1:0) << i; // GO
 
 	return res;
+}
+
+int gpio_get(Io io)
+{
+	return gpio_get_pin(io_param[io].gpio, io_param[io].pin) != 0;
 }
 
 void gpio_set(Io io)

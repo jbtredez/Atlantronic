@@ -9,14 +9,16 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-static StepperDriver elevatorMotor(GPIO_11, GPIO_10, 5, 200, 1000, 1000);
-
 #define ELEVATOR_STACK_SIZE       350
-#define ELEVATOR_PERIOD             2
+#define ELEVATOR_PERIOD             1
 #define ELEVATOR_DT             0.001
 
 #define ELEVATOR_MIN                0
-#define ELEVATOR_MAX              200
+#define ELEVATOR_MAX              150
+#define ELEVATOR_MAX_SPEED        100
+
+static StepperDriver elevatorMotor(IO_ELEVATOR_STEP, IO_ELEVATOR_DIR, 5, ELEVATOR_MAX_SPEED, 1000, 1000);
+
 
 static void elevator_task(void* arg);
 static void elevator_cmd(void* arg);
@@ -39,10 +41,33 @@ module_init(elevator_module_init, INIT_ELEVATOR);
 static void elevator_task(void* /*arg*/)
 {
 	uint32_t wake_time = 0;
+	int switchActiveLastCycle = 1;
 
-	// TODO gestion butee + init
+	elevatorMotor.setMaxSpeed(20);
+	elevatorMotor.setPosition(-50);
+
+	for(int i = 0; i < 5000 && ! gpio_get(IO_ELEVATOR_SWITCH); i++)
+	{
+		elevatorMotor.step(ELEVATOR_DT);
+		vTaskDelayUntil(&wake_time, ELEVATOR_PERIOD);
+	}
+
+	// on est en butee
+	elevatorMotor.setCurrentPosition(0);
+	elevatorMotor.setPosition(0);
+	elevatorMotor.setMaxSpeed(ELEVATOR_MAX_SPEED);
+	log(LOG_INFO, "elevator initialized");
+
 	while(1)
 	{
+		int switchActive = gpio_get(IO_ELEVATOR_SWITCH);
+		if( switchActive && ! switchActiveLastCycle )
+		{
+			// on vient de passer en butee
+			elevatorMotor.setCurrentPosition(0);
+		}
+		switchActiveLastCycle = switchActive;
+
 		elevatorMotor.step(ELEVATOR_DT);
 		vTaskDelayUntil(&wake_time, ELEVATOR_PERIOD);
 	}

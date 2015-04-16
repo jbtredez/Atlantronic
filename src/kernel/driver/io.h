@@ -44,8 +44,16 @@ typedef enum io
 
 #define IO_COLOR           GPIO_0
 #define IO_RECAL           GPIO_1
+#define IO_OMRON1          GPIO_2
+#define IO_OMRON2          GPIO_3
+#define IO_OMRON3          GPIO_4
+#define IO_ELEVATOR_SWITCH GPIO_9
+#define IO_ELEVATOR_DIR    GPIO_10
+#define IO_ELEVATOR_STEP   GPIO_11
 
 uint32_t gpio_get_state(void);
+
+int gpio_get(Io io);
 
 void gpio_set(Io io);
 
