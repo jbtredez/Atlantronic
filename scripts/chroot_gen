@@ -1,15 +1,17 @@
 #!/bin/bash
 
-STAGE3=stage3-i686-20140128.tar.bz2
+STAGE3=stage3-i686-20150324.tar.bz2
+PORTAGE=portage-latest.tar.bz2
 ARCH=i686
 VERSION=1
 OPTIMIZE=0
 
 CHROOTDIR=chroot_${ARCH}_${VERSION}
+SCRIPT_DIR=$(dirname $0)
 
 chroot_exec()
 {
-	./scripts/atlantronic_chroot ${CHROOTDIR} 1 $*
+	${SCRIPT_DIR}/atlantronic_chroot ${CHROOTDIR} 1 $*
 }
 
 root_check()
@@ -25,6 +27,16 @@ root_check()
 
 extract()
 {
+
+	if ! [ -e portage/.extracted ]
+	then
+		echo "Extracting $PORTAGE"
+		tar xjf $PORTAGE
+		touch portage/.extracted
+	fi
+
+	mkdir -p distfiles/
+
 	if ! [ -e ${CHROOTDIR}/.extracted ]
 	then
 		echo "Extracting $STAGE3"
@@ -63,8 +75,8 @@ configure()
 	echo 'USE_PYTHON='2.7'' >> ${CHROOTDIR}/etc/portage/make.conf
 	echo 'INSTALL_MASK="HACKING.gz TODO.gz /usr/share/gtk-doc"' >> ${CHROOTDIR}/etc/portage/make.conf
 	echo 'PORTDIR_OVERLAY=/usr/local/portage' >> ${CHROOTDIR}/etc/portage/make.conf
-	#USE="gudev introspection jpeg png tk"
-	echo 'USE="X gtk dot fontconfig ftdi opengl python sse sse2 -tk truetype usb expat -cups -doc -man -perl -python3 -webdav"' >> ${CHROOTDIR}/etc/portage/make.conf
+	echo 'DISTDIR="${PORTDIR_OVERLAY}/distfiles"' >> ${CHROOTDIR}/etc/portage/make.conf
+	echo 'USE="-X -gtk -fontconfig ftdi -opengl python sse sse2 -tk truetype usb expat -cups -doc -man -perl -python3 -webdav"' >> ${CHROOTDIR}/etc/portage/make.conf
 
 	mkdir -p ${CHROOTDIR}/etc/portage/package.accept_keywords/
 	echo "=dev-embedded/openocd-0.7.0-r1 ~x86" > ${CHROOTDIR}/etc/portage/package.accept_keywords/openocd
@@ -74,25 +86,28 @@ first_install()
 {
 	if ! [ -e ${CHROOTDIR}/.first_install_done ]
 	then
+		mkdir -p ${CHROOTDIR}/usr/local/portage/metadata/
+		echo "masters = gentoo" > ${CHROOTDIR}/usr/local/portage/metadata/layout.conf
 		mkdir -p ${CHROOTDIR}/etc/portage/patches/cross-arm-none-eabi/gcc/
-		cp toolchain/cross-arm-none-eabi/gcc-4.8.2/*.patch ${CHROOTDIR}/etc/portage/patches/cross-arm-none-eabi/gcc/
+		cp ${SCRIPT_DIR}/../toolchain/cross-arm-none-eabi/gcc-4.9.2/*.patch ${CHROOTDIR}/etc/portage/patches/cross-arm-none-eabi/gcc/
 		mkdir -p ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib
-		cp toolchain/cross-arm-none-eabi/newlib-2.1.0.ebuild ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib
-		chroot_exec 'cd ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib/ && ebuild newlib-2.1.0.ebuild digest'
-		chroot_exec ebuild ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib/newlib-2.1.0.ebuild digest
+		cp ${SCRIPT_DIR}/../toolchain/cross-arm-none-eabi/newlib-2.2.0.ebuild ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib
+		chroot_exec 'cd ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib/ && ebuild newlib-2.2.0.ebuild digest'
+		chroot_exec ebuild ${CHROOTDIR}/usr/local/portage/cross-arm-none-eabi/newlib/newlib-2.2.0.ebuild digest
 
 		chroot_exec emerge -uv ccache eix -j 3
 		chroot_exec eix-update
 		chroot_exec eselect python set 1
 		chroot_exec python-updater
-		chroot_exec emerge -DvN -1 portage
+		chroot_exec emerge -DvN -1 portage -j 3
 		if [ ${OPTIMIZE} -eq 1 ] ; then
 			chroot_exec emerge -ev world -j 3
 		fi
 		chroot_exec perl-cleaner --all
-		chroot_exec emerge -uv crossdev dev-vcs/git x11-libs/gtkglext media-libs/libcanberra dev-embedded/openocd dev-util/colorgcc dev-vcs/git x11-themes/gnome-themes-standard -j 3
-		chroot_exec crossdev -t arm-none-eabi -s4 --without-headers
+		chroot_exec emerge -uv crossdev dev-embedded/openocd dev-util/colorgcc dev-vcs/git -j3
+		chroot_exec 'USE="-unicode -threads -fortran -openmp -sanitize" crossdev -t arm-none-eabi -s4 --without-headers'
 		chroot_exec crossdev -t arm-none-eabi -s3 --ex-only --ex-gdb
+		chroot_exec eix-update
 
 		touch ${CHROOTDIR}/.first_install_done
 	fi

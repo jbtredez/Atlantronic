@@ -88,8 +88,8 @@ then
 		if ! [ -e ${MOUNT_MARK_ADMIN} ]
 		then
 			echo "Mounting portage"
-			mount -o bind /usr/portage ${CHROOT_DIR}/usr/portage
-			mount -o bind /usr/local/portage/distfiles ${CHROOT_DIR}/usr/local/portage/distfiles
+			mount -o bind portage ${CHROOT_DIR}/usr/portage
+			mount -o bind distfiles ${CHROOT_DIR}/usr/local/portage/distfiles
 			touch ${MOUNT_MARK_ADMIN}
 		fi
 	else
