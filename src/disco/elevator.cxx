@@ -9,11 +9,11 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-static StepperDriver elevatorMotor(GPIO_11, GPIO_10, 5, 100, 400, 400);
+static StepperDriver elevatorMotor(GPIO_11, GPIO_10, 5, 200, 1000, 1000);
 
 #define ELEVATOR_STACK_SIZE       350
 #define ELEVATOR_PERIOD             2
-#define ELEVATOR_DT             0.002
+#define ELEVATOR_DT             0.001
 
 #define ELEVATOR_MIN                0
 #define ELEVATOR_MAX              200
