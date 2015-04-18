@@ -31,6 +31,8 @@ MAKEFLAGS += -rR --no-print-directory
 DEBUG ?= 0
 VERBOSE ?= 0
 SKIP_SIZE_HEADER ?= "+1"
+CHROOT ?= 0
+CHROOT_DIR ?= ../chroot/chroot_i686_1/
 
 ifeq ($(VERBOSE),0)
 MAKEFLAGS += --quiet
@@ -38,10 +40,6 @@ endif
 
 ifeq ($(MAKECMDGOALS),discovery)
 ARCH=discovery
-endif
-
-ifeq ($(MAKECMDGOALS),foo)
-ARCH=foo
 endif
 
 ifeq ($(MAKECMDGOALS),linux)
@@ -101,9 +99,14 @@ stat: $(addprefix $(bin)/$(ARCH)/,$(bin-$(ARCH)))
 .PHONY: stat_$(ARCH)
 else
 all:
+ifeq ($(CHROOT),0)
 	$(MAKE) ARCH=disco
 	$(MAKE) ARCH=linux
 	$(MAKE) ARCH=disco stat
+else
+	$(MAKE) ARCH=linux
+	sudo ./scripts/atlantronic_chroot $(CHROOT_DIR) 0 "cd /mnt && make ARCH=disco CHROOT=0 -j 9 && make ARCH=disco CHROOT=0 stat"
+endif
 
 stat:
 	$(MAKE) ARCH=disco stat

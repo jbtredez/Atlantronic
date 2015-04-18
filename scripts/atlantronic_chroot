@@ -49,6 +49,7 @@ NODE_ID=$(stat -c %i ${CHROOT_DIR})
 MOUNT_MARK=/tmp/.chroot_mount-${NODE_ID}
 MOUNT_MARK_ADMIN=/tmp/.chroot_mount-${NODE_ID}-admin
 KERNEL=`uname -r`
+ATL_DIR=$(readlink -e $(dirname $0)/../)
 
 declare -i CPT
 
@@ -82,6 +83,7 @@ then
 	mount -o bind /etc/resolv.conf ${CHROOT_DIR}/etc/resolv.conf
 	mkdir -p ${CHROOT_DIR}/lib/modules/${KERNEL}/build
 	mount -o bind /lib/modules/${KERNEL}/build ${CHROOT_DIR}/lib/modules/${KERNEL}/build
+	mount -o bind ${ATL_DIR} ${CHROOT_DIR}/mnt
 
 	if [ ${ADMIN_MODE} == "1" ]
 	then
@@ -137,6 +139,7 @@ then
 	umount ${CHROOT_DIR}/var/tmp
 	umount ${CHROOT_DIR}/etc/resolv.conf
 	umount ${CHROOT_DIR}/lib/modules/${KERNEL}/build
+	umount ${CHROOT_DIR}/mnt
 
 	if [ -e ${MOUNT_MARK_ADMIN} ]
 	then
