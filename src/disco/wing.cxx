@@ -8,6 +8,12 @@
 
 static void wing_cmd(void* arg);
 
+////////////////////////////////////////////////
+/// function    : wing_module_init()
+/// descrition  : Initialise Wing module
+/// param       : none
+/// retrun      : always 0
+////////////////////////////////////////////////
 static int wing_module_init()
 {
 	usb_add_cmd(USB_CMD_WING, &wing_cmd);
@@ -30,6 +36,15 @@ static int wing_module_init()
 
 module_init(wing_module_init, INIT_WING);
 
+
+
+////////////////////////////////////////////////
+/// function    : wing_set_position()
+/// descrition  : Open Wings
+/// param       : left = enum wing_cmd_type left wing state
+/// param       : right = enum wing_cmd_type right wing state
+/// retrun      : none
+////////////////////////////////////////////////
 void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 {
 	switch(left)

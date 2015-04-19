@@ -27,13 +27,13 @@ static void strat_task(void* arg);
 static void strat_cmd(void* arg);
 
 static int strat_start(void* arg);
-static int strat_clap(void* arg);
+static int strat_clap1(void* arg);
 
 static int strat_color;
 StratAction strat_action[ ] =
 {
 		{ "start", strat_start, NULL, -1},
-		{ "clap", strat_clap, NULL, -1},
+        { "clap", strat_clap1, NULL, -1},
 };
 
 int strat_module_init()
@@ -126,17 +126,50 @@ static int strat_start(void* /*arg*/)
 	vTaskDelay(500);
 	trajectory_straight(-100);
 
+
+
 	return 0;
 }
 
-static int strat_clap(void* /*arg*/)
+static int strat_clap1(void* /*arg*/)
 {
-	/*VectPlan nextToClap(1200, -750, 0);
-	log_format(LOG_INFO, "color %d", strat_color);
+
+    log_format(LOG_INFO, "color %d", strat_color);
+    //onse déplace pres de notre premier clap (en fonction de la couleur
+    VectPlan nextToClap(strat_color*1200, -750, 0);
 	trajectory_goto(nextToClap.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
-	wing_set_position(strat_color!=1, WING_PARK, WING_OPEN);
+
+    //On ouvre nos ailes, pas besoin de réflechir de quel coté on est(homologation).
+    wing_set_position(WING_OPEN, WING_OPEN);
 	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
-*/
+
+    //On se déplace sur le vecteur y vers l'origine de la taille du clap -160 *stratcolor (vert vers y négatifs,jaune vers les y positifs)
+    nextToClap.x=strat_color*(1200 - 160);
+    trajectory_goto(nextToClap.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
+
+     trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+
+     //On ferme nos ailes, pas besoin de réflechir de quel coté on est(homologation).
+     wing_set_position(WING_PARK, WING_PARK);
+
+     //On se déplace sur le vecteur y vers l'origine de la taille du clap -160 *stratcolor (vert vers y négatifs,jaune vers les y positifs)
+     nextToClap.x=strat_color*(1200 - 160*2);
+     trajectory_goto(nextToClap.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
+
+     trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+
+     //On ouvre nos ailes, pas besoin de réflechir de quel coté on est(homologation).
+     wing_set_position(WING_OPEN, WING_OPEN);
+
+     //On se déplace sur le vecteur y vers l'origine de la taille du clap -160 *stratcolor (vert vers y négatifs,jaune vers les y positifs)
+     nextToClap.x=strat_color*(1200 - 160*3);
+     trajectory_goto(nextToClap.symetric(strat_color), WAY_BACKWARD, AVOIDANCE_STOP);
+
+     trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000); // TODO verif cas erreur
+
+     //On ouvre nos ailes, pas besoin de réflechir de quel coté on est(homologation).
+     wing_set_position(WING_PARK, WING_PARK);
+
 	return 0;
 }
 
