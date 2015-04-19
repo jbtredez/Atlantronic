@@ -71,7 +71,7 @@ static int trajectory_module_init()
 	trajectory_state = TRAJECTORY_STATE_NONE;
 	trajectory_hokuyo_enable_check = 1;
 	trajectory_static_check_enable = 1;
-// TODO
+
 	detection_register_callback(trajectory_detection_callback);
 
 	return 0;
@@ -131,16 +131,20 @@ static void trajectory_task(void* arg)
 								log(LOG_INFO, "collision -> graph");
 								// si on n'est pas sur le graph
 								// TODO retenter n fois puis recalculer une trajectoire ?
+								// pour le moment arret
+								log(LOG_INFO, "collision -> stop");
+								trajectory_state = TRAJECTORY_STATE_COLISION;
 								break;
 						}
 						break;
-						default:
-						case MOTION_TIMEOUT:
-							// TODO
-							break;
-						case MOTION_IN_MOTION:
-						case MOTION_UPDATING_TRAJECTORY:
-							break;
+					default:
+					case MOTION_TIMEOUT:
+						log(LOG_INFO, "timeout -> target not reached");
+						trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+						break;
+					case MOTION_IN_MOTION:
+					case MOTION_UPDATING_TRAJECTORY:
+						break;
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_DEST:
@@ -191,6 +195,75 @@ static void trajectory_task(void* arg)
 
 		// TODO ne pas attendre si evenement
 		vTaskDelayUntil(&wake_time, TRAJECTORY_PERIOD);
+	}
+}
+
+static void simplify_path()
+{
+	// elimination de points de passage
+	int i = 0;
+	for(i = -1; i < trajectory_graph_way_count - 1; i++)
+	{
+		Vect2 a_table;
+		Vect2 b_table;
+
+		// position du noeud avec alignement (marche avant) avec la destination
+		VectPlan pos;
+		if( i >= 0 )
+		{
+			int id = trajectory_graph_way[i];
+			pos.x = graph_node[id].pos.x;
+			pos.y = graph_node[id].pos.y;
+
+		}
+		else
+		{
+			// i == -1 : test elimination du premier point de passage
+			pos.x = trajectory_pos.x;
+			pos.y = trajectory_pos.y;
+		}
+		float dx = trajectory_dest.x - pos.x;
+		float dy = trajectory_dest.y - pos.y;
+		pos.theta = atan2f(dy, dx);
+
+		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+		float dist2 = dx * dx +  dy * dy;
+		float xmin2 = xmin * xmin;
+		if( dist2 < xmin2)
+		{
+			// possibilite d'aller directement a la destination depuis ce point
+			//log_format(LOG_INFO, "shortcut to dest from %d", i);
+			trajectory_graph_way_count = i+1;
+			break;
+		}
+
+		int j;
+		for(j = trajectory_graph_way_count - 1; j > i+1 ; j--)
+		{
+			// position du noeud avec alignement (marche avant) avec la destination
+			int id2 = trajectory_graph_way[j];
+			dx = graph_node[id2].pos.x - pos.x;
+			dy = graph_node[id2].pos.y - pos.y;
+			pos.theta = atan2f(dy, dx);
+
+			xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+			dist2 = dx * dx +  dy * dy;
+			xmin2 = xmin * xmin;
+			if( dist2 < xmin2)
+			{
+				// possibilite de prendre un racourci de i a j
+				//log_format(LOG_INFO, "shortcut from %d to %d", i, j);
+				// on supprime les points intermediaires entre i et j
+				int k = i;
+				int skip = (j - i - 1);
+				for(k = i + 1; k < trajectory_graph_way_count - 1 - skip; k++)
+				{
+					trajectory_graph_way[k] = trajectory_graph_way[k+skip];
+				}
+				trajectory_graph_way_count -= skip;
+				break;
+			}
+		}
 	}
 }
 
@@ -319,11 +392,9 @@ static void trajectory_update()
 				int i = last_graph_id;
 				while(trajectory_dijkstra_info[i].prev_node != trajectory_graph_way[0])
 				{
-					//log_format(LOG_INFO, "chemin - graph : %d <- %d", i, trajectory_dijkstra_info[i].prev_node);
 					i = trajectory_dijkstra_info[i].prev_node;
 					trajectory_graph_way_count++;
 				}
-				//log_format(LOG_INFO, "chemin - graph : %d <- %d", i, trajectory_dijkstra_info[i].prev_node);
 				trajectory_graph_way_count++;
 
 				// on refait un parcourt pour mettre dans les points dans l'ordre
@@ -336,36 +407,19 @@ static void trajectory_update()
 					j--;
 					trajectory_graph_way[j] = i;
 				}
+				// affichage debug
+				/*for(i=0; i < trajectory_graph_way_count; i++)
+				{
+					log_format(LOG_INFO, "chemin - graph : %d : %d", i, trajectory_graph_way[i]);
+				}*/
 			}
 		}
 
-		// elimination de points de passage
-		int i = 0;
-		for(i = 0; i < trajectory_graph_way_count - 1; i++)
-		{
-			Vect2 a_table;
-			Vect2 b_table;
-
-			// position du noeud avec alignement (marche avant) avec la destination
-			int id = trajectory_graph_way[i];
-			VectPlan pos(graph_node[id].pos.x, graph_node[id].pos.y, 0);
-			float dx = trajectory_dest.x - pos.x;
-			float dy = trajectory_dest.y - pos.y;
-			pos.theta = atan2f(dy, dx);
-
-			float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
-			float dist2 = dx * dx +  dy * dy;
-			float xmin2 = xmin * xmin;
-			if( dist2 < xmin2)
-			{
-				// possibilite d'aller directement a la destination depuis ce point
-				trajectory_graph_way_count = i+1;
-				break;
-			}
-		}
+		simplify_path();
 
 		log_format(LOG_INFO, "passage par %d points", trajectory_graph_way_count);
 		log_format(LOG_INFO, "point entrée graph : %d", trajectory_graph_way[0]);
+		int i;
 		for( i = 1 ; i < trajectory_graph_way_count - 1; i++)
 		{
 			log_format(LOG_INFO, "point passage graph : %d", trajectory_graph_way[i]);
