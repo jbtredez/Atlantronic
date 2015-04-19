@@ -20,6 +20,7 @@
 #define DETECTION_QUEUE_SIZE          20
 #define HOKUYO_REG_SEG               200
 #define SIMILARITY_ACCEPTANCE        200
+#define AVOIDANCE_MARGIN             1.1
 
 enum
 {
@@ -325,10 +326,10 @@ static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, co
 
 static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b)
 {
-	Vect2 a1( 0,  PARAM_LEFT_CORNER_Y );
-	Vect2 b1( 1e30,  PARAM_LEFT_CORNER_Y );
-	Vect2 a2( 0, PARAM_RIGHT_CORNER_Y );
-	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y );
+	Vect2 a1( 0,    PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN );
+	Vect2 b1( 1e30, PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN );
+	Vect2 a2( 0,    PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN );
+	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN );
 
 	Vect2 c;
 	Vect2 d;
