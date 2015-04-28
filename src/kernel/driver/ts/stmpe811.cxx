@@ -133,7 +133,7 @@
 #define STMPE811_TS_CTRL_STATUS         0x80
 
 #define STMPE811_STACK_SIZE              300
-#define STMPE811_I2C_ADDR               0x82
+#define STMPE811_I2C_ADDR               0x41
 
 #define STMPE811_TIMEOUT                 500
 

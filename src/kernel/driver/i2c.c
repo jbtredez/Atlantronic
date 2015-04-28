@@ -10,6 +10,12 @@
 #include "gpio.h"
 #include <math.h>
 
+#define I2C_SPEED_STANDARD(__PCLK__, __SPEED__)            (((((__PCLK__)/((__SPEED__) << 1)) & I2C_CCR_CCR) < 4)? 4:((__PCLK__) / ((__SPEED__) << 1)))
+#define I2C_SPEED_FAST(__PCLK__, __SPEED__, __DUTYCYCLE__) (((__DUTYCYCLE__) == 0)? ((__PCLK__) / ((__SPEED__) * 3)) : (((__PCLK__) / ((__SPEED__) * 25)) | I2C_CCR_DUTY))
+#define I2C_SPEED(__PCLK__, __SPEED__, __DUTYCYCLE__)      (((__SPEED__) <= 100000)? (I2C_SPEED_STANDARD((__PCLK__), (__SPEED__))) : \
+		((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__)) & I2C_CCR_CCR) == 0)? 1 : \
+		((I2C_SPEED_FAST((__PCLK__), (__SPEED__), (__DUTYCYCLE__))) | I2C_CCR_FS))
+
 #define I2C_RISE_TIME(__FREQRANGE__, __SPEED__)    (((__SPEED__) <= 100000) ? ((__FREQRANGE__) + 1) : ((((__FREQRANGE__) * 300) / 1000) + 1))
 
 #if ! defined(__disco__)
@@ -32,8 +38,8 @@ int i2c_module_init()
 	// activation GPIOA, GPIOC et i2c3
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN;
 
-	gpio_pin_init(GPIOA, 8, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // SCL
-	gpio_pin_init(GPIOC, 9, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_DOWN); // SDA
+	gpio_pin_init(GPIOA, 8, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_OD, GPIO_PUPD_NOPULL); // SCL
+	gpio_pin_init(GPIOC, 9, GPIO_MODE_AF, GPIO_SPEED_50MHz, GPIO_OTYPE_OD, GPIO_PUPD_NOPULL); // SDA
 
 	gpio_af_config(GPIOA, 8, GPIO_AF_I2C3);
 	gpio_af_config(GPIOC, 9, GPIO_AF_I2C3);
@@ -53,9 +59,14 @@ int i2c_module_init()
 	I2C3->CR1 = 0;
 	I2C3->CR2 = RCC_PCLK1_MHZ;
 	// i2c_speed = PCLK1 / (25 * CCR) si fm et DUTY = 1
-	// => pour 42MHz et 400k, CCR=4.2. On prend donc CCR=5 et du coup, i2c_speed = 384kHz
+	// => pour 48MHz et 400k, CCR=4.8. On prend donc CCR=5 et du coup, i2c_speed = 384kHz
+#if 1
 	I2C3->CCR = 5 | I2C_CCR_DUTY | I2C_CCR_FS;
 	I2C3->TRISE = I2C_RISE_TIME(RCC_PCLK1_MHZ, 384000);
+#else
+	I2C3->TRISE = I2C_RISE_TIME(RCC_PCLK1_MHZ, 100000);
+	I2C3->CCR = I2C_SPEED(RCC_PCLK1_MHZ*1000000, 100000, 0);
+#endif
 	// adresses 7 bits
 	I2C3->OAR1 = 0x4000; // le bit 14 doit etre a 1
 	I2C3->OAR2 = 0;
@@ -337,7 +348,7 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 	i2c_tx_buffer_count = 0;
 	i2c_rx_buffer_count = 0;
 	i2c_error = I2C_ERROR_NONE;
-	i2c_addr = addr;
+	i2c_addr = addr << 1;
 
 	if( rx_size )
 	{
@@ -354,6 +365,8 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 	if( xSemaphoreTake(i2c_sem, timeout) == pdFALSE )
 	{
 		res = I2C_ERROR_TIMEOUT;
+		I2C3->CR1 |= I2C_CR1_STOP;
+		I2C3->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITERREN | I2C_CR2_ITEVTEN);
 	}
 	else
 	{
@@ -373,7 +386,7 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 			log(LOG_ERROR, "i2c arbitration lost");
 			break;
 		case I2C_ERROR_AF:
-			log(LOG_ERROR, "i2c ack failure");
+			//log(LOG_ERROR, "i2c ack failure");
 			break;
 		case I2C_ERROR_OVR:
 			log(LOG_ERROR, "i2c overflow / underflow");
@@ -382,7 +395,7 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 			log(LOG_ERROR, "dma error");
 			break;
 		case I2C_ERROR_TIMEOUT:
-			log_format(LOG_ERROR, "i2c timeout tx %d / %d rx %d / %d", i2c_tx_buffer_count, i2c_tx_buffer_size, i2c_rx_buffer_count, i2c_rx_buffer_size);
+			//log_format(LOG_ERROR, "i2c timeout tx %d / %d rx %d / %d", i2c_tx_buffer_count, i2c_tx_buffer_size, i2c_rx_buffer_count, i2c_rx_buffer_size);
 			break;
 		case I2C_ERROR_BUSY:
 			log(LOG_ERROR, "busy");
