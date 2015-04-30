@@ -181,8 +181,13 @@ void TableScene::processHits(GLint hits, GLuint buffer[])
 	}
 }
 
-void TableScene::drawOpponentRobot()
+void TableScene::drawOpponentRobot(Graphique* graph)
 {
+	if( ! graph->courbes_activated[SUBGRAPH_TABLE_OPPONENT_ROBOT] )
+	{
+		return;
+	}
+
 	glPushName(GL_NAME_OPPONENT);
 	glPushMatrix();
 
@@ -210,7 +215,7 @@ void TableScene::drawOpponentRobot()
 void TableScene::drawRobot(Graphique* graph)
 {
 	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
-	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_ROBOT] && max > 0)
+	if( graph->courbes_activated[SUBGRAPH_TABLE_ROBOT] && max > 0)
 	{
 		// robot
 		VectPlan pos_robot = robotItf->control_usb_data[max-1].pos;
@@ -454,15 +459,15 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 			}
 		}
 
-		/*if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
+		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 		{
 			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
-			for(i = 0; i < robotItf->detection_dynamic_object_size; i++)
+			for(int i = 0; i < robotItf->detection_dynamic_object_size; i++)
 			{
 				if(robotItf->detection_dynamic_obj[i].size > 1)
 				{
 					glBegin(GL_LINE_STRIP);
-					for(j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
+					for(int j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
 					{
 						Vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
 						glVertex2f(pt.x, pt.y);
@@ -470,7 +475,7 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 					glEnd();
 				}
 			}
-		}*/
+		}
 
 		for(int i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
 		{
@@ -565,7 +570,7 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 	}
 
 	// robot adverse
-	drawOpponentRobot();
+	drawOpponentRobot(graph);
 
 	if( mode != GL_SELECT)
 	{

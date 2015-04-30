@@ -46,9 +46,9 @@ static int detection_reg_ecart = 25;
 static xSemaphoreHandle detection_mutex;
 static Vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
 static int detection_reg_size;
-static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT]; // TODO aligner
-static struct detection_object detection_obj1[DETECTION_NUM_OBJECT]; // TODO aligner
-static struct detection_object detection_obj2[DETECTION_NUM_OBJECT]; // TODO aligner
+static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT];
+static struct detection_object detection_obj1[DETECTION_NUM_OBJECT];
+static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
 static int32_t detection_num_obj[HOKUYO_MAX];
 
 int detection_module_init()
@@ -91,46 +91,45 @@ static void detection_task(void* arg)
 
 	while(1)
 	{
-		// attente d'un evenement hokuyo ou sick
+		// attente d'un evenement hokuyo ou omron
 		if( xQueueReceive(detection_queue, &event, portMAX_DELAY) )
 		{
-			//xSemaphoreTake(hokuyo_scan_mutex, portMAX_DELAY);
 			if( event == DETECTION_EVENT_HOKUYO_1 )
 			{
+				xSemaphoreTake(hokuyo[HOKUYO1].scan_mutex, portMAX_DELAY);
 		//		struct systime last_time = systick_get_time();
 				detection_compute(HOKUYO1);
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
 
-				//TODO
-				//xSemaphoreGive(hokuyo_scan_mutex);
+				xSemaphoreGive(hokuyo[HOKUYO1].scan_mutex);
 
 				int16_t detect_size = detection_num_obj[HOKUYO1];
 				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE1, &detect_size, sizeof(detect_size));
 
-				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
-				/*for(i = 0 ; i < detection_num_obj; i++)
+				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj[HOKUYO1]);
+				for(int i = 0 ; i < detect_size; i++)
 				{
 					usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
-				}*/
+				}
 
 				usb_add(USB_DETECTION_DYNAMIC_OBJECT1, detection_obj1, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj1[0]));
-				/*for(i = 0 ; i < detection_num_obj; i++)
+				/*for(int i = 0 ; i < detect_size; i++)
 				{
-					log_format(LOG_INFO, "obj = %d %d", (int)detection_obj[i].x, (int)detection_obj[i].y);
+					log_format(LOG_INFO, "obj = %3d %3d size %3d", (int)detection_obj1[i].x, (int)detection_obj1[i].y, detection_object_polyline[i].size);
 				}*/
 			}
-			if( event == DETECTION_EVENT_HOKUYO_2 )
+			else if( event == DETECTION_EVENT_HOKUYO_2 )
 			{
+				xSemaphoreTake(hokuyo[HOKUYO2].scan_mutex, portMAX_DELAY);
 		//		struct systime last_time = systick_get_time();
 				detection_compute(HOKUYO2);
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
 
-				//TODO
-				//xSemaphoreGive(hokuyo_scan_mutex);
+				xSemaphoreGive(hokuyo[HOKUYO2].scan_mutex);
 
 				int16_t detect_size = detection_num_obj[HOKUYO2];
 				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &detect_size, sizeof(detect_size));
@@ -246,6 +245,7 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 {
 	int32_t nb_objects_to_test = detection_num_obj[id];
 	int32_t i,j,k,l;
+	int new_num_obj = 0;
 	
 	//pour chaque objet détecté
 	for(i=0; i<nb_objects_to_test; i++)
@@ -300,19 +300,16 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 				//le vecteur n'appartient pas à un objet statique
 				dynamic_segment_in_object = 1;
 			}
-
 		}
-		if(current_dyn_object->size == 1)
+		if(current_dyn_object->size > 1)
 		{
-			//si un objet ne contient plus qu'un point, on l'élimine
-			current_dyn_object->size=0;
-			//si l'objet est en fin de liste, on libère cette position de la liste
-			if(current_dyn_object == (detection_object_polyline+detection_num_obj[id]-1))
-			{
-				detection_num_obj[id]--;
-			}
+			//si un objet contient au moins un segment (2 points), on le garde
+			detection_object_polyline[new_num_obj] = detection_object_polyline[i];
+			new_num_obj++;
 		}
 	}
+
+	detection_num_obj[id] = new_num_obj;
 }
 
 //méthode heuristique pour estimer une resemblance entre deux segments

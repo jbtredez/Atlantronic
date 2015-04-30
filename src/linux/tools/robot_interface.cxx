@@ -115,7 +115,7 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE1, &RobotInterface::process_detect_dyn_obj_size1);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &RobotInterface::process_detect_dyn_obj_size2);
-//	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, &RobotInterface::process_detect_obj);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, &RobotInterface::process_detect_dyn_obj);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT1, &RobotInterface::process_detect_obj1);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT2, &RobotInterface::process_detect_obj2);
 	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
@@ -445,6 +445,14 @@ int RobotInterface::process_detect_dyn_obj_size1(char* msg, uint16_t size)
 	detection_dynamic_object_count1 = 0;
 	memcpy(&detection_dynamic_object_count1, msg, sizeof(detection_dynamic_object_count1));
 
+	detection_dynamic_object_size_tmp = detection_dynamic_object_count1;
+	detection_dynamic_object_id = 0;
+	detection_dynamic_object_pt_tmp_size = 0;
+	if( detection_dynamic_object_count1 == 0)
+	{
+		detection_dynamic_object_size = 0;
+	}
+
 	pthread_mutex_unlock(&mutex);
 
 end:
@@ -477,7 +485,7 @@ int RobotInterface::process_detect_dyn_obj_size2(char* msg, uint16_t size)
 end:
 	return res;
 }
-/*
+
 int RobotInterface::process_detect_dyn_obj(char* msg, uint16_t size)
 {
 	int res = 0;
@@ -520,7 +528,7 @@ int RobotInterface::process_detect_dyn_obj(char* msg, uint16_t size)
 
 end:
 	return res;
-}*/
+}
 
 int RobotInterface::process_detect_obj1(char* msg, uint16_t size)
 {
