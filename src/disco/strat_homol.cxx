@@ -194,7 +194,7 @@ static bool strat_Oneclap(int axpos)
 		}
 		else
 		{
-			log_format(LOG_ERROR, "on impossible de rejoindre la position %d", nextToClap.x);
+			log_format(LOG_ERROR, "on impossible de rejoindre la position %d", (int)nextToClap.x);
 			bresult = false;
 		}
 	
