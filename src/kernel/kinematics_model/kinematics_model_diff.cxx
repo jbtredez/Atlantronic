@@ -8,7 +8,7 @@
 
 #include <math.h>
 
-static KinematicsParameters paramDriving = {1800, 1500, 1500};
+static KinematicsParameters paramDriving = {1800, 1000, 1000};
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
@@ -20,8 +20,8 @@ float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed
 	float vtheta = u.theta * speed;
 	float v[2];
 
-	v[0] = vx - 0.5 * voie * vtheta;
-	v[1] = vx + 0.5 * voie * vtheta;
+	v[RIGHT_WHEEL] = vx + 0.5 * voie * vtheta;
+	v[LEFT_WHEEL] = vx - 0.5 * voie * vtheta;
 
 	int i;
 	for(i = 0; i < 2; i++)
@@ -49,9 +49,9 @@ float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed
 VectPlan kinematics_model_compute_speed(double voie_inv, Kinematics* kinematics_mes)
 {
 	VectPlan v;
-	v.x = 0.5 * (kinematics_mes[0].v + kinematics_mes[1].v);
+	v.x = 0.5 * (kinematics_mes[RIGHT_WHEEL].v + kinematics_mes[LEFT_WHEEL].v);
 	v.y = 0;
-	v.theta = voie_inv * (kinematics_mes[1].v -  kinematics_mes[0].v);
+	v.theta = voie_inv * (kinematics_mes[RIGHT_WHEEL].v -  kinematics_mes[LEFT_WHEEL].v);
 
 	return v;
 }

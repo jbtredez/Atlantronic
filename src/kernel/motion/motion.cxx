@@ -136,7 +136,7 @@ void motion_compute()
 	uint16_t p1 = encoder_get(ENCODER_1);
 	uint16_t p2 = encoder_get(ENCODER_2);
 	motion_kinematics_mes[0].v = (int16_t)((uint16_t) p1 - (uint16_t)motion_kinematics_mes[0].pos);
-	motion_kinematics_mes[0].v *= 2 * M_PI * ODO1_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
+	motion_kinematics_mes[0].v *= ODO1_WAY * 2 * M_PI * ODO1_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
 	motion_kinematics_mes[1].v = (int16_t)((uint16_t) p2 - (uint16_t)motion_kinematics_mes[1].pos);
 	motion_kinematics_mes[1].v *= 2 * M_PI * ODO2_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
 	motion_kinematics_mes[0].pos = p1;
