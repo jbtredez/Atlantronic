@@ -51,7 +51,7 @@ void Robot3d::drawElevator()
 
 	glTranslatef(45.5, -50, 39);
 	glRotatef(180, 1, 0, 0);
-	glRotatef(lowFingerTheta * 180 / M_PI, 0, 0, 1);
+	glRotatef(-lowFingerTheta * 180 / M_PI, 0, 0, 1);
 	m_finger.draw();
 
 	glPopMatrix();
