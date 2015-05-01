@@ -113,6 +113,8 @@ module_init(motion_module_init, INIT_MOTION);
 void motion_compute()
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
+
+// si odometrie sur roues motrices (utiliser uniquement pour tests sur cale)
 #if 0
 	int motor_mes_valid = 1;
 
