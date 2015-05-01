@@ -41,7 +41,8 @@ enum
 
 enum
 {
-	SUBGRAPH_TABLE_POS_ROBOT = 0,
+	SUBGRAPH_TABLE_ROBOT = 0,
+	SUBGRAPH_TABLE_OPPONENT_ROBOT,
 	SUBGRAPH_TABLE_STATIC_ELM,
 	SUBGRAPH_TABLE_TABLE3D,
 	SUBGRAPH_TABLE_ELM3D,
@@ -75,7 +76,7 @@ class TableScene
 	protected:
 		void printInfos(Graphique* graph);
 		void draw_plus(float x, float y, float rx, float ry);
-		void drawOpponentRobot();
+		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
 		void processHits(GLint hits, GLuint buffer[]);
 

@@ -138,7 +138,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	robotItf = RobotItf;
 
 	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
-	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_POS_ROBOT, "Robot", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_ROBOT, "Robot", 1, 0, 0, 0);
+	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_OPPONENT_ROBOT, "Opponent Robot", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Table 2d du robot", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_TABLE3D, "Table 3d simu", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_ELM3D, "Elements 3d simu", 1, 0, 0, 0);

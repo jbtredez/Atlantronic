@@ -14,7 +14,7 @@ static int finger_module_init()
 	ax12.set_torque_limit(AX12_LOW_FINGER, 0.8);
 	ax12.set_torque_limit(AX12_HIGH_FINGER, 0.8);
 
-	ax12.set_goal_limit(AX12_LOW_FINGER, 0, M_PI_2);
+	ax12.set_goal_limit(AX12_LOW_FINGER, -M_PI_2, 0);
 	ax12.set_goal_limit(AX12_HIGH_FINGER, 0, M_PI_2);
 
 	usb_add_cmd(USB_CMD_FINGER, finger_cmd);
@@ -31,10 +31,10 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 			ax12.set_goal_position(AX12_LOW_FINGER, 0);
 			break;
 		case FINGER_HALF_CLOSE:
-			ax12.set_goal_position(AX12_LOW_FINGER, 30*M_PI/180);
+			ax12.set_goal_position(AX12_LOW_FINGER, -30*M_PI/180);
 			break;
 		case FINGER_OPEN:
-			ax12.set_goal_position(AX12_LOW_FINGER, M_PI_2);
+			ax12.set_goal_position(AX12_LOW_FINGER, -M_PI_2);
 			break;
 		default:
 			break;
