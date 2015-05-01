@@ -628,6 +628,14 @@ void trajectory_enable_hokuyo()
 	trajectory_hokuyo_enable_check = 1;
 }
 
+
+////////////////////////////////////////////////
+/// function    : trajectory_wait()
+/// descrition  : Waiting function of trajectory move functions
+/// param       : wanted_state = enum trajectory_state
+/// param       : timeout = uint32_t time_out (<0 no time-out but buffer overflow!!!!)
+/// retrun      : -1 if fail or 0 if sucess
+////////////////////////////////////////////////
 // TODO faire mieux pour eviter le polling
 int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout)
 {

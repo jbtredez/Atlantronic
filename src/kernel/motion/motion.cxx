@@ -467,7 +467,7 @@ static void motion_state_trajectory_run()
 	float ds = 0;
 	VectPlan u_loc;
 	float k;
-
+	
 	enum motion_check_speed res = motion_linear_speed_check.compute(motion_speed_cmd.x, motion_speed_mes.x);
 	if( res != MOTION_SPEED_OK )
 	{
@@ -477,67 +477,68 @@ static void motion_state_trajectory_run()
 		{
 			motion_kinematics[i].v = 0;
 		}
-		goto end;
-	}
 
-	ds = motion_ds[motion_traj_step];
-	if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
-	{
-		u = VectPlan(0, 0, 1);
-		curvilinearKinematicsParam = motion_wanted_angularParam;
 	}
 	else
 	{
-		u = motion_u;
-		curvilinearKinematicsParam = motion_wanted_linearParam;
-	}
-
-	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
-	u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
-	k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
-	motion_curvilinearKinematics.v = k * kinematics.v;
-	motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
-
-	motion_pos_cmd = motion_pos_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
-
-	if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
-	{
-		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		ds = motion_ds[motion_traj_step];
+		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
 		{
-			motion_kinematics[i].v = 0;
-		}
-
-		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
-		{
-			log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
-			motion_curvilinearKinematics.reset();
-			motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
-		}
-		else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
-		{
-			motion_curvilinearKinematics.reset();
-			motion_traj_step = MOTION_TRAJECTORY_ROTATE;
+			u = VectPlan(0, 0, 1);
+			curvilinearKinematicsParam = motion_wanted_angularParam;
 		}
 		else
 		{
-			motion_curvilinearKinematics.v = 0;
-			motion_curvilinearKinematics.a = 0;
+			u = motion_u;
+			curvilinearKinematicsParam = motion_wanted_linearParam;
+		}
 
-			VectPlan err = motion_dest - motion_pos_mes;
-			if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+		kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
+		u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
+		k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
+		motion_curvilinearKinematics.v = k * kinematics.v;
+		motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
+
+		motion_pos_cmd = motion_pos_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
+
+		if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
+		{
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
-				log(LOG_INFO, "MOTION_TARGET_REACHED");
-				motion_status = MOTION_TARGET_REACHED;
+				motion_kinematics[i].v = 0;
+			}
+
+			if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
+			{
+				log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
+				motion_curvilinearKinematics.reset();
+				motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
+			}
+			else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
+			{
+				motion_curvilinearKinematics.reset();
+				motion_traj_step = MOTION_TRAJECTORY_ROTATE;
 			}
 			else
 			{
-				log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
-				motion_status = MOTION_TARGET_NOT_REACHED;
+				motion_curvilinearKinematics.v = 0;
+				motion_curvilinearKinematics.a = 0;
+
+				VectPlan err = motion_dest - motion_pos_mes;
+				if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+				{
+					log(LOG_INFO, "MOTION_TARGET_REACHED");
+					motion_status = MOTION_TARGET_REACHED;
+				}
+				else
+				{
+					log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
+					motion_status = MOTION_TARGET_NOT_REACHED;
+				}
 			}
 		}
 	}
 
-end:
 	motion_update_motors();
 }
 

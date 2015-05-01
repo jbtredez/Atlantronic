@@ -27,7 +27,7 @@ enum avoidance_type
 
 enum trajectory_state
 {
-	TRAJECTORY_STATE_NONE,
+	TRAJECTORY_STATE_NONE = 0,
 	TRAJECTORY_STATE_UPDATING_TRAJECTORY,
 	TRAJECTORY_STATE_MOVE_TO_DEST,
 	TRAJECTORY_STATE_MOVING_TO_DEST,
@@ -84,7 +84,13 @@ void trajectory_enable_static_check();
 void trajectory_disable_static_check();
 
 enum trajectory_state trajectory_get_state();
-
+////////////////////////////////////////////////
+/// function    : trajectory_wait()
+/// descrition  : Waiting function of trajectory move functions
+/// param       : wanted_state = enum trajectory_state
+/// param       : timeout = uint32_t time_out (<0 no time-out but buffer overflow!!!!)
+/// retrun      : -1 if fail or 0 if sucess
+////////////////////////////////////////////////
 int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout);
 
 #endif
