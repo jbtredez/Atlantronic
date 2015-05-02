@@ -11,15 +11,13 @@
 
 class strategy
 {
-	private:
+	public:
 	//color of the party
 	int m_strat_color ;
 
 	action * m_list_action[NB_ACTION_MAX];
 	int m_size_actionlist;		
 	
-	public :
-
 
 	////////////////////////////////////////////////
 	/// function    : strategy()
@@ -27,7 +25,7 @@ class strategy
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////	
-	strategy(){ m_size_actionlist = 0; };
+	strategy(){ m_size_actionlist = 0; m_strat_color = 0;};
 
 	////////////////////////////////////////////////
 	/// function    : ~strategy()

@@ -77,6 +77,7 @@ core_robot += disco/recalage.o
 core_robot += disco/clapet.o
 
 
+
 obj-disco-core_os += ${core_os}
 bin-disco += core_os
 
@@ -103,5 +104,6 @@ obj-disco-homologation += ${core_usb}
 obj-disco-homologation += ${core_cpu_board}
 obj-disco-homologation += $(core_baz)
 obj-disco-homologation += $(core_robot)
+obj-disco-homologation += disco/strat_simple.o
 obj-disco-homologation += disco/strat_homol.o
 bin-disco += homologation

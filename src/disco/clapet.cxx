@@ -36,7 +36,7 @@ int clapet::do_action()
 
 	nextToClap = m_firstcheckpoint;
 
-
+	log_format(LOG_INFO , "Action clapet");
    	//On se déplace sur le vecteur y vers l'origine de la taille du clap (un décalage postif si le x est négatif)
 	if(m_firstcheckpoint.x > 0)
 	{

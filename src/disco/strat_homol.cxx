@@ -13,6 +13,7 @@
 #include "disco/recalage.h"
 #include "kernel/stratege_machine/stratege.h"
 #include "clapet.h"
+#include "strat_simple.h"
 #define STRAT_STACK_SIZE       300
 #define FEET_APPROX_DIST       100
 
@@ -62,26 +63,42 @@ static void strat_task(void* arg)
 {
 	(void) arg;
 
+	//création et chargement des actions à faire
+	VectPlan firstcheckpoint(730 ,-785,0.0f);	
+	clapet clap1(firstcheckpoint);
+	firstcheckpoint.x = -1030 ;
+	clapet clap2(firstcheckpoint);
+
+	homologation strat;
+	strat.add_action(&clap1);
+	strat.add_action(&clap2);
+
+
+
 	match_wait_go();
 	strat_color = match_get_color();
+	log_format(LOG_ERROR, "couleur %d", (int)strat_color );
+	
+	
 
-	VectPlan firstcheckpoint(730 * strat_color,-785,0.0f);
-	clapet clap1(firstcheckpoint);
-	firstcheckpoint.x = -1030 * strat_color;
-	clapet clap2(firstcheckpoint);
+	strat.Initialise(strat_color);
+	strat.run();
+
+	
 	// realisation des actions dans l'ordre au debut
-	for(unsigned int i = 0; i < sizeof(strat_action)/sizeof(strat_action[0]); i++)
-	{
-		StratAction* a = &strat_action[i];
-		log_format(LOG_INFO, "action %s", a->name);
-		a->action(a->arg);
-	}
+//	for(unsigned int i = 0; i < sizeof(strat_action)/sizeof(strat_action[0]); i++)
+//	{
+//		StratAction* a = &strat_action[i];
+//		log_format(LOG_INFO, "action %s", a->name);
+//		a->action(a->arg);
+//	}
 
-	clap2.do_action();
-	clap1.do_action();
+//	clap2.do_action();
+//	clap1.do_action();
 	// TODO faire les actions manquantes jusqu'a la fin du match
 	while(1)
 	{
+		log_format(LOG_ERROR, "WAIT NEW ORDER");
 		vTaskDelay(100);
 	}
 }

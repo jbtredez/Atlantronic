@@ -18,6 +18,6 @@ int strategy::add_action(action * p_action)
 	}
 
 	m_list_action[m_size_actionlist] = p_action;
-	
+	m_size_actionlist++;
 	return 0;
 }
