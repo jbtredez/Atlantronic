@@ -46,7 +46,7 @@ static void elevator_task(void* /*arg*/)
 	elevatorMotor.setMaxSpeed(20);
 	elevatorMotor.setPosition(-50);
 
-	for(int i = 0; i < 5000 && ! gpio_get(IO_ELEVATOR_SWITCH); i++)
+	for(int i = 0; i < 5000 && gpio_get(IO_ELEVATOR_SWITCH); i++)
 	{
 		elevatorMotor.step(ELEVATOR_DT);
 		vTaskDelayUntil(&wake_time, ELEVATOR_PERIOD);
@@ -54,13 +54,13 @@ static void elevator_task(void* /*arg*/)
 
 	// on est en butee
 	elevatorMotor.setCurrentPosition(0);
-	elevatorMotor.setPosition(0);
+	elevatorMotor.setPosition(20);
 	elevatorMotor.setMaxSpeed(ELEVATOR_MAX_SPEED);
 	log(LOG_INFO, "elevator initialized");
 
 	while(1)
 	{
-		int switchActive = gpio_get(IO_ELEVATOR_SWITCH);
+		int switchActive = ! gpio_get(IO_ELEVATOR_SWITCH);
 		if( switchActive && ! switchActiveLastCycle )
 		{
 			// on vient de passer en butee

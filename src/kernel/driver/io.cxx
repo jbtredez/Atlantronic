@@ -29,7 +29,7 @@ static const IoParam io_param[] =
 	{GPIOD,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_6
 	{GPIOD,  7, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_7
 	{GPIOD,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_8
-	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9 - 
+	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9 - switch elevateur
 	{GPIOG,  7, GPIO_MODE_OUT, GPIO_PUPD_UP}, // attention pull up 4k7 sur carte cpu - IO_10 - sortie
 	{GPIOG,  6, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_11 - sortie
 	{GPIOC, 14, GPIO_MODE_IN, GPIO_PUPD_DOWN}, // go
