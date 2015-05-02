@@ -130,9 +130,9 @@ class RobotInterface
 		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
 		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
 
-		// ---------- gestion control --------------------------------------------------
-		int control_print_param();
-		int control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha); // TODO a mettre a jour
+		// ---------- gestion motion --------------------------------------------------
+		int motion_print_param();
+		int motion_set_param(float kp_av, float ki_av, float kd_av, float kp_rot, float ki_rot, float kd_rot);
 
 		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum GyroCalibrationCmd cmd);

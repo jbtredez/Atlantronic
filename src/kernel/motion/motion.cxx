@@ -39,12 +39,14 @@ static float motion_ds[3];
 static float motion_v;
 static VectPlan motion_u;
 static Kinematics motion_curvilinearKinematics;
-static VectPlan motion_pos_cmd;
+static VectPlan motion_pos_cmd_th;
 static VectPlan motion_speed_cmd;
 static VectPlan motion_pos_mes;
 static VectPlan motion_speed_mes;
 static VectPlan motion_dest;  //!< destination
 static MotionSpeedCheck motion_linear_speed_check(100, 50);
+static float motion_kpx = 0.010;
+static float motion_kptheta = 0.020;
 
 static void motion_update_motors();
 
@@ -89,6 +91,8 @@ void motion_cmd_set_speed(void* arg);
 void motion_cmd_enable(void* arg);
 void motion_cmd_set_actuator_kinematics(void* arg);
 void motion_cmd_set_max_current(void* arg);
+void motion_cmd_print_param(void* arg);
+void motion_cmd_set_param(void* arg);
 
 static int motion_module_init()
 {
@@ -104,6 +108,8 @@ static int motion_module_init()
 	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &motion_cmd_set_max_current);
 	usb_add_cmd(USB_CMD_MOTION_ENABLE, &motion_cmd_enable);
 	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &motion_cmd_set_actuator_kinematics);
+	usb_add_cmd(USB_CMD_MOTION_PRINT_PARAM, motion_cmd_print_param);
+	usb_add_cmd(USB_CMD_MOTION_PARAM, motion_cmd_set_param);
 
 	return 0;
 }
@@ -451,7 +457,7 @@ static void motion_state_trajectory_entry()
 	motion_traj_step = MOTION_TRAJECTORY_PRE_ROTATE;
 	log(LOG_INFO, "IN_MOTION");
 	motion_status = MOTION_IN_MOTION;
-	motion_pos_cmd = motion_pos_mes;
+	motion_pos_cmd_th = motion_pos_mes;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
@@ -465,10 +471,7 @@ static void motion_state_trajectory_run()
 {
 	Kinematics kinematics = motion_curvilinearKinematics;
 	KinematicsParameters curvilinearKinematicsParam;
-	VectPlan u;
 	float ds = 0;
-	VectPlan u_loc;
-	float k;
 	
 	enum motion_check_speed res = motion_linear_speed_check.compute(motion_speed_cmd.x, motion_speed_mes.x);
 	if( res != MOTION_SPEED_OK )
@@ -479,10 +482,10 @@ static void motion_state_trajectory_run()
 		{
 			motion_kinematics[i].v = 0;
 		}
-
 	}
 	else
 	{
+		VectPlan u;
 		ds = motion_ds[motion_traj_step];
 		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
 		{
@@ -495,13 +498,39 @@ static void motion_state_trajectory_run()
 			curvilinearKinematicsParam = motion_wanted_linearParam;
 		}
 
+		VectPlan error_loc = abs_to_loc(motion_pos_mes, motion_pos_cmd_th);
+
+		// calcul de la commande theorique
+		Kinematics motion_kinematics_th[CAN_MOTOR_MAX];
+		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		{
+			motion_kinematics_th[i] = motion_kinematics[i];
+		}
 		kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
-		u_loc = abs_to_loc_speed(motion_pos_mes.theta, u);
-		k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics);
+		VectPlan u_loc = abs_to_loc_speed(motion_pos_cmd_th.theta, u);
+		float k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
 		motion_curvilinearKinematics.v = k * kinematics.v;
 		motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
+		VectPlan v_th = motion_curvilinearKinematics.v * u;
+		motion_pos_cmd_th = motion_pos_cmd_th + CONTROL_DT * v_th;
 
-		motion_pos_cmd = motion_pos_cmd + CONTROL_DT * motion_curvilinearKinematics.v * u;
+		// correction en fonction de l'erreur
+		VectPlan v = abs_to_loc_speed(motion_pos_mes.theta, v_th);
+		// TODO pas de correction laterale pour le moment
+		v.x += motion_kpx / CONTROL_DT * error_loc.x;
+		v.theta += motion_kptheta / CONTROL_DT * error_loc.theta;
+
+		float n = v.norm();
+		if( n > EPSILON )
+		{
+			u_loc = v / n;
+		}
+		else
+		{
+			n = v.theta;
+			u_loc = VectPlan(0, 0, 1);
+		}
+		kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, n, CONTROL_DT, motion_kinematics);
 
 		if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
 		{
@@ -584,6 +613,19 @@ static unsigned int motion_state_generic_power_transition(unsigned int currentSt
 }
 
 //---------------------- fin state machine ------------------------------------
+
+void motion_cmd_print_param(void* /*arg*/)
+{
+	log_format(LOG_INFO, "axe x     : 1000 * kp = %d", (int)(1000*motion_kpx));
+	log_format(LOG_INFO, "axe theta : 1000 * kp = %d", (int)(1000*motion_kptheta));
+}
+
+void motion_cmd_set_param(void* arg)
+{
+	struct motion_cmd_param_arg* cmd = (struct motion_cmd_param_arg*) arg;
+	motion_kpx = cmd->kp_av;
+	motion_kptheta = cmd->kp_rot;
+}
 
 void motion_cmd_goto(void* arg)
 {
@@ -703,7 +745,7 @@ void motion_update_usb_data(struct control_usb_data* data)
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 
 	data->motion_state = motionStateMachine.getCurrentState();
-	data->cons = motion_pos_cmd;
+	data->cons = motion_pos_cmd_th;
 
 	data->wanted_pos = motion_dest;
 

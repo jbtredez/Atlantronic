@@ -96,15 +96,12 @@ float motion_find_rotate(float start, float end);
 
 struct motion_cmd_param_arg
 {
-	int32_t kp_av;
-	int32_t ki_av;
-	int32_t kd_av;
-	int32_t kp_rot;
-	int32_t ki_rot;
-	int32_t kd_rot;
-	int32_t kx;
-	int32_t ky;
-	int32_t kalpha;
+	float kp_av;
+	float ki_av;
+	float kd_av;
+	float kp_rot;
+	float ki_rot;
+	float kd_rot;
 }  __attribute__((packed));
 
 struct motion_cmd_max_speed_arg

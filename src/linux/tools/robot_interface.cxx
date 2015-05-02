@@ -907,12 +907,12 @@ int RobotInterface::pump(uint8_t id, uint8_t val)
 	return usb_write(USB_CMD_PUMP, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::control_print_param()
+int RobotInterface::motion_print_param()
 {
 	return usb_write(USB_CMD_MOTION_PRINT_PARAM, NULL, 0);
 }
 
-int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_rot, int ki_rot, int kd_rot, int kx, int ky, int kalpha)
+int RobotInterface::motion_set_param(float kp_av, float ki_av, float kd_av, float kp_rot, float ki_rot, float kd_rot)
 {
 	struct motion_cmd_param_arg cmd_arg;
 
@@ -922,9 +922,6 @@ int RobotInterface::control_set_param(int kp_av, int ki_av, int kd_av, int kp_ro
 	cmd_arg.kp_rot = kp_rot;
 	cmd_arg.ki_rot = ki_rot;
 	cmd_arg.kd_rot = kd_rot;
-	cmd_arg.kx = kx;
-	cmd_arg.ky = ky;
-	cmd_arg.kalpha = kalpha;
 
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }

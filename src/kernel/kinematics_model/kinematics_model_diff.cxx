@@ -8,7 +8,7 @@
 
 #include <math.h>
 
-static KinematicsParameters paramDriving = {1800, 1000, 1000};
+static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations

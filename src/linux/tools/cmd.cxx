@@ -56,6 +56,8 @@ int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_motion_enable(const char* arg);
 int cmd_motion_goto(const char*arg);
+int cmd_motion_set_param(const char* arg);
+int cmd_motion_print_param(const char* arg);
 int cmd_motion_set_max_driving_current(const char* arg);
 int cmd_motion_set_actuator_kinematics(const char* arg);
 int cmd_motion_set_speed(const char* arg);
@@ -67,8 +69,6 @@ int cmd_rotate_to(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_straight(const char* arg);
-int cmd_control_param(const char* arg);
-int cmd_control_print_param(const char* arg);
 int cmd_wing_set_position(const char* arg);
 int cmd_xbee_set_op_baudrate(const char* arg);
 int cmd_xbee_set_manager_baudrate(const char* arg);
@@ -83,8 +83,6 @@ COMMAND usb_commands[] = {
 	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
 	{ "can_set_baudrate", cmd_can_set_baudrate, "can_set_baudrate id debug"},
 	{ "can_write", cmd_can_write, "can write id size data[0-7]"},
-	{ "control_param", cmd_control_param, "control_param kp_av ki_av kd_av kp_rot ki_rot kd_rot kx ky kalpha" },
-	{ "control_print_param", cmd_control_print_param, "control_print_param"},
 	{ "dynamixel_get_position", cmd_dynamixel_get_position, "donne la position actuelle du dynamixel : dynamixel_get_position type id"},
 	{ "dynamixel_scan", cmd_dynamixel_scan, "scan dynamixel id : dynamixel_scan type id"},
 	{ "dynamixel_set_id", cmd_dynamixel_set_id, "changement d'id des dynamixels : dynamixel_set_id type id newid"},
@@ -115,6 +113,8 @@ COMMAND usb_commands[] = {
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
 	{ "motion_goto", cmd_motion_goto, "motion_goto x y theta way type cpx cpy cptheta" },
+	{ "motion_set_param", cmd_motion_set_param, "motion_set_param kp_av ki_av kd_av kp_rot ki_rot kd_rot" },
+	{ "motion_print_param", cmd_motion_print_param, "control_print_param"},
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
 	{ "motion_set_actuator_kinematics", cmd_motion_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
 	{ "motion_set_speed", cmd_motion_set_speed, "set speed direction valeur"},
@@ -521,33 +521,31 @@ int cmd_quit(const char* arg)
 	return CMD_QUIT;
 }
 
-int cmd_control_param(const char* arg)
+int cmd_motion_set_param(const char* arg)
 {
-	int kp_av;
-	int ki_av;
-	int kd_av;
-	int kp_rot;
-	int ki_rot;
-	int kd_rot;
-	int kx;
-	int ky;
-	int kalpha;
-	int count = sscanf(arg, "%d %d %d %d %d %d %d %d %d", &kp_av, &ki_av, &kd_av, &kp_rot, &ki_rot, &kd_rot, &kx, &ky, &kalpha);
+	float kp_av;
+	float ki_av;
+	float kd_av;
+	float kp_rot;
+	float ki_rot;
+	float kd_rot;
 
-	if(count != 9)
+	int count = sscanf(arg, "%f %f %f %f %f %f", &kp_av, &ki_av, &kd_av, &kp_rot, &ki_rot, &kd_rot);
+
+	if(count != 6)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->control_set_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot, kx, ky, kalpha);
+	cmd_robot->motion_set_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot);
 
 	return CMD_SUCESS;
 }
 
-int cmd_control_print_param(const char* arg)
+int cmd_motion_print_param(const char* arg)
 {
 	(void) arg;
-	cmd_robot->control_print_param();
+	cmd_robot->motion_print_param();
 
 	return CMD_SUCESS;
 }
