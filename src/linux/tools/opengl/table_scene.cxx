@@ -246,6 +246,8 @@ void TableScene::drawRobot(Graphique* graph)
 		robot3d.leftWingTheta = robotItf->ax12[AX12_LEFT_WING].pos;
 		robot3d.lowFingerTheta = robotItf->ax12[AX12_LOW_FINGER].pos;
 		robot3d.highFingerTheta = robotItf->ax12[AX12_HIGH_FINGER].pos;
+		robot3d.rightCarpetTheta = robotItf->ax12[AX12_RIGHT_CARPET].pos;
+		robot3d.leftCarpetTheta = robotItf->ax12[AX12_LEFT_CARPET].pos;
 		robot3d.elevatorHeight = robotItf->last_control_usb_data.elevatorHeight;
 		robot3d.draw();
 		glEnable(GL_COLOR_MATERIAL);

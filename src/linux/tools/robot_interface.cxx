@@ -1123,6 +1123,15 @@ int RobotInterface::finger_set_position(enum finger_type low, enum finger_type h
 	cmd_arg.high = high;
 	return usb_write(USB_CMD_FINGER, &cmd_arg, sizeof(cmd_arg));
 }
+
+int RobotInterface::carpet_set_position(enum carpet_type right, enum carpet_type left)
+{
+	struct carpet_cmd_arg cmd_arg;
+	cmd_arg.right = right;
+	cmd_arg.left = left;
+	return usb_write(USB_CMD_CARPET, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::arm_cmd(uint32_t cmdType)
 {
 	struct arm_cmd cmd_arg;

@@ -14,6 +14,8 @@ class Robot3d
 		float elevatorHeight;
 		float highFingerTheta;
 		float lowFingerTheta;
+		float rightCarpetTheta;
+		float leftCarpetTheta;
 
 	protected:
 		void drawMobileBase();

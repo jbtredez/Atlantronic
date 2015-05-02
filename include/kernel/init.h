@@ -57,6 +57,7 @@
 #define INIT_PUMP                     "45"
 #define INIT_ELEVATOR                 "46"
 #define INIT_FINGER                   "47"
+#define INIT_CARPET                   "48"
 
 #define INIT_STRATEGY                 "60"
 

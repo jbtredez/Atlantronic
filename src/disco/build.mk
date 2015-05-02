@@ -73,6 +73,7 @@ core_robot += kernel/driver/stepper_driver.o
 core_robot += disco/elevator.o
 core_robot += disco/finger.o
 core_robot += disco/wing.o
+core_robot += disco/carpet.o
 core_robot += disco/recalage.o
 
 core_robot += disco/robot_state.o

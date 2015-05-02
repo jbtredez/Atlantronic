@@ -15,6 +15,7 @@ int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
 int cmd_arm_abz(const char* arg);
 int cmd_arm_cmd(const char* arg);
+int cmd_carpet_set_position(const char* arg);
 int cmd_can_lss(const char* arg);
 int cmd_can_lss_set_nodeid(const char* arg);
 int cmd_can_lss_save(const char* arg);
@@ -78,6 +79,7 @@ COMMAND usb_commands[] = {
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
 	{ "arm_cmd", cmd_arm_cmd, "arm_cmd type"},
+	{ "carpet_set_position", cmd_carpet_set_position, "carpet_set_position right left"},
 	{ "can_lss", cmd_can_lss, "can_lss on/off"},
 	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
 	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
@@ -346,6 +348,21 @@ int cmd_finger_set_position(const char* arg)
 	}
 
 	cmd_robot->finger_set_position((enum finger_type)low, (enum finger_type)high);
+	return CMD_SUCESS;
+}
+
+int cmd_carpet_set_position(const char* arg)
+{
+	int right;
+	int left;
+	int count = sscanf(arg, "%d %d", &right, &left);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->carpet_set_position((enum carpet_type)right, (enum carpet_type)left);
 	return CMD_SUCESS;
 }
 

@@ -69,6 +69,7 @@ enum usb_cmd
 	USB_CMD_HEARTBEAT,
 	USB_CMD_ELEVATOR,
 	USB_CMD_FINGER,
+	USB_CMD_CARPET,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

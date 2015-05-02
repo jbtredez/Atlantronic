@@ -13,6 +13,8 @@ bool Robot3d::init()
 	elevatorHeight = 0;
 	highFingerTheta = 0;
 	lowFingerTheta = 0;
+	rightCarpetTheta = 0;
+	leftCarpetTheta = 0;
 
 	return res;
 }
@@ -79,13 +81,16 @@ void Robot3d::drawWing(bool right)
 void Robot3d::drawCarpet(bool right)
 {
 	int side = 1;
+	float theta = leftCarpetTheta * 180 / M_PI;
 	if(right)
 	{
+		theta = -rightCarpetTheta * 180 / M_PI;
 		side = -1;
 	}
 	glPushMatrix();
 	glTranslatef(-100.5, side * 60, 77.4);
 	glRotatef(-90,0,0,1);
+	glRotatef(theta, 1, 0, 0);
 	m_carpet.draw();
 	glPopMatrix();
 }
