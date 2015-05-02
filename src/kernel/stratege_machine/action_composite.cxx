@@ -1,20 +1,23 @@
 
-#include "stratege.h"
 
-////////////////////////////////////////////////
-/// function    : strategy()
+#include "action_composite.h"
+
+
+
+///////////////////////////////////////////////
+/// function    : action()
 /// descrition  : constructor
-/// param       : none
+/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 /// retrun      : none
 ////////////////////////////////////////////////	
-strategy::strategy()
+actioncomposite::actioncomposite(VectPlan firstcheckpoint):action(firstcheckpoint)
 {
-	m_size_actionlist = 0;
-	m_strat_color = 0;
-	for(int i= 0;i<NB_ACTION_MAX;i++)
+	m_try = 0;
+	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
 	{
-		m_list_action[i] = 0;
+		List_action[i] = 0;
 	}
+	
 }
 
 ////////////////////////////////////////////////
@@ -23,7 +26,7 @@ strategy::strategy()
 /// param       : pointeur sur l'objet action
 /// retrun      : result of the operation -1 fail, 0 sucess
 ////////////////////////////////////////////////
-int strategy::add_action(action * p_action)
+int actioncomposite::add_action(action * p_action)
 {
 	if( (p_action == 0) || (m_size_actionlist >= NB_ACTION_MAX) )
 	{

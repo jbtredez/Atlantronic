@@ -25,7 +25,7 @@ class strategy
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////	
-	strategy(){ m_size_actionlist = 0; m_strat_color = 0;};
+	strategy();
 
 	////////////////////////////////////////////////
 	/// function    : ~strategy()

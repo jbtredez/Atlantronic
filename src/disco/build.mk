@@ -74,7 +74,13 @@ core_robot += disco/elevator.o
 core_robot += disco/finger.o
 core_robot += disco/wing.o
 core_robot += disco/recalage.o
-core_robot += disco/clapet.o
+
+core_robot += disco/robot_state.o
+core_robot += disco/action/clapet.o
+core_robot += disco/action/feet.o
+core_robot += disco/action/gobelet.o
+core_robot += disco/action/light.o
+core_robot += disco/action/dropstart.o
 
 
 

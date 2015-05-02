@@ -2,7 +2,7 @@
 #include "kernel/log.h"
 #include "kernel/motion/trajectory.h"
 #include "disco/wing.h"
-#include "clapet.h"
+#include "action/clapet.h"
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
