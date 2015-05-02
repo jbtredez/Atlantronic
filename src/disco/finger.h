@@ -12,6 +12,7 @@ enum finger_type
 	FINGER_CLOSE,
 	FINGER_HALF_CLOSE,
 	FINGER_OPEN,
+	FINGER_WIDE_OPEN,
 };
 
 void finger_set_pos(enum finger_type low, enum finger_type high);
