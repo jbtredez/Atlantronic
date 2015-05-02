@@ -19,11 +19,13 @@ class Robot3d
 		void drawMobileBase();
 		void drawElevator();
 		void drawWing(bool right);
+		void drawCarpet(bool right);
 
 		Object3d m_mobileBase;
 		Object3d m_wing;
 		Object3d m_elevator;
 		Object3d m_finger;
+		Object3d m_carpet;
 };
 
 #endif
