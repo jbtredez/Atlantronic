@@ -6,6 +6,7 @@ bool Robot3d::init()
 	res &= m_wing.init("media/wing.obj");
 	res &= m_elevator.init("media/elevator.obj");
 	res &= m_finger.init("media/finger.obj");
+	res &= m_carpet.init("media/brasTapis.obj");
 
 	rightWingTheta = 0;
 	leftWingTheta = 0;
@@ -27,6 +28,8 @@ void Robot3d::draw()
 
 	drawWing(false);
 	drawWing(true);
+	drawCarpet(false);
+	drawCarpet(true);
 }
 
 void Robot3d::drawMobileBase()
@@ -70,5 +73,19 @@ void Robot3d::drawWing(bool right)
 	glTranslatef(34.5, side * 135, 95);
 	glRotatef(theta,0,0,1);
 	m_wing.draw();
+	glPopMatrix();
+}
+
+void Robot3d::drawCarpet(bool right)
+{
+	int side = 1;
+	if(right)
+	{
+		side = -1;
+	}
+	glPushMatrix();
+	glTranslatef(-100.5, side * 60, 77.4);
+	glRotatef(-90,0,0,1);
+	m_carpet.draw();
 	glPopMatrix();
 }
