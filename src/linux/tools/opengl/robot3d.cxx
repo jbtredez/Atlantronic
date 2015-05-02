@@ -67,7 +67,7 @@ void Robot3d::drawWing(bool right)
 		theta = -90 + rightWingTheta * 180 / M_PI;
 	}
 	glPushMatrix();
-	glTranslatef(34.5, side * 135, 100);
+	glTranslatef(34.5, side * 135, 95);
 	glRotatef(theta,0,0,1);
 	m_wing.draw();
 	glPopMatrix();
