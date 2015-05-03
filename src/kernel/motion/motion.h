@@ -26,6 +26,7 @@ enum motion_state
 	MOTION_ACTUATOR_KINEMATICS,  //!< pilotage des vitesses ou position des moteurs (debug)
 	MOTION_SPEED,                //!< robot pilote en vitesse (mode manuel)
 	MOTION_TRAJECTORY,           //!< trajectoire en cours
+	MOTION_INTERRUPTING,         //!< arret en cours
 //	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	MOTION_MAX_STATE,
 };
