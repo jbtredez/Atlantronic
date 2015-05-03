@@ -28,7 +28,7 @@ void location_update(double voie_inv, Kinematics* kinematics_mes, float dt)
 
 	portENTER_CRITICAL();
 	location_speed = speed;
-	location_pos = location_pos + (loc_to_abs_speed(location_pos.theta, location_speed) * dt);
+	location_pos = location_pos + dt * loc_to_abs_speed(location_pos.theta, location_speed);
 	portEXIT_CRITICAL();
 }
 

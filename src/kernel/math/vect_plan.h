@@ -102,6 +102,15 @@ class VectPlan
 
 }__attribute__((packed));
 
+inline VectPlan operator*(float k, VectPlan a)
+{
+	return VectPlan(k * a.x, k * a.y, k * a.theta);
+}
+
+inline VectPlan operator-(VectPlan a)
+{
+	return VectPlan(-a.x, -a.y, -a.theta);
+}
 
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed);
 

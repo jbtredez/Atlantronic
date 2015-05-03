@@ -71,8 +71,15 @@ class Vect2
 };
 
 
+inline Vect2 operator*(float k, Vect2 a)
+{
+	return Vect2(k * a.x, k * a.y);
+}
 
-
+inline Vect2 operator-(Vect2 a)
+{
+	return Vect2(-a.x, -a.y);
+}
 
 //!< @function fx_Vect2_scalar_product
 //!< @brief calcul le produit scalaire de deux vecteurs u et v

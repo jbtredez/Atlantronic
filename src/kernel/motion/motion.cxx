@@ -531,8 +531,8 @@ static void motion_state_trajectory_run()
 		float k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
 		motion_curvilinearKinematics.v = k * kinematics.v;
 		motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
-		VectPlan v_th = u * motion_curvilinearKinematics.v ;
-		motion_pos_cmd_th = motion_pos_cmd_th + v_th * CONTROL_DT;
+		VectPlan v_th = motion_curvilinearKinematics.v * u;
+		motion_pos_cmd_th = motion_pos_cmd_th + CONTROL_DT * v_th;
 
 		// correction en fonction de l'erreur
 		VectPlan v = abs_to_loc_speed(motion_pos_mes.theta, v_th);
@@ -746,7 +746,7 @@ void motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_tr
 {
 	xSemaphoreTake(motion_mutex, portMAX_DELAY);
 	motion_wanted_state = MOTION_WANTED_STATE_TRAJECTORY;
-	motion_wanted_dest = loc_to_abs(dest, cp * -1);
+	motion_wanted_dest = loc_to_abs(dest, -cp);
 	motion_wanted_trajectory_type = type;
 	motion_wanted_way = way;
 	motion_wanted_linearParam = linearParam;

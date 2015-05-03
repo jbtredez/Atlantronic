@@ -33,7 +33,7 @@ int segment_intersection( Vect2 a,  Vect2 b,  Vect2 c,  Vect2 d, Vect2* h)
 		return -2;
 	}
 
-	*h = a +  (b - a) * alpha;
+	*h = a +  alpha * (b - a);
 
 	return 0;
 }
