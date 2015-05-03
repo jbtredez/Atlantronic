@@ -4,7 +4,7 @@
 
 //! calcule l'intersection h entre deux segments [a b] et [c d]
 //! @return 0 si h est trouvé, < 0 sinon
-int segment_intersection(const Vect2 a, const Vect2 b, const Vect2 c, const Vect2 d, Vect2* h)
+int segment_intersection( Vect2 a,  Vect2 b,  Vect2 c,  Vect2 d, Vect2* h)
 {
 	float den = (b.y - a.y) * (d.x - c.x) - (d.y - c.y) * (b.x - a.x);
 	float num = (d.x - c.x) * (c.y - a.y) - (d.y - c.y) * (c.x - a.x);
@@ -33,7 +33,7 @@ int segment_intersection(const Vect2 a, const Vect2 b, const Vect2 c, const Vect
 		return -2;
 	}
 
-	*h = a + alpha * (b - a);
+	*h = a +  (b - a) * alpha;
 
 	return 0;
 }

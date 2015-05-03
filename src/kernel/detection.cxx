@@ -32,7 +32,7 @@ static void detection_task(void* arg);
 static int detection_module_init();
 static void detection_compute(int id);
 static void detection_remove_static_elements_from_dynamic_list(int id);
-static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, const Vect2* m, const Vect2* n);
+static float detection_get_segment_similarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n);
 static void detection_hokuyo1_callback();
 static void detection_hokuyo2_callback();
 static xQueueHandle detection_queue;
@@ -313,7 +313,7 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 }
 
 //méthode heuristique pour estimer une resemblance entre deux segments
-static float detection_get_segment_similarity(const Vect2* a, const Vect2* b, const Vect2* m, const Vect2* n)
+static float detection_get_segment_similarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n)
 {
 	float similarity = distance_point_to_segment(*a, *m, *n);
 	similarity += distance_point_to_segment(*b, *m, *n);

@@ -62,41 +62,45 @@ class VectPlan
 		    y = a.y;
 		    theta = a.theta;
 		    return *this;
-		}
+		};
+
+
+		inline VectPlan operator+( VectPlan b)
+		{
+			return VectPlan(x + b.x, y + b.y, theta + b.theta);
+		};
+
+		inline VectPlan operator-(VectPlan b)
+		{
+			return VectPlan(x - b.x,y - b.y, theta - b.theta);
+		};
+
+		inline VectPlan operator*(float k)
+		{
+			return VectPlan(k * x, k * y, k * theta);
+		};
+
+//Inutile
+//		inline VectPlan operator*(VectPlan a, float k)
+//		{
+//			return VectPlan(k * a.x, k * a.y, k * a.theta);
+//		};
+
+		inline VectPlan operator/( float k)
+		{
+			return VectPlan(x / k, y / k, theta / k);
+		};
+
+
+	//équivalent du * -1
+//		inline VectPlan inverse(VectPlan a)
+//		{
+//			return VectPlan(-a.x, -a.y, -a.theta);
+//		};
+
+
+
 }__attribute__((packed));
-
-inline VectPlan operator+(VectPlan a, VectPlan b)
-{
-	return VectPlan(a.x + b.x, a.y + b.y, a.theta + b.theta);
-}
-
-inline VectPlan operator-(VectPlan a, VectPlan b)
-{
-	return VectPlan(a.x - b.x, a.y - b.y, a.theta - b.theta);
-}
-
-inline VectPlan operator*(float k, VectPlan a)
-{
-	return VectPlan(k * a.x, k * a.y, k * a.theta);
-}
-
-inline VectPlan operator*(VectPlan a, float k)
-{
-	return VectPlan(k * a.x, k * a.y, k * a.theta);
-}
-
-inline VectPlan operator/(VectPlan a, float k)
-{
-	return VectPlan(a.x / k, a.y / k, a.theta / k);
-}
-
-inline VectPlan operator-(VectPlan a)
-{
-	return VectPlan(-a.x, -a.y, -a.theta);
-}
-
-
-
 
 
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed);

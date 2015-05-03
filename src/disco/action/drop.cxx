@@ -16,7 +16,7 @@
 drop::drop(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
 	m_elevator = elevator;
-	m_dropposition = 300; 
+	m_dropposition = 200; 
 }
 
 ////////////////////////////////////////////////
@@ -70,7 +70,7 @@ int drop::do_action()
 			
 		}
 		//on se déplace dans la zone de départ
-		trajectory_goto_near_xy(dropzone.x,dropzone.y, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
@@ -86,6 +86,11 @@ int drop::do_action()
 
 	essai = 0;
 
+	elevator_set_position(150);
+
+	vTaskDelay(100);
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	vTaskDelay(400);
 	result = -1;
 	do 
 	{
@@ -103,9 +108,10 @@ int drop::do_action()
 	}while(  result ==-1 ) ;
 
 
-	elevator_set_position(200);
-	vTaskDelay(800);
-		
+
+	vTaskDelay(100);
+
+	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);	
 	m_elevator->setnumberelement(0);
  	m_elevator->setelevatorstate(ELEVATOR_EMPTY);
 	m_dropposition = m_dropposition - 110;

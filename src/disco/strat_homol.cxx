@@ -69,6 +69,7 @@ static void strat_task(void* arg)
 	robothomologation.setnumberelement(1);
 	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
 
+
 	//Pied 1
 	firstcheckpoint.x = 630;
 	firstcheckpoint.y = -355;
@@ -83,10 +84,11 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 400;
 	firstcheckpoint.y = -770;
 	feet feet3(firstcheckpoint,&robothomologation);
-
+	
+	
 	//Dropstart 
-	firstcheckpoint.x = 650;
-	firstcheckpoint.y = -0;
+	firstcheckpoint.x = 950;
+	firstcheckpoint.y = 0;
 	drop dropstartzone(firstcheckpoint,&robothomologation);
 
 
@@ -116,7 +118,7 @@ static void strat_task(void* arg)
 	while(1)
 	{
 		wing_set_position(WING_OPEN, WING_OPEN);
-		log_format(LOG_ERROR, "WAIT NEW ORDER");
+		log_format(LOG_INFO, "WAIT NEW ORDER");
 		vTaskDelay(1000);
 		wing_set_position(WING_PARK, WING_PARK);
 		vTaskDelay(1000);

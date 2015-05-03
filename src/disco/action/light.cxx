@@ -43,7 +43,7 @@ int light::do_action()
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 
 	//Cas pour l'ampoule se trouvant à l'emplacement de départ, on ne bouge pas
-	if(m_firstcheckpoint.x != -1 && m_firstcheckpoint.y == -1)
+	if(m_firstcheckpoint.x != -2000 && m_firstcheckpoint.y == -2000)
 	{
 		do 
 		{

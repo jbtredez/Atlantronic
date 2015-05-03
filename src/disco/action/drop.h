@@ -5,7 +5,7 @@
 #include "kernel/stratege_machine/action.h"
 
 
-#define DROPSTART_APPROX_DIST       100
+#define DROPSTART_APPROX_DIST       10
 
 
 class drop : public action
