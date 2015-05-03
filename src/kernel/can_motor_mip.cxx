@@ -6,7 +6,9 @@
 
 #include <math.h>
 
-#define ARRAY_SIZE(a)        (sizeof(a)/sizeof(a[0]))
+#define CAN_MIP_MOTOR_MAX_SPEED            2800
+#define CAN_MIP_MOTOR_MAX_ACCELERATION     6000
+#define CAN_MIP_MOTOR_MAX_DECELERATION     3000
 
 CanMipMotor can_motor[CAN_MOTOR_MAX];
 
@@ -47,6 +49,14 @@ CanMipMotor::CanMipMotor()
 	kinematics.pos = 0;
 	kinematics.v = 0;
 	kinematics.a = 0;
+
+	kinematicsParam.vMax = CAN_MIP_MOTOR_MAX_SPEED;
+	kinematicsParam.aMax = CAN_MIP_MOTOR_MAX_ACCELERATION;
+	kinematicsParam.dMax = CAN_MIP_MOTOR_MAX_DECELERATION;
+
+	kinematicsCmd.pos = 0;
+	kinematicsCmd.v = 0;
+	kinematicsCmd.a = 0;
 }
 
 uint32_t CanMipMotor::configure(MotorWriteConfIndex idx, uint32_t val)
@@ -164,6 +174,9 @@ void CanMipMotor::set_speed(float v)
 {
 	struct can_msg msg;
 	v *= inputGain;
+
+	kinematicsCmd.setSpeed(v, kinematicsParam, CONTROL_DT);
+	v = kinematicsCmd.v;
 	uint16_t speed = fabsf(v);
 
 	if( speed == 0 && lastSpeedCmd == 0 && ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
@@ -171,12 +184,6 @@ void CanMipMotor::set_speed(float v)
 		// 0 lance une fonction d'arret speciale cote moteur
 		// si on n est pas IN_MOTION, pas besoin de faire un arret (cela pose un pb cote moteur sinon)
 		return;
-	}
-
-	if( speed > CAN_MIP_MOTOR_MAX_SPEED )
-	{
-		log_format(LOG_ERROR, "motor %x : set speed %d sgn %x - overspeed (max %d)", nodeId, speed , v >= 0 ? 1 : 0, (int)CAN_MIP_MOTOR_MAX_SPEED);
-		speed = CAN_MIP_MOTOR_MAX_SPEED;
 	}
 
 	if( speed )

@@ -73,6 +73,9 @@ static void motion_state_trajectory_entry();
 static void motion_state_trajectory_run();
 static unsigned int motion_state_trajectory_transition(unsigned int currentState);
 
+static void motion_state_interrupting();
+static unsigned int motion_state_interrupting_transition(unsigned int currentState);
+
 static unsigned int motion_state_generic_power_transition(unsigned int currentState);
 
 StateMachineState motionStates[MOTION_MAX_STATE] = {
@@ -82,6 +85,7 @@ StateMachineState motionStates[MOTION_MAX_STATE] = {
 		{ "MOTION_ACTUATOR_KINEMATICS", &nop_function, &motion_state_actuator_kinematics_run, &motion_state_generic_power_transition},
 		{ "MOTION_SPEED", &motion_state_speed_entry, &motion_state_speed_run, &motion_state_generic_power_transition},
 		{ "MOTION_TRAJECTORY", &motion_state_trajectory_entry, &motion_state_trajectory_run, &motion_state_trajectory_transition},
+		{ "MOTION_INTERRUPTING", &nop_function, &motion_state_interrupting, motion_state_interrupting_transition},
 };
 StateMachine motionStateMachine(motionStates, MOTION_MAX_STATE);
 
@@ -588,17 +592,41 @@ static void motion_state_trajectory_run()
 static unsigned int motion_state_trajectory_transition(unsigned int currentState)
 {
 	unsigned int newState = motion_state_generic_power_transition(currentState);
+	if( newState != currentState || motion_status != MOTION_IN_MOTION)
+	{
+		return MOTION_INTERRUPTING;
+	}
+
+	return currentState;
+}
+
+//---------------------- Etat MOTION_INTERRUPTING -------------------------------
+static void motion_state_interrupting()
+{
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		motion_kinematics[i].v = 0;
+	}
+	motion_update_motors();
+}
+
+static unsigned int motion_state_interrupting_transition(unsigned int currentState)
+{
+	for(int i = 0; i < CAN_MOTOR_MAX; i++ )
+	{
+		if( can_motor[i].is_in_motion() )
+		{
+			return MOTION_INTERRUPTING;
+		}
+	}
+
+	unsigned int newState = motion_state_generic_power_transition(currentState);
 	if( newState != currentState )
 	{
 		return newState;
 	}
 
-	if( motion_status != MOTION_IN_MOTION )
-	{
-		return MOTION_ENABLED;
-	}
-
-	return currentState;
+	return MOTION_ENABLED;
 }
 
 //---------------------- Transitions generiques -------------------------------

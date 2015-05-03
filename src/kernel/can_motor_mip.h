@@ -51,7 +51,6 @@ enum MotorWriteConfIndex
 #define CAN_MIP_CMD_DISABLE                0x70
 #define CAN_MIP_CMD_ENABLE                 0x80
 
-#define CAN_MIP_MOTOR_MAX_SPEED            2800
 
 #define CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL         0x01
 #define CAN_MIP_MOTOR_STATE_IN_MOTION             0x02
@@ -85,10 +84,19 @@ class CanMipMotor : public CanMipNode
 		MotorState state;
 		int nullSpeedCount;
 
+		// realisation de rampes pour le moteur vu que cela ne se passe pas bien si on met v = 0 directement
+		KinematicsParameters kinematicsParam; //!< parametres cinematique en rpm
+		Kinematics kinematicsCmd;             //!< cinematique commandee en rpm
+
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);
 		void set_speed(float v);
 		void enable(bool enable);
+
+		inline bool is_in_motion()
+		{
+			return mipState & CAN_MIP_MOTOR_STATE_IN_MOTION;
+		}
 
 		inline bool is_op_enable()
 		{
