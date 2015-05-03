@@ -153,13 +153,18 @@ static void trajectory_task(void* arg)
 					VectPlan dest = trajectory_dest;
 					VectPlan u = trajectory_dest - trajectory_pos;
 					float ds = u.norm();
+					motion_trajectory_type traj_type = MOTION_AXIS_XYA;
 					if( fabsf(ds) > EPSILON )
 					{
 						dest.x -= trajectory_approx_dist * u.x / ds;
 						dest.y -= trajectory_approx_dist * u.y / ds;
 					}
+					else if( trajectory_type == TRAJECTORY_ROTATE )
+					{
+						traj_type = MOTION_AXIS_A;
+					}
 
-					motion_goto(dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
+					motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;

@@ -433,7 +433,17 @@ static void motion_state_trajectory_entry()
 	}
 	else if( motion_wanted_trajectory_type != MOTION_AXIS_XY)
 	{
-		dtheta2 = motion_find_rotate(motion_pos_mes.theta, motion_wanted_dest.theta);
+		if( motion_wanted_trajectory_type == MOTION_AXIS_A )
+		{
+			// rotation demandee explicitement. Pas d'optimisation de la rotation a faire.
+			// utile pour calibration odometrie principalement
+			dtheta2 =  motion_wanted_dest.theta - motion_pos_mes.theta;
+		}
+		else
+		{
+			// optimisation de l'angle de rotation a faire
+			dtheta2 = motion_find_rotate(motion_pos_mes.theta, motion_wanted_dest.theta);
+		}
 	}
 
 	if( motion_wanted_trajectory_type == MOTION_AXIS_XY )
@@ -444,6 +454,8 @@ static void motion_state_trajectory_entry()
 	t = motion_compute_time(dtheta1, motion_wanted_angularParam);
 	t += motion_compute_time(ds, motion_wanted_linearParam);
 	t += motion_compute_time(dtheta2, motion_wanted_angularParam);
+	// mise a jour de l'angle de destination en fonction des optimisations faites
+	motion_wanted_dest.theta = motion_pos_mes.theta + dtheta1 + dtheta2;
 
 	log_format(LOG_INFO, "goto %d %d %d t %d ms : rotate %d translate %d, rotate %d",
 			(int)motion_wanted_dest.x, (int)motion_wanted_dest.y, (int)(motion_wanted_dest.theta*180/M_PI), (int)(1000*t),
