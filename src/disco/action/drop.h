@@ -1,32 +1,34 @@
 
-#ifndef PLOT_H
-#define PLOT_H
+#ifndef DROPSTART_H
+#define DROPSTART_H
 
 #include "kernel/stratege_machine/action.h"
 
-#define MAX_FEET 5
+
+#define DROPSTART_APPROX_DIST       100
 
 
-class feet : public action
+class drop : public action
 {
 	private :
 	robotstate * m_elevator;
+	int m_dropposition;
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : feet()
+	/// function    : dropstart()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	feet(VectPlan firstcheckpoint,robotstate * elevator);
+	drop(VectPlan firstcheckpoint,robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~feet(){};
+	~drop(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

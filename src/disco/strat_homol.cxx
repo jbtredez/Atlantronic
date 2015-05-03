@@ -11,11 +11,18 @@
 #include "disco/elevator.h"
 #include "disco/finger.h"
 #include "disco/recalage.h"
+
+#include "disco/robot_state.h"
 #include "kernel/stratege_machine/stratege.h"
-#include "action/clapet.h"
+#include "disco/action/clapet.h"
+#include "disco/action/feet.h"
+#include "disco/action/drop.h"
+
+
 #include "strat_simple.h"
 #define STRAT_STACK_SIZE       300
-
+//Condition de démarage la balle est déjà préchargée dans l'elevator
+//Action : recherche des pieds puis basse de clapet puis dépose le spotlight dans la zone principale
 
 typedef struct
 {
@@ -57,12 +64,40 @@ static void strat_task(void* arg)
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint(730 ,-785,0.0f);	
 	clapet clap1(firstcheckpoint);
-	firstcheckpoint.x = -1030 ;
-	clapet clap2(firstcheckpoint);
+
+	robotstate robothomologation;
+	robothomologation.setnumberelement(1);
+	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
+
+	//Pied 1
+	firstcheckpoint.x = 630;
+	firstcheckpoint.y = -355;
+	feet feet1(firstcheckpoint,&robothomologation);
+
+	//Pied 2 
+	firstcheckpoint.x = 200;
+	firstcheckpoint.y = -400;
+	feet feet2(firstcheckpoint,&robothomologation);
+
+	//Pied 3 
+	firstcheckpoint.x = 400;
+	firstcheckpoint.y = -770;
+	feet feet3(firstcheckpoint,&robothomologation);
+
+	//Dropstart 
+	firstcheckpoint.x = 650;
+	firstcheckpoint.y = -0;
+	drop dropstartzone(firstcheckpoint,&robothomologation);
+
+
 
 	homologation strat;
+
+	strat.add_action(&feet1);
+	strat.add_action(&feet2);
+	strat.add_action(&feet3);
 	strat.add_action(&clap1);
-	strat.add_action(&clap2);
+	strat.add_action(&dropstartzone);
 
 
 

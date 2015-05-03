@@ -81,7 +81,7 @@ core_robot += disco/action/clapet.o
 core_robot += disco/action/feet.o
 core_robot += disco/action/gobelet.o
 core_robot += disco/action/light.o
-core_robot += disco/action/dropstart.o
+core_robot += disco/action/drop.o
 
 
 

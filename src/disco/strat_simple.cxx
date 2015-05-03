@@ -7,6 +7,8 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
+
+
 ////////////////////////////////////////////////
 /// function    : Initialise()
 /// descrition  : intialise the checkpoint color

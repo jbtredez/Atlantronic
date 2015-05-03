@@ -38,11 +38,11 @@ int feet::do_action()
 		return -1;
 	}
 	//On souleve la pile pour ajouter le nouvel element 
-	elevator_set_position(100);
+	elevator_set_position(80);
 
 	do 
 	{
-		trajectory_goto_near(m_firstcheckpoint, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{

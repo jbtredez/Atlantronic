@@ -7,16 +7,16 @@
 
 #include "disco/finger.h"
 #include "kernel/location/location.h"
-#include "disco/action/dropstart.h"
+#include "disco/action/drop.h"
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
 
-dropstart::dropstart(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
+drop::drop(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
 	m_elevator = elevator;
-	m_dropposition = 320; 
+	m_dropposition = 300; 
 }
 
 ////////////////////////////////////////////////
@@ -25,7 +25,7 @@ dropstart::dropstart(VectPlan firstcheckpoint,robotstate * elevator):action(firs
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int dropstart::do_action()
+int drop::do_action()
 {
 	int result = -1;
 	int essai = 0;
@@ -38,14 +38,29 @@ int dropstart::do_action()
 	}
 	
 	//On va dans la zone d'entrée de départ
-	trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+	do 
+	{
+		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		{
+			result = 0;
+		}
+		essai++;
+		if(essai == 3)
+		{
+			return -1;
+		}
+	} while(  result ==-1 ) ;
+
+	essai = 0;
+	result = -1;
 	do 
 	{
 		
 		if(dropzone.x <0 )
 		{
 			dropzone.x = dropzone.x - m_dropposition;
-			dropzone.theta = -3.14;
+			dropzone.theta = 3.14;
 			
 		}
 		else
@@ -55,8 +70,26 @@ int dropstart::do_action()
 			
 		}
 		//on se déplace dans la zone de départ
-		trajectory_goto_near(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near_xy(dropzone.x,dropzone.y, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
+		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		{
+			result = 0;
+		}
+		essai++;
+		if(essai == 3)
+		{
+			return -1;
+		}
+		
+	} while(  result ==-1 ) ;
+
+	essai = 0;
+
+	result = -1;
+	do 
+	{
+		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_BACKWARD, AVOIDANCE_STOP) ;
 		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
@@ -67,8 +100,8 @@ int dropstart::do_action()
 			elevator_set_position(0);
 			return -1;
 		}
-		
-	} while(  result ==-1 ) ;
+	}while(  result ==-1 ) ;
+
 
 	elevator_set_position(200);
 	vTaskDelay(800);
