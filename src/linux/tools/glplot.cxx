@@ -594,7 +594,7 @@ void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			draw_plus(5*i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			draw_plus(1000 * CONTROL_DT * i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			old_cons = cons;
 		}
 	}
@@ -607,7 +607,7 @@ void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			draw_plus(5*i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			draw_plus(1000 * CONTROL_DT * i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			old_cons = cons;
 		}
 	}
@@ -620,7 +620,7 @@ void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			draw_plus(5*i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			draw_plus(1000 * CONTROL_DT * i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			old_pos = pos;
 		}
 	}
@@ -633,7 +633,7 @@ void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			draw_plus(5*i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			draw_plus(1000 * CONTROL_DT * i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			old_pos = pos;
 		}
 	}
@@ -645,7 +645,7 @@ void plot_speed_dist(Graphique* graph)
 			glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
 			for(i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				draw_plus(5*i, robotItf->control_usb_data[i].cons_motors_v[j], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].cons_motors_v[j], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			}
 		}
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
@@ -653,7 +653,7 @@ void plot_speed_dist(Graphique* graph)
 			glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
 			for(i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				draw_plus(5*i, robotItf->control_usb_data[i].mes_motors[j].v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].mes_motors[j].v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			}
 		}
 	}
@@ -664,7 +664,7 @@ void plot_speed_dist(Graphique* graph)
 		for(int j=1; j < robotItf->control_usb_data_count; j++)
 		{
 			float v = robotItf->control_usb_data[j].vBat;
-			draw_plus(5*j, v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			draw_plus(1000 * CONTROL_DT * j, v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 		}
 	}
 
@@ -676,7 +676,7 @@ void plot_speed_dist(Graphique* graph)
 			for(int j=1; j < robotItf->control_usb_data_count; j++)
 			{
 				float current = robotItf->control_usb_data[j].iPwm[i];
-				draw_plus(5*j, 1000*current, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				draw_plus(1000 * CONTROL_DT * j, 1000*current, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
 			}
 		}
 	}

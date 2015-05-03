@@ -13,14 +13,14 @@ CanMipMotor can_motor[CAN_MOTOR_MAX];
 int can_motor_module_init()
 {
 	can_motor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
-	can_motor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
-	can_motor[CAN_MOTOR_RIGHT].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
+	can_motor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
+	can_motor[CAN_MOTOR_RIGHT].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING2_RED);
 	can_motor[CAN_MOTOR_RIGHT].name = "moteur droit";
 	can_motor[CAN_MOTOR_RIGHT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
 
 	can_motor[CAN_MOTOR_LEFT].nodeId = CAN_MOTOR_LEFT_NODEID;
-	can_motor[CAN_MOTOR_LEFT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
-	can_motor[CAN_MOTOR_LEFT].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING2_RED);
+	can_motor[CAN_MOTOR_LEFT].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
+	can_motor[CAN_MOTOR_LEFT].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
 	can_motor[CAN_MOTOR_LEFT].name = "moteur gauche";
 	can_motor[CAN_MOTOR_LEFT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_1;
 
@@ -86,6 +86,7 @@ void CanMipMotor::update(portTickType absTimeout)
 		kinematics.v = 0;
 		/*if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
 		{
+			// TODO couper l'alim du contoleur
 			resetNode();
 		}*/
 		state = CAN_MOTOR_MIP_DISCONNECTED;
@@ -165,7 +166,7 @@ void CanMipMotor::set_speed(float v)
 	v *= inputGain;
 	uint16_t speed = fabsf(v);
 
-	if( speed == 0 && ( lastSpeedCmd == 0 || ! (state & CAN_MIP_MOTOR_STATE_IN_MOTION) ) )
+	if( speed == 0 && lastSpeedCmd == 0 && ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
 	{
 		// 0 lance une fonction d'arret speciale cote moteur
 		// si on n est pas IN_MOTION, pas besoin de faire un arret (cela pose un pb cote moteur sinon)
@@ -178,7 +179,27 @@ void CanMipMotor::set_speed(float v)
 		speed = CAN_MIP_MOTOR_MAX_SPEED;
 	}
 
+	if( speed )
+	{
+		nullSpeedCount = 0;
+	}
+	else
+	{
+		nullSpeedCount++;
+		// on retarde de quelques cycles v = 0 pour ne pas lancer la fonction d'arret du moteur pour rien
+		if( nullSpeedCount < 4)
+		{
+			speed = 1;
+		}
+	}
+
 	lastSpeedCmd = speed;
+
+	// vitesse min pour le moteur...
+	if( speed < 5 && speed > 0)
+	{
+		speed = 5;
+	}
 
 	msg.id = 0x01 + (nodeId << 3);
 	msg.size = 6;

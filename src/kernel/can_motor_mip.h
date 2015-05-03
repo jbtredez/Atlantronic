@@ -9,8 +9,8 @@
 
 enum
 {
-	CAN_MOTOR_RIGHT = 0,
-	CAN_MOTOR_LEFT,
+	CAN_MOTOR_LEFT = 0,
+	CAN_MOTOR_RIGHT,
 	CAN_MOTOR_MAX,
 };
 
@@ -83,6 +83,7 @@ class CanMipMotor : public CanMipNode
 		float outputGain;   //!< gain pour convertir la position en unites robot
 		enum fault fault_disconnected_id;
 		MotorState state;
+		int nullSpeedCount;
 
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);

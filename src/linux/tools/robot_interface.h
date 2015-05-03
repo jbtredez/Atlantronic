@@ -130,6 +130,7 @@ class RobotInterface
 		int goto_graph_node(int id);
 		int goto_near_xy(float x, float y, float dist, unsigned int way, unsigned int avoidance_type);
 		int goto_near(VectPlan dest, float dist, unsigned int way, unsigned int avoidance_type);
+		int free();
 
 		// ---------- gestion motion --------------------------------------------------
 		int motion_print_param();

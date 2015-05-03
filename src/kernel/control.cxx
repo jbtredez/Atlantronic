@@ -49,7 +49,7 @@ static void control_task(void* /*arg*/)
 
 		// mise a jour du can
 		//canopen_update(wake_time + 3);
-		can_mip_update(wake_time + 3);
+		can_mip_update(wake_time + 5);
 
 		// mise a jour de la loc et calcul asservissement
 		motion_compute();

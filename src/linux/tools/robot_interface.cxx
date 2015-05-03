@@ -1046,6 +1046,15 @@ int RobotInterface::goto_graph_node(int id)
 	return goto_near_xy(graph_node[id].pos.x, graph_node[id].pos.y, 0, WAY_ANY, AVOIDANCE_GRAPH);
 }
 
+int RobotInterface::free()
+{
+	struct trajectory_cmd_arg cmd_arg;
+
+	cmd_arg.type = TRAJECTORY_FREE;
+
+	return usb_write(USB_CMD_TRAJECTORY, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::set_position(VectPlan pos)
 {
 	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
