@@ -62,6 +62,7 @@ core_robot += kernel/stratege_machine/action.o
 core_robot += kernel/can_mip.o
 core_robot += kernel/can_motor_mip.o
 #core_robot += kernel/can_motor_faulhaber.o
+core_robot += kernel/motion/pid.o
 core_robot += kernel/motion/motion.o
 core_robot += kernel/motion/motion_speed_check.o
 core_robot += kernel/motion/graph.o

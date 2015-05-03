@@ -16,6 +16,7 @@
 #include "kernel/state_machine/state_machine.h"
 #include "kernel/robot_parameters.h"
 #include "motion_speed_check.h"
+#include "pid.h"
 
 enum
 {
@@ -44,9 +45,10 @@ static VectPlan motion_speed_cmd;
 static VectPlan motion_pos_mes;
 static VectPlan motion_speed_mes;
 static VectPlan motion_dest;  //!< destination
-static MotionSpeedCheck motion_linear_speed_check(100, 50);
-static float motion_kpx = 0.010;
-static float motion_kptheta = 0.020;
+static systime motion_target_not_reached_start_time;
+static MotionSpeedCheck motion_linear_speed_check(100, 10);
+static Pid motion_x_pid(2, 0, 0, 100);// TODO voir saturation
+static Pid motion_theta_pid(8, 0.5, 0, 1); // TODO voir saturation
 
 static void motion_update_motors();
 
@@ -481,6 +483,8 @@ static void motion_state_trajectory_entry()
 	}
 
 	motion_dest = motion_wanted_dest;
+	motion_target_not_reached_start_time.ms = 0;
+	motion_target_not_reached_start_time.ns = 0;
 }
 
 static void motion_state_trajectory_run()
@@ -533,8 +537,8 @@ static void motion_state_trajectory_run()
 		// correction en fonction de l'erreur
 		VectPlan v = abs_to_loc_speed(motion_pos_mes.theta, v_th);
 		// TODO pas de correction laterale pour le moment
-		v.x += motion_kpx / CONTROL_DT * error_loc.x;
-		v.theta += motion_kptheta / CONTROL_DT * error_loc.theta;
+		v.x += motion_x_pid.compute(error_loc.x, CONTROL_DT);
+		v.theta += motion_theta_pid.compute(error_loc.theta, CONTROL_DT);
 
 		float n = v.norm();
 		if( n > EPSILON )
@@ -550,20 +554,23 @@ static void motion_state_trajectory_run()
 
 		if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
 		{
-			for(int i = 0; i < CAN_MOTOR_MAX; i++)
-			{
-				motion_kinematics[i].v = 0;
-			}
-
 			if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
 			{
 				log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
 				motion_curvilinearKinematics.reset();
+				for(int i = 0; i < CAN_MOTOR_MAX; i++)
+				{
+					motion_kinematics[i].v = 0;
+				}
 				motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
 			}
 			else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
 			{
 				motion_curvilinearKinematics.reset();
+				for(int i = 0; i < CAN_MOTOR_MAX; i++)
+				{
+					motion_kinematics[i].v = 0;
+				}
 				motion_traj_step = MOTION_TRAJECTORY_ROTATE;
 			}
 			else
@@ -579,8 +586,21 @@ static void motion_state_trajectory_run()
 				}
 				else
 				{
-					log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
-					motion_status = MOTION_TARGET_NOT_REACHED;
+					systime t = systick_get_time();
+					if( motion_target_not_reached_start_time.ms == 0)
+					{
+						log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
+						motion_target_not_reached_start_time = t;
+					}
+					else
+					{
+						systime detla = t - motion_target_not_reached_start_time;
+						if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
+						{
+							log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
+							motion_status = MOTION_TARGET_NOT_REACHED;
+						}
+					}
 				}
 			}
 		}
@@ -656,15 +676,19 @@ static unsigned int motion_state_generic_power_transition(unsigned int currentSt
 
 void motion_cmd_print_param(void* /*arg*/)
 {
-	log_format(LOG_INFO, "axe x     : 1000 * kp = %d", (int)(1000*motion_kpx));
-	log_format(LOG_INFO, "axe theta : 1000 * kp = %d", (int)(1000*motion_kptheta));
+	log_format(LOG_INFO, "axe x     : kp %d ki %d kd %d", (int)(motion_x_pid.kp), (int)(motion_x_pid.ki), (int)(motion_x_pid.kd));
+	log_format(LOG_INFO, "axe theta : kp %d ki %d kd %d", (int)(motion_theta_pid.kp), (int)(motion_theta_pid.ki), (int)(motion_theta_pid.kd));
 }
 
 void motion_cmd_set_param(void* arg)
 {
 	struct motion_cmd_param_arg* cmd = (struct motion_cmd_param_arg*) arg;
-	motion_kpx = cmd->kp_av;
-	motion_kptheta = cmd->kp_rot;
+	motion_x_pid.kp = cmd->kp_av;
+	motion_x_pid.ki = cmd->ki_av;
+	motion_x_pid.kd = cmd->kd_av;
+	motion_theta_pid.kp = cmd->kp_rot;
+	motion_theta_pid.ki = cmd->ki_rot;
+	motion_theta_pid.kd = cmd->kd_rot;
 }
 
 void motion_cmd_goto(void* arg)

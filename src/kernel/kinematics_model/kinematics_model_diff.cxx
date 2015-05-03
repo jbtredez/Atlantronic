@@ -30,14 +30,14 @@ float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed
 		kinematics.setSpeed(v[i], paramDriving, dt);
 
 		// reduction si saturation
-		if( v[i] > 1)
+		/*if( fabsf(v[i]) > 1 )
 		{
 			float k = fabsf(kinematics.v / v[i]);
 			if( k < kmin )
 			{
 				kmin = k;
 			}
-		}
+		}*/
 	}
 
 	kinematics_cmd[0].setSpeed(kmin * v[0], paramDriving, dt);
