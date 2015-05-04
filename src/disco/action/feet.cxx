@@ -4,7 +4,7 @@
 #include "kernel/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
-
+#include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/feet.h"
@@ -39,7 +39,7 @@ int feet::do_action()
 	}
 	//On souleve la pile pour ajouter le nouvel element 
 	elevator_set_position(80);
-
+	vTaskDelay(100);
 	do 
 	{
 		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
@@ -64,10 +64,16 @@ int feet::do_action()
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
 	vTaskDelay(200);
 	
-	m_elevator->setnumberelement(nbelement + 1);
- 	m_elevator->setelevatorstate(ELEVATOR_FEET);
+	//Vérifie si on a attrapé quelque chose
+	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	{
+		
+		m_elevator->setnumberelement(nbelement + 1);
+	 	m_elevator->setelevatorstate(ELEVATOR_FEET);
+		return 0;
+	}	
 
-	return result;
+	return -1;
 }
 	
 	

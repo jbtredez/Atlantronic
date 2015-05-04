@@ -4,7 +4,7 @@
 #include "kernel/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
-
+#include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/light.h"
@@ -39,37 +39,40 @@ int light::do_action()
 
 		
 
-	elevator_set_position(50);
+	elevator_set_position(100);
+	vTaskDelay(100);
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 
-	//Cas pour l'ampoule se trouvant à l'emplacement de départ, on ne bouge pas
-	if(m_firstcheckpoint.x != -2000 && m_firstcheckpoint.y == -2000)
+	do 
 	{
-		do 
+		trajectory_goto_near(m_firstcheckpoint, LIGHT_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
-			trajectory_goto_near(m_firstcheckpoint, LIGHT_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+			result = 0;
+		}
+		essai++;
+		if(essai == 3)
+		{
+			return -1;
+		}
+	
+	} while(  result ==-1 ) ;
 
-			if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
-			{
-				result = 0;
-			}
-			essai++;
-			if(essai == 3)
-			{
-				return -1;
-			}
-		
-		} while(  result ==-1 ) ;
-	}
 
 	vTaskDelay(500);
 	elevator_set_position(0);
 	vTaskDelay(800);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(200);
-	m_elevator->setnumberelement(nbelement + 1);
- 	m_elevator->setelevatorstate(ELEVATOR_LIGHT);
-	return result;
+	vTaskDelay(300);
+	//Vérifie si on a attrapé quelque chose
+	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	{
+		
+		m_elevator->setnumberelement(nbelement + 1);
+	 	m_elevator->setelevatorstate(ELEVATOR_LIGHT);
+		return 0;
+	}	
+	return -1;
 }
 	
 	

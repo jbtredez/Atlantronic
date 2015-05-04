@@ -14,23 +14,22 @@
 
 #include "disco/robot_state.h"
 #include "kernel/stratege_machine/stratege.h"
+
 #include "disco/action/clapet.h"
 #include "disco/action/feet.h"
 #include "disco/action/drop.h"
+#include "disco/action/movebackward.h"
+#include "disco/action/light.h"
 
 
-#include "strat_simple.h"
+#include "strat/strat_simple.h"
+
+
 #define STRAT_STACK_SIZE       300
-//Condition de démarage la balle est déjà préchargée dans l'elevator
-//Action : recherche des pieds puis basse de clapet puis dépose le spotlight dans la zone principale
 
-typedef struct
-{
-	const char* name;
-	int (*action)(void* arg);
-	void* arg;
-	int errorCount;  //! 0 si réalisée, -1 si jamais tentée, nombre de fois ou l'action a été ratée sinon
-}StratAction;
+//Action : recherche la balle, les pieds puis basse le clapet et fini par déposer le spotlight dans la zone principale
+
+
 
 static void strat_task(void* arg);
 static void strat_cmd(void* arg);
@@ -70,6 +69,18 @@ static void strat_task(void* arg)
 	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
 
 
+	//start
+	firstcheckpoint.x = 1000;
+	firstcheckpoint.y = 0;
+	movebackward startzone(firstcheckpoint);
+
+
+	//light 1
+	firstcheckpoint.x = 1285;
+	firstcheckpoint.y = 0;
+	light light1(firstcheckpoint,&robothomologation);
+
+
 	//Pied 1
 	firstcheckpoint.x = 630;
 	firstcheckpoint.y = -355;
@@ -91,10 +102,14 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 0;
 	drop dropstartzone(firstcheckpoint,&robothomologation);
 
+	
+
+	stratsimple strat;
 
 
-	homologation strat;
 
+	strat.add_action(&light1);
+	strat.add_action(&startzone);
 	strat.add_action(&feet1);
 	strat.add_action(&feet2);
 	strat.add_action(&feet3);

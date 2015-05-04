@@ -3,7 +3,7 @@
 #define STRAT_SIMPLE_H
 
 #include "kernel/stratege_machine/stratege.h"
-class homologation : public strategy
+class stratsimple : public strategy
 {
 	
 	public:
@@ -21,14 +21,14 @@ class homologation : public strategy
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	homologation(){};
+	stratsimple(){};
 	////////////////////////////////////////////////
 	/// function    : ~homologation()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~homologation(){};
+	~stratsimple(){};
 
 	////////////////////////////////////////////////
 	/// function    : run()

@@ -83,6 +83,7 @@ core_robot += disco/action/feet.o
 core_robot += disco/action/gobelet.o
 core_robot += disco/action/light.o
 core_robot += disco/action/drop.o
+core_robot += disco/action/movebackward.o
 
 
 
@@ -112,6 +113,6 @@ obj-disco-homologation += ${core_usb}
 obj-disco-homologation += ${core_cpu_board}
 obj-disco-homologation += $(core_baz)
 obj-disco-homologation += $(core_robot)
-obj-disco-homologation += disco/strat_simple.o
+obj-disco-homologation += disco/strat/strat_simple.o
 obj-disco-homologation += disco/strat_homol.o
 bin-disco += homologation

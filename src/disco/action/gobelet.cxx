@@ -4,7 +4,7 @@
 #include "kernel/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
-
+#include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/gobelet.h"
@@ -31,7 +31,7 @@ int gobelet::do_action()
 	int essai = 0;
 
 
-	//S ila reserve est pleine on quitte la fonction
+	//Si la reserve est pleine on quitte la fonction
 	if(m_elevator->getelevatorstate() != ELEVATOR_EMPTY)
 	{
 		return -1;
@@ -63,9 +63,14 @@ int gobelet::do_action()
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
 	vTaskDelay(200);
 	
- 	m_elevator->setelevatorstate(ELEVATOR_GOBELET);
+	//Vérifie si on a attrapé quelque chose
+	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	{
+		m_elevator->setelevatorstate(ELEVATOR_GOBELET);
+		return 0;
+	}
 
-	return result;
+	return -1;
 }
 	
 	
