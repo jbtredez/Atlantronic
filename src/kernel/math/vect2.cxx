@@ -17,7 +17,7 @@ float distance_point_to_segment( Vect2 m,  Vect2 a,  Vect2 b)
 	// t = (vect(AM).vect(AB))/((AB)^2)
 	Vect2 am = m - a;
 	Vect2 ab = b - a;
-	float scalaire_am_ab = am * ab;
+	float scalaire_am_ab = am.scalarProd(ab);
 	float nab2 = ab.norm2();
 
 	if( scalaire_am_ab <= 0 )
@@ -31,7 +31,7 @@ float distance_point_to_segment( Vect2 m,  Vect2 a,  Vect2 b)
 	}
 	else
 	{
-		return fabsf( cross_product_z(am, ab) ) / sqrtf(nab2);
+		return fabsf( am.crossProd_z(ab) ) / sqrtf(nab2);
 	}
 }
 
