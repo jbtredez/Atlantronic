@@ -456,3 +456,64 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 
 	return x_min;
 }
+
+//! TODO on utilise uniquement le hokuyo 1 pour le moment (on a un seul hokuyo)
+//! calcul de la distance avec le robot adverse le plus proche et situe sur le trajet (a +- 90 degres du vecteur directeur)
+float detection_compute_opponent_in_range_distance(Vect2 a, Vect2 u)
+{
+	int16_t detect_size = detection_num_obj[HOKUYO1];
+	float minDistance = 1e30;
+
+	for(int i = 0 ; i < detect_size; i++)
+	{
+		Vect2 b(detection_obj1[i].x, detection_obj1[i].y);
+		Vect2 ab = b - a;
+		float ps = u.scalarProd(ab);
+		if( ps > 0 )
+		{
+			// le robot adverse est devant
+			float d = ab.norm();
+			if( d < minDistance )
+			{
+				minDistance = d;
+			}
+		}
+	}
+
+	minDistance -= DETECTION_OPPONENT_ROBOT_RADIUS;
+
+	if( minDistance < 0)
+	{
+		minDistance = 0;
+	}
+
+	return minDistance;
+}
+
+//! TODO on utilise uniquement le hokuyo 1 pour le moment (on a un seul hokuyo)
+//! calcul de la distance avec le robot adverse le plus proche
+float detection_compute_opponent_distance(Vect2 a)
+{
+	int16_t detect_size = detection_num_obj[HOKUYO1];
+	float minDistance = 1e30;
+
+	for(int i = 0 ; i < detect_size; i++)
+	{
+		Vect2 b(detection_obj1[i].x, detection_obj1[i].y);
+		Vect2 ab = b - a;
+		float d = ab.norm();
+		if( d < minDistance )
+		{
+			minDistance = d;
+		}
+	}
+
+	minDistance -= DETECTION_OPPONENT_ROBOT_RADIUS;
+
+	if( minDistance < 0)
+	{
+		minDistance = 0;
+	}
+
+	return minDistance;
+}

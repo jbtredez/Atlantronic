@@ -15,6 +15,7 @@
 #include "kernel/driver/power.h"
 #include "kernel/state_machine/state_machine.h"
 #include "kernel/robot_parameters.h"
+#include "kernel/detection.h"
 #include "motion_speed_check.h"
 #include "pid.h"
 
@@ -485,6 +486,8 @@ static void motion_state_trajectory_entry()
 	motion_dest = motion_wanted_dest;
 	motion_target_not_reached_start_time.ms = 0;
 	motion_target_not_reached_start_time.ns = 0;
+	motion_x_pid.reset();
+	motion_theta_pid.reset();
 }
 
 static void motion_state_trajectory_run()
@@ -492,120 +495,160 @@ static void motion_state_trajectory_run()
 	Kinematics kinematics = motion_curvilinearKinematics;
 	KinematicsParameters curvilinearKinematicsParam;
 	float ds = 0;
-	
+	float k;
+	float n;
+	VectPlan u;
+	VectPlan u_loc;
+	VectPlan error_loc;
+	Kinematics motion_kinematics_th[CAN_MOTOR_MAX];
+	VectPlan v;
+	VectPlan v_th;
+
 	enum motion_check_speed res = motion_linear_speed_check.compute(motion_speed_cmd.x, motion_speed_mes.x);
 	if( res != MOTION_SPEED_OK )
 	{
 		log(LOG_INFO, "MOTION_COLSISION");
 		motion_status = MOTION_COLSISION;
-		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		goto error;
+	}
+
+	ds = motion_ds[motion_traj_step];
+	if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
+	{
+		u = VectPlan(0, 0, 1);
+		curvilinearKinematicsParam = motion_wanted_angularParam;
+		float opponentMinDistance = detection_compute_opponent_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y));
+		if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
 		{
-			motion_kinematics[i].v = 0;
+			//reduction de la vitesse max de rotation si l'adversaire est tres proche
+			curvilinearKinematicsParam.vMax = 1;
+		}
+		else if( opponentMinDistance < 2*PARAM_RIGHT_CORNER_X )
+		{
+			// reduction de la vitesse max de rotation si l'adversaire est proche
+			curvilinearKinematicsParam.vMax /= 1.5;
 		}
 	}
 	else
 	{
-		VectPlan u;
-		ds = motion_ds[motion_traj_step];
-		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE || motion_traj_step == MOTION_TRAJECTORY_ROTATE )
+		u = motion_u;
+		curvilinearKinematicsParam = motion_wanted_linearParam;
+		float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y), Vect2(u.x, u.y));
+		opponentMinDistance -= PARAM_RIGHT_CORNER_X;
+		if( opponentMinDistance < 0 )
 		{
-			u = VectPlan(0, 0, 1);
-			curvilinearKinematicsParam = motion_wanted_angularParam;
+			opponentMinDistance = 0;
 		}
-		else
+		opponentMinDistance /= 2; // facteur de securite
+		float corr = curvilinearKinematicsParam.dMax * CONTROL_DT / 2;
+		float vMaxSlowDown = sqrtf(corr * corr + 2 * fabsf(opponentMinDistance) * curvilinearKinematicsParam.dMax) - corr;
+		if(vMaxSlowDown < curvilinearKinematicsParam.vMax )
 		{
-			u = motion_u;
-			curvilinearKinematicsParam = motion_wanted_linearParam;
+			curvilinearKinematicsParam.vMax = vMaxSlowDown;
 		}
-
-		VectPlan error_loc = abs_to_loc(motion_pos_mes, motion_pos_cmd_th);
-
-		// calcul de la commande theorique
-		Kinematics motion_kinematics_th[CAN_MOTOR_MAX];
-		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+		if( vMaxSlowDown == 0 )
 		{
-			motion_kinematics_th[i] = motion_kinematics[i];
+			log(LOG_INFO, "MOTION_COLSISION");
+			motion_status = MOTION_COLSISION;
+			goto error;
 		}
-		kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
-		VectPlan u_loc = abs_to_loc_speed(motion_pos_cmd_th.theta, u);
-		float k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
-		motion_curvilinearKinematics.v = k * kinematics.v;
-		motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
-		VectPlan v_th = motion_curvilinearKinematics.v * u;
-		motion_pos_cmd_th = motion_pos_cmd_th + CONTROL_DT * v_th;
+	}
 
-		// correction en fonction de l'erreur
-		VectPlan v = abs_to_loc_speed(motion_pos_mes.theta, v_th);
-		// TODO pas de correction laterale pour le moment
-		v.x += motion_x_pid.compute(error_loc.x, CONTROL_DT);
-		v.theta += motion_theta_pid.compute(error_loc.theta, CONTROL_DT);
+	error_loc = abs_to_loc(motion_pos_mes, motion_pos_cmd_th);
 
-		float n = v.norm();
-		if( n > EPSILON )
-		{
-			u_loc = v / n;
-		}
-		else
-		{
-			n = v.theta;
-			u_loc = VectPlan(0, 0, 1);
-		}
-		kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, n, CONTROL_DT, motion_kinematics);
+	// calcul de la commande theorique
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		motion_kinematics_th[i] = motion_kinematics[i];
+	}
+	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
+	u_loc = abs_to_loc_speed(motion_pos_cmd_th.theta, u);
+	k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
+	motion_curvilinearKinematics.v = k * kinematics.v;
+	motion_curvilinearKinematics.pos += motion_curvilinearKinematics.v * CONTROL_DT;
+	v_th = motion_curvilinearKinematics.v * u;
+	motion_pos_cmd_th = motion_pos_cmd_th + CONTROL_DT * v_th;
 
-		if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
+	// correction en fonction de l'erreur
+	v = abs_to_loc_speed(motion_pos_mes.theta, v_th);
+	// TODO pas de correction laterale pour le moment
+	v.x += motion_x_pid.compute(error_loc.x, CONTROL_DT);
+	v.theta += motion_theta_pid.compute(error_loc.theta, CONTROL_DT);
+
+	n = v.norm();
+	if( n > EPSILON )
+	{
+		u_loc = v / n;
+	}
+	else
+	{
+		n = v.theta;
+		u_loc = VectPlan(0, 0, 1);
+	}
+	kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, n, CONTROL_DT, motion_kinematics);
+
+	if(fabsf(motion_curvilinearKinematics.pos - ds) < EPSILON && fabsf(motion_curvilinearKinematics.v) < EPSILON )
+	{
+		if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
 		{
-			if( motion_traj_step == MOTION_TRAJECTORY_PRE_ROTATE)
+			log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
+			motion_curvilinearKinematics.reset();
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
-				log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*motion_curvilinearKinematics.pos));
-				motion_curvilinearKinematics.reset();
-				for(int i = 0; i < CAN_MOTOR_MAX; i++)
-				{
-					motion_kinematics[i].v = 0;
-				}
-				motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
+				motion_kinematics[i].v = 0;
 			}
-			else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
+			motion_traj_step = MOTION_TRAJECTORY_STRAIGHT;
+		}
+		else if( motion_traj_step == MOTION_TRAJECTORY_STRAIGHT)
+		{
+			motion_curvilinearKinematics.reset();
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
 			{
-				motion_curvilinearKinematics.reset();
-				for(int i = 0; i < CAN_MOTOR_MAX; i++)
-				{
-					motion_kinematics[i].v = 0;
-				}
-				motion_traj_step = MOTION_TRAJECTORY_ROTATE;
+				motion_kinematics[i].v = 0;
+			}
+			motion_traj_step = MOTION_TRAJECTORY_ROTATE;
+		}
+		else
+		{
+			motion_curvilinearKinematics.v = 0;
+			motion_curvilinearKinematics.a = 0;
+
+			VectPlan err = motion_dest - motion_pos_mes;
+			if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+			{
+				log(LOG_INFO, "MOTION_TARGET_REACHED");
+				motion_status = MOTION_TARGET_REACHED;
 			}
 			else
 			{
-				motion_curvilinearKinematics.v = 0;
-				motion_curvilinearKinematics.a = 0;
-
-				VectPlan err = motion_dest - motion_pos_mes;
-				if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+				systime t = systick_get_time();
+				if( motion_target_not_reached_start_time.ms == 0)
 				{
-					log(LOG_INFO, "MOTION_TARGET_REACHED");
-					motion_status = MOTION_TARGET_REACHED;
+					log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
+					motion_target_not_reached_start_time = t;
 				}
 				else
 				{
-					systime t = systick_get_time();
-					if( motion_target_not_reached_start_time.ms == 0)
+					systime detla = t - motion_target_not_reached_start_time;
+					if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
 					{
-						log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
-						motion_target_not_reached_start_time = t;
-					}
-					else
-					{
-						systime detla = t - motion_target_not_reached_start_time;
-						if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
-						{
-							log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
-							motion_status = MOTION_TARGET_NOT_REACHED;
-						}
+						log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
+						motion_status = MOTION_TARGET_NOT_REACHED;
+						goto error;
 					}
 				}
 			}
 		}
 	}
 
+	motion_update_motors();
+	return;
+
+error:
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		motion_kinematics[i].v = 0;
+	}
 	motion_update_motors();
 }
 
