@@ -76,7 +76,7 @@ static void strat_task(void* arg)
 
 
 	//light 1
-	firstcheckpoint.x = 1285;
+	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
 	firstcheckpoint.y = 0;
 	light light1(firstcheckpoint,&robothomologation);
 
@@ -105,7 +105,6 @@ static void strat_task(void* arg)
 	
 
 	stratsimple strat;
-
 
 
 	strat.add_action(&light1);

@@ -4,7 +4,7 @@
 
 #include "kernel/stratege_machine/action.h"
 
-
+#define LIGHT_APPROX_DIST       100
 
 class light : public action
 {
