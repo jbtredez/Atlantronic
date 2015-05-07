@@ -727,7 +727,7 @@ static void drawScene(GLenum mode)
 		{
 			if(current_graph == GRAPH_SPEED_DIST)
 			{
-				graph[current_graph].resize_axis_x(0, robotItf->control_usb_data_count * 5);
+				graph[current_graph].resize_axis_x(0, robotItf->control_usb_data_count * CONTROL_DT * 1000);
 			}
 
 			if( current_graph != GRAPH_TABLE)

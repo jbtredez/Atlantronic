@@ -50,6 +50,7 @@ static systime motion_target_not_reached_start_time;
 static MotionSpeedCheck motion_linear_speed_check(100, 10);
 static Pid motion_x_pid(2, 0, 0, 100);// TODO voir saturation
 static Pid motion_theta_pid(8, 0.5, 0, 1); // TODO voir saturation
+static bool motion_antico_on = true;
 
 static void motion_update_motors();
 
@@ -182,6 +183,11 @@ static void motion_update_motors()
 	}
 
 	motion_speed_cmd = kinematics_model_compute_speed(VOIE_MOT_INV, motion_kinematics);
+}
+
+void motion_enable_antico(bool enable)
+{
+	motion_antico_on = enable;
 }
 
 //---------------------- Etat MOTION_DISABLED ---------------------------------
@@ -517,40 +523,67 @@ static void motion_state_trajectory_run()
 	{
 		u = VectPlan(0, 0, 1);
 		curvilinearKinematicsParam = motion_wanted_angularParam;
-		float opponentMinDistance = detection_compute_opponent_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y));
-		if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
+		if( motion_antico_on )
 		{
-			//reduction de la vitesse max de rotation si l'adversaire est tres proche
-			curvilinearKinematicsParam.vMax = 1;
-		}
-		else if( opponentMinDistance < 2*PARAM_RIGHT_CORNER_X )
-		{
-			// reduction de la vitesse max de rotation si l'adversaire est proche
-			curvilinearKinematicsParam.vMax /= 1.5;
+			float opponentMinDistance = detection_compute_opponent_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y));
+			if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
+			{
+				//reduction de la vitesse max de rotation si l'adversaire est tres proche
+				curvilinearKinematicsParam.vMax = 1;
+			}
+			else if( opponentMinDistance < 2*PARAM_RIGHT_CORNER_X )
+			{
+				// reduction de la vitesse max de rotation si l'adversaire est proche
+				curvilinearKinematicsParam.vMax /= 1.5;
+			}
 		}
 	}
 	else
 	{
 		u = motion_u;
 		curvilinearKinematicsParam = motion_wanted_linearParam;
-		float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y), Vect2(u.x, u.y));
-		opponentMinDistance -= PARAM_RIGHT_CORNER_X;
-		if( opponentMinDistance < 0 )
+		if( motion_antico_on )
 		{
-			opponentMinDistance = 0;
-		}
-		opponentMinDistance /= 2; // facteur de securite
-		float corr = curvilinearKinematicsParam.dMax * CONTROL_DT / 2;
-		float vMaxSlowDown = sqrtf(corr * corr + 2 * fabsf(opponentMinDistance) * curvilinearKinematicsParam.dMax) - corr;
-		if(vMaxSlowDown < curvilinearKinematicsParam.vMax )
-		{
-			curvilinearKinematicsParam.vMax = vMaxSlowDown;
-		}
-		if( vMaxSlowDown == 0 )
-		{
-			log(LOG_INFO, "MOTION_COLSISION");
-			motion_status = MOTION_COLSISION;
-			goto error;
+			// detection adverse
+			float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y), Vect2(u.x, u.y));
+			opponentMinDistance -= PARAM_RIGHT_CORNER_X;
+			opponentMinDistance /= 2; // facteur de securite
+			
+			// detection statique
+			VectPlan dir = motion_pos_mes;
+			if( u.x < 0 )
+			{
+				dir.theta += M_PI;
+			}
+			float tableBorderDistance = detection_compute_front_object(DETECTION_STATIC_OBJ, dir, NULL, NULL) + PARAM_NP_X;
+			if( tableBorderDistance < 10 )
+			{
+				tableBorderDistance = 10;
+			}
+			float maxDistance = tableBorderDistance;
+			if( opponentMinDistance < maxDistance)
+			{
+				maxDistance = opponentMinDistance;
+			}
+
+			if( maxDistance < 0 )
+			{
+				maxDistance = 0;
+			}
+
+			float corr = curvilinearKinematicsParam.dMax * CONTROL_DT / 2;
+			float vMaxSlowDown = sqrtf(corr * corr + 2 * fabsf(maxDistance) * curvilinearKinematicsParam.dMax) - corr;
+			if(vMaxSlowDown < curvilinearKinematicsParam.vMax )
+			{
+				curvilinearKinematicsParam.vMax = vMaxSlowDown;
+			}
+
+			if( vMaxSlowDown == 0 )
+			{
+				log(LOG_INFO, "MOTION_COLSISION");
+				motion_status = MOTION_COLSISION;
+				goto error;
+			}
 		}
 	}
 

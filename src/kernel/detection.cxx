@@ -7,6 +7,7 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/io.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
@@ -25,16 +26,16 @@
 enum
 {
 	DETECTION_EVENT_HOKUYO_1,
-	DETECTION_EVENT_HOKUYO_2,
+//	DETECTION_EVENT_HOKUYO_2,
 };
 
 static void detection_task(void* arg);
 static int detection_module_init();
-static void detection_compute(int id);
-static void detection_remove_static_elements_from_dynamic_list(int id);
+static void detection_compute();
+static void detection_remove_static_elements_from_dynamic_list();
 static float detection_get_segment_similarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n);
 static void detection_hokuyo1_callback();
-static void detection_hokuyo2_callback();
+//static void detection_hokuyo2_callback();
 static xQueueHandle detection_queue;
 static detection_callback detection_callback_function = (detection_callback)nop_function;
 
@@ -45,11 +46,12 @@ static int detection_reg_ecart = 25;
 // données partagées par la tache et des méthodes d'accés
 static xSemaphoreHandle detection_mutex;
 static Vect2 detection_hokuyo_reg[HOKUYO_REG_SEG];
+static Vect2 detection_omron_rectangle[5];
 static int detection_reg_size;
 static struct polyline detection_object_polyline[DETECTION_NUM_OBJECT];
-static struct detection_object detection_obj1[DETECTION_NUM_OBJECT];
-static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
-static int32_t detection_num_obj[HOKUYO_MAX];
+static struct detection_object detection_obj[DETECTION_NUM_OBJECT];
+//static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
+static int32_t detection_num_obj;
 
 int detection_module_init()
 {
@@ -75,7 +77,7 @@ int detection_module_init()
 	}
 
 	hokuyo[HOKUYO1].register_callback(detection_hokuyo1_callback);
-	hokuyo[HOKUYO2].register_callback(detection_hokuyo2_callback);
+//	hokuyo[HOKUYO2].register_callback(detection_hokuyo2_callback);
 
 	detection_reg_size = 0;
 
@@ -98,57 +100,30 @@ static void detection_task(void* arg)
 			{
 				xSemaphoreTake(hokuyo[HOKUYO1].scan_mutex, portMAX_DELAY);
 		//		struct systime last_time = systick_get_time();
-				detection_compute(HOKUYO1);
+				detection_compute();
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
 
 				xSemaphoreGive(hokuyo[HOKUYO1].scan_mutex);
-
-				int16_t detect_size = detection_num_obj[HOKUYO1];
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE1, &detect_size, sizeof(detect_size));
-
-				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj[HOKUYO1]);
-				for(int i = 0 ; i < detect_size; i++)
-				{
-					usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
-				}
-
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT1, detection_obj1, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj1[0]));
-				/*for(int i = 0 ; i < detect_size; i++)
-				{
-					log_format(LOG_INFO, "obj = %3d %3d size %3d", (int)detection_obj1[i].x, (int)detection_obj1[i].y, detection_object_polyline[i].size);
-				}*/
 			}
-			else if( event == DETECTION_EVENT_HOKUYO_2 )
-			{
-				xSemaphoreTake(hokuyo[HOKUYO2].scan_mutex, portMAX_DELAY);
-		//		struct systime last_time = systick_get_time();
-				detection_compute(HOKUYO2);
-		//		struct systime current_time = systick_get_time();
-		//		struct systime dt = timediff(current_time, last_time);
-		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
-
-				xSemaphoreGive(hokuyo[HOKUYO2].scan_mutex);
-
-				int16_t detect_size = detection_num_obj[HOKUYO2];
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &detect_size, sizeof(detect_size));
-
-				//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
-				/*for(i = 0 ; i < detection_num_obj; i++)
-				{
-					usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
-				}*/
-
-				usb_add(USB_DETECTION_DYNAMIC_OBJECT2, detection_obj2, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj2[0]));
-				/*for(i = 0 ; i < detection_num_obj; i++)
-				{
-					log_format(LOG_INFO, "obj = %d %d", (int)detection_obj[i].x, (int)detection_obj[i].y);
-				}*/
-			}
-
 			detection_callback_function();
 		}
+
+		int16_t detect_size = detection_num_obj;
+		usb_add(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &detect_size, sizeof(detect_size));
+
+		//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
+		for(int i = 0 ; i < detect_size; i++)
+		{
+			usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, detection_object_polyline[i].pt, sizeof(detection_object_polyline[i].pt[0]) * detection_object_polyline[i].size);
+		}
+
+		usb_add(USB_DETECTION_DYNAMIC_OBJECT, detection_obj, DETECTION_NUM_OBJECT_USB * sizeof(detection_obj[0]));
+		/*for(int i = 0 ; i < detect_size; i++)
+		{
+			log_format(LOG_INFO, "obj = %3d %3d size %3d", (int)detection_obj1[i].x, (int)detection_obj1[i].y, detection_object_polyline[i].size);
+		}*/
 	}
 }
 
@@ -163,33 +138,75 @@ static void detection_hokuyo1_callback()
 	xQueueSend(detection_queue, &event, 0);
 }
 
-static void detection_hokuyo2_callback()
+/*static void detection_hokuyo2_callback()
 {
 	unsigned char event = DETECTION_EVENT_HOKUYO_2;
 	xQueueSend(detection_queue, &event, 0);
-}
+}*/
 
-static void detection_compute(int id)
+static void detection_compute()
 {
 	int i;
 
 	// scan et position des points en x,y privé à la tache hokuyo
-	hokuyo_compute_xy(&hokuyo[id].scan, detection_hokuyo_pos);
+	hokuyo_compute_xy(&hokuyo[HOKUYO1].scan, detection_hokuyo_pos);
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(detection_mutex, portMAX_DELAY);
-	detection_num_obj[id] = hokuyo_find_objects(&hokuyo[id].scan, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object_polyline, DETECTION_NUM_OBJECT);
+	detection_num_obj = hokuyo_find_objects(&hokuyo[HOKUYO1].scan, detection_hokuyo_pos, HOKUYO_NUM_POINTS, detection_object_polyline, DETECTION_NUM_OBJECT);
 	detection_reg_size = 0;
 
-	for( i = 0 ; i < detection_num_obj[id] ; i++)
+	for( i = 0 ; i < detection_num_obj ; i++)
 	{
 		detection_object_polyline[i].size = regression_poly(detection_object_polyline[i].pt, detection_object_polyline[i].size, detection_reg_ecart, detection_hokuyo_reg + detection_reg_size, HOKUYO_REG_SEG - detection_reg_size);
 		detection_object_polyline[i].pt = &detection_hokuyo_reg[detection_reg_size];
 		detection_reg_size += detection_object_polyline[i].size;
 	}
-	detection_remove_static_elements_from_dynamic_list(id);
 
-	for( i = 0; i < detection_num_obj[id] ; i++)
+	detection_remove_static_elements_from_dynamic_list();
+
+	// TODO revoir comment c est fait pour separer objets calcules par hokuyo et ceux par sick
+	// TODO pour le moment, on utilise un seul tableau et on met a jour les omron ici
+	VectPlan pos = location_get_position();
+	bool opponentBehind = ! gpio_get(IO_OMRON1) || ! gpio_get(IO_OMRON2) || ! gpio_get(IO_OMRON3);
+	if( opponentBehind )
+	{
+		// TODO ameliorer avec le lidarlite
+		// objet derriere
+		detection_omron_rectangle[0] = loc_to_abs(pos, Vect2(PARAM_NP_X, PARAM_LEFT_CORNER_Y));
+		detection_omron_rectangle[1] = loc_to_abs(pos, Vect2(PARAM_NP_X, PARAM_RIGHT_CORNER_Y));
+		detection_omron_rectangle[2] = loc_to_abs(pos, Vect2(PARAM_NP_X - REAR_OMRON_RANGE, PARAM_RIGHT_CORNER_Y));
+		detection_omron_rectangle[3] = loc_to_abs(pos, Vect2(PARAM_NP_X - REAR_OMRON_RANGE, PARAM_LEFT_CORNER_Y));
+		detection_omron_rectangle[4] = detection_omron_rectangle[0];
+
+		// on regarde si ce n'est pas un point en dehors de la table
+		bool allInsideTable = true;
+		for(int i = 2; i < 4; i++)
+		{
+			if( fabsf(detection_omron_rectangle[i].x) > 1400 || fabsf(detection_omron_rectangle[i].y) > 900 )
+			{
+				allInsideTable = false;
+			}
+		}
+
+		// on ne sait pas ou il est exactement. Dans le pire des cas, le robot est colle. On ajoute un rectangle d'un robot virtuel colle au notre
+		detection_omron_rectangle[2] = loc_to_abs(pos, Vect2(PARAM_NP_X - 2*DETECTION_OPPONENT_ROBOT_RADIUS, PARAM_RIGHT_CORNER_Y));
+		detection_omron_rectangle[3] = loc_to_abs(pos, Vect2(PARAM_NP_X - 2*DETECTION_OPPONENT_ROBOT_RADIUS, PARAM_LEFT_CORNER_Y));
+
+		if( allInsideTable )
+		{
+			int num = detection_num_obj;
+			Vect2 u(cosf(pos.theta), sinf(pos.theta));
+			Vect2 v(u.y, -u.x);
+			Vect2 p(pos.x, pos.y);
+
+			detection_object_polyline[num].pt = detection_omron_rectangle;
+			detection_object_polyline[num].size = 5;
+			detection_num_obj++;
+		}
+	}
+
+	for( i = 0; i < detection_num_obj ; i++)
 	{
 		float xmin = detection_object_polyline[i].pt[0].x;
 		float xmax = xmin;
@@ -216,34 +233,21 @@ static void detection_compute(int id)
 			}
 		}
 
-		if(id == HOKUYO1 )
+		detection_obj[i].x = (xmin + xmax) / 2;
+		detection_obj[i].y = (ymin + ymax) / 2;
+		detection_obj[i].size = xmax - xmin;
+		if( ymax - ymin > detection_obj[i].size)
 		{
-			detection_obj1[i].x = (xmin + xmax) / 2;
-			detection_obj1[i].y = (ymin + ymax) / 2;
-			detection_obj1[i].size = xmax - xmin;
-			if( ymax - ymin > detection_obj1[i].size)
-			{
-				detection_obj1[i].size = ymax - ymin;
-			}
-		}
-		else
-		{
-			detection_obj2[i].x = (xmin + xmax) / 2;
-			detection_obj2[i].y = (ymin + ymax) / 2;
-			detection_obj2[i].size = xmax - xmin;
-			if( ymax - ymin > detection_obj2[i].size)
-			{
-				detection_obj2[i].size = ymax - ymin;
-			}
+			detection_obj[i].size = ymax - ymin;
 		}
 	}
 
 	xSemaphoreGive(detection_mutex);
 }
 
-static void detection_remove_static_elements_from_dynamic_list(int id)
+static void detection_remove_static_elements_from_dynamic_list()
 {
-	int32_t nb_objects_to_test = detection_num_obj[id];
+	int32_t nb_objects_to_test = detection_num_obj;
 	int32_t i,j,k,l;
 	int new_num_obj = 0;
 	
@@ -286,11 +290,11 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 				{
 					//On réduit l'objet aux segments dynamiques précédents et
 					//on reporte les segments non évalués dans un nouvel objet
-					detection_object_polyline[detection_num_obj[id]].pt=(current_dyn_object->pt)+j;
-					detection_object_polyline[detection_num_obj[id]].size=(current_dyn_object->size)-j;
+					detection_object_polyline[detection_num_obj].pt=(current_dyn_object->pt)+j;
+					detection_object_polyline[detection_num_obj].size=(current_dyn_object->size)-j;
 					current_dyn_object->size=j;
-					current_dyn_object=&(detection_object_polyline[detection_num_obj[id]]);
-					detection_num_obj[id]++;
+					current_dyn_object=&(detection_object_polyline[detection_num_obj]);
+					detection_num_obj++;
 					j = 0;
 					dynamic_segment_in_object = 0;
 				}
@@ -309,7 +313,7 @@ static void detection_remove_static_elements_from_dynamic_list(int id)
 		}
 	}
 
-	detection_num_obj[id] = new_num_obj;
+	detection_num_obj = new_num_obj;
 }
 
 //méthode heuristique pour estimer une resemblance entre deux segments
@@ -431,6 +435,7 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 		xSemaphoreGive(detection_mutex);
 	}
 	else
+#endif
 	{
 		c.x = x_min;
 		d.y = PARAM_LEFT_CORNER_Y;
@@ -438,35 +443,50 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 		d.x = x_min;
 		d.y = PARAM_RIGHT_CORNER_Y;
 
-		*a = loc_to_abs(pos, c);
-		*b = loc_to_abs(pos, d);
+		if( a )
+		{
+			*a = loc_to_abs(pos, c);
+		}
+
+		if( b )
+		{
+			*b = loc_to_abs(pos, d);
+		}
 	}
-#endif
+
 	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
 	{
+		xSemaphoreTake(detection_mutex, portMAX_DELAY);
 		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
+		xSemaphoreGive(detection_mutex);
 
 		if(x_min_table < x_min)
 		{
 			x_min = x_min_table;
-			*a = c;
-			*b = d;
+			if( a)
+			{
+				*a = c;
+			}
+			if( b )
+			{
+				*b = d;
+			}
 		}
 	}
 
 	return x_min;
 }
 
-//! TODO on utilise uniquement le hokuyo 1 pour le moment (on a un seul hokuyo)
 //! calcul de la distance avec le robot adverse le plus proche et situe sur le trajet (a +- 90 degres du vecteur directeur)
 float detection_compute_opponent_in_range_distance(Vect2 a, Vect2 u)
 {
-	int16_t detect_size = detection_num_obj[HOKUYO1];
 	float minDistance = 1e30;
 
+	xSemaphoreTake(detection_mutex, portMAX_DELAY);
+	int16_t detect_size = detection_num_obj;
 	for(int i = 0 ; i < detect_size; i++)
 	{
-		Vect2 b(detection_obj1[i].x, detection_obj1[i].y);
+		Vect2 b(detection_obj[i].x, detection_obj[i].y);
 		Vect2 ab = b - a;
 		float ps = u.scalarProd(ab);
 		if( ps > 0 )
@@ -479,6 +499,7 @@ float detection_compute_opponent_in_range_distance(Vect2 a, Vect2 u)
 			}
 		}
 	}
+	xSemaphoreGive(detection_mutex);
 
 	minDistance -= DETECTION_OPPONENT_ROBOT_RADIUS;
 
@@ -490,16 +511,16 @@ float detection_compute_opponent_in_range_distance(Vect2 a, Vect2 u)
 	return minDistance;
 }
 
-//! TODO on utilise uniquement le hokuyo 1 pour le moment (on a un seul hokuyo)
 //! calcul de la distance avec le robot adverse le plus proche
 float detection_compute_opponent_distance(Vect2 a)
 {
-	int16_t detect_size = detection_num_obj[HOKUYO1];
 	float minDistance = 1e30;
 
+	xSemaphoreTake(detection_mutex, portMAX_DELAY);
+	int16_t detect_size = detection_num_obj;
 	for(int i = 0 ; i < detect_size; i++)
 	{
-		Vect2 b(detection_obj1[i].x, detection_obj1[i].y);
+		Vect2 b(detection_obj[i].x, detection_obj[i].y);
 		Vect2 ab = b - a;
 		float d = ab.norm();
 		if( d < minDistance )
@@ -507,6 +528,7 @@ float detection_compute_opponent_distance(Vect2 a)
 			minDistance = d;
 		}
 	}
+	xSemaphoreGive(detection_mutex);
 
 	minDistance -= DETECTION_OPPONENT_ROBOT_RADIUS;
 

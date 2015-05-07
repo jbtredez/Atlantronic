@@ -35,4 +35,6 @@
 #define LEFT_WHEEL                               0
 #define RIGHT_WHEEL                              1
 
+#define REAR_OMRON_RANGE                       400
+
 #endif

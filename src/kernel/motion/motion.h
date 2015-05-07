@@ -96,6 +96,8 @@ void motion_set_max_driving_current(float maxCurrent);
 
 float motion_find_rotate(float start, float end);
 
+void motion_enable_antico(bool enable);
+
 struct motion_cmd_param_arg
 {
 	float kp_av;

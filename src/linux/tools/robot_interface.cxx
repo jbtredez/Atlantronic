@@ -113,10 +113,10 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 	add_usb_data_callback(USB_HOKUYO_SEG, &RobotInterface::process_hokuyo_seg);
 	add_usb_data_callback(USB_CONTROL, &RobotInterface::process_control);
 	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
-	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE1, &RobotInterface::process_detect_dyn_obj_size1);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &RobotInterface::process_detect_dyn_obj_size1);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &RobotInterface::process_detect_dyn_obj_size2);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, &RobotInterface::process_detect_dyn_obj);
-	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT1, &RobotInterface::process_detect_obj1);
+	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT, &RobotInterface::process_detect_obj1);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT2, &RobotInterface::process_detect_obj2);
 	add_usb_data_callback(USB_CAN_TRACE, &RobotInterface::can_trace);
 	add_usb_data_callback(USB_CMD_GET_VERSION, &RobotInterface::process_code_version);

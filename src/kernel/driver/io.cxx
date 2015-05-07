@@ -21,7 +21,7 @@ typedef struct
 static const IoParam io_param[] =
 {
 	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 - couleur
-	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1 - recalage
+	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1
 	{GPIOE,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_2 - pull up pour les omron
 	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - pull up pour les omron
 	{GPIOG, 10, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_4 - pull up pour les omron
