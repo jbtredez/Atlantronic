@@ -11,8 +11,8 @@ static void carpet_cmd(void* arg);
 static int carpet_module_init()
 {
 	// configuration des ax12
-	ax12.set_torque_limit(AX12_LEFT_CARPET, 0.6);
-	ax12.set_torque_limit(AX12_RIGHT_CARPET, 0.6);
+	ax12.set_torque_limit(AX12_LEFT_CARPET, 1);
+	ax12.set_torque_limit(AX12_RIGHT_CARPET, 1);
 
 	ax12.set_goal_limit(AX12_LEFT_CARPET, 0, 1.4);
 	ax12.set_goal_limit(AX12_RIGHT_CARPET, -1.4, 0);
