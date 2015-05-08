@@ -42,10 +42,10 @@ enum
 
 // pour PSC = 0, TIMCLK = 96 MHz,
 // ARR = TIM1CLK / 25000 - 1 = 3839 pour une PWM à 25 kHz. On a une resolution de 3840 sur une periode
-// pour PSC = 0, TIMCLK = 42 MHz,
+// pour PSC = 0, TIMCLK = 48 MHz,
 // ARR = TIM1CLK / 25000 - 1 = 1919 pour une PWM à 25 kHz. On a une resolution de 1920 sur une periode
-#define PWM_ARR1     3839
-#define PWM_ARR2     1919
+#define PWM_ARR1     1919
+#define PWM_ARR2     3839
 
 //! set a pwm
 //!
