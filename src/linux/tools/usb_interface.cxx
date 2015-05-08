@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 		// ajout de la table dans qemu
 		for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			qemu.add_object(table_obj[i]);
+			qemu.add_object(OBJECT_FLOOR_FOOTPRINT, table_obj[i]);
 		}
 	}
 

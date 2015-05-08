@@ -165,16 +165,17 @@ int Qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 	return m_com->write((void*) &event, sizeof(event));
 }
 
-int Qemu::add_object(const struct polyline polyline)
+int Qemu::add_object(ObjectType type, const struct polyline polyline)
 {
 	struct atlantronic_model_tx_event event;
 	unsigned int i = 0;
 
 	event.type = EVENT_NEW_OBJECT;
 
-	event.data[0] = MIN((unsigned int)polyline.size, (sizeof(event.data) - 1)/8);
-	float* f = (float*)(event.data+1);
-	for(i = 0; i < event.data[0]; i++ )
+	event.data[0] = type;
+	event.data[1] = MIN((unsigned int)polyline.size, (sizeof(event.data) - 2)/8);
+	float* f = (float*)(event.data+2);
+	for(i = 0; i < event.data[1]; i++ )
 	{
 		f[0] = polyline.pt[i].x;
 		f[1] = polyline.pt[i].y;

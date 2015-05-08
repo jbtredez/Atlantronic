@@ -22,7 +22,8 @@
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
 #define MAX_FPS    11
-#define QEMU_OPPONENT_ID   (TABLE_OBJ_SIZE)
+#define QEMU_FLOOR_FOOTPRINT_ID       (TABLE_OBJ_SIZE)
+#define QEMU_BEACON_FOOTPRINT_ID      (TABLE_OBJ_SIZE+1)
 
 enum
 {
@@ -104,6 +105,7 @@ static void qemu_set_parameters();
 void gtk_end();
 
 #define OPPONENT_R         150.0f
+#define FEET_RADIUS            30
 
 Vect2 opponent_robot_pt[] =
 {
@@ -118,10 +120,29 @@ Vect2 opponent_robot_pt[] =
 	Vect2( OPPONENT_R, 0),
 };
 
+Vect2 feet_pt[] =
+{
+	Vect2( FEET_RADIUS, 0),
+	Vect2( FEET_RADIUS * 0.707106781, FEET_RADIUS * 0.707106781),
+	Vect2( 0, FEET_RADIUS),
+	Vect2( -FEET_RADIUS * 0.707106781, FEET_RADIUS * 0.707106781),
+	Vect2( -FEET_RADIUS, 0),
+	Vect2( -FEET_RADIUS * 0.707106781, -FEET_RADIUS * 0.707106781),
+	Vect2( 0, -FEET_RADIUS),
+	Vect2( FEET_RADIUS * 0.707106781, -FEET_RADIUS * 0.707106781),
+	Vect2( FEET_RADIUS, 0),
+};
+
 struct polyline oponent_robot =
 {
 		opponent_robot_pt,
 		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
+};
+
+struct polyline feet_polyline =
+{
+		feet_pt,
+		sizeof(feet_pt) / sizeof(feet_pt[0])
 };
 
 int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
@@ -336,15 +357,55 @@ void qemu_set_parameters()
 	// ajout de la table dans qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
-		qemu->add_object(table_obj[i]);
+		qemu->add_object(OBJECT_FLOOR_FOOTPRINT, table_obj[i]);
 	}
 
 	// ajout d'un robot adverse
-	qemu->add_object(oponent_robot);
+	qemu->add_object(OBJECT_FLOOR_FOOTPRINT, oponent_robot);
+	qemu->add_object(OBJECT_BEACON_FOOTPRINT, oponent_robot);
 
 	// on le met a sa position de depart
 	Vect2 origin(0, 0);
-	qemu->move_object(QEMU_OPPONENT_ID, origin, tableScene.getOpponentPosition());
+	qemu->move_object(QEMU_FLOOR_FOOTPRINT_ID, origin, tableScene.getOpponentPosition());
+	qemu->move_object(QEMU_BEACON_FOOTPRINT_ID, origin, tableScene.getOpponentPosition());
+
+	// ajout des pieds
+	// TODO prendre positions de tableScene.table3d
+	VectPlan feetPosition[16];
+	feetPosition[0] = VectPlan(-1410, -850, 0);
+	feetPosition[1] = VectPlan(-1410, -750, 0);
+	feetPosition[2] = VectPlan(-1410,  800, 0);
+	feetPosition[3] = VectPlan(- 650,  800, 0);
+	feetPosition[4] = VectPlan(- 650,  900, 0);
+	feetPosition[5] = VectPlan(- 630, -355, 0);
+	feetPosition[6] = VectPlan(- 400, -750, 0);
+	feetPosition[7] = VectPlan(- 200, -400, 0);
+
+	feetPosition[8]  = VectPlan(1410, -850, 0);
+	feetPosition[9]  = VectPlan(1410, -750, 0);
+	feetPosition[10] = VectPlan(1410,  800, 0);
+	feetPosition[11] = VectPlan( 650,  800, 0);
+	feetPosition[12] = VectPlan( 650,  900, 0);
+	feetPosition[13] = VectPlan( 630, -355, 0);
+	feetPosition[14] = VectPlan( 400, -750, 0);
+	feetPosition[15] = VectPlan( 200, -400, 0);
+	for(int i = 0; i < 16; i++)
+	{
+		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
+		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+1, origin, feetPosition[i]);
+	}
+
+	VectPlan glassPosition[5];
+	glassPosition[0] = VectPlan(-1250, -750, 0);
+	glassPosition[1] = VectPlan(- 590,  170, 0);
+	glassPosition[2] = VectPlan(    0, -650, 0);
+	glassPosition[3] = VectPlan(  590,  170, 0);
+	glassPosition[4] = VectPlan( 1250, -750, 0);
+	for(int i = 0; i < 5; i++)
+	{
+		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
+		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+17, origin, glassPosition[i]);
+	}
 }
 
 void gtk_end()
@@ -859,7 +920,8 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			if(simulation && (newOpponentPos.x != opponentPos.x || newOpponentPos.y != opponentPos.y || newOpponentPos.theta != opponentPos.theta))
 			{
 				Vect2 origin(opponentPos.x, opponentPos.theta);
-				qemu->move_object(QEMU_OPPONENT_ID, origin, newOpponentPos - opponentPos);
+				qemu->move_object(QEMU_FLOOR_FOOTPRINT_ID, origin, newOpponentPos - opponentPos);
+				qemu->move_object(QEMU_BEACON_FOOTPRINT_ID, origin, newOpponentPos - opponentPos);
 				opponentPos = newOpponentPos;
 			}
 		}
