@@ -10,10 +10,16 @@
 #endif
 
 #include <stdint.h>
+#include "kernel/driver/io.h"
 
 void elevator_set_position(float pos);
 
 float elevator_get_position() WEAK_ELEVATOR;
+
+inline bool elevator_omron_active()
+{
+	return gpio_get(IO_OMRON_ELEVATOR) != 0;
+}
 
 struct elevator_cmd_arg
 {

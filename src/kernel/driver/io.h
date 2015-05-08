@@ -46,7 +46,7 @@ typedef enum io
 #define IO_OMRON1          GPIO_1
 #define IO_OMRON2          GPIO_2
 #define IO_OMRON3          GPIO_3
-//#define IO_OMRON4          GPIO_4
+#define IO_OMRON_ELEVATOR  GPIO_4
 //#define IO_OMRON5          GPIO_5
 //#define IO_OMRON6          GPIO_6
 //#define IO_LIDAR_LITE_1    GPIO_7
