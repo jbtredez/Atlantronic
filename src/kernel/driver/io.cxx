@@ -32,7 +32,7 @@ static const IoParam io_param[] =
 	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9 - switch elevateur
 	{GPIOG,  7, GPIO_MODE_OUT, GPIO_PUPD_UP}, // attention pull up 4k7 sur carte cpu - IO_10 - sortie
 	{GPIOG,  6, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_11 - sortie
-	{GPIOC, 14, GPIO_MODE_IN, GPIO_PUPD_DOWN}, // go
+	{GPIOC, 14, GPIO_MODE_IN, GPIO_PUPD_UP}, // go
 };
 
 static int io_module_init(void)
@@ -47,8 +47,9 @@ static int io_module_init(void)
 		gpio_pin_init(io_param[i].gpio, io_param[i].pin, io_param[i].mode, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, io_param[i].pupd);
 	}
 
-	// boutons en IT sur front descendant sur le GO
-	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN, match_go_from_isr);
+
+	// boutons en IT (GO et couleur)
+	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_go_from_isr);
 	exti_register(EXTI_PC, 15, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_color_from_isr);
 
 	return 0;

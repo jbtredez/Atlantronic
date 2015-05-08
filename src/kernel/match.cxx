@@ -154,11 +154,16 @@ portBASE_TYPE match_go_from_isr(void)
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
 
-	if( match_enable_go )
+	bool ioActive = gpio_get(IO_GO);
+
+	if( ioActive )
 	{
-		match_go = 1;
-		systick_start_match_from_isr();
-		xQueueSendFromISR(match_queue_go, NULL, &xHigherPriorityTaskWoken);
+		if( match_enable_go )
+		{
+			match_go = 1;
+			systick_start_match_from_isr();
+			xQueueSendFromISR(match_queue_go, NULL, &xHigherPriorityTaskWoken);
+		}
 	}
 	else
 	{
