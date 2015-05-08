@@ -3,6 +3,7 @@
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/control.h"
+#include "kernel/driver/power.h"
 
 #include <math.h>
 
@@ -94,11 +95,20 @@ void CanMipMotor::update(portTickType absTimeout)
 		fault(fault_disconnected_id, FAULT_ACTIVE);
 		kinematics.a = 0;
 		kinematics.v = 0;
-		/*if( (t - last_communication_time).ms > 1000 && (t - last_reset_node_time).ms > 1000) // TODO define pour le 1000 ms
+		if( (t - last_communication_time).ms > 1000 )
 		{
-			// TODO couper l'alim du contoleur
-			resetNode();
-		}*/
+			if( (t - lastPowerOffTime).ms > 1000 && power_get() == 0)
+			{
+				// le moteur s'est arrete a cause d'un pb de suivit..., on coupe l'alim du contoleur pour le relancer
+				lastPowerOffTime = systick_get_time();
+				power_set(POWER_OFF_MIP_MOTOR);
+			}
+			else if( (t - lastPowerOffTime).ms > 100 )
+			{
+				// on a coupe pendant 100 ms, on remet la puissance
+				power_clear(POWER_OFF_MIP_MOTOR);
+			}
+		}
 		state = CAN_MOTOR_MIP_DISCONNECTED;
 	}
 	else

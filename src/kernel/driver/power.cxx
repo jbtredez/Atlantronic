@@ -83,6 +83,10 @@ void power_set(int powerEventMask)
 	{
 		log(LOG_ERROR, "power off - HeartBeat");
 	}
+	if( diff & POWER_OFF_MIP_MOTOR)
+	{
+		log(LOG_ERROR, "power off - mip motor");
+	}
 }
 
 void power_clear(int powerEventMask)
@@ -110,6 +114,10 @@ void power_clear(int powerEventMask)
 	if( diff & POWER_OFF_HEARTBEAT)
 	{
 		log(LOG_ERROR, "power clear - HeartBeat");
+	}
+	if( diff & POWER_OFF_MIP_MOTOR)
+	{
+		log(LOG_ERROR, "power clear - mip motor");
 	}
 
 	if( ! (power_state & ~POWER_OFF_HEARTBEAT) )

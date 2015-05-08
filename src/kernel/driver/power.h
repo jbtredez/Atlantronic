@@ -15,6 +15,7 @@ extern "C" {
 #define POWER_OFF_END_MATCH      0x04    //!< extinction de la puissance a cause de la fin du match
 #define POWER_OFF_AU             0x08    //!< extinction de la puissance a cause d'un AU
 #define POWER_OFF_HEARTBEAT      0x10    //!< extinction de la puissance a caude de la perte du heartbeat
+#define POWER_OFF_MIP_MOTOR      0x20    //!< extinction de la puissance a caude de la perte du heartbeat
 
 void power_set(int powerEventMask);
 
