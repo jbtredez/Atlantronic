@@ -73,8 +73,10 @@ int light::do_action()
 		
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_LIGHT);
+		m_try = -1;
 		return 0;
-	}	
+	}
+	m_try++;	
 	return -1;
 }
 	

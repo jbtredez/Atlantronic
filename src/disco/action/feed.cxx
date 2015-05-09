@@ -7,19 +7,20 @@
 #include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
-#include "disco/action/spotlight.h"
+#include "disco/action/feed.h"
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-spotlight::spotlight(VectPlan firstcheckpoint,robotstate * elevator):actioncomposite(firstcheckpoint)
+feed::feed(VectPlan firstcheckpoint,robotstate * elevator):actioncomposite(firstcheckpoint)
 {
 	if(elevator != 0)
 	{
 		m_elevator =  elevator;
 	}
 	
-	set_actiontype(ACTION_SPOTLIGHT);
+	m_actiontype = ACTION_GOBELET;
+	 
 }
 
 ////////////////////////////////////////////////
@@ -28,18 +29,18 @@ spotlight::spotlight(VectPlan firstcheckpoint,robotstate * elevator):actioncompo
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int spotlight::do_action()
+int feed::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
-	int nbelement =  m_elevator->getnumberelement();
 	VectPlan position = location_get_position();
 	action * p_action;
+
 	switch(elevator_state)
 	{
 		//Cas où l'acsenceur est vide
 		case ELEVATOR_EMPTY:
 		{
-			p_action = find_action_not_done(ACTION_LIGHT,position);
+			p_action = find_action_not_done(ACTION_GOBELET,position);
 			if(p_action != 0)
 			{
 				return p_action->do_action();
@@ -50,18 +51,13 @@ int spotlight::do_action()
 			}
 			break;
 		}
-		//cas ou il faut récupérer des pieds ou déposer le spotlight
-		case ELEVATOR_LIGHT:
-			//Normal pas de break;
-		case ELEVATOR_FEET:
+
+		case ELEVATOR_GOBELET:
 		{
-			if(nbelement < MAX_ELEMENT )
+			p_action = find_action_not_done(ACTION_FEET,position);
+			if(p_action != 0)
 			{
-				p_action = find_action_not_done(ACTION_FEET,position);
-				if(p_action != 0)
-				{
-					return p_action->do_action();
-				}
+				return p_action->do_action();
 			}
 			else
 			{
@@ -70,12 +66,14 @@ int spotlight::do_action()
 				{
 					return p_action->do_action();
 				}
+				break;
 			}
-
+			break;
 		}
-		break;	
+		
 		///Dans les cas d'échec
-		case ELEVATOR_GOBELET:
+		case ELEVATOR_LIGHT:
+		case ELEVATOR_FEET:
 		default :
 			log_format(LOG_INFO , "Action présente non utilisée");
 
@@ -84,9 +82,6 @@ int spotlight::do_action()
 	return -1;	
 
 }
-	
-	
-
 	
 	
 

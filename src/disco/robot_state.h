@@ -16,9 +16,12 @@
 #define	ACTION_CLAP		2
 #define	ACTION_SPOTLIGHT	3
 #define	ACTION_CARPET		4
-#define	ACTION_GOBLET		5
+#define	ACTION_GOBELET		5
 #define	ACTION_STAIR		6
-#define	ACTION_DROP 		7
+#define	ACTION_DROPZONE		7
+#define	ACTION_DROP		8
+#define	ACTION_ENDLISTd	9
+
 
 
 

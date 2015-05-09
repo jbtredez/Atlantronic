@@ -86,9 +86,11 @@ core_robot += disco/action/feet.o
 core_robot += disco/action/gobelet.o
 core_robot += disco/action/light.o
 core_robot += disco/action/dropzone.o
+core_robot += disco/action/drop.o
 core_robot += disco/action/movebackward.o
 core_robot += disco/action/deposecarpette.o
 core_robot += disco/action/spotlight.o
+core_robot += disco/action/feed.o
 
 
 

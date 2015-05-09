@@ -47,15 +47,28 @@ int actioncomposite::add_action(action * p_action)
 ////////////////////////////////////////////////
 action * actioncomposite::find_action_not_done(int type, VectPlan position)
 {
-	int distance = 99999;
+	
+	float distance = 99999;
+	float result = 0;
+	action * p_actiontodo = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
 	{
-				
-		if(m_list_action[i]->m_actiontype == type)
+
+		
+		if( (m_list_action[i]->m_actiontype == type) 
+			&& m_list_action[i]->m_try > -1)
 		{
-			return m_list_action[i];
+			result = position.scalarProd(m_list_action[i]->get_firstcheckpoint());
+			if(result < distance )
+			{
+				distance = result;
+				p_actiontodo = m_list_action[i];
+			}
+ 
+			
+
 		}
 
 	}
-	return 0;
+	return p_actiontodo;
 }

@@ -1,34 +1,32 @@
 
-#ifndef SPOTLIGHT_H
-#define SPOTLIGHT_H
+#ifndef FEED_H
+#define FEED_H
 
 #include "kernel/stratege_machine/action.h"
 
+
 #include "kernel/stratege_machine/action_composite.h"
 
-
-
-
-class spotlight : public actioncomposite
+class feed : public actioncomposite
 {
 	private :
 	robotstate * m_elevator;
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : light()
+	/// function    : gobelet()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	spotlight(VectPlan firstcheckpoint,robotstate * elevator);
+	feed(VectPlan firstcheckpoint,robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~spotlight(){};
+	~feed(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

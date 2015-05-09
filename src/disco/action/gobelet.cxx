@@ -20,7 +20,7 @@ gobelet::gobelet(VectPlan firstcheckpoint,robotstate * elevator):action(firstche
 		m_elevator =  elevator;
 	}
 	
-	m_actiontype = ACTION_GOBLET;
+	m_actiontype = ACTION_GOBELET;
 	 
 }
 
@@ -72,9 +72,10 @@ int gobelet::do_action()
 	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
 	{
 		m_elevator->setelevatorstate(ELEVATOR_GOBELET);
+		m_try = -1;
 		return 0;
 	}
-
+	m_try++;
 	return -1;
 }
 	

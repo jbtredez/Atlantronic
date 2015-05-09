@@ -61,6 +61,7 @@ int deposecarpette::do_action()
 	//Si on arrive pas à joindre la position on abandonne
 	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
 	{
+		m_try++;
 		return -1; 
 	 }
 
@@ -74,11 +75,13 @@ int deposecarpette::do_action()
 		if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
 		{
 			bresult = 0;
+
 		}
 		else
 		{
 
 			bresult = -1;
+
 		}
 	
 		essaie++;
@@ -90,6 +93,15 @@ int deposecarpette::do_action()
 	carpet_set_pos(CARPET_UP, CARPET_DOWN);
 	vTaskDelay(100);
 	carpet_set_pos(CARPET_UP, CARPET_UP);
+
+	if(bresult == 0)
+	{
+		m_try = -1;
+	}
+	else
+	{
+		m_try++;				
+	}
 
 	return bresult;
 }

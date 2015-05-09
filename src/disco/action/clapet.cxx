@@ -79,6 +79,7 @@ int clapet::do_action()
 	//Si on arrive pas à joindre le clapet on abandonne
 	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
 	{
+		m_try++;
 		return -1; 
 	 }
 
@@ -97,11 +98,13 @@ int clapet::do_action()
 		if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
 		{
 			bresult = 0;
+			m_try = -1;
 		}
 		else
 		{
 
 			bresult = -1;
+			m_try++;
 		}
 	
 		essaie++;

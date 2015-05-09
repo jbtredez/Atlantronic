@@ -68,6 +68,8 @@ int feet::do_action()
 		if(essai == 3)
 		{
 			elevator_set_position(0);
+
+			m_try++;
 			return -1;
 		}
 		
@@ -88,11 +90,17 @@ int feet::do_action()
 		
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_FEET);
+
+		//(FINGER_HALF_CLOSE). Cela ne serre pas le pied et le pied reste bloqué. On ne solicite pas non plus
+		finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);		
+		m_try = -1;
+
 		return 0;
 	}	
 
-	//(FINGER_HALF_CLOSE). Cela ne serre pas le pied et le pied reste bloqué. On ne solicite pas non plus
-	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
+
+
+	m_try++;
 	return -1;
 }
 	

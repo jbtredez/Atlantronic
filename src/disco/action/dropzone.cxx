@@ -20,7 +20,7 @@ dropzone::dropzone(VectPlan firstcheckpoint,robotstate * elevator):action(firstc
 		m_elevator = elevator;	
 	}
 	m_dropposition = 200; 
-	m_actiontype = ACTION_DROP;
+	m_actiontype = ACTION_DROPZONE;
 }
 
 ////////////////////////////////////////////////
