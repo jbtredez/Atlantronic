@@ -1,11 +1,11 @@
 
-
-#include "action_composite.h"
+#include "kernel/stratege_machine/action.h"
+#include "kernel/stratege_machine/action_composite.h"
 
 
 
 ///////////////////////////////////////////////
-/// function    : action()
+/// function    : actioncomposite()
 /// descrition  : constructor
 /// param       : firstcheckpoint : VectPlan first checkpoint of the action
 /// retrun      : none
@@ -15,9 +15,10 @@ actioncomposite::actioncomposite(VectPlan firstcheckpoint):action(firstcheckpoin
 	m_try = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
 	{
-		List_action[i] = 0;
+		m_list_action[i] = 0;
 	}
 	
+	m_size_actionlist = 0;
 }
 
 ////////////////////////////////////////////////
@@ -28,12 +29,33 @@ actioncomposite::actioncomposite(VectPlan firstcheckpoint):action(firstcheckpoin
 ////////////////////////////////////////////////
 int actioncomposite::add_action(action * p_action)
 {
-	if( (p_action == 0) || (m_size_actionlist >= NB_ACTION_MAX) )
+	if( (p_action == 0) || (m_size_actionlist >= NB_MAX_COMPO_ACTION) )
 	{
 		return -1;
 	}
 
 	m_list_action[m_size_actionlist] = p_action;
 	m_size_actionlist++;
+	return 0;
+}
+
+////////////////////////////////////////////////
+/// function    : find_action_not_done()
+/// descrition  : find the nearest a type action wich are not done
+/// param       :int : type of the action
+/// retrun      : -1 if fail or Number of the action in the list  if sucess
+////////////////////////////////////////////////
+action * actioncomposite::find_action_not_done(int type, VectPlan position)
+{
+	int distance = 99999;
+	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
+	{
+				
+		if(m_list_action[i]->m_actiontype == type)
+		{
+			return m_list_action[i];
+		}
+
+	}
 	return 0;
 }

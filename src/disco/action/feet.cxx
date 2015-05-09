@@ -15,7 +15,12 @@
 #define FEET_APPROX_DIST       100
 feet::feet(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
-m_elevator = elevator;
+	if(elevator != 0)
+	{
+		m_elevator = elevator;	
+	}
+	
+	m_actiontype = ACTION_FEET;
 	 
 }
 
@@ -29,14 +34,25 @@ int feet::do_action()
 {
 	int result = -1;
 	int essai = 0;
+
+	if(m_elevator != 0)
+	{
+		return -1;
+	}
+
 	int nbelement = m_elevator->getnumberelement();
 
 
 	//S ila reserve est pleine on quitte la fonction
-	if(m_elevator->getnumberelement() >= MAX_ELEMENT)
+	if(nbelement >= MAX_ELEMENT)
 	{
 		return -1;
 	}
+
+	//On serre les élément 
+	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	vTaskDelay(100);
+
 	//On souleve la pile pour ajouter le nouvel element 
 	elevator_set_position(80);
 	vTaskDelay(100);
@@ -61,6 +77,8 @@ int feet::do_action()
 	vTaskDelay(500);
 	elevator_set_position(0);
 	vTaskDelay(800);
+
+
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
 	vTaskDelay(200);
 	
@@ -73,6 +91,8 @@ int feet::do_action()
 		return 0;
 	}	
 
+	//(FINGER_HALF_CLOSE). Cela ne serre pas le pied et le pied reste bloqué. On ne solicite pas non plus
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
 	return -1;
 }
 	

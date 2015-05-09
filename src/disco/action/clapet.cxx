@@ -2,15 +2,24 @@
 
 #include "kernel/log.h"
 #include "kernel/motion/trajectory.h"
+#include "disco/carpet.h"
 #include "disco/wing.h"
+
+#include "disco/robot_state.h"
+
 #include "clapet.h"
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
-clapet::clapet(VectPlan firstcheckpoint):action(firstcheckpoint)
-{
 
-	 
+clapet::clapet(VectPlan firstcheckpoint,robotstate * robot):action(firstcheckpoint)
+{
+	if(robot != 0)
+	{
+		m_robot =  robot;
+	}
+	
+	m_actiontype = ACTION_CLAP;
 }
 
 ////////////////////////////////////////////////
@@ -27,6 +36,9 @@ int clapet::do_action()
 	int second_x_position = 0;
 
     	VectPlan nextToClap ;
+	wing_cmd_type left = WING_PARK ;
+	wing_cmd_type right = WING_PARK ;
+
 
 
 	if(m_try < 0 )
@@ -42,11 +54,20 @@ int clapet::do_action()
 	{
 		second_x_position = m_firstcheckpoint.x - 185;
 		nextToClap.theta = -3.14f;
+
+		left = WING_OPEN;
+		
 	}
 	else
 	{
 		second_x_position = m_firstcheckpoint.x + 185;
+		right = WING_OPEN;
 		
+	}
+	if(m_robot->getcarpetstate() == CARPET_UP)
+	{
+			carpet_set_pos(CARPET_UP, CARPET_UP);
+			vTaskDelay(100);
 	}
 
 
@@ -60,9 +81,12 @@ int clapet::do_action()
 	{
 		return -1; 
 	 }
-	//On ouvre l'aile pas besoin de réfléchir
-   	wing_set_position(WING_OPEN, WING_OPEN);
 
+
+	//On ouvre l'aile pas besoin de réfléchir
+
+	wing_set_position(left, right);
+	m_robot->setwingstate(left,right);	
 
 	nextToClap.x = second_x_position;
 
@@ -83,9 +107,10 @@ int clapet::do_action()
 		essaie++;
 	}while(essaie <= 3 && !bresult); 
 
+
 	//On ferme l'aile pas besoin de réfléchir
 	wing_set_position(WING_PARK, WING_PARK);
-
+	m_robot->setwingstate(WING_PARK,WING_PARK);
 	return bresult;
 }
 	

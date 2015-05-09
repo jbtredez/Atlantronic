@@ -56,8 +56,11 @@ core_robot += kernel/table.o
 #core_robot += kernel/driver/gyro/adxrs453.o
 #core_robot += kernel/math/simpson_integrator.o
 core_robot += kernel/state_machine/state_machine.o
+
 core_robot += kernel/stratege_machine/stratege.o
 core_robot += kernel/stratege_machine/action.o
+core_robot += kernel/stratege_machine/action_composite.o
+
 #core_robot += kernel/canopen.o
 core_robot += kernel/can_mip.o
 core_robot += kernel/can_motor_mip.o
@@ -82,8 +85,10 @@ core_robot += disco/action/clapet.o
 core_robot += disco/action/feet.o
 core_robot += disco/action/gobelet.o
 core_robot += disco/action/light.o
-core_robot += disco/action/drop.o
+core_robot += disco/action/dropzone.o
 core_robot += disco/action/movebackward.o
+core_robot += disco/action/deposecarpette.o
+core_robot += disco/action/spotlight.o
 
 
 

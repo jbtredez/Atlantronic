@@ -1,32 +1,33 @@
 
-#ifndef CLAPET_H
-#define CLAPET_H
+#ifndef DEPOSE_CARPETTE_H
+#define DEPOSE_CARPETTE_H
 
 #include "kernel/stratege_machine/action.h"
-class clapet : public action
+class deposecarpette : public action
 {
 	private :
 	robotstate * m_robot;
 	public:
 	////////////////////////////////////////////////
-	/// function    : clapet()
+	/// function    : deposecarpette()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	clapet(VectPlan firstcheckpoint,robotstate * robot);
+	deposecarpette(VectPlan firstcheckpoint,robotstate * robot);
+
 	////////////////////////////////////////////////
-	/// function    : ~action()
+	/// function    : ~deposecarpette()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~clapet(){};
+	~deposecarpette(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()
 	/// descrition  : execute the action
-	/// param       : astratcolor : int the color (GREEN OR YELLOW)
+	/// param       : none
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();

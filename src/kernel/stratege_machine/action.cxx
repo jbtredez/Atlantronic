@@ -15,5 +15,6 @@
 action::action(VectPlan firstcheckpoint)
 {
 	m_try = 0;
+	m_actiontype = -1;
 	m_firstcheckpoint = firstcheckpoint;
 }

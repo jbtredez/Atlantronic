@@ -15,7 +15,12 @@
 #define GOBELET_APPROX_DIST       100
 gobelet::gobelet(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
-m_elevator = elevator;
+	if(elevator != 0)
+	{
+		m_elevator =  elevator;
+	}
+	
+	m_actiontype = ACTION_GOBLET;
 	 
 }
 

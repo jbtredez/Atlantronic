@@ -1,34 +1,34 @@
 
-#ifndef DROPSTART_H
-#define DROPSTART_H
+#ifndef SPOTLIGHT_H
+#define SPOTLIGHT_H
 
 #include "kernel/stratege_machine/action.h"
 
+#include "kernel/stratege_machine/action_composite.h"
+#define LIGHT_APPROX_DIST       100
 
-#define DROPSTART_APPROX_DIST       10
 
 
-class drop : public action
+class spotlight : public actioncomposite
 {
 	private :
 	robotstate * m_elevator;
-	int m_dropposition;
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : dropstart()
+	/// function    : light()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	drop(VectPlan firstcheckpoint,robotstate * elevator);
+	spotlight(VectPlan firstcheckpoint,robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~drop(){};
+	~spotlight(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

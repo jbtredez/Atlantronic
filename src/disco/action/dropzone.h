@@ -1,36 +1,42 @@
 
-#ifndef CLAPET_H
-#define CLAPET_H
+#ifndef DROPSTART_H
+#define DROPSTART_H
 
 #include "kernel/stratege_machine/action.h"
-class clapet : public action
+
+
+#define DROPSTART_APPROX_DIST       10
+
+
+class dropzone : public action
 {
 	private :
-	robotstate * m_robot;
+	robotstate * m_elevator;
+	int m_dropposition;
 	public:
+
 	////////////////////////////////////////////////
-	/// function    : clapet()
+	/// function    : dropstart()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	clapet(VectPlan firstcheckpoint,robotstate * robot);
+	dropzone(VectPlan firstcheckpoint,robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~clapet(){};
+	~dropzone(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()
 	/// descrition  : execute the action
-	/// param       : astratcolor : int the color (GREEN OR YELLOW)
+	/// param       : none
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
-
 }; 
 
 #endif

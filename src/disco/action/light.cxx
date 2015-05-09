@@ -14,7 +14,12 @@
 
 light::light(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
-	m_elevator = elevator;
+	if(elevator != 0)
+	{
+		m_elevator =  elevator;
+	}
+	
+	m_actiontype = ACTION_LIGHT;
 }
 
 ////////////////////////////////////////////////

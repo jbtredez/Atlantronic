@@ -17,7 +17,7 @@
 
 #include "disco/action/clapet.h"
 #include "disco/action/feet.h"
-#include "disco/action/drop.h"
+#include "disco/action/dropzone.h"
 #include "disco/action/movebackward.h"
 #include "disco/action/light.h"
 
@@ -60,13 +60,16 @@ static void strat_task(void* arg)
 {
 	(void) arg;
 
-	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(730 ,-785,0.0f);	
-	clapet clap1(firstcheckpoint);
-
 	robotstate robothomologation;
 	robothomologation.setnumberelement(1);
 	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
+
+
+	//création et chargement des actions à faire
+	VectPlan firstcheckpoint(730 ,-785,0.0f);	
+	clapet clap1(firstcheckpoint,&robothomologation);
+
+
 
 
 	//start
@@ -100,7 +103,7 @@ static void strat_task(void* arg)
 	//Dropstart 
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
-	drop dropstartzone(firstcheckpoint,&robothomologation);
+	dropzone dropstartzone(firstcheckpoint,&robothomologation);
 
 	
 

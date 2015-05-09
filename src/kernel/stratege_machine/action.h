@@ -7,7 +7,7 @@
 
 #include "kernel/log.h"
 #include "kernel/math/vect_plan.h"
-
+#define ACTION_NONE		-1
 class action
 {
 	public:
@@ -17,8 +17,14 @@ class action
 	VectPlan m_firstcheckpoint;		
 	
 
+	int m_actiontype;
+
 	int get_try(){return m_try;};
 	VectPlan get_firstcheckpoint(){return m_firstcheckpoint;};
+
+	int get_actiontype(){return m_actiontype;};
+	void set_actiontype(int actiontype){m_actiontype = actiontype;};
+
 
 	////////////////////////////////////////////////
 	/// function    : action()
