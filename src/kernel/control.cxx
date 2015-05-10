@@ -3,6 +3,7 @@
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/log.h"
+#include "kernel/driver/xbee.h"
 #include "kernel/control.h"
 #include "kernel/location/location.h"
 #include "kernel/kinematics_model/kinematics_model.h"
@@ -41,6 +42,7 @@ module_init(control_module_init, INIT_CONTROL);
 static void control_task(void* /*arg*/)
 {
 	uint32_t wake_time = 0;
+	int xbeeCycleCount = 0;
 
 	while(1)
 	{
@@ -84,6 +86,13 @@ static void control_task(void* /*arg*/)
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 
+		// en xbee, on diminue la frequence pour la bande passante
+		xbeeCycleCount++;
+		if( xbeeCycleCount > 100)
+		{
+			xbee_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+			xbeeCycleCount = 0;
+		}
 
 		vTaskDelayUntil(&wake_time, CONTROL_PERIOD);
 	}
