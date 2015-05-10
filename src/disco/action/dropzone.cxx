@@ -34,7 +34,7 @@ int dropzone::do_action()
 	int result = -1;
 	int essai = 0;
 
-	if(m_elevator != 0)
+	if(m_elevator == 0)
 	{
 		return -1;
 	}
