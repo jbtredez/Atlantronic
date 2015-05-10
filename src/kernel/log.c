@@ -6,6 +6,7 @@
 #include "kernel/log.h"
 #undef NO_WEAK_LOG
 #include <stdarg.h>
+#include "kernel/driver/xbee.h"
 
 //! attention, coute tres cher en stack
 void log_format_and_add(unsigned char level, const char* func, uint16_t line, const char* msg, ...)
@@ -18,9 +19,11 @@ void log_format_and_add(unsigned char level, const char* func, uint16_t line, co
 	va_end(ap);
 
 	usb_add_log(level, func, line, buffer);
+	xbee_add_log(level, func, line, buffer);
 }
 
 void log_add(unsigned char level, const char* func, uint16_t line, const char* msg)
 {
 	usb_add_log(level, func, line, msg);
+	xbee_add_log(level, func, line, msg);
 }

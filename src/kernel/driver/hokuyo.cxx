@@ -54,7 +54,7 @@ int hokuyo_module_init()
 	hokuyo[0].scan.theta_min = -M_PI;
 	hokuyo[0].scan.theta_max = M_PI;
 	hokuyo[0].scan.min_object_size = 1;
-	hokuyo[0].scan.min_distance = 100;
+	hokuyo[0].scan.min_distance = 125;
 	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
 	hokuyo[1].scan.theta_min = -M_PI;
 	hokuyo[1].scan.theta_max = M_PI;

@@ -11,6 +11,7 @@
 #include "kernel/location/location.h"
 #include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/pwm.h"
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
 #include "kernel/state_machine/state_machine.h"
@@ -181,6 +182,20 @@ static void motion_update_motors()
 			can_motor[i].set_position(motion_kinematics[i].pos);
 		}
 	}
+
+	// ambiance selon la vitesse des roues
+	float pwm = fabsf(motion_kinematics[RIGHT_WHEEL].v) / 1000;
+	if( pwm > 1)
+	{
+		pwm = 1;
+	}
+	pwm_set(PWM_1, pwm);
+	pwm = fabsf(motion_kinematics[LEFT_WHEEL].v) / 1000;
+	if( pwm > 1)
+	{
+		pwm = 1;
+	}
+	pwm_set(PWM_2, pwm);
 
 	motion_speed_cmd = kinematics_model_compute_speed(VOIE_MOT_INV, motion_kinematics);
 }

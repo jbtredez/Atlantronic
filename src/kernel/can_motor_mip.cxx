@@ -4,6 +4,7 @@
 #include "kernel/robot_parameters.h"
 #include "kernel/control.h"
 #include "kernel/driver/power.h"
+#include "kernel/driver/adc.h"
 
 #include <math.h>
 
@@ -95,9 +96,9 @@ void CanMipMotor::update(portTickType absTimeout)
 		fault(fault_disconnected_id, FAULT_ACTIVE);
 		kinematics.a = 0;
 		kinematics.v = 0;
-		if( (t - last_communication_time).ms > 1000 )
+		if( (t - last_communication_time).ms > 200 )
 		{
-			if( (t - lastPowerOffTime).ms > 1000 && power_get() == 0)
+			if( (t - lastPowerOffTime).ms > 500 && power_get() == 0 && adc_filtered_data.vBat > 10)
 			{
 				// le moteur s'est arrete a cause d'un pb de suivit..., on coupe l'alim du contoleur pour le relancer
 				lastPowerOffTime = systick_get_time();

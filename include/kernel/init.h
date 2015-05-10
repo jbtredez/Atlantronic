@@ -22,6 +22,7 @@
 #define INIT_GPIO                     "01"
 //#define INIT_LED                      "02"
 #define INIT_USB                      "03"
+#define INIT_XBEE                     "04"
 #define INIT_FAULT                    "04"
 #define INIT_POWER                    "05"
 #define INIT_SPI                      "06"
@@ -40,7 +41,6 @@
 
 // init adc
 #define INIT_ADC                      "20"
-#define INIT_XBEE                     "21"
 
 #define INIT_ENCODERS                 "31"
 #define INIT_PWM                      "32"

@@ -35,13 +35,12 @@ int feet::do_action()
 	int result = -1;
 	int essai = 0;
 
-	if(m_elevator != 0)
+	if(m_elevator == 0)
 	{
 		return -1;
 	}
 
 	int nbelement = m_elevator->getnumberelement();
-
 
 	//S ila reserve est pleine on quitte la fonction
 	if(nbelement >= MAX_ELEMENT)

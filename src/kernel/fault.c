@@ -11,6 +11,7 @@
 #include "kernel/fault.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/io.h"
+#include "kernel/driver/xbee.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -65,6 +66,7 @@ static void fault_task(void* arg)
 		// pas de mutex, on envoi pour le debug, s'il y a une modif en cours, on va renvoyer juste apres
 		// remarque : un defaut peut avoir eu le temps de monter et de descendre entre 2 envois
 		usb_add(USB_ERR, fault_status, sizeof(fault_status));
+		xbee_add(USB_ERR, &fault_status, sizeof(fault_status));
 	}
 }
 

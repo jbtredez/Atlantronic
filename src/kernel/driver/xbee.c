@@ -1,4 +1,8 @@
+#define WEAK_XBEE
 #include "xbee.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
+#include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/driver/usart.h"
 #include "kernel/driver/usb.h"
@@ -7,19 +11,25 @@
 
 #define XBEE_STACK_SIZE       350
 #define XBEE_USART         USART2_FULL_DUPLEX
+#define XBEE_TX_BUFER_SIZE       4096
 
 static void xbee_task(void* arg);
 static unsigned char xbee_tx_buffer_dma[256];
 static unsigned char xbee_rx_buffer_dma[256];
 static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val);
-static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l);
+static uint32_t xbee_send_data_api(const unsigned char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l);
+static uint32_t xbee_wait_send_data_api();
 static void xbee_cmd(void* arg);
 static XbeeStatus xbee_init();
 
-// TEST
-void xbee_add_log(unsigned char level, const char* func, uint16_t line, const char* msg);
 
 XbeeStatus xbee_status;
+static xSemaphoreHandle xbee_mutex;
+static xSemaphoreHandle xbee_write_sem;
+static unsigned char xbee_buffer[XBEE_TX_BUFER_SIZE];
+static int xbee_buffer_begin;
+static int xbee_buffer_end;
+static int xbee_buffer_size;
 
 int xbee_module_init()
 {
@@ -30,6 +40,20 @@ int xbee_module_init()
 		return ERR_INIT_XBEE;
 	}
 
+	xbee_mutex = xSemaphoreCreateMutex();
+
+	if(xbee_mutex == NULL)
+	{
+		return ERR_INIT_XBEE;
+	}
+
+	vSemaphoreCreateBinary(xbee_write_sem);
+	if( xbee_write_sem == NULL )
+	{
+		return ERR_INIT_XBEE;
+	}
+	xSemaphoreTake(xbee_write_sem, 0);
+
 	xbee_status = XBEE_STATUS_DISCONNECTED;
 	usb_add_cmd(USB_CMD_XBEE, &xbee_cmd);
 
@@ -38,8 +62,10 @@ int xbee_module_init()
 
 module_init(xbee_module_init, INIT_XBEE);
 
-void xbee_task(void* /*arg*/)
+void xbee_task(void* arg)
 {
+	(void) arg;
+	vTaskDelay(ms_to_tick(500));
 	usart_open(XBEE_USART, XBEE_OP_BAUDRATE);
 	usart_set_write_dma_buffer(XBEE_USART, xbee_tx_buffer_dma);
 	usart_set_read_dma_buffer(XBEE_USART, xbee_rx_buffer_dma);
@@ -56,9 +82,35 @@ void xbee_task(void* /*arg*/)
 			}
 		}
 
-		// TODO TEST
-		//xbee_add_log(LOG_INFO, __FUNCTION__, __LINE__, "toto");
-		vTaskDelay(ms_to_tick(2000));
+		xSemaphoreTake(xbee_mutex, portMAX_DELAY);
+		if(xbee_buffer_size > 0)
+		{
+			int sizeMax = XBEE_TX_BUFER_SIZE - xbee_buffer_begin;
+			if(xbee_buffer_size < sizeMax )
+			{
+				sizeMax = xbee_buffer_size;
+			}
+
+			// limitation par paquets de 100 (buffer dma de 256 avec entete de message xbee)
+			if( sizeMax > 100 )
+			{
+				sizeMax = 100;
+			}
+
+			xbee_send_data_api(xbee_buffer + xbee_buffer_begin, sizeMax, XBEE_ADDR_PC_H, XBEE_ADDR_PC_L);
+			xbee_buffer_size -= sizeMax;
+			xbee_buffer_begin = (xbee_buffer_begin + sizeMax) % XBEE_TX_BUFER_SIZE;
+		}
+
+		xSemaphoreGive(xbee_mutex);
+
+		xbee_wait_send_data_api();
+		vTaskDelay(10);
+
+		if( xbee_buffer_size == 0)
+		{
+			xSemaphoreTake(xbee_write_sem, portMAX_DELAY);
+		}
 	}
 }
 
@@ -92,7 +144,8 @@ static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 
 	// TODO gestion escaped character pour API mode 2 (API mode 1 pour le moment)
 	uint8_t checksum = 0;
-	for(int i = 3; i < api_specific_size + 3; i++)
+	int i;
+	for(i = 3; i < api_specific_size + 3; i++)
 	{
 		checksum += xbee_tx_buffer_dma[i];
 	}
@@ -149,7 +202,72 @@ static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val)
 	return res;
 }
 
-// TODO TEST
+// TODO factoriser avec usb.c
+void xbee_write(const void* buffer, int size)
+{
+	int nMax = XBEE_TX_BUFER_SIZE - xbee_buffer_end;
+
+	xbee_buffer_size += size;
+
+	if( likely(size <= nMax) )
+	{
+		memcpy(&xbee_buffer[xbee_buffer_end], buffer, size);
+		xbee_buffer_end = (xbee_buffer_end + size) % XBEE_TX_BUFER_SIZE;
+	}
+	else
+	{
+		memcpy(&xbee_buffer[xbee_buffer_end], buffer, nMax);
+		size -= nMax;
+		memcpy(&xbee_buffer[0], buffer + nMax, size);
+		xbee_buffer_end = size;
+	}
+
+	if( xbee_buffer_size > XBEE_TX_BUFER_SIZE)
+	{
+		xbee_buffer_size = XBEE_TX_BUFER_SIZE;
+		xbee_buffer_begin = xbee_buffer_end;
+	}
+}
+
+void xbee_write_byte(unsigned char byte)
+{
+	xbee_buffer[xbee_buffer_end] = byte;
+	xbee_buffer_end = (xbee_buffer_end + 1) % XBEE_TX_BUFER_SIZE;
+	xbee_buffer_size++;
+
+	if( xbee_buffer_size > XBEE_TX_BUFER_SIZE)
+	{
+		xbee_buffer_size = XBEE_TX_BUFER_SIZE;
+		xbee_buffer_begin = xbee_buffer_end;
+	}
+}
+
+void xbee_add(uint16_t type, void* msg, uint16_t size)
+{
+	if(size == 0)
+	{
+		return;
+	}
+
+	// on se reserve le buffer circulaire pour les log si le xbee n'est pas pret
+	if( xbee_status == XBEE_STATUS_DISCONNECTED)
+	{
+		return;
+	}
+
+	struct usb_header header = {type, size};
+
+	xSemaphoreTake(xbee_mutex, portMAX_DELAY);
+
+	xbee_write(&header, sizeof(header));
+	xbee_write(msg, size);
+
+	xSemaphoreGive(xbee_mutex);
+
+	xSemaphoreGive(xbee_write_sem);
+}
+
+// TODO mettre en commun les fonctions protocole avec le fichier usb.c
 void xbee_add_log(unsigned char level, const char* func, uint16_t line, const char* msg)
 {
 	uint16_t msg_size = strlen(msg);
@@ -180,16 +298,19 @@ void xbee_add_log(unsigned char level, const char* func, uint16_t line, const ch
 	uint16_t size = msg_size + len + 1;
 	struct usb_header usb_header = {USB_LOG, size};
 
-	static char buffer[2048];
-	memcpy(buffer, &usb_header, sizeof(usb_header));
-	memcpy(buffer + sizeof(usb_header), log_header, len);
-	memcpy(buffer + sizeof(usb_header) + len, msg, msg_size);
-	buffer[sizeof(usb_header) + len + msg_size] = '\n';
+	xSemaphoreTake(xbee_mutex, portMAX_DELAY);
 
-	xbee_send_data_api(buffer, sizeof(usb_header) + len + msg_size + 1, XBEE_ADDR_PC_H, XBEE_ADDR_PC_L);
+	xbee_write(&usb_header, sizeof(usb_header));
+	xbee_write(log_header, len);
+	xbee_write(msg, msg_size);
+	xbee_write_byte((unsigned  char)'\n');
+
+	xSemaphoreGive(xbee_mutex);
+
+	xSemaphoreGive(xbee_write_sem);
 }
 
-static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l)
+static uint32_t xbee_send_data_api(const unsigned char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l)
 {
 	uint16_t api_specific_size = size + 14;
 
@@ -213,7 +334,8 @@ static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr
 	memcpy(&xbee_tx_buffer_dma[17], msg, size);
 
 	uint8_t checksum = 0;
-	for(int i = 3; i < size + 17; i++)
+	int i;
+	for(i = 3; i < size + 17; i++)
 	{
 		checksum += xbee_tx_buffer_dma[i];
 	}
@@ -222,18 +344,24 @@ static uint32_t xbee_send_data_api(const char* msg, uint16_t size, uint32_t addr
 	usart_set_read_dma_size(XBEE_USART, 11);
 	usart_send_dma_buffer(XBEE_USART, size + 18);
 
+	return 0;
+}
+
+static uint32_t xbee_wait_send_data_api()
+{
 	int ret = usart_wait_read(XBEE_USART, 500);
 	if( ret != 0)
 	{
-		log_format(LOG_ERROR, "xbee send data usart error %d", ret);
+		// pas de log xbee pour ne pas partir en boucle d'erreur...
+		//usb_add_log(LOG_ERROR, __FUNCTION__, __LINE__, "usart_wait_read error");
+		//log_format(LOG_ERROR, "xbee send data usart error %d", ret);
 		return -1;
 	}
 
-	log_format(LOG_INFO, "tx status %x %x %x %x %x %x %x %x %x %x %x",
+	/*log_format(LOG_INFO, "tx status %x %x %x %x %x %x %x %x %x %x %x",
 			xbee_rx_buffer_dma[0], xbee_rx_buffer_dma[1], xbee_rx_buffer_dma[2], xbee_rx_buffer_dma[3],
 			xbee_rx_buffer_dma[4], xbee_rx_buffer_dma[5], xbee_rx_buffer_dma[6], xbee_rx_buffer_dma[7],
-			xbee_rx_buffer_dma[8], xbee_rx_buffer_dma[9], xbee_rx_buffer_dma[10]);
-
+			xbee_rx_buffer_dma[8], xbee_rx_buffer_dma[9], xbee_rx_buffer_dma[10]);*/
 	return 0;
 }
 

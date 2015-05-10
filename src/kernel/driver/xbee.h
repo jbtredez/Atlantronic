@@ -5,11 +5,14 @@
 //! @brief Xbee module
 //! @author Atlantronic
 
-
 #include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef WEAK_XBEE
+#define WEAK_XBEE __attribute__((weak, alias("nop_function") ))
 #endif
 
 #define XBEE_CMD_AT                        0x08      //!< commande AT
@@ -32,11 +35,11 @@ extern "C" {
 #define XBEE_ADDR_PC_H                   0x13a200
 #define XBEE_ADDR_PC_L                 0x409e0da5
 
-enum XbeeStatus
+typedef enum
 {
 	XBEE_STATUS_DISCONNECTED = 0,
 	XBEE_STATUS_CONNECTED,
-};
+} XbeeStatus;
 
 enum
 {
@@ -50,6 +53,10 @@ struct xbee_cmd_param
 	uint8_t cmd_id;         //!< id de la commande
 	float param;            //!< parametre
 } __attribute((packed));
+
+void xbee_add(uint16_t type, void* msg, uint16_t size) WEAK_XBEE;
+
+void xbee_add_log(unsigned char level, const char* func, uint16_t line, const char* msg) WEAK_XBEE;
 
 #ifdef __cplusplus
 }
