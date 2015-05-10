@@ -14,7 +14,7 @@ class feed : public actioncomposite
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : gobelet()
+	/// function    : feed()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none

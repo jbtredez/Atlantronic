@@ -49,6 +49,7 @@ action * actioncomposite::find_action_not_done(int type, VectPlan position)
 {
 	
 	float distance = 99999;
+	VectPlan Vectdistance;
 	float result = 0;
 	action * p_actiontodo = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
@@ -58,7 +59,8 @@ action * actioncomposite::find_action_not_done(int type, VectPlan position)
 		if( (m_list_action[i]->m_actiontype == type) 
 			&& m_list_action[i]->m_try > -1)
 		{
-			result = position.scalarProd(m_list_action[i]->get_firstcheckpoint());
+			Vectdistance = (position - (m_list_action[i]->get_firstcheckpoint()));
+			distance = Vectdistance.norm();
 			if(result < distance )
 			{
 				distance = result;

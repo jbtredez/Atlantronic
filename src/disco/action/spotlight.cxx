@@ -31,6 +31,7 @@ spotlight::spotlight(VectPlan firstcheckpoint,robotstate * elevator):actioncompo
 int spotlight::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
+	int result = 0;
 	int nbelement =  m_elevator->getnumberelement();
 	VectPlan position = location_get_position();
 	action * p_action;
@@ -63,14 +64,21 @@ int spotlight::do_action()
 					return p_action->do_action();
 				}
 			}
-			else
+			p_action = find_action_not_done(ACTION_DROPZONE,position);
+			if(p_action != 0)
 			{
-				p_action = find_action_not_done(ACTION_DROPZONE,position);
-				if(p_action != 0)
+				result =  p_action->do_action();
+				if( result != 0)
 				{
-					return p_action->do_action();
+					m_try ++;
+				}
+				else
+				{
+					m_try = -1;
+					return result;
 				}
 			}
+			
 
 		}
 		break;	

@@ -66,7 +66,7 @@ int deposecarpette::do_action()
 	 }
 
 
-	nextToDropCarpette.y = nextToDropCarpette.y - 50;
+	nextToDropCarpette.y = nextToDropCarpette.y - 100;
 
 	//On essaie de se déplacer 3 fois afin d'abandonner
 	do
