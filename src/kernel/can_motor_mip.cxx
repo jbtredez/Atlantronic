@@ -98,12 +98,12 @@ void CanMipMotor::update(portTickType absTimeout)
 		kinematics.v = 0;
 		if( (t - last_communication_time).ms > 200 )
 		{
-			if( power_get() != 0 || adc_filtered_data.vBat < 10)
+			if( (power_get() & (~POWER_OFF_MIP_MOTOR)) || adc_filtered_data.vBat < 10 )
 			{
 				lastPowerOffTime = systick_get_time();
 				power_clear(POWER_OFF_MIP_MOTOR);
 			}
-			else if( (t - lastPowerOffTime).ms > 500 )
+			else if( power_get() == 0 && adc_filtered_data.vBat > 10 && (t - lastPowerOffTime).ms > 500 )
 			{
 				// le moteur s'est arrete a cause d'un pb de suivit..., on coupe l'alim du contoleur pour le relancer
 				lastPowerOffTime = systick_get_time();
