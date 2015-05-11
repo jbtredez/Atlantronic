@@ -54,7 +54,7 @@ static void elevator_task(void* /*arg*/)
 
 	// on est en butee
 	elevatorMotor.setCurrentPosition(0);
-	elevatorMotor.setPosition(20);
+	elevatorMotor.setPosition(35);
 	elevatorMotor.setMaxSpeed(ELEVATOR_MAX_SPEED);
 	log(LOG_INFO, "elevator initialized");
 

@@ -50,11 +50,10 @@ int feet::do_action()
 
 	//On serre les élément 
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(100);
+	vTaskDelay(300);
 
 	//On souleve la pile pour ajouter le nouvel element 
 	elevator_set_position(80);
-	vTaskDelay(100);
 	do 
 	{
 		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
@@ -74,19 +73,19 @@ int feet::do_action()
 		
 	} while(  result ==-1 ) ;
 
-	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
 	vTaskDelay(500);
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	elevator_set_position(0);
 	vTaskDelay(800);
 
 
-	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
 	vTaskDelay(200);
 	
 	//Vérifie si on a attrapé quelque chose
-	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	//if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
 	{
-		
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_FEET);
 
@@ -96,8 +95,6 @@ int feet::do_action()
 
 		return 0;
 	}	
-
-
 
 	m_try++;
 	return -1;

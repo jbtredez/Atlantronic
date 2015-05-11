@@ -25,13 +25,21 @@ module_init(finger_module_init, INIT_FINGER);
 
 void finger_set_pos(enum finger_type low, enum finger_type high)
 {
+	if( low > high)
+	{
+		high = low;
+	}
+
 	switch(low)
 	{
 		case FINGER_CLOSE:
 			ax12.set_goal_position(AX12_LOW_FINGER, 0);
 			break;
 		case FINGER_HALF_CLOSE:
-			ax12.set_goal_position(AX12_LOW_FINGER, -30*M_PI/180);
+			ax12.set_goal_position(AX12_LOW_FINGER, -22*M_PI/180);
+			break;
+		case FINGER_HALF_OPEN:
+			ax12.set_goal_position(AX12_LOW_FINGER, -70*M_PI/180);
 			break;
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_LOW_FINGER, -M_PI_2);
@@ -46,10 +54,13 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 	switch(high)
 	{
 		case FINGER_CLOSE:
-			ax12.set_goal_position(AX12_HIGH_FINGER, 0);
+			ax12.set_goal_position(AX12_HIGH_FINGER, 30*M_PI/180);
 			break;
 		case FINGER_HALF_CLOSE:
-			ax12.set_goal_position(AX12_HIGH_FINGER, 30*M_PI/180);
+			ax12.set_goal_position(AX12_HIGH_FINGER, 60*M_PI/180);
+			break;
+		case FINGER_HALF_OPEN:
+			ax12.set_goal_position(AX12_HIGH_FINGER, 60*M_PI/180);
 			break;
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_HIGH_FINGER, M_PI_2);

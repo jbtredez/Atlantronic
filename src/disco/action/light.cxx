@@ -40,11 +40,8 @@ int light::do_action()
 		return -1;
 	}
 
-		
-
-	elevator_set_position(100);
-	vTaskDelay(100);
-	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+	elevator_set_position(10);
+	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
 
 	do 
 	{
@@ -61,23 +58,23 @@ int light::do_action()
 	
 	} while(  result ==-1 ) ;
 
-
+	finger_set_pos(FINGER_CLOSE, FINGER_HALF_CLOSE);
 	vTaskDelay(500);
-	elevator_set_position(0);
-	vTaskDelay(800);
-	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(300);
 	//Vérifie si on a attrapé quelque chose
-	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	// TODO a voir plus tard, ne marche pas (trop long)
+	//if( ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) )
 	{
-		
+		log(LOG_INFO, "light on board");
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_LIGHT);
 		m_try = -1;
+		finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
 		return 0;
 	}
+
+/*	log(LOG_INFO, "light lost");
 	m_try++;	
-	return -1;
+	return -1;*/
 }
 	
 	

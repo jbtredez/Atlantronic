@@ -24,16 +24,18 @@ void recalage()
 	location_set_position(pos.symetric(color));
 
 	wing_set_position(WING_PARK, WING_PARK);
-	elevator_set_position(100);
-	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
-	// TODO ranger porte tapis
+	elevator_set_position(120);
+	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
+	vTaskDelay(300);
+	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	// TODO ranger porte tapis ?
 
 	KinematicsParameters linParamOrig;
 	KinematicsParameters angParamOrig;
 	trajectory_get_kinematics_param(&linParamOrig, &angParamOrig);
 
 	KinematicsParameters linParam = {50, 300, 300};
-	KinematicsParameters angParam = {1, 1, 1};
+	KinematicsParameters angParam = angParamOrig;
 
 	trajectory_set_kinematics_param(linParam, angParam);
 
@@ -98,7 +100,11 @@ void recalage()
 		goto free;
 	}
 
-	vTaskDelay(ms_to_tick(200));
+	vTaskDelay(200);
+	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
+	vTaskDelay(300);
+	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
+	elevator_set_position(10);
 	log(LOG_INFO, "recalage termine");
 
 free:
