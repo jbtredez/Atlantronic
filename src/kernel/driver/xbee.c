@@ -65,7 +65,9 @@ module_init(xbee_module_init, INIT_XBEE);
 void xbee_task(void* arg)
 {
 	(void) arg;
-	vTaskDelay(ms_to_tick(500));
+
+	vTaskDelay(ms_to_tick(1000));
+
 	usart_open(XBEE_USART, XBEE_OP_BAUDRATE);
 	usart_set_write_dma_buffer(XBEE_USART, xbee_tx_buffer_dma);
 	usart_set_read_dma_buffer(XBEE_USART, xbee_rx_buffer_dma);
