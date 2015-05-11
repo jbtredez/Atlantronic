@@ -17,6 +17,7 @@
 #include "kernel/state_machine/state_machine.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/detection.h"
+#include "kernel/match.h"
 #include "motion_speed_check.h"
 #include "pid.h"
 
@@ -49,14 +50,19 @@ static VectPlan motion_speed_mes;
 static VectPlan motion_dest;  //!< destination
 static systime motion_target_not_reached_start_time;
 static MotionSpeedCheck motion_linear_speed_check(100, 10);
-static Pid motion_x_pid(2, 0, 0, 100);// TODO voir saturation
+static Pid motion_x_pid(2.5, 0, 0, 100);// TODO voir saturation
 static Pid motion_theta_pid(8, 0.5, 0, 1); // TODO voir saturation
 static bool motion_antico_on = true;
 
 static void motion_update_motors();
 
 // machine a etats de motion
+#define MOTION_AUTO_ENABLE
+#ifndef MOTION_AUTO_ENABLE
 static uint8_t motion_enable_wanted = MOTION_ENABLE_WANTED_UNKNOWN;
+#else
+static uint8_t motion_enable_wanted = MOTION_ENABLE_WANTED_ON;
+#endif
 static void motion_state_disabled_entry();
 static void motion_state_disabled_run();
 static unsigned int motion_state_disabled_transition(unsigned int currentState);
@@ -183,19 +189,22 @@ static void motion_update_motors()
 		}
 	}
 
-	// ambiance selon la vitesse des roues
-	float pwm = fabsf(motion_kinematics[RIGHT_WHEEL].v) / 1000;
-	if( pwm > 1)
+	if( match_get_go() )
 	{
-		pwm = 1;
+		// ambiance selon la vitesse des roues
+		float pwm = fabsf(motion_kinematics[RIGHT_WHEEL].v) / 1000;
+		if( pwm > 1)
+		{
+			pwm = 1;
+		}
+		pwm_set(PWM_1, pwm);
+		pwm = fabsf(motion_kinematics[LEFT_WHEEL].v) / 1000;
+		if( pwm > 1)
+		{
+			pwm = 1;
+		}
+		pwm_set(PWM_2, pwm);
 	}
-	pwm_set(PWM_1, pwm);
-	pwm = fabsf(motion_kinematics[LEFT_WHEEL].v) / 1000;
-	if( pwm > 1)
-	{
-		pwm = 1;
-	}
-	pwm_set(PWM_2, pwm);
 
 	motion_speed_cmd = kinematics_model_compute_speed(VOIE_MOT_INV, motion_kinematics);
 }
@@ -208,7 +217,11 @@ void motion_enable_antico(bool enable)
 //---------------------- Etat MOTION_DISABLED ---------------------------------
 static void motion_state_disabled_entry()
 {
+#ifndef MOTION_AUTO_ENABLE
 	motion_enable_wanted = MOTION_ENABLE_WANTED_UNKNOWN;
+#else
+	motion_enable_wanted = MOTION_ENABLE_WANTED_ON;
+#endif
 }
 
 static void motion_state_disabled_run()
@@ -223,13 +236,20 @@ static void motion_state_disabled_run()
 
 static unsigned int motion_state_disabled_transition(unsigned int currentState)
 {
+#ifndef MOTION_AUTO_ENABLE
 	if( power_get() )
 	{
 		// puissance desactivee
 		motion_enable_wanted = MOTION_ENABLE_WANTED_UNKNOWN;
 	}
+#else
+	if( ! power_get() )
+	{
+		motion_enable_wanted = MOTION_ENABLE_WANTED_ON;
+	}
+#endif
 
-	if( motion_enable_wanted == MOTION_ENABLE_WANTED_ON )
+	if( motion_enable_wanted == MOTION_ENABLE_WANTED_ON && ! power_get() )
 	{
 		return MOTION_TRY_ENABLE;
 	}
@@ -277,7 +297,9 @@ static void motion_state_enabled_entry()
 {
 	if( motion_enable_wanted == MOTION_ENABLE_WANTED_ON )
 	{
+#ifndef MOTION_AUTO_ENABLE
 		motion_enable_wanted = MOTION_ENABLE_WANTED_UNKNOWN;
+#endif
 	}
 	motion_wanted_state = MOTION_WANTED_STATE_UNKNOWN;
 }
@@ -755,7 +777,8 @@ static unsigned int motion_state_generic_power_transition(unsigned int currentSt
 		return MOTION_DISABLED;
 	}
 
-	if( motion_enable_wanted == MOTION_ENABLE_WANTED_ON )
+	if( motion_enable_wanted == MOTION_ENABLE_WANTED_ON && currentState != MOTION_ACTUATOR_KINEMATICS &&
+		currentState != MOTION_SPEED && currentState != MOTION_TRAJECTORY && currentState != MOTION_INTERRUPTING)
 	{
 		return MOTION_ENABLED;
 	}

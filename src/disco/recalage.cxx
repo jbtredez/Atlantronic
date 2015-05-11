@@ -28,10 +28,14 @@ void recalage()
 	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
 	// TODO ranger porte tapis
 
-/*	KinematicsParameters linParam = {1000, 1500, 1500};
+	KinematicsParameters linParamOrig;
+	KinematicsParameters angParamOrig;
+	trajectory_get_kinematics_param(&linParamOrig, &angParamOrig);
+
+	KinematicsParameters linParam = {50, 300, 300};
 	KinematicsParameters angParam = {1, 1, 1};
 
-	trajectory_set_kinematics_param();*/
+	trajectory_set_kinematics_param(linParam, angParam);
 
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
@@ -52,7 +56,7 @@ void recalage()
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
-	vTaskDelay(ms_to_tick(20));
+	vTaskDelay(ms_to_tick(100));
 
 	trajectory_straight(-75);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
@@ -86,7 +90,7 @@ void recalage()
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
-	vTaskDelay(ms_to_tick(20));
+	vTaskDelay(ms_to_tick(100));
 
 	trajectory_straight(-20);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
@@ -98,6 +102,7 @@ void recalage()
 	log(LOG_INFO, "recalage termine");
 
 free:
+	trajectory_set_kinematics_param(linParamOrig, angParamOrig);
 //	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();

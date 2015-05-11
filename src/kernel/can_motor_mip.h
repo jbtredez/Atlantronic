@@ -88,6 +88,7 @@ class CanMipMotor : public CanMipNode
 		// realisation de rampes pour le moteur vu que cela ne se passe pas bien si on met v = 0 directement
 		KinematicsParameters kinematicsParam; //!< parametres cinematique en rpm
 		Kinematics kinematicsCmd;             //!< cinematique commandee en rpm
+		systime t_motor_online;
 
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);

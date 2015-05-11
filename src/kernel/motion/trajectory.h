@@ -47,6 +47,8 @@ struct trajectory_cmd_arg
 	float dist;
 } __attribute__ (( packed ));
 
+void trajectory_get_kinematics_param(KinematicsParameters* linParam, KinematicsParameters* angParam);
+
 void trajectory_set_kinematics_param(KinematicsParameters linParam, KinematicsParameters angParam);
 
 //!< roue libre

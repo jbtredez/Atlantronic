@@ -140,15 +140,15 @@ static void match_cmd_color(void* arg)
 	{
 		if(new_color == COLOR_GREEN)
 		{
-			pwm_set(PWM_1, 0);
-			pwm_set(PWM_2, 0.5);
+			pwm_set(PWM_1, 0.5);
+			pwm_set(PWM_2, 0);
 			match_color = COLOR_GREEN;
 			log(LOG_INFO, "couleur => vert");
 		}
 		else
 		{
-			pwm_set(PWM_1, 0.5);
-			pwm_set(PWM_2, 0);
+			pwm_set(PWM_1, 0);
+			pwm_set(PWM_2, 0.5);
 			match_color = COLOR_YELLOW;
 			log(LOG_INFO, "couleur => jaune");
 		}
@@ -186,15 +186,16 @@ portBASE_TYPE match_set_color_from_isr(void)
 		int ioColor = GPIO_MASK(IO_COLOR) & gpio_get_state();
 		if(ioColor)
 		{
+
 			pwm_set(PWM_1, 0.5);
 			pwm_set(PWM_2, 0);
-			match_color = COLOR_YELLOW;
+			match_color = COLOR_GREEN;
 		}
 		else
 		{
 			pwm_set(PWM_1, 0);
 			pwm_set(PWM_2, 0.5);
-			match_color = COLOR_GREEN;
+			match_color = COLOR_YELLOW;
 		}
 	}
 	return 0;

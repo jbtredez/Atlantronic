@@ -45,7 +45,7 @@ static uint8_t trajectory_graph_valid_links[GRAPH_NUM_LINK];
 static uint8_t trajectory_graph_way[GRAPH_NUM_NODE];
 static int trajectory_graph_way_count;
 static uint8_t trajectory_graph_way_id;
-KinematicsParameters trajectory_linear_param = {1000, 600, 600};
+KinematicsParameters trajectory_linear_param = {900, 600, 600};
 KinematicsParameters trajectory_angular_param = {3, 5, 5};
 
 static int trajectory_module_init()
@@ -500,6 +500,14 @@ void trajectory_set_kinematics_param(KinematicsParameters linParam, KinematicsPa
 	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
 	trajectory_linear_param = linParam;
 	trajectory_angular_param = angParam;
+	xSemaphoreGive(trajectory_mutex);
+}
+
+void trajectory_get_kinematics_param(KinematicsParameters* linParam, KinematicsParameters* angParam)
+{
+	xSemaphoreTake(trajectory_mutex, portMAX_DELAY);
+	*linParam = trajectory_linear_param;
+	*angParam = trajectory_angular_param;
 	xSemaphoreGive(trajectory_mutex);
 }
 

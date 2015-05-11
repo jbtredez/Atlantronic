@@ -150,6 +150,13 @@ void CanMipMotor::enable(bool enable)
 {
 	struct can_msg msg;
 
+	// on evite de le faire trop vite enable (moteur pas vraiement pret)
+	systime t = systick_get_time();
+	if( (t - t_motor_online).ms < 100)
+	{
+		enable = false;
+	}
+
 	msg.id = 0x01 + (nodeId << 3);
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
@@ -161,6 +168,7 @@ void CanMipMotor::enable(bool enable)
 			if( mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN )
 			{
 				// init position + enable
+				log_format(LOG_INFO, "mip init %d", nodeId);
 				msg.size = 2;
 				msg.data[0] = CAN_MIP_CMD_RAZ;
 				msg.data[1] = 0x01;
@@ -168,14 +176,16 @@ void CanMipMotor::enable(bool enable)
 			}
 			else
 			{
+				log_format(LOG_INFO, "mip enable %d", nodeId);
 				msg.size = 1;
 				msg.data[0] = CAN_MIP_CMD_ENABLE;
 				can_write(&msg, 0);
 			}
 		}
 	}
-	else if( ! enable && (mipState & CAN_MIP_MOTOR_STATE_POWERED) )
+	else if( mipState & CAN_MIP_MOTOR_STATE_POWERED )
 	{
+		log_format(LOG_INFO, "mip disable %d", nodeId);
 		msg.size = 1;
 		msg.data[0] = CAN_MIP_CMD_DISABLE;
 		can_write(&msg, 0);
@@ -190,6 +200,12 @@ void CanMipMotor::set_speed(float v)
 	kinematicsCmd.setSpeed(v, kinematicsParam, CONTROL_DT);
 	v = kinematicsCmd.v;
 	uint16_t speed = fabsf(v);
+
+	if( state != CAN_MOTOR_MIP_READY )
+	{
+		// moteur pas pret, on ne fait rien
+		return;
+	}
 
 	if( speed == 0 && lastSpeedCmd == 0 && ! (mipState & CAN_MIP_MOTOR_STATE_IN_MOTION) )
 	{
@@ -241,6 +257,7 @@ void CanMipMotor::rxMsg(struct can_msg *msg)
 	if( state == CAN_MOTOR_MIP_DISCONNECTED)
 	{
 		state = CAN_MOTOR_MIP_INIT;
+		t_motor_online = systick_get_time();
 	}
 
 	// decodage msg
