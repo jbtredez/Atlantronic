@@ -128,6 +128,7 @@ void CanMipMotor::update(portTickType absTimeout)
 	{
 		case CAN_MOTOR_MIP_INIT:
 			fault(fault_disconnected_id, FAULT_CLEAR);
+			log_format(LOG_INFO, "configure mip %d max voltage", nodeId);
 			configure(MOTOR_CONF_IDX_MANUAL_VOLTAGE, 28300);
 			state = CAN_MOTOR_MIP_READY;
 			break;
