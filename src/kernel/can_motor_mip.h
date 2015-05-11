@@ -89,6 +89,8 @@ class CanMipMotor : public CanMipNode
 		KinematicsParameters kinematicsParam; //!< parametres cinematique en rpm
 		Kinematics kinematicsCmd;             //!< cinematique commandee en rpm
 		systime t_motor_online;
+		systime lastRaz;
+		systime lastMotionEnable;
 
 		void update(portTickType absTimeout);
 		void rxMsg(struct can_msg *msg);

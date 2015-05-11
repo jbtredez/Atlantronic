@@ -98,7 +98,12 @@ void CanMipMotor::update(portTickType absTimeout)
 		kinematics.v = 0;
 		if( (t - last_communication_time).ms > 200 )
 		{
-			if( (t - lastPowerOffTime).ms > 500 && power_get() == 0 && adc_filtered_data.vBat > 10)
+			if( power_get() != 0 || adc_filtered_data.vBat < 10)
+			{
+				lastPowerOffTime = systick_get_time();
+				power_clear(POWER_OFF_MIP_MOTOR);
+			}
+			else if( (t - lastPowerOffTime).ms > 500 )
 			{
 				// le moteur s'est arrete a cause d'un pb de suivit..., on coupe l'alim du contoleur pour le relancer
 				lastPowerOffTime = systick_get_time();
@@ -130,6 +135,19 @@ void CanMipMotor::update(portTickType absTimeout)
 			fault(fault_disconnected_id, FAULT_CLEAR);
 			log_format(LOG_INFO, "configure mip %d max voltage", nodeId);
 			configure(MOTOR_CONF_IDX_MANUAL_VOLTAGE, 28300);
+			{
+				struct can_msg msg;
+				msg.id = 0x01 + (nodeId << 3);
+				msg.format = CAN_STANDARD_FORMAT;
+				msg.type = CAN_DATA_FRAME;
+				// init position + enable
+				lastRaz = systick_get_time();
+				log_format(LOG_INFO, "mip init %d", nodeId);
+				msg.size = 2;
+				msg.data[0] = CAN_MIP_CMD_RAZ;
+				msg.data[1] = 0x01;
+				can_write(&msg, 0);
+			}
 			state = CAN_MOTOR_MIP_READY;
 			break;
 		case CAN_MOTOR_MIP_DISCONNECTED:
@@ -150,9 +168,14 @@ void CanMipMotor::enable(bool enable)
 {
 	struct can_msg msg;
 
+	if( state == CAN_MOTOR_MIP_DISCONNECTED)
+	{
+		return;
+	}
+
 	// on evite de le faire trop vite enable (moteur pas vraiement pret)
 	systime t = systick_get_time();
-	if( (t - t_motor_online).ms < 100)
+	if( (t - t_motor_online).ms < 200)
 	{
 		enable = false;
 	}
@@ -167,15 +190,20 @@ void CanMipMotor::enable(bool enable)
 		{
 			if( mipState & CAN_MIP_MOTOR_STATE_POSITION_UNKNOWN )
 			{
-				// init position + enable
-				log_format(LOG_INFO, "mip init %d", nodeId);
-				msg.size = 2;
-				msg.data[0] = CAN_MIP_CMD_RAZ;
-				msg.data[1] = 0x01;
-				can_write(&msg, 0);
+				if( (t - lastRaz).ms > 1000 )
+				{
+					// init position + enable
+					lastRaz = t;
+					log_format(LOG_INFO, "mip init %d", nodeId);
+					msg.size = 2;
+					msg.data[0] = CAN_MIP_CMD_RAZ;
+					msg.data[1] = 0x01;
+					can_write(&msg, 0);
+				}
 			}
-			else
+			else if( (t - lastMotionEnable).ms > 1000 )
 			{
+				lastMotionEnable = t;
 				log_format(LOG_INFO, "mip enable %d", nodeId);
 				msg.size = 1;
 				msg.data[0] = CAN_MIP_CMD_ENABLE;
