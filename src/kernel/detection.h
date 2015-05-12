@@ -10,7 +10,7 @@
 
 #define DETECTION_NUM_OBJECT                100
 #define DETECTION_NUM_OBJECT_USB             10
-#define DETECTION_OPPONENT_ROBOT_RADIUS     150
+#define DETECTION_OPPONENT_ROBOT_RADIUS     200
 
 enum detection_type
 {

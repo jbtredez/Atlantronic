@@ -584,7 +584,7 @@ static void motion_state_trajectory_run()
 		{
 			// detection adverse
 			float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(motion_pos_mes.x, motion_pos_mes.y), Vect2(u.x, u.y));
-			opponentMinDistance -= PARAM_RIGHT_CORNER_X;
+			opponentMinDistance = opponentMinDistance - PARAM_RIGHT_CORNER_X - PARAM_FINGER_SIZE_X;
 			opponentMinDistance /= 2; // facteur de securite
 			
 			// detection statique
@@ -616,7 +616,7 @@ static void motion_state_trajectory_run()
 				curvilinearKinematicsParam.vMax = vMaxSlowDown;
 			}
 
-			if( vMaxSlowDown == 0 )
+			if( vMaxSlowDown < EPSILON )
 			{
 				log(LOG_INFO, "MOTION_COLSISION");
 				motion_status = MOTION_COLSISION;
