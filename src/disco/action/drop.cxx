@@ -68,10 +68,6 @@ int drop::do_action()
 		}
 	} while(  result ==-1 ) ;
 
-	// faut pas monter l'ascenseur au dela de 100 avec la pince du haut ouverte (sinon, ça frotte sur l'étage du milieu).
-	elevator_set_position(100);
-
-	vTaskDelay(100);
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	vTaskDelay(400);
 	

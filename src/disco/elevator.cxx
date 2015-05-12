@@ -14,7 +14,7 @@
 #define ELEVATOR_DT             0.001
 
 #define ELEVATOR_MIN                0
-#define ELEVATOR_MAX              150
+#define ELEVATOR_MAX               85
 #define ELEVATOR_MAX_SPEED        100
 
 static StepperDriver elevatorMotor(IO_ELEVATOR_STEP, IO_ELEVATOR_DIR, 5, ELEVATOR_MAX_SPEED, 1000, 1000);

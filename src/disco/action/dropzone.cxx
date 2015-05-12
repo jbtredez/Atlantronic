@@ -103,10 +103,6 @@ int dropzone::do_action()
 
 	essai = 0;
 
-	// faut pas monter l'ascenseur au dela de 100 avec la pince du haut ouverte (sinon, ça frotte sur l'étage du milieu).
-	elevator_set_position(100);
-
-	vTaskDelay(100);
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	vTaskDelay(400);
 	result = -1;
@@ -120,7 +116,6 @@ int dropzone::do_action()
 		essai++;
 		if(essai == 3)
 		{
-			elevator_set_position(0);
 			return -1;
 		}
 	}while(  result ==-1 ) ;
@@ -129,7 +124,9 @@ int dropzone::do_action()
 
 	vTaskDelay(100);
 
-	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);	
+	finger_set_pos(FINGER_CLOSE, FINGER_OPEN);
+	vTaskDelay(100);
+	finger_set_pos(FINGER_CLOSE, FINGER_HALF_CLOSE);
 	m_elevator->setnumberelement(0);
  	m_elevator->setelevatorstate(ELEVATOR_EMPTY);
 	m_dropposition = m_dropposition - 110;

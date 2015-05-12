@@ -24,7 +24,7 @@ void recalage()
 	location_set_position(pos.symetric(color));
 
 	wing_set_position(WING_PARK, WING_PARK);
-	elevator_set_position(100);
+	elevator_set_position(85);
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
 	vTaskDelay(500);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
