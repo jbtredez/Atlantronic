@@ -18,9 +18,10 @@ class action
 	
 
 	int m_actiontype;
-
+	char * m_name;
 	int get_try(){return m_try;};
 	VectPlan get_firstcheckpoint(){return m_firstcheckpoint;};
+	char* get_name(){return m_name;};
 
 	int get_actiontype(){return m_actiontype;};
 	void set_actiontype(int actiontype){m_actiontype = actiontype;};
@@ -32,7 +33,7 @@ class action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////	
-	action(VectPlan firstcheckpoint);
+	action(VectPlan firstcheckpoint,char * name);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
@@ -47,14 +48,14 @@ class action
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	virtual void Initialise(int stratcolor){ m_firstcheckpoint.symetric(stratcolor) ;};
+	virtual void Initialise(int stratcolor){ m_firstcheckpoint.x = m_firstcheckpoint.x * stratcolor;m_firstcheckpoint.theta = M_PI - m_firstcheckpoint.theta; };
 	////////////////////////////////////////////////
 	/// function    : do_action()
 	/// descrition  : execute the action
 	/// param       : none
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
-	virtual int  do_action(){;return -1;};
+	virtual int  do_action(){	log_format(LOG_INFO , m_name);return -1;};
 	
 };
 

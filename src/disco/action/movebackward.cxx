@@ -9,7 +9,7 @@
 #define LIGHT_APPROX_DIST       100
 
 
-movebackward::movebackward(VectPlan firstcheckpoint):action(firstcheckpoint)
+movebackward::movebackward(VectPlan firstcheckpoint, char * name):action(firstcheckpoint, name)
 {
 
 }
@@ -22,6 +22,9 @@ movebackward::movebackward(VectPlan firstcheckpoint):action(firstcheckpoint)
 ////////////////////////////////////////////////
 int movebackward::do_action()
 {
+
+	action::do_action();
+
 	do
 	{
 	    trajectory_goto(m_firstcheckpoint, WAY_BACKWARD, AVOIDANCE_STOP);

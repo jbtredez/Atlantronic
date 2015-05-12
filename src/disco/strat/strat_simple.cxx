@@ -2,6 +2,7 @@
 #include "kernel/log.h"
 #include "kernel/motion/trajectory.h"
 
+#include "kernel/log.h"
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
@@ -17,6 +18,7 @@
 void stratsimple::Initialise(int stratcolor)
 {
 	m_stratcolor = stratcolor;
+	log_format(LOG_INFO, "couleur %d", (int)stratcolor );
 	for(int i = 0 ; i < m_size_actionlist ; i++)
 	{
 		if( m_list_action[i] != 0 )

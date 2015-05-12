@@ -13,7 +13,7 @@
 #include "kernel/math/vect_plan.h"
 
 #define FEET_APPROX_DIST       90
-feet::feet(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
+feet::feet(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{

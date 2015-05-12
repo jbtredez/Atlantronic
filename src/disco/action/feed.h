@@ -19,7 +19,7 @@ class feed : public actioncomposite
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	feed(VectPlan firstcheckpoint,robotstate * elevator);
+	feed(VectPlan firstcheckpoint, char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor

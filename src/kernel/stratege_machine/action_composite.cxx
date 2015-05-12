@@ -10,7 +10,7 @@
 /// param       : firstcheckpoint : VectPlan first checkpoint of the action
 /// retrun      : none
 ////////////////////////////////////////////////	
-actioncomposite::actioncomposite(VectPlan firstcheckpoint):action(firstcheckpoint)
+actioncomposite::actioncomposite(VectPlan firstcheckpoint,char * name):action(firstcheckpoint,name)
 {
 	m_try = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)

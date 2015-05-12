@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-light::light(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
+light::light(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -33,6 +33,9 @@ int light::do_action()
 	int result = -1;
 	int essai = 0;
 	int nbelement = m_elevator->getnumberelement();
+
+
+	action::do_action();
 	
 	//Si la reserve est pleine on quitte la fonction
 	if(m_elevator->getnumberelement() >= MAX_ELEMENT)

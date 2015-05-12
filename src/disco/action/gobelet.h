@@ -18,7 +18,7 @@ class gobelet : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	gobelet(VectPlan firstcheckpoint,robotstate * elevator);
+	gobelet(VectPlan firstcheckpoint, char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor

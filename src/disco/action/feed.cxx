@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-feed::feed(VectPlan firstcheckpoint,robotstate * elevator):actioncomposite(firstcheckpoint)
+feed::feed(VectPlan firstcheckpoint,char * name, robotstate * elevator):actioncomposite(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -34,6 +34,9 @@ int feed::do_action()
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
 	VectPlan position = location_get_position();
 	action * p_action;
+
+
+	action::do_action();
 
 	switch(elevator_state)
 	{

@@ -13,7 +13,7 @@
 #include "kernel/math/vect_plan.h"
 
 #define GOBELET_APPROX_DIST       100
-gobelet::gobelet(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
+gobelet::gobelet(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -35,6 +35,7 @@ int gobelet::do_action()
 	int result = -1;
 	int essai = 0;
 
+	action::do_action();
 
 	//Si la reserve est pleine on quitte la fonction
 	if(m_elevator->getelevatorstate() != ELEVATOR_EMPTY)

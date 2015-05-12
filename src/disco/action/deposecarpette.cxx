@@ -10,9 +10,12 @@
 #include "kernel/math/vect_plan.h"
 #include "deposecarpette.h"
 
-deposecarpette::deposecarpette(VectPlan firstcheckpoint,robotstate * robot, bool right):action(firstcheckpoint)
+deposecarpette::deposecarpette(VectPlan firstcheckpoint,char * name,robotstate * robot, bool right):action(firstcheckpoint,name)
 {
-	m_robot =  robot;
+	if( m_robot != 0)
+	{
+		m_robot =  robot;
+	}
 	m_right = right;
 	m_actiontype = ACTION_CARPET;
 }
@@ -25,6 +28,7 @@ deposecarpette::deposecarpette(VectPlan firstcheckpoint,robotstate * robot, bool
 ////////////////////////////////////////////////
 int deposecarpette::do_action()
 {
+	action::do_action();
 	int bresult = 0;
 
 	VectPlan nextToDropCarpette ;
@@ -41,7 +45,6 @@ int deposecarpette::do_action()
 	}
 	nextToDropCarpette = m_firstcheckpoint;
 
-	log_format(LOG_INFO , "Action Depose Carpette");
 	//On se déplace prés de l'escalier et on se met en position
 	nextToDropCarpette.theta = -1.57f;
 
@@ -66,7 +69,7 @@ int deposecarpette::do_action()
 	// pas de verif target reached, on est peut etre en collision avec la marche.
 
 	//On baisse pour déposer la carpette
-	if( m_right )
+	if( m_right)
 	{
 		carpet_set_pos(CARPET_DOWN, CARPET_UP);
 	}
@@ -74,6 +77,7 @@ int deposecarpette::do_action()
 	{
 		carpet_set_pos(CARPET_UP, CARPET_DOWN);
 	}
+
 	vTaskDelay(1000);
 	carpet_set_pos(CARPET_UP, CARPET_UP);
 
@@ -107,10 +111,4 @@ int deposecarpette::do_action()
 	return bresult;
 }
 
-void deposecarpette::Initialise(int stratcolor)
-{
-	if( stratcolor == COLOR_YELLOW )
-	{
-		m_right = !m_right;
-	}
-}
+

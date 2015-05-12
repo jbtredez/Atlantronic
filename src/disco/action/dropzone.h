@@ -21,7 +21,7 @@ class dropzone : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	dropzone(VectPlan firstcheckpoint,robotstate * elevator);
+	dropzone(VectPlan firstcheckpoint, char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor

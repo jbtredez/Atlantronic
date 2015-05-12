@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-clapet::clapet(VectPlan firstcheckpoint,robotstate * robot):action(firstcheckpoint)
+clapet::clapet(VectPlan firstcheckpoint,char * name, robotstate * robot):action(firstcheckpoint, name)
 {
 	if(robot != 0)
 	{
@@ -40,6 +40,7 @@ int clapet::do_action()
 	wing_cmd_type right = WING_PARK ;
 
 
+	action::do_action();
 
 	if(m_try < 0 )
 	{

@@ -18,7 +18,7 @@ class drop : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	drop(VectPlan firstcheckpoint,robotstate * elevator);
+	drop(VectPlan firstcheckpoint, char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~drop()
 	/// descrition  : destructor

@@ -28,7 +28,7 @@ class actioncomposite : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////	
-	actioncomposite(VectPlan firstcheckpoint);
+	actioncomposite(VectPlan firstcheckpoint, char * name);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
