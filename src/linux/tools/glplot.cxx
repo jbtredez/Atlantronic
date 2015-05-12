@@ -353,6 +353,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 void qemu_set_parameters()
 {
 	qemu->setPosition(qemuStartPos);
+	qemu->set_io(GPIO_MASK(IO_COLOR), true);
 
 	// ajout de la table dans qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -1016,7 +1017,7 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 {
 	static int color = COLOR_GREEN;
-	static bool ioColor = false;
+	static bool ioColor = true;
 
 	if( color == COLOR_GREEN )
 	{
