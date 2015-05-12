@@ -50,14 +50,14 @@ int feet::do_action()
 
 	//On serre les élément 
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
-	vTaskDelay(300);
+	vTaskDelay(500);
 
 	//On souleve la pile pour ajouter le nouvel element
 	elevator_set_position(85);
 
 	do 
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
 
 		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{

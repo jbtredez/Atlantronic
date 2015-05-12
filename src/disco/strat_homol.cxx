@@ -20,6 +20,7 @@
 #include "disco/action/dropzone.h"
 #include "disco/action/movebackward.h"
 #include "disco/action/light.h"
+#include "disco/action/deposecarpette.h"
 
 
 #include "strat/strat_simple.h"
@@ -69,9 +70,6 @@ static void strat_task(void* arg)
 	VectPlan firstcheckpoint(730 ,-770,0.0f);
 	clapet clap1(firstcheckpoint,&robothomologation);
 
-
-
-
 	//start
 	firstcheckpoint.x = 1000;
 	firstcheckpoint.y = 0;
@@ -103,11 +101,19 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
 	dropzone dropstartzone(firstcheckpoint,&robothomologation);
+/*
+ // TODO tapis : OK mais on passe sur un verre avant d'y aller...
+	// Carpet1
+	firstcheckpoint.x = 390;
+	firstcheckpoint.y = 200;
+	deposecarpette carpet1(firstcheckpoint,&robothomologation, false);
 
-	
-
+	// Carpet2
+	firstcheckpoint.x = 110;
+	firstcheckpoint.y = 200;
+	deposecarpette carpet2(firstcheckpoint,&robothomologation, true);
+*/
 	stratsimple strat;
-
 
 	strat.add_action(&light1);
 	strat.add_action(&startzone);
@@ -116,19 +122,16 @@ static void strat_task(void* arg)
 	strat.add_action(&feet3);
 	strat.add_action(&clap1);
 	strat.add_action(&dropstartzone);
-
-
+//	strat.add_action(&carpet1);
+//	strat.add_action(&carpet2);
 
 	match_wait_go();
 	strat_color = match_get_color();
 	log_format(LOG_ERROR, "couleur %d", (int)strat_color );
 	
-	
 
 	strat.Initialise(strat_color);
 	strat.run();
-	
-
 
 
 	while(1)

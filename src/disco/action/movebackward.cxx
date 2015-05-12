@@ -12,7 +12,6 @@
 movebackward::movebackward(VectPlan firstcheckpoint):action(firstcheckpoint)
 {
 
-	 
 }
 
 ////////////////////////////////////////////////
@@ -23,9 +22,6 @@ movebackward::movebackward(VectPlan firstcheckpoint):action(firstcheckpoint)
 ////////////////////////////////////////////////
 int movebackward::do_action()
 {
-
-
-
 	do
 	{
 	    trajectory_goto(m_firstcheckpoint, WAY_BACKWARD, AVOIDANCE_STOP);

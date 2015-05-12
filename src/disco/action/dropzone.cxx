@@ -19,7 +19,7 @@ dropzone::dropzone(VectPlan firstcheckpoint,robotstate * elevator):action(firstc
 	{
 		m_elevator = elevator;	
 	}
-	m_dropposition = 200; 
+	m_dropposition = 200;
 	m_actiontype = ACTION_DROPZONE;
 }
 
@@ -53,7 +53,14 @@ int dropzone::do_action()
 	{
 		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 		
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		{
+			result = 0;
+		}
+
+		// on n'a pas besoin de precision ici. Si on est sur la zone, c'est bon.
+		// TODO on regarde le target not reached (pour eliminer collision) => verifier position actuelle a la place
+		if( trajectory_get_state() == TRAJECTORY_STATE_TARGET_NOT_REACHED)
 		{
 			result = 0;
 		}
@@ -66,28 +73,32 @@ int dropzone::do_action()
 		}
 	} while(  result ==-1 ) ;
 
+	if(dropzone.x <0 )
+	{
+		dropzone.x = dropzone.x - m_dropposition;
+		dropzone.theta = 3.14;
+	}
+	else
+	{
+		dropzone.x = dropzone.x + m_dropposition;
+		dropzone.theta = 00.0f;
+	}
+
 	essai = 0;
 	result = -1;
 	do 
 	{
-		
-		if(dropzone.x <0 )
-		{
-			dropzone.x = dropzone.x - m_dropposition;
-			dropzone.theta = 3.14;
-			
-		}
-		else
-		{
-			dropzone.x = dropzone.x + m_dropposition;
-			dropzone.theta = 00.0f;
-			
-		}
-
 		//on se déplace dans la zone de départ
 		trajectory_goto_near(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		{
+			result = 0;
+		}
+
+		// on n'a pas besoin de precision ici. Si on est sur la zone, c'est bon.
+		// TODO on regarde le target not reached (pour eliminer collision) => verifier position actuelle a la place
+		if( trajectory_get_state() == TRAJECTORY_STATE_TARGET_NOT_REACHED)
 		{
 			result = 0;
 		}

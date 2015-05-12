@@ -47,7 +47,7 @@ class action
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	virtual void Initialise(int stratcolor){ m_firstcheckpoint.x = stratcolor *  m_firstcheckpoint.x ;};
+	virtual void Initialise(int stratcolor){ m_firstcheckpoint.symetric(stratcolor) ;};
 	////////////////////////////////////////////////
 	/// function    : do_action()
 	/// descrition  : execute the action

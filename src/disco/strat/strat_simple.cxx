@@ -24,7 +24,6 @@ void stratsimple::Initialise(int stratcolor)
 			m_list_action[i]->Initialise(stratcolor);
 		}
 	}
-
 }
 
 
@@ -66,6 +65,5 @@ int stratsimple::run()
 		}
 	}
 	return 0;
-
 }
 

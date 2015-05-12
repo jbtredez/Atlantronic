@@ -703,7 +703,7 @@ static void motion_state_trajectory_run()
 					systime detla = t - motion_target_not_reached_start_time;
 					if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
 					{
-						log(LOG_INFO, "MOTION_TARGET_NOT_REACHED");
+						log_format(LOG_INFO, "MOTION_TARGET_NOT_REACHED error %d %d %d", (int)err.x, (int)err.y, (int)(err.theta * 180 / M_PI));
 						motion_status = MOTION_TARGET_NOT_REACHED;
 						goto error;
 					}

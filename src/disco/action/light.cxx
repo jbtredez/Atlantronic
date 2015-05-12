@@ -45,7 +45,7 @@ int light::do_action()
 
 	do 
 	{
-		trajectory_goto_near(m_firstcheckpoint, LIGHT_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near(m_firstcheckpoint, LIGHT_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
 		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;

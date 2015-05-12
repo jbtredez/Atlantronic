@@ -6,7 +6,9 @@
 class deposecarpette : public action
 {
 	private :
-	robotstate * m_robot;
+		robotstate * m_robot;
+		bool m_right;
+
 	public:
 	////////////////////////////////////////////////
 	/// function    : deposecarpette()
@@ -14,7 +16,7 @@ class deposecarpette : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	deposecarpette(VectPlan firstcheckpoint,robotstate * robot);
+	deposecarpette(VectPlan firstcheckpoint,robotstate * robot, bool right);
 
 	////////////////////////////////////////////////
 	/// function    : ~deposecarpette()
@@ -31,7 +33,7 @@ class deposecarpette : public action
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
-
+	virtual void Initialise(int stratcolor);
 }; 
 
 #endif

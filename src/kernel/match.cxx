@@ -75,6 +75,7 @@ static void match_task(void *arg)
 	match_end = 1;
 	log(LOG_INFO, "Fin du match");
 
+	// TODO ouvrir les pince
 	power_set(POWER_OFF_END_MATCH);
 	exitModules();
 
