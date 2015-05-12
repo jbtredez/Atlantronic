@@ -17,6 +17,7 @@ class MotionSpeedCheck
 		MotionSpeedCheck(float deltaMax, int delayInCycle);
 
 		enum motion_check_speed compute(float cons, float mes);
+		void reset();
 
 	protected:
 		float m_deltaMax;

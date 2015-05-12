@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-#define FEET_APPROX_DIST       100
+#define FEET_APPROX_DIST       90
 feet::feet(VectPlan firstcheckpoint,robotstate * elevator):action(firstcheckpoint)
 {
 	if(elevator != 0)
@@ -49,11 +49,12 @@ int feet::do_action()
 	}
 
 	//On serre les élément 
-	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
+	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
 	vTaskDelay(300);
 
-	//On souleve la pile pour ajouter le nouvel element 
-	elevator_set_position(80);
+	//On souleve la pile pour ajouter le nouvel element
+	elevator_set_position(85);
+
 	do 
 	{
 		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
@@ -73,14 +74,14 @@ int feet::do_action()
 		
 	} while(  result ==-1 ) ;
 
-	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_OPEN);
 	vTaskDelay(500);
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	elevator_set_position(0);
 	vTaskDelay(800);
 
 
-	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);
+	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_OPEN);
 	vTaskDelay(200);
 	
 	//Vérifie si on a attrapé quelque chose
@@ -90,7 +91,7 @@ int feet::do_action()
 	 	m_elevator->setelevatorstate(ELEVATOR_FEET);
 
 		//(FINGER_HALF_CLOSE). Cela ne serre pas le pied et le pied reste bloqué. On ne solicite pas non plus
-		finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_CLOSE);		
+		finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_OPEN);
 		m_try = -1;
 
 		return 0;

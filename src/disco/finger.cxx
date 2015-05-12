@@ -57,7 +57,7 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 			ax12.set_goal_position(AX12_HIGH_FINGER, 30*M_PI/180);
 			break;
 		case FINGER_HALF_CLOSE:
-			ax12.set_goal_position(AX12_HIGH_FINGER, 60*M_PI/180);
+			ax12.set_goal_position(AX12_HIGH_FINGER, 50*M_PI/180);
 			break;
 		case FINGER_HALF_OPEN:
 			ax12.set_goal_position(AX12_HIGH_FINGER, 60*M_PI/180);

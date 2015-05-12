@@ -25,7 +25,7 @@
 #include "strat/strat_simple.h"
 
 
-#define STRAT_STACK_SIZE       300
+#define STRAT_STACK_SIZE       500
 
 //Action : recherche la balle, les pieds puis basse le clapet et fini par déposer le spotlight dans la zone principale
 
@@ -61,12 +61,12 @@ static void strat_task(void* arg)
 	(void) arg;
 
 	robotstate robothomologation;
-	robothomologation.setnumberelement(1);
+	robothomologation.setnumberelement(0);
 	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
 
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(730 ,-785,0.0f);	
+	VectPlan firstcheckpoint(730 ,-770,0.0f);
 	clapet clap1(firstcheckpoint,&robothomologation);
 
 
@@ -98,7 +98,6 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 400;
 	firstcheckpoint.y = -770;
 	feet feet3(firstcheckpoint,&robothomologation);
-	
 	
 	//Dropstart 
 	firstcheckpoint.x = 950;

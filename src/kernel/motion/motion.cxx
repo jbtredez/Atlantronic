@@ -531,6 +531,7 @@ static void motion_state_trajectory_entry()
 	motion_target_not_reached_start_time.ns = 0;
 	motion_x_pid.reset();
 	motion_theta_pid.reset();
+	motion_linear_speed_check.reset();
 }
 
 static void motion_state_trajectory_run()

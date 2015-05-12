@@ -19,6 +19,11 @@ class StepperDriver
 			m_wanted_pos = pos;
 		}
 
+		inline float getWantedPosition()
+		{
+			return m_wanted_pos;
+		}
+
 		inline void setCurrentPosition(float pos)
 		{
 			m_kinematics.pos = pos;

@@ -24,9 +24,9 @@ void recalage()
 	location_set_position(pos.symetric(color));
 
 	wing_set_position(WING_PARK, WING_PARK);
-	elevator_set_position(120);
+	elevator_set_position(100);
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
-	vTaskDelay(300);
+	vTaskDelay(500);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
 	// TODO ranger porte tapis ?
 
@@ -36,6 +36,9 @@ void recalage()
 
 	KinematicsParameters linParam = {50, 300, 300};
 	KinematicsParameters angParam = angParamOrig;
+	angParam.vMax /= 2;
+	angParam.aMax /= 2;
+	angParam.dMax /= 2;
 
 	trajectory_set_kinematics_param(linParam, angParam);
 

@@ -65,6 +65,10 @@ static void elevator_task(void* /*arg*/)
 		{
 			// on vient de passer en butee
 			elevatorMotor.setCurrentPosition(0);
+			if( elevatorMotor.getWantedPosition() < 0 )
+			{
+				elevatorMotor.setPosition(0);
+			}
 		}
 		switchActiveLastCycle = switchActive;
 
@@ -85,6 +89,13 @@ void elevator_set_position(float pos)
 		log_format(LOG_ERROR, "pos out of range : %d > %d, moving to max", (int)pos, (int)ELEVATOR_MAX);
 		pos = ELEVATOR_MAX;
 	}
+
+	if( pos == ELEVATOR_MIN )
+	{
+		// on souhaite aller jusqu'au switch
+		pos = ELEVATOR_MIN - 2;
+	}
+
 	elevatorMotor.setPosition(pos);
 }
 
