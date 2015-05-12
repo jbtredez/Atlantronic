@@ -79,7 +79,7 @@ void xbee_task(void* arg)
 			xbee_status = xbee_init();
 			if( xbee_status == XBEE_STATUS_DISCONNECTED)
 			{
-				vTaskDelay(ms_to_tick(100));
+				vTaskDelay(ms_to_tick(500));
 				continue;
 			}
 		}
