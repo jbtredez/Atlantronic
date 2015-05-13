@@ -21,7 +21,13 @@ static int finger_module_init()
 	return 0;
 }
 
+static void finger_module_exit()
+{
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+}
+
 module_init(finger_module_init, INIT_FINGER);
+module_exit(finger_module_exit, EXIT_FINGER);
 
 void finger_set_pos(enum finger_type low, enum finger_type high)
 {

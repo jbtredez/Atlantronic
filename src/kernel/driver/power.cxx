@@ -3,6 +3,8 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/driver/pwm.h"
+#include "kernel/FreeRTOS.h"
+#include "kernel/task.h"
 
 int power_state = POWER_ON;
 static void power_cmd(void* arg);
@@ -47,7 +49,15 @@ int power_module_init()
 	return 0;
 }
 
+void power_module_exit()
+{
+	// petite attente pour laisser un peu de rab au dynamixel
+	vTaskDelay(300);
+	power_set(POWER_OFF_END_MATCH);
+}
+
 module_init(power_module_init, INIT_POWER);
+module_exit(power_module_exit, EXIT_POWER);
 
 void power_set(int powerEventMask)
 {

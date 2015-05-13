@@ -71,5 +71,7 @@
 #define INIT_SYSTICK                  "99"
 
 #define EXIT_PWM                      "1"
+#define EXIT_FINGER                   "2"
+#define EXIT_POWER                   "10"
 
 #endif

@@ -71,13 +71,11 @@ static void match_task(void *arg)
 	msg[1] = t.ns;
 	msg[2] = match_time;
 	usb_add(USB_GO, &msg, sizeof(msg));
-	vTaskDelay(match_time);
-	match_end = 1;
-	log(LOG_INFO, "Fin du match");
 
-	// TODO ouvrir les pince
-	power_set(POWER_OFF_END_MATCH);
+	vTaskDelay(match_time);
+	log(LOG_INFO, "Fin du match");
 	exitModules();
+	match_end = 1;
 
 	vTaskSuspend(0);
 }
