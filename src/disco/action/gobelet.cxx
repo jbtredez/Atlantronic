@@ -64,7 +64,7 @@ int gobelet::do_action()
 		
 	} while(  result ==-1 ) ;
 
-	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
+	finger_set_pos(FINGER_GOBLET, FINGER_GOBLET);
 	vTaskDelay(300);
 	
 	//Vérifie si on a attrapé quelque chose
