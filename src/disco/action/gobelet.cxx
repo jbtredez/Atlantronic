@@ -37,19 +37,21 @@ int gobelet::do_action()
 
 	Action::do_action();
 
-	//Si la reserve est pleine on quitte la fonction
+	//Si la reserve n'est pas vide on quitte la fonction
 	if(m_elevator->getelevatorstate() != ELEVATOR_EMPTY)
 	{
 		return -1;
 	}
+
 	//On prend un nouvel element
-	elevator_set_position(200);
-	vTaskDelay(800);
+	elevator_set_position(0);
+	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
+
 	do 
 	{
 		trajectory_goto_near(m_firstcheckpoint, GOBELET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}
@@ -62,22 +64,18 @@ int gobelet::do_action()
 		
 	} while(  result ==-1 ) ;
 
-	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
-	vTaskDelay(500);
-	elevator_set_position(100);
-	vTaskDelay(800);
-	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	vTaskDelay(200);
+	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
+	vTaskDelay(300);
 	
 	//Vérifie si on a attrapé quelque chose
-	if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
-	{
+	//if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	//{
 		m_elevator->setelevatorstate(ELEVATOR_GOBELET);
 		m_try = -1;
 		return 0;
-	}
-	m_try++;
-	return -1;
+	//}
+	//m_try++;
+	//return -1;
 }
 	
 	
