@@ -137,10 +137,10 @@ static void strat_task(void* arg)
 
 	while(1)
 	{
-		wing_set_position(WING_OPEN, WING_OPEN);
+//		wing_set_position(WING_OPEN, WING_OPEN);
 		log_format(LOG_INFO, "WAIT NEW ORDER");
 		vTaskDelay(1000);
-		wing_set_position(WING_PARK, WING_PARK);
+//		wing_set_position(WING_PARK, WING_PARK);
 		vTaskDelay(1000);
 	}
 }
