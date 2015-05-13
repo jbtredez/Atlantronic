@@ -147,8 +147,30 @@ void CanMipMotor::update(portTickType absTimeout)
 				msg.data[0] = CAN_MIP_CMD_RAZ;
 				msg.data[1] = 0x01;
 				can_write(&msg, 0);
+
+				// disable
+				msg.size = 1;
+				msg.data[0] = CAN_MIP_CMD_DISABLE;
+				can_write(&msg, 0);
 			}
-			state = CAN_MOTOR_MIP_READY;
+			state = CAN_MOTOR_MIP_INIT_WAIT;
+			break;
+		case CAN_MOTOR_MIP_INIT_WAIT:
+			{
+				// disable
+				struct can_msg msg;
+				msg.id = 0x01 + (nodeId << 3);
+				msg.format = CAN_STANDARD_FORMAT;
+				msg.type = CAN_DATA_FRAME;
+				msg.size = 1;
+				msg.data[0] = CAN_MIP_CMD_DISABLE;
+				can_write(&msg, 0);
+				systime t = systick_get_time();
+				if( (t - t_motor_online).ms > 200 )
+				{
+					state = CAN_MOTOR_MIP_READY;
+				}
+			}
 			break;
 		case CAN_MOTOR_MIP_DISCONNECTED:
 		case CAN_MOTOR_MIP_READY:
