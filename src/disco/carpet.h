@@ -11,6 +11,7 @@ enum carpet_type
 {
 	CARPET_UP,
 	CARPET_DOWN,
+	CARPET_NO_MOVE,
 };
 
 void carpet_set_pos(enum carpet_type right, enum carpet_type left);

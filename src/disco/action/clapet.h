@@ -14,7 +14,7 @@ class clapet : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	clapet(VectPlan firstcheckpoint, char * name, robotstate * robot);
+	clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor

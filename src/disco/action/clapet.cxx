@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-clapet::clapet(VectPlan firstcheckpoint,char * name, robotstate * robot):action(firstcheckpoint, name)
+clapet::clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):action(firstcheckpoint, name)
 {
 	if(robot != 0)
 	{

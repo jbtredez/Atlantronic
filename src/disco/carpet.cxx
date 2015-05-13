@@ -33,6 +33,7 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 		case CARPET_DOWN:
 			ax12.set_goal_position(AX12_RIGHT_CARPET, -1.4);
 			break;
+		case CARPET_NO_MOVE:
 		default:
 			break;
 	}
@@ -45,6 +46,7 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 		case CARPET_DOWN:
 			ax12.set_goal_position(AX12_LEFT_CARPET, 1.4);
 			break;
+		case CARPET_NO_MOVE:
 		default:
 			break;
 	}

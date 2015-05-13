@@ -17,7 +17,7 @@ class movebackward : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	movebackward(VectPlan firstcheckpoint, char * name );
+	movebackward(VectPlan firstcheckpoint, const char * name );
 	////////////////////////////////////////////////
 	/// function    : ~start()
 	/// descrition  : destructor

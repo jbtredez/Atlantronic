@@ -18,7 +18,7 @@ class feet : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	feet(VectPlan firstcheckpoint, char * name, robotstate * elevator);
+	feet(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor

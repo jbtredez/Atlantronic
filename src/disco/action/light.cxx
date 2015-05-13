@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-light::light(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
+light::light(VectPlan firstcheckpoint, const char * name, robotstate * elevator):action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{

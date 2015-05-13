@@ -9,7 +9,7 @@
 #define LIGHT_APPROX_DIST       100
 
 
-movebackward::movebackward(VectPlan firstcheckpoint, char * name):action(firstcheckpoint, name)
+movebackward::movebackward(VectPlan firstcheckpoint, const char * name):action(firstcheckpoint, name)
 {
 
 }

@@ -16,7 +16,7 @@ class deposecarpette : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	deposecarpette(VectPlan firstcheckpoint,char * name, robotstate * robot, bool right);
+	deposecarpette(VectPlan firstcheckpoint, const char * name, robotstate * robot, bool right);
 
 	////////////////////////////////////////////////
 	/// function    : ~deposecarpette()

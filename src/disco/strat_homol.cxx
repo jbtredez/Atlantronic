@@ -68,60 +68,51 @@ static void strat_task(void* arg)
 
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint(730 ,-770,0.0f);
-	char Cclapet1[] = "Clapet 1";
-	clapet clap1(firstcheckpoint,Cclapet1,&robothomologation);
+	clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
 
 	//start
 	firstcheckpoint.x = 1000;
 	firstcheckpoint.y = 0;
-	char Cstarzone[] = "Startzone";
-	movebackward startzone(firstcheckpoint,Cstarzone);
+	movebackward startzone(firstcheckpoint, "Startzone");
 
 
 	//light 1
 	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
 	firstcheckpoint.y = 0;
-	firstcheckpoint.theta = 0
-	char CLight1[] = "Light 1";
-	light light1(firstcheckpoint,CLight1,&robothomologation);
+	firstcheckpoint.theta = 0;
+	light light1(firstcheckpoint, "Light 1", &robothomologation);
 
 
 	//Pied 1
 	firstcheckpoint.x = 630;
 	firstcheckpoint.y = -355;
-	char CFeet1[] = "Feet 1";
-	feet feet1(firstcheckpoint,CFeet1,&robothomologation);
+	feet feet1(firstcheckpoint, "Feet 1", &robothomologation);
 
 	//Pied 2 
 	firstcheckpoint.x = 200;
 	firstcheckpoint.y = -400;
-	char CFeet2[] = "Feet 2";
-	feet feet2(firstcheckpoint,CFeet2,&robothomologation);
+	feet feet2(firstcheckpoint, "Feet 2", &robothomologation);
 
 	//Pied 3 
 	firstcheckpoint.x = 400;
 	firstcheckpoint.y = -770;
-	char CFeet3[] = "Feet 3";
-	feet feet3(firstcheckpoint,CFeet3,&robothomologation);
+	feet feet3(firstcheckpoint, "Feet 3", &robothomologation);
 	
 	//Dropstart 
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
-	char CDropstart[] = "Feet 3";
-	dropzone dropstartzone(firstcheckpoint,CDropstart,&robothomologation);
+	dropzone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
  // TODO tapis : OK mais on passe sur un verre avant d'y aller...
 	// Carpet1
 	firstcheckpoint.x = 390;
 	firstcheckpoint.y = 200;
-	char CCarpetLeft[] = "Capette Left";
-	deposecarpette carpet1(firstcheckpoint,CCarpetLeft,&robothomologation, false);
+	deposecarpette carpet1(firstcheckpoint, "Capette Left", &robothomologation, false);
 
 	// Carpet2
 	firstcheckpoint.x = 110;
 	firstcheckpoint.y = 200;
-	char CCarpetRight[] = "Capette Right";
-	deposecarpette carpet2(firstcheckpoint,CCarpetRight,&robothomologation, true);
+	deposecarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
 
 	stratsimple strat;
 

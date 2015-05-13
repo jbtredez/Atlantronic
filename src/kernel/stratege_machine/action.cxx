@@ -7,7 +7,7 @@
 /// param       : firstcheckpoint : VectPlan first checkpoint of the action
 /// retrun      : none
 ////////////////////////////////////////////////	
-action::action(VectPlan firstcheckpoint, char * name)
+action::action(VectPlan firstcheckpoint, const char * name)
 {
 	m_name = 0;
 	if( name != 0)

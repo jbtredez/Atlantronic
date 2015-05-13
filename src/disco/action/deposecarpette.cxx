@@ -10,7 +10,7 @@
 #include "kernel/math/vect_plan.h"
 #include "deposecarpette.h"
 
-deposecarpette::deposecarpette(VectPlan firstcheckpoint,char * name,robotstate * robot, bool right):action(firstcheckpoint,name)
+deposecarpette::deposecarpette(VectPlan firstcheckpoint, const char * name,robotstate * robot, bool right):action(firstcheckpoint,name)
 {
 	if( m_robot != 0)
 	{
@@ -71,15 +71,22 @@ int deposecarpette::do_action()
 	//On baisse pour déposer la carpette
 	if( m_right)
 	{
-		carpet_set_pos(CARPET_DOWN, CARPET_UP);
+		carpet_set_pos(CARPET_DOWN, CARPET_NO_MOVE);
 	}
 	else
 	{
-		carpet_set_pos(CARPET_UP, CARPET_DOWN);
+		carpet_set_pos(CARPET_NO_MOVE, CARPET_DOWN);
 	}
 
 	vTaskDelay(1000);
-	carpet_set_pos(CARPET_UP, CARPET_UP);
+	if( m_right)
+	{
+		carpet_set_pos(CARPET_UP, CARPET_NO_MOVE);
+	}
+	else
+	{
+		carpet_set_pos(CARPET_NO_MOVE, CARPET_UP);
+	}
 
 	int result = -1;
 	int essai = 0;

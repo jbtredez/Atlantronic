@@ -13,7 +13,7 @@
 #include "kernel/math/vect_plan.h"
 
 
-dropzone::dropzone(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
+dropzone::dropzone(VectPlan firstcheckpoint, const char * name, robotstate * elevator):action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
