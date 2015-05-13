@@ -32,6 +32,16 @@ class Clapet : public Action
 		/// retrun      : -1 if fail or 0 if sucess
 		////////////////////////////////////////////////
 		int do_action();
+
+
+		////////////////////////////////////////////////
+		/// function    : Exit()
+		/// descrition  : action effectue pour sortir de l'action proprement
+		/// param       : none
+		/// retrun      : none
+		////////////////////////////////////////////////
+		void Exit();
+
 }; 
 
 #endif

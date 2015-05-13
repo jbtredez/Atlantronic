@@ -20,6 +20,20 @@ DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,robot
 	m_actiontype = ACTION_CARPET;
 }
 
+
+void DeposeCarpette::Exit()
+{
+
+	carpet_set_pos(CARPET_UP,CARPET_UP);
+	do
+	{
+		vTaskDelay(100);
+		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_BACKWARD, AVOIDANCE_STOP);
+	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0 );
+
+
+}
+
 ////////////////////////////////////////////////
 /// function    : do_action()
 /// descrition  : execute the action
@@ -78,6 +92,7 @@ int DeposeCarpette::do_action()
 		carpet_set_pos(CARPET_NO_MOVE, CARPET_DOWN);
 	}
 
+	//On releve  la 
 	vTaskDelay(500);
 	if( m_right )
 	{
@@ -102,6 +117,7 @@ int DeposeCarpette::do_action()
 		if(essai == 3)
 		{
 			m_try++;
+			Exit();
 			return -1;
 		}
 	} while(  result ==-1 ) ;

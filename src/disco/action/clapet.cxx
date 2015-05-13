@@ -23,6 +23,28 @@ Clapet::Clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):
 	m_actiontype = ACTION_CLAP;
 }
 
+
+////////////////////////////////////////////////
+/// function    : Exit()
+/// descrition  : action effectue pour sortir de l'action proprement
+/// param       : none
+/// retrun      : none
+////////////////////////////////////////////////
+void Clapet::Exit()
+{ 
+	
+
+	do
+	{
+		vTaskDelay(100);
+		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_BACKWARD, AVOIDANCE_STOP);
+	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0 );
+
+
+}
+
+
+
 ////////////////////////////////////////////////
 /// function    : do_action()
 /// descrition  : execute the action
@@ -86,7 +108,7 @@ int Clapet::do_action()
 	}
 
 
-	//On ouvre l'aile pas besoin de réfléchir
+	//On n'ouvre pas l'aile besoin de réfléchir
 
 	wing_set_position(left, right);
 	m_robot->setwingstate(left,right);	
@@ -118,8 +140,8 @@ int Clapet::do_action()
 	m_robot->setwingstate(WING_PARK,WING_PARK);
 
 	vTaskDelay(100);
-	trajectory_straight(-100);
-	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000);
+
+	Exit();
 
 	return bresult;
 }

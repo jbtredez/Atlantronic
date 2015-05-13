@@ -34,6 +34,9 @@ class drop : public Action
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
+
+
+
 }; 
 
 #endif

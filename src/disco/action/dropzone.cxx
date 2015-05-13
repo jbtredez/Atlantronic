@@ -23,6 +23,24 @@ dropzone::dropzone(VectPlan firstcheckpoint, const char * name, robotstate * ele
 	m_actiontype = ACTION_DROPZONE;
 }
 
+
+////////////////////////////////////////////////
+/// function    : Exit()
+/// descrition  : action effectue pour sortir de l'action proprement
+/// param       : none
+/// retrun      : none
+////////////////////////////////////////////////
+void dropzone::Exit()
+{
+	do 
+	{
+				vTaskDelay(100);
+		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_BACKWARD, AVOIDANCE_STOP) ;
+
+	}while(  trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
+	
+}
+
 ////////////////////////////////////////////////
 /// function    : do_action()
 /// descrition  : execute the action
@@ -112,28 +130,15 @@ int dropzone::do_action()
 			return -1;
 		}
 		
-	} while(  result ==-1 ) ;
+	} while(  0 != result ) ;
 
 	essai = 0;
 
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	vTaskDelay(400);
-	result = -1;
-	do 
-	{
-		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_BACKWARD, AVOIDANCE_STOP) ;
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
-		{
-			result = 0;
-		}
-		essai++;
-		if(essai == 3)
-		{
-			return -1;
-		}
-	}while(  result ==-1 ) ;
 
 
+	Exit();
 
 	vTaskDelay(100);
 

@@ -31,6 +31,15 @@ class dropzone : public Action
 	~dropzone(){};
 
 	////////////////////////////////////////////////
+	/// function    : Exit()
+	/// descrition  : action effectue pour sortir de l'action proprement
+	/// param       : none
+	/// retrun      : none
+	////////////////////////////////////////////////
+	void Exit();
+
+
+	////////////////////////////////////////////////
 	/// function    : do_action()
 	/// descrition  : execute the action
 	/// param       : none

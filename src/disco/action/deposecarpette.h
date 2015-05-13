@@ -34,6 +34,17 @@ class DeposeCarpette : public Action
 	////////////////////////////////////////////////
 	int do_action();
 	virtual void Initialise(int stratcolor);
+
+
+	////////////////////////////////////////////////
+	/// function    : Exit()
+	/// descrition  : action effectue pour sortir de l'action proprement
+	/// param       : none
+	/// retrun      : none
+	////////////////////////////////////////////////
+	void Exit();
+
+
 }; 
 
 #endif
