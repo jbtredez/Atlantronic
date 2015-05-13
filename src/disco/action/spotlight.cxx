@@ -34,9 +34,9 @@ int spotlight::do_action()
 	int result = 0;
 	int nbelement =  m_elevator->getnumberelement();
 	VectPlan position = location_get_position();
-	action * p_action;
+	Action * p_action;
 
-	action::do_action();
+	Action::do_action();
 
 	switch(elevator_state)
 	{

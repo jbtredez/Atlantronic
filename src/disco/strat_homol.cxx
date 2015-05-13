@@ -68,7 +68,7 @@ static void strat_task(void* arg)
 
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint(730 ,-770,0.0f);
-	clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
+	Clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
 
 	//start
 	firstcheckpoint.x = 1000;
@@ -107,12 +107,12 @@ static void strat_task(void* arg)
 	// Carpet1
 	firstcheckpoint.x = 390;
 	firstcheckpoint.y = 200;
-	deposecarpette carpet1(firstcheckpoint, "Capette Left", &robothomologation, false);
+	DeposeCarpette carpet1(firstcheckpoint, "Capette Left", &robothomologation, false);
 
 	// Carpet2
 	firstcheckpoint.x = 110;
 	firstcheckpoint.y = 200;
-	deposecarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
+	DeposeCarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
 
 	stratsimple strat;
 

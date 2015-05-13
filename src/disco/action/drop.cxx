@@ -13,7 +13,8 @@
 #include "kernel/math/vect_plan.h"
 
 
-drop::drop(VectPlan firstcheckpoint,char * name, robotstate * elevator):action(firstcheckpoint, name)
+drop::drop(VectPlan firstcheckpoint,char * name, robotstate * elevator) :
+	Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{

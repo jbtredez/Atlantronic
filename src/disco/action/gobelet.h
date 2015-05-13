@@ -6,7 +6,7 @@
 
 
 
-class gobelet : public action
+class gobelet : public Action
 {
 	private :
 	robotstate * m_elevator;

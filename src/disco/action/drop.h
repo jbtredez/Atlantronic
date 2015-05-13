@@ -6,7 +6,7 @@
 
 #define DROP_APPROX_DIST       10
 
-class drop : public action
+class drop : public Action
 {
 	private :
 	robotstate * m_elevator;

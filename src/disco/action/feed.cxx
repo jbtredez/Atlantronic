@@ -33,10 +33,10 @@ int feed::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
 	VectPlan position = location_get_position();
-	action * p_action;
+	Action * p_action;
 
 
-	action::do_action();
+	Action::do_action();
 
 	switch(elevator_state)
 	{

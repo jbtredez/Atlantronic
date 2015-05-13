@@ -6,7 +6,7 @@
 
 #define LIGHT_APPROX_DIST       100
 
-class light : public action
+class light : public Action
 {
 	private :
 	robotstate * m_elevator;

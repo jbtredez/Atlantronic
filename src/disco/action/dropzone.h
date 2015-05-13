@@ -8,7 +8,7 @@
 #define DROPSTART_APPROX_DIST       10
 
 
-class dropzone : public action
+class dropzone : public Action
 {
 	private :
 	robotstate * m_elevator;

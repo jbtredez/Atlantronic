@@ -6,7 +6,7 @@
 
 
 
-class feet : public action
+class feet : public Action
 {
 	private :
 	robotstate * m_elevator;

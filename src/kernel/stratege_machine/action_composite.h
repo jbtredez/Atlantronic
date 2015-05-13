@@ -8,13 +8,13 @@
 #include "kernel/log.h"
 #include "kernel/math/vect_plan.h"
 #define NB_MAX_COMPO_ACTION 10
-class actioncomposite : public action
+class actioncomposite : public Action
 {
 	public:
 	//nb of try of the action -1 if the action it's done
 	int m_try;
 	int m_size_actionlist;
-	action * m_list_action[NB_MAX_COMPO_ACTION];
+	Action * m_list_action[NB_MAX_COMPO_ACTION];
 	//first checkpoint 
 	VectPlan m_firstcheckpoint;		
 	
@@ -43,7 +43,7 @@ class actioncomposite : public action
 	/// param       : pointeur sur l'objet action
 	/// retrun      : result of the operation -1 fail, 0 sucess
 	////////////////////////////////////////////////
-	int add_action(action * p_action);
+	int add_action(Action * p_action);
 
 
 	////////////////////////////////////////////////
@@ -60,7 +60,7 @@ class actioncomposite : public action
 	/// param       :int : type of the action
 	/// retrun      : l'action ou un pt 0
 	////////////////////////////////////////////////
-	action * find_action_not_done(int type, VectPlan position);
+	Action * find_action_not_done(int type, VectPlan position);
 
 
 };

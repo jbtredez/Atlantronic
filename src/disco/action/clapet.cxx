@@ -2,6 +2,7 @@
 
 #include "kernel/log.h"
 #include "kernel/motion/trajectory.h"
+#include "kernel/match.h"
 #include "disco/carpet.h"
 #include "disco/wing.h"
 
@@ -12,7 +13,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-clapet::clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):action(firstcheckpoint, name)
+Clapet::Clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):Action(firstcheckpoint, name)
 {
 	if(robot != 0)
 	{
@@ -28,9 +29,8 @@ clapet::clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int clapet::do_action()
+int Clapet::do_action()
 {
-
 	int bresult = 0;
 	int essaie =0;
 	int second_x_position = 0;
@@ -40,7 +40,7 @@ int clapet::do_action()
 	wing_cmd_type right = WING_PARK ;
 
 
-	action::do_action();
+	Action::do_action();
 
 	if(m_try < 0 )
 	{
@@ -62,6 +62,7 @@ int clapet::do_action()
 	else
 	{
 		second_x_position = m_firstcheckpoint.x + 185;
+		nextToClap.theta = 0;
 		right = WING_OPEN;
 
 	}

@@ -68,7 +68,7 @@ static void strat_task(void* arg)
 	//création et chargement des actions à faire
 	//Clapet 1
 	VectPlan firstcheckpoint(730 ,-785,0.0f);
-	clapet clap1(firstcheckpoint,&robothomologation);
+	Clapet clap1(firstcheckpoint,&robothomologation);
 
 
 	//Dropzone startzone 
@@ -199,7 +199,7 @@ static void strat_task(void* arg)
 	//Action carpette
 	firstcheckpoint.x = 250;
 	firstcheckpoint.y = 200;	
-	deposecarpette carpette1(firstcheckpoint,&robothomologation);
+	Dposecarpette carpette1(firstcheckpoint,&robothomologation);
 	
 
 	stratcomplexe_def strat;

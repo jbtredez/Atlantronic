@@ -6,7 +6,7 @@
 //Action pour reculer à partir d'un point vers le checkpoint
 
 
-class movebackward : public action
+class movebackward : public Action
 {
 
 	public:

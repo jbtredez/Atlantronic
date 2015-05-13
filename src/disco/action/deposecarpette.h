@@ -1,9 +1,9 @@
-
 #ifndef DEPOSE_CARPETTE_H
 #define DEPOSE_CARPETTE_H
 
 #include "kernel/stratege_machine/action.h"
-class deposecarpette : public action
+
+class DeposeCarpette : public Action
 {
 	private :
 		robotstate * m_robot;
@@ -16,7 +16,7 @@ class deposecarpette : public action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	deposecarpette(VectPlan firstcheckpoint, const char * name, robotstate * robot, bool right);
+	DeposeCarpette(VectPlan firstcheckpoint, const char * name, robotstate * robot, bool right);
 
 	////////////////////////////////////////////////
 	/// function    : ~deposecarpette()
@@ -24,7 +24,7 @@ class deposecarpette : public action
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~deposecarpette(){};
+	~DeposeCarpette(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()
@@ -33,7 +33,7 @@ class deposecarpette : public action
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
-	//virtual void Initialise(int stratcolor);
+	virtual void Initialise(int stratcolor);
 }; 
 
 #endif

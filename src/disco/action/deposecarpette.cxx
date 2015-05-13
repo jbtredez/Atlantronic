@@ -10,7 +10,7 @@
 #include "kernel/math/vect_plan.h"
 #include "deposecarpette.h"
 
-deposecarpette::deposecarpette(VectPlan firstcheckpoint, const char * name,robotstate * robot, bool right):action(firstcheckpoint,name)
+DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,robotstate * robot, bool right):Action(firstcheckpoint,name)
 {
 	if( m_robot != 0)
 	{
@@ -26,9 +26,9 @@ deposecarpette::deposecarpette(VectPlan firstcheckpoint, const char * name,robot
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int deposecarpette::do_action()
+int DeposeCarpette::do_action()
 {
-	action::do_action();
+	Action::do_action();
 	int bresult = 0;
 
 	VectPlan nextToDropCarpette ;
@@ -78,8 +78,8 @@ int deposecarpette::do_action()
 		carpet_set_pos(CARPET_NO_MOVE, CARPET_DOWN);
 	}
 
-	vTaskDelay(1000);
-	if( m_right)
+	vTaskDelay(500);
+	if( m_right )
 	{
 		carpet_set_pos(CARPET_UP, CARPET_NO_MOVE);
 	}
@@ -118,4 +118,11 @@ int deposecarpette::do_action()
 	return bresult;
 }
 
-
+void DeposeCarpette::Initialise(int stratcolor)
+{
+	Action::Initialise(stratcolor);
+	if( stratcolor < 0)
+	{
+		m_right = ! m_right;
+	}
+}

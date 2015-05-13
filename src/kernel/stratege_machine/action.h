@@ -7,56 +7,56 @@
 
 #include "kernel/log.h"
 #include "kernel/math/vect_plan.h"
+
 #define ACTION_NONE		-1
-class action
+
+class Action
 {
 	public:
-	//nb of try of the action -1 if the action it's done
-	int m_try;
-	//first checkpoint 
-	VectPlan m_firstcheckpoint;
+		int get_try(){return m_try;};
+		VectPlan get_firstcheckpoint(){return m_firstcheckpoint;};
+		const char* get_name(){return m_name;};
+
+		int get_actiontype(){return m_actiontype;};
+		void set_actiontype(int actiontype){m_actiontype = actiontype;};
+
+		////////////////////////////////////////////////
+		/// function    : action()
+		/// descrition  : constructor
+		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
+		/// retrun      : none
+		////////////////////////////////////////////////
+		Action(VectPlan firstcheckpoint, const char * name);
+		////////////////////////////////////////////////
+		/// function    : ~action()
+		/// descrition  : destructor
+		/// param       : none
+		/// retrun      : none
+		////////////////////////////////////////////////
+		~Action(){};
 	
+		////////////////////////////////////////////////
+		/// function    : Initialise()
+		/// descrition  : intialise the checkpoint color
+		/// param       : none
+		/// retrun      : none
+		////////////////////////////////////////////////
+		virtual void Initialise(int stratcolor){ m_firstcheckpoint = m_firstcheckpoint.symetric(stratcolor); };
+		////////////////////////////////////////////////
+		/// function    : do_action()
+		/// descrition  : execute the action
+		/// param       : none
+		/// retrun      : -1 if fail or 0 if sucess
+		////////////////////////////////////////////////
+		virtual int do_action();
 
-	int m_actiontype;
-	const char * m_name;
-	int get_try(){return m_try;};
-	VectPlan get_firstcheckpoint(){return m_firstcheckpoint;};
-	const char* get_name(){return m_name;};
+		//nb of try of the action -1 if the action it's done
+		int m_try;
+		VectPlan m_firstcheckpoint;
+		bool actionDone;
 
-	int get_actiontype(){return m_actiontype;};
-	void set_actiontype(int actiontype){m_actiontype = actiontype;};
-
-
-	////////////////////////////////////////////////
-	/// function    : action()
-	/// descrition  : constructor
-	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
-	/// retrun      : none
-	////////////////////////////////////////////////	
-	action(VectPlan firstcheckpoint, const char * name);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~action(){};
-
-	////////////////////////////////////////////////
-	/// function    : Initialise()
-	/// descrition  : intialise the checkpoint color
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	virtual void Initialise(int stratcolor){ m_firstcheckpoint = m_firstcheckpoint.symetric(stratcolor); };
-	////////////////////////////////////////////////
-	/// function    : do_action()
-	/// descrition  : execute the action
-	/// param       : none
-	/// retrun      : -1 if fail or 0 if sucess
-	////////////////////////////////////////////////
-	virtual int  do_action(){	log_format(LOG_INFO , m_name);return -1;};
-	
+		int m_actiontype;
+		const char * m_name;
 };
 
 #endif

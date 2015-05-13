@@ -195,13 +195,13 @@ int stratcomplexedef::run()
 /// param       :int : type of the action
 /// retrun      : -1 if fail or Number of the action in the list  if sucess
 ////////////////////////////////////////////////
-action * stratcomplexedef::find_action_not_done(int type, VectPlan position)
+Action * stratcomplexedef::find_action_not_done(int type, VectPlan position)
 {
 	
 	float distance = 99999;
 	VectPlan Vectdistance;
 	float result = 0;
-	action * p_actiontodo = 0;
+	Action * p_actiontodo = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
 	{
 

@@ -9,7 +9,7 @@
 #define LIGHT_APPROX_DIST       100
 
 
-movebackward::movebackward(VectPlan firstcheckpoint, const char * name):action(firstcheckpoint, name)
+movebackward::movebackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)
 {
 
 }
@@ -23,7 +23,7 @@ movebackward::movebackward(VectPlan firstcheckpoint, const char * name):action(f
 int movebackward::do_action()
 {
 
-	action::do_action();
+	Action::do_action();
 
 	do
 	{
