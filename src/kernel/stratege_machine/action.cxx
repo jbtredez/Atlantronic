@@ -9,7 +9,6 @@
 ////////////////////////////////////////////////	
 Action::Action(VectPlan firstcheckpoint, const char * name)
 {
-	actionDone = false;
 	m_name = name;
 	m_try = 0;
 	m_actiontype = -1;

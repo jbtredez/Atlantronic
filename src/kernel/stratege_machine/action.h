@@ -53,7 +53,6 @@ class Action
 		//nb of try of the action -1 if the action it's done
 		int m_try;
 		VectPlan m_firstcheckpoint;
-		bool actionDone;
 
 		int m_actiontype;
 		const char * m_name;

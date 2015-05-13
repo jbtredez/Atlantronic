@@ -38,34 +38,43 @@ void stratsimple::Initialise(int stratcolor)
 int stratsimple::run()
 {
 	int result =0;
+	bool allDone = false;
+
 	if(m_size_actionlist == 0)
 	{
 		return -1;
 	}
 
 	log_format(LOG_INFO , "lancement des actions");
-	///Strategie simple  sans recherche de meilleur action
-	for(int i = 0 ; i < m_size_actionlist ; i++)
-	{
-		if( m_list_action[i] != 0 )
-		{
-			if(  m_list_action[i]->get_try() >= 0)
-			{
-				
-				log_format(LOG_INFO , "Action %d",(int)i);
 
-				result = m_list_action[i]->do_action();
-				if(result == -1)
+	// Strategie simple  sans recherche de meilleur action
+	do
+	{
+		allDone = true;
+		for(int i = 0 ; i < m_size_actionlist ; i++)
+		{
+			if( m_list_action[i] != 0 )
+			{
+				int actionTry =  m_list_action[i]->get_try();
+				if( actionTry >= 0)
 				{
-					m_list_action[i]->m_try++;
-				}
-				else
-				{
-					m_list_action[i]->m_try = -1;
+					log_format(LOG_INFO , "Action %d, try %d", i, actionTry);
+
+					result = m_list_action[i]->do_action();
+					if(result == -1)
+					{
+						allDone = false;
+						m_list_action[i]->m_try++;
+					}
+					else
+					{
+						m_list_action[i]->m_try = -1;
+					}
 				}
 			}
 		}
-	}
+	}while( ! allDone );
+
 	return 0;
 }
 
