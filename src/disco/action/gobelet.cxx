@@ -62,7 +62,7 @@ int Gobelet::do_action()
 			elevator_set_position(0);
 			return -1;
 		}
-		
+	vTaskDelay(100);		
 	} while(  result ==-1 ) ;
 
 	finger_set_pos(FINGER_GOBLET, FINGER_GOBLET);

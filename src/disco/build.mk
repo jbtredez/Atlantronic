@@ -91,6 +91,7 @@ core_robot += disco/action/movebackward.o
 core_robot += disco/action/deposecarpette.o
 core_robot += disco/action/spotlight.o
 core_robot += disco/action/feed.o
+core_robot += disco/action/Move.o
 
 
 

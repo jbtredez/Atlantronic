@@ -20,7 +20,8 @@
 #define	ACTION_STAIR		6
 #define	ACTION_DROPZONE		7
 #define	ACTION_DROP		8
-#define	ACTION_ENDLISTd	9
+#define ACTION_MOVE		9
+#define	ACTION_ENDLIST		10
 
 
 

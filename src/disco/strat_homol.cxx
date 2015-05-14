@@ -22,6 +22,7 @@
 #include "disco/action/light.h"
 #include "disco/action/deposecarpette.h"
 #include "disco/action/gobelet.h"
+#include "disco/action/Move.h"
 
 #include "strat/strat_simple.h"
 
@@ -98,14 +99,14 @@ static void strat_task(void* arg)
 	feet feet3(firstcheckpoint, "Feet 3", &robothomologation);
 
 	//Dropstart 
-	firstcheckpoint.x = 830;
+	firstcheckpoint.x = 800;
 	firstcheckpoint.y = 0;
 	firstcheckpoint.theta = 0;
 	DropZone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
 
 	//Dropcinema 
-	firstcheckpoint.x = -830;
+	firstcheckpoint.x = -800;
 	firstcheckpoint.y = -400;
 	firstcheckpoint.theta = -M_PI;
 	DropZone dropcinema(firstcheckpoint, "drop cinema", &robothomologation);
@@ -136,14 +137,30 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = -780;
 	Clapet clap2(firstcheckpoint, "Clapet 2", &robothomologation);
 
+	// Checkpoint 1
+	firstcheckpoint.x = 400;
+	firstcheckpoint.y = -400;
+	Move Checkpoint1(firstcheckpoint, "Checkpoint 1");
+
+
 	// Goblet 3
 	firstcheckpoint.x = 0;
 	firstcheckpoint.y = -650;
 	Gobelet gobelet3(firstcheckpoint, "gobelet 3", &robothomologation);
 
+
+	// Checkpoint 2
+	firstcheckpoint.x = -400;
+	firstcheckpoint.y = -400;
+	Move Checkpoint2(firstcheckpoint, "Checkpoint 2");
+
+
+	// Clapet 3
 	firstcheckpoint.x = -990;
 	firstcheckpoint.y = -780;
 	Clapet clap3(firstcheckpoint, "Clapet 3", &robothomologation);
+
+
 
 /*
 	//light 2
@@ -170,10 +187,12 @@ static void strat_task(void* arg)
 	strat.add_action(&carpet1);
 	strat.add_action(&carpet2);
 	strat.add_action(&dropstartzone);
-//	strat.add_action(&gobelet2);
-//	strat.add_action(&clap2);
-//	strat.add_action(&dropstartzone);
+	//strat.add_action(&gobelet2);
+	//strat.add_action(&clap2);
+	strat.add_action(&dropstartzone);
+	strat.add_action(&Checkpoint1);
 	strat.add_action(&gobelet3);
+	strat.add_action(&Checkpoint2);
 	strat.add_action(&clap3);
 	strat.add_action(&dropcinema);
 //	strat.add_action(&light2);

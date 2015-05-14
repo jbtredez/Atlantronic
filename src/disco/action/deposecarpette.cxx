@@ -120,6 +120,9 @@ int DeposeCarpette::do_action()
 			Exit();
 			return -1;
 		}
+
+		vTaskDelay(100);
+
 	} while(  result ==-1 ) ;
 
 	if(bresult == 0)

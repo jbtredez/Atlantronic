@@ -66,7 +66,7 @@ int light::do_action()
 		{
 			return -1;
 		}
-	
+		vTaskDelay(100);
 	} while(  result ==-1 ) ;
 
 	if( m_light2 )
@@ -89,6 +89,7 @@ int light::do_action()
 				return -1;
 			}
 
+			vTaskDelay(100);
 		} while(  result ==-1 ) ;
 	}
 

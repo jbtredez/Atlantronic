@@ -32,6 +32,8 @@ Clapet::Clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):
 int Clapet::do_action()
 {
 	int bresult = 0;
+	int essai = 0;
+	int result = -1;
 
 	VectPlan nextToClap ;
 	wing_cmd_type left = WING_PARK ;
@@ -68,15 +70,30 @@ int Clapet::do_action()
 		vTaskDelay(100);
 	}
 
-	//Mise en place de la position
-	trajectory_goto_near_xy(nextToClap.x, nextToClap.y, 0, WAY_FORWARD, AVOIDANCE_STOP);
-
-	//Si on arrive pas à joindre le clapet on abandonne
-	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
+	do 
 	{
-		m_try++;
-		return -1; 
-	}
+		trajectory_goto_near(nextToClap, 0, WAY_FORWARD, AVOIDANCE_STOP);
+		log_format(LOG_INFO, "WAIT NEW ORDER");
+		if (trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
+		{
+			result = 0;
+			log_format(LOG_INFO, "WAIT NEW ORDER");
+		}
+		else
+		{	
+			essai++;
+		}
+
+
+		if(essai == 3)
+		{
+			return -1;
+		}
+
+		vTaskDelay(100);	
+	} while(  0 != result ) ;
+
+
 
 	wing_set_position(left, right);
 	m_robot->setwingstate(left,right);

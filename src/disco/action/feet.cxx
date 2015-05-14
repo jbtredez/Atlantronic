@@ -71,7 +71,8 @@ int feet::do_action()
 			m_try++;
 			return -1;
 		}
-		
+		vTaskDelay(100);
+
 	} while(  result ==-1 ) ;
 
 	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_OPEN);

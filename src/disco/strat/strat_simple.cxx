@@ -8,6 +8,9 @@
 #include "kernel/math/vect_plan.h"
 
 
+#include "disco/robot_state.h"
+#include "kernel/stratege_machine/action.h"
+#include "disco/action/Move.h"
 
 ////////////////////////////////////////////////
 /// function    : Initialise()
@@ -39,7 +42,7 @@ int stratsimple::run()
 {
 	int result =0;
 	bool allDone = false;
-
+	bool busefullaction = false;
 	if(m_size_actionlist == 0)
 	{
 		return -1;
@@ -51,6 +54,7 @@ int stratsimple::run()
 	do
 	{
 		allDone = true;
+		busefullaction = false;
 		for(int i = 0 ; i < m_size_actionlist ; i++)
 		{
 			if( m_list_action[i] != 0 )
@@ -65,17 +69,32 @@ int stratsimple::run()
 					{
 						allDone = false;
 						m_list_action[i]->m_try++;
+						///Cas ou 10 echec
+						if( (ACTION_DROP != (m_list_action[i])->get_actiontype() )
+						|| ACTION_DROPZONE != (m_list_action[i])->get_actiontype()  )
+						{
+							busefullaction = true;
+						}						
 					}
 					else
 					{
 						m_list_action[i]->m_try = -1;
 					}
 				}
+
 			}
+
 		}
 		vTaskDelay(1000);
-	}while( ! allDone );
+	
 
+
+	}while( ! allDone
+		&&  false == busefullaction );
+	
+	// Idle 
+	Move Idle(VectPlan(200 ,250,0.0f), "Idle");
+	Idle.do_action();
 	return 0;
 }
 

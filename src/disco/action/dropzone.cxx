@@ -83,6 +83,7 @@ int DropZone::do_action()
 		{
 			return -1;
 		}
+		vTaskDelay(100);
 	} while( result ==-1 ) ;
 
 	if(dropzone.x <0 )
@@ -103,26 +104,26 @@ int DropZone::do_action()
 		//on se déplace dans la zone de départ
 		trajectory_goto_near(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0 )
 		{
 			result = 0;
 		}
 
 		// on n'a pas besoin de precision ici. Si on est sur la zone, c'est bon.
 		// TODO on regarde le target not reached (pour eliminer collision) => verifier position actuelle a la place
-		if( trajectory_get_state() == TRAJECTORY_STATE_TARGET_NOT_REACHED)
+		if( TRAJECTORY_STATE_TARGET_NOT_REACHED == trajectory_get_state() )
 		{
 			result = 0;
 		}
 
 		essai++;
 
-		if(essai == 3)
+		if(3 == essai)
 		{
 			Exit();
 			return -1;
 		}
-		
+		vTaskDelay(100);
 	} while(  0 != result ) ;
 
 	essai = 0;

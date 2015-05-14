@@ -67,6 +67,9 @@ int drop::do_action()
 			m_try++;
 			return -1;
 		}
+
+		vTaskDelay(100);
+
 	} while(  result ==-1 ) ;
 
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);

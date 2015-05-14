@@ -29,6 +29,7 @@ int movebackward::do_action()
 	{
 	    trajectory_goto(m_firstcheckpoint, WAY_BACKWARD, AVOIDANCE_STOP);
 	
+		vTaskDelay(100);
 	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0); 
 	return 0;
 }
