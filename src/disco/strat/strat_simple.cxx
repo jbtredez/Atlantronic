@@ -69,9 +69,8 @@ int stratsimple::run()
 					{
 						allDone = false;
 						m_list_action[i]->m_try++;
-						///Cas ou 10 echec
-						if( (ACTION_DROP != (m_list_action[i])->get_actiontype() )
-						|| ACTION_DROPZONE != (m_list_action[i])->get_actiontype()  )
+						if( ACTION_DROP != m_list_action[i]->get_actiontype() &&
+							ACTION_DROPZONE != m_list_action[i]->get_actiontype()  )
 						{
 							busefullaction = true;
 						}						
@@ -86,11 +85,7 @@ int stratsimple::run()
 
 		}
 		vTaskDelay(1000);
-	
-
-
-	}while( ! allDone
-		&&  false == busefullaction );
+	}while( ! allDone &&  busefullaction );
 	
 	// Idle
 	VectPlan pos(390, 200, 0.0f);
