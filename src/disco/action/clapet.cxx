@@ -72,8 +72,7 @@ int Clapet::do_action()
 
 	do 
 	{
-		trajectory_goto_near(nextToClap, 0, WAY_FORWARD, AVOIDANCE_STOP);
-		log_format(LOG_INFO, "WAIT NEW ORDER");
+		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, 0, WAY_FORWARD, AVOIDANCE_STOP);
 		if (trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
 		{
 			result = 0;
@@ -97,7 +96,10 @@ int Clapet::do_action()
 
 	wing_set_position(left, right);
 	m_robot->setwingstate(left,right);
+
+
 	vTaskDelay(300);
+
 	trajectory_rotate_to(nextToClap.theta);
 	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
 	{
