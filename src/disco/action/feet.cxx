@@ -34,7 +34,7 @@ int feet::do_action()
 {
 	int result = -1;
 	int essai = 0;
-
+	Action::do_action();
 	if(m_elevator == 0)
 	{
 		return -1;
@@ -85,7 +85,7 @@ int feet::do_action()
 	vTaskDelay(200);
 	
 	//Vérifie si on a attrapé quelque chose
-	//if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
+	if(elevator_omron_active())
 	{
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_FEET);

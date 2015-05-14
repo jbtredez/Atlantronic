@@ -35,7 +35,7 @@ void DropZone::Exit()
 	do 
 	{
 		vTaskDelay(100);
-		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_BACKWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
 
 	}while(  trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 	
@@ -73,13 +73,6 @@ int DropZone::do_action()
 		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 		
 		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
-		{
-			result = 0;
-		}
-
-		// on n'a pas besoin de precision ici. Si on est sur la zone, c'est bon.
-		// TODO on regarde le target not reached (pour eliminer collision) => verifier position actuelle a la place
-		if( trajectory_get_state() == TRAJECTORY_STATE_TARGET_NOT_REACHED)
 		{
 			result = 0;
 		}
@@ -146,7 +139,7 @@ int DropZone::do_action()
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_CLOSE);
 	m_elevator->setnumberelement(0);
  	m_elevator->setelevatorstate(ELEVATOR_EMPTY);
-	m_dropposition = m_dropposition - 130;
+	m_dropposition = m_dropposition - 150;
 
 // on retourne -1 pour que l'action reste dans la pile de strat
 	return -1;//result;

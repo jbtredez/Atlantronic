@@ -102,6 +102,13 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 0;
 	DropZone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
+
+	//Dropcinema 
+	firstcheckpoint.x = -1000;
+	firstcheckpoint.y = -400;
+	DropZone dropcinema(firstcheckpoint, "drop cinema", &robothomologation);
+
+
 	// Goblet
 	firstcheckpoint.x = 590;
 	firstcheckpoint.y = 170;
@@ -162,9 +169,10 @@ static void strat_task(void* arg)
 	strat.add_action(&dropstartzone);
 //	strat.add_action(&gobelet2);
 //	strat.add_action(&clap2);
-	strat.add_action(&dropstartzone);
+//	strat.add_action(&dropstartzone);
 	strat.add_action(&gobelet3);
 	strat.add_action(&clap3);
+	strat.add_action(&dropcinema);
 //	strat.add_action(&light2);
 //	strat.add_action(&feet4);
 

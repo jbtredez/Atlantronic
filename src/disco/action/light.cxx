@@ -95,6 +95,10 @@ int light::do_action()
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_CLOSE);
 	vTaskDelay(500);
 
+
+
+
+
 	log(LOG_INFO, "light on board");
 	m_elevator->setnumberelement(nbelement + 1);
 	m_elevator->setelevatorstate(ELEVATOR_LIGHT);

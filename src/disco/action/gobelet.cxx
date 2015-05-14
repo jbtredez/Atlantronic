@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-#define GOBELET_APPROX_DIST       100
+#define GOBELET_APPROX_DIST       110
 
 Gobelet::Gobelet(VectPlan firstcheckpoint, const char * name, robotstate * elevator):Action(firstcheckpoint, name)
 {
@@ -70,14 +70,14 @@ int Gobelet::do_action()
 	elevator_set_position(10);
 
 	//Vérifie si on a attrapé quelque chose
-	//if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
-	//{
+	if(elevator_omron_active())
+	{
 		m_elevator->setelevatorstate(ELEVATOR_GOBELET);
 		m_try = -1;
 		return 0;
-	//}
-	//m_try++;
-	//return -1;
+	}
+	m_try++;
+	return -1;
 }
 	
 	
