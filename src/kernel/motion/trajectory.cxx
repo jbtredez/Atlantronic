@@ -231,7 +231,7 @@ static void simplify_path()
 		float dy = trajectory_dest.y - pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table, 50);
+		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( dist2 < xmin2)
@@ -257,12 +257,13 @@ static void simplify_path()
 			if( dist2 < xmin2)
 			{
 				// possibilite de prendre un racourci de i a j
-				//log_format(LOG_INFO, "shortcut from %d to %d", i, j);
+				//log_format(LOG_INFO, "shortcut from %d to %d nb %d", i, j, trajectory_graph_way_count);
 				// on supprime les points intermediaires entre i et j
 				int k = i;
 				int skip = (j - i - 1);
-				for(k = i + 1; k < trajectory_graph_way_count - 1 - skip; k++)
+				for(k = i + 1; k < trajectory_graph_way_count - skip; k++)
 				{
+					//log_format(LOG_INFO, "skip %d", trajectory_graph_way[k]);
 					trajectory_graph_way[k] = trajectory_graph_way[k+skip];
 				}
 				trajectory_graph_way_count -= skip;
