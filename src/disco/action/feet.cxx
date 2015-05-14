@@ -85,8 +85,8 @@ int feet::do_action()
 	vTaskDelay(200);
 	
 	//Vérifie si on a attrapé quelque chose
-	if(elevator_omron_active())
-	{
+	//if(elevator_omron_active())
+	//{
 		m_elevator->setnumberelement(nbelement + 1);
 	 	m_elevator->setelevatorstate(ELEVATOR_FEET);
 
@@ -95,10 +95,10 @@ int feet::do_action()
 		m_try = -1;
 
 		return 0;
-	}	
+	//}	
 
-	m_try++;
-	return -1;
+	//m_try++;
+	//return -1;
 }
 	
 	

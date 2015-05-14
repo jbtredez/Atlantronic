@@ -98,13 +98,13 @@ static void strat_task(void* arg)
 	feet feet3(firstcheckpoint, "Feet 3", &robothomologation);
 
 	//Dropstart 
-	firstcheckpoint.x = 850;
+	firstcheckpoint.x = 830;
 	firstcheckpoint.y = 0;
 	DropZone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
 
 	//Dropcinema 
-	firstcheckpoint.x = -1000;
+	firstcheckpoint.x = -830;
 	firstcheckpoint.y = -400;
 	DropZone dropcinema(firstcheckpoint, "drop cinema", &robothomologation);
 
