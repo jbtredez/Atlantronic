@@ -74,7 +74,7 @@ static void strat_task(void* arg)
 	//Dropzone startzone 
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
-	dropzone dropstartzone(firstcheckpoint,&robothomologation);
+	DropZone dropstartzone(firstcheckpoint,&robothomologation);
 
 
 
@@ -159,7 +159,7 @@ static void strat_task(void* arg)
 	//Action gobelet 1
 	firstcheckpoint.x = 590;
 	firstcheckpoint.y = 200;
-	gobelet gobelet1(firstcheckpoint,&robothomologation);
+	Gobelet gobelet1(firstcheckpoint,&robothomologation);
 
 	feed feedgob1(firstcheckpoint,&robothomologation);
 	feedgob1.add_action(&gobelet1);	
@@ -170,12 +170,12 @@ static void strat_task(void* arg)
 	//Dropzone startzone 
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
-	dropzone dropcinemazone(firstcheckpoint,&robothomologation);
+	DropZone dropcinemazone(firstcheckpoint,&robothomologation);
 
 
 	firstcheckpoint.x = 0;
 	firstcheckpoint.y = -650;
-	gobelet gobelet2(firstcheckpoint,&robothomologation);
+	Gobelet gobelet2(firstcheckpoint,&robothomologation);
 
 	feed feedgob2(firstcheckpoint,&robothomologation);
 	feedgob2.add_action(&gobelet1);	
@@ -185,11 +185,11 @@ static void strat_task(void* arg)
 
 	firstcheckpoint.x = 950;
 	firstcheckpoint.y = 0;
-	dropzone dropcinemazone2(firstcheckpoint,&robothomologation);
+	DropZone dropcinemazone2(firstcheckpoint,&robothomologation);
 
 	firstcheckpoint.x = 1250;
 	firstcheckpoint.y = -750;
-	gobelet gobelet2(firstcheckpoint,&robothomologation);
+	Gobelet gobelet2(firstcheckpoint,&robothomologation);
 
 	feed feedgob2(firstcheckpoint,&robothomologation);
 	feedgob2.add_action(&gobelet1);	

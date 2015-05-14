@@ -19,7 +19,7 @@ feet::feet(VectPlan firstcheckpoint, const char * name, robotstate * elevator):A
 	{
 		m_elevator = elevator;	
 	}
-	
+
 	m_actiontype = ACTION_FEET;
 	 
 }

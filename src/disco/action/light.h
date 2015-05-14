@@ -18,7 +18,7 @@ class light : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	light(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
+	light(VectPlan firstcheckpoint, const char * name, robotstate * elevator, bool light2);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
@@ -34,6 +34,7 @@ class light : public Action
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
+	bool m_light2;
 }; 
 
 #endif

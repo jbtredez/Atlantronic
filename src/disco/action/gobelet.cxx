@@ -13,7 +13,8 @@
 #include "kernel/math/vect_plan.h"
 
 #define GOBELET_APPROX_DIST       100
-gobelet::gobelet(VectPlan firstcheckpoint,char * name, robotstate * elevator):Action(firstcheckpoint, name)
+
+Gobelet::Gobelet(VectPlan firstcheckpoint, const char * name, robotstate * elevator):Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -30,7 +31,7 @@ gobelet::gobelet(VectPlan firstcheckpoint,char * name, robotstate * elevator):Ac
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int gobelet::do_action()
+int Gobelet::do_action()
 {
 	int result = -1;
 	int essai = 0;
@@ -49,7 +50,7 @@ int gobelet::do_action()
 
 	do 
 	{
-		trajectory_goto_near(m_firstcheckpoint, GOBELET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, GOBELET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
@@ -66,7 +67,8 @@ int gobelet::do_action()
 
 	finger_set_pos(FINGER_GOBLET, FINGER_GOBLET);
 	vTaskDelay(300);
-	
+	elevator_set_position(10);
+
 	//Vérifie si on a attrapé quelque chose
 	//if(ax12.isFlagActive(AX12_LOW_FINGER, DYNAMIXEL_FLAG_STUCK) || ax12.isFlagActive(AX12_HIGH_FINGER, DYNAMIXEL_FLAG_STUCK))
 	//{

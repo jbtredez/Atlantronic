@@ -21,7 +21,7 @@
 #include "disco/action/movebackward.h"
 #include "disco/action/light.h"
 #include "disco/action/deposecarpette.h"
-
+#include "disco/action/gobelet.h"
 
 #include "strat/strat_simple.h"
 
@@ -75,12 +75,11 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 0;
 	movebackward startzone(firstcheckpoint, "Startzone");
 
-
 	//light 1
-	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
+	firstcheckpoint.x = 1285;
 	firstcheckpoint.y = 0;
 	firstcheckpoint.theta = 0;
-	light light1(firstcheckpoint, "Light 1", &robothomologation);
+	light light1(firstcheckpoint, "Light 1", &robothomologation, false);
 
 
 	//Pied 1
@@ -97,13 +96,17 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 400;
 	firstcheckpoint.y = -770;
 	feet feet3(firstcheckpoint, "Feet 3", &robothomologation);
-	
-	//Dropstart 
-	firstcheckpoint.x = 950;
-	firstcheckpoint.y = 0;
-	dropzone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
- // TODO tapis : OK mais on passe sur un verre avant d'y aller...
+	//Dropstart 
+	firstcheckpoint.x = 850;
+	firstcheckpoint.y = 0;
+	DropZone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
+
+	// Goblet
+	firstcheckpoint.x = 590;
+	firstcheckpoint.y = 170;
+	Gobelet gobelet1(firstcheckpoint, "gobelet 1", &robothomologation);
+
 	// Carpet1
 	firstcheckpoint.x = 390;
 	firstcheckpoint.y = 200;
@@ -113,7 +116,37 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 110;
 	firstcheckpoint.y = 200;
 	DeposeCarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
+/*
+	// Goblet
+	firstcheckpoint.x = 1250;
+	firstcheckpoint.y = -750;
+	Gobelet gobelet2(firstcheckpoint, "gobelet 2", &robothomologation);
 
+	firstcheckpoint.x = 1270;
+	firstcheckpoint.y = -770;
+	Clapet clap2(firstcheckpoint, "Clapet 2", &robothomologation);
+*/
+	// Goblet
+	firstcheckpoint.x = 0;
+	firstcheckpoint.y = -650;
+	Gobelet gobelet3(firstcheckpoint, "gobelet 3", &robothomologation);
+
+	firstcheckpoint.x = -990;
+	firstcheckpoint.y = -770;
+	Clapet clap3(firstcheckpoint, "Clapet 3", &robothomologation);
+
+/*
+	//light 2
+	firstcheckpoint.x = 250;
+	firstcheckpoint.y = -560;
+	firstcheckpoint.theta = -M_PI_2;
+	light light2(firstcheckpoint, "Light 2", &robothomologation, true);
+
+	//Pied 4
+	firstcheckpoint.x = 710;
+	firstcheckpoint.y = 800;
+	feet feet4(firstcheckpoint, "Feet 4", &robothomologation);
+*/
 	stratsimple strat;
 
 	strat.add_action(&light1);
@@ -123,8 +156,17 @@ static void strat_task(void* arg)
 	strat.add_action(&feet3);
 	strat.add_action(&clap1);
 	strat.add_action(&dropstartzone);
+	strat.add_action(&gobelet1);
 	strat.add_action(&carpet1);
 	strat.add_action(&carpet2);
+	strat.add_action(&dropstartzone);
+//	strat.add_action(&gobelet2);
+//	strat.add_action(&clap2);
+	strat.add_action(&dropstartzone);
+	strat.add_action(&gobelet3);
+	strat.add_action(&clap3);
+//	strat.add_action(&light2);
+//	strat.add_action(&feet4);
 
 	match_wait_go();
 	strat_color = match_get_color();

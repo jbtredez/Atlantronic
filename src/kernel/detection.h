@@ -38,7 +38,7 @@ void detection_register_callback(detection_callback callback);
 //!< attention, prise de mutex sur l'ensemble des segments
 //!<
 //!< @return distance maximale d'avance avant collision
-float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b);
+float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b, float margin = 0);
 
 float detection_compute_opponent_in_range_distance(Vect2 a, Vect2 u);
 

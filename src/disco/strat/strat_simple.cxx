@@ -73,6 +73,7 @@ int stratsimple::run()
 				}
 			}
 		}
+		vTaskDelay(1000);
 	}while( ! allDone );
 
 	return 0;

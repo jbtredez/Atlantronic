@@ -8,7 +8,7 @@
 #define DROPSTART_APPROX_DIST       10
 
 
-class dropzone : public Action
+class DropZone : public Action
 {
 	private :
 	robotstate * m_elevator;
@@ -21,14 +21,14 @@ class dropzone : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	dropzone(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
+	DropZone(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~dropzone(){};
+	~DropZone(){};
 
 	////////////////////////////////////////////////
 	/// function    : Exit()

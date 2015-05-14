@@ -325,12 +325,12 @@ static float detection_get_segment_similarity( Vect2* a,  Vect2* b,  Vect2* m,  
 	return similarity;
 }
 
-static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b)
+static float detection_compute_object_on_trajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b, float margin = 0)
 {
-	Vect2 a1( 0,    PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN );
-	Vect2 b1( 1e30, PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN );
-	Vect2 a2( 0,    PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN );
-	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN );
+	Vect2 a1( 0,    PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN + margin);
+	Vect2 b1( 1e30, PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN + margin);
+	Vect2 a2( 0,    PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN + margin);
+	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN + margin);
 
 	Vect2 c;
 	Vect2 d;
@@ -421,7 +421,7 @@ static float detection_compute_object_on_trajectory(const VectPlan& pos, const s
 	return x_min;
 }
 
-float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b)
+float detection_compute_front_object(enum detection_type type, const VectPlan& pos, Vect2* a, Vect2* b, float margin)
 {
 	float x_min = 1e30;
 	float x_min_table = 1e30;
@@ -457,7 +457,7 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 	if(type == DETECTION_FULL || type == DETECTION_STATIC_OBJ)
 	{
 		xSemaphoreTake(detection_mutex, portMAX_DELAY);
-		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d);
+		x_min_table = detection_compute_object_on_trajectory(pos, table_obj, TABLE_OBJ_SIZE, &c, &d, margin);
 		xSemaphoreGive(detection_mutex);
 
 		if(x_min_table < x_min)

@@ -6,7 +6,7 @@
 
 
 
-class gobelet : public Action
+class Gobelet : public Action
 {
 	private :
 	robotstate * m_elevator;
@@ -18,14 +18,14 @@ class gobelet : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	gobelet(VectPlan firstcheckpoint, char * name, robotstate * elevator);
+	Gobelet(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
 	////////////////////////////////////////////////
 	/// function    : ~action()
 	/// descrition  : destructor
 	/// param       : none
 	/// retrun      : none
 	////////////////////////////////////////////////
-	~gobelet(){};
+	~Gobelet(){};
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

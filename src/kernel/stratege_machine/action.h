@@ -51,7 +51,7 @@ class Action
 		/// param       : none
 		/// retrun      : none
 		////////////////////////////////////////////////
-		virtual void Initialise(int stratcolor){ m_firstcheckpoint = m_firstcheckpoint.symetric(stratcolor); };
+		virtual void Initialise(int stratcolor);
 		////////////////////////////////////////////////
 		/// function    : do_action()
 		/// descrition  : execute the action
@@ -66,6 +66,7 @@ class Action
 
 		int m_actiontype;
 		const char * m_name;
+		bool initialized;
 };
 
 #endif

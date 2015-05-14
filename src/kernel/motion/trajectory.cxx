@@ -231,7 +231,7 @@ static void simplify_path()
 		float dy = trajectory_dest.y - pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table, 50);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( dist2 < xmin2)
