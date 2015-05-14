@@ -128,11 +128,6 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 200;
 	DeposeCarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
 
-	// Carpet3
-	firstcheckpoint.x = 390;
-	firstcheckpoint.y = 200;
-	DeposeCarpette carpet3(firstcheckpoint, "Capette special", &robothomologation, false);
-
 	// Goblet 2
 	firstcheckpoint.x = 1250;
 	firstcheckpoint.y = -750;
@@ -202,7 +197,6 @@ static void strat_task(void* arg)
 	//strat.add_action(&dropcinema);
 //	//strat.add_action(&light2);
 //	//strat.add_action(&feet4);
-	//strat.add_action(&carpet3);
 
 	match_wait_go();
 	strat_color = match_get_color();

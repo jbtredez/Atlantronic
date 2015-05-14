@@ -93,7 +93,7 @@ int stratsimple::run()
 		&&  false == busefullaction );
 	
 	// Idle 
-	Move Idle(VectPlan(200 ,250,0.0f), "Idle");
+	Move Idle(VectPlan(390, 200, 0.0f), "Idle");
 	Idle.do_action();
 	return 0;
 }
