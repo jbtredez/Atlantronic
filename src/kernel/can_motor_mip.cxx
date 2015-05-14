@@ -10,7 +10,7 @@
 
 #define CAN_MIP_MOTOR_MAX_SPEED            2800
 #define CAN_MIP_MOTOR_MAX_ACCELERATION     6000
-#define CAN_MIP_MOTOR_MAX_DECELERATION     2000
+#define CAN_MIP_MOTOR_MAX_DECELERATION     3000
 
 CanMipMotor can_motor[CAN_MOTOR_MAX];
 
@@ -281,9 +281,9 @@ void CanMipMotor::set_speed(float v)
 	lastSpeedCmd = speed;
 
 	// vitesse min pour le moteur...
-	if( speed < 5 && speed > 0)
+	if( speed < 15 && speed > 0)
 	{
-		speed = 5;
+		speed = 15;
 	}
 
 	msg.id = 0x01 + (nodeId << 3);
