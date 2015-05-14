@@ -67,7 +67,7 @@ static void strat_task(void* arg)
 
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(730 ,-770,0.0f);
+	VectPlan firstcheckpoint(690 ,-770,0.0f);
 	Clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
 
 	//start
