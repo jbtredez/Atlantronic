@@ -49,7 +49,7 @@ void recalage()
 	motion_enable_antico(false);
 
 	motion_enable(true);
-	trajectory_straight(500);
+	trajectory_straight(200);
 
 	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
@@ -84,7 +84,7 @@ void recalage()
 		goto free;
 	}
 
-	trajectory_straight(500);
+	trajectory_straight(200);
 	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
