@@ -330,7 +330,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_widget_show_all(main_window);
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
-	setTableColor(COLOR_GREEN);
 
 	if( cli )
 	{
@@ -341,6 +340,8 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	{
 		qemu_set_parameters();
 	}
+
+	setTableColor(COLOR_GREEN);
 
 	gtk_main();
 
