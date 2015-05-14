@@ -20,7 +20,7 @@ const Vect2 pt[] =
 	SYM_POINT( -1200  ,  500  ),   //  2
 	SYM_POINT(  -800  ,  700  ),   //  4
     SYM_POINT(  -700  ,  200  ),   //  6
-    SYM_POINT(  -800  ,    0  ),   //  8
+    SYM_POINT(  -700  ,    0  ),   //  8
     SYM_POINT(  -800  , -400  ),   //  10
     SYM_POINT( -1200  , -400  ),   //  12
     SYM_POINT( -1200  , -700  ),   //  14
