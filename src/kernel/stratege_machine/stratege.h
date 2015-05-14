@@ -45,11 +45,20 @@ class strategy
 
 	////////////////////////////////////////////////
 	/// function    : run()
-	/// descrition  : execute the strategie
+	/// descrition  : execute the strategy
 	/// param       : none
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int run(){return 0;};
+
+
+	////////////////////////////////////////////////
+	/// function    : affiche()
+	/// descrition  : print the strategy
+	/// param       : none
+	/// retrun      : -1 if fail or 0 if sucess
+	////////////////////////////////////////////////
+	void affiche();
 	
 };
 

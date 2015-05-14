@@ -186,23 +186,23 @@ static void strat_task(void* arg)
 	strat.add_action(&feet1);
 	strat.add_action(&feet2);
 	strat.add_action(&feet3);
-	strat.add_action(&clap1);
+	//strat.add_action(&clap1);
 	strat.add_action(&dropstartzone);
 	strat.add_action(&gobelet1);
 	strat.add_action(&carpet1);
-	strat.add_action(&carpet2);
-	strat.add_action(&dropstartzone);
+	//strat.add_action(&carpet2);
+	//strat.add_action(&dropstartzone);
 	//strat.add_action(&gobelet2);
 	//strat.add_action(&clap2);
-	strat.add_action(&dropstartzone);
-	strat.add_action(&Checkpoint1);
-	strat.add_action(&gobelet3);
-	strat.add_action(&Checkpoint2);
-	strat.add_action(&clap3);
-	strat.add_action(&dropcinema);
-//	strat.add_action(&light2);
-//	strat.add_action(&feet4);
-	strat.add_action(&carpet3);
+	//strat.add_action(&dropstartzone);
+	//strat.add_action(&Checkpoint1);
+	//strat.add_action(&gobelet3);
+	//strat.add_action(&Checkpoint2);
+	//strat.add_action(&clap3);
+	//strat.add_action(&dropcinema);
+//	//strat.add_action(&light2);
+//	//strat.add_action(&feet4);
+	//strat.add_action(&carpet3);
 
 	match_wait_go();
 	strat_color = match_get_color();
@@ -210,6 +210,7 @@ static void strat_task(void* arg)
 	
 
 	strat.Initialise(strat_color);
+	strat.affiche();
 	strat.run();
 
 
