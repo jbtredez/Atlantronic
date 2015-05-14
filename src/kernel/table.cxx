@@ -38,7 +38,18 @@ const struct Vect2 table_depart_jaune[] =
 	Vect2(-1500, -222), Vect2(-1100, -222), Vect2(-1100, -200), Vect2(-1430, -200), Vect2(-1430, 200), Vect2(-1100, 200), Vect2(-1100, 222), Vect2(-1500, 222)
 };
 
-const struct polyline table_obj[TABLE_OBJ_SIZE] =
+const struct Vect2 table_depart_jaune_block[] =
+{
+	Vect2(-1100, -222), Vect2(-900, -222), Vect2(-900, 222), Vect2(-110, 222)
+};
+
+const struct Vect2 table_depart_vert_block[] =
+{
+	Vect2(1100, -222), Vect2(900, -222), Vect2(900, 222), Vect2(110, 222)
+};
+
+
+struct polyline table_obj[TABLE_OBJ_SIZE] =
 {
 	{ (Vect2*) table_contour, ARRAY_SIZE(table_contour) },
 	{ (Vect2*) table_estrade, ARRAY_SIZE(table_estrade) },
@@ -47,4 +58,20 @@ const struct polyline table_obj[TABLE_OBJ_SIZE] =
 	{ (Vect2*) table_marches_vertes, ARRAY_SIZE(table_marches_vertes) },
 	{ (Vect2*) table_depart_vert, ARRAY_SIZE(table_depart_vert) },
 	{ (Vect2*) table_depart_jaune, ARRAY_SIZE(table_depart_jaune) },
+	{ (Vect2*) table_depart_jaune_block, 0 },
+	{ (Vect2*) table_depart_vert_block, 0 },
 };
+
+void setTableColor(int color)
+{
+	if( color > 0)
+	{
+		table_obj[7].size = ARRAY_SIZE(table_depart_jaune_block);;
+		table_obj[8].size = 0;
+	}
+	else
+	{
+		table_obj[7].size = 0;
+		table_obj[8].size = ARRAY_SIZE(table_depart_vert_block);
+	}
+}

@@ -8,8 +8,10 @@
 #include <stdint.h>
 #include "kernel/math/polyline.h"
 
-#define TABLE_OBJ_SIZE                      7
+#define TABLE_OBJ_SIZE                      9
 
-extern const struct polyline table_obj[TABLE_OBJ_SIZE];
+extern struct polyline table_obj[TABLE_OBJ_SIZE];
+
+void setTableColor(int color);
 
 #endif

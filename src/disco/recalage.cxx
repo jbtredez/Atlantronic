@@ -8,6 +8,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
+#include "kernel/table.h"
 #include "kernel/motion/trajectory.h"
 
 #include "disco/wing.h"
@@ -22,6 +23,7 @@ void recalage()
 	log(LOG_INFO, "recalage...");
 
 	location_set_position(pos.symetric(color));
+	setTableColor(color);
 
 	wing_set_position(WING_PARK, WING_PARK);
 	elevator_set_position(85);
