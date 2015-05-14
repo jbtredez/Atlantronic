@@ -385,10 +385,27 @@ static void trajectory_update()
 		if(trajectory_graph_way[0] != last_graph_id)
 		{
 			// calcul du trajet dans le graph
-			// on active tout les chemins
+
+			// on active tout les chemins ou passe le robot
 			for(int i = 0; i < GRAPH_NUM_LINK; i++)
 			{
-				trajectory_graph_valid_links[i] = 1;
+				// position du noeud avec alignement (marche avant) avec la destination
+				VectPlan pos;
+				int ida = graph_link[i].a;
+				pos.x = graph_node[ida].pos.x;
+				pos.y = graph_node[ida].pos.y;
+				pos.theta =  graph_link[i].alpha;
+				float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, NULL, NULL);
+				if( graph_link[i].dist < xmin)
+				{
+					// lien valide
+					trajectory_graph_valid_links[i] = 1;
+				}
+				else
+				{
+					// lien invalide
+					trajectory_graph_valid_links[i] = 0;
+				}
 			}
 			//log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_graph_way[0], trajectory_last_graph_id);
 			int res = graph_dijkstra(trajectory_graph_way[0], last_graph_id, trajectory_dijkstra_info, trajectory_graph_valid_links);
