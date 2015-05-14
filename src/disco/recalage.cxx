@@ -36,7 +36,7 @@ void recalage()
 	KinematicsParameters angParamOrig;
 	trajectory_get_kinematics_param(&linParamOrig, &angParamOrig);
 
-	KinematicsParameters linParam = {50, 300, 300};
+	KinematicsParameters linParam = {100, 300, 300};
 	KinematicsParameters angParam = angParamOrig;
 	angParam.vMax /= 2;
 	angParam.aMax /= 2;
