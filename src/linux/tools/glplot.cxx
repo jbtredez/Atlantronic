@@ -330,6 +330,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_widget_show_all(main_window);
 
 	joystick_init(&joystick, "/dev/input/js0", joystick_event);
+	setTableColor(COLOR_GREEN);
 
 	if( cli )
 	{
@@ -1022,10 +1023,12 @@ static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 	if( color == COLOR_GREEN )
 	{
 		color = COLOR_YELLOW;
+		setTableColor(color);
 	}
 	else
 	{
 		color = COLOR_GREEN;
+		setTableColor(color);
 	}
 
 	if(qemu)

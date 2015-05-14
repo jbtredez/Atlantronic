@@ -40,12 +40,12 @@ const struct Vect2 table_depart_jaune[] =
 
 const struct Vect2 table_depart_jaune_block[] =
 {
-	Vect2(-1100, -222), Vect2(-900, -222), Vect2(-900, 222), Vect2(-110, 222)
+	Vect2(-1100, -222), Vect2(-850, -222), Vect2(-850, 222), Vect2(-1100, 222)
 };
 
 const struct Vect2 table_depart_vert_block[] =
 {
-	Vect2(1100, -222), Vect2(900, -222), Vect2(900, 222), Vect2(110, 222)
+	Vect2(1100, -222), Vect2(850, -222), Vect2(850, 222), Vect2(1100, 222)
 };
 
 
