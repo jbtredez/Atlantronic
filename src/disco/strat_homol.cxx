@@ -63,11 +63,11 @@ static void strat_task(void* arg)
 
 	robotstate robothomologation;
 	robothomologation.setnumberelement(0);
-	robothomologation.setelevatorstate(ELEVATOR_LIGHT);
+	robothomologation.setelevatorstate(ELEVATOR_EMPTY);
 
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(690 ,-770,0.0f);
+	VectPlan firstcheckpoint(690 ,-780,0.0f);
 	Clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
 
 	//start
@@ -123,23 +123,23 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 110;
 	firstcheckpoint.y = 200;
 	DeposeCarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
-/*
-	// Goblet
+
+	// Goblet 2
 	firstcheckpoint.x = 1250;
 	firstcheckpoint.y = -750;
 	Gobelet gobelet2(firstcheckpoint, "gobelet 2", &robothomologation);
 
 	firstcheckpoint.x = 1270;
-	firstcheckpoint.y = -770;
+	firstcheckpoint.y = -780;
 	Clapet clap2(firstcheckpoint, "Clapet 2", &robothomologation);
-*/
-	// Goblet
+
+	// Goblet 3
 	firstcheckpoint.x = 0;
 	firstcheckpoint.y = -650;
 	Gobelet gobelet3(firstcheckpoint, "gobelet 3", &robothomologation);
 
 	firstcheckpoint.x = -990;
-	firstcheckpoint.y = -770;
+	firstcheckpoint.y = -780;
 	Clapet clap3(firstcheckpoint, "Clapet 3", &robothomologation);
 
 /*
