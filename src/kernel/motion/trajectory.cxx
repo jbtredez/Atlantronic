@@ -156,6 +156,10 @@ static void trajectory_task(void* arg)
 					motion_trajectory_type traj_type = MOTION_AXIS_XYA;
 					if( fabsf(ds) > EPSILON )
 					{
+						if( trajectory_type == TRAJECTORY_GOTO_XY )
+						{
+							traj_type = MOTION_AXIS_XY;
+						}
 						dest.x -= trajectory_approx_dist * u.x / ds;
 						dest.y -= trajectory_approx_dist * u.y / ds;
 					}

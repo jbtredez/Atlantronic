@@ -11,7 +11,8 @@
 
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
-#define MOVE_APPROX_DIST 100
+
+
 Move::Move(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, name)
 {
 	set_actiontype(ACTION_MOVE);
@@ -25,19 +26,11 @@ Move::Move(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, 
 ////////////////////////////////////////////////
 int Move::do_action()
 {
-
-		do 
+	do
 	{
 		vTaskDelay(100);
-		trajectory_goto_near(m_firstcheckpoint, MOVE_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
+		trajectory_goto_near(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 	}while(  trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 	return 0;
-
 }
-	
-	
-
-	
-	
-

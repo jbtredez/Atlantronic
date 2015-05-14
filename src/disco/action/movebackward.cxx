@@ -6,9 +6,6 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-#define LIGHT_APPROX_DIST       100
-
-
 movebackward::movebackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)
 {
 
@@ -22,16 +19,13 @@ movebackward::movebackward(VectPlan firstcheckpoint, const char * name):Action(f
 ////////////////////////////////////////////////
 int movebackward::do_action()
 {
-
 	Action::do_action();
 
 	do
 	{
-	    trajectory_goto(m_firstcheckpoint, WAY_BACKWARD, AVOIDANCE_STOP);
+	    trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_ANY, AVOIDANCE_STOP);
 	
 		vTaskDelay(100);
 	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0); 
 	return 0;
 }
-	
-	

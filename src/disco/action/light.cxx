@@ -47,30 +47,24 @@ int light::do_action()
 	elevator_set_position(10);
 	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
 
-	do 
-	{
-		if( m_light2 )
-		{
-			trajectory_goto_near(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
-		}
-		else
-		{
-			trajectory_goto_near(m_firstcheckpoint, 0, WAY_ANY, AVOIDANCE_STOP) ;
-		}
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
-		{
-			result = 0;
-		}
-		essai++;
-		if(essai == 3)
-		{
-			return -1;
-		}
-		vTaskDelay(100);
-	} while(  result ==-1 ) ;
-
 	if( m_light2 )
 	{
+		do
+		{
+			trajectory_goto_near(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+
+			if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+			{
+				result = 0;
+			}
+			essai++;
+			if(essai == 3)
+			{
+				return -1;
+			}
+			vTaskDelay(100);
+		} while(  result ==-1 ) ;
+
 		finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 
 		VectPlan dest = m_firstcheckpoint;
@@ -95,10 +89,6 @@ int light::do_action()
 
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_CLOSE);
 	vTaskDelay(500);
-
-
-
-
 
 	log(LOG_INFO, "light on board");
 	m_elevator->setnumberelement(nbelement + 1);
