@@ -100,18 +100,21 @@ static void strat_task(void* arg)
 	//Dropstart 
 	firstcheckpoint.x = 830;
 	firstcheckpoint.y = 0;
+	firstcheckpoint.theta = 0;
 	DropZone dropstartzone(firstcheckpoint, "drop start", &robothomologation);
 
 
 	//Dropcinema 
 	firstcheckpoint.x = -830;
 	firstcheckpoint.y = -400;
+	firstcheckpoint.theta = -M_PI;
 	DropZone dropcinema(firstcheckpoint, "drop cinema", &robothomologation);
 
 
 	// Goblet
 	firstcheckpoint.x = 590;
 	firstcheckpoint.y = 170;
+	firstcheckpoint.theta = 0;
 	Gobelet gobelet1(firstcheckpoint, "gobelet 1", &robothomologation);
 
 	// Carpet1
