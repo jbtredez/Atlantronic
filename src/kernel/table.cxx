@@ -69,9 +69,14 @@ void setTableColor(int color)
 		table_obj[7].size = ARRAY_SIZE(table_depart_jaune_block);;
 		table_obj[8].size = 0;
 	}
-	else
+	else if( color < 0 )
 	{
 		table_obj[7].size = 0;
 		table_obj[8].size = ARRAY_SIZE(table_depart_vert_block);
+	}
+	else
+	{
+		table_obj[7].size = 0;
+		table_obj[8].size = 0;
 	}
 }

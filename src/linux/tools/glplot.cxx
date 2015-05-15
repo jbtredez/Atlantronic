@@ -341,8 +341,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 		qemu_set_parameters();
 	}
 
-	setTableColor(COLOR_GREEN);
-
 	gtk_main();
 
 	gdk_threads_leave();
@@ -356,6 +354,7 @@ void qemu_set_parameters()
 {
 	qemu->setPosition(qemuStartPos);
 	qemu->set_io(GPIO_MASK(IO_COLOR), true);
+	setTableColor(0);
 
 	// ajout de la table dans qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -409,6 +408,7 @@ void qemu_set_parameters()
 		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
 		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+17, origin, glassPosition[i]);
 	}
+	setTableColor(COLOR_GREEN);
 }
 
 void gtk_end()
