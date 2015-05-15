@@ -12,7 +12,7 @@
 #include "kernel/stratege_machine/action.h"
 #include "kernel/math/vect_plan.h"
 
-#define GOBELET_APPROX_DIST       130
+#define GOBELET_APPROX_DIST       150
 
 Gobelet::Gobelet(VectPlan firstcheckpoint, const char * name, robotstate * elevator):Action(firstcheckpoint, name)
 {
