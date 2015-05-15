@@ -1125,11 +1125,13 @@ int RobotInterface::elevator_set_position(float pos)
 	return usb_write(USB_CMD_ELEVATOR, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::finger_set_position(enum finger_type low, enum finger_type high)
+int RobotInterface::finger_set_position(enum finger_type low, enum finger_type high, enum finger_bottom_type right, enum finger_bottom_type left)
 {
 	struct finger_cmd_arg cmd_arg;
 	cmd_arg.low = low;
 	cmd_arg.high = high;
+	cmd_arg.right = right;
+	cmd_arg.left = left;
 	return usb_write(USB_CMD_FINGER, &cmd_arg, sizeof(cmd_arg));
 }
 

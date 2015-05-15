@@ -107,7 +107,7 @@ static void strat_task(void* arg)
 
 	//Dropcinema 
 	firstcheckpoint.x = -800;
-	firstcheckpoint.y = -400;
+	firstcheckpoint.y = -500;
 	firstcheckpoint.theta = -M_PI;
 	DropZone dropcinema(firstcheckpoint, "drop cinema", &robothomologation);
 
@@ -147,9 +147,6 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = -780;
 	Clapet clap3(firstcheckpoint, "Clapet 3", &robothomologation);
 
-
-
-/*
 	//light 2
 	firstcheckpoint.x = 250;
 	firstcheckpoint.y = -560;
@@ -157,10 +154,10 @@ static void strat_task(void* arg)
 	light light2(firstcheckpoint, "Light 2", &robothomologation, true);
 
 	//Pied 4
-	firstcheckpoint.x = 710;
-	firstcheckpoint.y = 800;
+	firstcheckpoint.x = 750;
+	firstcheckpoint.y = 650;
 	feet feet4(firstcheckpoint, "Feet 4", &robothomologation);
-*/
+
 	stratsimple strat;
 
 	strat.add_action(&light1);
@@ -180,8 +177,10 @@ static void strat_task(void* arg)
 	strat.add_action(&gobelet3);
 	strat.add_action(&clap3);
 	strat.add_action(&dropcinema);
-//	//strat.add_action(&light2);
-//	//strat.add_action(&feet4);
+#if 0
+	strat.add_action(&light2);
+	strat.add_action(&feet4);
+#endif
 
 	match_wait_go();
 	strat_color = match_get_color();

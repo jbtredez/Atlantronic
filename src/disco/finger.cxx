@@ -13,6 +13,8 @@ static int finger_module_init()
 	// configuration des ax12
 	ax12.set_torque_limit(AX12_LOW_FINGER, 0.6);
 	ax12.set_torque_limit(AX12_HIGH_FINGER, 0.6);
+	ax12.set_torque_limit(AX12_RIGHT_FINGER, 0.6);
+	ax12.set_torque_limit(AX12_LEFT_FINGER, 0.6);
 
 	ax12.set_goal_limit(AX12_LOW_FINGER, -1.8, 0);
 	ax12.set_goal_limit(AX12_HIGH_FINGER, 0, 1.8);
@@ -53,9 +55,6 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_LOW_FINGER, -M_PI_2);
 			break;
-		case FINGER_WIDE_OPEN:
-			ax12.set_goal_position(AX12_LOW_FINGER, -1.8);
-			break;
 		default:
 			break;
 	}
@@ -75,8 +74,32 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 		case FINGER_OPEN:
 			ax12.set_goal_position(AX12_HIGH_FINGER, M_PI_2);
 			break;
-		case FINGER_WIDE_OPEN:
-			ax12.set_goal_position(AX12_HIGH_FINGER, 1.8);
+		default:
+			break;
+	}
+}
+
+void finger_bottom_set_pos(enum finger_bottom_type right, enum finger_bottom_type left)
+{
+	switch(right)
+	{
+		case FINGER_BOTTOM_CLOSE:
+			ax12.set_goal_position(AX12_RIGHT_FINGER, 100*M_PI/180);
+			break;
+		case FINGER_BOTTOM_OPEN:
+			ax12.set_goal_position(AX12_RIGHT_FINGER, -60*M_PI/180);
+			break;
+		default:
+			break;
+	}
+
+	switch(left)
+	{
+		case FINGER_BOTTOM_CLOSE:
+			ax12.set_goal_position(AX12_LEFT_FINGER, -100*M_PI/180);
+			break;
+		case FINGER_BOTTOM_OPEN:
+			ax12.set_goal_position(AX12_LEFT_FINGER, 60*M_PI/180);
 			break;
 		default:
 			break;
@@ -87,4 +110,5 @@ static void finger_cmd(void* arg)
 {
 	struct finger_cmd_arg* cmd_arg = (struct finger_cmd_arg*) arg;
 	finger_set_pos((enum finger_type)cmd_arg->low, (enum finger_type)cmd_arg->high);
+	finger_bottom_set_pos((enum finger_bottom_type)cmd_arg->right, (enum finger_bottom_type)cmd_arg->left);
 }

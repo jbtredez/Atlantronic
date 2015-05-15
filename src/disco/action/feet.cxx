@@ -75,8 +75,12 @@ int feet::do_action()
 
 	} while(  result ==-1 ) ;
 
+	finger_bottom_set_pos(FINGER_BOTTOM_CLOSE, FINGER_BOTTOM_CLOSE);
 	finger_set_pos(FINGER_HALF_CLOSE, FINGER_HALF_OPEN);
+
 	vTaskDelay(500);
+
+	finger_bottom_set_pos(FINGER_BOTTOM_OPEN, FINGER_BOTTOM_OPEN);
 	finger_set_pos(FINGER_OPEN, FINGER_OPEN);
 	elevator_set_position(0);
 	vTaskDelay(800);

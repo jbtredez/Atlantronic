@@ -28,6 +28,7 @@ void recalage()
 	wing_set_position(WING_PARK, WING_PARK);
 	elevator_set_position(85);
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
+	finger_bottom_set_pos(FINGER_BOTTOM_OPEN, FINGER_BOTTOM_OPEN);
 	vTaskDelay(500);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
 	// TODO ranger porte tapis ?
@@ -65,7 +66,7 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory_straight(-75);
+	trajectory_straight(-65);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
@@ -99,7 +100,15 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory_straight(-20);
+	trajectory_straight(-50);
+	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+	{
+		goto free;
+	}
+
+	vTaskDelay(ms_to_tick(100));
+
+	trajectory_straight(40);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;

@@ -67,7 +67,7 @@ int Gobelet::do_action()
 
 	finger_set_pos(FINGER_GOBLET, FINGER_GOBLET);
 	vTaskDelay(300);
-	elevator_set_position(20);
+	elevator_set_position(30);
 
 	//Vérifie si on a attrapé quelque chose
 	//if(elevator_omron_active())

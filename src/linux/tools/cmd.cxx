@@ -98,7 +98,7 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_disable_endless_turn_mode", cmd_dynamixel_disable_endless_turn_mode, "dynamixel_disable_endless_turn_mode  id type"},
 	{ "dynamixel_set_speed", cmd_dynamixel_set_speed, "dynamixel_set_speed  id type speed"},
 	{ "elevator_set_position", cmd_elevator_set_position, "elevator_set_position pos"},
-	{ "finger_set_position", cmd_finger_set_position, "finger_set_position low high"},
+	{ "finger_set_position", cmd_finger_set_position, "finger_set_position low high right left"},
 	{ "free", cmd_free, "free"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
@@ -342,14 +342,16 @@ int cmd_finger_set_position(const char* arg)
 {
 	int low;
 	int high;
-	int count = sscanf(arg, "%d %d", &low, &high);
+	int right;
+	int left;
+	int count = sscanf(arg, "%d %d %d %d", &low, &high, &right, &left);
 
-	if(count != 2)
+	if(count != 4)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->finger_set_position((enum finger_type)low, (enum finger_type)high);
+	cmd_robot->finger_set_position((enum finger_type)low, (enum finger_type)high, (enum finger_bottom_type) right, (enum finger_bottom_type)left);
 	return CMD_SUCESS;
 }
 
