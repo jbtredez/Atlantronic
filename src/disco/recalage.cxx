@@ -18,6 +18,8 @@
 void recalage()
 {
 	VectPlan pos(1200, 0, M_PI_2);
+	VectPlan posInit(1285, 0, 0);
+
 	int color = match_get_color();
 
 	log(LOG_INFO, "recalage...");
@@ -100,15 +102,15 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory_straight(-50);
+	trajectory_straight(-100);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
-	vTaskDelay(ms_to_tick(100));
+	vTaskDelay(200);
 
-	trajectory_straight(40);
+	trajectory_goto_near(posInit.symetric(color), 0, WAY_FORWARD, AVOIDANCE_STOP);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
