@@ -7,9 +7,9 @@
 
 #include <math.h>
 
-#define PARAM_LEFT_CORNER_X                    135
+#define PARAM_LEFT_CORNER_X                    127
 #define PARAM_LEFT_CORNER_Y                    155
-#define PARAM_RIGHT_CORNER_X                   135
+#define PARAM_RIGHT_CORNER_X                   127
 #define PARAM_RIGHT_CORNER_Y                  -155
 #define PARAM_NP_X                            -125
 #define PARAM_FINGER_SIZE_X                     50

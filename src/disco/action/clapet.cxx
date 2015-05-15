@@ -72,7 +72,7 @@ int Clapet::do_action()
 
 	do 
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, 0, WAY_FORWARD, AVOIDANCE_STOP);
+		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, 0, WAY_FORWARD, AVOIDANCE_GRAPH);
 		if (trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
 		{
 			result = 0;

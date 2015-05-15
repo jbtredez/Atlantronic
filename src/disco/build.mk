@@ -83,6 +83,7 @@ core_robot += disco/recalage.o
 core_robot += disco/robot_state.o
 core_robot += disco/action/clapet.o
 core_robot += disco/action/feet.o
+core_robot += disco/action/feet_lateral.o
 core_robot += disco/action/gobelet.o
 core_robot += disco/action/light.o
 core_robot += disco/action/dropzone.o

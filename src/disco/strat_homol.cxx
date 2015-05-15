@@ -17,6 +17,7 @@
 
 #include "disco/action/clapet.h"
 #include "disco/action/feet.h"
+#include "disco/action/feet_lateral.h"
 #include "disco/action/dropzone.h"
 #include "disco/action/movebackward.h"
 #include "disco/action/light.h"
@@ -119,17 +120,17 @@ static void strat_task(void* arg)
 	Gobelet gobelet1(firstcheckpoint, "gobelet 1", &robothomologation);
 
 	// Carpet1
-	firstcheckpoint.x = 390;
+	firstcheckpoint.x = 382;
 	firstcheckpoint.y = 200;
 	DeposeCarpette carpet1(firstcheckpoint, "Capette Left", &robothomologation, false);
 
 	// Carpet2
-	firstcheckpoint.x = 110;
+	firstcheckpoint.x = 102;
 	firstcheckpoint.y = 200;
 	DeposeCarpette carpet2(firstcheckpoint, "Capette Right", &robothomologation, true);
 
 	// Goblet 2
-	firstcheckpoint.x = 1250;
+	firstcheckpoint.x = -1250;
 	firstcheckpoint.y = -750;
 	Gobelet gobelet2(firstcheckpoint, "gobelet 2", &robothomologation);
 
@@ -154,10 +155,14 @@ static void strat_task(void* arg)
 	light light2(firstcheckpoint, "Light 2", &robothomologation, true);
 
 	//Pied 4
-	firstcheckpoint.x = 750;
-	firstcheckpoint.y = 650;
-	feet feet4(firstcheckpoint, "Feet 4", &robothomologation);
+	//firstcheckpoint.x = 1005;
+	//firstcheckpoint.y = 500;
+	FeetLateral feet4(firstcheckpoint, "Feet 4", &robothomologation);
 
+/*	firstcheckpoint.x = 750;
+	firstcheckpoint.y = 650;
+	feet feet5(firstcheckpoint, "Feet 5", &robothomologation);
+*/
 	stratsimple strat;
 
 	strat.add_action(&light1);
@@ -171,16 +176,19 @@ static void strat_task(void* arg)
 	strat.add_action(&carpet1);
 	strat.add_action(&carpet2);
 	strat.add_action(&dropstartzone);
-	//strat.add_action(&gobelet2);
+	strat.add_action(&gobelet2);
 	//strat.add_action(&clap2);
 	//strat.add_action(&dropstartzone);
-	strat.add_action(&gobelet3);
-	strat.add_action(&clap3);
-	strat.add_action(&dropcinema);
 #if 0
 	strat.add_action(&light2);
 	strat.add_action(&feet4);
+//	strat.add_action(&feet5);
+//	strat.add_action(&dropstartzone);
 #endif
+
+	//strat.add_action(&gobelet3);
+//	strat.add_action(&clap3);
+	strat.add_action(&dropcinema);
 
 	match_wait_go();
 	strat_color = match_get_color();

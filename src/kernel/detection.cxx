@@ -53,6 +53,8 @@ static struct detection_object detection_obj[DETECTION_NUM_OBJECT];
 //static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
 static int32_t detection_num_obj;
 
+static Vect2 detectionOpponentRobotPt[5];
+
 int detection_module_init()
 {
 	portBASE_TYPE err = xTaskCreate(detection_task, "detect", DETECTION_STACK_SIZE, NULL, PRIORITY_TASK_DETECTION, NULL);
@@ -427,15 +429,32 @@ float detection_compute_front_object(enum detection_type type, const VectPlan& p
 	float x_min_table = 1e30;
 	Vect2 c;
 	Vect2 d;
-#if 0
+
 	if(type == DETECTION_FULL || type == DETECTION_DYNAMIC_OBJ)
 	{
 		xSemaphoreTake(detection_mutex, portMAX_DELAY);
-		//x_min = detection_compute_object_on_trajectory(pos, detection_object_polyline, detection_num_obj[1], a, b); // TODO regrouper obj1 et 2 ?
+
+		int16_t detect_size = detection_num_obj;
+		for(int i = 0 ; i < detect_size; i++)
+		{
+			struct polyline detectionOpponentRobot = {detectionOpponentRobotPt, sizeof(detectionOpponentRobotPt)/sizeof(detectionOpponentRobotPt[0])};
+			Vect2 opponentRobotPos(detection_obj[i].x, detection_obj[i].y);
+			detectionOpponentRobotPt[0] = opponentRobotPos + Vect2(DETECTION_OPPONENT_ROBOT_RADIUS/2, DETECTION_OPPONENT_ROBOT_RADIUS/2);
+			detectionOpponentRobotPt[1] = opponentRobotPos + Vect2(DETECTION_OPPONENT_ROBOT_RADIUS/2, -DETECTION_OPPONENT_ROBOT_RADIUS/2);
+			detectionOpponentRobotPt[2] = opponentRobotPos + Vect2(-DETECTION_OPPONENT_ROBOT_RADIUS/2, -DETECTION_OPPONENT_ROBOT_RADIUS/2);
+			detectionOpponentRobotPt[3] = opponentRobotPos + Vect2(-DETECTION_OPPONENT_ROBOT_RADIUS/2, DETECTION_OPPONENT_ROBOT_RADIUS/2);
+			detectionOpponentRobotPt[4] = opponentRobotPos + Vect2(DETECTION_OPPONENT_ROBOT_RADIUS/2, DETECTION_OPPONENT_ROBOT_RADIUS/2);
+
+			float x_min_tmp = detection_compute_object_on_trajectory(pos, &detectionOpponentRobot, 1, a, b);
+			if( x_min_tmp < x_min )
+			{
+				x_min = x_min_tmp;
+			}
+		}
+
 		xSemaphoreGive(detection_mutex);
 	}
 	else
-#endif
 	{
 		c.x = x_min;
 		d.y = PARAM_LEFT_CORNER_Y;

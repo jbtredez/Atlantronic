@@ -24,6 +24,7 @@ static void trajectory_task(void* arg);
 static void trajectory_update();
 static int trajectory_find_way_to_graph(VectPlan pos, enum detection_type detect_type);
 static void trajectory_detection_callback();
+static void trajectory_compute_graph(enum detection_type type);
 
 // requete pour la tache trajectory + mutex
 static struct trajectory_cmd_arg trajectory_request;
@@ -129,11 +130,8 @@ static void trajectory_task(void* arg)
 								break;
 							case AVOIDANCE_GRAPH:
 								log(LOG_INFO, "collision -> graph");
-								// si on n'est pas sur le graph
-								// TODO retenter n fois puis recalculer une trajectoire ?
-								// pour le moment arret
-								log(LOG_INFO, "collision -> stop");
-								trajectory_state = TRAJECTORY_STATE_COLISION;
+								trajectory_compute_graph(DETECTION_FULL);
+								trajectory_state = TRAJECTORY_STATE_MOVE_TO_GRAPH;
 								break;
 						}
 						break;
@@ -185,7 +183,12 @@ static void trajectory_task(void* arg)
 					}
 					else
 					{
-						motion_goto(trajectory_dest, VectPlan(), trajectory_way, MOTION_AXIS_XYA, trajectory_linear_param, trajectory_angular_param);
+						motion_trajectory_type traj_type = MOTION_AXIS_XYA;
+						if( trajectory_type == TRAJECTORY_GOTO_XY )
+						{
+							traj_type = MOTION_AXIS_XY;
+						}
+						motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 						trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 					}
 				}
@@ -207,7 +210,7 @@ static void trajectory_task(void* arg)
 	}
 }
 
-static void simplify_path()
+static void simplify_path(enum detection_type type)
 {
 	// elimination de points de passage
 	int i = 0;
@@ -235,7 +238,7 @@ static void simplify_path()
 		float dy = trajectory_dest.y - pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+		float xmin = detection_compute_front_object(type, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( dist2 < xmin2)
@@ -255,7 +258,7 @@ static void simplify_path()
 			dy = graph_node[id2].pos.y - pos.y;
 			pos.theta = atan2f(dy, dx);
 
-			xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+			xmin = detection_compute_front_object(type, pos, &a_table, &b_table);
 			dist2 = dx * dx +  dy * dy;
 			xmin2 = xmin * xmin;
 			if( dist2 < xmin2)
@@ -275,6 +278,86 @@ static void simplify_path()
 			}
 		}
 	}
+}
+
+void trajectory_compute_graph(enum detection_type type)
+{
+	trajectory_graph_way_count = 1;
+
+	trajectory_graph_way[0] = trajectory_find_way_to_graph(trajectory_pos, type);
+	int last_graph_id = trajectory_find_way_to_graph(trajectory_dest, type);
+	if(trajectory_graph_way[0] != last_graph_id)
+	{
+		// calcul du trajet dans le graph
+
+		// on active tout les chemins ou passe le robot
+		for(int i = 0; i < GRAPH_NUM_LINK; i++)
+		{
+			// position du noeud avec alignement (marche avant) avec la destination
+			VectPlan pos;
+			int ida = graph_link[i].a;
+			pos.x = graph_node[ida].pos.x;
+			pos.y = graph_node[ida].pos.y;
+			pos.theta =  graph_link[i].alpha;
+			float xmin = detection_compute_front_object(type, pos, NULL, NULL);
+			if( graph_link[i].dist < xmin)
+			{
+				// lien valide
+				trajectory_graph_valid_links[i] = 1;
+			}
+			else
+			{
+				// lien invalide
+				trajectory_graph_valid_links[i] = 0;
+			}
+			//log_format(LOG_INFO, "lien %d : %d (%d -> %d)", i, trajectory_graph_valid_links[i], (int)graph_link[i].a, (int)graph_link[i].b);
+		}
+		//log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_graph_way[0], trajectory_last_graph_id);
+		int res = graph_dijkstra(trajectory_graph_way[0], last_graph_id, trajectory_dijkstra_info, trajectory_graph_valid_links);
+		if(res)
+		{
+			log_format(LOG_INFO, "aucun chemin trouvé de %d à %d", trajectory_graph_way[0], last_graph_id);
+			trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+		}
+		else
+		{
+			int i = last_graph_id;
+			while(trajectory_dijkstra_info[i].prev_node != trajectory_graph_way[0])
+			{
+				i = trajectory_dijkstra_info[i].prev_node;
+				trajectory_graph_way_count++;
+			}
+			trajectory_graph_way_count++;
+
+			// on refait un parcourt pour mettre dans les points dans l'ordre
+			i = last_graph_id;
+			int j = trajectory_graph_way_count - 1;
+			trajectory_graph_way[j] = i;
+			while(trajectory_dijkstra_info[i].prev_node != trajectory_graph_way[0])
+			{
+				i = trajectory_dijkstra_info[i].prev_node;
+				j--;
+				trajectory_graph_way[j] = i;
+			}
+			// affichage debug
+			/*for(i=0; i < trajectory_graph_way_count; i++)
+			{
+				log_format(LOG_INFO, "chemin - graph : %d : %d", i, trajectory_graph_way[i]);
+			}*/
+		}
+	}
+
+	simplify_path(type);
+
+	log_format(LOG_INFO, "passage par %d points", trajectory_graph_way_count);
+	log_format(LOG_INFO, "point entrée graph : %d", trajectory_graph_way[0]);
+	int i;
+	for( i = 1 ; i < trajectory_graph_way_count - 1; i++)
+	{
+		log_format(LOG_INFO, "point passage graph : %d", trajectory_graph_way[i]);
+	}
+	log_format(LOG_INFO, "point sortie graph : %d", trajectory_graph_way[trajectory_graph_way_count-1]);
+	trajectory_graph_way_id = 0;
 }
 
 //! calcul des parametres de la trajectoire
@@ -378,81 +461,7 @@ static void trajectory_update()
 
 	if( trajectory_state == TRAJECTORY_STATE_MOVE_TO_GRAPH )
 	{
-		trajectory_graph_way_count = 1;
-
-		trajectory_graph_way[0] = trajectory_find_way_to_graph(trajectory_pos, DETECTION_STATIC_OBJ);
-		int last_graph_id = trajectory_find_way_to_graph(trajectory_dest, DETECTION_STATIC_OBJ);
-		if(trajectory_graph_way[0] != last_graph_id)
-		{
-			// calcul du trajet dans le graph
-
-			// on active tout les chemins ou passe le robot
-			for(int i = 0; i < GRAPH_NUM_LINK; i++)
-			{
-				// position du noeud avec alignement (marche avant) avec la destination
-				VectPlan pos;
-				int ida = graph_link[i].a;
-				pos.x = graph_node[ida].pos.x;
-				pos.y = graph_node[ida].pos.y;
-				pos.theta =  graph_link[i].alpha;
-				float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, NULL, NULL);
-				if( graph_link[i].dist < xmin)
-				{
-					// lien valide
-					trajectory_graph_valid_links[i] = 1;
-				}
-				else
-				{
-					// lien invalide
-					trajectory_graph_valid_links[i] = 0;
-				}
-			}
-			//log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_graph_way[0], trajectory_last_graph_id);
-			int res = graph_dijkstra(trajectory_graph_way[0], last_graph_id, trajectory_dijkstra_info, trajectory_graph_valid_links);
-			if(res)
-			{
-				log_format(LOG_INFO, "aucun chemin trouvé de %d à %d", trajectory_graph_way[0], last_graph_id);
-				trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
-			}
-			else
-			{
-				int i = last_graph_id;
-				while(trajectory_dijkstra_info[i].prev_node != trajectory_graph_way[0])
-				{
-					i = trajectory_dijkstra_info[i].prev_node;
-					trajectory_graph_way_count++;
-				}
-				trajectory_graph_way_count++;
-
-				// on refait un parcourt pour mettre dans les points dans l'ordre
-				i = last_graph_id;
-				int j = trajectory_graph_way_count - 1;
-				trajectory_graph_way[j] = i;
-				while(trajectory_dijkstra_info[i].prev_node != trajectory_graph_way[0])
-				{
-					i = trajectory_dijkstra_info[i].prev_node;
-					j--;
-					trajectory_graph_way[j] = i;
-				}
-				// affichage debug
-				/*for(i=0; i < trajectory_graph_way_count; i++)
-				{
-					log_format(LOG_INFO, "chemin - graph : %d : %d", i, trajectory_graph_way[i]);
-				}*/
-			}
-		}
-
-		simplify_path();
-
-		log_format(LOG_INFO, "passage par %d points", trajectory_graph_way_count);
-		log_format(LOG_INFO, "point entrée graph : %d", trajectory_graph_way[0]);
-		int i;
-		for( i = 1 ; i < trajectory_graph_way_count - 1; i++)
-		{
-			log_format(LOG_INFO, "point passage graph : %d", trajectory_graph_way[i]);
-		}
-		log_format(LOG_INFO, "point sortie graph : %d", trajectory_graph_way[trajectory_graph_way_count-1]);
-		trajectory_graph_way_id = 0;
+		trajectory_compute_graph(DETECTION_STATIC_OBJ);
 	}
 }
 
