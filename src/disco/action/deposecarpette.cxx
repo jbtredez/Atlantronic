@@ -23,7 +23,6 @@ DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,robot
 
 void DeposeCarpette::Exit()
 {
-
 	carpet_set_pos(CARPET_UP,CARPET_UP);
 	do
 	{

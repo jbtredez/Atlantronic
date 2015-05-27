@@ -18,7 +18,6 @@ Action::Action(VectPlan firstcheckpoint, const char * name)
 
 int Action::do_action()
 {
-	log_format(LOG_INFO , m_name);
 	return -1;
 };
 

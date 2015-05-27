@@ -62,7 +62,7 @@ int stratsimple::run()
 				int actionTry =  m_list_action[i]->get_try();
 				if( actionTry >= 0)
 				{
-					log_format(LOG_INFO , "Action %d, try %d", i, actionTry);
+					log_format(LOG_INFO , "Action %d (%s), try %d", i, m_list_action[i]->get_name(), actionTry);
 
 					result = m_list_action[i]->do_action();
 					if(result == -1)
