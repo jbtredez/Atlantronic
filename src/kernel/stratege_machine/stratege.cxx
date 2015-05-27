@@ -44,13 +44,8 @@ int strategy::add_action(Action * p_action)
 ////////////////////////////////////////////////
 void strategy::affiche()
 {
-
-
-	for(int i= 0;i < m_size_actionlist;i++)
+	for(int i= 0; i < m_size_actionlist; i++)
 	{
-		log_format(LOG_INFO , "Action %d name %s",i,m_list_action[m_size_actionlist]->get_name() );
-
-		log_format(LOG_INFO ,m_list_action[m_size_actionlist]->get_name() );
+		log_format(LOG_INFO , "Action %d name %s", i, m_list_action[i]->get_name() );
 	}
-
 }
