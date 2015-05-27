@@ -96,7 +96,7 @@ static void strat_task(void* arg)
 
 	//Pied 3 
 	firstcheckpoint.x = 400;
-	firstcheckpoint.y = -770;
+	firstcheckpoint.y = -750;
 	feet feet3(firstcheckpoint, "Feet 3", &robothomologation);
 
 	//Dropstart 
@@ -165,8 +165,8 @@ static void strat_task(void* arg)
 */
 	stratsimple strat;
 
-	strat.add_action(&light1);
-	strat.add_action(&startzone);
+//	strat.add_action(&light1);
+//	strat.add_action(&startzone);
 	strat.add_action(&feet1);
 	strat.add_action(&feet2);
 	strat.add_action(&feet3);
@@ -176,8 +176,7 @@ static void strat_task(void* arg)
 	strat.add_action(&carpet1);
 	strat.add_action(&carpet2);
 	strat.add_action(&dropstartzone);
-	strat.add_action(&gobelet2);
-	//strat.add_action(&clap2);
+	//strat.add_action(&gobelet2);
 	//strat.add_action(&dropstartzone);
 #if 0
 	strat.add_action(&light2);
@@ -186,9 +185,10 @@ static void strat_task(void* arg)
 //	strat.add_action(&dropstartzone);
 #endif
 
-	//strat.add_action(&gobelet3);
-//	strat.add_action(&clap3);
+	strat.add_action(&gobelet3);
 	strat.add_action(&dropcinema);
+	strat.add_action(&clap3);
+//	strat.add_action(&clap2);
 
 	match_wait_go();
 	strat_color = match_get_color();

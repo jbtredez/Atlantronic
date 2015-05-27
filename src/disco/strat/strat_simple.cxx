@@ -88,7 +88,7 @@ int stratsimple::run()
 	}while( ! allDone &&  busefullaction );
 	
 	// Idle
-	VectPlan pos(390, 200, 0.0f);
+	VectPlan pos(390, -200, 0.0f);
 	Move Idle(pos.symetric(m_stratcolor), "Idle");
 	Idle.do_action();
 	return 0;

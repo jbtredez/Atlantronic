@@ -18,7 +18,9 @@
 void recalage()
 {
 	VectPlan pos(1200, 0, M_PI_2);
-	VectPlan posInit(1293, 0, 0);
+	VectPlan posInit(1050, 0, -3*M_PI/4);
+	VectPlan firstcheckpoint(630, -355, 0);
+	posInit.theta = atan2f(firstcheckpoint.y - posInit.y, firstcheckpoint.x - posInit.x);
 
 	int color = match_get_color();
 
@@ -101,16 +103,16 @@ void recalage()
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
-
+/*
 	trajectory_straight(-100);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
-	vTaskDelay(200);
+	vTaskDelay(200);*/
 
-	trajectory_goto_near(posInit.symetric(color), 0, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory_goto_near(posInit.symetric(color), 0, WAY_ANY, AVOIDANCE_STOP);
 	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
