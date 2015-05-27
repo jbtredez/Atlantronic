@@ -52,6 +52,7 @@ int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 	snprintf(m_file_board_write, sizeof(m_file_board_write), "/tmp/carte-%i.in", current_pid);
 
 	m_com = new ComUsb(m_file_qemu_read, m_file_qemu_write);
+	m_clock_factor = 1000;
 
 	startQemu();
 
@@ -142,6 +143,7 @@ void Qemu::reboot()
 {
 	stopQemu();
 	startQemu();
+	set_clock_factor(m_clock_factor, 0);
 }
 
 void Qemu::destroy()
@@ -157,6 +159,8 @@ void Qemu::destroy()
 int Qemu::set_clock_factor(unsigned int factor, unsigned int icount)
 {
 	struct atlantronic_model_tx_event event;
+
+	m_clock_factor = factor;
 
 	event.type = EVENT_CLOCK_FACTOR;
 	event.data32[0] = factor;

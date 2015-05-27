@@ -36,6 +36,7 @@ class Qemu
 		void startQemu();
 		void stopQemu();
 
+		unsigned int m_clock_factor;
 		char m_qemu_path[2048];
 		char m_prog_name[2048];
 		int m_gdb_port;
