@@ -58,22 +58,6 @@ enum
 	SUBGRAPH_MOTION_NUM,
 };
 
-enum
-{
-	QEMU_SPEED_X1,
-	QEMU_SPEED_X2,
-	QEMU_SPEED_X4,
-	QEMU_SPEED_X6,
-	QEMU_SPEED_NUM,
-};
-
-static int qemu_speed[QEMU_SPEED_NUM] =
-{
-	1000,
-	500,
-	250,
-	167,
-};
 static GlFont glfont;
 static char font_name[] = "fixed";
 static int screen_width = 0;
@@ -102,7 +86,6 @@ static VectPlan qemuStartPos(1200, 0, M_PI/2);
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
-static void qemu_set_clock_factor(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
 static void init(GtkWidget* widget, gpointer arg);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
@@ -309,31 +292,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(show_legend), NULL);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
 
-	GtkWidget* menu2 = gtk_menu_new();	// menu "niveau 2"
-	menuObj = gtk_menu_item_new_with_label("vitesse");
-	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu2);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
-
-	char buffer[512];
-	group = NULL;
-	for(int i = 0; i < QEMU_SPEED_NUM; i++)
-	{
-		int speed = qemu_speed[i];
-		if( speed == 1000 )
-		{
-			snprintf(buffer, sizeof(buffer), "exacte - x1 (%d MHz)", RCC_SYSCLK_MHZ);
-		}
-		else
-		{
-			snprintf(buffer, sizeof(buffer), "x%.0f (%.0f MHz)", 1000.0f/speed, (speed*RCC_SYSCLK_MHZ)/1000.0f);
-		}
-		menuObj = gtk_radio_menu_item_new_with_label(group, buffer);
-		group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menuObj));
-		gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), speed == 1000);
-		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(qemu_set_clock_factor), &qemu_speed[i]);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menu2), menuObj);
-	}
-
 	GtkWidget* toolbar = gtk_toolbar_new();
 	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
 	gtk_container_set_border_width(GTK_CONTAINER(toolbar), 0);
@@ -507,12 +465,6 @@ static void show_legend(GtkWidget* widget, gpointer arg)
 	(void) arg;
 
 	glplot_show_legend = ! glplot_show_legend;
-}
-
-static void qemu_set_clock_factor(GtkWidget* /*widget*/, gpointer arg)
-{
-	int* speed = (int*) arg;
-	qemu->set_clock_factor(*speed, 0);
 }
 
 static void select_active_courbe(GtkWidget* widget, gpointer arg)

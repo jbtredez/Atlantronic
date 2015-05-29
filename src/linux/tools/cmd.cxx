@@ -38,7 +38,6 @@ int cmd_free(const char* arg);
 int cmd_power_off(const char* arg);
 int cmd_pwm_set(const char* arg);
 int cmd_pump(const char* arg);
-int cmd_qemu_set_clock_factor(const char* arg);
 int cmd_qemu_set_io(const char* arg);
 int cmd_qemu_manage_canopen_connexion(const char* arg);
 int cmd_quit(const char* arg);
@@ -127,7 +126,6 @@ COMMAND usb_commands[] = {
 	{ "pwm_set", cmd_pwm_set, "pwm_set id val"},
 	{ "pump", cmd_pump, "pump id val[0 100]"},
 	{ "q", cmd_quit, "Quit" },
-	{ "qemu_set_clock_factor", cmd_qemu_set_clock_factor, "qemu_set_clock_factor system_clock_factor icount" },
 	{ "qemu_set_io", cmd_qemu_set_io, "qemu_set_io id val" },
 	{ "qemu_manage_canopen_connexion", cmd_qemu_manage_canopen_connexion, "qemu connect canopen node : cmd_qemu_manage_canopen_connexion nodeid connected" },
 	{ "quit", cmd_quit, "Quit" },
@@ -474,25 +472,6 @@ int cmd_help(const char* arg)
 	for(int i = 0; i < (int)(sizeof(usb_commands) / sizeof(usb_commands[0])) - 1; i++)
 	{
 		log_info("%s : %s", usb_commands[i].name, usb_commands[i].doc);
-	}
-
-	return CMD_SUCESS;
-}
-
-int cmd_qemu_set_clock_factor(const char* arg)
-{
-	unsigned int system_clock_factor;
-	unsigned int icount =0;
-	int count = sscanf(arg, "%u %u", &system_clock_factor, &icount);
-
-	if(count != 1 && count != 2)
-	{
-		return CMD_ERROR;
-	}
-
-	if( cmd_qemu )
-	{
-		cmd_qemu->set_clock_factor(system_clock_factor, icount);
 	}
 
 	return CMD_SUCESS;

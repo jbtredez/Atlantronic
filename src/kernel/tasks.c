@@ -2169,6 +2169,8 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 		/* See if any tasks have been deleted. */
 		prvCheckTasksWaitingTermination();
 
+		*((volatile unsigned int*)0xe000ee00);
+
 		#if ( configUSE_PREEMPTION == 0 )
 		{
 			/* If we are not using preemption we keep forcing a task switch to
