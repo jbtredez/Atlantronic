@@ -8,8 +8,8 @@
 #include <stdint.h>
 
 #define ADC_CURRENT_MAX                 4
-#define ADC_VBAT_UNDERVOLTAGE          19
-#define ADC_VBAT_UNDERVOLTAGE_CLEAR    20
+#define ADC_VBAT_UNDERVOLTAGE          18
+#define ADC_VBAT_UNDERVOLTAGE_CLEAR    19
 #define ADC_VBAT_AU                     3
 #define ADC_VBAT_AU_CLEAR               5
 

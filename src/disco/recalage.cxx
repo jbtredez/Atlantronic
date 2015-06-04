@@ -122,7 +122,7 @@ void recalage()
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
 	vTaskDelay(300);
 	finger_set_pos(FINGER_HALF_OPEN, FINGER_HALF_OPEN);
-	elevator_set_position(10);
+	elevator_set_position(0);
 	log(LOG_INFO, "recalage termine");
 
 free:

@@ -296,9 +296,9 @@ void TableScene::printInfos(Graphique* graph)
 	glfont->glPrintf(x, y, "v %5.2f %5.2f (wanted %5.2f %5.2f)",
 			data->mes_motors[0].v, data->mes_motors[1].v, data->cons_motors_v[0], data->cons_motors_v[1]);
 	y += lineHeight;
-	glfont->glPrintf(x, y, "gyro %6.2f",
+/*	glfont->glPrintf(x, y, "gyro %6.2f",
 					data->pos_theta_gyro_euler * 180 / M_PI);
-	y += lineHeight;
+	y += lineHeight;*/
 	glfont->glPrintf(x, y, "vBat  %6.3f", data->vBat);
 	y += lineHeight;
 	for(int i = 0; i < 4; i++)

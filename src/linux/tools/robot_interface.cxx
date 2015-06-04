@@ -112,6 +112,7 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 	add_usb_data_callback(USB_HOKUYO, &RobotInterface::process_hokuyo);
 	add_usb_data_callback(USB_HOKUYO_SEG, &RobotInterface::process_hokuyo_seg);
 	add_usb_data_callback(USB_CONTROL, &RobotInterface::process_control);
+	add_usb_data_callback(USB_CONTROL_LIGHT, &RobotInterface::process_control_light);
 	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE, &RobotInterface::process_detect_dyn_obj_size1);
 	add_usb_data_callback(USB_DETECTION_DYNAMIC_OBJECT_SIZE2, &RobotInterface::process_detect_dyn_obj_size2);
@@ -673,6 +674,52 @@ int RobotInterface::process_hokuyo_seg(char* msg, uint16_t size)
 
 	detection_reg_num[id] = num;
 	memcpy(detection_hokuyo_reg + HOKUYO_NUM_POINTS * id, msg, size);
+
+	pthread_mutex_unlock(&mutex);
+
+end:
+	return res;
+}
+
+int RobotInterface::process_control_light(char* msg, uint16_t size)
+{
+	int res = 0;
+	systime t;
+
+	if(size != sizeof(struct control_usb_data_light) )
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data
+	memcpy(control_usb_data + control_usb_data_count, msg, size);
+	last_control_usb_data = control_usb_data[control_usb_data_count];
+	t = last_control_usb_data.current_time;
+	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
+	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
+
+	for(int i = 0; i < AX12_MAX_ID; i++)
+	{
+		ax12[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		ax12[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
+		ax12[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+	}
+
+	for(int i = 0; i < RX24_MAX_ID; i++)
+	{
+		rx24[i].pos = (last_control_usb_data.dynamixel.rx24[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		rx24[i].flags = last_control_usb_data.dynamixel.rx24[i].flags;
+		rx24[i].error = last_control_usb_data.dynamixel.rx24[i].error;
+	}
 
 	pthread_mutex_unlock(&mutex);
 

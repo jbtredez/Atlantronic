@@ -50,8 +50,8 @@ static VectPlan motion_speed_mes;
 static VectPlan motion_dest;  //!< destination
 static systime motion_target_not_reached_start_time;
 static MotionSpeedCheck motion_linear_speed_check(100, 10);
-static Pid motion_x_pid(2.5, 0, 0, 100);// TODO voir saturation
-static Pid motion_theta_pid(8, 0.5, 0, 1); // TODO voir saturation
+static Pid motion_x_pid(2, 1, 0, 100);// TODO voir saturation
+static Pid motion_theta_pid(8, 1, 0, 1); // TODO voir saturation
 static bool motion_antico_on = true;
 
 static void motion_update_motors();

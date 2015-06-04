@@ -181,10 +181,10 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_CONS, "Vitesse de rotation de consigne", 1, 1, 0, 0);
-	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 1);
-	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2, "v2", 0, 0.5, 0, 1);
-	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1_MES, "v1_mes", 0, 0, 1, 1);
-	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2_MES, "v2_mes", 0, 0, 0.5, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1, "v1", 0, 1, 0, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2, "v2", 0, 0, 1, 0);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V1_MES, "v1_mes", 0, 0, 0, 1);
+	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_V2_MES, "v2_mes", 0, 1, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_VBAT, "vBat", 0, 1, 0, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I1, "i1", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I2, "i2", 0, 0, 0, 1);

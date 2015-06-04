@@ -237,6 +237,7 @@ class RobotInterface
 		void* task();
 		int process_log(char* msg, uint16_t size);
 		int process_control(char* msg, uint16_t size);
+		int process_control_light(char* msg, uint16_t size);
 		int process_go(char* msg, uint16_t size);
 		int process_hokuyo(char* msg, uint16_t size);
 		int process_hokuyo_seg(char* msg, uint16_t size);

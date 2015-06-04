@@ -22,6 +22,7 @@
 #define CONTROL_STACK_SIZE       350
 
 static struct control_usb_data control_usb_data;
+static struct control_usb_data_light control_usb_data_light;// TODO mettre en commun avec control_usb_data
 
 static void control_task(void* arg);
 
@@ -64,10 +65,10 @@ static void control_task(void* /*arg*/)
 		motion_update_usb_data(&control_usb_data);
 		control_usb_data.current_time = systick_get_time();
 		control_usb_data.pos = location_get_position();
-		control_usb_data.raw_data_gyro = gyro_get_raw_data();
-		control_usb_data.omega_gyro = gyro_get_omega();
-		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
-		control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
+//		control_usb_data.raw_data_gyro = gyro_get_raw_data();
+//		control_usb_data.omega_gyro = gyro_get_omega();
+//		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
+//		control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
 		control_usb_data.vBat = adc_filtered_data.vBat;
 		control_usb_data.iPwm[0] = adc_filtered_data.i[0];
 		control_usb_data.iPwm[1] = adc_filtered_data.i[1];
@@ -82,6 +83,9 @@ static void control_task(void* /*arg*/)
 		control_usb_data.elevatorHeight = elevator_get_position();
 //		arm_get_matrix(&control_usb_data.arm_matrix);
 
+		// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data
+		memcpy(&control_usb_data_light, &control_usb_data, sizeof(control_usb_data_light));
+
 		dynamixel_update_usb_data(&control_usb_data.dynamixel);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
@@ -90,7 +94,7 @@ static void control_task(void* /*arg*/)
 		xbeeCycleCount++;
 		if( xbeeCycleCount > 100)
 		{
-			xbee_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+			xbee_add(USB_CONTROL_LIGHT, &control_usb_data_light, sizeof(control_usb_data_light));
 			xbeeCycleCount = 0;
 		}
 
