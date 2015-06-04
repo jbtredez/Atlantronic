@@ -415,6 +415,7 @@ void gtk_end()
 	gdk_threads_enter();
 	gtk_main_quit();
 	gdk_threads_leave();
+	//gdk_threads_add_idle(gtk_main_quit, NULL);
 }
 
 void glplot_update()
@@ -430,9 +431,10 @@ void glplot_update()
 			|| delta >= 1.0f/5)
 		{
 			gdk_threads_enter();
-			if(opengl_window->window)
+			GdkWindow* window = gtk_widget_get_window(opengl_window);
+			if(window)
 			{
-				gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+				gdk_window_invalidate_rect(window, NULL, FALSE);
 			}
 			gdk_threads_leave();
 			last_plot = current;
@@ -456,7 +458,7 @@ static void select_graph(GtkWidget* widget, gpointer arg)
 	{
 		current_graph = id;
 	}
-	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+	gdk_window_invalidate_rect(gtk_widget_get_window(opengl_window), NULL, FALSE);
 }
 
 static void show_legend(GtkWidget* widget, gpointer arg)
@@ -482,7 +484,7 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg)
 		*activated = 1;
 	}
 
-	gdk_window_invalidate_rect(opengl_window->window, &opengl_window->allocation, FALSE);
+	gdk_window_invalidate_rect(gtk_widget_get_window(opengl_window), NULL, FALSE);
 }
 
 static void init(GtkWidget* widget, gpointer arg)
@@ -537,8 +539,10 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 		return FALSE;
 	}
 
-	screen_width = widget->allocation.width;
-	screen_height = widget->allocation.height;
+	GtkAllocation alloc;
+	gtk_widget_get_allocation(widget, &alloc);
+	screen_width = alloc.width;
+	screen_height = alloc.height;
 
 	int i;
 	for( i = 0; i < GRAPH_NUM; i++)
@@ -882,7 +886,7 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 	{
 		graph[current_graph].reset_roi();
 	}
-	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 }
 
 static void mouse_release(GtkWidget* widget, GdkEventButton* event)
@@ -899,7 +903,7 @@ static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 		mouse_y1 = 0;
 		mouse_x2 = 0;
 		mouse_y2 = 0;
-		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 	}
 	else if(event->button == 2)
 	{
@@ -927,7 +931,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 				opponentPos = newOpponentPos;
 			}
 		}
-		gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+		gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 	}
 	else if(event->state & GDK_BUTTON2_MASK)
 	{
@@ -938,7 +942,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			tableScene.rotateView(dx, dy);
 			mouse_scroll_x1 = event->x;
 			mouse_scroll_y1 = event->y;
-			gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+			gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 		}
 	}
 }
@@ -956,7 +960,7 @@ static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event)
 			tableScene.translateView(0, 0, -200);
 		}
 	}
-	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 }
 
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg)
@@ -966,30 +970,30 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 
 	switch(event->keyval)
 	{
-		case GDK_Escape:
+		case GDK_KEY_Escape:
 			drawing_zoom_selection = 0;
 			break;
-		case GDK_KP_Subtract:
-		case GDK_minus:
+		case GDK_KEY_KP_Subtract:
+		case GDK_KEY_minus:
 			graph[current_graph].zoomf(2);
 			break;
-		case GDK_KP_Add:
-		case GDK_plus:
+		case GDK_KEY_KP_Add:
+		case GDK_KEY_plus:
 			graph[current_graph].zoomf(0.5);
 			break;
-		case GDK_Right:
+		case GDK_KEY_Right:
 			tableScene.translateView(40, 0, 0);
 			break;
-		case GDK_Left:
+		case GDK_KEY_Left:
 			tableScene.translateView(-40, 0, 0);
 			break;
-		case GDK_Up:
+		case GDK_KEY_Up:
 			tableScene.translateView(0, 0, -40);
 			break;
-		case GDK_Down:
+		case GDK_KEY_Down:
 			tableScene.translateView(0, 0, 40);
 			break;
-		case GDK_r:
+		case GDK_KEY_r:
 			res = pthread_mutex_lock(&robotItf->mutex);
 			if(res == 0)
 			{
@@ -997,12 +1001,12 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 				pthread_mutex_unlock(&robotItf->mutex);
 			}
 			break;
-		case GDK_u:
+		case GDK_KEY_u:
 			graph[current_graph].reset_roi();
 			break;
 	}
 
-	gdk_window_invalidate_rect(widget->window, &widget->allocation, FALSE);
+	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
 
 	return TRUE;
 }
