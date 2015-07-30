@@ -1,5 +1,5 @@
 Programmes du robot d'Atlantronic pour la compétition EUROBOT.
-Site : http://www.atlantronic.fr/
+Site : http://atlantronic.toile-libre.org/
 
 Requirements :
 "arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
