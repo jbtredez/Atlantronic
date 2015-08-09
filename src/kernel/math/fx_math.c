@@ -416,16 +416,15 @@ int32_t fx_acos(int32_t x)
 	if( x > 65536)
 	{
 		res = 0;
-		goto end;
 	}
-
-	res = (((int64_t)res * (int64_t)x) >> 16) + 12690560;
-	res = (((int64_t)res * (int64_t)x) >> 16) - 36248510;
-	res = (((int64_t)res * (int64_t)x) >> 16) + 268423916;
-	res = ((int64_t)res * (int64_t)fx_sqrt(65536-x)) >> 16;
-	res = res - 2 * negate * res;
-
-end:
+	else
+	{
+		res = (((int64_t)res * (int64_t)x) >> 16) + 12690560;
+		res = (((int64_t)res * (int64_t)x) >> 16) - 36248510;
+		res = (((int64_t)res * (int64_t)x) >> 16) + 268423916;
+		res = ((int64_t)res * (int64_t)fx_sqrt(65536-x)) >> 16;
+		res = res - 2 * negate * res;
+	}
 	return negate * 0x2000000 + (res >> 4); // 0.5 tour
 }
 
