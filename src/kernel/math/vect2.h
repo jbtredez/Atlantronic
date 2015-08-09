@@ -78,8 +78,8 @@ class Vect2
 			return x * v.y - y * v.x;
 		}
 
-		float x;
-		float y;
+		float x;          //!< coordonnée selon l'axe x en mm
+		float y;          //!< coordonnée selon l'axe y en mm
 };
 
 inline Vect2 operator*(float k, Vect2 a)

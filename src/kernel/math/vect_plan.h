@@ -13,20 +13,17 @@
 
 //! @struct VectPlan
 //! représentation d'un vecteur sur la table
-class VectPlan
+class VectPlan : public Vect2
 {
 	public:
 		VectPlan()
 		{
-			x = 0;
-			y = 0;
 			theta = 0;
 		}
 
-		VectPlan(float X, float Y, float Theta)
+		VectPlan(float X, float Y, float Theta):Vect2(X,Y)
 		{
-			x = X;
-			y = Y;
+
 			theta = Theta;
 		}
 
@@ -40,16 +37,6 @@ class VectPlan
 			{
 				return VectPlan(-x, y, M_PI - theta);
 			}
-		}
-
-		inline float norm()
-		{
-			return sqrtf(x * x + y * y);
-		}
-
-		inline float norm2()
-		{
-			return x * x + y * y;
 		}
 
 		inline VectPlan operator=(VectPlan a)
@@ -76,36 +63,12 @@ class VectPlan
 			return VectPlan(k * x, k * y, k * theta);
 		};
 
-//Inutile
-//		inline VectPlan operator*(VectPlan a, float k)
-//		{
-//			return VectPlan(k * a.x, k * a.y, k * a.theta);
-//		};
 
 		inline VectPlan operator/( float k)
 		{
 			return VectPlan(x / k, y / k, theta / k);
 		};
 
-		//!< @brief calcul le produit scalaire avec le vecteur v
-		//!< @param vecteur v
-		//!< @return produit scalaire calculé avec les positions en mm
-		inline float scalarProd(const VectPlan& v)
-		{
-			return x * v.x + y * v.y;
-		}
-
-		//!< @function fx_Vect2_vector_product_z
-		//!< @brief calcule la compose sur Oz du produit vectoriel avec v (appartenant à (Ox,Ox))
-		//!< @param vecteur v
-		//!< @return composante sur Oz du produit vectoriel calculé avec les positions en mm
-		inline float crossProd_z(const VectPlan& v)
-		{
-			return x * v.y - y * v.x;
-		}
-
-		float x;          //!< coordonnée selon l'axe x en mm
-		float y;          //!< coordonnée selon l'axe y en mm
 		float theta;      //!< orientation en rd
 }__attribute__((packed));
 
