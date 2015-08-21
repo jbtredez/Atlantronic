@@ -10,6 +10,7 @@
 #include "kernel/motion/graph.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
+#include "main_shader.h"
 
 enum
 {
@@ -60,8 +61,9 @@ class TableScene
 {
 	public:
 		TableScene();
-		bool init(GlFont* glfont, RobotInterface* robotItf);
+		bool init(GlFont* glfont, RobotInterface* robotItf, MainShader* shader);
 		void draw(GLenum mode, Graphique* graph);
+		void printInfos(Graphique* graph);
 		VectPlan projectMouseOnTable(int x, int y);
 		void rotateView(float dx, float dy);
 		void translateView(float dx, float dy, float dz);
@@ -74,7 +76,6 @@ class TableScene
 		}
 
 	protected:
-		void printInfos(Graphique* graph);
 		void draw_plus(float x, float y, float rx, float ry);
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
@@ -87,13 +88,16 @@ class TableScene
 		VectPlan opponentRobotPos;
 		GlFont* glfont;
 		float tableThetaZ;
-		GLdouble tableModelview[16];
-		GLdouble tableProjection[16];
+		glm::mat4 tableModelview;
+		glm::mat4 tableProjection;
 		MatrixHomogeneous viewMatrix;
 		int mouseX;
 		int mouseY;
 		float theta1;
 		float theta2;
+		MainShader* m_shader;
+		Object3dBasic m_robot2d;
+		Object3dBasic m_table2d[TABLE_OBJ_SIZE];
 };
 
 #endif

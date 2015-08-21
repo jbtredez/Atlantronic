@@ -1,9 +1,8 @@
-#ifndef GLPLOT_H
-#define GLPLOT_H
+#ifndef GLTOOLS_H
+#define GLTOOLS_H
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
+#include <epoxy/gl.h>
+#include <epoxy/glx.h>
 
 void plot_pave(float x, float y, float z, float dx, float dy, float dz);
 

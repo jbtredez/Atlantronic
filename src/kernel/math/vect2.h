@@ -80,7 +80,7 @@ class Vect2
 
 		float x;          //!< coordonnée selon l'axe x en mm
 		float y;          //!< coordonnée selon l'axe y en mm
-};
+}__attribute__((packed));
 
 inline Vect2 operator*(float k, Vect2 a)
 {

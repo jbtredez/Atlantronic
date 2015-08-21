@@ -1,9 +1,7 @@
 #include <gtk/gtk.h>
-#include <gtk/gtkgl.h>
+#include <gtkgl/gtkglarea.h>
 #include <gdk/gdkkeysyms.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
+
 #include <X11/Intrinsic.h>
 #include <stdlib.h>
 #include <math.h>
@@ -18,6 +16,7 @@
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/opengl/gltools.h"
 #include "kernel/math/matrix_homogeneous.h"
+#include "opengl/main_shader.h"
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
@@ -58,8 +57,10 @@ enum
 	SUBGRAPH_MOTION_NUM,
 };
 
+static MainShader shader;
 static GlFont glfont;
-static char font_name[] = "fixed";
+static char fontName[] = "/usr/share/fonts/dejavu/DejaVuSerif.ttf";
+static int fontSize = 16;
 static int screen_width = 0;
 static int screen_height = 0;
 static RobotInterface* robotItf;
@@ -82,15 +83,15 @@ Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
 static VectPlan qemuStartPos(1200, 0, M_PI/2);
+static Object3dBasic selectionObject;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
-static void init(GtkWidget* widget, gpointer arg);
+static void init(GtkGLArea *widget);
 static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg);
-static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
-static void drawScene(GLenum mode);
+static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg);
 static void mouse_press(GtkWidget* widget, GdkEventButton* event);
 static void mouse_release(GtkWidget* widget, GdkEventButton* event);
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg);
@@ -101,6 +102,11 @@ static void reboot_robot(GtkWidget* widget, gpointer arg);
 static void joystick_event(int event, float val);
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event);
 static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
+static void plot_legende(Graphique* graph);
+static void plot_hokuyo_hist(Graphique* graph);
+static void plot_speed_dist(Graphique* graph);
+static void plot_axes(Graphique* graph);
+
 static void qemu_set_parameters();
 void gtk_end();
 
@@ -191,28 +197,11 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
 
-#ifdef OLD_GTK
-	g_thread_init(NULL);
-#endif
-
 	gdk_threads_init();
 	gdk_threads_enter();
 
 	gtk_init(0, NULL);
-	gtk_gl_init(0, NULL);
-
-	// config de opengl
-	GdkGLConfig* glconfig = gdk_gl_config_new_by_mode((GdkGLConfigMode) (GDK_GL_MODE_RGB | GDK_GL_MODE_DEPTH | GDK_GL_MODE_DOUBLE));
-	if(glconfig == NULL)
-	{
-		fprintf(stderr, "double buffer non géré");
-		glconfig = gdk_gl_config_new_by_mode((GdkGLConfigMode)(GDK_GL_MODE_RGB | GDK_GL_MODE_DEPTH));
-		if(glconfig == NULL)
-		{
-			fprintf(stderr, "opengl non géré, abandon");
-			return 0;
-		}
-	}
+	gdk_gl_query();
 
 	// création de la fenêtre
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -223,15 +212,16 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(close_gtk), NULL);
 
 	// fenetre opengl
-	opengl_window = gtk_drawing_area_new();
+	// config de opengl
+	int attribute[] = { GDK_GL_RGBA, GDK_GL_DOUBLEBUFFER, GDK_GL_DEPTH_SIZE, 1, GDK_GL_NONE };
+	opengl_window = gtk_gl_area_share_new (attribute, (GtkGLArea *) opengl_window);
 	gtk_widget_set_size_request(opengl_window, 800, 600);
-	gtk_widget_set_gl_capability(opengl_window, glconfig, NULL, TRUE, GDK_GL_RGBA_TYPE);
 
 	gtk_widget_add_events(opengl_window, GDK_VISIBILITY_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
 
 	g_signal_connect_after(G_OBJECT(opengl_window), "realize", G_CALLBACK(init), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "configure_event", G_CALLBACK(config), NULL);
-	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(display), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(render), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mouse_press), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mouse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
@@ -431,11 +421,7 @@ void glplot_update()
 			|| delta >= 1.0f/5)
 		{
 			gdk_threads_enter();
-			GdkWindow* window = gtk_widget_get_window(opengl_window);
-			if(window)
-			{
-				gdk_window_invalidate_rect(window, NULL, FALSE);
-			}
+			gtk_widget_queue_draw(opengl_window);
 			gdk_threads_leave();
 			last_plot = current;
 		}
@@ -458,7 +444,7 @@ static void select_graph(GtkWidget* widget, gpointer arg)
 	{
 		current_graph = id;
 	}
-	gdk_window_invalidate_rect(gtk_widget_get_window(opengl_window), NULL, FALSE);
+	gtk_widget_queue_draw(opengl_window);
 }
 
 static void show_legend(GtkWidget* widget, gpointer arg)
@@ -484,21 +470,17 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg)
 		*activated = 1;
 	}
 
-	gdk_window_invalidate_rect(gtk_widget_get_window(opengl_window), NULL, FALSE);
+	gtk_widget_queue_draw(opengl_window);
 }
 
-static void init(GtkWidget* widget, gpointer arg)
+static void init(GtkGLArea *area)
 {
-	(void) arg;
 	int i;
 
-	GdkGLContext* glcontext = gtk_widget_get_gl_context(widget);
-	GdkGLDrawable* gldrawable = gtk_widget_get_gl_drawable(widget);
+	if(!gtk_gl_area_make_current (area)) return;
 
-	if(!gdk_gl_drawable_gl_begin(gldrawable, glcontext)) return;
-
-	bool res = glfont.init(font_name);
-	if( ! res )
+	int res = glfont.init(fontName, fontSize);
+	if( res )
 	{
 		exit(-1);
 	}
@@ -508,21 +490,29 @@ static void init(GtkWidget* widget, gpointer arg)
 		graph[i].set_border(10 * glfont.width, glfont.height*3);
 	}
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-	glEnable(GL_COLOR_MATERIAL);
-	glShadeModel(GL_SMOOTH);
+	res = shader.init();
+	if( res )
+	{
+		exit(-1);
+	}
 
-	res = tableScene.init(&glfont, robotItf);
+	res = tableScene.init(&glfont, robotItf, &shader);
 	if( ! res )
 	{
 		exit(-1);
 	}
 
-	gdk_gl_drawable_gl_end(gldrawable);
+	float sel[] =
+	{
+		mouse_x1, mouse_y1,
+		mouse_x2, mouse_y1,
+		mouse_x2, mouse_y2,
+		mouse_x1, mouse_y2,
+		mouse_x1, mouse_y1
+	};
+
+	selectionObject.init(sel, 2, 5, &shader);
+
 	glplot_init_done = 1;
 }
 
@@ -531,10 +521,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	(void) ev;
 	(void) arg;
 
-	GdkGLContext* glcontext = gtk_widget_get_gl_context(widget);
-	GdkGLDrawable* gldrawable = gtk_widget_get_gl_drawable(widget);
-
-	if(!gdk_gl_drawable_gl_begin (gldrawable, glcontext))
+	if(!gtk_gl_area_make_current (GTK_GL_AREA (widget)))
 	{
 		return FALSE;
 	}
@@ -551,16 +538,116 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	}
 
 	glViewport(0, 0, screen_width, screen_height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, screen_width, screen_height, 0, 0, 1);
-
-	gdk_gl_drawable_gl_end(gldrawable);
 
 	return TRUE;
 }
 
-void plot_axes(Graphique* graph)
+static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
+{
+	(void) ev;
+	(void) arg;
+	(void) widget;
+
+	Graphique* g = &graph[current_graph];
+
+	// on efface le frame buffer
+	glClearColor(1.0, 1.0, 1.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+	shader.use();
+	if( current_graph == GRAPH_TABLE)
+	{
+		glEnable(GL_DEPTH_TEST);
+		tableScene.draw(GL_RENDER, g);
+	}
+	else
+	{
+
+		int res = pthread_mutex_lock(&robotItf->mutex);
+		if(res == 0)
+		{
+			if(current_graph == GRAPH_SPEED_DIST)
+			{
+				g->resize_axis_x(0, robotItf->control_usb_data_count * CONTROL_DT * 1000);
+			}
+
+			glm::mat4 projection = glm::ortho(g->plot_xmin, g->plot_xmax, g->plot_ymin, g->plot_ymax, 0.0f, 1.0f);
+			shader.setProjection(projection);
+			shader.setModelView(glm::mat4(1.0f));
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_CULL_FACE);
+
+			// TODO ne marche plus
+			switch(current_graph)
+			{
+				default:
+				case GRAPH_TABLE:
+					break;
+				case GRAPH_HOKUYO_HIST:
+					plot_hokuyo_hist(g);
+					break;
+				case GRAPH_SPEED_DIST:
+					plot_speed_dist(g);
+					break;
+			}
+
+			pthread_mutex_unlock(&robotItf->mutex);
+		}
+	}
+
+	if( drawing_zoom_selection )
+	{
+		glm::mat4 projection = glm::ortho(0.0f, (float)screen_width, (float)screen_height, 0.0f, 0.0f, 1.0f);
+		shader.setProjection(projection);
+		shader.setModelView(glm::mat4(1.0f));
+		shader.setColor(0, 0, 0);
+
+		float sel[] =
+		{
+			mouse_x1, mouse_y1,
+			mouse_x2, mouse_y1,
+			mouse_x2, mouse_y2,
+			mouse_x1, mouse_y2,
+			mouse_x1, mouse_y1
+		};
+		selectionObject.update(sel, sizeof(sel));
+		selectionObject.render(GL_LINE_STRIP);
+	}
+
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// affichage texte
+	glfont.m_textShader.use();
+	glm::mat4 projection = glm::ortho(g->plot_xmin, g->plot_xmax, g->plot_ymin, g->plot_ymax, 0.0f, 1.0f);
+	glfont.m_textShader.setProjection(projection);
+
+	if( current_graph == GRAPH_TABLE)
+	{
+		int res = pthread_mutex_lock(&robotItf->mutex);
+		if(res == 0)
+		{
+			tableScene.printInfos(g);
+			pthread_mutex_unlock(&robotItf->mutex);
+		}
+	}
+
+	glfont.m_textShader.setColor(0,0,0,1);
+	plot_axes(g);
+
+	if( glplot_show_legend )
+	{
+		plot_legende(g);
+	}
+
+	//glFlush();
+	gtk_gl_area_swap_buffers(GTK_GL_AREA(widget));
+
+	return TRUE;
+}
+
+static void plot_axes(Graphique* graph)
 {
 	float roi_xmin = graph->roi_xmin;
 	float roi_xmax = graph->roi_xmax;
@@ -569,13 +656,13 @@ void plot_axes(Graphique* graph)
 
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
-
+/*// TODO bugge, mode text...
 	glBegin(GL_LINE_STRIP);
 	glVertex2f(roi_xmax, roi_ymin);
 	glVertex2f(roi_xmin, roi_ymin);
 	glVertex2f(roi_xmin, roi_ymax);
 	glEnd();
-
+*/
 	// axe x
 	float dx = graph->tics_dx;
 	float x;
@@ -605,22 +692,23 @@ void plot_axes(Graphique* graph)
 	}
 }
 
-void plot_legende(Graphique* graph)
+static void plot_legende(Graphique* graph)
 {
 	int i = 0;
 	int dy = 0;
+
 	for(i = 0; i < MAX_COURBES; i++)
 	{
 		if( graph->courbes_activated[i] )
 		{
-			glColor3fv(&graph->color[3*i]);
+			glfont.setColor(graph->color[3*i], graph->color[3*i+1], graph->color[3*i+2], 1);
 			glfont.glPrintf_xright2_yhigh(graph->roi_xmax, graph->roi_ymax + dy, graph->ratio_x, graph->ratio_y, "%s", graph->courbes_names[i]);
-			dy -= 2*glfont.digitHeight * graph->ratio_y;
+			dy -= 2*glfont.digitHeight;
 		}
 	}
 }
 
-void plot_hokuyo_hist(Graphique* graph)
+static void plot_hokuyo_hist(Graphique* graph)
 {
 	int i;
 
@@ -629,7 +717,7 @@ void plot_hokuyo_hist(Graphique* graph)
 
 	if( graph->courbes_activated[GRAPH_HOKUYO1_HIST] )
 	{
-		glColor3fv(&graph->color[3*GRAPH_HOKUYO1_HIST]);
+		shader.setColor(graph->color[3*GRAPH_HOKUYO1_HIST], graph->color[3*GRAPH_HOKUYO1_HIST+1], graph->color[3*GRAPH_HOKUYO1_HIST+2]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robotItf->hokuyo_scan[HOKUYO1].distance[i], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
@@ -638,7 +726,7 @@ void plot_hokuyo_hist(Graphique* graph)
 
 	if( graph->courbes_activated[GRAPH_HOKUYO2_HIST] )
 	{
-		glColor3fv(&graph->color[3*GRAPH_HOKUYO2_HIST]);
+		shader.setColor(graph->color[3*GRAPH_HOKUYO2_HIST], graph->color[3*GRAPH_HOKUYO2_HIST+1], graph->color[3*GRAPH_HOKUYO2_HIST+2]);
 		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			draw_plus(i, robotItf->hokuyo_scan[HOKUYO2].distance[i], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
@@ -646,7 +734,7 @@ void plot_hokuyo_hist(Graphique* graph)
 	}
 }
 
-void plot_speed_dist(Graphique* graph)
+static void plot_speed_dist(Graphique* graph)
 {
 	int i;
 
@@ -749,117 +837,6 @@ void plot_speed_dist(Graphique* graph)
 	}
 }
 
-static gboolean display(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
-{
-	(void) ev;
-	(void) arg;
-	GdkGLContext* glcontext = gtk_widget_get_gl_context(widget);
-	GdkGLDrawable* gldrawable = gtk_widget_get_gl_drawable(widget);
-
-	if(!gdk_gl_drawable_gl_begin(gldrawable, glcontext))
-	{
-		return FALSE;
-	}
-
-	drawScene(GL_RENDER);
-
-	if(gdk_gl_drawable_is_double_buffered(gldrawable))
-	{
-		gdk_gl_drawable_swap_buffers(gldrawable);
-	}
-	else
-	{
-		glFlush();
-	}
-
-	gdk_gl_drawable_gl_end(gldrawable);
-
-	return TRUE;
-}
-
-static void drawScene(GLenum mode)
-{
-	if( current_graph == GRAPH_TABLE)
-	{
-		tableScene.draw(mode, &graph[GRAPH_TABLE]);
-	}
-	else
-	{
-		// efface le frame buffer
-		glClearColor(1,1,1,1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		int res = pthread_mutex_lock(&robotItf->mutex);
-		if(res == 0)
-		{
-			if(current_graph == GRAPH_SPEED_DIST)
-			{
-				graph[current_graph].resize_axis_x(0, robotItf->control_usb_data_count * CONTROL_DT * 1000);
-			}
-
-			if( current_graph != GRAPH_TABLE)
-			{
-				glMatrixMode(GL_PROJECTION);
-				glLoadIdentity();
-				glOrtho(graph[current_graph].plot_xmin, graph[current_graph].plot_xmax, graph[current_graph].plot_ymin, graph[current_graph].plot_ymax, 0, 1);
-				glMatrixMode(GL_MODELVIEW);
-				glLoadIdentity();
-				glDisable(GL_LIGHTING);
-				glDisable(GL_DEPTH_TEST);
-			}
-
-			switch(current_graph)
-			{
-				default:
-				case GRAPH_TABLE:
-					break;
-				case GRAPH_HOKUYO_HIST:
-					plot_hokuyo_hist(&graph[current_graph]);
-					break;
-				case GRAPH_SPEED_DIST:
-					plot_speed_dist(&graph[current_graph]);
-					break;
-			}
-
-			pthread_mutex_unlock(&robotItf->mutex);
-		}
-	}
-
-	glColor3f(0,0,0);
-	plot_axes(&graph[current_graph]);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(graph[current_graph].roi_xmin, graph[current_graph].roi_xmax, graph[current_graph].roi_ymin, graph[current_graph].roi_ymax, 0, 1);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	if( glplot_show_legend )
-	{
-		plot_legende(&graph[current_graph]);
-	}
-
-	if( drawing_zoom_selection )
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, screen_width, screen_height, 0, 0, 1);
-
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		glColor3f(0,0,0);
-
-		glBegin(GL_LINE_STRIP);
-		glVertex2f(mouse_x1, mouse_y1);
-		glVertex2f(mouse_x2, mouse_y1);
-		glVertex2f(mouse_x2, mouse_y2);
-		glVertex2f(mouse_x1, mouse_y2);
-		glVertex2f(mouse_x1, mouse_y1);
-		glEnd();
-	}
-}
-
 static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 {
 	if(event->button == 1 )
@@ -886,7 +863,7 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 	{
 		graph[current_graph].reset_roi();
 	}
-	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+	gtk_widget_queue_draw(widget);
 }
 
 static void mouse_release(GtkWidget* widget, GdkEventButton* event)
@@ -903,7 +880,7 @@ static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 		mouse_y1 = 0;
 		mouse_x2 = 0;
 		mouse_y2 = 0;
-		gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+		gtk_widget_queue_draw(widget);
 	}
 	else if(event->button == 2)
 	{
@@ -931,7 +908,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 				opponentPos = newOpponentPos;
 			}
 		}
-		gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+		gtk_widget_queue_draw(widget);
 	}
 	else if(event->state & GDK_BUTTON2_MASK)
 	{
@@ -942,7 +919,7 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 			tableScene.rotateView(dx, dy);
 			mouse_scroll_x1 = event->x;
 			mouse_scroll_y1 = event->y;
-			gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+			gtk_widget_queue_draw(widget);
 		}
 	}
 }
@@ -960,11 +937,12 @@ static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event)
 			tableScene.translateView(0, 0, -200);
 		}
 	}
-	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+	gtk_widget_queue_draw(widget);
 }
 
 static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer arg)
 {
+	(void) widget;
 	(void) arg;
 	int res;
 
@@ -1006,7 +984,7 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			break;
 	}
 
-	gdk_window_invalidate_rect(gtk_widget_get_window(widget), NULL, FALSE);
+	gtk_widget_queue_draw(opengl_window);
 
 	return TRUE;
 }
