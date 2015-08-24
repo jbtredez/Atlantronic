@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 static const char* vertexShaderSrc =
-"in vec3 coord3d;                                              \n"
-"in vec3 normal;                                               \n"
+"attribute vec3 coord3d;                                       \n"
+"attribute vec3 normal;                                        \n"
 "uniform mat4 projection;                                      \n"
 "uniform mat4 modelView;                                       \n"
 "uniform mat3 normalMatrix;                                    \n"
