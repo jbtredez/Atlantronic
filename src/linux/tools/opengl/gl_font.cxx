@@ -1,6 +1,6 @@
 #include "gl_font.h"
 #include <stdarg.h>
-
+#include <fontconfig/fontconfig.h>
 // Maximum texture width
 #define MAXWIDTH 1024
 
@@ -34,10 +34,33 @@ int GlFont::init(const char* fontName, int fontSize)
 		return -1;
 	}
 
-	res = FT_New_Face(m_ft, fontName, 0, &m_face);
+	FcPattern* pat = FcNameParse((const FcChar8*)fontName);
+	if (!pat)
+	{
+	    fprintf(stderr, "Unable to parse the pattern\n");
+	    return 1;
+	}
+
+	FcConfigSubstitute (NULL, pat, FcMatchPattern);
+	FcDefaultSubstitute(pat);
+
+	char fileName[1024] = {0};
+	FcResult result;
+	FcPattern *font = FcFontMatch (0, pat, &result);
+	if(font)
+	{
+		FcChar8 *s = FcPatternFormat (font, (FcChar8*)"%{file}");
+		strncpy(fileName, (const char*)s, sizeof(fileName));
+		fileName[sizeof(fileName)-1] = 0;
+		FcPatternDestroy(font);
+	}
+
+	FcPatternDestroy(pat);
+
+	res = FT_New_Face(m_ft, fileName, 0, &m_face);
 	if( res )
 	{
-		fprintf(stderr, "Could not open font %s\n", fontName);
+		fprintf(stderr, "Could not open font %s\n", fileName);
 		return -1;
 	}
 

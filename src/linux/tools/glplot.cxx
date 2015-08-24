@@ -59,7 +59,7 @@ enum
 
 static MainShader shader;
 static GlFont glfont;
-static char fontName[] = "/usr/share/fonts/dejavu/DejaVuSerif.ttf";
+static char fontName[] = "DejaVuSerif.ttf";
 static int fontSize = 16;
 static int screen_width = 0;
 static int screen_height = 0;
