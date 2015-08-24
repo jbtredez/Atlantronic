@@ -17,8 +17,10 @@ class MainShader : public Shader
 		void setProjection(glm::mat4 projection);
 		void setModelView(glm::mat4 mvp);
 		inline glm::mat4 getModelView();
+		inline glm::mat4 getProjection();
 
 		void setColor(float r, float g, float b);
+		void setColor3f(float* rgb);
 		void setColorAmbiant(float r, float g, float b);
 		void setColorDiffuse(float r, float g, float b);
 		void setColorSpecular(float r, float g, float b);
@@ -35,9 +37,13 @@ class MainShader : public Shader
 		GLint m_uniform_color_specular;
 
 		glm::mat4 m_projection;
-		glm::mat4 m_view;
 		glm::mat4 m_modelView;
 };
+
+inline glm::mat4 MainShader::getProjection()
+{
+	return m_projection;
+}
 
 inline glm::mat4 MainShader::getModelView()
 {

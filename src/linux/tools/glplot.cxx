@@ -84,6 +84,8 @@ struct joystick joystick;
 static int glplot_init_done = 0;
 static VectPlan qemuStartPos(1200, 0, M_PI/2);
 static Object3dBasic selectionObject;
+static Object3dBasic axisObject;
+static Object3dBasic plusObject;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -105,7 +107,8 @@ static void mouse_scroll(GtkWidget* widget, GdkEventScroll* event);
 static void plot_legende(Graphique* graph);
 static void plot_hokuyo_hist(Graphique* graph);
 static void plot_speed_dist(Graphique* graph);
-static void plot_axes(Graphique* graph);
+static void plot_axes_text(Graphique* graph);
+static void plot_axes_lines(Graphique* graph);
 
 static void qemu_set_parameters();
 void gtk_end();
@@ -164,7 +167,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	qemu = Qemu;
 	robotItf = RobotItf;
 
-	graph[GRAPH_TABLE].init("Table", -1600, 2500, -1100, 1100, 800, 600, 0, 0);
+	graph[GRAPH_TABLE].init("Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_ROBOT, "Robot", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_OPPONENT_ROBOT, "Opponent Robot", 1, 0, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_STATIC_ELM, "Table 2d du robot", 1, 0, 0, 0);
@@ -513,6 +516,24 @@ static void init(GtkGLArea *area)
 
 	selectionObject.init(sel, 2, 5, &shader);
 
+	float axis[] =
+	{
+		1, 0,
+		0, 0,
+		0, 1
+	};
+	axisObject.init(axis, 2, 3, &shader);
+
+	float plus_pt[] =
+	{
+		-1, 0,
+		 1, 0,
+		 0, -1,
+		 0, 1,
+	};
+
+	plusObject.init(plus_pt, 2, 4, &shader);
+
 	glplot_init_done = 1;
 }
 
@@ -614,12 +635,19 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		selectionObject.render(GL_LINE_STRIP);
 	}
 
+	plot_axes_lines(g);
+
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// affichage texte
 	glfont.m_textShader.use();
+
+	glfont.m_textShader.setProjection(shader.getProjection() * shader.getModelView());
+	glfont.m_textShader.setColor(0,0,0,1);
+	plot_axes_text(g);
+
 	glm::mat4 projection = glm::ortho(g->plot_xmin, g->plot_xmax, g->plot_ymin, g->plot_ymax, 0.0f, 1.0f);
 	glfont.m_textShader.setProjection(projection);
 
@@ -633,9 +661,6 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		}
 	}
 
-	glfont.m_textShader.setColor(0,0,0,1);
-	plot_axes(g);
-
 	if( glplot_show_legend )
 	{
 		plot_legende(g);
@@ -647,7 +672,7 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 	return TRUE;
 }
 
-static void plot_axes(Graphique* graph)
+static void plot_axes_lines(Graphique* graph)
 {
 	float roi_xmin = graph->roi_xmin;
 	float roi_xmax = graph->roi_xmax;
@@ -656,25 +681,26 @@ static void plot_axes(Graphique* graph)
 
 	float ratio_x = graph->ratio_x;
 	float ratio_y = graph->ratio_y;
-/*// TODO bugge, mode text...
-	glBegin(GL_LINE_STRIP);
-	glVertex2f(roi_xmax, roi_ymin);
-	glVertex2f(roi_xmin, roi_ymin);
-	glVertex2f(roi_xmin, roi_ymax);
-	glEnd();
-*/
+
+	float axis[] =
+	{
+		roi_xmax, roi_ymin,
+		roi_xmin, roi_ymin,
+		roi_xmin, roi_ymax,
+	};
+	axisObject.update(axis, sizeof(axis));
+	axisObject.render(GL_LINE_STRIP);
+
 	// axe x
 	float dx = graph->tics_dx;
 	float x;
 	for(x = 0; x <= roi_xmax; x+=dx)
 	{
 		draw_plus(x, roi_ymin, glfont.width*ratio_x, glfont.width*ratio_y);
-		glfont.glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, "%g", x);
 	}
 	for(x = -dx; x >= roi_xmin; x-=dx)
 	{
 		draw_plus(x, roi_ymin, glfont.width*ratio_x, glfont.width*ratio_y);
-		glfont.glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, "%g", x);
 	}
 
 	// axe y
@@ -683,11 +709,44 @@ static void plot_axes(Graphique* graph)
 	for(y = 0; y <= roi_ymax; y+=dy)
 	{
 		draw_plus(roi_xmin, y, glfont.width*ratio_x, glfont.width*ratio_y);
-		glfont.glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, "%g", y);
 	}
 	for(y = -dy; y >= roi_ymin; y-=dy)
 	{
 		draw_plus(roi_xmin, y, glfont.width*ratio_x, glfont.width*ratio_y);
+	}
+}
+
+static void plot_axes_text(Graphique* graph)
+{
+	float roi_xmin = graph->roi_xmin;
+	float roi_xmax = graph->roi_xmax;
+	float roi_ymin = graph->roi_ymin;
+	float roi_ymax = graph->roi_ymax;
+
+	float ratio_x = graph->ratio_x;
+	float ratio_y = graph->ratio_y;
+
+	// axe x
+	float dx = graph->tics_dx;
+	float x;
+	for(x = 0; x <= roi_xmax; x+=dx)
+	{
+		glfont.glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, "%g", x);
+	}
+	for(x = -dx; x >= roi_xmin; x-=dx)
+	{
+		glfont.glPrintf_xcenter_yhigh2(x, roi_ymin, ratio_x, ratio_y, "%g", x);
+	}
+
+	// axe y
+	float dy = graph->tics_dy;
+	float y;
+	for(y = 0; y <= roi_ymax; y+=dy)
+	{
+		glfont.glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, "%g", y);
+	}
+	for(y = -dy; y >= roi_ymin; y-=dy)
+	{
 		glfont.glPrintf_xright2_ycenter(roi_xmin, y, ratio_x, ratio_y, "%g", y);
 	}
 }
@@ -743,7 +802,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_CONS]);
+		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_CONS]);
 		VectPlan old_cons = robotItf->control_usb_data[0].cons;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
@@ -756,7 +815,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_CONS] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_CONS]);
+		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_CONS]);
 		VectPlan old_cons = robotItf->control_usb_data[0].cons;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
@@ -769,7 +828,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_MES] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_MES]);
+		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_MES]);
 		VectPlan old_pos = robotItf->control_usb_data[0].pos;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
@@ -782,7 +841,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_MES] )
 	{
-		glColor3fv(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_MES]);
+		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_MES]);
 		VectPlan old_pos = robotItf->control_usb_data[0].pos;
 		for(i=1; i < robotItf->control_usb_data_count; i++)
 		{
@@ -797,7 +856,7 @@ static void plot_speed_dist(Graphique* graph)
 	{
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1 + j] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
+			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
 			for(i=0; i < robotItf->control_usb_data_count; i++)
 			{
 				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].cons_motors_v[j], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
@@ -805,7 +864,7 @@ static void plot_speed_dist(Graphique* graph)
 		}
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
+			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
 			for(i=0; i < robotItf->control_usb_data_count; i++)
 			{
 				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].mes_motors[j].v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
@@ -815,7 +874,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_VBAT] )
 	{
-		glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
+		shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
 		for(int j=1; j < robotItf->control_usb_data_count; j++)
 		{
 			float v = robotItf->control_usb_data[j].vBat;
@@ -827,7 +886,7 @@ static void plot_speed_dist(Graphique* graph)
 	{
 		if( graph->courbes_activated[SUBGRAPH_MOTION_I1+i] )
 		{
-			glColor3fv(&graph->color[3*(SUBGRAPH_MOTION_I1+i)]);
+			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_I1+i)]);
 			for(int j=1; j < robotItf->control_usb_data_count; j++)
 			{
 				float current = robotItf->control_usb_data[j].iPwm[i];

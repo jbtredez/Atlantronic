@@ -112,3 +112,8 @@ void MainShader::setColor(float r, float g, float b)
 	setColorDiffuse(0, 0, 0);
 	setColorSpecular(0, 0, 0);
 }
+
+void MainShader::setColor3f(float* rgb)
+{
+	setColor(rgb[0], rgb[1], rgb[2]);
+}
