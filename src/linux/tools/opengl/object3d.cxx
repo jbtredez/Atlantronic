@@ -22,6 +22,7 @@ void Object3dBasic::init(aiMesh *mesh, MainShader* shader)
 	glBindVertexArray(m_vao);
 
 	m_elementCount = mesh->mNumFaces * 3;
+	m_elementSize = 3;
 	if(mesh->HasPositions())
 	{
 		float *vertices = new float[mesh->mNumVertices * 3];
@@ -34,7 +35,7 @@ void Object3dBasic::init(aiMesh *mesh, MainShader* shader)
 
 		glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
 		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-		glBufferData(GL_ARRAY_BUFFER, 3 * mesh->mNumVertices * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * m_elementSize * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
 
 		glVertexAttribPointer(shader->m_attribute_coord3d, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 		glEnableVertexAttribArray(shader->m_attribute_coord3d);
@@ -103,16 +104,23 @@ void Object3dBasic::init(aiMesh *mesh, MainShader* shader)
 	glBindVertexArray(0);
 }
 
-void Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader)
+void Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic)
 {
+	GLenum drawType = GL_STATIC_DRAW;
+	if( dynamic )
+	{
+		drawType = GL_DYNAMIC_DRAW;
+	}
+
 	glGenVertexArrays(1, &m_vao);
 	glBindVertexArray(m_vao);
 
 	m_elementCount = elementCount;
+	m_elementSize = elementSize;
 
 	glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-	glBufferData(GL_ARRAY_BUFFER, elementSize * elementCount * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, elementSize * elementCount * sizeof(GLfloat), vertices, drawType);
 
 	glVertexAttribPointer(shader->m_attribute_coord3d, elementSize, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(shader->m_attribute_coord3d);
@@ -121,13 +129,14 @@ void Object3dBasic::init(float* vertices, int elementSize, int elementCount, Mai
 	glBindVertexArray(0);
 }
 
-void Object3dBasic::update(float* vertices, int size)
+void Object3dBasic::update(float* vertices, int nbElement)
 {
 	glBindVertexArray(m_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, size, vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, nbElement * m_elementSize * sizeof(GLfloat), vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	m_elementCount = nbElement;
 }
 
 Object3dBasic::~Object3dBasic()

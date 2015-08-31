@@ -15,6 +15,7 @@ struct point
 GlFont::GlFont()
 {
 	m_tex = 0;
+	m_qualityScale = 4;
 }
 
 GlFont::~GlFont()
@@ -70,7 +71,7 @@ int GlFont::init(const char* fontName, int fontSize)
 		return -1;
 	}
 
-	FT_Set_Pixel_Sizes(m_face, 0, fontSize);
+	FT_Set_Pixel_Sizes(m_face, 0, fontSize * m_qualityScale);
 	FT_GlyphSlot g = m_face->glyph;
 
 	int roww = 0;
@@ -156,9 +157,9 @@ int GlFont::init(const char* fontName, int fontSize)
 		ox += g->bitmap.width + 1;
 	}
 
-	height = m_charInfo['0'].bh;
-	width = m_charInfo['0'].bw;
-	digitHeight = m_charInfo['0'].bh;
+	height = m_charInfo['0'].bh/m_qualityScale;
+	width = m_charInfo['0'].bw/m_qualityScale;
+	digitHeight = m_charInfo['0'].bh/m_qualityScale;
 
 	//fprintf(stderr, "Generated a %d x %d (%d kb) texture atlas\n", m_texWidth, m_texHeight, m_texWidth * m_texHeight / 1024);
 
@@ -200,14 +201,14 @@ void GlFont::glprint(float x, float y, float x_ratio, float y_ratio, const char*
 	for (p = (const uint8_t *)text; *p; p++)
 	{
 		/* Calculate the vertex and texture coordinates */
-		float x2 = x + m_charInfo[*p].bl*x_ratio;
-		float y2 = -y - m_charInfo[*p].bt*y_ratio;
-		float w = m_charInfo[*p].bw*x_ratio;
-		float h = m_charInfo[*p].bh*y_ratio;
+		float x2 = x + m_charInfo[*p].bl*x_ratio/m_qualityScale;
+		float y2 = -y - m_charInfo[*p].bt*y_ratio/m_qualityScale;
+		float w = m_charInfo[*p].bw*x_ratio/m_qualityScale;
+		float h = m_charInfo[*p].bh*y_ratio/m_qualityScale;
 
 		/* Advance the cursor to the start of the next character */
-		x += m_charInfo[*p].ax*x_ratio;
-		y += m_charInfo[*p].ay*y_ratio;
+		x += m_charInfo[*p].ax*x_ratio/m_qualityScale;
+		y += m_charInfo[*p].ay*y_ratio/m_qualityScale;
 
 		/* Skip glyphs that have no pixels */
 		if (!w || !h)

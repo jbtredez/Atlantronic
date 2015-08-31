@@ -85,7 +85,7 @@ static int glplot_init_done = 0;
 static VectPlan qemuStartPos(1200, 0, M_PI/2);
 static Object3dBasic selectionObject;
 static Object3dBasic axisObject;
-static Object3dBasic plusObject;
+static Object3dBasic graphPointObject;
 
 static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
@@ -524,15 +524,9 @@ static void init(GtkGLArea *area)
 	};
 	axisObject.init(axis, 2, 3, &shader);
 
-	float plus_pt[] =
-	{
-		-1, 0,
-		 1, 0,
-		 0, -1,
-		 0, 1,
-	};
-
-	plusObject.init(plus_pt, 2, 4, &shader);
+	float plus_pt[2*CONTROL_USB_DATA_MAX];
+	memset(plus_pt, 0, sizeof(plus_pt));
+	graphPointObject.init(plus_pt, 2, CONTROL_USB_DATA_MAX, &shader, true);
 
 	glplot_init_done = 1;
 }
@@ -616,8 +610,13 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		}
 	}
 
+	shader.setColor(0, 0, 0);
+	plot_axes_lines(g);
+
 	if( drawing_zoom_selection )
 	{
+		glm::mat4 oldProjection = shader.getProjection();
+		glm::mat4 oldModelView = shader.getModelView();
 		glm::mat4 projection = glm::ortho(0.0f, (float)screen_width, (float)screen_height, 0.0f, 0.0f, 1.0f);
 		shader.setProjection(projection);
 		shader.setModelView(glm::mat4(1.0f));
@@ -631,11 +630,11 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			mouse_x1, mouse_y2,
 			mouse_x1, mouse_y1
 		};
-		selectionObject.update(sel, sizeof(sel));
+		selectionObject.update(sel, sizeof(sel) / (2*sizeof(sel[0])));
 		selectionObject.render(GL_LINE_STRIP);
+		shader.setProjection(oldProjection);
+		shader.setModelView(oldModelView);
 	}
-
-	plot_axes_lines(g);
 
 	glDisable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
@@ -688,7 +687,7 @@ static void plot_axes_lines(Graphique* graph)
 		roi_xmin, roi_ymin,
 		roi_xmin, roi_ymax,
 	};
-	axisObject.update(axis, sizeof(axis));
+	axisObject.update(axis, sizeof(axis) / (2 * sizeof(axis[0])));
 	axisObject.render(GL_LINE_STRIP);
 
 	// axe x
@@ -769,87 +768,104 @@ static void plot_legende(Graphique* graph)
 
 static void plot_hokuyo_hist(Graphique* graph)
 {
-	int i;
-
-	float ratio_x = graph->ratio_x;
-	float ratio_y = graph->ratio_y;
+// TODO separer axe des x dans le vbo ?
+	static float pt[2*HOKUYO_NUM_POINTS];
+	for(int i=0; i < HOKUYO_NUM_POINTS; i++)
+	{
+		pt[2*i] = i;
+	}
 
 	if( graph->courbes_activated[GRAPH_HOKUYO1_HIST] )
 	{
 		shader.setColor(graph->color[3*GRAPH_HOKUYO1_HIST], graph->color[3*GRAPH_HOKUYO1_HIST+1], graph->color[3*GRAPH_HOKUYO1_HIST+2]);
-		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
+		for(int i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robotItf->hokuyo_scan[HOKUYO1].distance[i], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*i+1] = robotItf->hokuyo_scan[HOKUYO1].distance[i];
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
 	if( graph->courbes_activated[GRAPH_HOKUYO2_HIST] )
 	{
 		shader.setColor(graph->color[3*GRAPH_HOKUYO2_HIST], graph->color[3*GRAPH_HOKUYO2_HIST+1], graph->color[3*GRAPH_HOKUYO2_HIST+2]);
-		for(i = 0; i < HOKUYO_NUM_POINTS; i++)
+		for(int i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
-			draw_plus(i, robotItf->hokuyo_scan[HOKUYO2].distance[i], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*i+1] = robotItf->hokuyo_scan[HOKUYO2].distance[i];
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 }
 
 static void plot_speed_dist(Graphique* graph)
 {
-	int i;
+//TODO passer avec GL_POINT_SPRITE (	glEnable(GL_POINT_SPRITE); glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);) ? (pour texture sur point)
+// TODO separer axe des x dans le vbo ?
+	static float pt[2*CONTROL_USB_DATA_MAX];
+	for(int i=1; i < robotItf->control_usb_data_count; i++)
+	{
+		pt[2*(i-1)] = 1000 * CONTROL_DT * i;
+	}
 
-	float ratio_x = graph->ratio_x;
-	float ratio_y = graph->ratio_y;
-
-	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] )
+	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] && robotItf->control_usb_data_count > 1)
 	{
 		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_CONS]);
 		VectPlan old_cons = robotItf->control_usb_data[0].cons;
-		for(i=1; i < robotItf->control_usb_data_count; i++)
+		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			draw_plus(1000 * CONTROL_DT * i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*(i-1)+1] = v.norm();
 			old_cons = cons;
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_CONS] )
 	{
 		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_CONS]);
 		VectPlan old_cons = robotItf->control_usb_data[0].cons;
-		for(i=1; i < robotItf->control_usb_data_count; i++)
+		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			draw_plus(1000 * CONTROL_DT * i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*(i-1)+1] = v.theta*1000.0f;
 			old_cons = cons;
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_MES] )
 	{
 		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_DIST_MES]);
 		VectPlan old_pos = robotItf->control_usb_data[0].pos;
-		for(i=1; i < robotItf->control_usb_data_count; i++)
+		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			draw_plus(1000 * CONTROL_DT * i, v.norm(), 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*(i-1)+1] = v.norm();
 			old_pos = pos;
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_ROT_MES] )
 	{
 		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_SPEED_ROT_MES]);
 		VectPlan old_pos = robotItf->control_usb_data[0].pos;
-		for(i=1; i < robotItf->control_usb_data_count; i++)
+		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			draw_plus(1000 * CONTROL_DT * i, v.theta*1000.0f, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*(i-1)+1] = v.theta*1000.0f;
 			old_pos = pos;
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
 	for(int j = 0; j < 2; j++)
@@ -857,41 +873,47 @@ static void plot_speed_dist(Graphique* graph)
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1 + j] )
 		{
 			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
-			for(i=0; i < robotItf->control_usb_data_count; i++)
+			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].cons_motors_v[j], 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				pt[2*(i-1)+1] = robotItf->control_usb_data[i].cons_motors_v[j];
 			}
+			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.render(GL_POINTS);
 		}
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
 		{
 			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
-			for(i=0; i < robotItf->control_usb_data_count; i++)
+			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				draw_plus(1000 * CONTROL_DT * i, robotItf->control_usb_data[i].mes_motors[j].v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				pt[2*(i-1)+1] = robotItf->control_usb_data[i].mes_motors[j].v;
 			}
+			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.render(GL_POINTS);
 		}
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_VBAT] )
 	{
 		shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
-		for(int j=1; j < robotItf->control_usb_data_count; j++)
+		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			float v = robotItf->control_usb_data[j].vBat;
-			draw_plus(1000 * CONTROL_DT * j, v, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+			pt[2*(i-1)+1] = robotItf->control_usb_data[i].vBat;
 		}
+		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.render(GL_POINTS);
 	}
 
-	for(int i = 0; i < 4; i++)
+	for(int j = 0; j < 4; j++)
 	{
-		if( graph->courbes_activated[SUBGRAPH_MOTION_I1+i] )
+		if( graph->courbes_activated[SUBGRAPH_MOTION_I1+j] )
 		{
-			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_I1+i)]);
-			for(int j=1; j < robotItf->control_usb_data_count; j++)
+			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_I1+j)]);
+			for(int i=1; i < robotItf->control_usb_data_count; i++)
 			{
-				float current = robotItf->control_usb_data[j].iPwm[i];
-				draw_plus(1000 * CONTROL_DT * j, 1000*current, 0.25*glfont.width*ratio_x, 0.25*glfont.width*ratio_y);
+				pt[2*(i-1)+1] = 1000 * robotItf->control_usb_data[i].iPwm[j];
 			}
+			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.render(GL_POINTS);
 		}
 	}
 }

@@ -19,8 +19,8 @@ class Object3dBasic
 		~Object3dBasic();
 
 		void init(aiMesh *mesh, MainShader* shader);
-		void init(float* vertices, int elementSize, int elementCount, MainShader* shader);
-		void update(float* vertices, int size);
+		void init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic = false);
+		void update(float* vertices, int nbElement);
 
 		void render(GLenum mode);
 
@@ -36,6 +36,7 @@ class Object3dBasic
 		GLuint m_vao;
 		GLuint m_vbo[4];
 		unsigned int m_elementCount;
+		unsigned int m_elementSize;
 };
 
 class Object3d

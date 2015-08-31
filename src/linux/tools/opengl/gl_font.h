@@ -44,6 +44,7 @@ class GlFont
 		TextShader m_textShader;
 
 	protected:
+		float m_qualityScale;
 		FT_Library m_ft;
 		FT_Face m_face;
 		GLuint m_vbo;
