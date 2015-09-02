@@ -18,8 +18,8 @@ class Object3dBasic
 		Object3dBasic();
 		~Object3dBasic();
 
-		void init(aiMesh *mesh, MainShader* shader);
-		void init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic = false);
+		bool init(aiMesh *mesh, MainShader* shader);
+		bool init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic = false);
 		void update(float* vertices, int nbElement);
 
 		void render(GLenum mode);

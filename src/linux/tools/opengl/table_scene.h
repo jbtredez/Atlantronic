@@ -76,7 +76,6 @@ class TableScene
 		}
 
 	protected:
-		void draw_plus(float x, float y, float rx, float ry);
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
 		void processHits(GLint hits, GLuint buffer[]);
@@ -98,6 +97,7 @@ class TableScene
 		MainShader* m_shader;
 		Object3dBasic m_robot2d;
 		Object3dBasic m_table2d[TABLE_OBJ_SIZE];
+		Object3dBasic graphPointObject;
 };
 
 #endif

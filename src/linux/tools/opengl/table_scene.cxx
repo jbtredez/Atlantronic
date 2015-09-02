@@ -53,42 +53,21 @@ bool TableScene::init(GlFont* font, RobotInterface* robot, MainShader* shader)
 	robotItf = robot;
 	m_shader = shader;
 
-	if( ! table3d.init(glSelectFeetName, glSelectGlassName, shader) )
-	{
-		fprintf(stderr, "table3d.init() error - Exiting.\n");
-		return false;
-	}
+	bool res = table3d.init(glSelectFeetName, glSelectGlassName, shader);
+	res &= robot3d.init(shader);
+	res &= opponentRobot3d.init("media/opponentRobot.obj", shader);
+	res &= m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
 
-	if( ! robot3d.init(shader) )
-	{
-		fprintf(stderr, "robot3d.init() error - Exiting.\n");
-		return false;
-	}
-
-	if( ! opponentRobot3d.init("media/opponentRobot.obj", shader) )
-	{
-		fprintf(stderr, "opponentRobot3d.init() error - Exiting.\n");
-		return false;
-	}
-
-	m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
+	float plus_pt[2*CONTROL_USB_DATA_MAX];
+	memset(plus_pt, 0, sizeof(plus_pt));
+	res &= graphPointObject.init(plus_pt, 2, CONTROL_USB_DATA_MAX, shader, true);
 
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
-		m_table2d[i].init((float*)&table_obj[i].pt[0], 2, table_obj[i].size, shader);
+		res &= m_table2d[i].init((float*)&table_obj[i].pt[0], 2, table_obj[i].size, shader);
 	}
 
-	return true;
-}
-
-void TableScene::draw_plus(float x, float y, float rx, float ry)
-{
-	glBegin(GL_LINES);
-	glVertex2f(x-rx, y);
-	glVertex2f(x+rx, y);
-	glVertex2f(x, y-ry);
-	glVertex2f(x, y+ry);
-	glEnd();
+	return res;
 }
 
 VectPlan TableScene::projectMouseOnTable(int x, int y)
@@ -379,16 +358,13 @@ void TableScene::printInfos(Graphique* graph)
 }
 void TableScene::draw(GLenum mode, Graphique* graph)
 {
+	static Vect2 pt[CONTROL_USB_DATA_MAX];
+
 	int res = pthread_mutex_lock(&robotItf->mutex);
 	if(res != 0)
 	{
 		return;
 	}
-
-	float ratio_x = graph->ratio_x;
-	float ratio_y = graph->ratio_y;
-	float plus_dx = 2 * ratio_x;
-	float plus_dy = 2 * ratio_y;
 
 	MatrixHomogeneous m = viewMatrix;
 	float ax = m.val[3];
@@ -432,84 +408,98 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
 			for(int i = 0; i < robotItf->detection_dynamic_object_size; i++)
 			{
 				if(robotItf->detection_dynamic_obj[i].size > 1)
 				{
-					glBegin(GL_LINE_STRIP);
-					for(int j = 0; j < robotItf->detection_dynamic_obj[i].size; j++)
-					{
-						Vect2 pt = robotItf->detection_dynamic_obj[i].pt[j];
-						glVertex2f(pt.x, pt.y);
-					}
-					glEnd();
+					graphPointObject.update((float*)robotItf->detection_dynamic_obj[i].pt, robotItf->detection_dynamic_obj[i].size);
+					graphPointObject.render(GL_LINE_STRIP);
 				}
 			}
 		}
 
 		for(int i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
 		{
-			glColor3f(0,0,1);
-			draw_plus(robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y, 50, 50);
+			m_shader->setColor(0,0,1);
+			pt[i].x = robotItf->detection_obj1[i].x;
+			pt[i].y = robotItf->detection_obj1[i].y;
 			//printf("obj_h1 : %7.2f %7.2f\n", robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y);
 		}
 
+		graphPointObject.update((float*)pt, (int)robotItf->detection_dynamic_object_count1);
+		graphPointObject.render(GL_POINTS);
+
 		for(int i = 0; i < (int)robotItf->detection_dynamic_object_count2; i++)
 		{
-			glColor3f(0,1,1);
-			draw_plus(robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y, 50, 50);
+			m_shader->setColor(0,1,1);
+			pt[i].x = robotItf->detection_obj2[i].x;
+			pt[i].y = robotItf->detection_obj2[i].y;
 			//printf("obj_h2 : %7.2f %7.2f\n", robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y);
 		}
 
+		graphPointObject.update((float*)pt, (int)robotItf->detection_dynamic_object_count2);
+		graphPointObject.render(GL_POINTS);
+
 		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
 			for(int i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
 			{
-				draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
+				pt[i] = robotItf->detection_hokuyo_pos[i];
 			}
+			graphPointObject.update((float*)pt, HOKUYO_NUM_POINTS);
+			graphPointObject.render(GL_POINTS);
 		}
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO2] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
 			for(int i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 			{
-				draw_plus(robotItf->detection_hokuyo_pos[i].x, robotItf->detection_hokuyo_pos[i].y, plus_dx, plus_dy);
+				pt[i] = robotItf->detection_hokuyo_pos[i];
 			}
+			graphPointObject.update((float*)pt, HOKUYO_NUM_POINTS);
+			graphPointObject.render(GL_POINTS);
 		}
 
 		int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
 		{
-			m_shader->setColor(graph->color[3*SUBGRAPH_TABLE_POS_CONS], graph->color[3*SUBGRAPH_TABLE_POS_CONS+1], graph->color[3*SUBGRAPH_TABLE_POS_CONS+2]);
+			unsigned int pointCount = 0;
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_POS_CONS]);
 
 			for(int i=0; i< max; i++)
 			{
 				int state = robotItf->control_usb_data[i].motion_state;
 				if( state != MOTION_ENABLED && state != MOTION_DISABLED)
 				{
-					draw_plus(robotItf->control_usb_data[i].cons.x, robotItf->control_usb_data[i].cons.y, plus_dx, plus_dy);
+					pt[pointCount] = robotItf->control_usb_data[i].cons;
+					pointCount++;
 				}
 			}
+			graphPointObject.update((float*)pt, pointCount);
+			graphPointObject.render(GL_POINTS);
 		}
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_POS_MES] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 			for(int i=0; i < max; i++)
 			{
-				draw_plus(robotItf->control_usb_data[i].pos.x, robotItf->control_usb_data[i].pos.y, plus_dx, plus_dy);
+				pt[i] = robotItf->control_usb_data[i].pos;
 			}
+			graphPointObject.update((float*)pt, max);
+			graphPointObject.render(GL_POINTS);
 		}
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH_LINK] )
 		{
 			glEnable(GL_LINE_STIPPLE);
 			glLineStipple(1, 0xAAAA);
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK]);
+			unsigned int pointCount = 0;
 			for(int i=0; i < GRAPH_NUM_LINK; i++)
 			{
 				int a = graph_link[i].a;
@@ -517,26 +507,26 @@ void TableScene::draw(GLenum mode, Graphique* graph)
 				// on trace les liens une seule fois
 				if( a < b)
 				{
-					float x1 = graph_node[a].pos.x;
-					float y1 = graph_node[a].pos.y;
-					float x2 = graph_node[b].pos.x;
-					float y2 = graph_node[b].pos.y;
-					glBegin(GL_LINES);
-					glVertex2f(x1, y1);
-					glVertex2f(x2, y2);
-					glEnd();
+					pt[pointCount] = graph_node[a].pos;
+					pointCount++;
+					pt[pointCount] = graph_node[b].pos;
+					pointCount++;
 				}
 			}
+			graphPointObject.update((float*)pt, pointCount);
+			graphPointObject.render(GL_LINES);
 			glDisable(GL_LINE_STIPPLE);
 		}
 
 		if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH] )
 		{
-			glColor3fv(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
+			m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
 			for(int i=0; i < GRAPH_NUM_NODE; i++)
 			{
-				draw_plus(graph_node[i].pos.x, graph_node[i].pos.y, plus_dx, plus_dy);
+				pt[i] = graph_node[i].pos;
 			}
+			graphPointObject.update((float*)pt, GRAPH_NUM_NODE);
+			graphPointObject.render(GL_POINTS);
 		}
 	}
 

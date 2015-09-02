@@ -60,7 +60,7 @@ enum
 static MainShader shader;
 static GlFont glfont;
 static char fontName[] = "DejaVuSerif.ttf";
-static int fontSize = 16;
+static int fontSize = 12;
 static int screen_width = 0;
 static int screen_height = 0;
 static RobotInterface* robotItf;
@@ -673,13 +673,12 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 
 static void plot_axes_lines(Graphique* graph)
 {
+	static float pt[2048];
+	unsigned int ptCount = 0;
 	float roi_xmin = graph->roi_xmin;
 	float roi_xmax = graph->roi_xmax;
 	float roi_ymin = graph->roi_ymin;
 	float roi_ymax = graph->roi_ymax;
-
-	float ratio_x = graph->ratio_x;
-	float ratio_y = graph->ratio_y;
 
 	float axis[] =
 	{
@@ -693,26 +692,37 @@ static void plot_axes_lines(Graphique* graph)
 	// axe x
 	float dx = graph->tics_dx;
 	float x;
-	for(x = 0; x <= roi_xmax; x+=dx)
+	for(x = 0; x <= roi_xmax && ptCount < sizeof(pt)/(2*sizeof(pt[0])); x+=dx)
 	{
-		draw_plus(x, roi_ymin, glfont.width*ratio_x, glfont.width*ratio_y);
+		pt[2*ptCount] = x;
+		pt[2*ptCount+1] = roi_ymin;
+		ptCount++;
 	}
-	for(x = -dx; x >= roi_xmin; x-=dx)
+	for(x = -dx; x >= roi_xmin && ptCount < sizeof(pt)/(2*sizeof(pt[0])); x-=dx)
 	{
-		draw_plus(x, roi_ymin, glfont.width*ratio_x, glfont.width*ratio_y);
+		pt[2*ptCount] = x;
+		pt[2*ptCount+1] = roi_ymin;
+		ptCount++;
 	}
 
 	// axe y
 	float dy = graph->tics_dy;
 	float y;
-	for(y = 0; y <= roi_ymax; y+=dy)
+	for(y = 0; y <= roi_ymax && ptCount < sizeof(pt)/(2*sizeof(pt[0])); y+=dy)
 	{
-		draw_plus(roi_xmin, y, glfont.width*ratio_x, glfont.width*ratio_y);
+		pt[2*ptCount] = roi_xmin;
+		pt[2*ptCount+1] = y;
+		ptCount++;
 	}
-	for(y = -dy; y >= roi_ymin; y-=dy)
+	for(y = -dy; y >= roi_ymin && ptCount < sizeof(pt)/(2*sizeof(pt[0])); y-=dy)
 	{
-		draw_plus(roi_xmin, y, glfont.width*ratio_x, glfont.width*ratio_y);
+		pt[2*ptCount] = roi_xmin;
+		pt[2*ptCount+1] = y;
+		ptCount++;
 	}
+
+	graphPointObject.update(pt, ptCount);
+	graphPointObject.render(GL_POINTS);
 }
 
 static void plot_axes_text(Graphique* graph)
@@ -768,7 +778,6 @@ static void plot_legende(Graphique* graph)
 
 static void plot_hokuyo_hist(Graphique* graph)
 {
-// TODO separer axe des x dans le vbo ?
 	static float pt[2*HOKUYO_NUM_POINTS];
 	for(int i=0; i < HOKUYO_NUM_POINTS; i++)
 	{
@@ -801,11 +810,10 @@ static void plot_hokuyo_hist(Graphique* graph)
 static void plot_speed_dist(Graphique* graph)
 {
 //TODO passer avec GL_POINT_SPRITE (	glEnable(GL_POINT_SPRITE); glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);) ? (pour texture sur point)
-// TODO separer axe des x dans le vbo ?
-	static float pt[2*CONTROL_USB_DATA_MAX];
+	static Vect2 pt[CONTROL_USB_DATA_MAX];
 	for(int i=1; i < robotItf->control_usb_data_count; i++)
 	{
-		pt[2*(i-1)] = 1000 * CONTROL_DT * i;
+		pt[i-1].x = 1000 * CONTROL_DT * i;
 	}
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] && robotItf->control_usb_data_count > 1)
@@ -816,10 +824,10 @@ static void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			pt[2*(i-1)+1] = v.norm();
+			pt[i-1].y = v.norm();
 			old_cons = cons;
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
 
@@ -831,10 +839,10 @@ static void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan cons = robotItf->control_usb_data[i].cons;
 			VectPlan v = (cons - old_cons) / CONTROL_DT;
-			pt[2*(i-1)+1] = v.theta*1000.0f;
+			pt[i-1].y = v.theta*1000.0f;
 			old_cons = cons;
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
 
@@ -846,10 +854,10 @@ static void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			pt[2*(i-1)+1] = v.norm();
+			pt[i-1].y = v.norm();
 			old_pos = pos;
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
 
@@ -861,10 +869,10 @@ static void plot_speed_dist(Graphique* graph)
 		{
 			VectPlan pos = robotItf->control_usb_data[i].pos;
 			VectPlan v = (pos - old_pos) / CONTROL_DT;
-			pt[2*(i-1)+1] = v.theta*1000.0f;
+			pt[i-1].y = v.theta*1000.0f;
 			old_pos = pos;
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
 
@@ -875,9 +883,9 @@ static void plot_speed_dist(Graphique* graph)
 			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
 			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				pt[2*(i-1)+1] = robotItf->control_usb_data[i].cons_motors_v[j];
+				pt[i-1].y = robotItf->control_usb_data[i].cons_motors_v[j];
 			}
-			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 			graphPointObject.render(GL_POINTS);
 		}
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
@@ -885,9 +893,9 @@ static void plot_speed_dist(Graphique* graph)
 			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
 			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
-				pt[2*(i-1)+1] = robotItf->control_usb_data[i].mes_motors[j].v;
+				pt[i-1].y = robotItf->control_usb_data[i].mes_motors[j].v;
 			}
-			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 			graphPointObject.render(GL_POINTS);
 		}
 	}
@@ -897,9 +905,9 @@ static void plot_speed_dist(Graphique* graph)
 		shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
 		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
-			pt[2*(i-1)+1] = robotItf->control_usb_data[i].vBat;
+			pt[i-1].y = robotItf->control_usb_data[i].vBat;
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
 
@@ -910,9 +918,9 @@ static void plot_speed_dist(Graphique* graph)
 			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_I1+j)]);
 			for(int i=1; i < robotItf->control_usb_data_count; i++)
 			{
-				pt[2*(i-1)+1] = 1000 * robotItf->control_usb_data[i].iPwm[j];
+				pt[i-1].y = 1000 * robotItf->control_usb_data[i].iPwm[j];
 			}
-			graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+			graphPointObject.update((float*)pt, robotItf->control_usb_data_count-1);
 			graphPointObject.render(GL_POINTS);
 		}
 	}

@@ -11,7 +11,7 @@ Object3dBasic::Object3dBasic()
 	m_vbo[INDEX_BUFFER] = 0;
 }
 
-void Object3dBasic::init(aiMesh *mesh, MainShader* shader)
+bool Object3dBasic::init(aiMesh *mesh, MainShader* shader)
 {
 	m_vbo[VERTEX_BUFFER] = 0;
 	m_vbo[TEXCOORD_BUFFER] = 0;
@@ -102,9 +102,10 @@ void Object3dBasic::init(aiMesh *mesh, MainShader* shader)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	return true;
 }
 
-void Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic)
+bool Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic)
 {
 	GLenum drawType = GL_STATIC_DRAW;
 	if( dynamic )
@@ -127,6 +128,7 @@ void Object3dBasic::init(float* vertices, int elementSize, int elementCount, Mai
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+	return true;
 }
 
 void Object3dBasic::update(float* vertices, int nbElement)
