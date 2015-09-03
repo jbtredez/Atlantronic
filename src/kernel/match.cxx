@@ -52,6 +52,9 @@ static int match_module_init()
 	usb_add_cmd(USB_CMD_COLOR, &match_cmd_color);
 	usb_add_cmd(USB_CMD_MATCH_TIME, &match_cmd_set_time);
 
+	// on force la lecture io au boot
+	match_set_color_from_isr();
+
 	return 0;
 }
 
