@@ -14,7 +14,6 @@
 #include "linux/tools/joystick.h"
 #include "linux/tools/opengl/table_scene.h"
 #include "linux/tools/opengl/gl_font.h"
-#include "linux/tools/opengl/gltools.h"
 #include "kernel/math/matrix_homogeneous.h"
 #include "opengl/main_shader.h"
 
@@ -561,19 +560,22 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 {
 	(void) ev;
 	(void) arg;
-	(void) widget;
 
 	Graphique* g = &graph[current_graph];
 
 	// on efface le frame buffer
+	glClearStencil(0);
 	glClearColor(1.0, 1.0, 1.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	shader.use();
 	if( current_graph == GRAPH_TABLE)
 	{
 		glEnable(GL_DEPTH_TEST);
-		tableScene.draw(GL_RENDER, g);
+		glEnable(GL_STENCIL_TEST);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilFunc(GL_ALWAYS, 0, ~0);
+		tableScene.draw(g);
 	}
 	else
 	{

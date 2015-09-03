@@ -31,7 +31,6 @@ obj-linux-glplot += linux/tools/opengl/shader.o
 obj-linux-glplot += linux/tools/opengl/main_shader.o
 obj-linux-glplot += linux/tools/opengl/text_shader.o
 obj-linux-glplot += linux/tools/opengl/table_scene.o
-obj-linux-glplot += linux/tools/opengl/gltools.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/graphique.o
 obj-linux-glplot += linux/tools/joystick.o

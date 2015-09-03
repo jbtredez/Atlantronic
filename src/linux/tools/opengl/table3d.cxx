@@ -1,5 +1,4 @@
 #include "table3d.h"
-#include "linux/tools/opengl/gltools.h"
 
 bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5], MainShader* shader)
 {
@@ -98,9 +97,9 @@ void Table3d::moveSelected(float dx, float dy)
 
 }
 
-void Table3d::draw(GLenum mode)
+void Table3d::draw()
 {
-	if(mode != GL_SELECT && showTable)
+	if(showTable)
 	{
 		glm::mat4 oldModelView = m_shader->getModelView();
 		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22));
@@ -124,8 +123,8 @@ void Table3d::draw(GLenum mode)
 
 	if( showElements )
 	{
-		drawFeets(mode);
-		drawGlass(mode);
+		drawFeets();
+		drawGlass();
 	}
 }
 
@@ -166,7 +165,7 @@ void Table3d::drawClap(float x, bool yellow)
 	m_shader->setModelView(oldModelView);
 }
 
-void Table3d::drawFeets(GLenum mode)
+void Table3d::drawFeets()
 {
 	Object3d* feet = &feetYellow;
 	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
@@ -175,42 +174,28 @@ void Table3d::drawFeets(GLenum mode)
 		{
 			feet = &feetGreen;
 		}
-		glPushName(glSelectFeetName[i]);
+		glStencilFunc(GL_ALWAYS, glSelectFeetName[i], ~0);
 		glm::mat4 oldModelView = m_shader->getModelView();
 		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z));
 		m_shader->setModelView(modelView);
 		feet->selected = feetSelected[i];
-		if(mode != GL_SELECT)
-		{
-			feet->draw();
-		}
-		else
-		{
-			//plot_boundingBox(feet->sceneMin.x, feet->sceneMin.y, feet->sceneMin.z, feet->sceneMax.x, feet->sceneMax.y, feet->sceneMax.z);
-		}
+		feet->draw();
 		m_shader->setModelView(oldModelView);
-		glPopName();
+		glStencilFunc(GL_ALWAYS, 0, ~0);
 	}
 }
 
-void Table3d::drawGlass(GLenum mode)
+void Table3d::drawGlass()
 {
 	for(unsigned int i = 0; i < sizeof(glassPosition) / sizeof(glassPosition[0]); i++)
 	{
-		glPushName(glSelectGlassName[i]);
+		glStencilFunc(GL_ALWAYS, glSelectGlassName[i], ~0);
 		glm::mat4 oldModelView = m_shader->getModelView();
 		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z));
 		m_shader->setModelView(modelView);
 		glass.selected = glassSelected[i];
-		if(mode != GL_SELECT)
-		{
-			glass.draw();
-		}
-		else
-		{
-			//plot_boundingBox(glass.sceneMin.x, glass.sceneMin.y, glass.sceneMin.z, glass.sceneMax.x, glass.sceneMax.y, glass.sceneMax.z);
-		}
+		glass.draw();
 		m_shader->setModelView(oldModelView);
-		glPopName();
+		glStencilFunc(GL_ALWAYS, 0, ~0);
 	}
 }

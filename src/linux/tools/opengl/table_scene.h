@@ -62,7 +62,7 @@ class TableScene
 	public:
 		TableScene();
 		bool init(GlFont* glfont, RobotInterface* robotItf, MainShader* shader);
-		void draw(GLenum mode, Graphique* graph);
+		void draw(Graphique* graph);
 		void printInfos(Graphique* graph);
 		VectPlan projectMouseOnTable(int x, int y);
 		void rotateView(float dx, float dy);
@@ -78,7 +78,6 @@ class TableScene
 	protected:
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
-		void processHits(GLint hits, GLuint buffer[]);
 
 		RobotInterface* robotItf;
 		Table3d table3d;

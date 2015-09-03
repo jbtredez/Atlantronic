@@ -7,7 +7,7 @@ class Table3d
 {
 	public:
 		bool init(int glSelectFeetName[16], int glSelectGlassName[5], MainShader* shader);
-		void draw(GLenum mode);
+		void draw();
 
 		void unselectAll();
 		void selectFeet(unsigned int id);
@@ -20,8 +20,8 @@ class Table3d
 	protected:
 		void drawDispenser(float x);
 		void drawClap(float x, bool yellow);
-		void drawFeets(GLenum mode);
-		void drawGlass(GLenum mode);
+		void drawFeets();
+		void drawGlass();
 
 		Object3d table;
 		Object3d dispenser;
