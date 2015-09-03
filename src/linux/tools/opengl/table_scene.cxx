@@ -114,7 +114,7 @@ void TableScene::mouseSelect(int x, int y, Graphique* graph)
 	m_opponentRobot3d.selected = false;
 
 	glReadPixels(x, graph->screen_height - y - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &id);
-	//printf("mouse index %d\n", index);
+	//printf("mouse index %d\n", id);
 
 	if( id >= GL_NAME_FEET_0 && id <= GL_NAME_FEET_15)
 	{

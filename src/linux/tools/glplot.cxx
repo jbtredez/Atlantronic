@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
+#ifndef GTK3
 #include <gtkgl/gtkglarea.h>
+#endif
 #include <gdk/gdkkeysyms.h>
 
 #include <X11/Intrinsic.h>
@@ -85,8 +87,9 @@ static VectPlan qemuStartPos(1200, 0, M_PI/2);
 static Object3dBasic selectionObject;
 static Object3dBasic axisObject;
 static Object3dBasic graphPointObject;
+static int color = COLOR_GREEN;
+static bool ioColor = true;
 
-static void close_gtk(GtkWidget* widget, gpointer arg);
 static void select_graph(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
@@ -110,7 +113,7 @@ static void plot_axes_text(Graphique* graph);
 static void plot_axes_lines(Graphique* graph);
 
 static void qemu_set_parameters();
-void gtk_end();
+static void gtk_end();
 
 #define OPPONENT_R         150.0f
 #define FEET_RADIUS            30
@@ -199,31 +202,41 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I3, "i3", 0, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_I4, "i4", 0, 0, 0, 1);
 
-	gdk_threads_init();
-	gdk_threads_enter();
-
 	gtk_init(0, NULL);
+#ifndef GTK3
 	gdk_gl_query();
-
+#endif
 	// création de la fenêtre
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(main_window),"USB Interface");
 	gtk_window_set_default_size(GTK_WINDOW(main_window), 400, 300);
 
-	g_signal_connect(G_OBJECT(main_window), "delete_event", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(close_gtk), NULL);
+	g_signal_connect(G_OBJECT(main_window), "delete_event", G_CALLBACK(gtk_end), NULL);
+	g_signal_connect(G_OBJECT(main_window), "destroy", G_CALLBACK(gtk_end), NULL);
 
 	// fenetre opengl
 	// config de opengl
-	int attribute[] = { GDK_GL_RGBA, GDK_GL_DOUBLEBUFFER, GDK_GL_DEPTH_SIZE, 1, GDK_GL_NONE };
+#ifndef GTK3
+	int attribute[] = { GDK_GL_RGBA, GDK_GL_DOUBLEBUFFER, GDK_GL_DEPTH_SIZE, 1, GDK_GL_STENCIL_SIZE, 1, GDK_GL_NONE };
 	opengl_window = gtk_gl_area_share_new (attribute, (GtkGLArea *) opengl_window);
+#else
+	opengl_window = gtk_gl_area_new();
+	gtk_gl_area_set_has_depth_buffer( GTK_GL_AREA(opengl_window), true);
+	//gtk_gl_area_set_has_alpha( GTK_GL_AREA(opengl_window), true);
+	gtk_gl_area_set_has_stencil_buffer( GTK_GL_AREA(opengl_window), true);
+#endif
 	gtk_widget_set_size_request(opengl_window, 800, 600);
 
 	gtk_widget_add_events(opengl_window, GDK_VISIBILITY_NOTIFY_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK);
 
 	g_signal_connect_after(G_OBJECT(opengl_window), "realize", G_CALLBACK(init), NULL);
+#ifndef GTK3
 	g_signal_connect(G_OBJECT(opengl_window), "configure_event", G_CALLBACK(config), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "expose_event", G_CALLBACK(render), NULL);
+#else
+	g_signal_connect(G_OBJECT(opengl_window), "resize", G_CALLBACK(config), NULL);
+	g_signal_connect(G_OBJECT(opengl_window), "render", G_CALLBACK(render), NULL);
+#endif
 	g_signal_connect(G_OBJECT(opengl_window), "button_press_event", G_CALLBACK(mouse_press), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "button_release_event", G_CALLBACK(mouse_release), NULL);
 	g_signal_connect(G_OBJECT(opengl_window), "motion_notify_event", G_CALLBACK(mouse_move), NULL);
@@ -289,29 +302,41 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_container_set_border_width(GTK_CONTAINER(toolbar), 0);
 	gtk_orientable_set_orientation(GTK_ORIENTABLE(toolbar), GTK_ORIENTATION_VERTICAL);
 	gtk_toolbar_set_icon_size(GTK_TOOLBAR(toolbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
-
-	GtkToolItem* toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_QUIT);
-	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(close_gtk), (GtkWidget*) main_window);
+	GtkToolItem* toolBarBtn = gtk_tool_button_new(NULL, NULL);
+	gtk_tool_button_set_icon_name( GTK_TOOL_BUTTON(toolBarBtn), "application-exit");
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(gtk_end), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
-	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_REFRESH);
+	toolBarBtn = gtk_tool_button_new(NULL, NULL);
+	gtk_tool_button_set_icon_name( GTK_TOOL_BUTTON(toolBarBtn), "view-refresh");
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(reboot_robot), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
+#ifndef GTK3
 	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_COLOR);
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), NULL);
+#else
+	GdkRGBA green = {0, 1, 0, 1};
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&green);
+	toolBarBtn = gtk_tool_button_new(switchColorBtn, NULL);
+	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), switchColorBtn);
+#endif
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
-	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_APPLY);
+	toolBarBtn = gtk_tool_button_new(NULL, "Go");
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_go), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
+#ifndef GTK3
 	GtkWidget* main_vbox = gtk_vbox_new(FALSE, 0);
 	GtkWidget* main_hbox = gtk_hbox_new(FALSE, 0);
+#else
+	GtkWidget* main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	GtkWidget* main_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#endif
 	gtk_container_add(GTK_CONTAINER(main_window), main_hbox);
-
 	gtk_box_pack_start(GTK_BOX(main_hbox), toolbar, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_hbox), main_vbox, TRUE, TRUE, 0);
 
@@ -334,8 +359,6 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	gtk_main();
 
-	gdk_threads_leave();
-
 	joystick_destroy(&joystick);
 
 	return 0;
@@ -343,9 +366,9 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 void qemu_set_parameters()
 {
-	qemu->setPosition(qemuStartPos);
-	qemu->set_io(GPIO_MASK(IO_COLOR), true);
-	setTableColor(0);
+	qemu->setPosition(qemuStartPos.symetric(color));
+	qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
+	setTableColor(color);
 
 	// ajout de la table dans qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
@@ -399,15 +422,24 @@ void qemu_set_parameters()
 		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
 		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+17, origin, glassPosition[i]);
 	}
-	setTableColor(COLOR_GREEN);
+}
+
+static gboolean gtk_end_from_gtk_thread(gpointer /*data*/)
+{
+	gtk_main_quit();
+	return G_SOURCE_REMOVE;
 }
 
 void gtk_end()
 {
-	gdk_threads_enter();
-	gtk_main_quit();
-	gdk_threads_leave();
-	//gdk_threads_add_idle(gtk_main_quit, NULL);
+	gdk_threads_add_idle(gtk_end_from_gtk_thread, NULL);
+}
+
+static gboolean redraw(gpointer data)
+{
+	GtkWidget* widget = (GtkWidget*)data;
+	gtk_widget_queue_draw(widget);
+	return G_SOURCE_REMOVE;
 }
 
 void glplot_update()
@@ -422,19 +454,10 @@ void glplot_update()
 		if((delta >= 1.0f/MAX_FPS && (current_graph == GRAPH_TABLE || current_graph == GRAPH_HOKUYO_HIST) )
 			|| delta >= 1.0f/5)
 		{
-			gdk_threads_enter();
-			gtk_widget_queue_draw(opengl_window);
-			gdk_threads_leave();
+			gdk_threads_add_idle(redraw, opengl_window);
 			last_plot = current;
 		}
 	}
-}
-
-static void close_gtk(GtkWidget* widget, gpointer arg)
-{
-	(void) widget;
-	(void) arg;
-	gtk_main_quit();
 }
 
 static void select_graph(GtkWidget* widget, gpointer arg)
@@ -478,9 +501,15 @@ static void select_active_courbe(GtkWidget* widget, gpointer arg)
 static void init(GtkGLArea *area)
 {
 	int i;
-
+#ifndef GTK3
 	if(!gtk_gl_area_make_current (area)) return;
-
+#else
+	gtk_gl_area_make_current(area);
+	if (gtk_gl_area_get_error (area) )
+	{
+		return;
+	}
+#endif
 	int res = glfont.init(fontName, fontSize);
 	if( res )
 	{
@@ -535,10 +564,18 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	(void) ev;
 	(void) arg;
 
+#ifndef GTK3
 	if(!gtk_gl_area_make_current (GTK_GL_AREA (widget)))
 	{
 		return FALSE;
 	}
+#else
+	gtk_gl_area_make_current(GTK_GL_AREA(widget));
+	if (gtk_gl_area_get_error( GTK_GL_AREA(widget) ) )
+	{
+		return FALSE;
+	}
+#endif
 
 	GtkAllocation alloc;
 	gtk_widget_get_allocation(widget, &alloc);
@@ -556,11 +593,8 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 	return TRUE;
 }
 
-static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
+static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg*/)
 {
-	(void) ev;
-	(void) arg;
-
 	Graphique* g = &graph[current_graph];
 
 	// on efface le frame buffer
@@ -594,7 +628,6 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 			glDisable(GL_DEPTH_TEST);
 			glDisable(GL_CULL_FACE);
 
-			// TODO ne marche plus
 			switch(current_graph)
 			{
 				default:
@@ -667,8 +700,11 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* ev, gpointer arg)
 		plot_legende(g);
 	}
 
-	//glFlush();
+#ifndef GTK3
 	gtk_gl_area_swap_buffers(GTK_GL_AREA(widget));
+#else
+	(void) widget;
+#endif
 
 	return TRUE;
 }
@@ -934,6 +970,18 @@ static void mouse_press(GtkWidget* widget, GdkEventButton* event)
 	{
 		if( current_graph == GRAPH_TABLE )
 		{
+#ifndef GTK3
+			if(!gtk_gl_area_make_current (GTK_GL_AREA (widget)))
+			{
+				return;
+			}
+#else
+			gtk_gl_area_make_current(GTK_GL_AREA (widget));
+			if (gtk_gl_area_get_error (GTK_GL_AREA (widget)) )
+			{
+				return;
+			}
+#endif
 			tableScene.mouseSelect(event->x, event->y, &graph[GRAPH_TABLE]);
 		}
 		else
@@ -1088,21 +1136,18 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 	return TRUE;
 }
 
-static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
+static void toggle_color(GtkWidget* /*widget*/, gpointer arg)
 {
-	static int color = COLOR_GREEN;
-	static bool ioColor = true;
-
 	if( color == COLOR_GREEN )
 	{
 		color = COLOR_YELLOW;
-		setTableColor(color);
 	}
 	else
 	{
 		color = COLOR_GREEN;
-		setTableColor(color);
 	}
+
+	setTableColor(color);
 
 	if(qemu)
 	{
@@ -1116,6 +1161,21 @@ static void toggle_color(GtkWidget* /*widget*/, gpointer /*arg*/)
 		// en reel, on passe par l'interface de com
 		robotItf->color(color);
 	}
+#ifdef GTK3
+	GtkColorButton* switchColorBtn = (GtkColorButton*) arg;
+	if( ioColor )
+	{
+		GdkRGBA green = {0, 1, 0, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &green);
+	}
+	else
+	{
+		GdkRGBA yellow = {1, 1, 0, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &yellow);
+	}
+#else
+	(void) arg;
+#endif
 }
 
 static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
