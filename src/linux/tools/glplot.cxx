@@ -18,6 +18,7 @@
 #include "linux/tools/opengl/gl_font.h"
 #include "kernel/math/matrix_homogeneous.h"
 #include "opengl/main_shader.h"
+#include "point_texture.h"
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
@@ -89,6 +90,7 @@ static Object3dBasic axisObject;
 static Object3dBasic graphPointObject;
 static int color = COLOR_GREEN;
 static bool ioColor = true;
+static GLuint pointTextureId;
 
 static void select_graph(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
@@ -556,6 +558,17 @@ static void init(GtkGLArea *area)
 	memset(plus_pt, 0, sizeof(plus_pt));
 	graphPointObject.init(plus_pt, 2, CONTROL_USB_DATA_MAX, &shader, true);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_POINT_SPRITE);
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glActiveTexture(GL_TEXTURE0);
+	glGenTextures(1, &pointTextureId);
+	glBindTexture(GL_TEXTURE_2D, pointTextureId);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pointTexture.width, pointTexture.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pointTexture.pixel_data);
+
 	glplot_init_done = 1;
 }
 
@@ -603,6 +616,7 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
 	shader.use();
+	shader.setSprite(0);
 	if( current_graph == GRAPH_TABLE)
 	{
 		glEnable(GL_DEPTH_TEST);
@@ -759,8 +773,11 @@ static void plot_axes_lines(Graphique* graph)
 		ptCount++;
 	}
 
+	shader.setSprite(pointTexture.width/2);
+	glBindTexture(GL_TEXTURE_2D, pointTextureId);
 	graphPointObject.update(pt, ptCount);
 	graphPointObject.render(GL_POINTS);
+	shader.setSprite(0);
 }
 
 static void plot_axes_text(Graphique* graph)
@@ -822,6 +839,9 @@ static void plot_hokuyo_hist(Graphique* graph)
 		pt[2*i] = i;
 	}
 
+	shader.setSprite(pointTexture.width/4);
+	glBindTexture(GL_TEXTURE_2D, pointTextureId);
+
 	if( graph->courbes_activated[GRAPH_HOKUYO1_HIST] )
 	{
 		shader.setColor(graph->color[3*GRAPH_HOKUYO1_HIST], graph->color[3*GRAPH_HOKUYO1_HIST+1], graph->color[3*GRAPH_HOKUYO1_HIST+2]);
@@ -843,6 +863,7 @@ static void plot_hokuyo_hist(Graphique* graph)
 		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
 		graphPointObject.render(GL_POINTS);
 	}
+	shader.setSprite(0);
 }
 
 static void plot_speed_dist(Graphique* graph)
@@ -853,6 +874,9 @@ static void plot_speed_dist(Graphique* graph)
 	{
 		pt[i-1].x = 1000 * CONTROL_DT * i;
 	}
+
+	shader.setSprite(pointTexture.width/4);
+	glBindTexture(GL_TEXTURE_2D, pointTextureId);
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] && robotItf->control_usb_data_count > 1)
 	{
@@ -962,6 +986,7 @@ static void plot_speed_dist(Graphique* graph)
 			graphPointObject.render(GL_POINTS);
 		}
 	}
+	shader.setSprite(0);
 }
 
 static void mouse_press(GtkWidget* widget, GdkEventButton* event)

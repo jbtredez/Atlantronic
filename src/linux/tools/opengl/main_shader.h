@@ -14,6 +14,7 @@ class MainShader : public Shader
 
 		int init();
 
+		void setSprite(float sprite);
 		void setProjection(glm::mat4 projection);
 		void setModelView(glm::mat4 mvp);
 		inline glm::mat4 getModelView();
@@ -35,6 +36,7 @@ class MainShader : public Shader
 		GLint m_uniform_color_ambient;
 		GLint m_uniform_color_diffuse;
 		GLint m_uniform_color_specular;
+		GLint m_uniform_sprite;
 
 		glm::mat4 m_projection;
 		glm::mat4 m_modelView;

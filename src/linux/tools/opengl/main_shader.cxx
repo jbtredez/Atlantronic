@@ -2,11 +2,13 @@
 #include <stdio.h>
 
 static const char* vertexShaderSrc =
+"#version 120                                                  \n"
 "attribute vec3 coord3d;                                       \n"
 "attribute vec3 normal;                                        \n"
 "uniform mat4 projection;                                      \n"
 "uniform mat4 modelView;                                       \n"
 "uniform mat3 normalMatrix;                                    \n"
+"uniform lowp float sprite;                                    \n"
 "varying vec3 f_coord3d;                                       \n"
 "varying vec3 f_normal;                                        \n"
 "void main()                                                   \n"
@@ -14,34 +16,45 @@ static const char* vertexShaderSrc =
 "	f_coord3d = (modelView * vec4(coord3d, 1.0)).xyz;          \n"
 "	f_normal = normalMatrix * normal;                          \n"
 "	gl_Position = projection * modelView * vec4(coord3d, 1.0); \n"
+"	gl_PointSize = max(1.0, sprite);                           \n"
 "}                                                             \n";
 
 static const char* fragmentShaderSrc =
+"#version 120                                                \n"
 "uniform vec3 color_ambient;                                 \n"
 "uniform vec3 color_diffuse;                                 \n"
 "uniform vec3 color_specular;                                \n"
+"uniform sampler2D tex;                                      \n"
+"uniform float sprite;                                       \n"
 "varying vec3 f_coord3d;                                     \n"
 "varying vec3 f_normal;                                      \n"
-"void main()                                                 \n"
-"{                                                           \n"
-"	vec3 lightPos = vec3(0, 2000, 0);                        \n"
-"	vec3 viewPos = vec3(0, -3000, 2000);                     \n"
+"void main()                                                     \n"
+"{                                                               \n"
+"	if( sprite <= 1.0 )                                          \n"
+"	{                                                            \n"
+"		vec3 lightPos = vec3(0, 2000, 0);                        \n"
+"		vec3 viewPos = vec3(0, -3000, 2000);                     \n"
 // Ambient
-"	vec3 ambient = color_ambient;                            \n"
+"		vec3 ambient = color_ambient;                            \n"
 // Diffuse
-"	vec3 lightDir = normalize(lightPos - f_coord3d);         \n"
-"	vec3 n = normalize(f_normal);                            \n"
-"	float diff = max(dot(lightDir, n), 0.0);                 \n"
-"	vec3 diffuse = diff * color_diffuse;                     \n"
+"		vec3 lightDir = normalize(lightPos - f_coord3d);         \n"
+"		vec3 n = normalize(f_normal);                            \n"
+"		float diff = max(dot(lightDir, n), 0.0);                 \n"
+"		vec3 diffuse = diff * color_diffuse;                     \n"
 // Specular
-"	vec3 viewDir = normalize(viewPos - f_coord3d);           \n"
-"	vec3 reflectDir = reflect(-lightDir, n);                 \n"
-"	float spec = 0.0;                                        \n"
-"	vec3 halfwayDir = normalize(lightDir + viewDir);         \n"
-"	spec = pow(max(dot(f_normal, halfwayDir), 0.0), 32.0);   \n"
-"	vec3 specular = color_specular * spec;                   \n"
-"	gl_FragColor = vec4(ambient + diffuse + specular, 1.0);  \n"
-"}                                                           \n";
+"		vec3 viewDir = normalize(viewPos - f_coord3d);           \n"
+"		vec3 reflectDir = reflect(-lightDir, n);                 \n"
+"		float spec = 0.0;                                        \n"
+"		vec3 halfwayDir = normalize(lightDir + viewDir);         \n"
+"		spec = pow(max(dot(f_normal, halfwayDir), 0.0), 32.0);   \n"
+"		vec3 specular = color_specular * spec;                   \n"
+"		gl_FragColor = vec4(ambient + diffuse + specular, 1.0);  \n"
+"	}                                                            \n"
+"	else                                                         \n"
+"	{                                                            \n"
+"		gl_FragColor = texture2D(tex, gl_PointCoord) * vec4(color_ambient,1.0);\n"
+"	}                                                            \n"
+"}                                                               \n";
 
 MainShader::MainShader() :
 	Shader()
@@ -65,10 +78,11 @@ int MainShader::init()
 	m_uniform_projection = getUniformLocation("projection");
 	m_uniform_modelView = getUniformLocation("modelView");
 	m_uniform_normalMatrix = getUniformLocation("normalMatrix");
+	m_uniform_sprite = getUniformLocation("sprite");
 
 	if( m_attribute_coord3d == -1 || m_attribute_normal == -1 || m_uniform_color_ambient == -1 ||
 		m_uniform_color_diffuse == -1 || m_uniform_color_specular == -1 || m_uniform_projection == -1 ||
-		m_uniform_modelView == -1 || m_uniform_normalMatrix == -1)
+		m_uniform_modelView == -1 || m_uniform_normalMatrix == -1 || m_uniform_sprite == -1)
 	{
 		return -1;
 	}
@@ -76,6 +90,10 @@ int MainShader::init()
 	return 0;
 }
 
+void MainShader::setSprite(float sprite)
+{
+	glUniform1f(m_uniform_sprite, sprite);
+}
 
 void MainShader::setProjection(glm::mat4 projection)
 {
