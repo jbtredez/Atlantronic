@@ -8,7 +8,7 @@ static const char* vertexShaderSrc =
 "uniform mat4 projection;                                      \n"
 "uniform mat4 modelView;                                       \n"
 "uniform mat3 normalMatrix;                                    \n"
-"uniform lowp float sprite;                                    \n"
+"uniform float sprite;                                         \n"
 "varying vec3 f_coord3d;                                       \n"
 "varying vec3 f_normal;                                        \n"
 "void main()                                                   \n"
