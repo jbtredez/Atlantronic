@@ -309,37 +309,45 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(gtk_end), NULL);
 	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
 
-	toolBarBtn = gtk_tool_button_new(NULL, NULL);
-	gtk_tool_button_set_icon_name( GTK_TOOL_BUTTON(toolBarBtn), "view-refresh");
-	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(reboot_robot), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
+	GtkWidget* reloadBtn = gtk_button_new_with_label("Recharger");
+	g_signal_connect(G_OBJECT(reloadBtn), "clicked", G_CALLBACK(reboot_robot), NULL);
+	gtk_button_set_relief(GTK_BUTTON(reloadBtn), GTK_RELIEF_NONE);
 
 #ifndef GTK3
-	toolBarBtn = gtk_tool_button_new_from_stock(GTK_STOCK_SELECT_COLOR);
-	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), NULL);
+	GdkColor green = {0, 0, 65535, 0};
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_color(&green);
 #else
 	GdkRGBA green = {0, 1, 0, 1};
 	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&green);
-	toolBarBtn = gtk_tool_button_new(switchColorBtn, NULL);
-	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_color), switchColorBtn);
 #endif
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
+	GtkColorButtonClass* switchColorBtnClass = GTK_COLOR_BUTTON_GET_CLASS(switchColorBtn);
+	GtkButtonClass* switchColorBtnClass2 = GTK_BUTTON_CLASS(switchColorBtnClass);
+	switchColorBtnClass2->clicked = NULL; // on vire le handler par defaut qui affiche une popup de selection de couleur
+	g_signal_connect(G_OBJECT(switchColorBtn), "clicked", G_CALLBACK(toggle_color), NULL);
+	gtk_button_set_relief(GTK_BUTTON(switchColorBtn), GTK_RELIEF_NONE);
 
-	toolBarBtn = gtk_tool_button_new(NULL, "Go");
-	g_signal_connect(G_OBJECT(toolBarBtn), "clicked", G_CALLBACK(toggle_go), NULL);
-	gtk_toolbar_insert(GTK_TOOLBAR(toolbar), toolBarBtn, -1);
+	GtkWidget* goBtn = gtk_button_new_with_label("Go");
+	g_signal_connect(G_OBJECT(goBtn), "clicked", G_CALLBACK(toggle_go), NULL);
+	gtk_button_set_relief(GTK_BUTTON(goBtn), GTK_RELIEF_NONE);
 
 	// rangement des éléments dans la fenetre
 	// vbox la fenetre principale : menu + fenetre opengl
 #ifndef GTK3
 	GtkWidget* main_vbox = gtk_vbox_new(FALSE, 0);
 	GtkWidget* main_hbox = gtk_hbox_new(FALSE, 0);
+	GtkWidget* main_vboxToolBar = gtk_vbox_new(FALSE, 0);
 #else
 	GtkWidget* main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	GtkWidget* main_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	GtkWidget* main_vboxToolBar = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 #endif
 	gtk_container_add(GTK_CONTAINER(main_window), main_hbox);
-	gtk_box_pack_start(GTK_BOX(main_hbox), toolbar, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_hbox), main_vboxToolBar, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), reloadBtn, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), switchColorBtn, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), goBtn, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), toolbar, TRUE, TRUE, 0);
+
 	gtk_box_pack_start(GTK_BOX(main_hbox), main_vbox, TRUE, TRUE, 0);
 
 	gtk_box_pack_start(GTK_BOX(main_vbox), menu0, FALSE, FALSE, 0);
@@ -1161,7 +1169,7 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 	return TRUE;
 }
 
-static void toggle_color(GtkWidget* /*widget*/, gpointer arg)
+static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 {
 	if( color == COLOR_GREEN )
 	{
@@ -1186,21 +1194,29 @@ static void toggle_color(GtkWidget* /*widget*/, gpointer arg)
 		// en reel, on passe par l'interface de com
 		robotItf->color(color);
 	}
-#ifdef GTK3
-	GtkColorButton* switchColorBtn = (GtkColorButton*) arg;
+
+	GtkColorButton* switchColorBtn = (GtkColorButton*) widget;
+
 	if( ioColor )
 	{
+#ifdef GTK3
 		GdkRGBA green = {0, 1, 0, 1};
 		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &green);
+#else
+		GdkColor green = {0, 0, 65535, 0};
+		gtk_color_button_set_color(switchColorBtn, &green);
+#endif
 	}
 	else
 	{
+#ifdef GTK3
 		GdkRGBA yellow = {1, 1, 0, 1};
 		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &yellow);
-	}
 #else
-	(void) arg;
+		GdkColor yellow = {0, 65535, 65535, 0};
+		gtk_color_button_set_color(switchColorBtn, &yellow);
 #endif
+	}
 }
 
 static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
