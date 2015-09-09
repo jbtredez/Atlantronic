@@ -1,12 +1,13 @@
 #include "robot3d.h"
 
-bool Robot3d::init()
+bool Robot3d::init(MainShader* shader)
 {
-	bool res = m_mobileBase.init("media/robot2015.obj");
-	res &= m_wing.init("media/wing.obj");
-	res &= m_elevator.init("media/elevator.obj");
-	res &= m_finger.init("media/finger.obj");
-	res &= m_carpet.init("media/brasTapis.obj");
+	m_shader = shader;
+	bool res = m_mobileBase.init("media/robot2015.obj", shader);
+	res &= m_wing.init("media/wing.obj", shader);
+	res &= m_elevator.init("media/elevator.obj", shader);
+	res &= m_finger.init("media/finger.obj", shader);
+	res &= m_carpet.init("media/brasTapis.obj", shader);
 
 	rightWingTheta = 0;
 	leftWingTheta = 0;
@@ -21,8 +22,11 @@ bool Robot3d::init()
 
 void Robot3d::draw()
 {
+	glm::mat4 oldModelView = m_shader->getModelView();
+
 	// garde au sol de 5mm
-	glTranslatef(0, 0, 5);
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(0, 0, 5));
+	m_shader->setModelView(modelView);
 
 	drawMobileBase();
 
@@ -32,65 +36,72 @@ void Robot3d::draw()
 	drawWing(true);
 	drawCarpet(false);
 	drawCarpet(true);
+	m_shader->setModelView(oldModelView);
 }
 
 void Robot3d::drawMobileBase()
 {
-	glPushMatrix();
-	glRotatef(90, 0, 0, 1);
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::rotate(oldModelView, (float)M_PI/2, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
 	m_mobileBase.draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }
 
 void Robot3d::drawElevator()
 {
-	glPushMatrix();
-	glTranslatef(49, 0, elevatorHeight + 32);
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(49, 0, elevatorHeight + 32));
+	m_shader->setModelView(modelView);
 	m_elevator.draw();
 
-	glPushMatrix();
-	glTranslatef(45.5, 50, 31);
-	glRotatef(highFingerTheta * 180 / M_PI, 0, 0, 1);
+	glm::mat4 oldModelView2 = m_shader->getModelView();
+	modelView = glm::translate(oldModelView2, glm::vec3(45.5, 50, 31));
+	modelView = glm::rotate(modelView, highFingerTheta, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
 	m_finger.draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView2);
 
-	glTranslatef(45.5, -50, 39);
-	glRotatef(180, 1, 0, 0);
-	glRotatef(-lowFingerTheta * 180 / M_PI, 0, 0, 1);
+	modelView = glm::translate(oldModelView2, glm::vec3(45.5, -50, 39));
+	modelView = glm::rotate(modelView, (float)M_PI, glm::vec3(1, 0, 0));
+	modelView = glm::rotate(modelView, -lowFingerTheta, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
 	m_finger.draw();
 
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }
 
 void Robot3d::drawWing(bool right)
 {
 	int side = 1;
-	float theta = -90 + leftWingTheta * 180 / M_PI;
+	float theta = -M_PI/2 + leftWingTheta;
 	if(right)
 	{
 		side = -1;
-		theta = -90 + rightWingTheta * 180 / M_PI;
+		theta = -M_PI/2 + rightWingTheta;
 	}
-	glPushMatrix();
-	glTranslatef(34.5, side * 135, 95);
-	glRotatef(theta,0,0,1);
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(34.5, side * 135, 95));
+	modelView = glm::rotate(modelView, theta, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
 	m_wing.draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }
 
 void Robot3d::drawCarpet(bool right)
 {
 	int side = 1;
-	float theta = leftCarpetTheta * 180 / M_PI;
+	float theta = leftCarpetTheta;
 	if(right)
 	{
-		theta = -rightCarpetTheta * 180 / M_PI;
+		theta = -rightCarpetTheta;
 		side = -1;
 	}
-	glPushMatrix();
-	glTranslatef(-100.5, side * 60, 77.4);
-	glRotatef(-90,0,0,1);
-	glRotatef(theta, 1, 0, 0);
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-100.5, side * 60, 77.4));
+	modelView = glm::rotate(modelView, (float)M_PI/2, glm::vec3(0, 0, 1));
+	modelView = glm::rotate(modelView, theta, glm::vec3(1, 0, 0));
+	m_shader->setModelView(modelView);
 	m_carpet.draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }

@@ -10,6 +10,7 @@
 #include "kernel/motion/graph.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
+#include "main_shader.h"
 
 enum
 {
@@ -60,8 +61,9 @@ class TableScene
 {
 	public:
 		TableScene();
-		bool init(GlFont* glfont, RobotInterface* robotItf);
-		void draw(GLenum mode, Graphique* graph);
+		bool init(GlFont* glfont, RobotInterface* robotItf, MainShader* shader);
+		void draw(Graphique* graph);
+		void printInfos(Graphique* graph);
 		VectPlan projectMouseOnTable(int x, int y);
 		void rotateView(float dx, float dy);
 		void translateView(float dx, float dy, float dz);
@@ -70,30 +72,28 @@ class TableScene
 		void mouseMoveSelection(int x, int y);
 		inline VectPlan getOpponentPosition()
 		{
-			return opponentRobotPos;
+			return m_opponentRobotPos;
 		}
 
 	protected:
-		void printInfos(Graphique* graph);
-		void draw_plus(float x, float y, float rx, float ry);
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
-		void processHits(GLint hits, GLuint buffer[]);
 
-		RobotInterface* robotItf;
-		Table3d table3d;
-		Robot3d robot3d;
-		Object3d opponentRobot3d;
-		VectPlan opponentRobotPos;
-		GlFont* glfont;
-		float tableThetaZ;
-		GLdouble tableModelview[16];
-		GLdouble tableProjection[16];
-		MatrixHomogeneous viewMatrix;
-		int mouseX;
-		int mouseY;
-		float theta1;
-		float theta2;
+		RobotInterface* m_robotItf;
+		Table3d m_table3d;
+		Robot3d m_robot3d;
+		Object3d m_opponentRobot3d;
+		VectPlan m_opponentRobotPos;
+		GlFont* m_glfont;
+		glm::mat4 m_tableModelview;
+		glm::mat4 m_tableProjection;
+		MatrixHomogeneous m_viewMatrix;
+		int m_mouseX;
+		int m_mouseY;
+		MainShader* m_shader;
+		Object3dBasic m_robot2d;
+		Object3dBasic m_table2d[TABLE_OBJ_SIZE];
+		Object3dBasic m_graphPointObject;
 };
 
 #endif

@@ -1,18 +1,18 @@
 #include "table3d.h"
-#include "linux/tools/opengl/gltools.h"
 
-bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5])
+bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5], MainShader* shader)
 {
 	showTable = true;
 	showElements = true;
+	m_shader = shader;
 
-	bool res = table.init("media/table2015.obj");
-	res &= dispenser.init("media/distributeur.obj");
-	res &= clapYellow.init("media/clap_jaune.obj");
-	res &= clapGreen.init("media/clap_vert.obj");
-	res &= feetYellow.init("media/pied_jaune.obj");
-	res &= feetGreen.init("media/pied_vert.obj");
-	res &= glass.init("media/verre.obj");
+	bool res = table.init("media/table2015.obj", shader);
+	res &= dispenser.init("media/distributeur.obj", shader);
+	res &= clapYellow.init("media/clap_jaune.obj", shader);
+	res &= clapGreen.init("media/clap_vert.obj", shader);
+	res &= feetYellow.init("media/pied_jaune.obj", shader);
+	res &= feetGreen.init("media/pied_vert.obj", shader);
+	res &= glass.init("media/verre.obj", shader);
 
 	feetPosition[0] = aiVector3D(-1410, -850, 0);
 	feetPosition[1] = aiVector3D(-1410, -750, 0);
@@ -97,14 +97,15 @@ void Table3d::moveSelected(float dx, float dy)
 
 }
 
-void Table3d::draw(GLenum mode)
+void Table3d::draw()
 {
-	if(mode != GL_SELECT && showTable)
-	{	
-		glPushMatrix();
-		glTranslatef( -table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22 );
+	if(showTable)
+	{
+		glm::mat4 oldModelView = m_shader->getModelView();
+		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22));
+		m_shader->setModelView(modelView);
 		table.draw();
-		glPopMatrix();
+		m_shader->setModelView(oldModelView);
 
 		drawDispenser(-1200);
 		drawDispenser(- 900);
@@ -122,19 +123,20 @@ void Table3d::draw(GLenum mode)
 
 	if( showElements )
 	{
-		drawFeets(mode);
-		drawGlass(mode);
+		drawFeets();
+		drawGlass();
 	}
 }
 
 void Table3d::drawDispenser(float x)
 {
-	glPushMatrix();
-	glTranslatef(x, 1022, 0);
-	glRotatef(180, 0, 0, 1);
-	glTranslatef( -dispenser.sceneCenter.x, -dispenser.sceneMin.y, -dispenser.sceneMin.z );
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(x, 1022, 0));
+	modelView = glm::rotate(modelView, (float)M_PI, glm::vec3(0, 0, 1));
+	modelView = glm::translate(modelView, glm::vec3(-dispenser.sceneCenter.x, -dispenser.sceneMin.y, -dispenser.sceneMin.z));
+	m_shader->setModelView(modelView);
 	dispenser.draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }
 
 void Table3d::drawClap(float x, bool yellow)
@@ -144,25 +146,26 @@ void Table3d::drawClap(float x, bool yellow)
 	{
 		clap = &clapGreen;
 	}
-	glPushMatrix();
-	glTranslatef(x, -1000, 78);
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(x, -1000, 78));
 	if( x > 0)
 	{
-		glRotatef(180, 0, 0, 1);
+		modelView = glm::rotate(modelView, (float)M_PI, glm::vec3(0, 0, 1));
 	}
 	if( x < 0)
 	{
-		glTranslatef( -clap->sceneMax.x, -clap->sceneMax.y, -clap->sceneMin.z );
+		modelView = glm::translate(modelView, glm::vec3(-clap->sceneMax.x, -clap->sceneMax.y, -clap->sceneMin.z));
 	}
 	else
 	{
-		glTranslatef( -clap->sceneMax.x, -clap->sceneMin.y, -clap->sceneMin.z );
+		modelView = glm::translate(modelView, glm::vec3(-clap->sceneMax.x, -clap->sceneMin.y, -clap->sceneMin.z ));
 	}
+	m_shader->setModelView(modelView);
 	clap->draw();
-	glPopMatrix();
+	m_shader->setModelView(oldModelView);
 }
 
-void Table3d::drawFeets(GLenum mode)
+void Table3d::drawFeets()
 {
 	Object3d* feet = &feetYellow;
 	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
@@ -171,40 +174,28 @@ void Table3d::drawFeets(GLenum mode)
 		{
 			feet = &feetGreen;
 		}
-		glPushName(glSelectFeetName[i]);
-		glPushMatrix();
-		glTranslatef( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z );
+		glStencilFunc(GL_ALWAYS, glSelectFeetName[i], ~0);
+		glm::mat4 oldModelView = m_shader->getModelView();
+		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z));
+		m_shader->setModelView(modelView);
 		feet->selected = feetSelected[i];
-		if(mode != GL_SELECT)
-		{
-			feet->draw();
-		}
-		else
-		{
-			plot_boundingBox(feet->sceneMin.x, feet->sceneMin.y, feet->sceneMin.z, feet->sceneMax.x, feet->sceneMax.y, feet->sceneMax.z);
-		}
-		glPopMatrix();
-		glPopName();
+		feet->draw();
+		m_shader->setModelView(oldModelView);
+		glStencilFunc(GL_ALWAYS, 0, ~0);
 	}
 }
 
-void Table3d::drawGlass(GLenum mode)
+void Table3d::drawGlass()
 {
 	for(unsigned int i = 0; i < sizeof(glassPosition) / sizeof(glassPosition[0]); i++)
 	{
-		glPushName(glSelectGlassName[i]);
-		glPushMatrix();
-		glTranslatef( -glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z );
+		glStencilFunc(GL_ALWAYS, glSelectGlassName[i], ~0);
+		glm::mat4 oldModelView = m_shader->getModelView();
+		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z));
+		m_shader->setModelView(modelView);
 		glass.selected = glassSelected[i];
-		if(mode != GL_SELECT)
-		{
-			glass.draw();
-		}
-		else
-		{
-			plot_boundingBox(glass.sceneMin.x, glass.sceneMin.y, glass.sceneMin.z, glass.sceneMax.x, glass.sceneMax.y, glass.sceneMax.z);
-		}
-		glPopMatrix();
-		glPopName();
+		glass.draw();
+		m_shader->setModelView(oldModelView);
+		glStencilFunc(GL_ALWAYS, 0, ~0);
 	}
 }

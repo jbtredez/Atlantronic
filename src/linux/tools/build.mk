@@ -27,13 +27,23 @@ obj-linux-glplot += linux/tools/opengl/object3d.o
 obj-linux-glplot += linux/tools/opengl/table3d.o
 obj-linux-glplot += linux/tools/opengl/robot3d.o
 obj-linux-glplot += linux/tools/opengl/gl_font.o
+obj-linux-glplot += linux/tools/opengl/shader.o
+obj-linux-glplot += linux/tools/opengl/main_shader.o
+obj-linux-glplot += linux/tools/opengl/text_shader.o
 obj-linux-glplot += linux/tools/opengl/table_scene.o
-obj-linux-glplot += linux/tools/opengl/gltools.o
+obj-linux-glplot += linux/tools/point_texture.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/graphique.o
 obj-linux-glplot += linux/tools/joystick.o
-cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0 gtkglext-1.0)
-lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0 gtkglext-1.0) -lreadline -lm -lassimp
+ifneq ($(GTK3),1)
+cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0) -I/usr/include/gtkgl-2.0
+lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0) -lreadline -lm -lassimp -lepoxy -lfreetype -lfontconfig -lgtkgl-2.0
+else
+cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-3.0) -DGTK3
+lib-linux-glplot+=$(shell pkg-config --libs gtk+-3.0) -lreadline -lm -lassimp -lepoxy -lfreetype -lfontconfig
+endif
+cxxflags-linux-linux/tools/opengl/gl_font.o+=-I/usr/include/freetype2
+cxxflags-linux-linux/tools/opengl/table_scene.o+=-I/usr/include/freetype2
 bin-linux += glplot
 
 obj-linux-sin_table_gen += linux/tools/sin_table_gen.o

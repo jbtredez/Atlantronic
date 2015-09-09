@@ -1,22 +1,209 @@
 #include "object3d.h"
 
-#define aisgl_min(x,y) (x<y?x:y)
-#define aisgl_max(x,y) (y>x?y:x)
+#define MIN(x,y) (x<y?x:y)
+#define MAX(x,y) (y>x?y:x)
+
+Object3dBasic::Object3dBasic()
+{
+	m_vbo[VERTEX_BUFFER] = 0;
+	m_vbo[TEXCOORD_BUFFER] = 0;
+	m_vbo[NORMAL_BUFFER] = 0;
+	m_vbo[INDEX_BUFFER] = 0;
+}
+
+bool Object3dBasic::init(aiMesh *mesh, MainShader* shader)
+{
+	m_vbo[VERTEX_BUFFER] = 0;
+	m_vbo[TEXCOORD_BUFFER] = 0;
+	m_vbo[NORMAL_BUFFER] = 0;
+	m_vbo[INDEX_BUFFER] = 0;
+
+	glGenVertexArrays(1, &m_vao);
+	glBindVertexArray(m_vao);
+
+	m_elementCount = mesh->mNumFaces * 3;
+	m_elementSize = 3;
+	if(mesh->HasPositions())
+	{
+		float *vertices = new float[mesh->mNumVertices * 3];
+		for(unsigned int i = 0; i < mesh->mNumVertices; ++i)
+		{
+			vertices[i * 3] = mesh->mVertices[i].x;
+			vertices[i * 3 + 1] = mesh->mVertices[i].y;
+			vertices[i * 3 + 2] = mesh->mVertices[i].z;
+		}
+
+		glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
+		glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * m_elementSize * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(shader->m_attribute_coord3d, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(shader->m_attribute_coord3d);
+
+		delete vertices;
+	}
+
+#if 0
+	if(mesh->HasTextureCoords(0))
+	{
+		float *texCoords = new float[mesh->mNumVertices * 2];
+		for(int i = 0; i < mesh->mNumVertices; ++i)
+		{
+			texCoords[i * 2] = mesh->mTextureCoords[0][i].x;
+			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
+		}
+
+		glGenBuffers(1, &m_vbo[TEXCOORD_BUFFER]);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[TEXCOORD_BUFFER]);
+		glBufferData(GL_ARRAY_BUFFER, 2 * mesh->mNumVertices * sizeof(GLfloat), texCoords, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray (1);
+
+		delete texCoords;
+	}
+#endif
+	if(mesh->HasNormals())
+	{
+		float *normals = new float[mesh->mNumVertices * 3];
+		for(unsigned int i = 0; i < mesh->mNumVertices; ++i)
+		{
+			normals[i * 3] = mesh->mNormals[i].x;
+			normals[i * 3 + 1] = mesh->mNormals[i].y;
+			normals[i * 3 + 2] = mesh->mNormals[i].z;
+		}
+
+		glGenBuffers(1, &m_vbo[NORMAL_BUFFER]);
+		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[NORMAL_BUFFER]);
+		glBufferData(GL_ARRAY_BUFFER, 3 * mesh->mNumVertices * sizeof(GLfloat), normals, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(shader->m_attribute_normal, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(shader->m_attribute_normal);
+
+		delete normals;
+	}
+
+	if(mesh->HasFaces())
+	{
+		unsigned int *indices = new unsigned int[mesh->mNumFaces * 3];
+		for(unsigned int i = 0; i < mesh->mNumFaces; ++i)
+		{
+			indices[i * 3] = mesh->mFaces[i].mIndices[0];
+			indices[i * 3 + 1] = mesh->mFaces[i].mIndices[1];
+			indices[i * 3 + 2] = mesh->mFaces[i].mIndices[2];
+		}
+
+		glGenBuffers(1, &m_vbo[INDEX_BUFFER]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo[INDEX_BUFFER]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * mesh->mNumFaces * sizeof(GLuint), indices, GL_STATIC_DRAW);
+
+		delete indices;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	return true;
+}
+
+bool Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic)
+{
+	GLenum drawType = GL_STATIC_DRAW;
+	if( dynamic )
+	{
+		drawType = GL_DYNAMIC_DRAW;
+	}
+
+	glGenVertexArrays(1, &m_vao);
+	glBindVertexArray(m_vao);
+
+	m_elementCount = elementCount;
+	m_elementSize = elementSize;
+
+	glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
+	glBufferData(GL_ARRAY_BUFFER, elementSize * elementCount * sizeof(GLfloat), vertices, drawType);
+
+	glVertexAttribPointer(shader->m_attribute_coord3d, elementSize, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(shader->m_attribute_coord3d);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	return true;
+}
+
+void Object3dBasic::update(float* vertices, int nbElement)
+{
+	glBindVertexArray(m_vao);
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, nbElement * m_elementSize * sizeof(GLfloat), vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	m_elementCount = nbElement;
+}
+
+Object3dBasic::~Object3dBasic()
+{
+	if(m_vbo[VERTEX_BUFFER])
+	{
+		glDeleteBuffers(1, &m_vbo[VERTEX_BUFFER]);
+	}
+
+	if(m_vbo[TEXCOORD_BUFFER])
+	{
+		glDeleteBuffers(1, &m_vbo[TEXCOORD_BUFFER]);
+	}
+
+	if(m_vbo[NORMAL_BUFFER])
+	{
+		glDeleteBuffers(1, &m_vbo[NORMAL_BUFFER]);
+	}
+
+	if(m_vbo[INDEX_BUFFER])
+	{
+		glDeleteBuffers(1, &m_vbo[INDEX_BUFFER]);
+	}
+
+	glDeleteVertexArrays(1, &m_vao);
+}
+
+void Object3dBasic::render(GLenum mode)
+{
+	glBindVertexArray(m_vao);
+	if( m_vbo[INDEX_BUFFER] )
+	{
+		glDrawElements(mode, m_elementCount, GL_UNSIGNED_INT, NULL);
+	}
+	else
+	{
+		glDrawArrays(mode, 0, m_elementCount);
+	}
+	glBindVertexArray(0);
+}
 
 Object3d::Object3d()
 {
-	scene = NULL;
-	glListId = 0;
+	m_scene = NULL;
 	selected = false;
+	m_meshEntries = NULL;
 }
 
-bool Object3d::init(const char* filename)
+Object3d::~Object3d()
+{
+	if( m_meshEntries )
+	{
+		delete [ ] m_meshEntries;
+	}
+}
+
+
+bool Object3d::init(const char* filename, MainShader* shader)
 {
 	bool res = false;
 
-	scene = aiImportFile(filename, aiProcessPreset_TargetRealtime_MaxQuality);
+	m_shader = shader;
+	m_scene = aiImportFile(filename, aiProcessPreset_TargetRealtime_MaxQuality);
 
-	if( ! scene )
+	if( ! m_scene )
 	{
 		fprintf(stderr, "aiImportFile error\n");
 		goto done;
@@ -26,6 +213,18 @@ bool Object3d::init(const char* filename)
 	sceneCenter.x = (sceneMin.x + sceneMax.x) / 2.0f;
 	sceneCenter.y = (sceneMin.y + sceneMax.y) / 2.0f;
 	sceneCenter.z = (sceneMin.z + sceneMax.z) / 2.0f;
+
+	if( m_scene->mNumMeshes < 1)
+	{
+		fprintf(stderr, "no meshes found\n");
+		goto done;
+	}
+
+	m_meshEntries = new Object3dBasic[m_scene->mNumMeshes]();
+	for(unsigned int i = 0; i < m_scene->mNumMeshes; ++i)
+	{
+		m_meshEntries[i].init(m_scene->mMeshes[i], m_shader);
+	}
 
 	res = true;
 
@@ -41,17 +240,17 @@ void Object3d::getBoundingBoxForNode(const aiNode* nd, aiMatrix4x4* trafo)
 	aiMultiplyMatrix4(trafo,&nd->mTransformation);
 	for (; n < nd->mNumMeshes; ++n)
 	{
-		const aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
+		const aiMesh* mesh = m_scene->mMeshes[nd->mMeshes[n]];
 		for (t = 0; t < mesh->mNumVertices; ++t)
 		{
 			aiVector3D tmp = mesh->mVertices[t];
 			aiTransformVecByMatrix4(&tmp,trafo);
-			sceneMin.x = aisgl_min(sceneMin.x,tmp.x);
-			sceneMin.y = aisgl_min(sceneMin.y,tmp.y);
-			sceneMin.z = aisgl_min(sceneMin.z,tmp.z);
-			sceneMax.x = aisgl_max(sceneMax.x,tmp.x);
-			sceneMax.y = aisgl_max(sceneMax.y,tmp.y);
-			sceneMax.z = aisgl_max(sceneMax.z,tmp.z);
+			sceneMin.x = MIN(sceneMin.x,tmp.x);
+			sceneMin.y = MIN(sceneMin.y,tmp.y);
+			sceneMin.z = MIN(sceneMin.z,tmp.z);
+			sceneMax.x = MAX(sceneMax.x,tmp.x);
+			sceneMax.y = MAX(sceneMax.y,tmp.y);
+			sceneMax.z = MAX(sceneMax.z,tmp.z);
 		}
 	}
 	for (n = 0; n < nd->mNumChildren; ++n)
@@ -67,7 +266,7 @@ void Object3d::getBoundingBox()
 	aiIdentityMatrix4(&trafo);
 	sceneMin.x = sceneMin.y = sceneMin.z = 1e10f;
 	sceneMax.x = sceneMax.y = sceneMax.z = -1e10f;
-	getBoundingBoxForNode(scene->mRootNode, &trafo);
+	getBoundingBoxForNode(m_scene->mRootNode, &trafo);
 }
 
 void Object3d::color4ToFloat4(const aiColor4D *c, float f[4])
@@ -90,12 +289,10 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 {
 	float c[4];
 	GLenum fill_mode;
-	int ret1, ret2;
 	aiColor4D diffuse;
 	aiColor4D specular;
 	aiColor4D ambient;
 	aiColor4D emission;
-	float shininess, strength;
 	int two_sided;
 	int wireframe;
 	unsigned int max;
@@ -113,7 +310,7 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 		setFloat4(c, 0.0f, 0.2f, 1, 1.0f);
 	}
 
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, c);
+	m_shader->setColorDiffuse(c[0], c[1], c[2]);
 
 	if( ! selected )
 	{
@@ -127,15 +324,15 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	{
 		setFloat4(c, 0.0f, 0.2f, 1, 1.0f);
 	}
-	glMaterialfv(GL_FRONT, GL_SPECULAR, c);
+	m_shader->setColorSpecular(c[0], c[1], c[2]);
 
 	setFloat4(c, 0.2f, 0.2f, 0.2f, 1.0f);
 	if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient) == AI_SUCCESS)
 	{
 		color4ToFloat4(&ambient, c);
 	}
-	glMaterialfv(GL_FRONT, GL_AMBIENT, c);
-
+	m_shader->setColorAmbiant(c[0], c[1], c[2]);
+#if 0
 	setFloat4(c, 0.0f, 0.0f, 0.0f, 1.0f);
 	if(aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission) == AI_SUCCESS)
 	{
@@ -144,11 +341,13 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	glMaterialfv(GL_FRONT, GL_EMISSION, c);
 
 	max = 1;
-	ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
+	float shininess;
+	float strength;
+	int ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
 	if(ret1 == AI_SUCCESS)
 	{
 		max = 1;
-		ret2 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &max);
+		int ret2 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS_STRENGTH, &strength, &max);
 		if(ret2 == AI_SUCCESS)
 		{
 			glMaterialf(GL_FRONT, GL_SHININESS, shininess * strength);
@@ -164,6 +363,7 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 		setFloat4(c, 0.0f, 0.0f, 0.0f, 0.0f);
 		glMaterialfv(GL_FRONT, GL_SPECULAR, c);
 	}
+#endif
 	max = 1;
 	if( aiGetMaterialIntegerArray(mtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &max) == AI_SUCCESS)
 	{
@@ -183,87 +383,43 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 	{
 		glEnable(GL_CULL_FACE);
 	}
+
 }
 
 void Object3d::render(const struct aiNode* nd)
 {
-	unsigned int i;
-	unsigned int n = 0, t;
+	unsigned int n = 0;
 	aiMatrix4x4 m = nd->mTransformation;
-	/* update transform */
+
 	aiTransposeMatrix4(&m);
-	glPushMatrix();
-	glMultMatrixf((float*)&m);
-	/* draw all meshes assigned to this node */
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = oldModelView * glm::mat4(*((float*)&m));
+	m_shader->setModelView(modelView);
+
 	for(; n < nd->mNumMeshes; ++n)
 	{
-		const struct aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
-		applyMaterial(scene->mMaterials[mesh->mMaterialIndex]);
-		if(mesh->mNormals)
+		const struct aiMesh* mesh = m_scene->mMeshes[nd->mMeshes[n]];
+		applyMaterial(m_scene->mMaterials[mesh->mMaterialIndex]);
+		/*if(mesh->mNormals)
 		{
 			glEnable(GL_LIGHTING);
 		}
 		else
 		{
 			glDisable(GL_LIGHTING);
-		}
-		for (t = 0; t < mesh->mNumFaces; ++t)
-		{
-			const struct aiFace* face = &mesh->mFaces[t];
-			GLenum face_mode;
-			switch(face->mNumIndices)
-			{
-				case 1: face_mode = GL_POINTS; break;
-				case 2: face_mode = GL_LINES; break;
-				case 3: face_mode = GL_TRIANGLES; break;
-				default: face_mode = GL_POLYGON; break;
-			}
-			glBegin(face_mode);
-			for(i = 0; i < face->mNumIndices; i++)
-			{
-				int index = face->mIndices[i];
-				if(mesh->mColors[0])
-				{
-					glColor4fv((GLfloat*)&mesh->mColors[0][index]);
-				}
-				if(mesh->mNormals)
-				{
-					glNormal3fv(&mesh->mNormals[index].x);
-				}
-				glVertex3fv(&mesh->mVertices[index].x);
-			}
-			glEnd();
-		}
+		}*/
+		m_meshEntries[nd->mMeshes[n]].render(GL_TRIANGLES);
 	}
-	// draw all children
+
 	for (n = 0; n < nd->mNumChildren; ++n)
 	{
 		render(nd->mChildren[n]);
 	}
-	glPopMatrix();
+
+	m_shader->setModelView(oldModelView);
 }
 
 void Object3d::draw()
 {
-	if( ! selected )
-	{
-		if( ! glListId )
-		{
-			glListId = glGenLists(1);
-			if( glListId )
-			{
-				glNewList(glListId, GL_COMPILE_AND_EXECUTE);
-				render(scene->mRootNode);
-				glEndList();
-			}
-		}
-		else
-		{
-			glCallList(glListId);
-		}
-	}
-	else
-	{
-		render(scene->mRootNode);
-	}
+	render(m_scene->mRootNode);
 }

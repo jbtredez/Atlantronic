@@ -24,6 +24,8 @@ int main(int argc, char *argv[])
 	bool xbee = false;
 	Com* com;
 
+	setenv("LC_ALL","C",1);
+
 	if(argc > 1)
 	{
 		int option = -1;

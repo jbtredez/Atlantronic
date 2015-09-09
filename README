@@ -9,9 +9,10 @@ Requirements :
 	- newlib-2.2.0 (cf ebuild dans toolchain)
 cible linux :
 	- readline
-	- gtk+-2
-	- gtkglext-1
+	- (gtk+-2 et gtkglarea-2.1) ou gtk+3.16
 	- assimp
+	- libepoxy-1.2
+	- glm-0.9.6
 
 doc : 
 	- doxygen >= 1.8.4
@@ -30,8 +31,9 @@ Package Ubuntu:
 	- libstdc++-arm-none-eabi-newlib
 	- libreadline-dev 
 	- libgtk2.0-0-dev
-	- libgtkglext1-dev 
-
+	- libgtkgl2.0-dev
+	- libepoxy-dev
+	- libglm-dev
 
 ---------------------------------------------------------
 Organisation des dossiers :

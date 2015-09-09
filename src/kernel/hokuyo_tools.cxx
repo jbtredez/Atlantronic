@@ -7,7 +7,6 @@
 #include "kernel/systick.h"
 #include "kernel/math/vect2.h"
 #include "kernel/error_codes.h"
-#include "kernel/math/fx_math.h"
 
 #include <stdio.h>
 #include <stdlib.h>

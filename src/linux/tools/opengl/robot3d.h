@@ -6,7 +6,7 @@
 class Robot3d
 {
 	public:
-		bool init();
+		bool init(MainShader* shader);
 		void draw();
 
 		float rightWingTheta;
@@ -28,6 +28,7 @@ class Robot3d
 		Object3d m_elevator;
 		Object3d m_finger;
 		Object3d m_carpet;
+		MainShader* m_shader;
 };
 
 #endif
