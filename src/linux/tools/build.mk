@@ -35,13 +35,19 @@ obj-linux-glplot += linux/tools/point_texture.o
 obj-linux-glplot += linux/tools/glplot_main.o
 obj-linux-glplot += linux/tools/graphique.o
 obj-linux-glplot += linux/tools/joystick.o
-ifneq ($(GTK3),1)
-cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0) -I/usr/include/gtkgl-2.0
-lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0) -lreadline -lm -lassimp -lepoxy -lfreetype -lfontconfig -lgtkgl-2.0
-else
+
+
+GTK3_16?=$(shell if [ $$(pkg-config --modversion gtk+-3.0 | cut -d. -f2) -ge 16 ] ; then echo 1; else echo 0; fi 2> /dev/null)
+ifeq ($(GTK3_16),1)
+# gtk 3.16 ou plus
 cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-3.0) -DGTK3
 lib-linux-glplot+=$(shell pkg-config --libs gtk+-3.0) -lreadline -lm -lassimp -lepoxy -lfreetype -lfontconfig
+else
+# utilisation gtk2
+cxxflags-linux-linux/tools/glplot.o+=$(shell pkg-config --cflags gtk+-2.0) -I/usr/include/gtkgl-2.0
+lib-linux-glplot+=$(shell pkg-config --libs gtk+-2.0) -lreadline -lm -lassimp -lepoxy -lfreetype -lfontconfig -lgtkgl-2.0
 endif
+
 cxxflags-linux-linux/tools/opengl/gl_font.o+=-I/usr/include/freetype2
 cxxflags-linux-linux/tools/opengl/table_scene.o+=-I/usr/include/freetype2
 bin-linux += glplot
