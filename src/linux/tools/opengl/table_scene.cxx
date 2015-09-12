@@ -430,7 +430,7 @@ void TableScene::draw(Graphique* graph)
 		for(int i=0; i< max; i++)
 		{
 			int state = m_robotItf->control_usb_data[i].motion_state;
-			if( state != MOTION_ENABLED && state != MOTION_DISABLED)
+			if( state != MOTION_STATE_ENABLED && state != MOTION_STATE_DISABLED)
 			{
 				pt[pointCount] = m_robotItf->control_usb_data[i].cons;
 				pointCount++;

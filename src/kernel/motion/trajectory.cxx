@@ -14,6 +14,9 @@
 #include "kernel/detection.h"
 #include "kernel/motion/graph.h"
 #include <stdlib.h>
+#include "kernel/motion/new_state/CMotionStateMachine.h"
+
+
 
 #define TRAJECTORY_STACK_SIZE       400
 #define TRAJECTORY_APPROX_DIST      150      //!< distance d'approche d'un objet
@@ -87,12 +90,12 @@ static void trajectory_task(void* arg)
 	enum motion_state motion_state;
 	enum motion_status motion_status;
 	enum motion_trajectory_step motion_traj_step;
-	enum motion_wanted_state motion_wanted_state;
+	enum motion_state motion_wanted_state;
 
 	while(1)
 	{
 		trajectory_pos = location_get_position();
-		motion_get_state(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
+		MotionStateMachine->motion_get_state(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
 
 		if( trajectory_new_request )
 		{
@@ -119,7 +122,7 @@ static void trajectory_task(void* arg)
 						log(LOG_ERROR, "TRAJECTORY_TARGET_NOT_REACHED");
 						trajectory_state = TRAJECTORY_STATE_TARGET_NOT_REACHED;
 						break;
-					case MOTION_COLSISION:
+					case MOTION_COLISION:
 						switch(trajectory_avoidance_type)
 						{
 							default:
@@ -146,7 +149,7 @@ static void trajectory_task(void* arg)
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_DEST:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				if( motion_state == MOTION_STATE_ENABLED && motion_wanted_state == MOTION_NONE_STATE )
 				{
 					VectPlan dest = trajectory_dest;
 					VectPlan u = trajectory_dest - trajectory_pos;
@@ -166,12 +169,12 @@ static void trajectory_task(void* arg)
 						traj_type = MOTION_AXIS_A;
 					}
 
-					motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+					MotionStateMachine->motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;
 			case TRAJECTORY_STATE_USING_GRAPH:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				if( motion_state == MOTION_STATE_ENABLED && motion_wanted_state == MOTION_NONE_STATE )
 				{
 					if( trajectory_graph_way_id < trajectory_graph_way_count - 1 )
 					{
@@ -179,7 +182,7 @@ static void trajectory_task(void* arg)
 						int i = trajectory_graph_way[trajectory_graph_way_id];
 						log_format(LOG_INFO, "goto graph node %d", i);
 						VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
-						motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+						MotionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 					}
 					else
 					{
@@ -188,19 +191,19 @@ static void trajectory_task(void* arg)
 						{
 							traj_type = MOTION_AXIS_XY;
 						}
-						motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+						MotionStateMachine->motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 						trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 					}
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_GRAPH:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN)
+				if( motion_state == MOTION_STATE_ENABLED && motion_wanted_state == MOTION_NONE_STATE)
 				{
 					trajectory_state = TRAJECTORY_STATE_USING_GRAPH;
 					int i = trajectory_graph_way[0];
 					VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
 					log_format(LOG_INFO, "goto graph node %d : %d %d", i, (int)dest.x, (int)dest.y);
-					motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+					MotionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 				}
 				break;
 		}
@@ -402,7 +405,7 @@ static void trajectory_update()
 			break;
 		case TRAJECTORY_ROTATE_TO:
 			log_format(LOG_INFO, "rotate_to %d", (int)(req.dest.theta * 180 / M_PI));
-			trajectory_dest.theta += motion_find_rotate(trajectory_dest.theta, req.dest.theta);
+			trajectory_dest.theta += MotionEtat::motion_find_rotate(trajectory_dest.theta, req.dest.theta);
 			break;
 		case TRAJECTORY_GOTO_XY:
 			trajectory_dest.x = req.dest.x;
@@ -427,7 +430,7 @@ static void trajectory_update()
 		case TRAJECTORY_FREE:
 		default:
 			trajectory_type = TRAJECTORY_FREE;
-			motion_enable(false);
+			MotionStateMachine->motion_enable(false);
 			return;
 	}
 

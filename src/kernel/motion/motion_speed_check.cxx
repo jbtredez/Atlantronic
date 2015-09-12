@@ -14,6 +14,13 @@ void MotionSpeedCheck::reset()
 	m_errorCycleCount = 0;
 }
 
+void MotionSpeedCheck::Set(float deltaMax, int delayInCycle)
+{
+	m_deltaMax = deltaMax;
+	m_delayInCycle = delayInCycle;
+	m_errorCycleCount = 0;	
+}
+
 enum motion_check_speed MotionSpeedCheck::compute(float cons, float mes)
 {
 	enum motion_check_speed res = MOTION_SPEED_OK;

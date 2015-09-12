@@ -10,6 +10,8 @@ core_os += kernel/heap_1.o
 core_os += kernel/fault.o
 core_os += kernel/driver/gpio.o
 core_os += kernel/log.o
+core_os += kernel/new.o
+
 
 core_usb += kernel/driver/usb/usb.o
 core_usb += kernel/driver/usb/usb_descriptor.o
@@ -57,6 +59,10 @@ core_robot += kernel/table.o
 #core_robot += kernel/math/simpson_integrator.o
 core_robot += kernel/state_machine/state_machine.o
 
+#Machine d'état
+core_robot += kernel/state_machine/new_state_machine/CContexteEtat.o
+
+
 core_robot += kernel/stratege_machine/stratege.o
 core_robot += kernel/stratege_machine/action.o
 core_robot += kernel/stratege_machine/action_composite.o
@@ -65,7 +71,19 @@ core_robot += kernel/stratege_machine/action_composite.o
 core_robot += kernel/can_mip.o
 core_robot += kernel/can_motor_mip.o
 core_robot += kernel/motion/pid.o
-core_robot += kernel/motion/motion.o
+#core_robot += kernel/motion/motion.o
+#machine d'état de motion
+core_robot += kernel/motion/new_state/CMotionEtat.o
+core_robot += kernel/motion/new_state/CMotionStateMachine.o
+core_robot += kernel/motion/new_state/CStateMotionActuatorKinematic.o
+core_robot += kernel/motion/new_state/CStateMotionDisable.o
+core_robot += kernel/motion/new_state/CStateMotionEnable.o
+core_robot += kernel/motion/new_state/CStateMotionSpeed.o
+core_robot += kernel/motion/new_state/CStateMotionTrajectory.o
+core_robot += kernel/motion/new_state/CStateMotionTryEnable.o
+core_robot += kernel/motion/new_state/CStateMotionInterrupting.o
+
+
 core_robot += kernel/motion/motion_speed_check.o
 core_robot += kernel/motion/graph.o
 core_robot += kernel/motion/trajectory.o

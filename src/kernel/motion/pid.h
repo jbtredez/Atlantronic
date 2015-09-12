@@ -12,6 +12,8 @@ class Pid
 	public:
 		Pid(float kp, float ki, float kd, float max);
 
+		Pid(){};
+		~Pid(){};
 		float compute(float error, float dt);
 		void reset();
 

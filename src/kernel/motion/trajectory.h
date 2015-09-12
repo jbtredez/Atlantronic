@@ -5,7 +5,7 @@
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
-#include "motion.h"
+#include "kernel/motion/new_state/MotionVar.h"
 #include "kernel/location/location.h"
 
 enum trajectory_cmd_type

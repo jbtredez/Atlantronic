@@ -32,7 +32,6 @@ const char* hokuyo_hs_cmd = "HS0\n";
 //const char* hokuyo_hs_cmd = "HS1\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
-
 Hokuyo hokuyo[HOKUYO_MAX];
 
 int hokuyo_module_init()
@@ -40,14 +39,14 @@ int hokuyo_module_init()
 	int err = hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1);
 	if(err)
 	{
-		goto done;
+		return err;
 	}
 
 /*	err = hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2);
 
 	if(err)
 	{
-		goto done;
+		return err;
 	}
 */
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
@@ -61,7 +60,6 @@ int hokuyo_module_init()
 	hokuyo[1].scan.min_object_size = 1;
 	hokuyo[1].scan.min_distance = 100;
 
-done:
 	return err;
 }
 
@@ -157,37 +155,33 @@ uint32_t Hokuyo::init_com()
 
 			err = scip2();
 
-			if(err)
+			if(!err)
 			{
-				goto retry;
+				log_format(LOG_INFO, "%s - set speed", pcTaskGetTaskName(NULL));
+				// mise a la bonne vitesse
+				err = set_speed()
 			}
 
-			log_format(LOG_INFO, "%s - set speed", pcTaskGetTaskName(NULL));
-			// mise a la bonne vitesse
-			err = set_speed();
+;
 
-			if(err)
+			if(!err)
 			{
-				goto retry;
+				usart_set_frequency(usartId, HOKUYO_SPEED);
 			}
 
-			usart_set_frequency(usartId, HOKUYO_SPEED);
+
 		}
 #endif
-		if(err)
+		if(!err)
 		{
-			goto retry;
+			err = laser_on();
 		}
 
-		err = laser_on();
-
-		if(err)
+		if(!err)
 		{
-			goto retry;
+			err = hs();
 		}
 
-		err = hs();
-retry:
 		fault_update(err);
 	}
 	while(err);
@@ -272,11 +266,10 @@ uint32_t Hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
 		if(cmd[i] != read_dma_buffer[i])
 		{
 			res = ERR_HOKUYO_CHECK_CMD;
-			goto end;
+			break;
 		}
 	}
 
-end:
 	return res;
 }
 
@@ -331,19 +324,17 @@ uint32_t Hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t r
 		{
 			err |= ERR_HOKUYO_USART_ORE;
 		}
-		goto end;
+		
 	}
-
-	err = check_cmd(buf, write_size);
-
-	if(err)
+	if(!err)
 	{
-		goto end;
+		err = check_cmd(buf, write_size);
+	}
+	if(!err)
+	{
+		err = check_sum(write_size, write_size+2);
 	}
 
-	err = check_sum(write_size, write_size+2);
-
-end:
 	return err;
 }
 
@@ -353,24 +344,16 @@ uint32_t Hokuyo::scip2()
 
 	err = transaction((unsigned char*) hokuyo_scip2_cmd, 8, 13, ms_to_tick(100));
 
-	if(err)
-	{
-		goto end;
-	}
-
-	if( read_dma_buffer[8] != '0')
+	if( (read_dma_buffer[8] != '0') && (0== err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;	
 	}
 
-	if( read_dma_buffer[9] != '0' &&  read_dma_buffer[9] != 'E')
+	if( (read_dma_buffer[9] != '0') &&  (read_dma_buffer[9] != 'E') && (0 == err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;
 	}
 
-end:
 	return err;
 }
 
@@ -380,33 +363,30 @@ uint32_t Hokuyo::set_speed()
 
 	err = transaction((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100));
 
-	if(err)
-	{
-		goto end;
-	}
 
-	if( read_dma_buffer[9] != '0')
+
+	if( (read_dma_buffer[9] != '0') && (0 == err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;
+	
 	}
-
-	switch(read_dma_buffer[10])
+	if(0 == err) 
 	{
-		case '0':
-		case '3':
-			// OK
-			break;
-		case '1':
-		case '2':
-			err = ERR_HOKUYO_BAUD_RATE;
-			goto end;
-		default:
-			err = ERR_HOKUYO_UNKNOWN_STATUS;
-			goto end;
+		switch(read_dma_buffer[10] )
+		{
+			case '0':
+			case '3':
+				// OK
+				break;
+			case '1':
+			case '2':
+				err = ERR_HOKUYO_BAUD_RATE;
+				break;
+			default:
+				err = ERR_HOKUYO_UNKNOWN_STATUS;
+				break;;
+		}
 	}
-
-end:
 	return err;
 }
 
@@ -418,24 +398,16 @@ uint32_t Hokuyo::hs()
 
 	err = transaction((unsigned char*) hokuyo_hs_cmd, 4, 9, ms_to_tick(200));
 
-	if(err)
-	{
-		goto end;
-	}
-
-	if( read_dma_buffer[4] != '0')
+	if( (read_dma_buffer[4] != '0') && (0 == err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;
 	}
 
-	if( read_dma_buffer[5] != '0' && read_dma_buffer[5] != '2')
+	if( (read_dma_buffer[5] != '0') && (read_dma_buffer[5] != '2') && (0 == err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;
 	}
 
-end:
 	return err;
 }
 
@@ -447,34 +419,29 @@ uint32_t Hokuyo::laser_on()
 
 	err = transaction((unsigned char*) hokuyo_laser_on_cmd, 3, 8, ms_to_tick(300));
 
-	if(err)
-	{
-		goto end;
-	}
 
-	if( read_dma_buffer[3] != '0')
+	if( read_dma_buffer[3] != '0'  && (0 == err) )
 	{
 		err = ERR_HOKUYO_UNKNOWN_STATUS;
 		log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
-		goto end;
 	}
-
-	switch(read_dma_buffer[4])
+	if(0 == err) 
 	{
-		case '0':
-		case '2':
-			// OK
-			break;
-		case '1':
-			err = ERR_HOKUYO_LASER_MALFUNCTION;
-			goto end;
-		default:
-			err = ERR_HOKUYO_UNKNOWN_STATUS;
-			log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
-			goto end;
+		switch(read_dma_buffer[4])
+		{
+			case '0':
+			case '2':
+				// OK
+				break;
+			case '1':
+				err = ERR_HOKUYO_LASER_MALFUNCTION;
+				break;;
+			default:
+				err = ERR_HOKUYO_UNKNOWN_STATUS;
+				log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
+				break;
+		}
 	}
-
-end:
 	return err;
 }
 
@@ -507,48 +474,50 @@ uint32_t Hokuyo::wait_decode_scan()
 		{
 			err |= ERR_HOKUYO_USART_ORE;
 		}
-		goto end;
+
+	}
+	else
+	{
+		err = check_cmd((unsigned char*)hokuyo_scan_all, 13);
+	}
+	if(!err)
+	{
+		err = check_sum(13, 15);
 	}
 
-	err = check_cmd((unsigned char*)hokuyo_scan_all, 13);
-
-	if(err)
+	if(!err)
 	{
-		goto end;
-	}
-
-	err = check_sum(13, 15);
-
-	if(err)
-	{
-		goto end;
+		if( read_dma_buffer[13] != '0')
+		{
+			err = ERR_HOKUYO_UNKNOWN_STATUS;
+		}
 	}
 	
-	if( read_dma_buffer[13] != '0')
+	
+	if(!err)
 	{
-		err = ERR_HOKUYO_UNKNOWN_STATUS;
-		goto end;
+		switch(read_dma_buffer[14])
+		{
+			case '0':
+			case '2':
+				// OK
+				break;
+			case '1':
+				err = ERR_HOKUYO_LASER_MALFUNCTION;
+				break;;
+			default:
+				err = ERR_HOKUYO_UNKNOWN_STATUS;
+				break;
+		}
 	}
 
-	switch(read_dma_buffer[14])
+	if(!err)
 	{
-		case '0':
-		case '2':
-			// OK
-			break;
-		case '1':
-			err = ERR_HOKUYO_LASER_MALFUNCTION;
-			goto end;
-		default:
-			err = ERR_HOKUYO_UNKNOWN_STATUS;
-			goto end;
+		xSemaphoreTake(scan_mutex, portMAX_DELAY);
+		err = decode_scan();
+		xSemaphoreGive(scan_mutex);
 	}
 
-	xSemaphoreTake(scan_mutex, portMAX_DELAY);
-	err = decode_scan();
-	xSemaphoreGive(scan_mutex);
-
-end:
 	return err;
 }
 
