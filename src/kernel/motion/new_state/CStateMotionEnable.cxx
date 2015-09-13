@@ -6,12 +6,12 @@
 
 CStateMotionEnable::CStateMotionEnable():MotionEtat("MOTION_STATE_ENABLE")
 {
-	m_pMotionDisable 			= 0;
+	m_pMotionDisable 		= 0;
 	m_pMotionActuorKinematics 	= 0;
-	m_pMotionSpeed 				= 0;
-	m_pMotionTrajectory			= 0;
-	m_pmotion_wanted_kinematics = 0;
-	m_pgotoparam				= 0;
+	m_pMotionSpeed 			= 0;
+	m_pMotionTrajectory		= 0;
+	m_pmotion_wanted_kinematics 	= 0;
+	m_pgotoparam			= 0;
 
 }
 CStateMotionEnable::~CStateMotionEnable()
@@ -24,7 +24,6 @@ void CStateMotionEnable::InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed
 	m_pMotionActuorKinematics 		= pMotionActuorKinematics;
 	m_pMotionSpeed 				= pMotionSpeed;
 	m_pMotionTrajectory			= pMotionTrajectory;
-	
 	m_pmotion_wanted_kinematics 		= pmotion_wanted_kinematics;
 	m_pgotoparam				= pgotoparam;
 	m_motion_status 			= MOTION_UPDATING_TRAJECTORY;
@@ -48,31 +47,8 @@ bool CStateMotionEnable::run()
 	return true;
 }		
 
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action		
-bool CStateMotionEnable::entry()
-{
 
-	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
 
-	//Prise en compte de la commande utilisateur de changement d'état
-	m_motion_Wanted_State = MOTION_NONE_STATE;
-
-	return true;
-}
-		
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action		
-bool CStateMotionEnable::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-	return true;
-}
 
 void CStateMotionEnable::motion_set_actuator_kinematics( motion_cmd_set_actuator_kinematics_arg cmd)
 {

@@ -7,9 +7,8 @@
 
 CStateMotionDisable::CStateMotionDisable():MotionEtat("MOTION_STATE_DISABLE")
 {
-	m_pMotionTryEnable = 0;
-
-	m_motion_State 				= MOTION_STATE_DISABLED;
+	m_pMotionTryEnable 	= 0;
+	m_motion_State		= MOTION_STATE_DISABLED;
 }
 CStateMotionDisable::~CStateMotionDisable()
 {
@@ -34,40 +33,22 @@ bool CStateMotionDisable::run()
 	}
 	return op_enable;
 }		
-
+#ifdef MOTION_AUTO_ENABLE
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action		
 bool CStateMotionDisable::entry()
 {
-
-#ifndef MOTION_AUTO_ENABLE
-	m_motion_Wanted_State = MOTION_NONE_STATE;
-#else
 	m_motion_Wanted_State = MOTION_STATE_ENABLED;
-#endif
 
 	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
 
 	//Prise en compte de la commande utilisateur de changement d'état
-	
 	return true;
 }
 		
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action		
-bool CStateMotionDisable::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-
-	return true;
-}
-
-
+#endif
 
 ////////////////////////////////////////
 //méthode recupere l'etat suivant

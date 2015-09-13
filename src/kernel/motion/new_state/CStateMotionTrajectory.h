@@ -31,7 +31,7 @@ class CStateMotionTrajectory : public MotionEtat
 		~CStateMotionTrajectory();
 
 
-		void InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * motion_x_pid,Pid * motion_theta_pid , motion_goto_parameter * pgotoparam);
+		void InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam);
 
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat
@@ -44,11 +44,6 @@ class CStateMotionTrajectory : public MotionEtat
 		//Param :
 		//retourne: Réussite de l'action
 		bool entry();
-		////////////////////////////////////////
-		//méthode virtuelle Effectue l'action de l'etat
-		//Param :
-		//retourne: Réussite de l'action
-		bool out();
 
 		////////////////////////////////////////
 		//méthode recupere l'etat suivant

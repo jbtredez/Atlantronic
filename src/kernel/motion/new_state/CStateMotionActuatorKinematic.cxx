@@ -11,8 +11,9 @@
 CStateMotionActuatorKinematic::CStateMotionActuatorKinematic():MotionEtat("MOTION_STATE_ACTUATOR_KINEMATICS")
 {
 	// TODO Auto-generated constructor stub
-	m_motion_State 				= MOTION_STATE_ACTUATOR_KINEMATICS;
-
+	m_motion_State 		= MOTION_STATE_ACTUATOR_KINEMATICS;
+	m_pMotionDisable	= 0;
+	m_pMotionEnable		= 0;
 }
 
 CStateMotionActuatorKinematic::~CStateMotionActuatorKinematic()
@@ -47,37 +48,6 @@ bool CStateMotionActuatorKinematic::run()
 
 
 
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionActuatorKinematic::entry()
-{
-//#ifndef MOTION_AUTO_ENABLE
-//	motion_enable_wanted = MOTION_ENABLE_WANTED_UNKNOWN;
-//#else
-//	motion_enable_wanted = MOTION_ENABLE_WANTED_ON;
-//#endif
-
-	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
-
-	//Prise en compte de la commande utilisateur de changement d'état
-	m_motion_Wanted_State = MOTION_NONE_STATE;
-	return true;
-}
-
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionActuatorKinematic::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-
-	return true;
-}
-
 
 
 ////////////////////////////////////////
@@ -89,7 +59,7 @@ Etat * CStateMotionActuatorKinematic::getProchainEtat()
 	Etat * pFuturState = this;
 	bool all_op_enable = true;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = CAN_MOTOR_MAX - 1 ; i-- ;)
 	{
 		all_op_enable &= can_motor[i].is_op_enable();
 	}
@@ -113,7 +83,7 @@ void CStateMotionActuatorKinematic::motion_set_actuator_kinematics(motion_cmd_se
 	m_motion_Wanted_State = MOTION_STATE_ACTUATOR_KINEMATICS;
 	*m_pmotion_wanted_kinematics = cmd;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = CAN_MOTOR_MAX - 1 ; i--;)
 	{
 		if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 		{

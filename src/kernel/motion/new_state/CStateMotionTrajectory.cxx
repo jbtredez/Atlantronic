@@ -11,6 +11,14 @@ CStateMotionTrajectory::CStateMotionTrajectory():MotionEtat("MOTION_STATE_TRAJEC
 {
 	// TODO Auto-generated constructor stub
 	m_motion_State 				= MOTION_STATE_TRAJECTORY;
+	m_pMotionDisable			= 0;
+	Etat * m_pMotionInterrupting		= 0;
+	Pid * m_pmotion_x_pid			= 0;
+	Pid * m_pmotion_theta_pid		= 0;
+	motion_goto_parameter * m_pgotoparam	= 0;
+
+
+
 
 }
 
@@ -20,13 +28,13 @@ CStateMotionTrajectory::~CStateMotionTrajectory()
 }
 
 
-void CStateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * motion_x_pid,Pid * motion_theta_pid , motion_goto_parameter * pgotoparam)
+void CStateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam)
 {
-	m_pMotionInterrupting = pMotionInterrupting;
-	m_pMotionDisable = pMotionDisable;
-	m_pmotion_x_pid =motion_x_pid;
-	m_pmotion_theta_pid = motion_theta_pid;
-	m_pgotoparam = pgotoparam;
+	m_pMotionInterrupting	= pMotionInterrupting;
+	m_pMotionDisable 	= pMotionDisable;
+	m_pmotion_x_pid 	= pmotion_x_pid;
+	m_pmotion_theta_pid 	= pmotion_theta_pid;
+	m_pgotoparam 		= pgotoparam;
 	m_motion_linear_speed_check.Set(100, 10);
 
 }
@@ -135,6 +143,7 @@ bool CStateMotionTrajectory::run()
 		{
 			motion_kinematics_th[i] = m_motion_kinematics[i];
 		}
+
 		kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
 		u_loc = abs_to_loc_speed(m_motion_pos_cmd_th.theta, u);
 		k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
@@ -145,6 +154,7 @@ bool CStateMotionTrajectory::run()
 
 		// correction en fonction de l'erreur
 		v = abs_to_loc_speed(m_motion_pos_mes.theta, v_th);
+
 		// TODO pas de correction laterale pour le moment
 		v.x += m_pmotion_x_pid->compute(error_loc.x, CONTROL_DT);
 		v.theta += m_pmotion_theta_pid->compute(error_loc.theta, CONTROL_DT);
@@ -218,7 +228,7 @@ bool CStateMotionTrajectory::run()
 	if(m_motion_status == MOTION_TARGET_NOT_REACHED ||  m_motion_status == MOTION_COLISION || m_motion_status == MOTION_TARGET_REACHED)
 	{
 
-		for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 		{
 			m_motion_kinematics[i].v = 0;
 		}
@@ -384,17 +394,6 @@ bool CStateMotionTrajectory::entry()
 }
 
 
-
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionTrajectory::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-	return true;
-}
 
 
 

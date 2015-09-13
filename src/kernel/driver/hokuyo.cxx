@@ -324,16 +324,18 @@ uint32_t Hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t r
 		{
 			err |= ERR_HOKUYO_USART_ORE;
 		}
-		
+		return err;
 	}
-	if(!err)
+
+	err = check_cmd(buf, write_size);
+
+	if(err)
 	{
-		err = check_cmd(buf, write_size);
+		return err;		
 	}
-	if(!err)
-	{
-		err = check_sum(write_size, write_size+2);
-	}
+
+	err = check_sum(write_size, write_size+2);
+
 
 	return err;
 }
@@ -458,7 +460,7 @@ uint32_t Hokuyo::wait_decode_scan()
 
 	if(err)
 	{
-		if(err & ERR_USART_TIMEOUT)
+		if( ERR_USART_TIMEOUT & err)
 		{
 			err |= ERR_HOKUYO_TIMEOUT;
 		}
@@ -474,24 +476,29 @@ uint32_t Hokuyo::wait_decode_scan()
 		{
 			err |= ERR_HOKUYO_USART_ORE;
 		}
+		
+		return err;
 
 	}
 	else
 	{
 		err = check_cmd((unsigned char*)hokuyo_scan_all, 13);
-	}
-	if(!err)
-	{
-		err = check_sum(13, 15);
+		if(err)
+		{
+			return err;
+		}
+
 	}
 
-	if(!err)
+	err = check_sum(13, 15);
+
+
+
+	if( read_dma_buffer[13] != '0' && 0 == err)
 	{
-		if( read_dma_buffer[13] != '0')
-		{
-			err = ERR_HOKUYO_UNKNOWN_STATUS;
-		}
+		err = ERR_HOKUYO_UNKNOWN_STATUS;
 	}
+
 	
 	
 	if(!err)

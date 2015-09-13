@@ -10,7 +10,9 @@
 CStateMotionTryEnable::CStateMotionTryEnable():MotionEtat("MOTION_STATE_TRY_ENABLE")
 {
 	// TODO Auto-generated constructor stub
-	m_motion_State 				= MOTION_STATE_TRY_ENABLE;
+	m_motion_State 		= MOTION_STATE_TRY_ENABLE;
+	m_pMotionDisable	= 0;
+	m_pMotionEnable		= 0;
 
 }
 
@@ -37,30 +39,6 @@ bool CStateMotionTryEnable::run()
 		op_enable &= (!can_motor[i].is_op_enable());
 	}
 	return op_enable;
-}
-
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionTryEnable::entry()
-{
-
-	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
-
-	return true;
-}
-
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionTryEnable::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-
-	return true;
 }
 
 

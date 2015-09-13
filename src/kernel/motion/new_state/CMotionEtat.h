@@ -96,12 +96,12 @@ class MotionEtat :public Etat
 		//méthode virtuelle Effectue l'action de l'etat
 		//Param :
 		//retourne: Réussite de l'action
-		bool entry(){return true;};
+		bool entry();
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat
 		//Param :
 		//retourne: Réussite de l'action
-		bool out(){return true;};
+		bool out();
 
 		////////////////////////////////////////
 		//méthode recupere l'etat suivant

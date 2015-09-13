@@ -29,7 +29,7 @@
 #include "kernel/motion/new_state/CStateMotionInterrupting.h"
 class CMotionStateMachine : public ContextEtat
 {
-	public:
+	private:
 		Pid m_motion_x_pid;
 		Pid m_motion_theta_pid;
 
@@ -52,7 +52,7 @@ class CMotionStateMachine : public ContextEtat
 		void motion_update_usb_data(struct control_usb_data* data);
 		void motion_compute();
 
-	public :
+	private :
 		//Declaration des States
 		CStateMotionActuatorKinematic 		m_StateMotionActuatorKinematic;
 		CStateMotionDisable 			m_StateMotionDisable;

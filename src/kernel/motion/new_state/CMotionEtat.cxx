@@ -230,8 +230,11 @@ void MotionEtat::motion_set_speed(VectPlan u, float v)
 	log_format(LOG_INFO, "m_WantedState  %d", m_motion_Wanted_State);
 	m_motion_u = u;
 	m_motion_v = v;
+
+
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
+		
 		m_motion_kinematics[i] = m_motion_kinematics_mes[i];
 	}
 
@@ -257,6 +260,34 @@ void MotionEtat::motion_get_state(motion_state* state,  motion_status* status,  
 	*wanted_state = m_motion_Wanted_State;
 	xSemaphoreGive(m_motion_mutex);
 }
+
+////////////////////////////////////////
+//méthode virtuelle Effectue l'action de l'etat
+//Param :
+//retourne: Réussite de l'action
+bool MotionEtat::entry()
+{
+
+	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
+
+	m_motion_Wanted_State = MOTION_NONE_STATE;
+
+	return true;
+}
+
+
+
+////////////////////////////////////////
+//méthode virtuelle Effectue l'action de l'etat
+//Param :
+//retourne: Réussite de l'action
+bool MotionEtat::out()
+{
+
+	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
+	return true;
+};
+
 
 void MotionEtat::motion_update_usb_data(struct control_usb_data* data)
 {

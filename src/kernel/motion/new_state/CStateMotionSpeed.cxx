@@ -13,7 +13,9 @@
 CStateMotionSpeed::CStateMotionSpeed():MotionEtat("MOTION_STATE_SPEED")
 {
 	// TODO Auto-generated constructor stub
-	m_motion_State 				= MOTION_STATE_SPEED;
+	m_motion_State 		= MOTION_STATE_SPEED;
+	m_pMotionDisable	= 0;
+	m_pMotionEnable		= 0;
 
 }
 
@@ -50,18 +52,6 @@ bool CStateMotionSpeed::entry()
 	m_motion_Wanted_State = MOTION_NONE_STATE;
 	return true;
 }
-
-////////////////////////////////////////
-//méthode virtuelle Effectue l'action de l'etat
-//Param :
-//retourne: Réussite de l'action
-bool CStateMotionSpeed::out()
-{
-
-	log_format(LOG_INFO, "Sortie de l'etat %s", this->getNameEtat());
-	return true;
-}
-
 
 
 ////////////////////////////////////////

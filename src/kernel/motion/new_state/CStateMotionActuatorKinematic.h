@@ -36,16 +36,7 @@ class CStateMotionActuatorKinematic : public MotionEtat
 		//retourne: Réussite de l'action
 		bool run();
 
-		////////////////////////////////////////
-		//méthode virtuelle Effectue l'action de l'etat
-		//Param :
-		//retourne: Réussite de l'action
-		bool entry();
-		////////////////////////////////////////
-		//méthode virtuelle Effectue l'action de l'etat
-		//Param :
-		//retourne: Réussite de l'action
-		bool out();
+
 
 		////////////////////////////////////////
 		//méthode recupere l'etat suivant

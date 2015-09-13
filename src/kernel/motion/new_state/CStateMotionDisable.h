@@ -23,16 +23,13 @@ class CStateMotionDisable : public MotionEtat
 		//retourne: Réussite de l'action		
 		bool run();
 
+		#ifdef MOTION_AUTO_ENABLE
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat
 		//Param :
 		//retourne: Réussite de l'action		
 		bool entry();		
-		////////////////////////////////////////
-		//méthode virtuelle Effectue l'action de l'etat
-		//Param :
-		//retourne: Réussite de l'action		
-		bool out();
+		#endif
 
 		////////////////////////////////////////
 		//méthode recupere l'etat suivant
