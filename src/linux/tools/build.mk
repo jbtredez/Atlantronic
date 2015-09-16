@@ -57,6 +57,5 @@ lib-linux-sin_table_gen += -lm
 bin-linux += sin_table_gen
 
 obj-linux-graph_gen += linux/tools/graph_gen.o
-obj-linux-graph_gen += kernel/math/fx_math.o
 lib-linux-graph_gen += -lm
 bin-linux += graph_gen

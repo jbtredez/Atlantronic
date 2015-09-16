@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include "kernel/math/vect2.h"
-#include "kernel/math/fx_math.h"
 #include "kernel/motion/graph.h"
 
 //!< le but est de générer les données du graph du code du robot
