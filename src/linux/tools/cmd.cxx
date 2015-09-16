@@ -50,8 +50,6 @@ int cmd_gyro_calib_start(const char* arg);
 int cmd_gyro_calib_stop(const char* arg);
 int cmd_gyro_set_theta(const char* arg);
 int cmd_gyro_set_calibration_values(const char* arg);
-int cmd_heartbeat_disable(const char* arg);
-int cmd_heartbeat_update(const char* arg);
 int cmd_help(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
@@ -110,8 +108,6 @@ COMMAND usb_commands[] = {
 	{ "gyro_set_theta", cmd_gyro_set_theta, "cmd_gyro_set_theta theta"},
 	{ "gyro_set_calibration_values", cmd_gyro_set_calibration_values, "cmd_gyro_set_calibration_values scale bias dead_zone"},
 	{ "help", cmd_help, "Display this text" },
-	{ "heartbeat_disable", cmd_heartbeat_disable, "heartbeat_disable" },
-	{ "heartbeat_update", cmd_heartbeat_update, "heartbeat_update"},
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
@@ -448,20 +444,6 @@ int cmd_can_lss_save(const char* arg)
 {
 	(void) arg;
 	cmd_robot->can_lss_save();
-	return CMD_SUCESS;
-}
-
-int cmd_heartbeat_disable(const char* arg)
-{
-	(void) arg;
-	cmd_robot->heartbeat_disable();
-	return CMD_SUCESS;
-}
-
-int cmd_heartbeat_update(const char* arg)
-{
-	(void) arg;
-	cmd_robot->heartbeat_update();
 	return CMD_SUCESS;
 }
 

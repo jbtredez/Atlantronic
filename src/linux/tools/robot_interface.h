@@ -19,7 +19,6 @@
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
 #include "kernel/arm.h"
-#include "kernel/heartbeat.h"
 #include "kernel/control.h"
 #include "kernel/detection.h"
 #include "kernel/driver/io.h"
@@ -152,10 +151,6 @@ class RobotInterface
 
 		// ---------- localisation ------------------------------------------------------
 		int set_position(VectPlan pos);
-
-		// ---------- heartbeat ---------------------------------------------------------
-		int heartbeat_update();
-		int heartbeat_disable();
 
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);

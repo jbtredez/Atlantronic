@@ -12,7 +12,6 @@
 #include "kernel/driver/adc.h"
 #include "kernel/driver/power.h"
 #include "kernel/arm.h"
-#include "kernel/heartbeat.h"
 #include "kernel/driver/io.h"
 #include "kernel/fault.h"
 #include "kernel/pump.h"
@@ -56,9 +55,6 @@ static void control_task(void* /*arg*/)
 
 		// mise a jour de la loc et calcul asservissement
 		motion_compute();
-
-		// mise a jour heartbeat
-		heartbeat_update();
 
 		control_usb_data.pumpState = pump_update();
 

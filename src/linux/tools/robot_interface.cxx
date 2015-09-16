@@ -1107,20 +1107,6 @@ int RobotInterface::set_position(VectPlan pos)
 	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
 }
 
-int RobotInterface::heartbeat_update()
-{
-	struct heartbeat_cmd_arg cmd_arg;
-	cmd_arg.type = HEARTBEAT_UPDATE;
-	return usb_write(USB_CMD_HEARTBEAT, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::heartbeat_disable()
-{
-	struct heartbeat_cmd_arg cmd_arg;
-	cmd_arg.type = HEARTBEAT_DISABLE;
-	return usb_write(USB_CMD_HEARTBEAT, &cmd_arg, sizeof(cmd_arg));
-}
-
 int RobotInterface::gyro_calibration(enum GyroCalibrationCmd cmd)
 {
 	int32_t cmd_arg = cmd;
