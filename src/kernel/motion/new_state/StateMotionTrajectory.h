@@ -1,17 +1,12 @@
-/*
- * CStateMotionTrajectory.h
- *
- *  Created on: 24 août 2015
- *      Author: jul
- */
 #include "kernel/log.h"
 #include "kernel/motion/new_state/MotionVar.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#ifndef CSTATEMOTIONTRAJECTORY_H_
-#define CSTATEMOTIONTRAJECTORY_H_
+#include "kernel/motion/new_state/MotionEtat.h"
+
+#ifndef STATE_MOTION_TRAJECTORY_H
+#define STATE_MOTION_TRAJECTORY_H
 
 
-class CStateMotionTrajectory : public MotionEtat
+class StateMotionTrajectory : public MotionEtat
 {
 	private:
 		systime m_motion_target_not_reached_start_time;
@@ -27,8 +22,8 @@ class CStateMotionTrajectory : public MotionEtat
 		VectPlan   m_motion_speed_cmd;
 		float m_motion_ds[3];
 	public:
-		CStateMotionTrajectory();
-		~CStateMotionTrajectory();
+		StateMotionTrajectory();
+		~StateMotionTrajectory();
 
 
 		void InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam);
@@ -58,4 +53,4 @@ class CStateMotionTrajectory : public MotionEtat
 
 };
 
-#endif /* CSTATEMOTIONTRAJECTORY_H_ */
+#endif /* STATE_MOTION_TRAJECTORY_H */

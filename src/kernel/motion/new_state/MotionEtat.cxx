@@ -2,7 +2,7 @@
 //#define WEAK_MOTION
 
 
-#include "kernel/motion/new_state/CMotionEtat.h"
+#include "MotionEtat.h"
 // machine a etats de motion
 //Initialisation de l'etat'
 #define MOTION_AUTO_ENABLE

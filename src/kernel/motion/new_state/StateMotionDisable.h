@@ -1,19 +1,17 @@
+#ifndef STATE_MOTION_DISABLE_H
+#define STATE_MOTION_DISABLE_H
 
-
-
-
-#ifndef CSTATEMOTIONDISABLE_H_
-#define CSTATEMOTIONDISABLE_H_
 #include "kernel/log.h"
-#include "kernel/motion/new_state/MotionVar.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-class CStateMotionDisable : public MotionEtat
+#include "MotionVar.h"
+#include "MotionEtat.h"
+
+class StateMotionDisable : public MotionEtat
 {
 	private:
 		Etat * m_pMotionTryEnable;
 	public:
-		CStateMotionDisable();
-		~CStateMotionDisable();
+		StateMotionDisable();
+		~StateMotionDisable();
 
 		void InitState(Etat * pMotionTryEnable){m_pMotionTryEnable = pMotionTryEnable;};
 
@@ -37,10 +35,6 @@ class CStateMotionDisable : public MotionEtat
 		//retourne: l'etat suivant
 		//          null si on ne change pas etat
 		Etat * getProchainEtat();
-
 };
-
-
-
 
 #endif

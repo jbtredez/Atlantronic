@@ -1,24 +1,18 @@
-/*
- * CStateMotionSpeed.h
- *
- *  Created on: 24 août 2015
- *      Author: jul
- */
+#ifndef STATE_MOTION_SPEED_H
+#define STATE_MOTION_SPEED_H
 
-#ifndef CSTATEMOTIONSPEED_H_
-#define CSTATEMOTIONSPEED_H_
 #include "kernel/log.h"
-#include "kernel/motion/new_state/MotionVar.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
+#include "MotionVar.h"
+#include "MotionEtat.h"
 
-class CStateMotionSpeed : public MotionEtat
+class StateMotionSpeed : public MotionEtat
 {
 	private:
 		Etat * m_pMotionDisable;
 		Etat * m_pMotionEnable;
 	public:
-		CStateMotionSpeed();
-		~CStateMotionSpeed();
+		StateMotionSpeed();
+		~StateMotionSpeed();
 
 
 		void InitState(Etat * pMotionEnable, Etat * pMotionDisable){m_pMotionEnable = pMotionEnable;m_pMotionDisable = pMotionDisable;};
@@ -42,7 +36,6 @@ class CStateMotionSpeed : public MotionEtat
 		//retourne: l'etat suivant
 		//          null si on ne change pas etat
 		Etat * getProchainEtat();
-
 };
 
-#endif /* CMOTIONSPEED_H_ */
+#endif /* STATE_MOTION_SPEED_H */

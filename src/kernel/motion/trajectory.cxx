@@ -14,7 +14,7 @@
 #include "kernel/detection.h"
 #include "kernel/motion/graph.h"
 #include <stdlib.h>
-#include "kernel/motion/new_state/CMotionStateMachine.h"
+#include "kernel/motion/new_state/MotionStateMachine.h"
 
 
 
@@ -95,7 +95,7 @@ static void trajectory_task(void* arg)
 	while(1)
 	{
 		trajectory_pos = location_get_position();
-		MotionStateMachine->motion_get_state(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
+		motionStateMachine->motion_get_state(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
 
 		if( trajectory_new_request )
 		{
@@ -169,7 +169,7 @@ static void trajectory_task(void* arg)
 						traj_type = MOTION_AXIS_A;
 					}
 
-					MotionStateMachine->motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+					motionStateMachine->motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;
@@ -182,7 +182,7 @@ static void trajectory_task(void* arg)
 						int i = trajectory_graph_way[trajectory_graph_way_id];
 						log_format(LOG_INFO, "goto graph node %d", i);
 						VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
-						MotionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+						motionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 					}
 					else
 					{
@@ -191,7 +191,7 @@ static void trajectory_task(void* arg)
 						{
 							traj_type = MOTION_AXIS_XY;
 						}
-						MotionStateMachine->motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+						motionStateMachine->motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 						trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 					}
 				}
@@ -203,7 +203,7 @@ static void trajectory_task(void* arg)
 					int i = trajectory_graph_way[0];
 					VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
 					log_format(LOG_INFO, "goto graph node %d : %d %d", i, (int)dest.x, (int)dest.y);
-					MotionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+					motionStateMachine->motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 				}
 				break;
 		}
@@ -430,7 +430,7 @@ static void trajectory_update()
 		case TRAJECTORY_FREE:
 		default:
 			trajectory_type = TRAJECTORY_FREE;
-			MotionStateMachine->motion_enable(false);
+			motionStateMachine->motion_enable(false);
 			return;
 	}
 

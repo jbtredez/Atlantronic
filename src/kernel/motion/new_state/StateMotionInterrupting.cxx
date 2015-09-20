@@ -1,18 +1,18 @@
 
 #include "kernel/log.h"
 #include "kernel/motion/new_state/MotionVar.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#include "kernel/motion/new_state/CStateMotionDisable.h"
+#include "MotionEtat.h"
+#include "StateMotionDisable.h"
 
 
 
-CStateMotionInterrupting::CStateMotionInterrupting():MotionEtat("MOTION_STATE_INTERRUPTING")
+StateMotionInterrupting::StateMotionInterrupting():MotionEtat("MOTION_STATE_INTERRUPTING")
 {
 	m_pMotionDisable 	= 0;
 	m_pMotionEnable 	= 0;
 	m_motion_State 		= MOTION_STATE_INTERRUPTING;
 }
-CStateMotionInterrupting::~CStateMotionInterrupting()
+StateMotionInterrupting::~StateMotionInterrupting()
 {
 }
 
@@ -22,7 +22,7 @@ CStateMotionInterrupting::~CStateMotionInterrupting()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action		
-bool CStateMotionInterrupting::run()
+bool StateMotionInterrupting::run()
 {
 	//On stop les moteurs
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -40,7 +40,7 @@ bool CStateMotionInterrupting::run()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant		
-Etat * CStateMotionInterrupting::getProchainEtat()
+Etat * StateMotionInterrupting::getProchainEtat()
 {
 	Etat * pFuturState = this;
 	bool all_op_enable = true;

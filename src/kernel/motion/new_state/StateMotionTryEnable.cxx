@@ -5,9 +5,9 @@
  *      Author: jul
  */
 #include "kernel/log.h"
-#include "CStateMotionTryEnable.h"
+#include "StateMotionTryEnable.h"
 
-CStateMotionTryEnable::CStateMotionTryEnable():MotionEtat("MOTION_STATE_TRY_ENABLE")
+StateMotionTryEnable::StateMotionTryEnable():MotionEtat("MOTION_STATE_TRY_ENABLE")
 {
 	// TODO Auto-generated constructor stub
 	m_motion_State 		= MOTION_STATE_TRY_ENABLE;
@@ -16,7 +16,7 @@ CStateMotionTryEnable::CStateMotionTryEnable():MotionEtat("MOTION_STATE_TRY_ENAB
 
 }
 
-CStateMotionTryEnable::~CStateMotionTryEnable()
+StateMotionTryEnable::~StateMotionTryEnable()
 {
 	// TODO Auto-generated destructor stub
 }
@@ -26,7 +26,7 @@ CStateMotionTryEnable::~CStateMotionTryEnable()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionTryEnable::run()
+bool StateMotionTryEnable::run()
 {
 	log_format(LOG_INFO, "Run dans l'etat %s", this->getNameEtat());
 	//On étient les moteurs
@@ -47,7 +47,7 @@ bool CStateMotionTryEnable::run()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant
-Etat * CStateMotionTryEnable::getProchainEtat()
+Etat * StateMotionTryEnable::getProchainEtat()
 {
 	Etat * pFuturState = this;
 

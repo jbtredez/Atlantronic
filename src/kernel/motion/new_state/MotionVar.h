@@ -1,11 +1,10 @@
+#ifndef MOTIONVAR_H
+#define MOTIONVAR_H
 
-
-#ifndef MOTIONVAR_H_
-#define MOTIONVAR_H_
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor_mip.h"
-
 #include "kernel/math/vect_plan.h"
+
 enum
 {
 	MOTION_ENABLE_WANTED_UNKNOWN = -1,

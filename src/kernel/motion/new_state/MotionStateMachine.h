@@ -1,18 +1,11 @@
-/*
- * CMotionStateMachine.h
- *
- *  Created on: 2 sept. 2015
- *      Author: jul
- */
+#ifndef MOTION_STATE_MACHINE_H
+#define MOTION_STATE_MACHINE_H
 
-
-#ifndef CMOTIONSTATEMACHINE_H_
-#define CMOTIONSTATEMACHINE_H_
 #include "kernel/log.h"
 #include "kernel/motion/pid.h"
 
-#include "kernel/motion/new_state/MotionVar.h"
-#include "kernel/state_machine/new_state_machine/CContexteEtat.h"
+#include "MotionVar.h"
+#include "kernel/state_machine/new_state_machine/ContexteEtat.h"
 
 #include "kernel/task.h"
 #include "kernel/semphr.h"
@@ -20,22 +13,23 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/math/vect_plan.h"
-#include "kernel/motion/new_state/CStateMotionActuatorKinematic.h"
-#include "kernel/motion/new_state/CStateMotionDisable.h"
-#include "kernel/motion/new_state/CStateMotionEnable.h"
-#include "kernel/motion/new_state/CStateMotionSpeed.h"
-#include "kernel/motion/new_state/CStateMotionTrajectory.h"
-#include "kernel/motion/new_state/CStateMotionTryEnable.h"
-#include "kernel/motion/new_state/CStateMotionInterrupting.h"
-class CMotionStateMachine : public ContextEtat
+#include "StateMotionActuatorKinematic.h"
+#include "StateMotionDisable.h"
+#include "StateMotionEnable.h"
+#include "StateMotionSpeed.h"
+#include "StateMotionTrajectory.h"
+#include "StateMotionTryEnable.h"
+#include "StateMotionInterrupting.h"
+
+class MotionStateMachine : public ContextEtat
 {
 	private:
 		Pid m_motion_x_pid;
 		Pid m_motion_theta_pid;
 
 	public:
-		CMotionStateMachine(){};
-		~CMotionStateMachine();
+		MotionStateMachine(){};
+		~MotionStateMachine();
 		void Init();
 		void motion_cmd_print_param(void* /*arg*/);
 		void motion_cmd_set_param(void* arg);
@@ -54,19 +48,18 @@ class CMotionStateMachine : public ContextEtat
 
 	private :
 		//Declaration des States
-		CStateMotionActuatorKinematic 		m_StateMotionActuatorKinematic;
-		CStateMotionDisable 			m_StateMotionDisable;
-		CStateMotionEnable 			m_StateMotionEnable;
-		CStateMotionSpeed 			m_StateMotionSpeed;
-		CStateMotionTrajectory 			m_StateMotionTrajectory;
-		CStateMotionTryEnable 			m_StateMotionTryEnable;
-		CStateMotionInterrupting		m_StateMotionInterrupting;
+		StateMotionActuatorKinematic 		m_StateMotionActuatorKinematic;
+		StateMotionDisable 			m_StateMotionDisable;
+		StateMotionEnable 			m_StateMotionEnable;
+		StateMotionSpeed 			m_StateMotionSpeed;
+		StateMotionTrajectory 			m_StateMotionTrajectory;
+		StateMotionTryEnable 			m_StateMotionTryEnable;
+		StateMotionInterrupting		m_StateMotionInterrupting;
 
 		//declaration des paramétres commun des états
 		motion_goto_parameter m_gotoparam;
 		motion_cmd_set_actuator_kinematics_arg m_motion_cmd_set_actuator_kinematics_arg;
-
 };
 
- extern CMotionStateMachine * MotionStateMachine;
-#endif /* CMOTIONSTATEMACHINE_H_ */
+ extern MotionStateMachine * motionStateMachine;
+#endif /* MOTION_STATE_MACHINE_H */

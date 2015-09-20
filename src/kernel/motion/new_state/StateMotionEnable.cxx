@@ -1,10 +1,10 @@
 
 #include "kernel/log.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#include "kernel/motion/new_state/CStateMotionEnable.h"
+#include "MotionEtat.h"
+#include "StateMotionEnable.h"
 
 
-CStateMotionEnable::CStateMotionEnable():MotionEtat("MOTION_STATE_ENABLE")
+StateMotionEnable::StateMotionEnable():MotionEtat("MOTION_STATE_ENABLE")
 {
 	m_pMotionDisable 		= 0;
 	m_pMotionActuorKinematics 	= 0;
@@ -14,11 +14,11 @@ CStateMotionEnable::CStateMotionEnable():MotionEtat("MOTION_STATE_ENABLE")
 	m_pgotoparam			= 0;
 
 }
-CStateMotionEnable::~CStateMotionEnable()
+StateMotionEnable::~StateMotionEnable()
 {
 }
 
-void CStateMotionEnable::InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg * pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam)
+void StateMotionEnable::InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg * pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam)
 {
 	m_pMotionDisable 			= pMotionDisable;
 	m_pMotionActuorKinematics 		= pMotionActuorKinematics;
@@ -34,7 +34,7 @@ void CStateMotionEnable::InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action		
-bool CStateMotionEnable::run()
+bool StateMotionEnable::run()
 {
 	//log_format(LOG_INFO, "Run dans l'etat %s", this->getNameEtat());
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -50,7 +50,7 @@ bool CStateMotionEnable::run()
 
 
 
-void CStateMotionEnable::motion_set_actuator_kinematics( motion_cmd_set_actuator_kinematics_arg cmd)
+void StateMotionEnable::motion_set_actuator_kinematics( motion_cmd_set_actuator_kinematics_arg cmd)
 {
 	xSemaphoreTake(m_motion_mutex, portMAX_DELAY);
 
@@ -69,7 +69,7 @@ void CStateMotionEnable::motion_set_actuator_kinematics( motion_cmd_set_actuator
 	xSemaphoreGive(m_motion_mutex);
 }
 
-void CStateMotionEnable::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void StateMotionEnable::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_motion_mutex, portMAX_DELAY);
 
@@ -90,7 +90,7 @@ void CStateMotionEnable::motion_goto(VectPlan dest, VectPlan cp, enum motion_way
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant		
-Etat * CStateMotionEnable::getProchainEtat()
+Etat * StateMotionEnable::getProchainEtat()
 {
 	Etat * pFuturState = this;
 	bool all_op_enable = true;

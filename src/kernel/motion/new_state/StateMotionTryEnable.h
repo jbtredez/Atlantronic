@@ -1,25 +1,18 @@
-/*
- * CStateMotionTryEnable.h
- *
- *  Created on: 23 août 2015
- *      Author: jul
- */
 #include "kernel/log.h"
 #include "kernel/motion/new_state/MotionVar.h"
-#include "CMotionEtat.h"
+#include "MotionEtat.h"
 
-#ifndef CSTATEMOTIONTRYENABLE_H_
-#define CSTATEMOTIONTRYENABLE_H_
+#ifndef STATE_MOTION_TRY_ENABLE_H
+#define STATE_MOTION_TRY_ENABLE_H
 
-
-class CStateMotionTryEnable: public MotionEtat
+class StateMotionTryEnable: public MotionEtat
 {
 	private:
 		Etat * m_pMotionDisable;
 		Etat * m_pMotionEnable;
 	public:
-		CStateMotionTryEnable();
-		~CStateMotionTryEnable();
+		StateMotionTryEnable();
+		~StateMotionTryEnable();
 
 		void InitState(Etat * pMotionEnable, Etat * pMotionDisable){m_pMotionDisable = pMotionDisable;m_pMotionEnable = pMotionEnable;};
 
@@ -37,8 +30,6 @@ class CStateMotionTryEnable: public MotionEtat
 		//retourne: l'etat suivant
 		//          null si on ne change pas etat
 		Etat * getProchainEtat();
-
-
 };
 
-#endif /* CSTATEMOTIONTRYENABLE_H_ */
+#endif /* STATE_MOTION_TRY_ENABLE_H */

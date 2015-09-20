@@ -54,11 +54,11 @@ static void control_task(void* /*arg*/)
 		can_mip_update(wake_time + 5);
 
 		// mise a jour de la loc et calcul asservissement
-		MotionStateMachine->motion_compute();
+		motionStateMachine->motion_compute();
 
 		control_usb_data.pumpState = pump_update();
 
-		MotionStateMachine->motion_update_usb_data(&control_usb_data);
+		motionStateMachine->motion_update_usb_data(&control_usb_data);
 		control_usb_data.current_time = systick_get_time();
 		control_usb_data.pos = location_get_position();
 //		control_usb_data.raw_data_gyro = gyro_get_raw_data();

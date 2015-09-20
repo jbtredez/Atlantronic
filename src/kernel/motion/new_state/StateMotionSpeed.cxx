@@ -6,11 +6,11 @@
  */
 #include "kernel/log.h"
 #include "kernel/kinematics_model/kinematics_model.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#include "CStateMotionSpeed.h"
+#include "MotionEtat.h"
+#include "StateMotionSpeed.h"
 
 
-CStateMotionSpeed::CStateMotionSpeed():MotionEtat("MOTION_STATE_SPEED")
+StateMotionSpeed::StateMotionSpeed():MotionEtat("MOTION_STATE_SPEED")
 {
 	// TODO Auto-generated constructor stub
 	m_motion_State 		= MOTION_STATE_SPEED;
@@ -19,7 +19,7 @@ CStateMotionSpeed::CStateMotionSpeed():MotionEtat("MOTION_STATE_SPEED")
 
 }
 
-CStateMotionSpeed::~CStateMotionSpeed()
+StateMotionSpeed::~StateMotionSpeed()
 {
 	// TODO Auto-generated destructor stub
 }
@@ -29,7 +29,7 @@ CStateMotionSpeed::~CStateMotionSpeed()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionSpeed::run()
+bool StateMotionSpeed::run()
 {
 	kinematics_model_compute_actuator_cmd(VOIE_MOT, m_motion_u, m_motion_v, CONTROL_DT, m_motion_kinematics);
 	motion_update_motors();
@@ -40,7 +40,7 @@ bool CStateMotionSpeed::run()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionSpeed::entry()
+bool StateMotionSpeed::entry()
 {
 
 	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
@@ -58,7 +58,7 @@ bool CStateMotionSpeed::entry()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant
-Etat * CStateMotionSpeed::getProchainEtat()
+Etat * StateMotionSpeed::getProchainEtat()
 {
 	Etat * pFuturState = this;
 	bool all_op_enable = true;

@@ -11,7 +11,7 @@
 #include "kernel/table.h"
 #include "kernel/motion/trajectory.h"
 
-#include "kernel/motion/new_state/CMotionStateMachine.h"
+#include "kernel/motion/new_state/MotionStateMachine.h"
 #include "disco/wing.h"
 #include "disco/elevator.h"
 #include "disco/finger.h"
@@ -52,9 +52,9 @@ void recalage()
 
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
-	MotionStateMachine->motion_enable_antico(false);
+	motionStateMachine->motion_enable_antico(false);
 
-	MotionStateMachine->motion_enable(true);
+	motionStateMachine->motion_enable(true);
 	/// Allumage des moteurs
 	vTaskDelay(ms_to_tick(500));
 
@@ -134,5 +134,5 @@ free:
 //	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();
-	MotionStateMachine->motion_enable_antico(true);
+	motionStateMachine->motion_enable_antico(true);
 }

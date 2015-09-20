@@ -1,16 +1,16 @@
 
 #include "kernel/log.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#include "kernel/motion/new_state/CStateMotionDisable.h"
+#include "MotionEtat.h"
+#include "StateMotionDisable.h"
 
 
 
-CStateMotionDisable::CStateMotionDisable():MotionEtat("MOTION_STATE_DISABLE")
+StateMotionDisable::StateMotionDisable():MotionEtat("MOTION_STATE_DISABLE")
 {
 	m_pMotionTryEnable 	= 0;
 	m_motion_State		= MOTION_STATE_DISABLED;
 }
-CStateMotionDisable::~CStateMotionDisable()
+StateMotionDisable::~StateMotionDisable()
 {
 }
 
@@ -20,7 +20,7 @@ CStateMotionDisable::~CStateMotionDisable()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action		
-bool CStateMotionDisable::run()
+bool StateMotionDisable::run()
 {
 	//On étient les moteurs
 	bool op_enable = true;
@@ -38,7 +38,7 @@ bool CStateMotionDisable::run()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action		
-bool CStateMotionDisable::entry()
+bool StateMotionDisable::entry()
 {
 	m_motion_Wanted_State = MOTION_STATE_ENABLED;
 
@@ -54,7 +54,7 @@ bool CStateMotionDisable::entry()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant		
-Etat * CStateMotionDisable::getProchainEtat()
+Etat * StateMotionDisable::getProchainEtat()
 {
 	Etat * pFuturState = this;
 

@@ -1,10 +1,7 @@
+#ifndef STATE_MOTION_ENABLE_H
+#define STATE_MOTION_ENABLE_H
 
-
-
-#ifndef CSTATEMOTIONENABLE_H_
-#define CSTATEMOTIONENABLE_H_
-
-class CStateMotionEnable : public MotionEtat
+class StateMotionEnable : public MotionEtat
 {
 	private:
 		Etat * m_pMotionSpeed;
@@ -14,8 +11,8 @@ class CStateMotionEnable : public MotionEtat
 		motion_cmd_set_actuator_kinematics_arg * m_pmotion_wanted_kinematics;
 		motion_goto_parameter * m_pgotoparam;
 	public:
-		CStateMotionEnable();
-		~CStateMotionEnable();
+		StateMotionEnable();
+		~StateMotionEnable();
 
 		void InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg *pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam);
 		////////////////////////////////////////
@@ -34,6 +31,5 @@ class CStateMotionEnable : public MotionEtat
 
 		void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 };
-
 
 #endif

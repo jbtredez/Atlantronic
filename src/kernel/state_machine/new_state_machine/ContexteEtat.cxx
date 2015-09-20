@@ -1,9 +1,7 @@
-
-
 #include "kernel/log.h"
 
-#include "kernel/state_machine/new_state_machine/CContexteEtat.h"
-#include "kernel/state_machine/new_state_machine/CEtat.h"
+#include "ContexteEtat.h"
+#include "Etat.h"
 
 /*
 ContextEtat::ContextEtat()

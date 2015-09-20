@@ -2,20 +2,13 @@
 //Classe de contexte pour le pattern Etat
 //Cette classe contient la liste des etats possibles dans une map<string,Cetat>
 //Cette classe contient l etat courant
-
-
-#ifndef CCONTEXTETAT
-#define CCONTEXTETAT
-
-
+#ifndef CONTEXT_ETAT_H
+#define CONTEXT_ETAT_H
 
 class Etat;
 
 class ContextEtat
 {
-
-
-
 	protected:
 
 		//Etat courant
@@ -57,12 +50,7 @@ class ContextEtat
 		//retourne: true si l'op�ration est r�ussite
 		Etat * getLastState(){ return mp_EtatPrecedent;};
 
-
-
-
 		int execute();
-
-
 };
 
 

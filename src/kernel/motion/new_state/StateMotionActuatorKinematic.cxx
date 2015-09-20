@@ -5,10 +5,10 @@
  *      Author: jul
  */
 #include "kernel/log.h"
-#include "kernel/motion/new_state/CMotionEtat.h"
-#include "CStateMotionActuatorKinematic.h"
+#include "MotionEtat.h"
+#include "StateMotionActuatorKinematic.h"
 
-CStateMotionActuatorKinematic::CStateMotionActuatorKinematic():MotionEtat("MOTION_STATE_ACTUATOR_KINEMATICS")
+StateMotionActuatorKinematic::StateMotionActuatorKinematic():MotionEtat("MOTION_STATE_ACTUATOR_KINEMATICS")
 {
 	// TODO Auto-generated constructor stub
 	m_motion_State 		= MOTION_STATE_ACTUATOR_KINEMATICS;
@@ -16,7 +16,7 @@ CStateMotionActuatorKinematic::CStateMotionActuatorKinematic():MotionEtat("MOTIO
 	m_pMotionEnable		= 0;
 }
 
-CStateMotionActuatorKinematic::~CStateMotionActuatorKinematic()
+StateMotionActuatorKinematic::~StateMotionActuatorKinematic()
 {
 	// TODO Auto-generated destructor stub
 }
@@ -26,7 +26,7 @@ CStateMotionActuatorKinematic::~CStateMotionActuatorKinematic()
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionActuatorKinematic::run()
+bool StateMotionActuatorKinematic::run()
 {
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
@@ -54,7 +54,7 @@ bool CStateMotionActuatorKinematic::run()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant
-Etat * CStateMotionActuatorKinematic::getProchainEtat()
+Etat * StateMotionActuatorKinematic::getProchainEtat()
 {
 	Etat * pFuturState = this;
 	bool all_op_enable = true;
@@ -76,7 +76,7 @@ Etat * CStateMotionActuatorKinematic::getProchainEtat()
 	return pFuturState;
 }
 
-void CStateMotionActuatorKinematic::motion_set_actuator_kinematics(motion_cmd_set_actuator_kinematics_arg cmd)
+void StateMotionActuatorKinematic::motion_set_actuator_kinematics(motion_cmd_set_actuator_kinematics_arg cmd)
 {
 	xSemaphoreTake(m_motion_mutex, portMAX_DELAY);
 

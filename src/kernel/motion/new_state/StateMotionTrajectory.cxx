@@ -5,9 +5,9 @@
  *      Author: jul
  */
 
-#include "CStateMotionTrajectory.h"
+#include "StateMotionTrajectory.h"
 
-CStateMotionTrajectory::CStateMotionTrajectory():MotionEtat("MOTION_STATE_TRAJECTORY")
+StateMotionTrajectory::StateMotionTrajectory():MotionEtat("MOTION_STATE_TRAJECTORY")
 {
 	// TODO Auto-generated constructor stub
 	m_motion_State 				= MOTION_STATE_TRAJECTORY;
@@ -22,13 +22,13 @@ CStateMotionTrajectory::CStateMotionTrajectory():MotionEtat("MOTION_STATE_TRAJEC
 
 }
 
-CStateMotionTrajectory::~CStateMotionTrajectory()
+StateMotionTrajectory::~StateMotionTrajectory()
 {
 	// TODO Auto-generated destructor stub
 }
 
 
-void CStateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam)
+void StateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam)
 {
 	m_pMotionInterrupting	= pMotionInterrupting;
 	m_pMotionDisable 	= pMotionDisable;
@@ -43,7 +43,7 @@ void CStateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotio
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionTrajectory::run()
+bool StateMotionTrajectory::run()
 {
 	Kinematics kinematics = m_motion_curvilinearKinematics;
 	KinematicsParameters curvilinearKinematicsParam;
@@ -241,13 +241,13 @@ bool CStateMotionTrajectory::run()
 }
 
 
-void CStateMotionTrajectory::motion_update_motors()
+void StateMotionTrajectory::motion_update_motors()
 {
 	MotionEtat::motion_update_motors();
 	m_motion_speed_cmd = kinematics_model_compute_speed(VOIE_MOT_INV, m_motion_kinematics);
 }
 
-void CStateMotionTrajectory::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void StateMotionTrajectory::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_motion_mutex, portMAX_DELAY);
 	m_motion_Wanted_State = MOTION_STATE_TRAJECTORY;
@@ -264,7 +264,7 @@ void CStateMotionTrajectory::motion_goto(VectPlan dest, VectPlan cp, enum motion
 //méthode virtuelle Effectue l'action de l'etat
 //Param :
 //retourne: Réussite de l'action
-bool CStateMotionTrajectory::entry()
+bool StateMotionTrajectory::entry()
 {
 
 	log_format(LOG_INFO, "Entree dans l'etat %s", this->getNameEtat());
@@ -402,7 +402,7 @@ bool CStateMotionTrajectory::entry()
 //méthode recupere l'etat suivant
 //Param :
 //retourne: Id de l'etat suivant
-Etat * CStateMotionTrajectory::getProchainEtat()
+Etat * StateMotionTrajectory::getProchainEtat()
 {
 	Etat * pFuturState = this;
 	bool all_op_enable = true;
@@ -426,7 +426,7 @@ Etat * CStateMotionTrajectory::getProchainEtat()
 	return pFuturState;
 }
 
-float CStateMotionTrajectory::motion_compute_time(float ds, KinematicsParameters param)
+float StateMotionTrajectory::motion_compute_time(float ds, KinematicsParameters param)
 {
 	ds = fabsf(ds);
 	float ainv = 1 / param.aMax + 1 / param.dMax;

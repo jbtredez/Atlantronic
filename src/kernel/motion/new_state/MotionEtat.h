@@ -25,11 +25,10 @@
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor_mip.h"
 #include "kernel/motion/new_state/MotionVar.h"
+#include "kernel/state_machine/new_state_machine/Etat.h"
 
-
-#include "kernel/state_machine/new_state_machine/CEtat.h"
-#ifndef CMOTIONETAT_H_
-#define CMOTIONETAT_H_
+#ifndef MOTION_ETAT_H
+#define MOTION_ETAT_H
 
 
 class MotionEtat :public Etat

@@ -60,7 +60,7 @@ core_robot += kernel/table.o
 core_robot += kernel/state_machine/state_machine.o
 
 #Machine d'état
-core_robot += kernel/state_machine/new_state_machine/CContexteEtat.o
+core_robot += kernel/state_machine/new_state_machine/ContexteEtat.o
 
 
 core_robot += kernel/stratege_machine/stratege.o
@@ -73,15 +73,15 @@ core_robot += kernel/can_motor_mip.o
 core_robot += kernel/motion/pid.o
 #core_robot += kernel/motion/motion.o
 #machine d'état de motion
-core_robot += kernel/motion/new_state/CMotionEtat.o
-core_robot += kernel/motion/new_state/CMotionStateMachine.o
-core_robot += kernel/motion/new_state/CStateMotionActuatorKinematic.o
-core_robot += kernel/motion/new_state/CStateMotionDisable.o
-core_robot += kernel/motion/new_state/CStateMotionEnable.o
-core_robot += kernel/motion/new_state/CStateMotionSpeed.o
-core_robot += kernel/motion/new_state/CStateMotionTrajectory.o
-core_robot += kernel/motion/new_state/CStateMotionTryEnable.o
-core_robot += kernel/motion/new_state/CStateMotionInterrupting.o
+core_robot += kernel/motion/new_state/MotionEtat.o
+core_robot += kernel/motion/new_state/MotionStateMachine.o
+core_robot += kernel/motion/new_state/StateMotionActuatorKinematic.o
+core_robot += kernel/motion/new_state/StateMotionDisable.o
+core_robot += kernel/motion/new_state/StateMotionEnable.o
+core_robot += kernel/motion/new_state/StateMotionSpeed.o
+core_robot += kernel/motion/new_state/StateMotionTrajectory.o
+core_robot += kernel/motion/new_state/StateMotionTryEnable.o
+core_robot += kernel/motion/new_state/StateMotionInterrupting.o
 
 
 core_robot += kernel/motion/motion_speed_check.o
