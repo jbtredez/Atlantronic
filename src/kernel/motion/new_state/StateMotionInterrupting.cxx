@@ -6,17 +6,12 @@
 
 
 
-StateMotionInterrupting::StateMotionInterrupting():MotionEtat("MOTION_STATE_INTERRUPTING")
+StateMotionInterrupting::StateMotionInterrupting() : MotionEtat("MOTION_STATE_INTERRUPTING")
 {
 	m_pMotionDisable 	= 0;
 	m_pMotionEnable 	= 0;
 	m_motion_State 		= MOTION_STATE_INTERRUPTING;
 }
-StateMotionInterrupting::~StateMotionInterrupting()
-{
-}
-
-
 
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat

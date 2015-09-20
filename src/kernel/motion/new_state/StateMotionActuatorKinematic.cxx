@@ -16,12 +16,6 @@ StateMotionActuatorKinematic::StateMotionActuatorKinematic():MotionEtat("MOTION_
 	m_pMotionEnable		= 0;
 }
 
-StateMotionActuatorKinematic::~StateMotionActuatorKinematic()
-{
-	// TODO Auto-generated destructor stub
-}
-
-
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat
 //Param :

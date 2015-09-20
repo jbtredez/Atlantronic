@@ -5,7 +5,7 @@
 #ifndef CONTEXT_ETAT_H
 #define CONTEXT_ETAT_H
 
-class Etat;
+#include "Etat.h"
 
 class ContextEtat
 {
@@ -27,10 +27,6 @@ class ContextEtat
 		///////////////
 		///Constructeur
 		//ContextEtat();
-
-		///////////////
-		///Destructeur
-		//~ContextEtat(){};
 
 		////////////////////////////////////////
 		//Recoup�re l'etat courant

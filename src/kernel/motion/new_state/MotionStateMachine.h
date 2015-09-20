@@ -29,8 +29,7 @@ class MotionStateMachine : public ContextEtat
 
 	public:
 		MotionStateMachine(){};
-		~MotionStateMachine();
-		void Init();
+		void init();
 		void motion_cmd_print_param(void* /*arg*/);
 		void motion_cmd_set_param(void* arg);
 		void motion_cmd_goto(void * arg);
@@ -47,19 +46,20 @@ class MotionStateMachine : public ContextEtat
 		void motion_compute();
 
 	private :
-		//Declaration des States
-		StateMotionActuatorKinematic 		m_StateMotionActuatorKinematic;
-		StateMotionDisable 			m_StateMotionDisable;
-		StateMotionEnable 			m_StateMotionEnable;
-		StateMotionSpeed 			m_StateMotionSpeed;
-		StateMotionTrajectory 			m_StateMotionTrajectory;
-		StateMotionTryEnable 			m_StateMotionTryEnable;
-		StateMotionInterrupting		m_StateMotionInterrupting;
+		//Declaration des etats
+		StateMotionActuatorKinematic m_StateMotionActuatorKinematic;
+		StateMotionDisable           m_StateMotionDisable;
+		StateMotionEnable            m_StateMotionEnable;
+		StateMotionSpeed             m_StateMotionSpeed;
+		StateMotionTrajectory        m_StateMotionTrajectory;
+		StateMotionTryEnable         m_StateMotionTryEnable;
+		StateMotionInterrupting      m_StateMotionInterrupting;
 
 		//declaration des paramétres commun des états
 		motion_goto_parameter m_gotoparam;
 		motion_cmd_set_actuator_kinematics_arg m_motion_cmd_set_actuator_kinematics_arg;
 };
 
- extern MotionStateMachine * motionStateMachine;
+extern MotionStateMachine * motionStateMachine;
+
 #endif /* MOTION_STATE_MACHINE_H */

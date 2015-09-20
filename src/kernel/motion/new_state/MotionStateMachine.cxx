@@ -41,7 +41,7 @@ static int motion_module_init()
 {
 
 	motionStateMachine = new MotionStateMachine();
-	motionStateMachine->Init();
+	motionStateMachine->init();
 	MotionEtat * pMotionCourant = (MotionEtat *)motionStateMachine->getCurrentState();
 	pMotionCourant->motion_module_init();	
 	usb_add_cmd(USB_CMD_MOTION_GOTO, &motion_cmd_goto);
@@ -56,7 +56,8 @@ static int motion_module_init()
 }
 
 module_init(motion_module_init, INIT_MOTION);
-void MotionStateMachine::Init()
+
+void MotionStateMachine::init()
 {
 	// TODO Auto-generated constructor stub
 	m_motion_x_pid.kp = 2;
@@ -75,32 +76,18 @@ void MotionStateMachine::Init()
 
 	//Initalisation des etats
 
-	m_StateMotionDisable.InitState(&m_StateMotionTryEnable);
-
-	m_StateMotionTryEnable.InitState(&m_StateMotionEnable,&m_StateMotionDisable);
-
-	m_StateMotionEnable.InitState(&m_StateMotionTrajectory,&m_StateMotionSpeed,&m_StateMotionActuatorKinematic,&m_StateMotionDisable, &m_motion_cmd_set_actuator_kinematics_arg,&m_gotoparam);
-
-	m_StateMotionSpeed.InitState(&m_StateMotionEnable,&m_StateMotionDisable);
-
-	m_StateMotionActuatorKinematic.InitState(&m_StateMotionEnable,&m_StateMotionDisable,&m_motion_cmd_set_actuator_kinematics_arg);
-
-
-	m_StateMotionTrajectory.InitState(&m_StateMotionInterrupting,&m_StateMotionDisable,&m_motion_x_pid,&m_motion_theta_pid,&m_gotoparam);
-
-	m_StateMotionInterrupting.InitState(&m_StateMotionEnable,&m_StateMotionDisable);
+	m_StateMotionDisable.initState(&m_StateMotionTryEnable);
+	m_StateMotionTryEnable.initState(&m_StateMotionEnable,&m_StateMotionDisable);
+	m_StateMotionEnable.initState(&m_StateMotionTrajectory,&m_StateMotionSpeed,&m_StateMotionActuatorKinematic,&m_StateMotionDisable, &m_motion_cmd_set_actuator_kinematics_arg,&m_gotoparam);
+	m_StateMotionSpeed.initState(&m_StateMotionEnable,&m_StateMotionDisable);
+	m_StateMotionActuatorKinematic.initState(&m_StateMotionEnable,&m_StateMotionDisable,&m_motion_cmd_set_actuator_kinematics_arg);
+	m_StateMotionTrajectory.initState(&m_StateMotionInterrupting,&m_StateMotionDisable,&m_motion_x_pid,&m_motion_theta_pid,&m_gotoparam);
+	m_StateMotionInterrupting.initState(&m_StateMotionEnable,&m_StateMotionDisable);
 
 	//Mise en place du premier Etat
 	mp_EtatCourant = &m_StateMotionDisable;
 
 }
-
-
-MotionStateMachine::~MotionStateMachine()
-{
-	// TODO Auto-generated destructor stub
-}
-
 
 void MotionStateMachine::motion_cmd_print_param(void* /*arg*/)
 {

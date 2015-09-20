@@ -34,12 +34,10 @@
 class MotionEtat :public Etat
 {
 	public :
-		MotionEtat(){};
 		///////////////
 		///Constructeur
-		MotionEtat(char* name);
+		MotionEtat(const char* name);
 
-		~MotionEtat(){};
 		motion_state m_motion_State;
 		int motion_module_init();
 		static xSemaphoreHandle m_motion_mutex;

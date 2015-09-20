@@ -12,23 +12,13 @@ StateMotionTrajectory::StateMotionTrajectory():MotionEtat("MOTION_STATE_TRAJECTO
 	// TODO Auto-generated constructor stub
 	m_motion_State 				= MOTION_STATE_TRAJECTORY;
 	m_pMotionDisable			= 0;
-	Etat * m_pMotionInterrupting		= 0;
-	Pid * m_pmotion_x_pid			= 0;
-	Pid * m_pmotion_theta_pid		= 0;
-	motion_goto_parameter * m_pgotoparam	= 0;
-
-
-
-
+	m_pMotionInterrupting		= 0;
+	m_pmotion_x_pid			= 0;
+	m_pmotion_theta_pid		= 0;
+	m_pgotoparam	= 0;
 }
 
-StateMotionTrajectory::~StateMotionTrajectory()
-{
-	// TODO Auto-generated destructor stub
-}
-
-
-void StateMotionTrajectory::InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam)
+void StateMotionTrajectory::initState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam)
 {
 	m_pMotionInterrupting	= pMotionInterrupting;
 	m_pMotionDisable 	= pMotionDisable;

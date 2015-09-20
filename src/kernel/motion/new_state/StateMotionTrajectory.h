@@ -23,10 +23,8 @@ class StateMotionTrajectory : public MotionEtat
 		float m_motion_ds[3];
 	public:
 		StateMotionTrajectory();
-		~StateMotionTrajectory();
 
-
-		void InitState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam);
+		void initState(Etat * pMotionInterrupting, Etat * pMotionDisable, Pid * pmotion_x_pid,Pid * pmotion_theta_pid , motion_goto_parameter * pgotoparam);
 
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat

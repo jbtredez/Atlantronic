@@ -10,11 +10,6 @@ StateMotionDisable::StateMotionDisable():MotionEtat("MOTION_STATE_DISABLE")
 	m_pMotionTryEnable 	= 0;
 	m_motion_State		= MOTION_STATE_DISABLED;
 }
-StateMotionDisable::~StateMotionDisable()
-{
-}
-
-
 
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat

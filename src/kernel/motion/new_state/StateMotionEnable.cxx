@@ -14,11 +14,8 @@ StateMotionEnable::StateMotionEnable():MotionEtat("MOTION_STATE_ENABLE")
 	m_pgotoparam			= 0;
 
 }
-StateMotionEnable::~StateMotionEnable()
-{
-}
 
-void StateMotionEnable::InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg * pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam)
+void StateMotionEnable::initState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg * pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam)
 {
 	m_pMotionDisable 			= pMotionDisable;
 	m_pMotionActuorKinematics 		= pMotionActuorKinematics;
@@ -116,10 +113,12 @@ Etat * StateMotionEnable::getProchainEtat()
 		case MOTION_STATE_SPEED:
 			pFuturState = m_pMotionSpeed;
 			break;
-		case MOTION_NONE_STATE:
-			//Pas de Break;
-		case MOTION_MAX_STATE:
-			//Pas de break;
+		case MOTION_NONE_STATE: //Pas de Break;
+		case MOTION_MAX_STATE: //Pas de Break;
+		case MOTION_STATE_DISABLED: //Pas de Break;
+		case MOTION_STATE_TRY_ENABLE: //Pas de Break;
+		case MOTION_STATE_ENABLED: //Pas de Break;
+		case MOTION_STATE_INTERRUPTING: //Pas de Break;
 		default:
 			break;
 	}

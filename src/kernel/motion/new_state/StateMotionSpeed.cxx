@@ -19,12 +19,6 @@ StateMotionSpeed::StateMotionSpeed():MotionEtat("MOTION_STATE_SPEED")
 
 }
 
-StateMotionSpeed::~StateMotionSpeed()
-{
-	// TODO Auto-generated destructor stub
-}
-
-
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat
 //Param :

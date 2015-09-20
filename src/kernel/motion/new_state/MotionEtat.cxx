@@ -47,7 +47,7 @@ int MotionEtat::motion_module_init()
 }
 
 
-MotionEtat::MotionEtat(char* name):Etat(name)
+MotionEtat::MotionEtat(const char* name) : Etat(name)
 {
 	
 }
@@ -177,7 +177,7 @@ void MotionEtat::motion_set_max_driving_current(float maxCurrent)
 
 
 ///Normal dans un etat autre que enable ou trajectory on ne fais rien avec cette cmd
-void MotionEtat::motion_goto(VectPlan dest, VectPlan cp, motion_way way, motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void MotionEtat::motion_goto(VectPlan /*dest*/, VectPlan /*cp*/, motion_way /*way*/, motion_trajectory_type /*type*/, const KinematicsParameters &/*linearParam*/, const KinematicsParameters &/*angularParam*/)
 {
 	log_format(LOG_INFO, "etat %s, motion Goto", this->getNameEtat());
 }
@@ -246,7 +246,7 @@ void MotionEtat::motion_stop()
 	motion_set_speed(VectPlan(1,0,0), 0);
 }
 
-void MotionEtat::motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd)
+void MotionEtat::motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg /*cmd*/)
 {
 	log_format(LOG_INFO, "etat %s,motion_set_actuator_kinematics", this->getNameEtat());
 }

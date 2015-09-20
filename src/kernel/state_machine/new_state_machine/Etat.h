@@ -3,8 +3,8 @@
 //Cette classe contient le nom de l'etat
 
 
-#ifndef CETAT
-#define CETAT
+#ifndef ETAT_H
+#define ETAT_H
 
 class Etat
 {

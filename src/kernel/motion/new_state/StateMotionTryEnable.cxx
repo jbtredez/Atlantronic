@@ -16,12 +16,6 @@ StateMotionTryEnable::StateMotionTryEnable():MotionEtat("MOTION_STATE_TRY_ENABLE
 
 }
 
-StateMotionTryEnable::~StateMotionTryEnable()
-{
-	// TODO Auto-generated destructor stub
-}
-
-
 ////////////////////////////////////////
 //méthode virtuelle Effectue l'action de l'etat
 //Param :

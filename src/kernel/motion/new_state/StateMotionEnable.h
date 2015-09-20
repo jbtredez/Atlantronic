@@ -12,9 +12,8 @@ class StateMotionEnable : public MotionEtat
 		motion_goto_parameter * m_pgotoparam;
 	public:
 		StateMotionEnable();
-		~StateMotionEnable();
 
-		void InitState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg *pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam);
+		void initState(Etat * pMotionTrajectory, Etat * pMotionSpeed, Etat * pMotionActuorKinematics, Etat * pMotionDisable,motion_cmd_set_actuator_kinematics_arg *pmotion_wanted_kinematics,motion_goto_parameter * pgotoparam);
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat
 		//Param :

@@ -15,11 +15,9 @@ class StateMotionActuatorKinematic : public MotionEtat
 
 	public:
 		StateMotionActuatorKinematic();
-		~StateMotionActuatorKinematic();
-
 
 		void motion_set_actuator_kinematics(motion_cmd_set_actuator_kinematics_arg cmd);
-		void InitState(Etat * pMotionEnable, Etat * pMotionDisable, motion_cmd_set_actuator_kinematics_arg * motion_wanted_kinematics){m_pMotionEnable = pMotionEnable;m_pMotionDisable = pMotionDisable; m_pmotion_wanted_kinematics = motion_wanted_kinematics;};
+		void initState(Etat * pMotionEnable, Etat * pMotionDisable, motion_cmd_set_actuator_kinematics_arg * motion_wanted_kinematics){m_pMotionEnable = pMotionEnable;m_pMotionDisable = pMotionDisable; m_pmotion_wanted_kinematics = motion_wanted_kinematics;};
 
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat

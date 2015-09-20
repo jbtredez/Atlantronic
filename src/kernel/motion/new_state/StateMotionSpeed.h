@@ -12,10 +12,8 @@ class StateMotionSpeed : public MotionEtat
 		Etat * m_pMotionEnable;
 	public:
 		StateMotionSpeed();
-		~StateMotionSpeed();
 
-
-		void InitState(Etat * pMotionEnable, Etat * pMotionDisable){m_pMotionEnable = pMotionEnable;m_pMotionDisable = pMotionDisable;};
+		void initState(Etat * pMotionEnable, Etat * pMotionDisable){m_pMotionEnable = pMotionEnable;m_pMotionDisable = pMotionDisable;};
 
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat

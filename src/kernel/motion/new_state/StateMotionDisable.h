@@ -11,9 +11,8 @@ class StateMotionDisable : public MotionEtat
 		Etat * m_pMotionTryEnable;
 	public:
 		StateMotionDisable();
-		~StateMotionDisable();
 
-		void InitState(Etat * pMotionTryEnable){m_pMotionTryEnable = pMotionTryEnable;};
+		void initState(Etat * pMotionTryEnable){m_pMotionTryEnable = pMotionTryEnable;};
 
 		////////////////////////////////////////
 		//méthode virtuelle Effectue l'action de l'etat
