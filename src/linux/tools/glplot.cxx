@@ -378,13 +378,14 @@ void qemu_set_parameters()
 {
 	qemu->setPosition(qemuStartPos.symetric(color));
 	qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
-	setTableColor(color);
 
 	// ajout de la table dans qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
 		qemu->add_object(OBJECT_FLOOR_FOOTPRINT, table_obj[i]);
 	}
+
+	setTableColor(color);
 
 	// ajout d'un robot adverse
 	qemu->add_object(OBJECT_FLOOR_FOOTPRINT, oponent_robot);
