@@ -10,6 +10,9 @@
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor_mip.h"
 #include "kernel/math/vect_plan.h"
+#include "kernel/state_machine/state_machine.h"
+#include "motion_speed_check.h"
+#include "pid.h"
 
 #ifndef WEAK_MOTION
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
@@ -57,6 +60,13 @@ enum motion_wanted_state
 	MOTION_WANTED_STATE_TRAJECTORY,
 };
 
+enum
+{
+	MOTION_ENABLE_WANTED_UNKNOWN = -1,
+	MOTION_ENABLE_WANTED_OFF = 0,
+	MOTION_ENABLE_WANTED_ON = 1
+};
+
 enum motion_way
 {
 	WAY_BACKWARD = -1,    //!< marche arriere
@@ -70,33 +80,6 @@ enum motion_trajectory_type
 	MOTION_AXIS_A,         //!< rotation sur place
 	MOTION_AXIS_XY,        //!< aller a la position x,y en ligne droite (=> rotation puis avance)
 };
-
-void motion_get_state(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state);
-
-void motion_enable(bool enable);
-
-//!< demande de trajectoire
-void motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
-
-//! arret du mouvement en cours
-void motion_stop();
-
-//!< demande de vitesse
-void motion_set_speed(VectPlan u, float v);
-
-//!< demande de cinematique actionneur (debug)
-void motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
-
-//!< mise a jour de l'asservissement
-void motion_compute() WEAK_MOTION;
-
-void motion_update_usb_data(struct control_usb_data* data) WEAK_MOTION;
-
-void motion_set_max_driving_current(float maxCurrent);
-
-float motion_find_rotate(float start, float end);
-
-void motion_enable_antico(bool enable);
 
 struct motion_cmd_param_arg
 {
@@ -145,5 +128,95 @@ struct motion_cmd_set_max_driving_current_arg
 {
 	float maxDrivingCurrent;
 }  __attribute__((packed));
+
+#define MOTION_AUTO_ENABLE
+
+class Motion
+{
+	public:
+		Motion();
+		int init();
+
+		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state);
+
+		void enable(bool enable);
+
+		//!< demande de trajectoire
+		void goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam);
+
+		//! arret du mouvement en cours
+		void stop();
+
+		//!< demande de vitesse
+		void setSpeed(VectPlan u, float v);
+
+		//!< demande de cinematique actionneur (debug)
+		void setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
+
+		//!< mise a jour de l'asservissement
+		void compute() WEAK_MOTION;
+
+		void updateUsbData(struct control_usb_data* data) WEAK_MOTION;
+
+		void setMaxDrivingCurrent(float maxCurrent);
+
+		float findRotate(float start, float end);
+
+		void enableAntico(bool enable);
+
+		// interface usb
+		static void cmd_goto(void* arg);
+		static void cmd_set_speed(void* arg);
+		static void cmd_enable(void* arg);
+		static void cmd_set_actuator_kinematics(void* arg);
+		static void cmd_set_max_current(void* arg);
+		static void cmd_print_param(void* arg);
+		static void cmd_set_param(void* arg);
+
+	protected:
+		friend class MotionDisabledState;
+		friend class MotionTryEnableState;
+		friend class MotionEnabledState;
+		friend class MotionActuatorKinematicsState;
+		friend class MotionSpeedState;
+		friend class MotionTrajectoryState;
+		friend class MotionInterruptingState;
+
+		void motion_update_motors();
+		float motion_compute_time(float ds, KinematicsParameters param);
+		unsigned int motion_state_generic_power_transition(unsigned int currentState);
+
+		uint8_t m_enableWanted;
+		enum motion_wanted_state m_wantedState;
+		enum motion_status m_status;
+		enum motion_trajectory_step m_trajStep;
+		struct motion_cmd_set_actuator_kinematics_arg m_wantedKinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)
+		Kinematics m_kinematics[CAN_MOTOR_MAX];
+		Kinematics m_kinematicsMes[CAN_MOTOR_MAX];
+		xSemaphoreHandle m_mutex;
+		VectPlan m_wantedDest;
+		enum motion_way m_wantedWay;
+		enum motion_trajectory_type m_wantedTrajectoryType;
+		KinematicsParameters m_wantedLinearParam;
+		KinematicsParameters m_wantedAngularParam;
+		float m_ds[3];
+		float m_v;
+		VectPlan m_u;
+		Kinematics m_curvilinearKinematics;
+		VectPlan m_posCmdTh;
+		VectPlan m_speedCmd;
+		VectPlan m_posMes;
+		VectPlan m_speedMes;
+		VectPlan m_dest;  //!< destination
+		systime m_targetNotReachedStartTime;
+		MotionSpeedCheck m_linearSpeedCheck;
+		Pid m_xPid;
+		Pid m_thetaPid;
+		bool m_anticoOn;
+		static StateMachineState* m_motionStates[MOTION_MAX_STATE];
+		StateMachine m_motionStateMachine;
+};
+
+extern Motion motion;
 
 #endif

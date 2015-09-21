@@ -1,43 +1,64 @@
 #include "state_machine.h"
 #include "kernel/log.h"
 
-StateMachine::StateMachine(StateMachineState* States, unsigned int Size)
+StateMachineState::StateMachineState(const char* name)
 {
-	states = States;
-	size = Size;
-	currentStateId = 0;
-	lastStateId = size;
+	m_name = name;
+}
+
+void StateMachineState::entry(void* /*data*/)
+{
+
+}
+
+void StateMachineState::run(void* /*data*/)
+{
+
+}
+
+unsigned int StateMachineState::transition(void* /*data*/, unsigned int currentState)
+{
+	return currentState;
+}
+
+StateMachine::StateMachine(StateMachineState** states, unsigned int size, void* data)
+{
+	m_data = data;
+	m_states = states;
+	m_size = size;
+	m_currentStateId = 0;
+	m_lastStateId = m_size;
 }
 
 int StateMachine::execute()
 {
-	if( currentStateId >= size )
+	if( m_currentStateId >= m_size )
 	{
-		log_format(LOG_ERROR, "invalid state machine id %d >= size %d", currentStateId, size);
+		log_format(LOG_ERROR, "invalid state machine id %d >= size %d", m_currentStateId, m_size);
 		return -1;
 	}
 
-	if( lastStateId != currentStateId)
+	if( m_lastStateId != m_currentStateId)
 	{
-		states[currentStateId].entry();
-		lastStateId = currentStateId;
+		m_states[m_currentStateId]->entry(m_data);
+		m_lastStateId = m_currentStateId;
 	}
 
-	states[currentStateId].run();
+	m_states[m_currentStateId]->run(m_data);
 
-	unsigned int wantedStateId = states[currentStateId].transition(currentStateId);
-	if( wantedStateId >= size)
+	unsigned int wantedStateId = m_states[m_currentStateId]->transition(m_data, m_currentStateId);
+	if( wantedStateId >= m_size)
 	{
-		log_format(LOG_ERROR, "invalid state machine transition to id %d >= size %d", currentStateId, size);
+		log_format(LOG_ERROR, "invalid state machine transition to id %d >= size %d", m_currentStateId, m_size);
 		return -1;
 	}
 
-	if( wantedStateId != currentStateId )
+	if( wantedStateId != m_currentStateId )
 	{
-		currentStateId = wantedStateId;
-		log_format(LOG_INFO, "%s", states[currentStateId].name);
-		states[currentStateId].entry();
-		lastStateId = currentStateId;
+		m_currentStateId = wantedStateId;
+		log_format(LOG_INFO, "%s", m_states[m_currentStateId]->m_name);
+		m_states[m_currentStateId]->entry(m_data);
+		m_lastStateId = m_currentStateId;
 	}
 
 	return 0;

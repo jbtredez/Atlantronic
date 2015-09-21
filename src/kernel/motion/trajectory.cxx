@@ -92,7 +92,7 @@ static void trajectory_task(void* arg)
 	while(1)
 	{
 		trajectory_pos = location_get_position();
-		motion_get_state(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
+		motion.getState(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
 
 		if( trajectory_new_request )
 		{
@@ -166,7 +166,7 @@ static void trajectory_task(void* arg)
 						traj_type = MOTION_AXIS_A;
 					}
 
-					motion_goto(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+					motion.goTo(dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 					trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;
@@ -179,7 +179,7 @@ static void trajectory_task(void* arg)
 						int i = trajectory_graph_way[trajectory_graph_way_id];
 						log_format(LOG_INFO, "goto graph node %d", i);
 						VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
-						motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+						motion.goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 					}
 					else
 					{
@@ -188,7 +188,7 @@ static void trajectory_task(void* arg)
 						{
 							traj_type = MOTION_AXIS_XY;
 						}
-						motion_goto(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
+						motion.goTo(trajectory_dest, VectPlan(), trajectory_way, traj_type, trajectory_linear_param, trajectory_angular_param);
 						trajectory_state = TRAJECTORY_STATE_MOVING_TO_DEST;
 					}
 				}
@@ -200,7 +200,7 @@ static void trajectory_task(void* arg)
 					int i = trajectory_graph_way[0];
 					VectPlan dest(graph_node[i].pos.x, graph_node[i].pos.y, 0);
 					log_format(LOG_INFO, "goto graph node %d : %d %d", i, (int)dest.x, (int)dest.y);
-					motion_goto(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
+					motion.goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, trajectory_linear_param, trajectory_angular_param);
 				}
 				break;
 		}
@@ -402,7 +402,7 @@ static void trajectory_update()
 			break;
 		case TRAJECTORY_ROTATE_TO:
 			log_format(LOG_INFO, "rotate_to %d", (int)(req.dest.theta * 180 / M_PI));
-			trajectory_dest.theta += motion_find_rotate(trajectory_dest.theta, req.dest.theta);
+			trajectory_dest.theta += motion.findRotate(trajectory_dest.theta, req.dest.theta);
 			break;
 		case TRAJECTORY_GOTO_XY:
 			trajectory_dest.x = req.dest.x;
@@ -427,7 +427,7 @@ static void trajectory_update()
 		case TRAJECTORY_FREE:
 		default:
 			trajectory_type = TRAJECTORY_FREE;
-			motion_enable(false);
+			motion.enable(false);
 			return;
 	}
 

@@ -1,34 +1,36 @@
 #ifndef STATE_MACHINE
 #define STATE_MACHINE
 
-typedef void (*StateMachineEntry_t) ();
-typedef void (*StateMachineRun_t) ();
-typedef unsigned int (*StateMachineTransition_t) (unsigned int currentState);
+#include <stdint.h>
 
-struct StateMachineState
+class StateMachineState
 {
-	const char* name;
-	StateMachineEntry_t entry;
-	StateMachineRun_t run;
-	StateMachineTransition_t transition;
+	public:
+		StateMachineState(const char* name);
+		virtual void entry(void* data);
+		virtual void run(void* data);
+		virtual unsigned int transition(void* data, unsigned int currentState);
+
+		const char* m_name;
 };
 
 class StateMachine
 {
 	public:
-		StateMachine(StateMachineState* states, unsigned int size);
+		StateMachine(StateMachineState** states, unsigned int size, void* data = 0);
 
 		int execute();
 		inline int getCurrentState()
 		{
-			return currentStateId;
+			return m_currentStateId;
 		}
 
 	protected:
-		StateMachineState* states;
-		unsigned int size;
-		unsigned int currentStateId;
-		unsigned int lastStateId;
+		void* m_data;
+		StateMachineState** m_states;
+		unsigned int m_size;
+		unsigned int m_currentStateId;
+		unsigned int m_lastStateId;
 };
 
 #endif

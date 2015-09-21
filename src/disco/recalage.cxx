@@ -51,9 +51,9 @@ void recalage()
 
 	trajectory_disable_hokuyo();
 	trajectory_disable_static_check();
-	motion_enable_antico(false);
+	motion.enableAntico(false);
 
-	motion_enable(true);
+	motion.enable(true);
 	trajectory_straight(200);
 
 	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
@@ -130,5 +130,5 @@ free:
 //	trajectory_free();
 	trajectory_enable_hokuyo();
 	trajectory_enable_static_check();
-	motion_enable_antico(true);
+	motion.enableAntico(true);
 }
