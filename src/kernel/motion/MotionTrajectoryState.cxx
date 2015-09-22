@@ -97,9 +97,9 @@ void MotionTrajectoryState::entry(void* data)
 		m->m_wantedDest.theta = m->m_posMes.theta + dtheta1;
 	}
 
-	t = m->motion_compute_time(dtheta1, m->m_wantedAngularParam);
-	t += m->motion_compute_time(ds, m->m_wantedLinearParam);
-	t += m->motion_compute_time(dtheta2, m->m_wantedAngularParam);
+	t = m->motionComputeTime(dtheta1, m->m_wantedAngularParam);
+	t += m->motionComputeTime(ds, m->m_wantedLinearParam);
+	t += m->motionComputeTime(dtheta2, m->m_wantedAngularParam);
 	// mise a jour de l'angle de destination en fonction des optimisations faites
 	m->m_wantedDest.theta = m->m_posMes.theta + dtheta1 + dtheta2;
 
@@ -309,7 +309,7 @@ void MotionTrajectoryState::run(void* data)
 		}
 	}
 
-	m->motion_update_motors();
+	m->motionUpdateMotors();
 	return;
 
 error:
@@ -317,13 +317,13 @@ error:
 	{
 		m->m_kinematics[i].v = 0;
 	}
-	m->motion_update_motors();
+	m->motionUpdateMotors();
 }
 
 unsigned int MotionTrajectoryState::transition(void* data, unsigned int currentState)
 {
 	Motion* m = (Motion*) data;
-	unsigned int newState = m->motion_state_generic_power_transition(currentState);
+	unsigned int newState = m->motionStateGenericPowerTransition(currentState);
 	if( newState != currentState || m->m_status != MOTION_IN_MOTION)
 	{
 		return MOTION_INTERRUPTING;

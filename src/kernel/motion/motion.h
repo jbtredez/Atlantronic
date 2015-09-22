@@ -6,11 +6,12 @@
 //! @author Atlantronic
 
 #include <stdint.h>
+
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor_mip.h"
 #include "kernel/math/vect_plan.h"
-#include "kernel/state_machine/state_machine.h"
+#include "kernel/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
 #include "pid.h"
 
@@ -182,9 +183,9 @@ class Motion
 		friend class MotionTrajectoryState;
 		friend class MotionInterruptingState;
 
-		void motion_update_motors();
-		float motion_compute_time(float ds, KinematicsParameters param);
-		unsigned int motion_state_generic_power_transition(unsigned int currentState);
+		void motionUpdateMotors();
+		float motionComputeTime(float ds, KinematicsParameters param);
+		unsigned int motionStateGenericPowerTransition(unsigned int currentState);
 
 		uint8_t m_enableWanted;
 		enum motion_wanted_state m_wantedState;

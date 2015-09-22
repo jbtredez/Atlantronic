@@ -13,7 +13,7 @@ void MotionInterruptingState::run(void* data)
 	{
 		m->m_kinematics[i].v = 0;
 	}
-	m->motion_update_motors();
+	m->motionUpdateMotors();
 }
 
 unsigned int MotionInterruptingState::transition(void* data, unsigned int currentState)
@@ -27,7 +27,7 @@ unsigned int MotionInterruptingState::transition(void* data, unsigned int curren
 		}
 	}
 
-	unsigned int newState = m->motion_state_generic_power_transition(currentState);
+	unsigned int newState = m->motionStateGenericPowerTransition(currentState);
 	if( newState != currentState )
 	{
 		return newState;

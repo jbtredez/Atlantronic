@@ -23,11 +23,11 @@ void MotionActuatorKinematicsState::run(void* data)
 		}
 	}
 
-	m->motion_update_motors();
+	m->motionUpdateMotors();
 }
 
 unsigned int MotionActuatorKinematicsState::transition(void* data, unsigned int currentState)
 {
 	Motion* m = (Motion*) data;
-	return m->motion_state_generic_power_transition(currentState);
+	return m->motionStateGenericPowerTransition(currentState);
 }

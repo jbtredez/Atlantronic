@@ -29,7 +29,7 @@ void MotionEnabledState::run(void* data)
 		m->m_kinematics[i].mode = KINEMATICS_SPEED;
 	}
 
-	m->motion_update_motors();
+	m->motionUpdateMotors();
 }
 
 unsigned int MotionEnabledState::transition(void* data, unsigned int currentState)

@@ -13,7 +13,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/dynamixel.h"
-#include "kernel/state_machine/state_machine.h"
+#include "state_machine/StateMachine.h"
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
 #include <math.h>

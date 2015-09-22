@@ -128,7 +128,7 @@ void Motion::compute()
 	xSemaphoreGive(m_mutex);
 }
 
-void Motion::motion_update_motors()
+void Motion::motionUpdateMotors()
 {
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
@@ -188,7 +188,7 @@ float Motion::findRotate(float start, float end)
 	return dtheta;
 }
 
-float Motion::motion_compute_time(float ds, KinematicsParameters param)
+float Motion::motionComputeTime(float ds, KinematicsParameters param)
 {
 	ds = fabsf(ds);
 	float ainv = 1 / param.aMax + 1 / param.dMax;
@@ -202,7 +202,7 @@ float Motion::motion_compute_time(float ds, KinematicsParameters param)
 	return ds / param.vMax + 0.5f * param.vMax * ainv;
 }
 
-unsigned int Motion::motion_state_generic_power_transition(unsigned int currentState)
+unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState)
 {
 	bool all_op_enable = true;
 

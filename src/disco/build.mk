@@ -55,7 +55,8 @@ core_robot += kernel/detection.o
 core_robot += kernel/table.o
 #core_robot += kernel/driver/gyro/adxrs453.o
 #core_robot += kernel/math/simpson_integrator.o
-core_robot += kernel/state_machine/state_machine.o
+core_robot += kernel/state_machine/StateMachine.o
+core_robot += kernel/state_machine/StateMachineState.o
 
 core_robot += kernel/stratege_machine/stratege.o
 core_robot += kernel/stratege_machine/action.o
