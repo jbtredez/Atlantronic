@@ -1,26 +1,19 @@
-
-
+#include "SpotLight.h"
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
-#include "disco/robot_state.h"
+#include "middleware/motion/trajectory.h"
 #include "elevator.h"
 #include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
-#include "disco/action/feed.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-feed::feed(VectPlan firstcheckpoint,char * name, robotstate * elevator):actioncomposite(firstcheckpoint, name)
+SpotLight::SpotLight(VectPlan firstcheckpoint,char * name, RobotState * elevator):ActionComposite(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
 		m_elevator =  elevator;
 	}
 	
-	m_actiontype = ACTION_GOBELET;
-	 
+	set_actiontype(ACTION_SPOTLIGHT);
 }
 
 ////////////////////////////////////////////////
@@ -29,12 +22,13 @@ feed::feed(VectPlan firstcheckpoint,char * name, robotstate * elevator):actionco
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int feed::do_action()
+int SpotLight::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
+	int result = 0;
+	int nbelement =  m_elevator->getnumberelement();
 	VectPlan position = location_get_position();
 	Action * p_action;
-
 
 	Action::do_action();
 
@@ -42,8 +36,7 @@ int feed::do_action()
 	{
 		//Cas où l'acsenceur est vide
 		case ELEVATOR_EMPTY:
-		{
-			p_action = find_action_not_done(ACTION_GOBELET,position);
+			p_action = find_action_not_done(ACTION_LIGHT,position);
 			if(p_action != 0)
 			{
 				return p_action->do_action();
@@ -53,38 +46,39 @@ int feed::do_action()
 				return -1;
 			}
 			break;
-		}
-
-		case ELEVATOR_GOBELET:
-		{
-			p_action = find_action_not_done(ACTION_FEET,position);
-			if(p_action != 0)
+		//cas ou il faut récupérer des pieds ou déposer le spotlight
+		case ELEVATOR_LIGHT:
+			//Normal pas de break;
+		case ELEVATOR_FEET:
+			if(nbelement < MAX_ELEMENT )
 			{
-				return p_action->do_action();
-			}
-			else
-			{
-				p_action = find_action_not_done(ACTION_DROPZONE,position);
+				p_action = find_action_not_done(ACTION_FEET,position);
 				if(p_action != 0)
 				{
 					return p_action->do_action();
 				}
-				break;
+			}
+			p_action = find_action_not_done(ACTION_DROPZONE,position);
+			if(p_action != 0)
+			{
+				result =  p_action->do_action();
+				if( result != 0)
+				{
+					m_try ++;
+				}
+				else
+				{
+					m_try = -1;
+					return result;
+				}
 			}
 			break;
-		}
-		
 		///Dans les cas d'échec
-		case ELEVATOR_LIGHT:
-		case ELEVATOR_FEET:
+		case ELEVATOR_GOBELET:
 		default :
 			log_format(LOG_INFO , "Action présente non utilisée");
-
+			break;
 	}
 
 	return -1;	
-
 }
-	
-	
-

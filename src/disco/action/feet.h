@@ -1,15 +1,12 @@
-
 #ifndef FEET_H
 #define FEET_H
 
-#include "kernel/stratege_machine/action.h"
-
-
+#include "middleware/stratege_machine/action.h"
 
 class feet : public Action
 {
 	private :
-	robotstate * m_elevator;
+		RobotState * m_elevator;
 	public:
 
 	////////////////////////////////////////////////
@@ -18,14 +15,7 @@ class feet : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	feet(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~feet(){};
+	feet(VectPlan firstcheckpoint, const char * name, RobotState * elevator);
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

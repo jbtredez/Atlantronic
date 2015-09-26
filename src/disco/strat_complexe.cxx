@@ -1,3 +1,5 @@
+#include "action/Light.h"
+#include "action/MoveBackward.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -18,10 +20,6 @@
 #include "disco/action/clapet.h"
 #include "disco/action/feet.h"
 #include "disco/action/dropzone.h"
-#include "disco/action/movebackward.h"
-#include "disco/action/light.h"
-
-
 #include "strat/strat_simple.h"
 
 
@@ -60,7 +58,7 @@ static void strat_task(void* arg)
 {
 	(void) arg;
 
-	robotstate robothomologation;
+	RobotState robothomologation;
 	robothomologation.setnumberelement(0);
 	robothomologation.setelevatorstate(ELEVATOR_EMPTY);
 
@@ -81,7 +79,7 @@ static void strat_task(void* arg)
 	//light 1
 	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
 	firstcheckpoint.y = 0;
-	light light1(firstcheckpoint,&robothomologation);
+	Light light1(firstcheckpoint,&robothomologation);
 
 	//Pied 1
 	firstcheckpoint.x = 630;
@@ -111,10 +109,10 @@ static void strat_task(void* arg)
 	//start
 	firstcheckpoint.x = 1000;
 	firstcheckpoint.y = 0;
-	movebackward startzone(firstcheckpoint);
+	MoveBackward startzone(firstcheckpoint);
 
 	//Création du spotlight
-	spotlight spotlight1(firstcheckpoint,&robothomologation);
+	SpotLight spotlight1(firstcheckpoint,&robothomologation);
 
 	spotlight1.add_action(&light1);	
 	spotlight1.add_action(&feet1);	
@@ -128,7 +126,7 @@ static void strat_task(void* arg)
 	//light 2
 	firstcheckpoint.x = 250 + LIGHT_APPROX_DIST;
 	firstcheckpoint.y = -800;
-	light light2(firstcheckpoint,&robothomologation);
+	Light light2(firstcheckpoint,&robothomologation);
 
 
 	//Pied 6
@@ -148,7 +146,7 @@ static void strat_task(void* arg)
 	
 
 	//Actoin spolight2 
-	spotlight spotlight1(firstcheckpoint,&robothomologation);
+	SpotLight spotlight1(firstcheckpoint,&robothomologation);
 	spotlight2.add_action(&light2);	
 	spotlight2.add_action(&feet6);	
 	spotlight2.add_action(&feet7);	
@@ -161,7 +159,7 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 200;
 	Gobelet gobelet1(firstcheckpoint,&robothomologation);
 
-	feed feedgob1(firstcheckpoint,&robothomologation);
+	Feed feedgob1(firstcheckpoint,&robothomologation);
 	feedgob1.add_action(&gobelet1);	
 	feedgob1.add_action(&dropstartzone);	
 
@@ -177,7 +175,7 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = -650;
 	Gobelet gobelet2(firstcheckpoint,&robothomologation);
 
-	feed feedgob2(firstcheckpoint,&robothomologation);
+	Feed feedgob2(firstcheckpoint,&robothomologation);
 	feedgob2.add_action(&gobelet1);	
 	feedgob2.add_action(&dropcinemazone);	
 
@@ -191,7 +189,7 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = -750;
 	Gobelet gobelet2(firstcheckpoint,&robothomologation);
 
-	feed feedgob2(firstcheckpoint,&robothomologation);
+	Feed feedgob2(firstcheckpoint,&robothomologation);
 	feedgob2.add_action(&gobelet1);	
 	feedgob2.add_action(&dropcinemazone2);	
 	

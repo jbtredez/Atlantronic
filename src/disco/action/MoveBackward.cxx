@@ -1,12 +1,10 @@
+#include "MoveBackward.h"
+
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "kernel/location/location.h"
-#include "disco/action/movebackward.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-movebackward::movebackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)
+MoveBackward::MoveBackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)
 {
 
 }
@@ -17,7 +15,7 @@ movebackward::movebackward(VectPlan firstcheckpoint, const char * name):Action(f
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int movebackward::do_action()
+int MoveBackward::do_action()
 {
 	Action::do_action();
 

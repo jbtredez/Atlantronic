@@ -1,32 +1,24 @@
+#ifndef LIGHT_H
+#define LIGHT_H
 
-#ifndef FEED_H
-#define FEED_H
+#include "middleware/stratege_machine/action.h"
+#include "disco/robot_state.h"
 
-#include "kernel/stratege_machine/action.h"
+#define LIGHT_APPROX_DIST       100
 
-
-#include "kernel/stratege_machine/action_composite.h"
-
-class feed : public actioncomposite
+class Light : public Action
 {
 	private :
-	robotstate * m_elevator;
+		RobotState * m_elevator;
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : feed()
+	/// function    : light()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	feed(VectPlan firstcheckpoint, char * name, robotstate * elevator);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~feed(){};
+	Light(VectPlan firstcheckpoint, const char * name, RobotState * elevator, bool light2);
 
 	////////////////////////////////////////////////
 	/// function    : do_action()
@@ -35,6 +27,7 @@ class feed : public actioncomposite
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
+	bool m_light2;
 }; 
 
 #endif

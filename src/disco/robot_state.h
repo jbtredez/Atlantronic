@@ -9,8 +9,6 @@
 #include "disco/wing.h"
 #include "disco/carpet.h"
 
-
-
 #define	ACTION_FEET		0
 #define ACTION_LIGHT		1
 #define	ACTION_CLAP		2
@@ -23,9 +21,6 @@
 #define ACTION_MOVE		9
 #define	ACTION_ENDLIST		10
 
-
-
-
 enum Eelevator_state
 {
 	ELEVATOR_EMPTY = 0,
@@ -35,41 +30,35 @@ enum Eelevator_state
 
 };
 
-
-
 #define MAX_ELEMENT 5
 
-class robotstate 
+class RobotState 
 {
 	private:
-	//indicats what's in the elevator
-	Eelevator_state m_elevator;
-	//Number element store in the elevator
-	int m_numberelement;
+		//indicats what's in the elevator
+		Eelevator_state m_elevator;
+		//Number element store in the elevator
+		int m_numberelement;
 
-	wing_cmd_type m_leftwing;
-	wing_cmd_type m_rightwing;
+		wing_cmd_type m_leftwing;
+		wing_cmd_type m_rightwing;
 
-	carpet_type m_carpet;
-
-
+		carpet_type m_carpet;
 
 	public:
-	Eelevator_state getelevatorstate(){return m_elevator;};
-	int getnumberelement(){return m_numberelement;};
+		Eelevator_state getelevatorstate(){return m_elevator;};
+		int getnumberelement(){return m_numberelement;};
 
-	carpet_type getcarpetstate(){return m_carpet;};
-	void setcarpetstate(carpet_type carpet){m_carpet = carpet;};
-
-
-	void setelevatorstate(Eelevator_state elevator){m_elevator = elevator;};
-	void setnumberelement(int numberelement){m_numberelement = numberelement;};
-	robotstate(){m_numberelement = 0; m_elevator = ELEVATOR_EMPTY;} ;
-
-	wing_cmd_type getwingopen(){return (m_leftwing == WING_OPEN || m_leftwing == WING_OPEN ) ? WING_OPEN : WING_PARK;};
-	void setwingstate(wing_cmd_type leftwing,wing_cmd_type rightwing ){m_leftwing = leftwing;m_rightwing = rightwing;};
+		carpet_type getcarpetstate(){return m_carpet;};
+		void setcarpetstate(carpet_type carpet){m_carpet = carpet;};
 
 
+		void setelevatorstate(Eelevator_state elevator){m_elevator = elevator;};
+		void setnumberelement(int numberelement){m_numberelement = numberelement;};
+		RobotState(){m_numberelement = 0; m_elevator = ELEVATOR_EMPTY;} ;
+
+		wing_cmd_type getwingopen(){return (m_leftwing == WING_OPEN || m_leftwing == WING_OPEN ) ? WING_OPEN : WING_PARK;};
+		void setwingstate(wing_cmd_type leftwing,wing_cmd_type rightwing ){m_leftwing = leftwing;m_rightwing = rightwing;};
 };
 
 #endif

@@ -1,6 +1,6 @@
 #include "MotionTrajectoryState.h"
 #include "kernel/log.h"
-#include "kernel/detection.h"
+#include "middleware/detection.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/control.h"
 #include "kernel/kinematics_model/kinematics_model.h"

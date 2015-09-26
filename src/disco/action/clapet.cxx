@@ -1,19 +1,11 @@
-
-
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "kernel/match.h"
 #include "disco/carpet.h"
 #include "disco/wing.h"
-
-#include "disco/robot_state.h"
-
 #include "clapet.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-Clapet::Clapet(VectPlan firstcheckpoint, const char * name, robotstate * robot):Action(firstcheckpoint, name)
+Clapet::Clapet(VectPlan firstcheckpoint, const char * name, RobotState * robot):Action(firstcheckpoint, name)
 {
 	if(robot != 0)
 	{
@@ -115,4 +107,3 @@ int Clapet::do_action()
 
 	return bresult;
 }
-

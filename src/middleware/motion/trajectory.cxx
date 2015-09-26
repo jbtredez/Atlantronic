@@ -11,8 +11,8 @@
 #include "kernel/log.h"
 #include "kernel/robot_parameters.h"
 #include "trajectory.h"
-#include "kernel/detection.h"
-#include "kernel/motion/graph.h"
+#include "middleware/detection.h"
+#include "graph.h"
 #include <stdlib.h>
 
 #define TRAJECTORY_STACK_SIZE       400

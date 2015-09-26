@@ -11,7 +11,7 @@
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/can_motor_mip.h"
 #include "kernel/math/vect_plan.h"
-#include "kernel/state_machine/StateMachine.h"
+#include "middleware/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
 #include "pid.h"
 

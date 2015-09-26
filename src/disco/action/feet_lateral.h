@@ -1,15 +1,13 @@
-
 #ifndef FEET_LATERAL_H
 #define FEET_LATERAL_H
 
-#include "kernel/stratege_machine/action.h"
-
-
+#include "middleware/stratege_machine/action.h"
 
 class FeetLateral : public Action
 {
 	private :
-	robotstate * m_elevator;
+		RobotState * m_elevator;
+
 	public:
 
 	////////////////////////////////////////////////
@@ -18,14 +16,7 @@ class FeetLateral : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	FeetLateral(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~FeetLateral(){};
+	FeetLateral(VectPlan firstcheckpoint, const char * name, RobotState * elevator);
 
 	////////////////////////////////////////////////
 	/// function    : do_action()

@@ -1,9 +1,7 @@
-
 #ifndef DROPSTART_H
 #define DROPSTART_H
 
-#include "kernel/stratege_machine/action.h"
-
+#include "middleware/stratege_machine/action.h"
 
 #define DROPSTART_APPROX_DIST       10
 
@@ -11,7 +9,7 @@
 class DropZone : public Action
 {
 	private :
-	robotstate * m_elevator;
+	RobotState * m_elevator;
 	int m_dropposition;
 	public:
 
@@ -21,14 +19,7 @@ class DropZone : public Action
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	DropZone(VectPlan firstcheckpoint, const char * name, robotstate * elevator);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~DropZone(){};
+	DropZone(VectPlan firstcheckpoint, const char * name, RobotState * elevator);
 
 	////////////////////////////////////////////////
 	/// function    : Exit()

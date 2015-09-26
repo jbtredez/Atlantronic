@@ -8,8 +8,8 @@
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
-#include "kernel/table.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/table.h"
+#include "middleware/motion/trajectory.h"
 
 #include "disco/wing.h"
 #include "disco/elevator.h"

@@ -9,7 +9,7 @@
 #include "linux/tools/cmd.h"
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
-#include "table.h"
+#include "middleware/table.h"
 
 static RobotInterface robotItf;
 static Qemu qemu;

@@ -4,7 +4,6 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/driver/xbee.h"
-#include "kernel/control.h"
 #include "kernel/location/location.h"
 #include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
@@ -17,6 +16,7 @@
 #include "kernel/pump.h"
 #include "kernel/match.h"
 #include "disco/elevator.h"
+#include "control.h"
 
 #define CONTROL_STACK_SIZE       350
 

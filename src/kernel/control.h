@@ -10,7 +10,7 @@
 #include "kernel/control/kinematics.h"
 #include "kernel/math/vect_plan.h"
 #include "kernel/math/matrix_homogeneous.h"
-#include "kernel/motion/motion.h"
+#include "middleware/motion/motion.h"
 #include "kernel/driver/encoder.h"
 #include "kernel/driver/dynamixel.h"
 

@@ -1,8 +1,8 @@
-
 #ifndef STRAT_SIMPLE_H
 #define STRAT_SIMPLE_H
 
 #include "kernel/stratege_machine/stratege.h"
+
 class stratcomplexedef : public strategy
 {
 	
@@ -15,20 +15,6 @@ class stratcomplexedef : public strategy
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	void Initialise(int stratcolor);
-	////////////////////////////////////////////////
-	/// function    : homologation()
-	/// descrition  : constructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	stratcomplexedef(){};
-	////////////////////////////////////////////////
-	/// function    : ~homologation()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~stratcomplexedef(){};
 
 	////////////////////////////////////////////////
 	/// function    : run()

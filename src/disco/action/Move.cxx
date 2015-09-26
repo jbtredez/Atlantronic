@@ -1,16 +1,11 @@
-
-
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
 #include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/Move.h"
-
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
 
 
 Move::Move(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, name)

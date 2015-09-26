@@ -1,7 +1,5 @@
-
-
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
 #include "kernel/driver/dynamixel.h"
@@ -9,11 +7,7 @@
 #include "kernel/location/location.h"
 #include "disco/action/feet_lateral.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-
-FeetLateral::FeetLateral(VectPlan firstcheckpoint, const char * name, robotstate * elevator):Action(firstcheckpoint, name)
+FeetLateral::FeetLateral(VectPlan firstcheckpoint, const char * name, RobotState * elevator):Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -126,6 +120,3 @@ int FeetLateral::do_action()
 	//m_try++;
 	//return -1;
 }
-	
-	
-

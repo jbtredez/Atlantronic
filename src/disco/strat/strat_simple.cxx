@@ -1,15 +1,7 @@
 #include "strat_simple.h"
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
-
-#include "kernel/log.h"
-
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-
+#include "middleware/motion/trajectory.h"
 #include "disco/robot_state.h"
-#include "kernel/stratege_machine/action.h"
 #include "disco/action/Move.h"
 
 ////////////////////////////////////////////////
@@ -18,7 +10,7 @@
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-void stratsimple::Initialise(int stratcolor)
+void StratSimple::Initialise(int stratcolor)
 {
 	m_stratcolor = stratcolor;
 	log_format(LOG_INFO, "couleur %d", (int)stratcolor );
@@ -38,7 +30,7 @@ void stratsimple::Initialise(int stratcolor)
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int stratsimple::run()
+int StratSimple::run()
 {
 	int result =0;
 	bool allDone = false;

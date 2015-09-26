@@ -1,16 +1,14 @@
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "kernel/match.h"
 #include "disco/carpet.h"
 #include "disco/robot_state.h"
 #include "disco/wing.h"
 
 #include "disco/robot_state.h"
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
 #include "deposecarpette.h"
 
-DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,robotstate * robot, bool right):Action(firstcheckpoint,name)
+DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,RobotState * robot, bool right):Action(firstcheckpoint,name)
 {
 	if( m_robot != 0)
 	{

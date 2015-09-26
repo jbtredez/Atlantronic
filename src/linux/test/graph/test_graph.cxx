@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "kernel/motion/graph.h"
+#include "middleware/motion/graph.h"
 
 int main()
 {

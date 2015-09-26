@@ -1,8 +1,5 @@
-
-#include "kernel/stratege_machine/action.h"
-#include "kernel/stratege_machine/action_composite.h"
-
-
+#include "action.h"
+#include "action_composite.h"
 
 ///////////////////////////////////////////////
 /// function    : actioncomposite()
@@ -10,7 +7,7 @@
 /// param       : firstcheckpoint : VectPlan first checkpoint of the action
 /// retrun      : none
 ////////////////////////////////////////////////	
-actioncomposite::actioncomposite(VectPlan firstcheckpoint,char * name):Action(firstcheckpoint,name)
+ActionComposite::ActionComposite(VectPlan firstcheckpoint,char * name):Action(firstcheckpoint,name)
 {
 	m_try = 0;
 	for( int i = 0 ; i< NB_MAX_COMPO_ACTION ; i++)
@@ -27,7 +24,7 @@ actioncomposite::actioncomposite(VectPlan firstcheckpoint,char * name):Action(fi
 /// param       : pointeur sur l'objet action
 /// retrun      : result of the operation -1 fail, 0 sucess
 ////////////////////////////////////////////////
-int actioncomposite::add_action(Action * p_action)
+int ActionComposite::add_action(Action * p_action)
 {
 	if( (p_action == 0) || (m_size_actionlist >= NB_MAX_COMPO_ACTION) )
 	{
@@ -45,7 +42,7 @@ int actioncomposite::add_action(Action * p_action)
 /// param       :int : type of the action
 /// retrun      : -1 if fail or Number of the action in the list  if sucess
 ////////////////////////////////////////////////
-Action * actioncomposite::find_action_not_done(int type, VectPlan position)
+Action * ActionComposite::find_action_not_done(int type, VectPlan position)
 {
 	
 	float distance = 99999;

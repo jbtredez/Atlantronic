@@ -1,39 +1,31 @@
-#ifndef CLAPET_H
-#define CLAPET_H
+#ifndef FEED_H
+#define FEED_H
 
 #include "middleware/stratege_machine/action.h"
+#include "middleware/stratege_machine/action_composite.h"
 #include "disco/robot_state.h"
 
-class Clapet : public Action
+class Feed : public ActionComposite
 {
 	private :
-		RobotState * m_robot;
+		RobotState * m_elevator;
 
 	public:
 		////////////////////////////////////////////////
-		/// function    : clapet()
+		/// function    : feed()
 		/// descrition  : constructor
 		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 		/// retrun      : none
 		////////////////////////////////////////////////
-		Clapet(VectPlan firstcheckpoint, const char * name, RobotState * robot);
+		Feed(VectPlan firstcheckpoint, char * name, RobotState * elevator);
 
 		////////////////////////////////////////////////
 		/// function    : do_action()
 		/// descrition  : execute the action
-		/// param       : astratcolor : int the color (GREEN OR YELLOW)
+		/// param       : none
 		/// retrun      : -1 if fail or 0 if sucess
 		////////////////////////////////////////////////
 		int do_action();
-
-
-		////////////////////////////////////////////////
-		/// function    : Exit()
-		/// descrition  : action effectue pour sortir de l'action proprement
-		/// param       : none
-		/// retrun      : none
-		////////////////////////////////////////////////
-		void Exit();
 }; 
 
 #endif

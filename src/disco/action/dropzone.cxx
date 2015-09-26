@@ -1,7 +1,5 @@
-
-
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
 
@@ -9,11 +7,7 @@
 #include "kernel/location/location.h"
 #include "disco/action/dropzone.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-
-DropZone::DropZone(VectPlan firstcheckpoint, const char * name, robotstate * elevator):Action(firstcheckpoint, name)
+DropZone::DropZone(VectPlan firstcheckpoint, const char * name, RobotState * elevator):Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -145,6 +139,3 @@ int DropZone::do_action()
 // on retourne -1 pour que l'action reste dans la pile de strat
 	return -1;//result;
 }
-	
-	
-

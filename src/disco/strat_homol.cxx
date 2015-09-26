@@ -1,3 +1,5 @@
+#include "action/Light.h"
+#include "action/MoveBackward.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -6,21 +8,19 @@
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "disco/wing.h"
 #include "disco/elevator.h"
 #include "disco/finger.h"
 #include "disco/recalage.h"
 
 #include "disco/robot_state.h"
-#include "kernel/stratege_machine/stratege.h"
+#include "middleware/stratege_machine/stratege.h"
 
 #include "disco/action/clapet.h"
 #include "disco/action/feet.h"
 #include "disco/action/feet_lateral.h"
 #include "disco/action/dropzone.h"
-#include "disco/action/movebackward.h"
-#include "disco/action/light.h"
 #include "disco/action/deposecarpette.h"
 #include "disco/action/gobelet.h"
 #include "disco/action/Move.h"
@@ -63,7 +63,7 @@ static void strat_task(void* arg)
 {
 	(void) arg;
 
-	robotstate robothomologation;
+	RobotState robothomologation;
 	robothomologation.setnumberelement(0);
 	robothomologation.setelevatorstate(ELEVATOR_EMPTY);
 
@@ -75,13 +75,13 @@ static void strat_task(void* arg)
 	//start
 	firstcheckpoint.x = 1000;
 	firstcheckpoint.y = 0;
-	movebackward startzone(firstcheckpoint, "Startzone");
+	MoveBackward startzone(firstcheckpoint, "Startzone");
 
 	//light 1
 	firstcheckpoint.x = 1285;
 	firstcheckpoint.y = 0;
 	firstcheckpoint.theta = 0;
-	light light1(firstcheckpoint, "Light 1", &robothomologation, false);
+	Light light1(firstcheckpoint, "Light 1", &robothomologation, false);
 
 
 	//Pied 1
@@ -152,7 +152,7 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = 250;
 	firstcheckpoint.y = -560;
 	firstcheckpoint.theta = -M_PI_2;
-	light light2(firstcheckpoint, "Light 2", &robothomologation, true);
+	Light light2(firstcheckpoint, "Light 2", &robothomologation, true);
 
 	//Pied 4
 	//firstcheckpoint.x = 1005;
@@ -163,7 +163,7 @@ static void strat_task(void* arg)
 	firstcheckpoint.y = 650;
 	feet feet5(firstcheckpoint, "Feet 5", &robothomologation);
 */
-	stratsimple strat;
+	StratSimple strat;
 
 //	strat.add_action(&light1);
 //	strat.add_action(&startzone);

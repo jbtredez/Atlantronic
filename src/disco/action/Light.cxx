@@ -1,18 +1,14 @@
-
+#include "Light.h"
 
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
+#include "middleware/motion/trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
 #include "kernel/driver/dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
-#include "disco/action/light.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-light::light(VectPlan firstcheckpoint, const char * name, robotstate * elevator, bool light2):Action(firstcheckpoint, name)
+Light::Light(VectPlan firstcheckpoint, const char * name, RobotState * elevator, bool light2):Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
 	{
@@ -29,7 +25,7 @@ light::light(VectPlan firstcheckpoint, const char * name, robotstate * elevator,
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int light::do_action()
+int Light::do_action()
 {
 	int result = -1;
 	int essai = 0;
@@ -113,6 +109,3 @@ int light::do_action()
 
 	return 0;
 }
-	
-	
-

@@ -1,19 +1,13 @@
-
+#include "Drop.h"
 
 #include "kernel/log.h"
-#include "kernel/motion/trajectory.h"
-#include "disco/robot_state.h"
+#include "middleware/motion/trajectory.h"
 #include "elevator.h"
 
 #include "disco/finger.h"
 #include "kernel/location/location.h"
-#include "disco/action/drop.h"
 
-#include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
-
-
-drop::drop(VectPlan firstcheckpoint,char * name, robotstate * elevator) :
+Drop::Drop(VectPlan firstcheckpoint,char * name, RobotState * elevator) :
 	Action(firstcheckpoint, name)
 {
 	if(elevator != 0)
@@ -29,7 +23,7 @@ drop::drop(VectPlan firstcheckpoint,char * name, robotstate * elevator) :
 /// param       : none
 /// retrun      : -1 if fail or 0 if sucess
 ////////////////////////////////////////////////
-int drop::do_action()
+int Drop::do_action()
 {
 	int result = -1;
 	int essai = 0;

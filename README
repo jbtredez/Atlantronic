@@ -37,10 +37,9 @@ Package Ubuntu:
 
 ---------------------------------------------------------
 Organisation des dossiers :
-src/kernel : Code générique ou commun aux cartes
-src/foo : Code pour la carte foo (obsolete)
-src/discovery : Code pour la carte discovery (obsolete)
-src/disco : Code pour la carte disco
+src/kernel : Code bas niveau (noyau temps réel + BSP de la carte + drivers)
+src/middleware : code réutilisable et non bas niveau
+src/disco : code spécifique pour l'année
 src/linux : Code utilitaire pour linux
 	- src/linux/modules : module usb pour les cartes foo et bar
 	- src/linu/test : tests unitaires réalisables sous linux

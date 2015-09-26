@@ -1,31 +1,24 @@
+#ifndef DROPSTART_H
+#define DROPSTART_H
 
-#ifndef LIGHT_H
-#define LIGHT_H
+#include "middleware/stratege_machine/action.h"
+#include "disco/robot_state.h"
 
-#include "kernel/stratege_machine/action.h"
+#define DROP_APPROX_DIST       10
 
-#define LIGHT_APPROX_DIST       100
-
-class light : public Action
+class Drop : public Action
 {
 	private :
-	robotstate * m_elevator;
+		RobotState * m_elevator;
 	public:
 
 	////////////////////////////////////////////////
-	/// function    : light()
+	/// function    : drop()
 	/// descrition  : constructor
 	/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 	/// retrun      : none
 	////////////////////////////////////////////////
-	light(VectPlan firstcheckpoint, const char * name, robotstate * elevator, bool light2);
-	////////////////////////////////////////////////
-	/// function    : ~action()
-	/// descrition  : destructor
-	/// param       : none
-	/// retrun      : none
-	////////////////////////////////////////////////
-	~light(){};
+	Drop(VectPlan firstcheckpoint, char * name, RobotState * elevator);
 
 	////////////////////////////////////////////////
 	/// function    : do_action()
@@ -34,7 +27,6 @@ class light : public Action
 	/// retrun      : -1 if fail or 0 if sucess
 	////////////////////////////////////////////////
 	int do_action();
-	bool m_light2;
 }; 
 
 #endif
