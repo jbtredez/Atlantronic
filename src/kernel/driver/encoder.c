@@ -13,17 +13,6 @@ static void encoder_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_
 
 static int encoder_module_init()
 {
-#if defined(__discovery__)
-	// activation GPIOB, GPIOC et GPIOD
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN;
-	// activation du timer 2, 3 et 4
-	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN;
-
-	encoder_init(ENCODER_1, GPIOB, 4, GPIOB, 5, TIM3, GPIO_AF_TIM3); // encoder 1
-	encoder_init(ENCODER_2, GPIOA, 15, GPIOB, 3, TIM2, GPIO_AF_TIM2); // encoder 2
-	encoder_init(ENCODER_3, GPIOD, 12, GPIOD, 13, TIM4, GPIO_AF_TIM4); // encoder 3
-
-#elif defined(__disco__)
 	// activation GPIOA, GPIOB, GPIOC et GPIOD
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN;
 	// activation du timer 2, 3 et 4
@@ -32,9 +21,6 @@ static int encoder_module_init()
 	encoder_init(ENCODER_1, GPIOA, 0, GPIOA, 1, TIM2, GPIO_AF_TIM2); // encoder 1
 	encoder_init(ENCODER_2, GPIOD, 12, GPIOB, 7, TIM4, GPIO_AF_TIM4); // encoder 2
 	encoder_init(ENCODER_3, GPIOB, 4, GPIOC, 7, TIM3, GPIO_AF_TIM3); // encoder 3
-#else
-#error unknown card
-#endif
 
 	return 0;
 }

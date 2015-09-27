@@ -35,29 +35,6 @@ static void spi_driver_init(const enum spi_driver id, SPI_TypeDef* spi_reg, GPIO
 
 int spi_module_init()
 {
-#if defined(__discovery__)
-	// activation du SPI1
-	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
-
-	// activation GPIOA (SCK, MOSI et MISO sur le port A) et GPIOE (CS de l'accelero) et dma2
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
-
-	// reset SPI1
-	RCC->APB2RSTR |= RCC_APB2RSTR_SPI1;
-	RCC->APB2RSTR &= ~RCC_APB2RSTR_SPI1;
-
-	spi_register_device(SPI_DEVICE_ACCELERO, GPIOE, 3);
-	spi_register_device(SPI_DEVICE_GYRO, GPIOE, 7);
-	//spi_register_device(SPI_DEVICE_GYRO, GPIOA, 8);
-	spi_driver_init(SPI_DRIVER_1, SPI1, GPIOA, 5, GPIOA, 6, GPIOA, 7, GPIO_AF_SPI1, DMA2_Stream3, 3, DMA2_Stream0, 3);
-
-	NVIC_EnableIRQ(SPI1_IRQn);
-	NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
-	NVIC_SetPriority(SPI1_IRQn, PRIORITY_IRQ_SPI);
-	NVIC_SetPriority(DMA2_Stream0_IRQn, PRIORITY_IRQ_DMA2_STREAM0);
-	NVIC_SetPriority(DMA2_Stream3_IRQn, PRIORITY_IRQ_DMA2_STREAM3);
-#elif defined(__disco__)
 	// activation du SPI5 et SPI6
 	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN /*| RCC_APB2ENR_SPI6EN*/;
 
@@ -89,9 +66,7 @@ int spi_module_init()
 	//NVIC_SetPriority(SPI6_IRQn, PRIORITY_IRQ_SPI);
 	//NVIC_SetPriority(DMA2_Stream5_IRQn, PRIORITY_IRQ_DMA2_STREAM5);
 	//NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
-#else
-#error unknown card
-#endif
+
 	return 0;
 }
 
@@ -186,60 +161,6 @@ static void spi_register_device(const enum spi_device id, GPIO_TypeDef* gpio_cs,
 	spi_driver[driverId].devices[deviceId].pin_cs = pin_cs;
 }
 
-#if defined(__discovery__)
-void isr_dma2_stream0()
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-	if( DMA2->LISR | DMA_LISR_TCIF0)
-	{
-		DMA2->LIFCR |= DMA_LIFCR_CTCIF0;
-		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-		xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_1].sem, &xHigherPriorityTaskWoken);
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-
-void isr_dma2_stream3()
-{
-	portBASE_TYPE xHigherPriorityTaskWoken = 0;
-	portSET_INTERRUPT_MASK_FROM_ISR();
-	if( DMA2->LISR | DMA_LISR_TCIF3)
-	{
-		DMA2->LIFCR |= DMA_LIFCR_CTCIF3;
-		DMA2_Stream3->CR &= ~DMA_SxCR_EN;
-
-		if( SPI1->CR1 & SPI_CR1_BIDIOE )
-		{
-			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_1].sem, &xHigherPriorityTaskWoken);
-		}
-	}
-
-	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
-}
-
-void isr_spi1(void)
-{
-	int status = SPI1->SR;
-	if( status & (SPI_SR_OVR | SPI_SR_MODF | SPI_SR_CRCERR) )
-	{
-		// TODO : remonter erreur + log erreur
-
-		// erreur MODF qui ne doit pas arriver (NSS soft et SSI = 1)
-		// erreur CRC qui ne doit pas arriver (pas active)
-
-		// on desactive le DMA de reception
-		DMA2_Stream0->CR &= ~DMA_SxCR_EN;
-
-		// clear overrun : lecture DR puis lecture SR
-		SPI1->DR;
-		SPI1->SR;
-	}
-}
-#elif defined(__disco__)
 void isr_dma2_stream3()
 {
 	portBASE_TYPE xHigherPriorityTaskWoken = 0;
@@ -295,9 +216,6 @@ void isr_spi5(void)
 		SPI5->SR;
 	}
 }
-#else
-#error unknown card
-#endif
 
 //! @return -1 si timeout ou erreur
 //! @return 0 sinon

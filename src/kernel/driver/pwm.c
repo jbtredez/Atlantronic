@@ -32,19 +32,6 @@ static void pwm_cmd(void* arg);
 
 static int pwm_module_init()
 {
-#if defined(__discovery__)
-	// activation GPIOE
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
-
-	pwn_pin_init(PWM_1, GPIOE, 9, &TIM1->CCR1, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 8);
-	pwn_pin_init(PWM_2, GPIOE, 11, &TIM1->CCR2, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 10);
-	pwn_pin_init(PWM_3, GPIOE, 13, &TIM1->CCR3, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 12);
-	pwn_pin_init(PWM_4, GPIOE, 14, &TIM1->CCR4, PWM_ARR1, GPIO_AF_TIM1, GPIOE, 15);
-
-	// activation clock sur le timer 1
-	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-	pwm_timer_init(TIM1, PWM_ARR1, PWM_CH1 | PWM_CH2 | PWM_CH3 | PWM_CH4);
-#elif defined(__disco__)
 	// activation GPIOA, GPIOC, GPIOE, GPIOF, GPIOG
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_GPIOGEN;
 
@@ -60,9 +47,6 @@ static int pwm_module_init()
 	// activation clock sur le timer 9
 	RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
 	pwm_timer_init(TIM9, PWM_ARR2, PWM_CH1 | PWM_CH2);
-#else
-#error unknown card
-#endif
 
 	usb_add_cmd(USB_CMD_PWM, pwm_cmd);
 

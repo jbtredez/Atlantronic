@@ -7,20 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 
-#if defined(__discovery__)
-enum spi_driver
-{
-	SPI_DRIVER_1 = 0,
-	SPI_DRIVER_MAX,
-};
-
-enum spi_device
-{
-	SPI_DEVICE_ACCELERO = (SPI_DRIVER_1 << 16),
-	SPI_DEVICE_GYRO,
-	SPI_DEVICE_UNUSED_SPI1,
-};
-#elif defined(__disco__)
 enum spi_driver
 {
 	SPI_DRIVER_5 = 0,
@@ -36,9 +22,6 @@ enum spi_device
 	SPI_DEVICE_UNUSED1_SPI6 = (SPI_DRIVER_6 << 16),
 	SPI_DEVICE_UNUSED2_SPI6,
 };
-#else
-#error unknown card
-#endif
 
 int spi_transaction(enum spi_device device, const void* tx_buffer, void* rx_buffer, uint16_t size);
 
