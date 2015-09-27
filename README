@@ -39,10 +39,18 @@ Package Ubuntu:
 
 ---------------------------------------------------------
 B/ Compilation
-compilation du code : make
-compilation qemu : make qemu
-compilation du module usb de communication : make modules
-installation du moduke usb de communication : make install
+
+compilation du code :
+make
+compilation qemu :
+il faut utiliser la branche Gitatlantronic-1.7.0-cortexm4 de qemu
+make qemu
+
+compilation du module usb de communication :
+make modules
+
+installation du moduke usb de communication :
+make install
 
 --------------------------------------------------------
 C/ Simulation 
