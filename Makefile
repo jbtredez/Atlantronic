@@ -150,6 +150,7 @@ $(bin)/$(ARCH)/%:
 	$(OBJCOPY) --only-keep-debug $@ $@.debug
 	$(OBJCOPY) --add-gnu-debuglink $@.debug $@
 	$(STRIP) $@
+	./scripts/checkMap $@ src/$(ARCH)/allowedFunctions || (rm $@.map $@.debug $@ && exit 1)
 
 #$(bin)/$(ARCH)/%.stat:
 #	$(SIZE) -B $(@:.stat=) | tail -n 1 | awk '{ print $$1/1000 "k / " ($$2 + $$3)/1000 "k  : $(@:.stat=)" }'
