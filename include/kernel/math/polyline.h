@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/math/vect2.h"
+#include "kernel/math/Vect2.h"
 
 struct polyline
 {

@@ -7,7 +7,7 @@
 
 
 #include <stdint.h>
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 #ifndef LINUX
 #include "kernel/module.h"
 #include "kernel/driver/usart.h"

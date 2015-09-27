@@ -9,7 +9,7 @@
 #include "disco/table.h"
 #include "middleware/motion/graph.h"
 #include "disco/robot_parameters.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 #include "main_shader.h"
 
 enum

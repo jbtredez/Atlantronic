@@ -1,8 +1,8 @@
 #ifndef VECT2_H
 #define VECT2_H
 
-//! @file vect2.h
-//! @brief vect2
+//! @file Vect2.h
+//! @brief Vect2
 //! @author Atlantronic
 
 #include <stdint.h>

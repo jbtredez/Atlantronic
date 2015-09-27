@@ -43,8 +43,8 @@ core_baz += kernel/driver/can.o
 
 core_robot += kernel/control.o
 core_robot += kernel/location/location.o
-core_robot += kernel/math/vect_plan.o
-core_robot += kernel/math/vect2.o
+core_robot += kernel/math/VectPlan.o
+core_robot += kernel/math/Vect2.o
 core_robot += kernel/math/regression.o
 #core_robot += kernel/math/matrix_homogeneous.o
 core_robot += kernel/math/segment_intersection.o

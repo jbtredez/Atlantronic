@@ -2,7 +2,7 @@
 //! @brief Changements de reperes
 //! @author Atlantronic
 
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 
 VectPlan transferSpeed(const VectPlan &A, const VectPlan &B, const VectPlan &speed)
 {

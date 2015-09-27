@@ -1,13 +1,13 @@
 #ifndef VECT_PLAN_H
 #define VECT_PLAN_H
 
-//! @file vect_plan.h
-//! @brief vect_plan
+//! @file VectPlan.h
+//! @brief VectPlan
 //! @author Atlantronic
 
 #include <stdint.h>
 #include <math.h>
-#include "vect2.h"
+#include "Vect2.h"
 
 #define EPSILON                                 1e-4
 
@@ -16,7 +16,7 @@
 class VectPlan : public Vect2
 {
 	public:
-		VectPlan()
+		VectPlan() : Vect2(0,0)
 		{
 			theta = 0;
 		}

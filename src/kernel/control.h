@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "kernel/systick.h"
 #include "kernel/control/kinematics.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 #include "kernel/math/matrix_homogeneous.h"
 #include "middleware/motion/motion.h"
 #include "kernel/driver/encoder.h"

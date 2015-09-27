@@ -10,7 +10,7 @@
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
 #include "kernel/CanMipMotor.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 #include "middleware/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
 #include "pid.h"

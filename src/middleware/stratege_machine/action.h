@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include "kernel/log.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 
 #define ACTION_NONE		-1
 

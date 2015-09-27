@@ -3,7 +3,7 @@
 
 #include "linux/tools/com/com_usb.h"
 #include "kernel/math/polyline.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 
 enum ObjectType
 {

@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 
 #define DETECTION_NUM_OBJECT                100
 #define DETECTION_NUM_OBJECT_USB             10

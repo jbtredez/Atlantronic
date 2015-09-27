@@ -1,7 +1,7 @@
 #ifndef REGRESSION_H
 #define REGRESSION_H
 
-#include "kernel/math/vect2.h"
+#include "kernel/math/Vect2.h"
 
 //! @file regression.h
 //! @brief Calcul d'une régression linéaire

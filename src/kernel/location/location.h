@@ -6,7 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 #include "kernel/control/kinematics.h"
 
 #ifndef WEAK_LOCATION

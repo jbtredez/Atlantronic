@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "kernel/math/vect2.h"
+#include "kernel/math/Vect2.h"
 #include "middleware/motion/graph.h"
 
 //!< le but est de générer les données du graph du code du robot

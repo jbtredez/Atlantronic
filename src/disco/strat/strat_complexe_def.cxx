@@ -1,10 +1,8 @@
 #include "strat_simple.h"
 #include "kernel/log.h"
 #include "kernel/motion/trajectory.h"
-
-
 #include "kernel/stratege_machine/action.h"
-#include "kernel/math/vect_plan.h"
+#include "kernel/math/VectPlan.h"
 
 
 

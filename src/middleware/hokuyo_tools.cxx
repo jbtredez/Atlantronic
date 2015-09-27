@@ -5,7 +5,7 @@
 #include "hokuyo_tools.h"
 #include "disco/robot_parameters.h"
 #include "kernel/systick.h"
-#include "kernel/math/vect2.h"
+#include "kernel/math/Vect2.h"
 #include "kernel/error_codes.h"
 
 #include <stdio.h>
