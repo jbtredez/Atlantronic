@@ -29,9 +29,9 @@ void DropZone::Exit()
 	do 
 	{
 		vTaskDelay(100);
-		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
+		trajectory.goToNear(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_ANY, AVOIDANCE_STOP) ;
 
-	}while(  trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
+	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 	
 }
 
@@ -64,9 +64,9 @@ int DropZone::do_action()
 	//On va dans la zone d'entrée de départ
 	do 
 	{
-		trajectory_goto_near(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNear(m_firstcheckpoint, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 		
-		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}
@@ -96,16 +96,16 @@ int DropZone::do_action()
 	do 
 	{
 		//on se déplace dans la zone de départ
-		trajectory_goto_near(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNear(dropzone, DROPSTART_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0 )
+		if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0 )
 		{
 			result = 0;
 		}
 
 		// on n'a pas besoin de precision ici. Si on est sur la zone, c'est bon.
 		// TODO on regarde le target not reached (pour eliminer collision) => verifier position actuelle a la place
-		if( TRAJECTORY_STATE_TARGET_NOT_REACHED == trajectory_get_state() )
+		if( TRAJECTORY_STATE_TARGET_NOT_REACHED == trajectory.getState() )
 		{
 			result = 0;
 		}

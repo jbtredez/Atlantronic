@@ -34,7 +34,6 @@ int Drop::do_action()
 		return -1;
 	}
 
-
 	Eelevator_state state = m_elevator->getelevatorstate();
 	VectPlan drop = m_firstcheckpoint;
 	//Si la reserve est vide
@@ -47,9 +46,9 @@ int Drop::do_action()
 	//On va dans à la position demandée
 	do 
 	{
-		trajectory_goto_near(drop, DROP_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNear(drop, DROP_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 		
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}
@@ -74,6 +73,3 @@ int Drop::do_action()
 	m_try = -1;
 	return result;
 }
-	
-	
-

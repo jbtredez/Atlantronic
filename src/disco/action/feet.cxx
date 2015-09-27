@@ -52,9 +52,9 @@ int feet::do_action()
 
 	do 
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNearXy(m_firstcheckpoint.x,m_firstcheckpoint.y, FEET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}

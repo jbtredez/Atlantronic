@@ -47,9 +47,9 @@ int Light::do_action()
 	{
 		do
 		{
-			trajectory_goto_near(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+			trajectory.goToNear(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-			if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+			if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 			{
 				result = 0;
 			}
@@ -68,8 +68,8 @@ int Light::do_action()
 		result = -1;
 		do
 		{
-			trajectory_goto_near(dest, 0, WAY_ANY, AVOIDANCE_STOP) ;
-			if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+			trajectory.goToNear(dest, 0, WAY_ANY, AVOIDANCE_STOP) ;
+			if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 			{
 				result = 0;
 			}
@@ -97,8 +97,8 @@ int Light::do_action()
 		int res = 0;
 		do
 		{
-			trajectory_goto_near(m_firstcheckpoint, 0, WAY_ANY, AVOIDANCE_STOP);
-			res = trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000);
+			trajectory.goToNear(m_firstcheckpoint, 0, WAY_ANY, AVOIDANCE_STOP);
+			res = trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000);
 			if( res != 0 )
 			{
 				vTaskDelay(500);

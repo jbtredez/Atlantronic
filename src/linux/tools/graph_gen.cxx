@@ -82,8 +82,8 @@ int main()
 	printf("GRAPH_NUM_NODE %d\n", num_nodes);
 	printf("GRAPH_NUM_LINK %d\n", 2*num_link);
 
-	struct graph_node* gnode = (struct graph_node*)malloc( sizeof(struct graph_node) * num_nodes);
-	struct graph_link* glink = (struct graph_link*)malloc( sizeof(struct graph_link) * 2 * num_link);
+	struct GraphNode* gnode = (struct GraphNode*)malloc( sizeof(struct GraphNode) * num_nodes);
+	struct GraphLink* glink = (struct GraphLink*)malloc( sizeof(struct GraphLink) * 2 * num_link);
 
 	for( i = 0; i < num_nodes; i++)
 	{
@@ -159,7 +159,7 @@ int main()
 	}
 
 	printf("\n//!< noeuds du graph\n");
-	printf("const struct graph_node graph_node[GRAPH_NUM_NODE] =\n{\n");
+	printf("const struct GraphNode Graph::graph_node[GRAPH_NUM_NODE] =\n{\n");
 	for( i = 0; i < num_nodes; i++)
 	{
 		printf("\t{Vect2( %8.2ff, %8.2ff), %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
@@ -167,7 +167,7 @@ int main()
 	printf("};\n");
 
 	printf("\n//!< liens du graph.\n");
-	printf("const struct graph_link graph_link[GRAPH_NUM_LINK] =\n{\n");
+	printf("const struct GraphLink Graph::graph_link[GRAPH_NUM_LINK] =\n{\n");
 	for( i = 0; i < 2*num_link; i++)
 	{
 		printf("\t{%2u, %2u, %4u, %9.6ff},\n", glink[i].a, glink[i].b, glink[i].dist, glink[i].alpha);

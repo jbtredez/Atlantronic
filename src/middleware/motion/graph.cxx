@@ -8,7 +8,7 @@
 
 
 //!< noeuds du graph
-const struct graph_node graph_node[GRAPH_NUM_NODE] =
+const struct GraphNode Graph::m_graphNode[GRAPH_NUM_NODE] =
 {
 	{Vect2( -1200.00f,   700.00f),  0,  3},
 	{Vect2(  1200.00f,   700.00f),  3,  3},
@@ -43,7 +43,7 @@ const struct graph_node graph_node[GRAPH_NUM_NODE] =
 };
 
 //!< liens du graph.
-const struct graph_link graph_link[GRAPH_NUM_LINK] =
+const struct GraphLink Graph::m_graphLink[GRAPH_NUM_LINK] =
 {
 	{ 0,  2,  200, -1.570796f},
 	{ 0,  4,  450,  0.000000f},
@@ -142,7 +142,7 @@ const struct graph_link graph_link[GRAPH_NUM_LINK] =
 };
 
 
-int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* valid_links)
+int Graph::dijkstra(int a, int b)
 {
 	int i;
 	int j;
@@ -150,32 +150,32 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 	// init
 	for( i=0 ; i < GRAPH_NUM_NODE; i++)
 	{
-		info[i].dist = 0xFFFF;
-		info[i].prev_node = a;
-		info[i].is_best = 0;
+		m_info[i].dist = 0xFFFF;
+		m_info[i].prev_node = a;
+		m_info[i].is_best = 0;
 	}
 
 	// a est a une distance de 0 de lui même et il n'y a pas mieux
-	info[a].dist = 0;
+	m_info[a].dist = 0;
 	i = a;
 
 	while( i != b)
 	{
-		info[i].is_best = 1;
+		m_info[i].is_best = 1;
 
-		int max = graph_node[i].link_id + graph_node[i].link_num;
-		for(j = graph_node[i].link_id; j < max; j++)
+		int max = m_graphNode[i].link_id + m_graphNode[i].link_num;
+		for(j = m_graphNode[i].link_id; j < max; j++)
 		{
-			if( valid_links[j])
+			if( m_validLinks[j])
 			{
-				int connected_node = graph_link[j].b;
+				int connected_node = m_graphLink[j].b;
 				// calcul de la distance en passant par la
-				uint16_t dist = info[i].dist + graph_link[j].dist;
-				if( info[connected_node].dist > dist)
+				uint16_t dist = m_info[i].dist + m_graphLink[j].dist;
+				if( m_info[connected_node].dist > dist)
 				{
 					// on a trouvé un chemin plus court pour aller vers "connected_node"
-					info[connected_node].dist = dist;
-					info[connected_node].prev_node = i;
+					m_info[connected_node].dist = dist;
+					m_info[connected_node].prev_node = i;
 				}
 			}
 		}
@@ -184,9 +184,9 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 		i = a;
 		for(j = 0; j<GRAPH_NUM_NODE; j++)
 		{
-			if( ! info[j].is_best && info[j].dist < best_dist)
+			if( ! m_info[j].is_best && m_info[j].dist < best_dist)
 			{
-				best_dist = info[j].dist;
+				best_dist = m_info[j].dist;
 				i = j;
 			}
 		}
@@ -197,12 +197,38 @@ int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* vali
 		}
 	}
 
-	info[i].is_best = 1;
+	m_info[i].is_best = 1;
+
+	// on met le chemin dans l'ordre de a vers b dans le tableau m_way
+	m_wayCount = 2;
+	i = b;
+	while(m_info[i].prev_node != a)
+	{
+		i = m_info[i].prev_node;
+		m_wayCount++;
+	}
+
+	m_way[0] = a;
+	j = m_wayCount - 1;
+	m_way[j] = b;
+	i = b;
+	while(m_info[i].prev_node != a)
+	{
+		i = m_info[i].prev_node;
+		j--;
+		m_way[j] = i;
+	}
+
+	// affichage debug
+	/*for(i=0; i < m_wayCount; i++)
+	{
+		log_format(LOG_INFO, "chemin - graph : %d : %d", i, m_way[i]);
+	}*/
 
 	return 0;
 }
 
-int graph_compute_node_distance(struct Vect2 pos, struct graph_node_dist* node_dist )
+int Graph::computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist )
 {
 	int i;
 	int j;
@@ -212,8 +238,8 @@ int graph_compute_node_distance(struct Vect2 pos, struct graph_node_dist* node_d
 
 	for(i = 0; i< GRAPH_NUM_NODE; i++)
 	{
-		dx = pos.x - graph_node[i].pos.x;
-		dy = pos.y - graph_node[i].pos.y;
+		dx = pos.x - m_graphNode[i].pos.x;
+		dy = pos.y - m_graphNode[i].pos.y;
 		dist = (uint16_t)sqrtf(dx * dx + dy * dy);
 
 		j = i-1;

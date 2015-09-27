@@ -4,7 +4,7 @@ FORBIDEN_FUNC=$(cat $1.map | grep ".text.*(.*\.o)" | cut -d'(' -f2 | cut -d')' -
 if [ "x${FORBIDEN_FUNC}" != "x" ]; then
 	echo "unexpected function used :"
 	echo ${FORBIDEN_FUNC} | awk '{print $0}' RS=' '
-	exit -1;
+	exit 1;
 fi
 
 exit 0;

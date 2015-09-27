@@ -27,6 +27,11 @@ class VectPlan : public Vect2
 			theta = Theta;
 		}
 
+		VectPlan(Vect2 a, float Theta) : Vect2(a)
+		{
+			theta = Theta;
+		}
+
 		inline VectPlan symetric(int color)
 		{
 			if( color == 1)
@@ -46,7 +51,6 @@ class VectPlan : public Vect2
 		    theta = a.theta;
 		    return *this;
 		};
-
 
 		inline VectPlan operator+( VectPlan b)
 		{

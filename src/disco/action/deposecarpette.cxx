@@ -25,8 +25,8 @@ void DeposeCarpette::Exit()
 	do
 	{
 		vTaskDelay(100);
-		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_BACKWARD, AVOIDANCE_STOP);
-	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0 );
+		trajectory.goToNearXy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_BACKWARD, AVOIDANCE_STOP);
+	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0 );
 
 
 }
@@ -59,13 +59,11 @@ int DeposeCarpette::do_action()
 	//On se déplace prés de l'escalier et on se met en position
 	nextToDropCarpette.theta = -1.57f;
 
-
-
 	//Mise en place de la position
-	trajectory_goto(nextToDropCarpette, WAY_FORWARD, AVOIDANCE_STOP);
+	trajectory.goTo(nextToDropCarpette, WAY_FORWARD, AVOIDANCE_STOP);
 
 	//Si on arrive pas à joindre la position on abandonne
-	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
+	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
 	{
 		m_try++;
 		return -1; 
@@ -75,8 +73,8 @@ int DeposeCarpette::do_action()
 	nextToDropCarpette.y = nextToDropCarpette.y + 80;
 
 	//On essaie de se déplacer 3 fois avant d'abandonner
-	trajectory_goto(nextToDropCarpette, WAY_BACKWARD, AVOIDANCE_STOP);
-	trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000);
+	trajectory.goTo(nextToDropCarpette, WAY_BACKWARD, AVOIDANCE_STOP);
+	trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 40000);
 	// pas de verif target reached, on est peut etre en collision avec la marche.
 
 	//On baisse pour déposer la carpette
@@ -104,9 +102,9 @@ int DeposeCarpette::do_action()
 	int essai = 0;
 	do
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_ANY, AVOIDANCE_STOP);
+		trajectory.goToNearXy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_ANY, AVOIDANCE_STOP);
 
-		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}

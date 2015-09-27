@@ -45,9 +45,9 @@ int Gobelet::do_action()
 
 	do 
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, GOBELET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_GRAPH) ;
+		trajectory.goToNearXy(m_firstcheckpoint.x, m_firstcheckpoint.y, GOBELET_APPROX_DIST, WAY_FORWARD, AVOIDANCE_GRAPH) ;
 
-		if ( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}

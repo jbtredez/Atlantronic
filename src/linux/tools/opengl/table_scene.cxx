@@ -204,16 +204,12 @@ void TableScene::printInfos(Graphique* graph)
 		m_glfont->m_textShader.setColor(graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK], graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK+1], graph->color[3*SUBGRAPH_TABLE_GRAPH_LINK+2], 1);
 		for(int i=0; i < GRAPH_NUM_LINK; i++)
 		{
-			int a = graph_link[i].a;
-			int b = graph_link[i].b;
+			GraphLink link = Graph::getLink(i);
 			// on trace les liens une seule fois
-			if( a < b)
+			if( link.a < link.b)
 			{
-				float x1 = graph_node[a].pos.x;
-				float y1 = graph_node[a].pos.y;
-				float x2 = graph_node[b].pos.x;
-				float y2 = graph_node[b].pos.y;
-				m_glfont->glPrintf_xcenter_ycenter(0.5f * (x1 + x2), 0.5f * (y1 + y2), 2.5, 2.5, "%d", graph_link[i].dist);
+				Vect2 p = 0.5f * (Graph::getNode(link.a) + Graph::getNode(link.b));
+				m_glfont->glPrintf_xcenter_ycenter(p.x, p.y, 2.5, 2.5, "%d", link.dist);
 			}
 		}
 	}
@@ -224,7 +220,8 @@ void TableScene::printInfos(Graphique* graph)
 		m_glfont->m_textShader.setColor(graph->color[3*SUBGRAPH_TABLE_GRAPH],graph->color[3*SUBGRAPH_TABLE_GRAPH+1],graph->color[3*SUBGRAPH_TABLE_GRAPH+2],1);
 		for(int i=0; i < GRAPH_NUM_NODE; i++)
 		{
-			m_glfont->glPrintf_xcenter_yhigh2(graph_node[i].pos.x, graph_node[i].pos.y, 2.5, 2.5, "%d", i);
+			Vect2 p = Graph::getNode(i);
+			m_glfont->glPrintf_xcenter_yhigh2(p.x, p.y, 2.5, 2.5, "%d", i);
 		}
 	}
 
@@ -458,14 +455,13 @@ void TableScene::draw(Graphique* graph)
 		unsigned int pointCount = 0;
 		for(int i=0; i < GRAPH_NUM_LINK; i++)
 		{
-			int a = graph_link[i].a;
-			int b = graph_link[i].b;
+			GraphLink link = Graph::getLink(i);
 			// on trace les liens une seule fois
-			if( a < b)
+			if( link.a < link.b)
 			{
-				pt[pointCount] = graph_node[a].pos;
+				pt[pointCount] = Graph::getNode(link.a);
 				pointCount++;
-				pt[pointCount] = graph_node[b].pos;
+				pt[pointCount] = Graph::getNode(link.b);
 				pointCount++;
 			}
 		}
@@ -479,7 +475,7 @@ void TableScene::draw(Graphique* graph)
 		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_GRAPH]);
 		for(int i=0; i < GRAPH_NUM_NODE; i++)
 		{
-			pt[i] = graph_node[i].pos;
+			pt[i] = Graph::getNode(i);
 		}
 		m_graphPointObject.update((float*)pt, GRAPH_NUM_NODE);
 		m_graphPointObject.render(GL_POINTS);

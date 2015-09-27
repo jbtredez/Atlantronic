@@ -1090,7 +1090,8 @@ int RobotInterface::goto_graph()
 
 int RobotInterface::goto_graph_node(int id)
 {
-	return goto_near_xy(graph_node[id].pos.x, graph_node[id].pos.y, 0, WAY_ANY, AVOIDANCE_GRAPH);
+	Vect2 p = Graph::getNode(id);
+	return goto_near_xy(p.x, p.y, 0, WAY_ANY, AVOIDANCE_GRAPH);
 }
 
 int RobotInterface::free()

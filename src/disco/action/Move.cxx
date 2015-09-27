@@ -24,8 +24,8 @@ int Move::do_action()
 	do
 	{
 		vTaskDelay(100);
-		trajectory_goto_near(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNear(m_firstcheckpoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-	}while(  trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
+	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 	return 0;
 }

@@ -64,8 +64,8 @@ int Clapet::do_action()
 
 	do 
 	{
-		trajectory_goto_near_xy(m_firstcheckpoint.x,m_firstcheckpoint.y, 0, WAY_FORWARD, AVOIDANCE_GRAPH);
-		if (trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
+		trajectory.goToNearXy(m_firstcheckpoint.x,m_firstcheckpoint.y, 0, WAY_FORWARD, AVOIDANCE_GRAPH);
+		if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) == 0)
 		{
 			result = 0;
 			log_format(LOG_INFO, "WAIT NEW ORDER");
@@ -92,8 +92,8 @@ int Clapet::do_action()
 
 	vTaskDelay(300);
 
-	trajectory_rotate_to(nextToClap.theta);
-	if(trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
+	trajectory.rotateTo(nextToClap.theta);
+	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 40000) != 0)
 	{
 		m_try++;
 		return -1;

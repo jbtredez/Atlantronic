@@ -38,7 +38,7 @@ void recalage()
 
 	KinematicsParameters linParamOrig;
 	KinematicsParameters angParamOrig;
-	trajectory_get_kinematics_param(&linParamOrig, &angParamOrig);
+	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
 
 	KinematicsParameters linParam = {100, 300, 300};
 	KinematicsParameters angParam = angParamOrig;
@@ -46,16 +46,16 @@ void recalage()
 	angParam.aMax /= 2;
 	angParam.dMax /= 2;
 
-	trajectory_set_kinematics_param(linParam, angParam);
+	trajectory.setKinematicsParam(linParam, angParam);
 
-	trajectory_disable_hokuyo();
-	trajectory_disable_static_check();
+	trajectory.enableHokuyo(false);
+	trajectory.enableStaticCheck(false);
 	motion.enableAntico(false);
 
 	motion.enable(true);
-	trajectory_straight(200);
+	trajectory.straight(200);
 
-	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
+	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
@@ -69,27 +69,27 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory_straight(-200 + PARAM_LEFT_CORNER_X);
-	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+	trajectory.straight(-200 + PARAM_LEFT_CORNER_X);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
 	if( color == COLOR_GREEN )
 	{
-		trajectory_rotate_to(0);
+		trajectory.rotateTo(0);
 	}
 	else
 	{
-		trajectory_rotate_to(M_PI);
+		trajectory.rotateTo(M_PI);
 	}
-	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
 
-	trajectory_straight(200);
-	if( trajectory_wait(TRAJECTORY_STATE_COLISION, 10000) )
+	trajectory.straight(200);
+	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
@@ -111,8 +111,8 @@ void recalage()
 
 	vTaskDelay(200);*/
 
-	trajectory_goto_near(posInit.symetric(color), 0, WAY_ANY, AVOIDANCE_STOP);
-	if( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
+	trajectory.goToNear(posInit.symetric(color), 0, WAY_ANY, AVOIDANCE_STOP);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
@@ -125,9 +125,9 @@ void recalage()
 	log(LOG_INFO, "recalage termine");
 
 free:
-	trajectory_set_kinematics_param(linParamOrig, angParamOrig);
-//	trajectory_free();
-	trajectory_enable_hokuyo();
-	trajectory_enable_static_check();
+	trajectory.setKinematicsParam(linParamOrig, angParamOrig);
+	//	trajectory.trajectory_free();
+	trajectory.enableHokuyo(true);
+	trajectory.enableStaticCheck(true);
 	motion.enableAntico(true);
 }

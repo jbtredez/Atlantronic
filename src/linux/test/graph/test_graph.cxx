@@ -3,33 +3,32 @@
 
 int main()
 {
+	Graph graph;
 	int i;
-	struct graph_dijkstra_info info[GRAPH_NUM_NODE];
-	uint8_t valid_links[GRAPH_NUM_LINK];
 
 	for(i=0; i< GRAPH_NUM_LINK; i++)
 	{
-		valid_links[i] = 1;
+		graph.setValidLink(i, true);
 	}
 
-	valid_links[16] = 0; // 6 - 3
-	valid_links[9] = 0;  // 3 - 6
-	valid_links[37] = 0; // 14 - 15
-	valid_links[39] = 0;  // 15 - 14
+	graph.setValidLink(16, false); // 6 - 3
+	graph.setValidLink(9, false);  // 3 - 6
+	graph.setValidLink(37, false); // 14 - 15
+	graph.setValidLink(39, false);  // 15 - 14
 
-	int res = graph_dijkstra(14, 0, info, valid_links);
+	int res = graph.dijkstra(14, 0);
 
 	printf("dijkstra : res = %d\n", res);
 
-	for(i = 0; i<GRAPH_NUM_NODE ; i++)
+	/*for(i = 0; i<GRAPH_NUM_NODE ; i++)
 	{
-		printf("%3d : %6d %3d %d\n", i, info[i].dist, info[i].prev_node, info[i].is_best);
-	}
+		printf("%3d : %6d %3d %d\n", i, graph.m_info[i].dist, graph.m_info[i].prev_node, graph.m_info[i].is_best);
+	}*/
 
 
 	Vect2 pos(-350, -600);
-	struct graph_node_dist node_dist[GRAPH_NUM_NODE];
-	graph_compute_node_distance(pos, node_dist);
+	struct GraphNodeDist node_dist[GRAPH_NUM_NODE];
+	graph.computeNodeDistance(pos, node_dist);
 
 	printf("graph_compute_node_distance :\n");
 

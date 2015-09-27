@@ -11,7 +11,7 @@
 #define GRAPH_NUM_NODE          30
 #define GRAPH_NUM_LINK          94
 
-struct graph_link
+struct GraphLink
 {
 	uint8_t a;         //!< noeud de depart
 	uint8_t b;         //!< noeud d'arrivé
@@ -19,35 +19,59 @@ struct graph_link
 	float alpha;       //!< angle de la droite dans le repère absolu (table)
 };
 
-struct graph_node
+struct GraphNode
 {
 	struct Vect2 pos;
 	uint8_t link_id;
 	uint8_t link_num;
 };
 
-struct graph_dijkstra_info
+struct GrapgDijkstraInfo
 {
 	uint16_t dist;
 	uint8_t prev_node;
 	uint8_t is_best;
 };
 
-struct graph_node_dist
+struct GraphNodeDist
 {
 	uint16_t dist;
 	uint16_t id;
 };
 
-extern const struct graph_node graph_node[GRAPH_NUM_NODE];
-extern const struct graph_link graph_link[GRAPH_NUM_LINK];
+class Graph
+{
+	public:
+		//! lancement de l'algo dijkstra entre a et b
+		int dijkstra(int a, int b);
 
-//! graph_dijkstra_info* info : tableau de taille minimale GRAPH_NUM_NODE
-//! valid_links : tableau de taille minimale GRAPH_NUM_LINK
-int graph_dijkstra(int a, int b, struct graph_dijkstra_info* info, uint8_t* valid_links);
+		//! calcule la distance entre le point et tout les noeuds du graph
+		//! resultat dans un tableau trié de la plus petite distance à la plus grande
+		int computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist);
 
-//! calcule la distance entre le point et tout les noeuds du graph
-//! resultat dans un tableau trié de la plus petite distance à la plus grande
-int graph_compute_node_distance(struct Vect2 pos, struct graph_node_dist* node_dist );
+		inline void setValidLink(int id, bool valid)
+		{
+			m_validLinks[id] = valid;
+		}
+
+		inline static Vect2 getNode(int id)
+		{
+			return m_graphNode[id].pos;
+		}
+
+		inline static GraphLink getLink(int id)
+		{
+			return m_graphLink[id];
+		}
+
+		uint8_t m_way[GRAPH_NUM_NODE];
+		int m_wayCount;
+
+	protected:
+		struct GrapgDijkstraInfo m_info[GRAPH_NUM_NODE];
+		bool m_validLinks[GRAPH_NUM_LINK];
+		static const struct GraphNode m_graphNode[GRAPH_NUM_NODE];
+		static const struct GraphLink m_graphLink[GRAPH_NUM_LINK];
+};
 
 #endif

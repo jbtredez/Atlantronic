@@ -7,6 +7,8 @@
 
 #include "motion.h"
 #include "kernel/location/location.h"
+#include "middleware/detection.h"
+#include "graph.h"
 
 enum trajectory_cmd_type
 {
@@ -47,52 +49,96 @@ struct trajectory_cmd_arg
 	float dist;
 } __attribute__ (( packed ));
 
-void trajectory_get_kinematics_param(KinematicsParameters* linParam, KinematicsParameters* angParam);
+class Trajectory
+{
+	public:
+		Trajectory();
 
-void trajectory_set_kinematics_param(KinematicsParameters linParam, KinematicsParameters angParam);
+		int init();
 
-//!< roue libre
-void trajectory_free();
+		void getKinematicsParam(KinematicsParameters* linParam, KinematicsParameters* angParam);
 
-//!< rejoindre le graph
-void trajectory_goto_graph();
+		void setKinematicsParam(KinematicsParameters linParam, KinematicsParameters angParam);
 
-void trajectory_goto_graph_node(uint32_t node_id, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		//!< roue libre
+		void freeWheel();
 
-void trajectory_goto_near_xy(float x, float y, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		//!< rejoindre le graph
+		void goToGraph();
 
-void trajectory_goto_near(VectPlan dest, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		void goToGraphNode(uint32_t node_id, float dist, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_goto(VectPlan dest, enum motion_way way, enum avoidance_type avoidance_type);
+		void goToNearXy(float x, float y, float dist, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_rotate(float theta);
+		void goToNear(VectPlan dest, float dist, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_rotate_to(float theta);
+		void goTo(VectPlan dest, enum motion_way way, enum avoidance_type avoidance_type);
 
-void trajectory_straight(float dist);
+		void rotate(float theta);
 
-void trajectory_straight_to_wall();
+		void rotateTo(float theta);
 
-//!< desactivation de l'arrêt sur obstacle détecté par hokuyo
-void trajectory_disable_hokuyo();
+		void straight(float dist);
 
-//!< activation de l'arrêt sur obstacle détecté par hokuyo
-void trajectory_enable_hokuyo();
+		void straightToWall();
 
-//!< desactivation de l'arrêt sur obstacle statique
-void trajectory_enable_static_check();
+		//!< activation  /desactivation de l'arrêt sur obstacle statique
+		inline void enableStaticCheck(bool enable)
+		{
+			m_staticCheckEnable = enable;
+		}
 
-//!< activation de l'arrêt sur obstacle statique
-void trajectory_disable_static_check();
+		//!< activation / desactivation de l'arrêt sur obstacle détecté par hokuyo
+		inline void enableHokuyo(bool enable)
+		{
+			m_hokuyoEnableCheck = enable;
+		}
 
-enum trajectory_state trajectory_get_state();
-////////////////////////////////////////////////
-/// function    : trajectory_wait()
-/// descrition  : Waiting function of trajectory move functions
-/// param       : wanted_state = enum trajectory_state
-/// param       : timeout = uint32_t time_out (<0 no time-out but buffer overflow!!!!)
-/// retrun      : -1 if fail or 0 if sucess
-////////////////////////////////////////////////
-int trajectory_wait(enum trajectory_state wanted_state, uint32_t timeout);
+		inline enum trajectory_state getState()
+		{
+			return m_trajectoryState;
+		}
+		////////////////////////////////////////////////
+		/// function    : trajectory_wait()
+		/// descrition  : Waiting function of trajectory move functions
+		/// param       : wanted_state = enum trajectory_state
+		/// param       : timeout = uint32_t time_out (<0 no time-out but buffer overflow!!!!)
+		/// retrun      : -1 if fail or 0 if sucess
+		////////////////////////////////////////////////
+		int wait(enum trajectory_state wanted_state, uint32_t timeout);
+
+		static void trajectory_task(void* arg);
+
+	protected:
+		friend void trajectoryCmd(void* arg);
+		void trajectoryTask();
+		void simplifyPath(enum detection_type type);
+		void computeGraph(enum detection_type type);
+		void update();
+		int findWayToGraph(VectPlan pos, enum detection_type detect_type);
+		void updateRequest();
+
+		// requete pour la tache trajectory + mutex
+		struct trajectory_cmd_arg m_request;
+		bool m_newRequest;
+		xSemaphoreHandle m_mutex;
+
+		// donnees privees a la tache
+		VectPlan m_pos; //!< position du robot au moment du reveil de la tache
+		VectPlan m_dest;
+		float m_approxDist;
+		enum motion_way m_way;
+		enum trajectory_cmd_type m_type;
+		enum avoidance_type m_avoidanceType;
+		enum trajectory_state m_trajectoryState;
+		bool m_hokuyoEnableCheck; //!< utilisation ou non des hokuyos
+		bool m_staticCheckEnable; //!< verification des éléments statiques
+		uint8_t m_graphWayId;
+		KinematicsParameters m_linearParam;
+		KinematicsParameters m_angularParam;
+		Graph m_graph;
+};
+
+extern Trajectory trajectory;
 
 #endif

@@ -21,9 +21,9 @@ int MoveBackward::do_action()
 
 	do
 	{
-	    trajectory_goto_near_xy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_ANY, AVOIDANCE_STOP);
+		trajectory.goToNearXy(m_firstcheckpoint.x, m_firstcheckpoint.y, 0, WAY_ANY, AVOIDANCE_STOP);
 	
 		vTaskDelay(100);
-	}while( trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0); 
+	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0);
 	return 0;
 }

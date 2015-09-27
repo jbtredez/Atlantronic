@@ -52,9 +52,9 @@ int FeetLateral::do_action()
 
 	do 
 	{
-		trajectory_goto_near_xy(p1.x,p1.y, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNearXy(p1.x,p1.y, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}
@@ -72,9 +72,9 @@ int FeetLateral::do_action()
 
 	do
 	{
-		trajectory_goto_near_xy(p2.x,p2.y, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNearXy(p2.x,p2.y, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
-		if (   trajectory_wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
+		if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) == 0)
 		{
 			result = 0;
 		}
