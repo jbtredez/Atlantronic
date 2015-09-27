@@ -8,7 +8,7 @@
 #include "linux/tools/robot_interface.h"
 #include "disco/table.h"
 #include "middleware/motion/graph.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
 #include "main_shader.h"
 

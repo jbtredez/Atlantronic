@@ -15,7 +15,7 @@ void MotionTryEnableState::run(void* data)
 	{
 		m->m_kinematics[i].pos = m->m_kinematicsMes[i].pos;
 		m->m_kinematics[i].v = 0;
-		can_motor[i].enable(true);
+		m->m_canMotor[i].enable(true);
 	}
 }
 
@@ -32,7 +32,7 @@ unsigned int MotionTryEnableState::transition(void* data, unsigned int currentSt
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
-		all_op_enable &= can_motor[i].is_op_enable();
+		all_op_enable &= m->m_canMotor[i].is_op_enable();
 	}
 
 	if( all_op_enable )

@@ -24,7 +24,7 @@ void MotionDisabledState::run(void* data)
 	{
 		m->m_kinematics[i].pos = m->m_kinematicsMes[i].pos;
 		m->m_kinematics[i].v = 0;
-		can_motor[i].enable(false);
+		m->m_canMotor[i].enable(false);
 	}
 }
 

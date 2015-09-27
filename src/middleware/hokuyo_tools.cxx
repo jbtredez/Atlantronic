@@ -2,8 +2,8 @@
 //! @brief Hokuyo tools
 //! @author Atlantronic
 
-#include "kernel/hokuyo_tools.h"
-#include "kernel/robot_parameters.h"
+#include "hokuyo_tools.h"
+#include "disco/robot_parameters.h"
 #include "kernel/systick.h"
 #include "kernel/math/vect2.h"
 #include "kernel/error_codes.h"

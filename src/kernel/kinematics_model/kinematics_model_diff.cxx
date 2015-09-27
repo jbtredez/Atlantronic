@@ -3,7 +3,7 @@
 //! @author Atlantronic
 
 #include "kinematics_model.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "kernel/log.h"
 
 #include <math.h>

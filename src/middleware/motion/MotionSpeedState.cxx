@@ -1,6 +1,6 @@
 #include "MotionSpeedState.h"
 #include "kernel/log.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "kernel/control.h"
 #include "kernel/kinematics_model/kinematics_model.h"
 

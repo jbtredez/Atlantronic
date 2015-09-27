@@ -1,9 +1,9 @@
-#ifndef CAN_MOTOR_H
-#define CAN_MOTOR_H
+#ifndef CAN_MIP_MOTOR_H
+#define CAN_MIP_MOTOR_H
 
 #include <stdint.h>
 #include "kernel/can/can_id.h"
-#include "kernel/can_mip.h"
+#include "kernel/CanMipNode.h"
 #include "kernel/control/kinematics.h"
 #include "kernel/fault.h"
 
@@ -121,7 +121,5 @@ class CanMipMotor : public CanMipNode
 	protected:
 		uint32_t configure(MotorWriteConfIndex idx, uint32_t val);
 };
-
-extern CanMipMotor can_motor[CAN_MOTOR_MAX];
 
 #endif

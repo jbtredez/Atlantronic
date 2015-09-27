@@ -4,7 +4,7 @@
 #include <math.h>
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/cli.h"
-#include "kernel/hokuyo_tools.h"
+#include "middleware/hokuyo_tools.h"
 #include "kernel/math/regression.h"
 #include "kernel/log_level.h"
 #include "kernel/systick.h"

@@ -9,7 +9,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "trajectory.h"
 #include "middleware/detection.h"
 #include "graph.h"

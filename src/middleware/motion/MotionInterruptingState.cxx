@@ -21,7 +21,7 @@ unsigned int MotionInterruptingState::transition(void* data, unsigned int curren
 	Motion* m = (Motion*) data;
 	for(int i = 0; i < CAN_MOTOR_MAX; i++ )
 	{
-		if( can_motor[i].is_in_motion() )
+		if( m->m_canMotor[i].is_in_motion() )
 		{
 			return MOTION_INTERRUPTING;
 		}

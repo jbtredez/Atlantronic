@@ -1,4 +1,3 @@
-
 #define WEAK_MOTION
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
@@ -15,7 +14,7 @@
 #include "kernel/driver/pwm.h"
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "middleware/detection.h"
 #include "kernel/match.h"
 #include "MotionDisabledState.h"
@@ -70,6 +69,23 @@ Motion::Motion() :
 	m_anticoOn = true;
 	m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
 	m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+
+	m_canMotor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
+	m_canMotor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
+	m_canMotor[CAN_MOTOR_RIGHT].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING2_RED);
+	m_canMotor[CAN_MOTOR_RIGHT].name = "moteur droit";
+	m_canMotor[CAN_MOTOR_RIGHT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
+
+	m_canMotor[CAN_MOTOR_LEFT].nodeId = CAN_MOTOR_LEFT_NODEID;
+	m_canMotor[CAN_MOTOR_LEFT].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
+	m_canMotor[CAN_MOTOR_LEFT].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
+	m_canMotor[CAN_MOTOR_LEFT].name = "moteur gauche";
+	m_canMotor[CAN_MOTOR_LEFT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_1;
+
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		can_mip_register_node(&m_canMotor[i]);
+	}
 }
 
 int Motion::init()
@@ -94,12 +110,12 @@ void Motion::compute()
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
-		if( ! can_motor[i].is_op_enable() )
+		if( ! m_canMotor[i].is_op_enable() )
 		{
 			motor_mes_valid = 0;
 		}
 
-		m_kinematicsMes[i] = can_motor[i].kinematics;
+		m_kinematicsMes[i] = m_canMotor[i].kinematics;
 	}
 
 	if( motor_mes_valid )
@@ -134,11 +150,11 @@ void Motion::motionUpdateMotors()
 	{
 		if( m_kinematics[i].mode == KINEMATICS_SPEED )
 		{
-			can_motor[i].set_speed(m_kinematics[i].v);
+			m_canMotor[i].set_speed(m_kinematics[i].v);
 		}
 		else if( m_kinematics[i].mode == KINEMATICS_POSITION )
 		{
-			can_motor[i].set_position(m_kinematics[i].pos);
+			m_canMotor[i].set_position(m_kinematics[i].pos);
 		}
 	}
 
@@ -208,7 +224,7 @@ unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
-		all_op_enable &= can_motor[i].is_op_enable();
+		all_op_enable &= m_canMotor[i].is_op_enable();
 	}
 
 	if( power_get() || ! all_op_enable || m_enableWanted == MOTION_ENABLE_WANTED_OFF)
@@ -289,8 +305,8 @@ void Motion::enable(bool enable)
 
 void Motion::setMaxDrivingCurrent(float maxCurrent)
 {
-	can_motor[0].set_max_current(maxCurrent);
-	can_motor[1].set_max_current(maxCurrent);
+	m_canMotor[0].set_max_current(maxCurrent);
+	m_canMotor[1].set_max_current(maxCurrent);
 }
 
 void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
@@ -368,7 +384,7 @@ void Motion::updateUsbData(struct control_usb_data* data)
 	{
 		data->cons_motors_v[i] = m_kinematics[i].v;
 		data->mes_motors[i] = m_kinematicsMes[i];
-		data->mes_motor_current[i] = can_motor[i].current;
+		data->mes_motor_current[i] = m_canMotor[i].current;
 	}
 
 	xSemaphoreGive(m_mutex);

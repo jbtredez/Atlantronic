@@ -4,7 +4,6 @@
 
 #include "kernel/driver/hokuyo.h"
 #include "kernel/rcc.h"
-#include "kernel/hokuyo_tools.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"

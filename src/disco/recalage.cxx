@@ -4,7 +4,7 @@
 #include "kernel/systick.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-#include "kernel/robot_parameters.h"
+#include "disco/robot_parameters.h"
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"

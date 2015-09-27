@@ -39,7 +39,7 @@ unsigned int MotionEnabledState::transition(void* data, unsigned int currentStat
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
-		all_op_enable &= can_motor[i].is_op_enable();
+		all_op_enable &= m->m_canMotor[i].is_op_enable();
 	}
 
 	if( power_get() || ! all_op_enable || m->m_enableWanted == MOTION_ENABLE_WANTED_OFF )

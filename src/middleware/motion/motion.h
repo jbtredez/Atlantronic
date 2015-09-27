@@ -9,7 +9,7 @@
 
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
-#include "kernel/can_motor_mip.h"
+#include "kernel/CanMipMotor.h"
 #include "kernel/math/vect_plan.h"
 #include "middleware/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
@@ -216,6 +216,7 @@ class Motion
 		bool m_anticoOn;
 		static StateMachineState* m_motionStates[MOTION_MAX_STATE];
 		StateMachine m_motionStateMachine;
+		CanMipMotor m_canMotor[CAN_MOTOR_MAX];
 };
 
 extern Motion motion;

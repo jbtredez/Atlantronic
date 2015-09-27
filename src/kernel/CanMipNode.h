@@ -1,5 +1,5 @@
-#ifndef CAN_MIP_H
-#define CAN_MIP_H
+#ifndef CAN_MIP_NODE_H
+#define CAN_MIP_NODE_H
 
 #include "kernel/driver/can.h"
 #include "kernel/FreeRTOS.h"

@@ -5,7 +5,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 #define WEAK_CAN_MIP
-#include "kernel/can_mip.h"
+#include "CanMipNode.h"
 
 #define CAN_STACK_SIZE             250
 #define CAN_READ_QUEUE_SIZE         50

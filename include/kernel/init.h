@@ -32,7 +32,6 @@
 
 // init de la communication
 #define INIT_CAN                      "10"
-#define INIT_CAN_MOTOR                "11"
 
 #define INIT_SDRAM                    "12"
 #define INIT_I2C                      "13"
