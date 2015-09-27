@@ -171,7 +171,7 @@ static void adc_init(uint8_t id, GPIO_TypeDef* gpio, uint8_t pin, uint8_t an)
 
 void adc_update()
 {
-	int end = (sizeof(adc_data) - ADC_DMA_CHAN->NDTR) / sizeof(adc_data[0]);
+	int end = (sizeof(adc_data) - ADC_DMA_CHAN->NDTR*sizeof(uint16_t)) / sizeof(adc_data[0]);
 	int count = end - adc_startId;
 	if( count < 0 )
 	{
