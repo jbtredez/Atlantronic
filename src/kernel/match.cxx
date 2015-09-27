@@ -19,7 +19,7 @@
 uint32_t match_time = 90000; //!< duree du match en ms
 volatile int match_color;
 volatile uint8_t match_go;
-volatile uint8_t match_color_change_enable;
+static volatile uint8_t match_color_change_enable;
 volatile uint8_t match_enable_go = 0;
 static xQueueHandle match_queue_go;
 static xQueueHandle match_queue_recal;
@@ -30,6 +30,7 @@ static void match_task(void *arg);
 static void match_cmd_set_time(void* arg);
 static void match_cmd_go(void* arg);
 static void match_cmd_color(void* arg);
+static void match_wait_recal();
 
 static int match_module_init()
 {
@@ -66,8 +67,10 @@ static void match_task(void *arg)
 
 	match_wait_recal();
 	recalage();
-	match_enable_go = true;
+	match_color_change_enable = 0;
+	match_enable_go = 1;
 	match_wait_go();
+
 	uint32_t msg[3];
 	struct systime t = systick_get_time();
 	msg[0] = t.ms;
@@ -127,7 +130,7 @@ static void match_cmd_go(void * arg)
 			}
 			break;
 		case MATCH_CMD_RECALAGE:
-			recalage();
+			xQueueSend(match_queue_recal, NULL, 0);
 			break;
 		default:
 			log_format(LOG_ERROR, "unknown go cmd %d", cmd_arg->cmd);
@@ -188,7 +191,6 @@ portBASE_TYPE match_set_color_from_isr(void)
 		int ioColor = GPIO_MASK(IO_COLOR) & gpio_get_state();
 		if(ioColor)
 		{
-
 			pwm_set(PWM_1, 0.5);
 			pwm_set(PWM_2, 0);
 			match_color = COLOR_GREEN;

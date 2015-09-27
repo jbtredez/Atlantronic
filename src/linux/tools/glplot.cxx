@@ -1187,7 +1187,10 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	{
 		// simulation : on change l'io
 		ioColor = !ioColor;
-		qemu->setPosition(qemuStartPos.symetric(color));
+		if( robotItf->last_control_usb_data.pos.x == 0 && robotItf->last_control_usb_data.pos.y == 0 && ! robotItf->get_gpio(1 << (GPIO_IN_GO+1)))
+		{
+			qemu->setPosition(qemuStartPos.symetric(color));
+		}
 		qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
 	}
 	else

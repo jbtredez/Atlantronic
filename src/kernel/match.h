@@ -12,12 +12,6 @@ extern volatile int match_end;
 portBASE_TYPE match_go_from_isr(void);
 portBASE_TYPE match_set_color_from_isr(void);
 
-static inline void match_color_change_disable()
-{
-	extern volatile uint8_t match_color_change_enable;
-	match_color_change_enable = 0;
-}
-
 static inline int match_get_color()
 {
 	extern volatile int match_color;
@@ -30,14 +24,7 @@ static inline uint8_t match_get_go()
 	return match_go;
 }
 
-static inline uint8_t match_is_go_enable()
-{
-	extern volatile uint8_t match_enable_go;
-	return match_enable_go;
-}
-
 void match_wait_go();
-void match_wait_recal();
 
 // ---------------- interface usb ------------
 enum
