@@ -13,7 +13,7 @@ obj-linux-itf-core += kernel/hokuyo_tools.o
 obj-linux-itf-core += kernel/math/regression.o
 obj-linux-itf-core += kernel/math/vect_plan.o
 obj-linux-itf-core += kernel/math/matrix_homogeneous.o
-obj-linux-itf-core += middleware/table.o
+obj-linux-itf-core += disco/table.o
 obj-linux-itf-core += middleware/motion/graph.o
 
 obj-linux-usb_interface += $(obj-linux-itf-core)

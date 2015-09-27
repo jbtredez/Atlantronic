@@ -1,7 +1,8 @@
 Programmes du robot d'Atlantronic pour la compétition EUROBOT.
 Site : http://atlantronic.toile-libre.org/
 
-Requirements :
+---------------------------------------------------------
+A/ Dependances
 "arm-none-eabi" toolchaine (thumb2, cortex m3 soft-float et cortex m4 hard-float) :
 	- binutils-2.25
 	- gcc-4.9.2 (patch t-arm-elf, cf dossier toolchain)
@@ -36,18 +37,69 @@ Package Ubuntu:
 	- libglm-dev
 
 ---------------------------------------------------------
-Organisation des dossiers :
+B/ Compilation
+compilation du code : make
+compilation qemu : make qemu
+compilation du module usb de communication : make modules
+installation du moduke usb de communication : make install
+
+--------------------------------------------------------
+C/ Simulation 
+exemple simulation avec le binaire arm homologation :
+cd Atlantronic
+./bin/linux/glplot -s bin/disco/homologation
+
+--------------------------------------------------------
+D/ Installation sur cible
+dans un premier terminal : ./scripts/jtag/gdb_server_discovery
+dans un second terminal : arm-none-eabi-gdb -q bin/disco/homologation -ex "target remote localhost:1234"
+programmer : prog
+
+---------------------------------------------------------
+E/ Organisation des dossiers
 src/kernel : Code bas niveau (noyau temps réel + BSP de la carte + drivers)
 src/middleware : code réutilisable et non bas niveau
 src/disco : code spécifique pour l'année
 src/linux : Code utilitaire pour linux
-	- src/linux/modules : module usb pour les cartes foo et bar
+	- src/linux/modules : module usb de communication avec la carte
 	- src/linu/test : tests unitaires réalisables sous linux
 	- src/linux/tools : outils
 qemu : qemu modifié pour la simulation
 
---------------------------------------------------------
-exemple simulation avec le binaire arm homologation :
-cd Atlantronic
-./bin/linux/glplot -s bin/disco/homologation
+---------------------------------------------------------
+F/ Regles de codage
+- Code en anglais et commentaires en français
+- Utiliser le c++ principalement
+- (c++) Le nom d'un fichier doit être identique au nom de la classe qu'il contient.
+- Le nom du fichier .h est identique au nom du fichier.c ou .cxx
+- La première lettre de chaque mot qui compose le nom de la classe,enum ou structure doit être en Majuscule
+exemple :
+MotionTool  -> OK
+Motion_Tool -> KO
+motion_tool -> KO
+- (c++) Les variables d'une classe posédent toujours un préfixe m_ devant le nom de la variable (sauf éléments mathématiques vecteur.x ,....)
+Classe:
+- Les variables pointeurs possédent toujours un p après le préfixe s'il existe et avant le nom de la variable
+ex membre d'une classe
+bool   m_theVariable  		   -> OK
+bool   m_TheVariable  		   -> KO
+bool * m_ppointeurOfTheVariable    -> OK
+
+variable 
+bool theVariable    -> OK
+bool TheVariable    -> KO
+bool * ptheVariable -> OK
+- utiliser la macro assert pour vérifier des choses toujours vraie (pointeur non null par exemple) pour avoir la vérification uniquement en debug
+- Les destructeurs ne sont pas à créer (sauf cas exceptionnel) car on utilise que des déclarations statiques.
+- Les constructeurs ne sont pas à créer s'ils ne font rien.
+- Méthode / fonction : La première lettre de chaque mot sauf du premier mot qui compose le nom de la méthode doit être en Majuscule
+ex:
+void openWindows() -> OK
+void OpenWindows() -> KO
+void open_Windows() -> KO
+- Il faut toujours mettre des accolades pour les if, for, while, Switch....
+- Les If ternaire "très simple" sont authorisés
+- Pour chaque cas de switch un break est présent à la fin. Si un break n'est pas présent un commentaire indique que c'est normal.
+- Il est possible d'utiliser des return pour sortir au plus vite des fonctions en cas d'erreur
+- Il est possible d'utiliser les goto seulement et seulement pour la gestion des cas d'erreur dans les sections critiques (mutex) pour être sur de quitter la zone critique normalement.
 

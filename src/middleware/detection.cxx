@@ -13,7 +13,7 @@
 #include "kernel/math/segment_intersection.h"
 #include "kernel/math/polyline.h"
 #include "kernel/location/location.h"
-#include "table.h"
+#include "disco/table.h"
 #include "detection.h"
 
 //! @todo réglage au pif

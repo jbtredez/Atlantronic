@@ -1,6 +1,5 @@
 #include "table_scene.h"
 
-
 static float robot2dVectrices[] =
 {
 	PARAM_NP_X, PARAM_RIGHT_CORNER_Y,

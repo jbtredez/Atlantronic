@@ -6,7 +6,7 @@
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/robot_interface.h"
-#include "middleware/table.h"
+#include "disco/table.h"
 #include "middleware/motion/graph.h"
 #include "kernel/robot_parameters.h"
 #include "kernel/math/vect_plan.h"
