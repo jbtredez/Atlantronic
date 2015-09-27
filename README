@@ -101,5 +101,5 @@ void open_Windows() -> KO
 - Les If ternaire "très simple" sont authorisés
 - Pour chaque cas de switch un break est présent à la fin. Si un break n'est pas présent un commentaire indique que c'est normal.
 - Il est possible d'utiliser des return pour sortir au plus vite des fonctions en cas d'erreur
-- Il est possible d'utiliser les goto seulement et seulement pour la gestion des cas d'erreur dans les sections critiques (mutex) pour être sur de quitter la zone critique normalement.
+- Il est possible d'utiliser les goto seulement et seulement pour la gestion des cas d'erreur llorsqu'il y a des ressources a liberer (mutex) pour être sur de liberer les ressources correctement
 

@@ -303,7 +303,7 @@ void DynamixelManager::send(struct dynamixel_request *req)
 	res = usart_wait_read(usart, DYNAMIXEL_READ_TIMEOUT);
 	if( res )
 	{
-		goto end;
+		goto end_unlock;
 	}
 
 	buffer = read_dma_buffer;
@@ -314,7 +314,7 @@ void DynamixelManager::send(struct dynamixel_request *req)
 		{
 			// erreur, on n'a pas lus ce qui a été envoyé
 			res = ERR_DYNAMIXEL_SEND_CHECK;
-			goto end;
+			goto end_unlock;
 		}
 	}
 
@@ -328,14 +328,14 @@ void DynamixelManager::send(struct dynamixel_request *req)
 		{
 			// erreur protocole
 			res = ERR_DYNAMIXEL_PROTO;
-			goto end;
+			goto end_unlock;
 		}
 
 		if( buffer[size - 1] != dynamixel_checksum(buffer, size))
 		{
 			// erreur checksum
 			res = ERR_DYNAMIXEL_CHECKSUM;
-			goto end;
+			goto end_unlock;
 		}
 
 		req->status.error.internal_error = buffer[4];
@@ -351,7 +351,7 @@ void DynamixelManager::send(struct dynamixel_request *req)
 		}
 	}
 
-end:
+end_unlock:
 	if(res && ! (res & ERR_USART_TIMEOUT) )
 	{
 		// on vide tout ce qui traine dans le buffer de reception

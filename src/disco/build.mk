@@ -79,7 +79,7 @@ core_robot += middleware/motion/trajectory.o
 #core_robot += kernel/pump.o
 #core_robot += kernel/arm.o
 
-core_robot += kernel/driver/stepper_driver.o
+core_robot += kernel/driver/StepperDriver.o
 core_robot += disco/elevator.o
 core_robot += disco/finger.o
 core_robot += disco/wing.o

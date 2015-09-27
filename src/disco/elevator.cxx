@@ -4,7 +4,7 @@
 
 #define WEAK_ELEVATOR
 #include "elevator.h"
-#include "kernel/driver/stepper_driver.h"
+#include "kernel/driver/StepperDriver.h"
 #include "kernel/driver/io.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"

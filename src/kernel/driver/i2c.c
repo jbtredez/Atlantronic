@@ -330,8 +330,7 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 	if( I2C3->SR2 & I2C_SR2_BUSY )
 	{
 		// busy
-		res = I2C_ERROR_BUSY;
-		goto done;
+		return I2C_ERROR_BUSY;
 	}
 
 	xSemaphoreTake(i2c_mutex, portMAX_DELAY);
@@ -405,6 +404,5 @@ I2c_error i2c_transaction(uint16_t addr, void* tx_data, uint16_t tx_size, void* 
 			break;
 	}
 
-done:
 	return res;
 }

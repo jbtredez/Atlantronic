@@ -63,7 +63,7 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned in
 
 		if (i >= size - 1)
 		{
-			goto end;
+			return res;
 		}
 
 		// debut de l'objet
@@ -95,7 +95,7 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned in
 		{
 			if(obj_size == 0)
 			{
-				goto end;
+				return res;
 			}
 			obj_size--;
 			obj->pt = hokuyo_pos + object_start;
@@ -105,6 +105,5 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned in
 		}
 	}
 
-end:
 	return res;
 }

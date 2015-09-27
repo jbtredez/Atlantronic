@@ -39,14 +39,12 @@ int regression_linear(float* x, float* y, float* w, int size, float* a, float* b
 	float det = swx2 * sw - swx * swx;
 	if(det == 0)
 	{
-		err = -1;
-		goto end;
+		return -1;
 	}
 
 	*a = (sw * swxy - swx * swy) / det;
 	*b = (- swx * swxy + swx2 * swy) / det;
 
-end:
 	return err;
 }
 #endif
@@ -73,7 +71,7 @@ int regression_poly(Vect2* pt, int size, int seuil, Vect2* regression_pt, int re
 
 	if(a >= size)
 	{
-		goto end;
+		return 0;
 	}
 
 	regression_pt[0] = pt[a];
@@ -86,7 +84,7 @@ int regression_poly(Vect2* pt, int size, int seuil, Vect2* regression_pt, int re
 
 	if( a == b)
 	{
-		goto end;
+		return regression_num;
 	}
 
 	regression_pt[1] = pt[b];
@@ -147,10 +145,9 @@ int regression_poly(Vect2* pt, int size, int seuil, Vect2* regression_pt, int re
 
 		if(b >= size)
 		{
-			goto end;
+			return regression_num;
 		}
 	}
 
-end:
 	return regression_num;
 }
