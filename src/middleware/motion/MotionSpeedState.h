@@ -5,7 +5,7 @@
 //! @brief Etat MotionSpeed
 //! @author Atlantronic
 
-#include "motion.h"
+#include "Motion.h"
 
 class MotionSpeedState : public StateMachineState
 {

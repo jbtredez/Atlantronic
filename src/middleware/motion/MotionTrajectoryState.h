@@ -5,7 +5,7 @@
 //! @brief Etat MotionTrajectory
 //! @author Atlantronic
 
-#include "motion.h"
+#include "Motion.h"
 
 class MotionTrajectoryState : public StateMachineState
 {

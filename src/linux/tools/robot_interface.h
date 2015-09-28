@@ -23,7 +23,7 @@
 #include "middleware/detection.h"
 #include "kernel/driver/io.h"
 #include "kernel/match.h"
-#include "middleware/motion/trajectory.h"
+#include "middleware/trajectory/Trajectory.h"
 #include "disco/wing.h"
 #include "disco/finger.h"
 #include "disco/carpet.h"

@@ -14,7 +14,7 @@ obj-linux-itf-core += kernel/math/regression.o
 obj-linux-itf-core += kernel/math/VectPlan.o
 obj-linux-itf-core += kernel/math/matrix_homogeneous.o
 obj-linux-itf-core += disco/table.o
-obj-linux-itf-core += middleware/motion/graph.o
+obj-linux-itf-core += middleware/trajectory/Graph.o
 
 obj-linux-usb_interface += $(obj-linux-itf-core)
 obj-linux-usb_interface += linux/tools/usb_interface.o

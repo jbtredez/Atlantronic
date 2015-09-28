@@ -1,4 +1,4 @@
-#include "graph.h"
+#include "Graph.h"
 #include <math.h>
 
 //! Le tableau graph_link doit être trié et il doit y avoir un liens dans chaque sens (avec la même distance)

@@ -1,7 +1,7 @@
 #include "Drop.h"
 
 #include "kernel/log.h"
-#include "middleware/motion/trajectory.h"
+#include "middleware/trajectory/Trajectory.h"
 #include "elevator.h"
 
 #include "disco/finger.h"

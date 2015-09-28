@@ -1,7 +1,7 @@
 #ifndef MOTION_H
 #define MOTION_H
 
-//! @file motion.h
+//! @file Motion.h
 //! @brief Gestion du deplacement du robot (asservissement)
 //! @author Atlantronic
 

@@ -7,7 +7,7 @@
 #include "linux/tools/graphique.h"
 #include "linux/tools/robot_interface.h"
 #include "disco/table.h"
-#include "middleware/motion/graph.h"
+#include "middleware/trajectory/Graph.h"
 #include "disco/robot_parameters.h"
 #include "kernel/math/VectPlan.h"
 #include "main_shader.h"

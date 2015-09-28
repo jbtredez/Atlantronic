@@ -1,7 +1,7 @@
 #include "MoveBackward.h"
 
 #include "kernel/log.h"
-#include "middleware/motion/trajectory.h"
+#include "middleware/trajectory/Trajectory.h"
 #include "kernel/location/location.h"
 
 MoveBackward::MoveBackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)

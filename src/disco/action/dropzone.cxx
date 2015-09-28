@@ -1,5 +1,5 @@
 #include "kernel/log.h"
-#include "middleware/motion/trajectory.h"
+#include "middleware/trajectory/Trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
 

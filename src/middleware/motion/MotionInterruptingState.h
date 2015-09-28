@@ -5,7 +5,7 @@
 //! @brief Etat MotionInterrupting
 //! @author Atlantronic
 
-#include "motion.h"
+#include "Motion.h"
 
 class MotionInterruptingState : public StateMachineState
 {

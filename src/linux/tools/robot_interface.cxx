@@ -12,7 +12,7 @@
 #include "kernel/driver/xbee.h"
 #include "kernel/pump.h"
 #include "kernel/match.h"
-#include "middleware/motion/graph.h"
+#include "middleware/trajectory/Graph.h"
 #include "disco/elevator.h"
 
 #ifndef VERSION

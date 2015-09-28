@@ -5,7 +5,7 @@
 //! @brief Etat MotionTryEnable
 //! @author Atlantronic
 
-#include "motion.h"
+#include "Motion.h"
 
 class MotionTryEnableState : public StateMachineState
 {

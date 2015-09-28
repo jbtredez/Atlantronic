@@ -1,4 +1,4 @@
-//! @file trajectory.h
+//! @file Trajectory.h
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
@@ -10,7 +10,7 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "disco/robot_parameters.h"
-#include "trajectory.h"
+#include "Trajectory.h"
 #include <stdlib.h>
 
 #define TRAJECTORY_STACK_SIZE       400

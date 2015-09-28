@@ -1,14 +1,14 @@
 #ifndef TRAJECTORY_H
 #define TRAJECTORY_H
 
-//! @file trajectory.h
+//! @file Trajectory.h
 //! @brief Generation de trajectoire
 //! @author Atlantronic
 
-#include "motion.h"
+#include "middleware/motion/Motion.h"
 #include "kernel/location/location.h"
 #include "middleware/detection.h"
-#include "graph.h"
+#include "Graph.h"
 
 enum trajectory_cmd_type
 {

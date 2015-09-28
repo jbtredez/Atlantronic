@@ -7,7 +7,7 @@
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
 #include "kernel/control.h"
-#include "motion.h"
+#include "Motion.h"
 #include "kernel/location/location.h"
 #include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"

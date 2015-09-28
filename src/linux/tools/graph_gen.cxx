@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "kernel/math/Vect2.h"
-#include "middleware/motion/graph.h"
+#include "middleware/trajectory/Graph.h"
 
 //!< le but est de générer les données du graph du code du robot
 //!< à partir d'une liste de noeud et des liens bidirectionels
