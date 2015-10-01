@@ -5,7 +5,7 @@
 
 extern volatile int match_end;
 
-#define COLOR_YELLOW     -1     //!< couleur avec x negatif (=> -1)
+#define COLOR_PINK     -1     //!< couleur avec x negatif (=> -1)
 //#define COLOR_UNKNOWN     0     //!< couelur inconnue (non choisie)
 #define COLOR_GREEN       1     //!< couleur avec x positif (=> 1)
 

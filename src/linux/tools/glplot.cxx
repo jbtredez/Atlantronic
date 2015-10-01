@@ -1174,7 +1174,7 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 {
 	if( color == COLOR_GREEN )
 	{
-		color = COLOR_YELLOW;
+		color = COLOR_PINK;
 	}
 	else
 	{
@@ -1214,11 +1214,11 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	else
 	{
 #ifdef GTK3
-		GdkRGBA yellow = {1, 1, 0, 1};
-		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &yellow);
+		GdkRGBA pink = {1, 0.25, 1, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &pink);
 #else
-		GdkColor yellow = {0, 65535, 65535, 0};
-		gtk_color_button_set_color(switchColorBtn, &yellow);
+		GdkColor pink = {0, 65535, 16384, 65535};
+		gtk_color_button_set_color(switchColorBtn, &pink);
 #endif
 	}
 }
