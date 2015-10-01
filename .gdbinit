@@ -54,8 +54,10 @@ define _ptasks
 	set $static_alloc = (unsigned int)&_ebss - (unsigned int)&_sdata - sizeof(ucHeap)
 	set $malloc_percent = 100.0f * xNextFreeByte / (float)sizeof(ucHeap)
 	set $ram_size = (unsigned int)&_estack - (unsigned int)&_sdata
+	set $total_alloc = $static_alloc + xNextFreeByte
 	printf "static alloc : %5i\n", $static_alloc
 	printf "malloc       : %5i / %5i (%6.2f%%)\n", xNextFreeByte, sizeof(ucHeap), $malloc_percent
+	printf "total alloc  : %5i (%6.2f%%)\n", $total_alloc, 100.0f * $total_alloc / (float) $ram_size
 	printf "main stack   : %5i\n", $ram_size - $static_alloc - sizeof(ucHeap)
 	printf "uptime       : %10.6f\n", $systime
 	printf "match_time   : %10.6f\n", $match_time
