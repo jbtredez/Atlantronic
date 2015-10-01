@@ -205,7 +205,7 @@ bool Object3d::init(const char* filename, MainShader* shader)
 
 	if( ! m_scene )
 	{
-		fprintf(stderr, "aiImportFile error\n");
+		fprintf(stderr, "aiImportFile error %s\n", filename);
 		goto done;
 	}
 

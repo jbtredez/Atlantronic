@@ -6,13 +6,13 @@ bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5], MainSha
 	showElements = true;
 	m_shader = shader;
 
-	bool res = table.init("media/table2015.obj", shader);
-	res &= dispenser.init("media/distributeur.obj", shader);
-	res &= clapYellow.init("media/clap_jaune.obj", shader);
-	res &= clapGreen.init("media/clap_vert.obj", shader);
-	res &= feetYellow.init("media/pied_jaune.obj", shader);
-	res &= feetGreen.init("media/pied_vert.obj", shader);
-	res &= glass.init("media/verre.obj", shader);
+	bool res = table.init("media/2015/table2015.obj", shader);
+	res &= dispenser.init("media/2015/distributeur.obj", shader);
+	res &= clapYellow.init("media/2015/clap_jaune.obj", shader);
+	res &= clapGreen.init("media/2015/clap_vert.obj", shader);
+	res &= feetYellow.init("media/2015/pied_jaune.obj", shader);
+	res &= feetGreen.init("media/2015/pied_vert.obj", shader);
+	res &= glass.init("media/2015/verre.obj", shader);
 
 	feetPosition[0] = aiVector3D(-1410, -850, 0);
 	feetPosition[1] = aiVector3D(-1410, -750, 0);

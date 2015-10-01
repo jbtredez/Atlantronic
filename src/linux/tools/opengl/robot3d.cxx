@@ -3,11 +3,11 @@
 bool Robot3d::init(MainShader* shader)
 {
 	m_shader = shader;
-	bool res = m_mobileBase.init("media/robot2015.obj", shader);
-	res &= m_wing.init("media/wing.obj", shader);
-	res &= m_elevator.init("media/elevator.obj", shader);
-	res &= m_finger.init("media/finger.obj", shader);
-	res &= m_carpet.init("media/brasTapis.obj", shader);
+	bool res = m_mobileBase.init("media/2015/robot2015.obj", shader);
+	res &= m_wing.init("media/2015/wing.obj", shader);
+	res &= m_elevator.init("media/2015/elevator.obj", shader);
+	res &= m_finger.init("media/2015/finger.obj", shader);
+	res &= m_carpet.init("media/2015/brasTapis.obj", shader);
 
 	rightWingTheta = 0;
 	leftWingTheta = 0;
