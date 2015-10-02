@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include "kernel/math/polyline.h"
 
-#define TABLE_OBJ_SIZE                      9
+#define TABLE_OBJ_SIZE                      6
 
 extern struct polyline table_obj[TABLE_OBJ_SIZE];
 

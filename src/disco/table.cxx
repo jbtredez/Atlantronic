@@ -3,80 +3,90 @@
 #define ARRAY_SIZE(a)               (sizeof(a)/sizeof(a[0]))
 
 //!< contour de la table
-const struct Vect2 table_contour[] =
+const struct Vect2 tableContour[] =
 {
-	Vect2( -1500, -1000), Vect2( -1500, 1000 ), Vect2( 1500, 1000 ), Vect2( 1500, -1000 ), Vect2( -1500, -1000 )
+	Vect2( -1500, -1000), Vect2( -1500, 1000 ),
+	Vect2( -700, 1000 ), Vect2( -700, 800 ), Vect2( -678, 800 ), Vect2( -678, 1000 ),
+	Vect2( 678, 1000 ), Vect2( 678, 800 ), Vect2( 700, 800 ), Vect2( 700, 1000 ),
+	Vect2( 1500, 1000 ), Vect2( 1500, -1000 ),
+	Vect2( 572, -1000 ), Vect2( 572, -978 ), Vect2( 550, -978 ), Vect2( 550, -1000 ),
+	Vect2( -550, -1000 ), Vect2( -550, -978 ), Vect2( -572, -978 ), Vect2( -572, -1000 ),
+	Vect2( -1500, -1000 )
 };
 
-const struct Vect2 table_estrade[] =
+const struct Vect2 tableCenter[] =
 {
-	Vect2( -300, -1000), Vect2( -300, -900 ), Vect2( 300, -900 ), Vect2( 300, -1000 )
+	Vect2(-600, 250), Vect2(600, 250), Vect2(600, 228), Vect2(24, 228),
+	Vect2(24, -350), Vect2(-24, -350),
+	Vect2(-24, 228), Vect2(-600, 228), Vect2(-600, 250)
 };
 
-const struct Vect2 table_bordure_marches[] =
+const struct Vect2 tableCorner1[] =
 {
-	Vect2(-533, 1000), Vect2(-533, 410), Vect2(-511, 410), Vect2(-511, 978), Vect2(-11, 978), Vect2(-11, 410), Vect2(11, 410), Vect2(11, 978), Vect2(511, 978), Vect2(511, 410), Vect2(533, 410), Vect2(533, 1000)
+	Vect2( -1250, -1000 ),
+	Vect2( -1262.235872, -922.745749 ),
+	Vect2( -1297.745754, -853.053683 ),
+	Vect2( -1353.053692, -797.745748 ),
+	Vect2( -1422.745760, -762.235868 ),
+	Vect2( -1500, -750 ),
 };
 
-const struct Vect2 table_marches_jaunes[] =
+const struct Vect2 tableCorner2[] =
 {
-	Vect2(-511, 410), Vect2(-11, 410), Vect2(-11, 480), Vect2(-511, 480), Vect2(-511, 550), Vect2(-11, 550), Vect2(-11, 620), Vect2(-511, 620)
+	Vect2( 1250, -1000 ),
+	Vect2( 1262.235872, -922.745749 ),
+	Vect2( 1297.745754, -853.053683 ),
+	Vect2( 1353.053692, -797.745748 ),
+	Vect2( 1422.745760, -762.235868 ),
+	Vect2( 1500, -750 ),
 };
 
-const struct Vect2 table_marches_vertes[] =
+const struct Vect2 tableGreenStart[] =
 {
-	Vect2(511, 410), Vect2(11, 410), Vect2(11, 480), Vect2(511, 480), Vect2(511, 550), Vect2(11, 550), Vect2(11, 620), Vect2(511, 620)
+	Vect2( 1500, -100 ),
+	Vect2( 1200, -100 ),
+	Vect2( 1200, 400 ),
+	Vect2( 1500, 400 ),
 };
 
-const struct Vect2 table_depart_vert[] =
+const struct Vect2 tablePurpleStart[] =
 {
-	Vect2(1500, -222), Vect2(1100, -222), Vect2(1100, -200), Vect2(1430, -200), Vect2(1430, 200), Vect2(1100, 200), Vect2(1100, 222), Vect2(1500, 222)
+	Vect2( -1500, -100 ),
+	Vect2( -1200, -100 ),
+	Vect2( -1200, 400 ),
+	Vect2( -1500, 400 ),
 };
-
-const struct Vect2 table_depart_jaune[] =
-{
-	Vect2(-1500, -222), Vect2(-1100, -222), Vect2(-1100, -200), Vect2(-1430, -200), Vect2(-1430, 200), Vect2(-1100, 200), Vect2(-1100, 222), Vect2(-1500, 222)
-};
-
-const struct Vect2 table_depart_jaune_block[] =
-{
-	Vect2(-1100, -222), Vect2(-850, -222), Vect2(-850, 222), Vect2(-1100, 222)
-};
-
-const struct Vect2 table_depart_vert_block[] =
-{
-	Vect2(1100, -222), Vect2(850, -222), Vect2(850, 222), Vect2(1100, 222)
-};
-
 
 struct polyline table_obj[TABLE_OBJ_SIZE] =
 {
-	{ (Vect2*) table_contour, ARRAY_SIZE(table_contour) },
-	{ (Vect2*) table_estrade, ARRAY_SIZE(table_estrade) },
-	{ (Vect2*) table_bordure_marches, ARRAY_SIZE(table_bordure_marches) },
-	{ (Vect2*) table_marches_jaunes, ARRAY_SIZE(table_marches_jaunes) },
-	{ (Vect2*) table_marches_vertes, ARRAY_SIZE(table_marches_vertes) },
-	{ (Vect2*) table_depart_vert, ARRAY_SIZE(table_depart_vert) },
-	{ (Vect2*) table_depart_jaune, ARRAY_SIZE(table_depart_jaune) },
-	{ (Vect2*) table_depart_jaune_block, 0 },
-	{ (Vect2*) table_depart_vert_block, 0 },
+	{ (Vect2*) tableContour, ARRAY_SIZE(tableContour) },
+	{ (Vect2*) tableCenter, ARRAY_SIZE(tableCenter) },
+	{ (Vect2*) tableCorner1, ARRAY_SIZE(tableCorner1) },
+	{ (Vect2*) tableCorner2, ARRAY_SIZE(tableCorner2) },
+	{ (Vect2*) tableGreenStart, 0 },
+	{ (Vect2*) tablePurpleStart, 0 },
 };
 
 void setTableColor(int color)
 {
-	if( color > 0)
+	if( color == 1 )
 	{
-		table_obj[7].size = ARRAY_SIZE(table_depart_jaune_block);
-		table_obj[8].size = 0;
+		table_obj[4].size = 0;
+		table_obj[5].size = ARRAY_SIZE(tablePurpleStart);
 	}
-	else if( color < 0 )
+	else if( color == -1 )
 	{
-		table_obj[7].size = 0;
-		table_obj[8].size = ARRAY_SIZE(table_depart_vert_block);
+		table_obj[4].size = ARRAY_SIZE(tableGreenStart);
+		table_obj[5].size = 0;
+	}
+	else if( color == 0 )
+	{
+		table_obj[4].size = 0;
+		table_obj[5].size = 0;
 	}
 	else
 	{
-		table_obj[7].size = 0;
-		table_obj[8].size = 0;
+		table_obj[4].size = ARRAY_SIZE(tableGreenStart);
+		table_obj[5].size = ARRAY_SIZE(tablePurpleStart);
 	}
 }

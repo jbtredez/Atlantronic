@@ -18,40 +18,11 @@ TableScene::TableScene()
 
 bool TableScene::init(GlFont* font, RobotInterface* robot, MainShader* shader)
 {
-	int glSelectFeetName[16] =
-	{
-		GL_NAME_FEET_0,
-		GL_NAME_FEET_1,
-		GL_NAME_FEET_2,
-		GL_NAME_FEET_3,
-		GL_NAME_FEET_4,
-		GL_NAME_FEET_5,
-		GL_NAME_FEET_6,
-		GL_NAME_FEET_7,
-		GL_NAME_FEET_8,
-		GL_NAME_FEET_9,
-		GL_NAME_FEET_10,
-		GL_NAME_FEET_11,
-		GL_NAME_FEET_12,
-		GL_NAME_FEET_13,
-		GL_NAME_FEET_14,
-		GL_NAME_FEET_15,
-	};
-
-	int glSelectGlassName[5] =
-	{
-		GL_NAME_GLASS_0,
-		GL_NAME_GLASS_1,
-		GL_NAME_GLASS_2,
-		GL_NAME_GLASS_3,
-		GL_NAME_GLASS_4,
-	};
-
 	m_glfont = font;
 	m_robotItf = robot;
 	m_shader = shader;
 
-	bool res = m_table3d.init(glSelectFeetName, glSelectGlassName, shader);
+	bool res = m_table3d.init(GL_NAME_TABLE_ELEMENTS_0, shader);
 	res &= m_robot3d.init(shader);
 	res &= m_opponentRobot3d.init("media/opponentRobot.obj", shader);
 	res &= m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
@@ -60,12 +31,23 @@ bool TableScene::init(GlFont* font, RobotInterface* robot, MainShader* shader)
 	memset(plus_pt, 0, sizeof(plus_pt));
 	res &= m_graphPointObject.init(plus_pt, 2, CONTROL_USB_DATA_MAX, shader, true);
 
+	setTableColor(100);
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
 		res &= m_table2d[i].init((float*)&table_obj[i].pt[0], 2, table_obj[i].size, shader);
 	}
+	setColor(1);
 
 	return res;
+}
+
+void TableScene::setColor(int color)
+{
+	setTableColor(color);
+	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
+	{
+		m_table2d[i].update((float*)&table_obj[i].pt[0], table_obj[i].size);
+	}
 }
 
 VectPlan TableScene::projectMouseOnTable(int x, int y)
@@ -115,17 +97,13 @@ void TableScene::mouseSelect(int x, int y, Graphique* graph)
 	glReadPixels(x, graph->screen_height - y - 1, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, &id);
 	//printf("mouse index %d\n", id);
 
-	if( id >= GL_NAME_FEET_0 && id <= GL_NAME_FEET_15)
-	{
-		m_table3d.selectFeet(id - GL_NAME_FEET_0);
-	}
-	else if( id >= GL_NAME_GLASS_0 && id <= GL_NAME_GLASS_4)
-	{
-		m_table3d.selectGlass(id - GL_NAME_GLASS_0);
-	}
-	else if( id == GL_NAME_OPPONENT )
+	if( id == GL_NAME_OPPONENT )
 	{
 		m_opponentRobot3d.selected = true;
+	}
+	else
+	{
+		m_table3d.select(id);
 	}
 }
 

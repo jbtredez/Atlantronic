@@ -23,11 +23,11 @@ class Robot3d
 		void drawWing(bool right);
 		void drawCarpet(bool right);
 
-		Object3d m_mobileBase;
-		Object3d m_wing;
-		Object3d m_elevator;
-		Object3d m_finger;
-		Object3d m_carpet;
+		GlObject m_mobileBase;
+		GlObject m_wing;
+		GlObject m_elevator;
+		GlObject m_finger;
+		GlObject m_carpet;
 		MainShader* m_shader;
 };
 

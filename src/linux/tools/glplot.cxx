@@ -85,14 +85,15 @@ Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
 static VectPlan qemuStartPos(1200, 0, M_PI/2);
-static Object3dBasic selectionObject;
-static Object3dBasic axisObject;
-static Object3dBasic graphPointObject;
+static GlObjectBasic selectionObject;
+static GlObjectBasic axisObject;
+static GlObjectBasic graphPointObject;
 static int color = COLOR_GREEN;
 static bool ioColor = true;
 static GLuint pointTextureId;
 
 static void select_graph(GtkWidget* widget, gpointer arg);
+static void select_configuration(GtkWidget* widget, gpointer arg);
 static void show_legend(GtkWidget* widget, gpointer arg);
 static void select_active_courbe(GtkWidget* widget, gpointer arg);
 static void init(GtkGLArea *widget);
@@ -160,8 +161,6 @@ struct polyline feet_polyline =
 
 int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
 {
-	long i = 0;
-	long j = 0;
 	atlantronicPath = strdup(AtlantronicPath);
 	simulation = Simulation;
 	if( ! simulation )
@@ -258,7 +257,7 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
 
 	GSList *group = NULL;
-	for( i = 0; i < GRAPH_NUM; i++)
+	for(long i = 0; i < GRAPH_NUM; i++)
 	{
 		menuObj = gtk_radio_menu_item_new_with_label(group, graph[i].name);
 		group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menuObj));
@@ -270,13 +269,13 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 		}
 	}
 
-	for( i = 0 ; i < GRAPH_NUM; i++)
+	for(long i = 0 ; i < GRAPH_NUM; i++)
 	{
 		menu1 = gtk_menu_new();	// menu "niveau 1"
 		menuObj = gtk_menu_item_new_with_label( graph[i].name);
 		gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
 		gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
-		for( j = 0; j < MAX_COURBES; j++)
+		for(long j = 0; j < MAX_COURBES; j++)
 		{
 			char* name = graph[i].courbes_names[j];
 			if( name )
@@ -298,6 +297,25 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 	gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), false);
 	g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(show_legend), NULL);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+
+	menu1 = gtk_menu_new();	// menu "niveau 1"
+	menuObj = gtk_menu_item_new_with_label("Configuration");
+	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu0), menuObj);
+	group = NULL;
+	for(long i = 0; i < 5; i++)
+	{
+		char buffer[16];
+		snprintf(buffer, sizeof(buffer), "%d", (int)i+1);
+		menuObj = gtk_radio_menu_item_new_with_label(group, buffer);
+		group = gtk_radio_menu_item_get_group (GTK_RADIO_MENU_ITEM (menuObj));
+		g_signal_connect(G_OBJECT(menuObj), "activate", G_CALLBACK(select_configuration), (void*)(i+1));
+		gtk_menu_shell_append(GTK_MENU_SHELL(menu1), menuObj);
+		if( i == 0 )
+		{
+			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM (menuObj), TRUE);
+		}
+	}
 
 	GtkWidget* toolbar = gtk_toolbar_new();
 	gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
@@ -380,12 +398,11 @@ void qemu_set_parameters()
 	qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
 
 	// ajout de la table dans qemu
+	setTableColor(0); // pas de couleur pour qemu
 	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 	{
 		qemu->add_object(OBJECT_FLOOR_FOOTPRINT, table_obj[i]);
 	}
-
-	setTableColor(color);
 
 	// ajout d'un robot adverse
 	qemu->add_object(OBJECT_FLOOR_FOOTPRINT, oponent_robot);
@@ -480,6 +497,15 @@ static void select_graph(GtkWidget* widget, gpointer arg)
 	{
 		current_graph = id;
 	}
+	gtk_widget_queue_draw(opengl_window);
+}
+
+static void select_configuration(GtkWidget* widget, gpointer arg)
+{
+	(void) widget;
+
+	unsigned long id = (unsigned long) arg;
+	tableScene.selectConfiguration(id);
 	gtk_widget_queue_draw(opengl_window);
 }
 
@@ -1172,16 +1198,29 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 
 static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 {
+#ifndef GTK3
+	if(!gtk_gl_area_make_current (GTK_GL_AREA (opengl_window)))
+	{
+		return;
+	}
+#else
+	gtk_gl_area_make_current(GTK_GL_AREA(opengl_window));
+	if (gtk_gl_area_get_error( GTK_GL_AREA(opengl_window) ) )
+	{
+		return;
+	}
+#endif
+
 	if( color == COLOR_GREEN )
 	{
-		color = COLOR_PINK;
+		color = COLOR_PURPLE;
 	}
 	else
 	{
 		color = COLOR_GREEN;
 	}
 
-	setTableColor(color);
+	tableScene.setColor(color);
 
 	if(qemu)
 	{
@@ -1214,11 +1253,11 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	else
 	{
 #ifdef GTK3
-		GdkRGBA pink = {1, 0.25, 1, 1};
-		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &pink);
+		GdkRGBA purple = {1, 0, 1, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &purple);
 #else
-		GdkColor pink = {0, 65535, 16384, 65535};
-		gtk_color_button_set_color(switchColorBtn, &pink);
+		GdkColor purple = {0, 65535, 0, 65535};
+		gtk_color_button_set_color(switchColorBtn, &purple);
 #endif
 	}
 }
@@ -1240,6 +1279,19 @@ static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
 
 static void reboot_robot(GtkWidget* /*widget*/, gpointer /*arg*/)
 {
+#ifndef GTK3
+	if(!gtk_gl_area_make_current (GTK_GL_AREA (opengl_window)))
+	{
+		return;
+	}
+#else
+	gtk_gl_area_make_current(GTK_GL_AREA(opengl_window));
+	if (gtk_gl_area_get_error( GTK_GL_AREA(opengl_window) ) )
+	{
+		return;
+	}
+#endif
+
 	if(qemu)
 	{
 		// simulation
@@ -1248,6 +1300,7 @@ static void reboot_robot(GtkWidget* /*widget*/, gpointer /*arg*/)
 		robotItf->control_usb_data_count = 0;
 		qemu->reboot();
 		qemu_set_parameters();
+		tableScene.setColor(color);
 	}
 	else
 	{

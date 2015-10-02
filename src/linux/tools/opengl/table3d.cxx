@@ -1,201 +1,276 @@
 #include "table3d.h"
 
-bool Table3d::init(int _glSelectFeetName[16], int _glSelectGlassName[5], MainShader* shader)
+bool Table3d::init(int glSelectBaseId, MainShader* shader)
 {
 	showTable = true;
 	showElements = true;
 	m_shader = shader;
 
-	bool res = table.init("media/2015/table2015.obj", shader);
-	res &= dispenser.init("media/2015/distributeur.obj", shader);
-	res &= clapYellow.init("media/2015/clap_jaune.obj", shader);
-	res &= clapGreen.init("media/2015/clap_vert.obj", shader);
-	res &= feetYellow.init("media/2015/pied_jaune.obj", shader);
-	res &= feetGreen.init("media/2015/pied_vert.obj", shader);
-	res &= glass.init("media/2015/verre.obj", shader);
+	bool res = m_glTable.init("media/2016/table2016.obj", shader);
+	res &= m_glSandCone.init("media/2016/cone_sable.obj", shader);
+	res &= m_glSandCube.init("media/2016/cube_sable.obj", shader);
+	res &= m_glSandCylinder.init("media/2016/cylindre_sable.obj", shader);
+	res &= m_glWhiteSeaShell.init("media/2016/coquillage_blanc.obj", shader);
+	res &= m_glGreenSeaShell.init("media/2016/coquillage_vert.obj", shader);
+	res &= m_glPurpleSeaShell.init("media/2016/coquillage_violet.obj", shader);
+	res &= m_glGreenFish.init("media/2016/poisson_vert.obj", shader);
+	res &= m_glPurpleFish.init("media/2016/poisson_violet.obj", shader);
 
-	feetPosition[0] = aiVector3D(-1410, -850, 0);
-	feetPosition[1] = aiVector3D(-1410, -750, 0);
-	feetPosition[2] = aiVector3D(-1410,  800, 0);
-	feetPosition[3] = aiVector3D(- 650,  800, 0);
-	feetPosition[4] = aiVector3D(- 650,  900, 0);
-	feetPosition[5] = aiVector3D(- 630, -355, 0);
-	feetPosition[6] = aiVector3D(- 400, -750, 0);
-	feetPosition[7] = aiVector3D(- 200, -400, 0);
-
-	feetPosition[8]  = aiVector3D(1410, -850, 0);
-	feetPosition[9]  = aiVector3D(1410, -750, 0);
-	feetPosition[10] = aiVector3D(1410,  800, 0);
-	feetPosition[11] = aiVector3D( 650,  800, 0);
-	feetPosition[12] = aiVector3D( 650,  900, 0);
-	feetPosition[13] = aiVector3D( 630, -355, 0);
-	feetPosition[14] = aiVector3D( 400, -750, 0);
-	feetPosition[15] = aiVector3D( 200, -400, 0);
-
-	glassPosition[0] = aiVector3D(-1250, -750, 0);
-	glassPosition[1] = aiVector3D(- 590,  170, 0);
-	glassPosition[2] = aiVector3D(    0, -650, 0);
-	glassPosition[3] = aiVector3D(  590,  170, 0);
-	glassPosition[4] = aiVector3D( 1250, -750, 0);
-
-	for(unsigned int i = 0; i < sizeof(feetSelected) / sizeof(feetSelected[0]); i++)
+	int selectId = glSelectBaseId;
+	for(unsigned int i = TABLE_OBJ_SAND_CONE_START; i < TABLE_OBJ_SAND_CONE_START + NUM_SAND_CONE; i++)
 	{
-		feetSelected[i] = false;
-		glSelectFeetName[i] = _glSelectFeetName[i];
+		res &= m_obj[i].init(&m_glSandCone, selectId++);
 	}
 
-	for(unsigned int i = 0; i < sizeof(glassSelected) / sizeof(glassSelected[0]); i++)
+	for(unsigned int i = TABLE_OBJ_SAND_CUBE_START; i < TABLE_OBJ_SAND_CUBE_START + NUM_SAND_CUBE; i++)
 	{
-		glassSelected[i] = false;
-		glSelectGlassName[i] = _glSelectGlassName[i];
+		res &= m_obj[i].init(&m_glSandCube, selectId++);
 	}
+
+	for(unsigned int i = TABLE_OBJ_SAND_CYLINDER_START; i < TABLE_OBJ_SAND_CYLINDER_START + NUM_SAND_CYLINDER; i++)
+	{
+		res &= m_obj[i].init(&m_glSandCylinder, selectId++);
+	}
+
+	for(unsigned int i = TABLE_OBJ_WHITE_SEA_SHELL_START; i < TABLE_OBJ_WHITE_SEA_SHELL_START + NUM_WHITE_SEA_SHELL; i++)
+	{
+		res &= m_obj[i].init(&m_glWhiteSeaShell, selectId++);
+	}
+
+	for(unsigned int i = TABLE_OBJ_GREEN_SEA_SHELL_START; i < TABLE_OBJ_GREEN_SEA_SHELL_START + NUM_GREEN_SEA_SHELL; i++)
+	{
+		res &= m_obj[i].init(&m_glGreenSeaShell, selectId++);
+	}
+
+	for(unsigned int i = TABLE_OBJ_PURPLE_SEA_SHELL_START; i < TABLE_OBJ_PURPLE_SEA_SHELL_START + NUM_PURPLE_SEA_SHELL; i++)
+	{
+		res &= m_obj[i].init(&m_glPurpleSeaShell, selectId++);
+	}
+
+	for(unsigned int i = TABLE_OBJ_GREEN_FISH_START; i < TABLE_OBJ_GREEN_FISH_START + NUM_GREEN_FISH; i++)
+	{
+		res &= m_obj[i].init(&m_glGreenFish, selectId++);
+	}
+
+	for(unsigned int i = TABLE_OBJ_PURPLE_FISH_START; i < TABLE_OBJ_PURPLE_FISH_START + NUM_PURPLE_FISH; i++)
+	{
+		res &= m_obj[i].init(&m_glPurpleFish, selectId++);
+	}
+
+	initElementPosition(5);
 
 	return res;
 }
 
-void Table3d::selectFeet(unsigned int id)
+void Table3d::initElementPosition(int configuration)
 {
-	if( id < sizeof(feetSelected) / sizeof(feetSelected[0]))
+	// sable
+	m_obj[TABLE_OBJ_SAND_CUBE_START].setPosition(879, 129, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+1].setPosition(879, 71, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+2].setPosition(821, 129, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+3].setPosition(821, 71, 0);
+
+	m_obj[TABLE_OBJ_SAND_CUBE_START+4].setPosition(649, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+5].setPosition(649, 913, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+6].setPosition(591, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+7].setPosition(591, 913, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+8].setPosition(649, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+9].setPosition(649, 913, 58);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+10].setPosition(591, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+11].setPosition(591, 913, 58);
+
+	m_obj[TABLE_OBJ_SAND_CUBE_START+12].setPosition(232, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+13].setPosition(174, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+14].setPosition(116, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+15].setPosition(58, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+16].setPosition(58, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+17].setPosition(58, 913, 0);
+
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START].setPosition(850, 100, 58);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+1].setPosition(620, 942, 116);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+2].setPosition(174, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+3].setPosition(116, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+4].setPosition(116, 971, 116);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+5].setPosition(58, 971, 116);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+6].setPosition(58, 971, 174);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+7].setPosition(58, 913, 58);
+
+	m_obj[TABLE_OBJ_SAND_CONE_START].setPosition(850, 100, 116);
+	m_obj[TABLE_OBJ_SAND_CONE_START+1].setPosition(620, 942, 174);
+	m_obj[TABLE_OBJ_SAND_CONE_START+2].setPosition(116, 971, 174);
+	m_obj[TABLE_OBJ_SAND_CONE_START+3].setPosition(58, 971, 232);
+
+	for(int i = 0; i < 18; i++)
 	{
-		feetSelected[id] = true;
+		m_obj[TABLE_OBJ_SAND_CUBE_START + 18 + i].position = m_obj[TABLE_OBJ_SAND_CUBE_START + i].position;
+		m_obj[TABLE_OBJ_SAND_CUBE_START + 18 + i].position.x *= -1;
+	}
+	for(int i = 0; i < 8; i++)
+	{
+		m_obj[TABLE_OBJ_SAND_CYLINDER_START + 8 + i].position = m_obj[TABLE_OBJ_SAND_CYLINDER_START + i].position;
+		m_obj[TABLE_OBJ_SAND_CYLINDER_START + 8 + i].position.x *= -1;
+	}
+	for(int i = 0; i < 4; i++)
+	{
+		m_obj[TABLE_OBJ_SAND_CONE_START + 4 + i].position = m_obj[TABLE_OBJ_SAND_CONE_START + i].position;
+		m_obj[TABLE_OBJ_SAND_CONE_START + 4 + i].position.x *= -1;
+	}
+
+	m_obj[TABLE_OBJ_SAND_CUBE_START+36].setPosition(0, 971, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+37].setPosition(0, 913, 0);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+38].setPosition(0, 971, 58);
+	m_obj[TABLE_OBJ_SAND_CUBE_START+39].setPosition(0, 913, 58);
+
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+16].setPosition(0, 971, 116);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+17].setPosition(0, 971, 174);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+18].setPosition(0, 913, 116);
+	m_obj[TABLE_OBJ_SAND_CYLINDER_START+19].setPosition(0, 855, 0);
+
+	m_obj[TABLE_OBJ_SAND_CONE_START+8].setPosition(0, 971, 232);
+
+	// coquillages
+	switch( configuration )
+	{
+		default:
+		case 1:
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1300, -250, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1300, -250, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(0, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(0, -850, 0);
+
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-600, -450, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(300, -650, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-1425, -925, 66);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			break;
+		case 2:
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(0, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(0, -850, 0);
+
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-600, -450, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-300, -650, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			break;
+		case 3:
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-800, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(800, -550, 0);
+
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-800, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-300, -650, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			break;
+		case 4:
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-800, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(800, -550, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-300, -650, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(300, -650, 0);
+
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-1300, -550, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-800, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(1425, -800, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(1300, -925, 44);
+			break;
+		case 5:
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -925, 44);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -925, 44);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-800, -850, 0);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(800, -850, 0);
+
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-1300, -550, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-800, -250, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(800, -550, 0);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1425, -800, 44);
+			break;
+	}
+
+	for(int i = 0; i < NUM_PURPLE_SEA_SHELL; i++)
+	{
+		m_obj[TABLE_OBJ_GREEN_SEA_SHELL_START + i].position = m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START + i].position;
+		m_obj[TABLE_OBJ_GREEN_SEA_SHELL_START + i].position.x *= -1;
+	}
+
+	// poissons
+	m_obj[TABLE_OBJ_GREEN_FISH_START].setPosition(-700, -1150, 70);
+	m_obj[TABLE_OBJ_GREEN_FISH_START+1].setPosition(-775, -1110, 70);
+	m_obj[TABLE_OBJ_GREEN_FISH_START+2].setPosition(-850, -1150, 70);
+	m_obj[TABLE_OBJ_GREEN_FISH_START+3].setPosition(-925, -1100, 70);
+	for(int i = 0; i < NUM_PURPLE_FISH; i++)
+	{
+		m_obj[TABLE_OBJ_PURPLE_FISH_START + i].position = m_obj[TABLE_OBJ_GREEN_FISH_START + i].position;
+		m_obj[TABLE_OBJ_PURPLE_FISH_START + i].position.x *= -1;
+		m_obj[TABLE_OBJ_PURPLE_FISH_START + i].theta = m_obj[TABLE_OBJ_GREEN_FISH_START + i].theta + M_PI;
 	}
 }
 
-void Table3d::selectGlass(unsigned int id)
+void Table3d::select(unsigned int id)
 {
-	if( id < sizeof(glassSelected) / sizeof(glassSelected[0]))
+	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
 	{
-		glassSelected[id] = true;
+		if( m_obj[i].selectionId == id )
+		{
+			m_obj[i].selected = true;
+		}
 	}
 }
 
 void Table3d::unselectAll()
 {
-	memset(feetSelected, 0, sizeof(feetSelected));
-	memset(glassSelected, 0, sizeof(glassSelected));
+	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
+	{
+		m_obj[i].selected = false;
+	}
 }
 
 void Table3d::moveSelected(float dx, float dy)
 {
-	for(unsigned int i = 0; i < sizeof(feetSelected) / sizeof(feetSelected[0]); i++)
+	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
 	{
-		if( feetSelected[i] )
+		if( m_obj[i].selected )
 		{
-			feetPosition[i].x += dx;
-			feetPosition[i].y += dy;
+			m_obj[i].position.x += dx;
+			m_obj[i].position.y += dy;
 		}
 	}
-
-	for(unsigned int i = 0; i < sizeof(glassSelected) / sizeof(glassSelected[0]); i++)
-	{
-		if( glassSelected[i] )
-		{
-			glassPosition[i].x += dx;
-			glassPosition[i].y += dy;
-		}
-	}
-
 }
 
 void Table3d::draw()
 {
 	if(showTable)
 	{
+		// on baisse la table de 1mm pour eviter des pb d'affichage avec les points places en z=0
 		glm::mat4 oldModelView = m_shader->getModelView();
-		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-table.sceneCenter.x, -table.sceneCenter.y, -table.sceneMin.z-22));
+		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(0, 0, -1));
 		m_shader->setModelView(modelView);
-		table.draw();
+		m_glTable.draw();
 		m_shader->setModelView(oldModelView);
-
-		drawDispenser(-1200);
-		drawDispenser(- 900);
-		drawDispenser(  900);
-		drawDispenser( 1200);
-
-		drawClap(-1100, true);
-		drawClap(- 800, false);
-		drawClap(- 500, true);
-
-		drawClap(  500, false);
-		drawClap(  800, true);
-		drawClap( 1100, false);
 	}
 
 	if( showElements )
 	{
-		drawFeets();
-		drawGlass();
-	}
-}
-
-void Table3d::drawDispenser(float x)
-{
-	glm::mat4 oldModelView = m_shader->getModelView();
-	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(x, 1022, 0));
-	modelView = glm::rotate(modelView, (float)M_PI, glm::vec3(0, 0, 1));
-	modelView = glm::translate(modelView, glm::vec3(-dispenser.sceneCenter.x, -dispenser.sceneMin.y, -dispenser.sceneMin.z));
-	m_shader->setModelView(modelView);
-	dispenser.draw();
-	m_shader->setModelView(oldModelView);
-}
-
-void Table3d::drawClap(float x, bool yellow)
-{
-	Object3d* clap = &clapYellow;
-	if( ! yellow )
-	{
-		clap = &clapGreen;
-	}
-	glm::mat4 oldModelView = m_shader->getModelView();
-	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(x, -1000, 78));
-	if( x > 0)
-	{
-		modelView = glm::rotate(modelView, (float)M_PI, glm::vec3(0, 0, 1));
-	}
-	if( x < 0)
-	{
-		modelView = glm::translate(modelView, glm::vec3(-clap->sceneMax.x, -clap->sceneMax.y, -clap->sceneMin.z));
-	}
-	else
-	{
-		modelView = glm::translate(modelView, glm::vec3(-clap->sceneMax.x, -clap->sceneMin.y, -clap->sceneMin.z ));
-	}
-	m_shader->setModelView(modelView);
-	clap->draw();
-	m_shader->setModelView(oldModelView);
-}
-
-void Table3d::drawFeets()
-{
-	Object3d* feet = &feetYellow;
-	for(unsigned int i = 0; i < sizeof(feetPosition) / sizeof(feetPosition[0]); i++)
-	{
-		if( i >= sizeof(feetPosition) / (2*sizeof(feetPosition[0])) )
+		for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
 		{
-			feet = &feetGreen;
+			m_obj[i].draw();
 		}
-		glStencilFunc(GL_ALWAYS, glSelectFeetName[i], ~0);
-		glm::mat4 oldModelView = m_shader->getModelView();
-		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3( -feet->sceneCenter.x + feetPosition[i].x, -feet->sceneCenter.y + feetPosition[i].y, -feet->sceneMin.z + feetPosition[i].z));
-		m_shader->setModelView(modelView);
-		feet->selected = feetSelected[i];
-		feet->draw();
-		m_shader->setModelView(oldModelView);
-		glStencilFunc(GL_ALWAYS, 0, ~0);
-	}
-}
-
-void Table3d::drawGlass()
-{
-	for(unsigned int i = 0; i < sizeof(glassPosition) / sizeof(glassPosition[0]); i++)
-	{
-		glStencilFunc(GL_ALWAYS, glSelectGlassName[i], ~0);
-		glm::mat4 oldModelView = m_shader->getModelView();
-		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(-glass.sceneCenter.x + glassPosition[i].x, -glass.sceneCenter.y + glassPosition[i].y, -glass.sceneMin.z + glassPosition[i].z));
-		m_shader->setModelView(modelView);
-		glass.selected = glassSelected[i];
-		glass.draw();
-		m_shader->setModelView(oldModelView);
-		glStencilFunc(GL_ALWAYS, 0, ~0);
 	}
 }

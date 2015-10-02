@@ -23,6 +23,7 @@ bin-linux += usb_interface
 
 obj-linux-glplot += $(obj-linux-itf-core)
 obj-linux-glplot += linux/tools/glplot.o
+obj-linux-glplot += linux/tools/opengl/Object3dBasic.o
 obj-linux-glplot += linux/tools/opengl/object3d.o
 obj-linux-glplot += linux/tools/opengl/table3d.o
 obj-linux-glplot += linux/tools/opengl/robot3d.o

@@ -154,8 +154,8 @@ static void match_cmd_color(void* arg)
 		{
 			pwm_set(PWM_1, 0);
 			pwm_set(PWM_2, 0.5);
-			match_color = COLOR_PINK;
-			log(LOG_INFO, "couleur => rose");
+			match_color = COLOR_PURPLE;
+			log(LOG_INFO, "couleur => violet");
 		}
 	}
 }
@@ -199,7 +199,7 @@ portBASE_TYPE match_set_color_from_isr(void)
 		{
 			pwm_set(PWM_1, 0);
 			pwm_set(PWM_2, 0.5);
-			match_color = COLOR_PINK;
+			match_color = COLOR_PURPLE;
 		}
 	}
 	return 0;

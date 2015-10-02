@@ -3,200 +3,27 @@
 #define MIN(x,y) (x<y?x:y)
 #define MAX(x,y) (y>x?y:x)
 
-Object3dBasic::Object3dBasic()
-{
-	m_vbo[VERTEX_BUFFER] = 0;
-	m_vbo[TEXCOORD_BUFFER] = 0;
-	m_vbo[NORMAL_BUFFER] = 0;
-	m_vbo[INDEX_BUFFER] = 0;
-}
-
-bool Object3dBasic::init(aiMesh *mesh, MainShader* shader)
-{
-	m_vbo[VERTEX_BUFFER] = 0;
-	m_vbo[TEXCOORD_BUFFER] = 0;
-	m_vbo[NORMAL_BUFFER] = 0;
-	m_vbo[INDEX_BUFFER] = 0;
-
-	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
-
-	m_elementCount = mesh->mNumFaces * 3;
-	m_elementSize = 3;
-	if(mesh->HasPositions())
-	{
-		float *vertices = new float[mesh->mNumVertices * 3];
-		for(unsigned int i = 0; i < mesh->mNumVertices; ++i)
-		{
-			vertices[i * 3] = mesh->mVertices[i].x;
-			vertices[i * 3 + 1] = mesh->mVertices[i].y;
-			vertices[i * 3 + 2] = mesh->mVertices[i].z;
-		}
-
-		glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
-		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-		glBufferData(GL_ARRAY_BUFFER, mesh->mNumVertices * m_elementSize * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(shader->m_attribute_coord3d, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(shader->m_attribute_coord3d);
-
-		delete vertices;
-	}
-
-#if 0
-	if(mesh->HasTextureCoords(0))
-	{
-		float *texCoords = new float[mesh->mNumVertices * 2];
-		for(int i = 0; i < mesh->mNumVertices; ++i)
-		{
-			texCoords[i * 2] = mesh->mTextureCoords[0][i].x;
-			texCoords[i * 2 + 1] = mesh->mTextureCoords[0][i].y;
-		}
-
-		glGenBuffers(1, &m_vbo[TEXCOORD_BUFFER]);
-		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[TEXCOORD_BUFFER]);
-		glBufferData(GL_ARRAY_BUFFER, 2 * mesh->mNumVertices * sizeof(GLfloat), texCoords, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray (1);
-
-		delete texCoords;
-	}
-#endif
-	if(mesh->HasNormals())
-	{
-		float *normals = new float[mesh->mNumVertices * 3];
-		for(unsigned int i = 0; i < mesh->mNumVertices; ++i)
-		{
-			normals[i * 3] = mesh->mNormals[i].x;
-			normals[i * 3 + 1] = mesh->mNormals[i].y;
-			normals[i * 3 + 2] = mesh->mNormals[i].z;
-		}
-
-		glGenBuffers(1, &m_vbo[NORMAL_BUFFER]);
-		glBindBuffer(GL_ARRAY_BUFFER, m_vbo[NORMAL_BUFFER]);
-		glBufferData(GL_ARRAY_BUFFER, 3 * mesh->mNumVertices * sizeof(GLfloat), normals, GL_STATIC_DRAW);
-
-		glVertexAttribPointer(shader->m_attribute_normal, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray(shader->m_attribute_normal);
-
-		delete normals;
-	}
-
-	if(mesh->HasFaces())
-	{
-		unsigned int *indices = new unsigned int[mesh->mNumFaces * 3];
-		for(unsigned int i = 0; i < mesh->mNumFaces; ++i)
-		{
-			indices[i * 3] = mesh->mFaces[i].mIndices[0];
-			indices[i * 3 + 1] = mesh->mFaces[i].mIndices[1];
-			indices[i * 3 + 2] = mesh->mFaces[i].mIndices[2];
-		}
-
-		glGenBuffers(1, &m_vbo[INDEX_BUFFER]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo[INDEX_BUFFER]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * mesh->mNumFaces * sizeof(GLuint), indices, GL_STATIC_DRAW);
-
-		delete indices;
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	return true;
-}
-
-bool Object3dBasic::init(float* vertices, int elementSize, int elementCount, MainShader* shader, bool dynamic)
-{
-	GLenum drawType = GL_STATIC_DRAW;
-	if( dynamic )
-	{
-		drawType = GL_DYNAMIC_DRAW;
-	}
-
-	glGenVertexArrays(1, &m_vao);
-	glBindVertexArray(m_vao);
-
-	m_elementCount = elementCount;
-	m_elementSize = elementSize;
-
-	glGenBuffers(1, &m_vbo[VERTEX_BUFFER]);
-	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-	glBufferData(GL_ARRAY_BUFFER, elementSize * elementCount * sizeof(GLfloat), vertices, drawType);
-
-	glVertexAttribPointer(shader->m_attribute_coord3d, elementSize, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(shader->m_attribute_coord3d);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	return true;
-}
-
-void Object3dBasic::update(float* vertices, int nbElement)
-{
-	glBindVertexArray(m_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, m_vbo[VERTEX_BUFFER]);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, nbElement * m_elementSize * sizeof(GLfloat), vertices);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	m_elementCount = nbElement;
-}
-
-Object3dBasic::~Object3dBasic()
-{
-	if(m_vbo[VERTEX_BUFFER])
-	{
-		glDeleteBuffers(1, &m_vbo[VERTEX_BUFFER]);
-	}
-
-	if(m_vbo[TEXCOORD_BUFFER])
-	{
-		glDeleteBuffers(1, &m_vbo[TEXCOORD_BUFFER]);
-	}
-
-	if(m_vbo[NORMAL_BUFFER])
-	{
-		glDeleteBuffers(1, &m_vbo[NORMAL_BUFFER]);
-	}
-
-	if(m_vbo[INDEX_BUFFER])
-	{
-		glDeleteBuffers(1, &m_vbo[INDEX_BUFFER]);
-	}
-
-	glDeleteVertexArrays(1, &m_vao);
-}
-
-void Object3dBasic::render(GLenum mode)
-{
-	glBindVertexArray(m_vao);
-	if( m_vbo[INDEX_BUFFER] )
-	{
-		glDrawElements(mode, m_elementCount, GL_UNSIGNED_INT, NULL);
-	}
-	else
-	{
-		glDrawArrays(mode, 0, m_elementCount);
-	}
-	glBindVertexArray(0);
-}
-
-Object3d::Object3d()
+GlObject::GlObject()
 {
 	m_scene = NULL;
 	selected = false;
 	m_meshEntries = NULL;
 }
 
-Object3d::~Object3d()
+GlObject::~GlObject()
 {
 	if( m_meshEntries )
 	{
 		delete [ ] m_meshEntries;
 	}
+	if( m_scene )
+	{
+		aiReleaseImport(m_scene);
+	}
 }
 
 
-bool Object3d::init(const char* filename, MainShader* shader)
+bool GlObject::init(const char* filename, MainShader* shader)
 {
 	bool res = false;
 
@@ -220,7 +47,7 @@ bool Object3d::init(const char* filename, MainShader* shader)
 		goto done;
 	}
 
-	m_meshEntries = new Object3dBasic[m_scene->mNumMeshes]();
+	m_meshEntries = new GlObjectBasic[m_scene->mNumMeshes]();
 	for(unsigned int i = 0; i < m_scene->mNumMeshes; ++i)
 	{
 		m_meshEntries[i].init(m_scene->mMeshes[i], m_shader);
@@ -232,7 +59,7 @@ done:
 	return res;
 }
 
-void Object3d::getBoundingBoxForNode(const aiNode* nd, aiMatrix4x4* trafo)
+void GlObject::getBoundingBoxForNode(const aiNode* nd, aiMatrix4x4* trafo)
 {
 	aiMatrix4x4 prev;
 	unsigned int n = 0, t;
@@ -260,7 +87,7 @@ void Object3d::getBoundingBoxForNode(const aiNode* nd, aiMatrix4x4* trafo)
 	*trafo = prev;
 }
 
-void Object3d::getBoundingBox()
+void GlObject::getBoundingBox()
 {
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
@@ -269,7 +96,7 @@ void Object3d::getBoundingBox()
 	getBoundingBoxForNode(m_scene->mRootNode, &trafo);
 }
 
-void Object3d::color4ToFloat4(const aiColor4D *c, float f[4])
+void GlObject::color4ToFloat4(const aiColor4D *c, float f[4])
 {
 	f[0] = c->r;
 	f[1] = c->g;
@@ -277,7 +104,7 @@ void Object3d::color4ToFloat4(const aiColor4D *c, float f[4])
 	f[3] = c->a;
 }
 
-void Object3d::setFloat4(float f[4], float a, float b, float c, float d)
+void GlObject::setFloat4(float f[4], float a, float b, float c, float d)
 {
 	f[0] = a;
 	f[1] = b;
@@ -285,7 +112,7 @@ void Object3d::setFloat4(float f[4], float a, float b, float c, float d)
 	f[3] = d;
 }
 
-void Object3d::applyMaterial(const struct aiMaterial *mtl)
+void GlObject::applyMaterial(const struct aiMaterial *mtl)
 {
 	float c[4];
 	GLenum fill_mode;
@@ -386,7 +213,7 @@ void Object3d::applyMaterial(const struct aiMaterial *mtl)
 
 }
 
-void Object3d::render(const struct aiNode* nd)
+void GlObject::render(const struct aiNode* nd)
 {
 	unsigned int n = 0;
 	aiMatrix4x4 m = nd->mTransformation;
@@ -400,14 +227,6 @@ void Object3d::render(const struct aiNode* nd)
 	{
 		const struct aiMesh* mesh = m_scene->mMeshes[nd->mMeshes[n]];
 		applyMaterial(m_scene->mMaterials[mesh->mMaterialIndex]);
-		/*if(mesh->mNormals)
-		{
-			glEnable(GL_LIGHTING);
-		}
-		else
-		{
-			glDisable(GL_LIGHTING);
-		}*/
 		m_meshEntries[nd->mMeshes[n]].render(GL_TRIANGLES);
 	}
 
@@ -419,7 +238,29 @@ void Object3d::render(const struct aiNode* nd)
 	m_shader->setModelView(oldModelView);
 }
 
-void Object3d::draw()
+void GlObject::draw()
 {
 	render(m_scene->mRootNode);
+}
+
+bool Object3d::init(GlObject* obj, int _selectionId)
+{
+	selected = false;
+	selectionId = _selectionId;
+	m_obj = obj;
+
+	return true;
+}
+
+void Object3d::draw()
+{
+	glStencilFunc(GL_ALWAYS, selectionId, ~0);
+	glm::mat4 oldModelView = m_obj->m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(position.x, position.y, position.z));
+	modelView = glm::rotate(modelView, theta, glm::vec3(0,0,1));
+	m_obj->m_shader->setModelView(modelView);
+	m_obj->selected = selected;
+	m_obj->draw();
+	m_obj->m_shader->setModelView(oldModelView);
+	glStencilFunc(GL_ALWAYS, 0, ~0);
 }
