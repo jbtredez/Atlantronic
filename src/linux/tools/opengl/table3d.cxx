@@ -1,10 +1,53 @@
 #include "table3d.h"
 
-bool Table3d::init(int glSelectBaseId, MainShader* shader)
+#define SEA_SHELL_R         38.1f
+#define CYLINDER_R          29.0f
+
+Vect2 cubePt[] =
+{
+	Vect2( -29, -29),
+	Vect2(  29, -29),
+	Vect2(  29,  29),
+	Vect2( -29,  29),
+	Vect2( -29, -29),
+};
+
+Vect2 seaShellPt[] =
+{
+	Vect2( SEA_SHELL_R, 0),
+	Vect2( SEA_SHELL_R * 0.707106781, SEA_SHELL_R * 0.707106781),
+	Vect2( 0, SEA_SHELL_R),
+	Vect2( -SEA_SHELL_R * 0.707106781, SEA_SHELL_R * 0.707106781),
+	Vect2( -SEA_SHELL_R, 0),
+	Vect2( -SEA_SHELL_R * 0.707106781, -SEA_SHELL_R * 0.707106781),
+	Vect2( 0, -SEA_SHELL_R),
+	Vect2( SEA_SHELL_R * 0.707106781, -SEA_SHELL_R * 0.707106781),
+	Vect2( SEA_SHELL_R, 0),
+};
+
+Vect2 cylinderPt[] =
+{
+	Vect2( CYLINDER_R, 0),
+	Vect2( CYLINDER_R * 0.707106781, CYLINDER_R * 0.707106781),
+	Vect2( 0, CYLINDER_R),
+	Vect2( -CYLINDER_R * 0.707106781, CYLINDER_R * 0.707106781),
+	Vect2( -CYLINDER_R, 0),
+	Vect2( -CYLINDER_R * 0.707106781, -CYLINDER_R * 0.707106781),
+	Vect2( 0, -CYLINDER_R),
+	Vect2( CYLINDER_R * 0.707106781, -CYLINDER_R * 0.707106781),
+	Vect2( CYLINDER_R, 0),
+};
+
+struct polyline cube = { cubePt, sizeof(cubePt) / sizeof(cubePt[0]) };
+struct polyline seaShell = { seaShellPt, sizeof(seaShellPt) / sizeof(seaShellPt[0]) };
+struct polyline cylinder = { cylinderPt, sizeof(cylinderPt) / sizeof(cylinderPt[0]) };
+
+bool Table3d::init(int glSelectBaseId, MainShader* shader, Qemu* qemu)
 {
 	showTable = true;
 	showElements = true;
 	m_shader = shader;
+	m_qemu = qemu;
 
 	bool res = m_glTable.init("media/2016/table2016.obj", shader);
 	res &= m_glSandCone.init("media/2016/cone_sable.obj", shader);
@@ -223,6 +266,61 @@ void Table3d::initElementPosition(int configuration)
 	}
 }
 
+bool Table3d::initQemuObjects()
+{
+	if( ! m_qemu )
+	{
+		return false;
+	}
+
+	for(unsigned int i = TABLE_OBJ_SAND_CONE_START; i < TABLE_OBJ_SAND_CONE_START + NUM_SAND_CONE; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cylinder, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_SAND_CUBE_START; i < TABLE_OBJ_SAND_CUBE_START + NUM_SAND_CUBE; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cube, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_SAND_CYLINDER_START; i < TABLE_OBJ_SAND_CYLINDER_START + NUM_SAND_CYLINDER; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cylinder, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_WHITE_SEA_SHELL_START; i < TABLE_OBJ_WHITE_SEA_SHELL_START + NUM_WHITE_SEA_SHELL; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_GREEN_SEA_SHELL_START; i < TABLE_OBJ_GREEN_SEA_SHELL_START + NUM_GREEN_SEA_SHELL; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_PURPLE_SEA_SHELL_START; i < TABLE_OBJ_PURPLE_SEA_SHELL_START + NUM_PURPLE_SEA_SHELL; i++)
+	{
+		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+	}
+
+	for(unsigned int i = TABLE_OBJ_GREEN_FISH_START; i < TABLE_OBJ_GREEN_FISH_START + NUM_GREEN_FISH; i++)
+	{
+		m_qemuObjId[i] = -1;
+	}
+
+	for(unsigned int i = TABLE_OBJ_PURPLE_FISH_START; i < TABLE_OBJ_PURPLE_FISH_START + NUM_PURPLE_FISH; i++)
+	{
+		m_qemuObjId[i] = -1;
+	}
+
+	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
+	{
+		m_qemu->move_object(m_qemuObjId[i], Vect2(), VectPlan(m_obj[i].position.x, m_obj[i].position.y, m_obj[i].theta));
+	}
+
+	return true;
+}
+
 void Table3d::select(unsigned int id)
 {
 	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
@@ -248,6 +346,10 @@ void Table3d::moveSelected(float dx, float dy)
 	{
 		if( m_obj[i].selected )
 		{
+			if( m_qemu )
+			{
+				m_qemu->move_object(m_qemuObjId[i], Vect2(m_obj[i].position.x, m_obj[i].position.y), VectPlan(dx, dy, 0));
+			}
 			m_obj[i].position.x += dx;
 			m_obj[i].position.y += dy;
 		}

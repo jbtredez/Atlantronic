@@ -6,6 +6,7 @@
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/robot_interface.h"
+#include "linux/tools/qemu.h"
 #include "disco/table.h"
 #include "middleware/trajectory/Graph.h"
 #include "disco/robot_parameters.h"
@@ -41,7 +42,9 @@ class TableScene
 {
 	public:
 		TableScene();
-		bool init(GlFont* glfont, RobotInterface* robotItf, MainShader* shader);
+		bool init(GlFont* glfont, Qemu* qemu, RobotInterface* robotItf, MainShader* shader);
+		bool initQemuObjects();
+
 		void draw(Graphique* graph);
 		void printInfos(Graphique* graph);
 		VectPlan projectMouseOnTable(int x, int y);
@@ -65,6 +68,8 @@ class TableScene
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
 
+		Qemu* m_qemu;
+		int m_qemuObjectOpponentId;
 		RobotInterface* m_robotItf;
 		Table3d m_table3d;
 		Robot3d m_robot3d;

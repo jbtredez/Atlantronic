@@ -35,6 +35,7 @@ struct atlantronic_model_tx_event
 Qemu::Qemu()
 {
 	m_com = NULL;
+	m_lastObjectId = -1;
 }
 
 int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
@@ -62,6 +63,7 @@ void Qemu::startQemu()
 	pid_t current_pid = getpid();
 
 	m_com->close();
+	m_lastObjectId = -1;
 
 	mkfifo(m_file_qemu_read, 0666);
 	mkfifo(m_file_qemu_write, 0666);
@@ -153,14 +155,14 @@ void Qemu::destroy()
 	}
 }
 
-int Qemu::add_object(ObjectType type, const struct polyline polyline)
+int Qemu::add_object(int flags, const struct polyline polyline, int* objectId)
 {
 	struct atlantronic_model_tx_event event;
 	unsigned int i = 0;
 
 	event.type = EVENT_NEW_OBJECT;
 
-	event.data[0] = type;
+	event.data[0] = flags;
 	event.data[1] = MIN((unsigned int)polyline.size, (sizeof(event.data) - 2)/8);
 	float* f = (float*)(event.data+2);
 	for(i = 0; i < event.data[1]; i++ )
@@ -170,12 +172,22 @@ int Qemu::add_object(ObjectType type, const struct polyline polyline)
 		f += 2;
 	}
 
+	m_lastObjectId++;
+	if( objectId )
+	{
+		*objectId = m_lastObjectId;
+	}
 	return m_com->write((void*) &event, sizeof(event));
 }
 
 int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
 {
 	struct atlantronic_model_tx_event event;
+
+	if( id < 0 )
+	{
+		return -1;
+	}
 
 	event.type = EVENT_MOVE_OBJECT;
 

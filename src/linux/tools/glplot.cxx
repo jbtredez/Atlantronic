@@ -23,8 +23,6 @@
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
 #define MAX_FPS    11
-#define QEMU_FLOOR_FOOTPRINT_ID       (TABLE_OBJ_SIZE)
-#define QEMU_BEACON_FOOTPRINT_ID      (TABLE_OBJ_SIZE+1)
 
 enum
 {
@@ -117,47 +115,6 @@ static void plot_axes_lines(Graphique* graph);
 
 static void qemu_set_parameters();
 static void gtk_end();
-
-#define OPPONENT_R         150.0f
-#define FEET_RADIUS            30
-
-Vect2 opponent_robot_pt[] =
-{
-	Vect2( OPPONENT_R, 0),
-	Vect2( OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
-	Vect2( 0, OPPONENT_R),
-	Vect2( -OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
-	Vect2( -OPPONENT_R, 0),
-	Vect2( -OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
-	Vect2( 0, -OPPONENT_R),
-	Vect2( OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
-	Vect2( OPPONENT_R, 0),
-};
-
-Vect2 feet_pt[] =
-{
-	Vect2( FEET_RADIUS, 0),
-	Vect2( FEET_RADIUS * 0.707106781, FEET_RADIUS * 0.707106781),
-	Vect2( 0, FEET_RADIUS),
-	Vect2( -FEET_RADIUS * 0.707106781, FEET_RADIUS * 0.707106781),
-	Vect2( -FEET_RADIUS, 0),
-	Vect2( -FEET_RADIUS * 0.707106781, -FEET_RADIUS * 0.707106781),
-	Vect2( 0, -FEET_RADIUS),
-	Vect2( FEET_RADIUS * 0.707106781, -FEET_RADIUS * 0.707106781),
-	Vect2( FEET_RADIUS, 0),
-};
-
-struct polyline oponent_robot =
-{
-		opponent_robot_pt,
-		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
-};
-
-struct polyline feet_polyline =
-{
-		feet_pt,
-		sizeof(feet_pt) / sizeof(feet_pt[0])
-};
 
 int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
 {
@@ -397,59 +354,7 @@ void qemu_set_parameters()
 	qemu->setPosition(qemuStartPos.symetric(color));
 	qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
 
-	// ajout de la table dans qemu
-	setTableColor(0); // pas de couleur pour qemu
-	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
-	{
-		qemu->add_object(OBJECT_FLOOR_FOOTPRINT, table_obj[i]);
-	}
-
-	// ajout d'un robot adverse
-	qemu->add_object(OBJECT_FLOOR_FOOTPRINT, oponent_robot);
-	qemu->add_object(OBJECT_BEACON_FOOTPRINT, oponent_robot);
-
-	// on le met a sa position de depart
-	Vect2 origin(0, 0);
-	qemu->move_object(QEMU_FLOOR_FOOTPRINT_ID, origin, tableScene.getOpponentPosition());
-	qemu->move_object(QEMU_BEACON_FOOTPRINT_ID, origin, tableScene.getOpponentPosition());
-
-	// ajout des pieds
-	// TODO prendre positions de tableScene.table3d
-	VectPlan feetPosition[16];
-	feetPosition[0] = VectPlan(-1410, -850, 0);
-	feetPosition[1] = VectPlan(-1410, -750, 0);
-	feetPosition[2] = VectPlan(-1410,  800, 0);
-	feetPosition[3] = VectPlan(- 650,  800, 0);
-	feetPosition[4] = VectPlan(- 650,  900, 0);
-	feetPosition[5] = VectPlan(- 630, -355, 0);
-	feetPosition[6] = VectPlan(- 400, -750, 0);
-	feetPosition[7] = VectPlan(- 200, -400, 0);
-
-	feetPosition[8]  = VectPlan(1410, -850, 0);
-	feetPosition[9]  = VectPlan(1410, -750, 0);
-	feetPosition[10] = VectPlan(1410,  800, 0);
-	feetPosition[11] = VectPlan( 650,  800, 0);
-	feetPosition[12] = VectPlan( 650,  900, 0);
-	feetPosition[13] = VectPlan( 630, -355, 0);
-	feetPosition[14] = VectPlan( 400, -750, 0);
-	feetPosition[15] = VectPlan( 200, -400, 0);
-	for(int i = 0; i < 16; i++)
-	{
-		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
-		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+1, origin, feetPosition[i]);
-	}
-
-	VectPlan glassPosition[5];
-	glassPosition[0] = VectPlan(-1250, -750, 0);
-	glassPosition[1] = VectPlan(- 590,  170, 0);
-	glassPosition[2] = VectPlan(    0, -650, 0);
-	glassPosition[3] = VectPlan(  590,  170, 0);
-	glassPosition[4] = VectPlan( 1250, -750, 0);
-	for(int i = 0; i < 5; i++)
-	{
-		qemu->add_object(OBJECT_MOBILE_FLOOR_FOOTPRINT, feet_polyline);
-		qemu->move_object(QEMU_BEACON_FOOTPRINT_ID+i+17, origin, glassPosition[i]);
-	}
+	tableScene.initQemuObjects();
 }
 
 static gboolean gtk_end_from_gtk_thread(gpointer /*data*/)
@@ -564,7 +469,7 @@ static void init(GtkGLArea *area)
 		exit(-1);
 	}
 
-	res = tableScene.init(&glfont, robotItf, &shader);
+	res = tableScene.init(&glfont, qemu, robotItf, &shader);
 	if( ! res )
 	{
 		exit(-1);
@@ -1090,7 +995,6 @@ static void mouse_release(GtkWidget* widget, GdkEventButton* event)
 
 static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 {
-	static VectPlan opponentPos = tableScene.getOpponentPosition();
 	if(event->state & GDK_BUTTON1_MASK)
 	{
 		mouse_x2 = event->x;
@@ -1098,14 +1002,6 @@ static void mouse_move(GtkWidget* widget, GdkEventMotion* event)
 		if(current_graph == GRAPH_TABLE)
 		{
 			tableScene.mouseMoveSelection(event->x, event->y);
-			VectPlan newOpponentPos = tableScene.getOpponentPosition();
-			if(simulation && (newOpponentPos.x != opponentPos.x || newOpponentPos.y != opponentPos.y || newOpponentPos.theta != opponentPos.theta))
-			{
-				Vect2 origin(opponentPos.x, opponentPos.theta);
-				qemu->move_object(QEMU_FLOOR_FOOTPRINT_ID, origin, newOpponentPos - opponentPos);
-				qemu->move_object(QEMU_BEACON_FOOTPRINT_ID, origin, newOpponentPos - opponentPos);
-				opponentPos = newOpponentPos;
-			}
 		}
 		gtk_widget_queue_draw(widget);
 	}

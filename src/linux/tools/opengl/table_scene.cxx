@@ -9,20 +9,43 @@ static float robot2dVectrices[] =
 	PARAM_NP_X, PARAM_RIGHT_CORNER_Y
 };
 
+#define OPPONENT_R         150.0f
+
+Vect2 opponent_robot_pt[] =
+{
+	Vect2( OPPONENT_R, 0),
+	Vect2( OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
+	Vect2( 0, OPPONENT_R),
+	Vect2( -OPPONENT_R * 0.707106781, OPPONENT_R * 0.707106781),
+	Vect2( -OPPONENT_R, 0),
+	Vect2( -OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
+	Vect2( 0, -OPPONENT_R),
+	Vect2( OPPONENT_R * 0.707106781, -OPPONENT_R * 0.707106781),
+	Vect2( OPPONENT_R, 0),
+};
+
+struct polyline oponent_robot =
+{
+		opponent_robot_pt,
+		sizeof(opponent_robot_pt) / sizeof(opponent_robot_pt[0])
+};
+
 TableScene::TableScene()
 {
+	m_qemu = NULL;
 	m_opponentRobotPos = VectPlan(-2000, 1000, 0);
 	m_viewMatrix.rotateX(M_PI/6);
 	m_viewMatrix.translate(0, 0, 3000);
 }
 
-bool TableScene::init(GlFont* font, RobotInterface* robot, MainShader* shader)
+bool TableScene::init(GlFont* font, Qemu* qemu, RobotInterface* robot, MainShader* shader)
 {
 	m_glfont = font;
 	m_robotItf = robot;
+	m_qemu = qemu;
 	m_shader = shader;
 
-	bool res = m_table3d.init(GL_NAME_TABLE_ELEMENTS_0, shader);
+	bool res = m_table3d.init(GL_NAME_TABLE_ELEMENTS_0, shader, m_qemu);
 	res &= m_robot3d.init(shader);
 	res &= m_opponentRobot3d.init("media/opponentRobot.obj", shader);
 	res &= m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
@@ -39,6 +62,32 @@ bool TableScene::init(GlFont* font, RobotInterface* robot, MainShader* shader)
 	setColor(1);
 
 	return res;
+}
+
+bool TableScene::initQemuObjects()
+{
+	if( ! m_qemu )
+	{
+		return false;
+	}
+
+	// ajout de la table dans qemu
+	setTableColor(0); // pas de couleur pour qemu
+	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
+	{
+		m_qemu->add_object(OBJECT_SEEN_BY_HOKUYO, table_obj[i]);
+	}
+
+	// ajout d'un robot adverse
+	m_qemu->add_object(OBJECT_SEEN_BY_HOKUYO | OBJECT_SEEN_BY_OMRON, oponent_robot, &m_qemuObjectOpponentId);
+
+	// on le met a sa position de depart
+	Vect2 origin(0, 0);
+	m_qemu->move_object(m_qemuObjectOpponentId, origin, m_opponentRobotPos);
+
+	m_table3d.initQemuObjects();
+
+	return true;
 }
 
 void TableScene::setColor(int color)
@@ -115,6 +164,11 @@ void TableScene::mouseMoveSelection(int x, int y)
 
 	if( m_opponentRobot3d.selected )
 	{
+		if( m_qemu )
+		{
+			Vect2 origin(m_opponentRobotPos.x, m_opponentRobotPos.y);
+			m_qemu->move_object(m_qemuObjectOpponentId, origin, delta);
+		}
 		m_opponentRobotPos = m_opponentRobotPos + delta;
 	}
 	m_table3d.moveSelected(delta.x, delta.y);

@@ -5,12 +5,9 @@
 #include "kernel/math/polyline.h"
 #include "kernel/math/VectPlan.h"
 
-enum ObjectType
-{
-	OBJECT_FLOOR_FOOTPRINT,
-	OBJECT_MOBILE_FLOOR_FOOTPRINT,
-	OBJECT_BEACON_FOOTPRINT,
-};
+#define OBJECT_MOBILE                1
+#define OBJECT_SEEN_BY_HOKUYO        2
+#define OBJECT_SEEN_BY_OMRON         4
 
 class Qemu
 {
@@ -25,7 +22,7 @@ class Qemu
 		int init(const char* qemu_path, const char* prog_name, int gdb_port);
 		void reboot();
 		void destroy();
-		int add_object(ObjectType type, const struct polyline polyline);
+		int add_object(int flags, const struct polyline polyline, int* objectId = NULL);
 		int move_object(int id, Vect2 origin, VectPlan delta);
 		int manage_canopen_connexion(int nodeId, bool connected);
 		int set_io(uint32_t id, bool val);
@@ -40,6 +37,7 @@ class Qemu
 		int m_gdb_port;
 		Com* m_com; //!< communication avec qemu
 		pid_t m_pid; //!< pid de qemu
+		int m_lastObjectId;
 };
 
 #endif

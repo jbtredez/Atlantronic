@@ -2,6 +2,7 @@
 #define TABLE_3D_H
 
 #include "linux/tools/opengl/object3d.h"
+#include "linux/tools/qemu.h"
 
 #define NUM_SAND_CONE               9
 #define NUM_SAND_CUBE              40
@@ -28,7 +29,8 @@ enum
 class Table3d
 {
 	public:
-		bool init(int glSelectBaseId, MainShader* shader);
+		bool init(int glSelectBaseId, MainShader* shader, Qemu* qemu);
+		bool initQemuObjects();
 		void draw();
 
 		void unselectAll();
@@ -51,7 +53,10 @@ class Table3d
 		GlObject m_glPurpleFish;
 
 		Object3d m_obj[TABLE_OBJ_MAX];
+		int m_qemuObjId[TABLE_OBJ_MAX];
+
 		MainShader* m_shader;
+		Qemu* m_qemu;
 };
 
 #endif
