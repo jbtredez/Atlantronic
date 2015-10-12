@@ -52,7 +52,7 @@ enum motion_trajectory_step
 	MOTION_TRAJECTORY_STRAIGHT,
 	MOTION_TRAJECTORY_ROTATE,
 };
-
+/*
 enum motion_wanted_state
 {
 	MOTION_WANTED_STATE_UNKNOWN = 0,
@@ -60,7 +60,7 @@ enum motion_wanted_state
 	MOTION_WANTED_STATE_SPEED,
 	MOTION_WANTED_STATE_TRAJECTORY,
 };
-
+*/
 enum
 {
 	MOTION_ENABLE_WANTED_UNKNOWN = -1,
@@ -138,7 +138,7 @@ class Motion
 		Motion();
 		int init();
 
-		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state);
+		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state);
 
 		void enable(bool enable);
 
@@ -187,8 +187,8 @@ class Motion
 		float motionComputeTime(float ds, KinematicsParameters param);
 		unsigned int motionStateGenericPowerTransition(unsigned int currentState);
 
-		uint8_t m_enableWanted;
-		enum motion_wanted_state m_wantedState;
+		//uint8_t m_enableWanted;
+		enum motion_state m_wantedState;
 		enum motion_status m_status;
 		enum motion_trajectory_step m_trajStep;
 		struct motion_cmd_set_actuator_kinematics_arg m_wantedKinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)

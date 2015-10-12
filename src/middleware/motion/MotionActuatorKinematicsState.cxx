@@ -26,7 +26,7 @@ void MotionActuatorKinematicsState::run(void* data)
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionActuatorKinematicsState::transition(void* data, unsigned int currentState)
+unsigned int MotionActuatorKinematicsState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	return m->motionStateGenericPowerTransition(currentState);

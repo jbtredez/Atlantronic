@@ -13,7 +13,7 @@ class MotionDisabledState : public StateMachineState
 		MotionDisabledState();
 		virtual void entry(void* data);
 		virtual void run(void* data);
-		virtual unsigned int transition(void* data, unsigned int currentState);
+		virtual unsigned int transition(void* data);
 };
 
 #endif

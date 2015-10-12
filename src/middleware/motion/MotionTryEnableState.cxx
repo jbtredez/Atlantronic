@@ -3,7 +3,7 @@
 #include "kernel/driver/power.h"
 
 MotionTryEnableState::MotionTryEnableState() :
-	StateMachineState("MOTION_TRY_ENABLE")
+	StateMachineState("MOTION_TRY_ENABLE",MOTION_TRY_ENABLE)
 {
 
 }
@@ -19,7 +19,7 @@ void MotionTryEnableState::run(void* data)
 	}
 }
 
-unsigned int MotionTryEnableState::transition(void* data, unsigned int currentState)
+unsigned int MotionTryEnableState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	bool all_op_enable = true;

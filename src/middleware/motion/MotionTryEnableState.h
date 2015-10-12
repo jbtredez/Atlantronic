@@ -12,7 +12,7 @@ class MotionTryEnableState : public StateMachineState
 	public:
 		MotionTryEnableState();
 		virtual void run(void* data);
-		virtual unsigned int transition(void* data, unsigned int currentState);
+		virtual unsigned int transition(void* data);
 };
 
 #endif

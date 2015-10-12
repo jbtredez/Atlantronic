@@ -320,11 +320,11 @@ error:
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionTrajectoryState::transition(void* data, unsigned int currentState)
+unsigned int MotionTrajectoryState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	unsigned int newState = m->motionStateGenericPowerTransition(currentState);
-	if( newState != currentState || m->m_status != MOTION_IN_MOTION)
+	if( newState != m_stateId || m->m_status != MOTION_IN_MOTION)
 	{
 		return MOTION_INTERRUPTING;
 	}

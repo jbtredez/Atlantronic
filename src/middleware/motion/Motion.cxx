@@ -67,8 +67,9 @@ Motion::Motion() :
 	m_motionStateMachine(m_motionStates, MOTION_MAX_STATE, this)
 {
 	m_anticoOn = true;
-	m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-	m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+	///C'est pour l'allumage des moteur mais c'est le Wanted State
+	///m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
+	m_wantedState = MOTION_MAX_STATE;
 
 	m_canMotor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
 	m_canMotor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
@@ -218,6 +219,8 @@ float Motion::motionComputeTime(float ds, KinematicsParameters param)
 	return ds / param.vMax + 0.5f * param.vMax * ainv;
 }
 
+	//////////////////////////................. Cette méthode est appellé que dans deux classes ...? je me pose la question sur son utilitée dans cette classe (a déplacer dans les classe utilisatrice ou créer une classe intermédiaire pour héritage...(note dans une classe fille tu peux appeller une méthode de la classe mére =>
+	//FILLE::METHODE { MAMMAN::METHODE(); .....}
 unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState)
 {
 	bool all_op_enable = true;
@@ -226,13 +229,17 @@ unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState
 	{
 		all_op_enable &= m_canMotor[i].is_op_enable();
 	}
-
-	if( power_get() || ! all_op_enable || m_enableWanted == MOTION_ENABLE_WANTED_OFF)
+	///En gros on veut éteindre les moteur cad passer dans l'etat DISABLE
+	/// Que se passe-t-il lorsque le moteur est allumé on pars automatiquement en DISABLE???
+	/// On par en DIsable si pas de puissance dans les moteur et on veut eteindre les moteur en partant en DISABLE
+	if( power_get() || ! all_op_enable || m_wantedState == MOTION_DISABLED)
 	{
 		return MOTION_DISABLED;
 	}
 
-	if( m_enableWanted == MOTION_ENABLE_WANTED_ON && currentState != MOTION_ACTUATOR_KINEMATICS &&
+	//////////////////////////................. Cette méthode est appellé que dans deux classes ...? je me pose la question sur son utilitée dans cette classe (a déplacer dans les classe utilisatrice ou créer une classe intermédiaire pour héritage...(note dans une classe fille tu peux appeller une méthode de la classe mére =>
+	//FILLE::METHODE { MAMMAN::METHODE(); .....}
+	if( m_wantedState == MOTION_ENABLED && currentState != MOTION_ACTUATOR_KINEMATICS &&
 		currentState != MOTION_SPEED && currentState != MOTION_TRAJECTORY && currentState != MOTION_INTERRUPTING)
 	{
 		return MOTION_ENABLED;
@@ -288,17 +295,26 @@ void Motion::cmd_set_actuator_kinematics(void* arg)
 	struct motion_cmd_set_actuator_kinematics_arg* cmd = (struct motion_cmd_set_actuator_kinematics_arg*) arg;
 	motion.setActuatorKinematics(*cmd);
 }
-
+//En gros l'utilisatteur par cette méthode veut partir dans l'etat ENABLE .................
+// Franchement ne vaut-il pas mieux d'utiliser la variable wantedState que d'utiliser une autre variable, non? 
 void Motion::enable(bool enable)
-{
+{	
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	if( enable && m_motionStateMachine.getCurrentState() != MOTION_ENABLED )
+	//Sur notre document nous résumant nos etats si on n'est pas les etats Disable on ne peut pas transiter vers l'etat ENABLE=> donc le seul etat ou on peut transiter vers ENABLE c'est l'état DISABLE
+	//SI on est dans les autre état on a forcement de la puissance
+	//if( enable && m_motionStateMachine.getCurrentState() != MOTION_ENABLED )
+	if( enable && m_motionStateMachine.getCurrentState() == MOTION_DISABLED )
 	{
-		m_enableWanted = MOTION_ENABLE_WANTED_ON;
+		//m_enableWanted = MOTION_ENABLE_WANTED_ON;
+		m_wantedState = MOTION_ENABLE;
+
 	}
-	else if( ! enable && m_motionStateMachine.getCurrentState() != MOTION_DISABLED )
+	///Pour le CAS de disable, on veut revenir dans quelque soit l'etat de la machine d'etat même disable dans l'état disable .......
+	//else if( ! enable && m_motionStateMachine.getCurrentState() != MOTION_DISABLED )
+	else if( ! enable )
 	{
-		m_enableWanted = MOTION_ENABLE_WANTED_OFF;
+		//m_enableWanted = MOTION_ENABLE_WANTED_ON;
+		m_wantedState = MOTION_DISABLED;
 	}
 	xSemaphoreGive(m_mutex);
 }
@@ -312,7 +328,7 @@ void Motion::setMaxDrivingCurrent(float maxCurrent)
 void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_wantedState = MOTION_WANTED_STATE_TRAJECTORY;
+	m_wantedState = MOTION_STATE_TRAJECTORY;
 	m_wantedDest = loc_to_abs(dest, -cp);
 	m_wantedTrajectoryType = type;
 	m_wantedWay = way;
@@ -326,7 +342,7 @@ void Motion::setSpeed(VectPlan u, float v)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 
-	m_wantedState = MOTION_WANTED_STATE_SPEED;
+	m_wantedState = MOTION_STATE_SPEED;
 	m_u = u;
 	m_v = v;
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -345,8 +361,9 @@ void Motion::stop()
 void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg cmd)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-
-	m_wantedState = MOTION_WANTED_STATE_ACTUATOR_KINEMATICS;
+	//Appele un chat un chat, le nom de la variable suffit non? on veut aller dans l'etat Wanted MOTION_ACTUATOR_KINEMATICS
+	//m_wantedState = MOTION_WANTED_STATE_ACTUATOR_KINEMATICS;
+	m_wantedState = MOTION_ACTUATOR_KINEMATICS;
 	m_wantedKinematics = cmd;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -354,7 +371,7 @@ void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg
 		if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 		{
 			log_format(LOG_ERROR, "unknown mode %d for actuator %i", cmd.mode[i], i);
-			m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+			m_wantedState = MOTION_STATE_UNKNOWN;
 		}
 	}
 
