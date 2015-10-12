@@ -5,7 +5,7 @@
 #include "kernel/kinematics_model/kinematics_model.h"
 
 MotionSpeedState::MotionSpeedState() :
-	StateMachineState("MOTION_SPEED")
+	MotionMoveState("MOTION_SPEED",MOTION_SPEED)
 {
 
 }
@@ -14,6 +14,10 @@ void MotionSpeedState::entry(void* data)
 {
 	Motion* m = (Motion*) data;
 	m->m_status = MOTION_IN_MOTION;
+
+	//Satisfaction de la volonte operateur
+	m->m_wantedState = MOTION_UNKNOWN_STATE;
+
 	log(LOG_INFO, "IN_MOTION");
 }
 
@@ -24,8 +28,3 @@ void MotionSpeedState::run(void* data)
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionSpeedState::transition(void* data, unsigned int currentState)
-{
-	Motion* m = (Motion*) data;
-	return m->motionStateGenericPowerTransition(currentState);
-}

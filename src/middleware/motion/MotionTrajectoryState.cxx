@@ -6,7 +6,7 @@
 #include "kernel/kinematics_model/kinematics_model.h"
 
 MotionTrajectoryState::MotionTrajectoryState() :
-	StateMachineState("MOTION_TRAJECTORY")
+	MotionMoveState("MOTION_TRAJECTORY",MOTION_TRAJECTORY)
 {
 
 }
@@ -14,6 +14,10 @@ MotionTrajectoryState::MotionTrajectoryState() :
 void MotionTrajectoryState::entry(void* data)
 {
 	Motion* m = (Motion*) data;
+
+	//Satisfaction de la volonte operateur 
+	m->m_wantedState = MOTION_UNKNOWN_STATE;
+
 	float dtheta1 = 0;
 	float ds = 0;
 	float dtheta2 = 0;
@@ -150,7 +154,8 @@ void MotionTrajectoryState::run(void* data)
 	{
 		log(LOG_INFO, "MOTION_COLSISION");
 		m->m_status = MOTION_COLSISION;
-		goto error;
+		stop(m);
+		return;
 	}
 
 	ds = m->m_ds[m->m_trajStep];
@@ -217,7 +222,8 @@ void MotionTrajectoryState::run(void* data)
 			{
 				log(LOG_INFO, "MOTION_COLSISION");
 				m->m_status = MOTION_COLSISION;
-				goto error;
+				stop(m);
+				return;
 			}
 		}
 	}
@@ -261,20 +267,17 @@ void MotionTrajectoryState::run(void* data)
 		{
 			log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*m->m_curvilinearKinematics.pos));
 			m->m_curvilinearKinematics.reset();
-			for(int i = 0; i < CAN_MOTOR_MAX; i++)
-			{
-				m->m_kinematics[i].v = 0;
-			}
 			m->m_trajStep = MOTION_TRAJECTORY_STRAIGHT;
+			stop(m);
+			return;
+			
 		}
 		else if( m->m_trajStep == MOTION_TRAJECTORY_STRAIGHT)
 		{
 			m->m_curvilinearKinematics.reset();
-			for(int i = 0; i < CAN_MOTOR_MAX; i++)
-			{
-				m->m_kinematics[i].v = 0;
-			}
 			m->m_trajStep = MOTION_TRAJECTORY_ROTATE;
+			stop(m);
+			return;
 		}
 		else
 		{
@@ -302,7 +305,8 @@ void MotionTrajectoryState::run(void* data)
 					{
 						log_format(LOG_INFO, "MOTION_TARGET_NOT_REACHED error %d %d %d", (int)err.x, (int)err.y, (int)(err.theta * 180 / M_PI));
 						m->m_status = MOTION_TARGET_NOT_REACHED;
-						goto error;
+						stop(m);
+						return;
 					}
 				}
 			}
@@ -312,7 +316,10 @@ void MotionTrajectoryState::run(void* data)
 	m->motionUpdateMotors();
 	return;
 
-error:
+}
+
+void MotionTrajectoryState::stop(Motion* m)
+{
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i].v = 0;
@@ -320,14 +327,20 @@ error:
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionTrajectoryState::transition(void* data, unsigned int currentState)
+unsigned int MotionTrajectoryState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
-	unsigned int newState = m->motionStateGenericPowerTransition(currentState);
-	if( newState != currentState || m->m_status != MOTION_IN_MOTION)
+	unsigned int new_State = MotionMoveState::transition(data);
+	if(new_State == MOTION_DISABLED)
 	{
+		return MOTION_DISABLED;
+	}
+	///Si le prochain etat n'est pas motion disabled et que le robot est arrete on passe forcement dans l'etat d'arret de moteur pour retomberr dans l'etat ENABLE, new State nesera jamais en DISABLED
+	if( m->m_status != MOTION_IN_MOTION )
+	{
+		log(LOG_INFO, "new state MOTION_INTERRUPTING");
 		return MOTION_INTERRUPTING;
 	}
 
-	return currentState;
+	return m_stateId;
 }

@@ -2,7 +2,7 @@
 #include "kernel/driver/power.h"
 
 MotionDisabledState::MotionDisabledState() :
-	StateMachineState("MOTION_DISABLED")
+	StateMachineState("MOTION_DISABLED",MOTION_DISABLED)
 {
 
 }
@@ -10,10 +10,11 @@ MotionDisabledState::MotionDisabledState() :
 void MotionDisabledState::entry(void* data)
 {
 	Motion* m = (Motion*) data;
-#ifndef MOTION_AUTO_ENABLE
-	m->m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-#else
-	m->m_enableWanted = MOTION_ENABLE_WANTED_ON;
+	// Par defaut quand on entre dans un nouvel etat on ne veut pas aller plus loin
+	m->m_wantedState = MOTION_UNKNOWN_STATE;
+#ifdef MOTION_AUTO_ENABLE
+	// si on veut aller dans l'état MOTION_ENABLED automatiquement
+	m->m_wantedState  = MOTION_ENABLED;
 #endif
 }
 
@@ -28,26 +29,15 @@ void MotionDisabledState::run(void* data)
 	}
 }
 
-unsigned int MotionDisabledState::transition(void* data, unsigned int currentState)
+unsigned int MotionDisabledState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
-#ifndef MOTION_AUTO_ENABLE
-	if( power_get() )
-	{
-		// puissance desactivee
-		m->m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-	}
-#else
-	if( ! power_get() )
-	{
-		m->m_enableWanted = MOTION_ENABLE_WANTED_ON;
-	}
-#endif
 
-	if( m->m_enableWanted == MOTION_ENABLE_WANTED_ON && ! power_get() )
+	// changement d'état vers enable possible si on a de la puissance
+	if( m->m_wantedState == MOTION_ENABLED && !power_get() )
 	{
 		return MOTION_TRY_ENABLE;
 	}
 
-	return currentState;
+	return m_stateId;
 }

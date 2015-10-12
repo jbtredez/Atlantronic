@@ -34,6 +34,7 @@ enum motion_state
 	MOTION_INTERRUPTING,         //!< arret en cours
 //	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	MOTION_MAX_STATE,
+	MOTION_UNKNOWN_STATE,	     //!< etat neutre permet d'indiquer que l'utilisateur ne veut pas changer d'état
 };
 
 enum motion_status
@@ -51,21 +52,6 @@ enum motion_trajectory_step
 	MOTION_TRAJECTORY_PRE_ROTATE = 0,
 	MOTION_TRAJECTORY_STRAIGHT,
 	MOTION_TRAJECTORY_ROTATE,
-};
-
-enum motion_wanted_state
-{
-	MOTION_WANTED_STATE_UNKNOWN = 0,
-	MOTION_WANTED_STATE_ACTUATOR_KINEMATICS,
-	MOTION_WANTED_STATE_SPEED,
-	MOTION_WANTED_STATE_TRAJECTORY,
-};
-
-enum
-{
-	MOTION_ENABLE_WANTED_UNKNOWN = -1,
-	MOTION_ENABLE_WANTED_OFF = 0,
-	MOTION_ENABLE_WANTED_ON = 1
 };
 
 enum motion_way
@@ -138,7 +124,7 @@ class Motion
 		Motion();
 		int init();
 
-		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state);
+		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state);
 
 		void enable(bool enable);
 
@@ -178,6 +164,7 @@ class Motion
 		friend class MotionDisabledState;
 		friend class MotionTryEnableState;
 		friend class MotionEnabledState;
+		friend class MotionMoveState;
 		friend class MotionActuatorKinematicsState;
 		friend class MotionSpeedState;
 		friend class MotionTrajectoryState;
@@ -187,8 +174,7 @@ class Motion
 		float motionComputeTime(float ds, KinematicsParameters param);
 		unsigned int motionStateGenericPowerTransition(unsigned int currentState);
 
-		uint8_t m_enableWanted;
-		enum motion_wanted_state m_wantedState;
+		enum motion_state m_wantedState;
 		enum motion_status m_status;
 		enum motion_trajectory_step m_trajStep;
 		struct motion_cmd_set_actuator_kinematics_arg m_wantedKinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)

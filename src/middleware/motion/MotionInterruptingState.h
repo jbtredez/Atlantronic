@@ -7,12 +7,13 @@
 
 #include "Motion.h"
 
-class MotionInterruptingState : public StateMachineState
+#include "MotionMoveState.h"
+class MotionInterruptingState : public MotionMoveState
 {
 	public:
 		MotionInterruptingState();
 		virtual void run(void* data);
-		virtual unsigned int transition(void* data, unsigned int currentState);
+		virtual unsigned int transition(void* data);
 };
 
 #endif

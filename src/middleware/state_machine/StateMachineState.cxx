@@ -1,8 +1,9 @@
 #include "StateMachineState.h"
 
-StateMachineState::StateMachineState(const char* name)
+StateMachineState::StateMachineState(const char* name,unsigned int stateId)
 {
 	m_name = name;
+	m_stateId = stateId;
 }
 
 void StateMachineState::entry(void* /*data*/)
@@ -20,7 +21,8 @@ void StateMachineState::exit(void* /*data*/)
 
 }
 
-unsigned int StateMachineState::transition(void* /*data*/, unsigned int currentState)
+unsigned int StateMachineState::transition(void* /*data*/)
 {
-	return currentState;
+	return m_stateId;
 }
+

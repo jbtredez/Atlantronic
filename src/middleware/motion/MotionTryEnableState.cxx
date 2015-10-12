@@ -3,7 +3,7 @@
 #include "kernel/driver/power.h"
 
 MotionTryEnableState::MotionTryEnableState() :
-	StateMachineState("MOTION_TRY_ENABLE")
+	StateMachineState("MOTION_TRY_ENABLE",MOTION_TRY_ENABLE)
 {
 
 }
@@ -19,12 +19,13 @@ void MotionTryEnableState::run(void* data)
 	}
 }
 
-unsigned int MotionTryEnableState::transition(void* data, unsigned int currentState)
+unsigned int MotionTryEnableState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	bool all_op_enable = true;
 
-	if( power_get() || m->m_enableWanted == MOTION_ENABLE_WANTED_OFF )
+	//Volonte de l'utilisateur de couper l'etat ou pas de puissance
+	if( power_get() || m->m_wantedState == MOTION_DISABLED )
 	{
 		// puissance desactivee
 		return MOTION_DISABLED;
@@ -41,5 +42,5 @@ unsigned int MotionTryEnableState::transition(void* data, unsigned int currentSt
 		return MOTION_ENABLED;
 	}
 
-	return currentState;
+	return m_stateId;
 }

@@ -6,13 +6,14 @@
 //! @author Atlantronic
 
 #include "Motion.h"
+#include "MotionMoveState.h"
 
-class MotionActuatorKinematicsState : public StateMachineState
+class MotionActuatorKinematicsState : public MotionMoveState
 {
 	public:
 		MotionActuatorKinematicsState();
 		virtual void run(void* data);
-		virtual unsigned int transition(void* data, unsigned int currentState);
+		void entry(void* data);
 };
 
 #endif

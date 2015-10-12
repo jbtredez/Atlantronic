@@ -67,8 +67,7 @@ Motion::Motion() :
 	m_motionStateMachine(m_motionStates, MOTION_MAX_STATE, this)
 {
 	m_anticoOn = true;
-	m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-	m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+	m_wantedState = MOTION_UNKNOWN_STATE;
 
 	m_canMotor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
 	m_canMotor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
@@ -218,29 +217,6 @@ float Motion::motionComputeTime(float ds, KinematicsParameters param)
 	return ds / param.vMax + 0.5f * param.vMax * ainv;
 }
 
-unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState)
-{
-	bool all_op_enable = true;
-
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
-	{
-		all_op_enable &= m_canMotor[i].is_op_enable();
-	}
-
-	if( power_get() || ! all_op_enable || m_enableWanted == MOTION_ENABLE_WANTED_OFF)
-	{
-		return MOTION_DISABLED;
-	}
-
-	if( m_enableWanted == MOTION_ENABLE_WANTED_ON && currentState != MOTION_ACTUATOR_KINEMATICS &&
-		currentState != MOTION_SPEED && currentState != MOTION_TRAJECTORY && currentState != MOTION_INTERRUPTING)
-	{
-		return MOTION_ENABLED;
-	}
-
-	return currentState;
-}
-
 void Motion::cmd_print_param(void* /*arg*/)
 {
 	log_format(LOG_INFO, "axe x     : kp %d ki %d kd %d", (int)(motion.m_xPid.kp), (int)(motion.m_xPid.ki), (int)(motion.m_xPid.kd));
@@ -290,15 +266,15 @@ void Motion::cmd_set_actuator_kinematics(void* arg)
 }
 
 void Motion::enable(bool enable)
-{
+{	
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	if( enable && m_motionStateMachine.getCurrentState() != MOTION_ENABLED )
+	if( enable && m_motionStateMachine.getCurrentState() == MOTION_DISABLED )
 	{
-		m_enableWanted = MOTION_ENABLE_WANTED_ON;
+		m_wantedState = MOTION_ENABLED;
 	}
-	else if( ! enable && m_motionStateMachine.getCurrentState() != MOTION_DISABLED )
+	else if( ! enable )
 	{
-		m_enableWanted = MOTION_ENABLE_WANTED_OFF;
+		m_wantedState = MOTION_DISABLED;
 	}
 	xSemaphoreGive(m_mutex);
 }
@@ -312,13 +288,14 @@ void Motion::setMaxDrivingCurrent(float maxCurrent)
 void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_wantedState = MOTION_WANTED_STATE_TRAJECTORY;
+	m_wantedState = MOTION_TRAJECTORY;
 	m_wantedDest = loc_to_abs(dest, -cp);
 	m_wantedTrajectoryType = type;
 	m_wantedWay = way;
 	m_wantedLinearParam = linearParam;
 	m_wantedAngularParam = angularParam;
 	m_status = MOTION_UPDATING_TRAJECTORY;
+	
 	xSemaphoreGive(m_mutex);
 }
 
@@ -326,7 +303,7 @@ void Motion::setSpeed(VectPlan u, float v)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 
-	m_wantedState = MOTION_WANTED_STATE_SPEED;
+	m_wantedState = MOTION_SPEED;
 	m_u = u;
 	m_v = v;
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -345,8 +322,7 @@ void Motion::stop()
 void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg cmd)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-
-	m_wantedState = MOTION_WANTED_STATE_ACTUATOR_KINEMATICS;
+	m_wantedState = MOTION_ACTUATOR_KINEMATICS;
 	m_wantedKinematics = cmd;
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -354,14 +330,14 @@ void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg
 		if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 		{
 			log_format(LOG_ERROR, "unknown mode %d for actuator %i", cmd.mode[i], i);
-			m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+			m_wantedState = MOTION_UNKNOWN_STATE;
 		}
 	}
 
 	xSemaphoreGive(m_mutex);
 }
 
-void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state)
+void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 	*state = (enum motion_state)m_motionStateMachine.getCurrentState();

@@ -77,10 +77,9 @@ void Trajectory::trajectory_task(void* arg)
 void Trajectory::trajectoryTask()
 {
 	uint32_t wake_time = 0;
-	enum motion_state motion_state;
+	enum motion_state motion_state, motion_wanted_state;
 	enum motion_status motion_status;
 	enum motion_trajectory_step motion_traj_step;
-	enum motion_wanted_state motion_wanted_state;
 
 	while(1)
 	{
@@ -139,11 +138,12 @@ void Trajectory::trajectoryTask()
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_DEST:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_UNKNOWN_STATE )
 				{
 					VectPlan dest = m_dest;
 					VectPlan u = m_dest - m_pos;
 					float ds = u.norm();
+					log_format(LOG_INFO, "Move to dest");
 					motion_trajectory_type traj_type = MOTION_AXIS_XYA;
 					if( fabsf(ds) > EPSILON )
 					{
@@ -164,7 +164,7 @@ void Trajectory::trajectoryTask()
 				}
 				break;
 			case TRAJECTORY_STATE_USING_GRAPH:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN )
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_UNKNOWN_STATE )
 				{
 					if( m_graphWayId < m_graph.m_wayCount - 1 )
 					{
@@ -187,7 +187,7 @@ void Trajectory::trajectoryTask()
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_GRAPH:
-				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_WANTED_STATE_UNKNOWN)
+				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_UNKNOWN_STATE)
 				{
 					m_trajectoryState = TRAJECTORY_STATE_USING_GRAPH;
 					int i = m_graph.m_way[0];
