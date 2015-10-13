@@ -6,8 +6,10 @@ StateMachine::StateMachine(StateMachineState** states, unsigned int size, void* 
 	m_data = data;
 	m_states = states;
 	m_size = size;
+
+	//Initialisation pour effectuer l'entry du premier Etat (0)
 	m_currentStateId = 0;
-	m_lastStateId = m_size;
+	m_lastStateId = m_size;	
 }
 
 int StateMachine::execute()

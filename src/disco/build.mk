@@ -66,6 +66,7 @@ core_robot += kernel/CanMipNode.o
 core_robot += kernel/CanMipMotor.o
 core_robot += middleware/motion/pid.o
 core_robot += middleware/motion/Motion.o
+core_robot += middleware/motion/MotionMoveState.o
 core_robot += middleware/motion/MotionDisabledState.o
 core_robot += middleware/motion/MotionTryEnableState.o
 core_robot += middleware/motion/MotionEnabledState.o

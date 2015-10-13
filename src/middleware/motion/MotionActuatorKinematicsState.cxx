@@ -1,10 +1,18 @@
 #include "MotionActuatorKinematicsState.h"
 
 MotionActuatorKinematicsState::MotionActuatorKinematicsState() :
-	StateMachineState("MOTION_ACTUATOR_KINEMATICS")
+	MotionMoveState("MOTION_ACTUATOR_KINEMATICS",MOTION_ACTUATOR_KINEMATICS)
 {
 
 }
+void MotionActuatorKinematicsState::entry(void* data)
+{
+	Motion* m = (Motion*) data;
+	//Satisfaction de la volonte operateur
+	m->m_wantedState = MOTION_UNKNOWN_STATE;
+
+}
+
 
 void MotionActuatorKinematicsState::run(void* data)
 {
@@ -26,8 +34,3 @@ void MotionActuatorKinematicsState::run(void* data)
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionActuatorKinematicsState::transition(void* data)
-{
-	Motion* m = (Motion*) data;
-	return m->motionStateGenericPowerTransition(currentState);
-}

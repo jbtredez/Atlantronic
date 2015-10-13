@@ -24,7 +24,8 @@ unsigned int MotionTryEnableState::transition(void* data)
 	Motion* m = (Motion*) data;
 	bool all_op_enable = true;
 
-	if( power_get() || m->m_enableWanted == MOTION_ENABLE_WANTED_OFF )
+	//Volonte de l'utilisateur de couper l'etat ou pas de puissance
+	if( power_get() || m->m_wantedState == MOTION_DISABLED )
 	{
 		// puissance desactivee
 		return MOTION_DISABLED;
@@ -41,5 +42,5 @@ unsigned int MotionTryEnableState::transition(void* data)
 		return MOTION_ENABLED;
 	}
 
-	return currentState;
+	return m_stateId;
 }

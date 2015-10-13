@@ -3,7 +3,7 @@
 #include "kernel/driver/power.h"
 
 MotionEnabledState::MotionEnabledState() :
-	StateMachineState("MOTION_ENABLED")
+	StateMachineState("MOTION_ENABLED",MOTION_ENABLED)
 {
 
 }
@@ -11,13 +11,15 @@ MotionEnabledState::MotionEnabledState() :
 void MotionEnabledState::entry(void* data)
 {
 	Motion* m = (Motion*) data;
-	if( m->m_enableWanted == MOTION_ENABLE_WANTED_ON )
-	{
-#ifndef MOTION_AUTO_ENABLE
-		m->m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-#endif
-	}
-	m->m_wantedState = MOTION_WANTED_STATE_UNKNOWN;
+///	Code MORT
+//	if( m->m_enableWanted == MOTION_ENABLE_WANTED_ON )
+//	{
+//#ifndef MOTION_AUTO_ENABLE
+//		m->m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
+//#endif
+//	}
+	//Satisfaction de la volonte operateur ou de la volonte automatique
+	m->m_wantedState = MOTION_UNKNOWN_STATE;
 }
 
 void MotionEnabledState::run(void* data)
@@ -32,7 +34,7 @@ void MotionEnabledState::run(void* data)
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionEnabledState::transition(void* data, unsigned int currentState)
+unsigned int MotionEnabledState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	bool all_op_enable = true;
@@ -42,25 +44,22 @@ unsigned int MotionEnabledState::transition(void* data, unsigned int currentStat
 		all_op_enable &= m->m_canMotor[i].is_op_enable();
 	}
 
-	if( power_get() || ! all_op_enable || m->m_enableWanted == MOTION_ENABLE_WANTED_OFF )
+	///if( power_get() || ! all_op_enable || m->m_enableWanted == MOTION_ENABLE_WANTED_OFF )
+	//Si Aucun moteur actif 
+	if(power_get() || ! all_op_enable )
 	{
 		return MOTION_DISABLED;
 	}
 
-	switch(m->m_wantedState)
+	//Action Operateur de passer de changer d'etat dans les etat suivant on retourne l'etat MotionEnable
+	if( m->m_wantedState == MOTION_ACTUATOR_KINEMATICS
+	 || m->m_wantedState == MOTION_SPEED
+	 || m->m_wantedState == MOTION_TRAJECTORY
+	 || m->m_wantedState == MOTION_DISABLED)
 	{
-		case MOTION_WANTED_STATE_ACTUATOR_KINEMATICS:
-			return MOTION_ACTUATOR_KINEMATICS;
-			break;
-		case MOTION_WANTED_STATE_TRAJECTORY:
-			return MOTION_TRAJECTORY;
-			break;
-		case MOTION_WANTED_STATE_SPEED:
-			return MOTION_SPEED;
-		case MOTION_WANTED_STATE_UNKNOWN:
-		default:
-			break;
+		return m->m_wantedState; 
 	}
 
-	return currentState;
+	//SInon dans les autres cas on change d'etat
+	return m_stateId;
 }

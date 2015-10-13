@@ -69,7 +69,7 @@ Motion::Motion() :
 	m_anticoOn = true;
 	///C'est pour l'allumage des moteur mais c'est le Wanted State
 	///m_enableWanted = MOTION_ENABLE_WANTED_UNKNOWN;
-	m_wantedState = MOTION_MAX_STATE;
+	m_wantedState = MOTION_UNKNOWN_STATE;
 
 	m_canMotor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
 	m_canMotor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
@@ -221,32 +221,32 @@ float Motion::motionComputeTime(float ds, KinematicsParameters param)
 
 	//////////////////////////................. Cette méthode est appellé que dans deux classes ...? je me pose la question sur son utilitée dans cette classe (a déplacer dans les classe utilisatrice ou créer une classe intermédiaire pour héritage...(note dans une classe fille tu peux appeller une méthode de la classe mére =>
 	//FILLE::METHODE { MAMMAN::METHODE(); .....}
-unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState)
-{
-	bool all_op_enable = true;
-
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
-	{
-		all_op_enable &= m_canMotor[i].is_op_enable();
-	}
+//unsigned int Motion::motionStateGenericPowerTransition(unsigned int currentState)
+//{
+//	bool all_op_enable = true;
+//
+//	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+//	{
+//		all_op_enable &= m_canMotor[i].is_op_enable();
+//	}
 	///En gros on veut éteindre les moteur cad passer dans l'etat DISABLE
-	/// Que se passe-t-il lorsque le moteur est allumé on pars automatiquement en DISABLE???
-	/// On par en DIsable si pas de puissance dans les moteur et on veut eteindre les moteur en partant en DISABLE
-	if( power_get() || ! all_op_enable || m_wantedState == MOTION_DISABLED)
-	{
-		return MOTION_DISABLED;
-	}
+	/// On par en DIsable si pas de puissance dans les moteur ou on veut eteindre les moteur en partant en DISABLE
+//	if( power_get() || ! all_op_enable || m_wantedState == MOTION_DISABLED)
+//	{
+//		return MOTION_DISABLED;
+//	}
 
-	//////////////////////////................. Cette méthode est appellé que dans deux classes ...? je me pose la question sur son utilitée dans cette classe (a déplacer dans les classe utilisatrice ou créer une classe intermédiaire pour héritage...(note dans une classe fille tu peux appeller une méthode de la classe mére =>
-	//FILLE::METHODE { MAMMAN::METHODE(); .....}
-	if( m_wantedState == MOTION_ENABLED && currentState != MOTION_ACTUATOR_KINEMATICS &&
-		currentState != MOTION_SPEED && currentState != MOTION_TRAJECTORY && currentState != MOTION_INTERRUPTING)
-	{
-		return MOTION_ENABLED;
-	}
+	//On rentre dans ce If que dans l'état DISABLE ou TRY_ENABLE ou MOTION_ENABLE
+	//Or cette méthode est appellée seulement par les ETATs autres que ces trois derniers....
+	//Donc Code mort à supprimer
+//	if( m_wantedState == MOTION_ENABLED && currentState != MOTION_ACTUATOR_KINEMATICS &&
+//		currentState != MOTION_SPEED && currentState != MOTION_TRAJECTORY && currentState != MOTION_INTERRUPTING)
+//	{
+//		return MOTION_ENABLED;
+//	}
 
-	return currentState;
-}
+//	return currentState;
+//}
 
 void Motion::cmd_print_param(void* /*arg*/)
 {
@@ -306,7 +306,7 @@ void Motion::enable(bool enable)
 	if( enable && m_motionStateMachine.getCurrentState() == MOTION_DISABLED )
 	{
 		//m_enableWanted = MOTION_ENABLE_WANTED_ON;
-		m_wantedState = MOTION_ENABLE;
+		m_wantedState = MOTION_ENABLED;
 
 	}
 	///Pour le CAS de disable, on veut revenir dans quelque soit l'etat de la machine d'etat même disable dans l'état disable .......
@@ -328,7 +328,7 @@ void Motion::setMaxDrivingCurrent(float maxCurrent)
 void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_wantedState = MOTION_STATE_TRAJECTORY;
+	m_wantedState = MOTION_TRAJECTORY;
 	m_wantedDest = loc_to_abs(dest, -cp);
 	m_wantedTrajectoryType = type;
 	m_wantedWay = way;
@@ -342,7 +342,7 @@ void Motion::setSpeed(VectPlan u, float v)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 
-	m_wantedState = MOTION_STATE_SPEED;
+	m_wantedState = MOTION_SPEED;
 	m_u = u;
 	m_v = v;
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
@@ -371,14 +371,14 @@ void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg
 		if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 		{
 			log_format(LOG_ERROR, "unknown mode %d for actuator %i", cmd.mode[i], i);
-			m_wantedState = MOTION_STATE_UNKNOWN;
+			m_wantedState = MOTION_UNKNOWN_STATE;
 		}
 	}
 
 	xSemaphoreGive(m_mutex);
 }
 
-void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_wanted_state* wanted_state)
+void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 	*state = (enum motion_state)m_motionStateMachine.getCurrentState();

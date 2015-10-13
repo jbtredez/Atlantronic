@@ -34,6 +34,7 @@ enum motion_state
 	MOTION_INTERRUPTING,         //!< arret en cours
 //	MOTION_BACK_TO_WALL,         //!< pas d'asservissement, les deux roues en marche arrière, pwm à x %. Arrêt quand le robot ne bouge plus
 	MOTION_MAX_STATE,
+	MOTION_UNKNOWN_STATE,	     //!< etat neutre permet d'indiquer que l'utilisateur ne veut pas changer d'état
 };
 
 enum motion_status
@@ -61,12 +62,12 @@ enum motion_wanted_state
 	MOTION_WANTED_STATE_TRAJECTORY,
 };
 */
-enum
+/*enum
 {
 	MOTION_ENABLE_WANTED_UNKNOWN = -1,
 	MOTION_ENABLE_WANTED_OFF = 0,
 	MOTION_ENABLE_WANTED_ON = 1
-};
+};*/
 
 enum motion_way
 {
@@ -178,6 +179,7 @@ class Motion
 		friend class MotionDisabledState;
 		friend class MotionTryEnableState;
 		friend class MotionEnabledState;
+		friend class MotionMoveState;
 		friend class MotionActuatorKinematicsState;
 		friend class MotionSpeedState;
 		friend class MotionTrajectoryState;

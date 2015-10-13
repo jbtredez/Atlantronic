@@ -1,7 +1,7 @@
 #include "MotionInterruptingState.h"
 
 MotionInterruptingState::MotionInterruptingState() :
-	StateMachineState("MOTION_INTERRUPTING")
+	MotionMoveState("MOTION_INTERRUPTING",MOTION_INTERRUPTING)
 {
 
 }
@@ -16,9 +16,11 @@ void MotionInterruptingState::run(void* data)
 	m->motionUpdateMotors();
 }
 
-unsigned int MotionInterruptingState::transition(void* data, unsigned int currentState)
+unsigned int MotionInterruptingState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
+	
+
 	for(int i = 0; i < CAN_MOTOR_MAX; i++ )
 	{
 		if( m->m_canMotor[i].is_in_motion() )
@@ -26,9 +28,9 @@ unsigned int MotionInterruptingState::transition(void* data, unsigned int curren
 			return MOTION_INTERRUPTING;
 		}
 	}
-
-	unsigned int newState = m->motionStateGenericPowerTransition(currentState);
-	if( newState != currentState )
+	
+	unsigned int newState = MotionMoveState::transition(data);
+	if( newState == MOTION_DISABLED )
 	{
 		return newState;
 	}
