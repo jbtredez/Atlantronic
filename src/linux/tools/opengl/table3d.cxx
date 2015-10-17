@@ -100,7 +100,7 @@ bool Table3d::init(int glSelectBaseId, MainShader* shader, Qemu* qemu)
 		res &= m_obj[i].init(&m_glPurpleFish, selectId++);
 	}
 
-	initElementPosition(5);
+	initElementPosition(1);
 
 	return res;
 }
@@ -185,13 +185,13 @@ void Table3d::initElementPosition(int configuration)
 
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-600, -450, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(300, -650, 0);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-1425, -925, 66);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-1430, -930, 66);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1430, -810, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1310, -930, 44);
 			break;
 		case 2:
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1430, -930, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1430, -930, 66);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(0, -550, 0);
@@ -200,12 +200,12 @@ void Table3d::initElementPosition(int configuration)
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-600, -450, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-300, -650, 0);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1430, -810, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1310, -930, 44);
 			break;
 		case 3:
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1430, -930, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1430, -930, 66);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-800, -550, 0);
@@ -214,12 +214,12 @@ void Table3d::initElementPosition(int configuration)
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-800, -250, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-300, -650, 0);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1425, -800, 44);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1300, -925, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(-1430, -810, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1310, -930, 44);
 			break;
 		case 4:
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1430, -930, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1430, -930, 66);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-800, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(800, -550, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-300, -650, 0);
@@ -228,14 +228,14 @@ void Table3d::initElementPosition(int configuration)
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START].setPosition(-1300, -250, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-1300, -550, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-800, -250, 0);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(1425, -800, 44);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(1300, -925, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(1430, -810, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(1310, -930, 44);
 			break;
 		case 5:
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1425, -925, 66);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1425, -925, 66);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1300, -925, 44);
-			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1300, -925, 44);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START].setPosition(-1430, -930, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+1].setPosition(1430, -930, 66);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+2].setPosition(-1310, -930, 44);
+			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+3].setPosition(1310, -930, 44);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+4].setPosition(-800, -850, 0);
 			m_obj[TABLE_OBJ_WHITE_SEA_SHELL_START+5].setPosition(800, -850, 0);
 
@@ -243,7 +243,7 @@ void Table3d::initElementPosition(int configuration)
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+1].setPosition(-1300, -550, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+2].setPosition(-800, -250, 0);
 			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+3].setPosition(800, -550, 0);
-			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1425, -800, 44);
+			m_obj[TABLE_OBJ_PURPLE_SEA_SHELL_START+4].setPosition(-1430, -810, 44);
 			break;
 	}
 
