@@ -15,6 +15,11 @@ void StateMachineState::run(void* /*data*/)
 
 }
 
+void StateMachineState::exit(void* /*data*/)
+{
+
+}
+
 unsigned int StateMachineState::transition(void* /*data*/, unsigned int currentState)
 {
 	return currentState;

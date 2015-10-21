@@ -18,7 +18,7 @@ int StateMachine::execute()
 		return -1;
 	}
 
-	if( m_lastStateId != m_currentStateId)
+	if( m_lastStateId != m_currentStateId )
 	{
 		m_states[m_currentStateId]->entry(m_data);
 		m_lastStateId = m_currentStateId;
@@ -35,6 +35,7 @@ int StateMachine::execute()
 
 	if( wantedStateId != m_currentStateId )
 	{
+		m_states[m_currentStateId]->exit(m_data);
 		m_currentStateId = wantedStateId;
 		log_format(LOG_INFO, "%s", m_states[m_currentStateId]->m_name);
 		m_states[m_currentStateId]->entry(m_data);
