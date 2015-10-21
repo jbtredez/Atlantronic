@@ -26,7 +26,7 @@ static int trajectory_module_init()
 {
 	usb_add_cmd(USB_CMD_TRAJECTORY, &trajectoryCmd);
 
-	detection_register_callback(trajectory_detection_callback);
+	detection.registerCallback(trajectory_detection_callback);
 
 	return trajectory.init();
 }
@@ -229,7 +229,7 @@ void Trajectory::simplifyPath(enum detection_type type)
 		float dy = m_dest.y - pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection_compute_front_object(type, pos, &a_table, &b_table);
+		float xmin = detection.computeFrontObject(type, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( dist2 < xmin2)
@@ -250,7 +250,7 @@ void Trajectory::simplifyPath(enum detection_type type)
 			dy = p.y - pos.y;
 			pos.theta = atan2f(dy, dx);
 
-			xmin = detection_compute_front_object(type, pos, &a_table, &b_table);
+			xmin = detection.computeFrontObject(type, pos, &a_table, &b_table);
 			dist2 = dx * dx +  dy * dy;
 			xmin2 = xmin * xmin;
 			if( dist2 < xmin2)
@@ -287,7 +287,7 @@ void Trajectory::computeGraph(enum detection_type type)
 			VectPlan pos;
 			GraphLink link = m_graph.getLink(i);
 			pos = VectPlan(m_graph.getNode(link.a), link.alpha);
-			float xmin = detection_compute_front_object(type, pos, NULL, NULL);
+			float xmin = detection.computeFrontObject(type, pos, NULL, NULL);
 			m_graph.setValidLink(i, link.dist < xmin);
 			//log_format(LOG_INFO, "lien %d : %d (%d -> %d)", i, trajectory_graph_valid_links[i], (int)graph_link[i].a, (int)graph_link[i].b);
 		}
@@ -399,7 +399,7 @@ void Trajectory::update()
 		float dy = m_dest.y - m_pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection_compute_front_object(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+		float xmin = detection.computeFrontObject(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( xmin2 < dist2)
@@ -444,7 +444,7 @@ int Trajectory::findWayToGraph(VectPlan pos, enum detection_type detect_type)
 		float dx = p.x - pos.x;
 		float dy = p.y - pos.y;
 		pos.theta = atan2f(dy, dx);
-		xmin = detection_compute_front_object(detect_type, pos, &a_table, &b_table);
+		xmin = detection.computeFrontObject(detect_type, pos, &a_table, &b_table);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;

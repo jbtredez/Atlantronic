@@ -165,7 +165,7 @@ void MotionTrajectoryState::run(void* data)
 		curvilinearKinematicsParam = m->m_wantedAngularParam;
 		if( m->m_anticoOn )
 		{
-			float opponentMinDistance = detection_compute_opponent_distance(Vect2(m->m_posMes.x, m->m_posMes.y));
+			float opponentMinDistance = detection.computeOpponentDistance(Vect2(m->m_posMes.x, m->m_posMes.y));
 			if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
 			{
 				//reduction de la vitesse max de rotation si l'adversaire est tres proche
@@ -185,7 +185,7 @@ void MotionTrajectoryState::run(void* data)
 		if( m->m_anticoOn )
 		{
 			// detection adverse
-			float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
+			float opponentMinDistance = detection.computeOpponentInRangeDistance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
 			opponentMinDistance = opponentMinDistance - PARAM_RIGHT_CORNER_X - PARAM_FINGER_SIZE_X;
 			opponentMinDistance /= 2; // facteur de securite
 
@@ -195,7 +195,7 @@ void MotionTrajectoryState::run(void* data)
 			{
 				dir.theta += M_PI;
 			}
-			float tableBorderDistance = detection_compute_front_object(DETECTION_STATIC_OBJ, dir, NULL, NULL) + PARAM_NP_X;
+			float tableBorderDistance = detection.computeFrontObject(DETECTION_STATIC_OBJ, dir, NULL, NULL) + PARAM_NP_X;
 			if( tableBorderDistance < 10 )
 			{
 				tableBorderDistance = 10;
