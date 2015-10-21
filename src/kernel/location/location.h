@@ -9,16 +9,30 @@
 #include "kernel/math/VectPlan.h"
 #include "kernel/control/kinematics.h"
 
+#ifndef LINUX
+
 #ifndef WEAK_LOCATION
 #define WEAK_LOCATION __attribute__((weak, alias("nop_function") ))
 #endif
 
-void location_update(double voie_inv, Kinematics* kinematics_mes, float dt);
+class Location
+{
+	public:
+		void init();
 
-VectPlan location_get_position() WEAK_LOCATION;
+		void update(double voie_inv, Kinematics* kinematics_mes, float dt);
 
-VectPlan location_get_speed();
+		VectPlan getPosition() WEAK_LOCATION;
 
-void location_set_position(VectPlan pos);
+		VectPlan getSpeed();
+
+		void setPosition(VectPlan pos);
+
+	protected:
+		static void cmdSetPosition(void* arg, void* data);
+		VectPlan location_pos;
+		VectPlan location_speed;
+};
+#endif
 
 #endif

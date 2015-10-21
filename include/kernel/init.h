@@ -20,7 +20,6 @@
 
 // init gpio, usb et error pour afficher les erreurs sur les led et envoyer des log
 #define INIT_GPIO                     "01"
-//#define INIT_LED                      "02"
 #define INIT_USB                      "03"
 #define INIT_XBEE                     "04"
 #define INIT_FAULT                    "04"
@@ -28,7 +27,6 @@
 #define INIT_SPI                      "06"
 #define INIT_GYRO                     "07"
 #define INIT_ACCELERO                 "08"
-//#define INIT_HEARTBEAT                "09"
 
 // init de la communication
 #define INIT_CAN                      "10"
@@ -44,15 +42,14 @@
 #define INIT_ENCODERS                 "31"
 #define INIT_PWM                      "32"
 #define INIT_DYNAMIXEL                "33"
-#define INIT_HOKUYO                   "35"
-#define INIT_DETECTION                "36"
-#define INIT_LOCATION                 "38"
+//#define INIT_HOKUYO                   "35"
+//#define INIT_DETECTION                "36"
 #define INIT_END                      "39"
-#define INIT_MOTION                   "40"
+#define INIT_MAIN_ROBOT               "40"
 #define INIT_CONTROL                  "41"
 #define INIT_WING                     "42"
 //#define INIT_ARM                      "43"
-#define INIT_TRAJECTORY               "44"
+
 #define INIT_PUMP                     "45"
 #define INIT_ELEVATOR                 "46"
 #define INIT_FINGER                   "47"

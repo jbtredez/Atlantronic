@@ -35,7 +35,7 @@
 
 
 static void strat_task(void* arg);
-static void strat_cmd(void* arg);
+static void strat_cmd(void* arg, void* data);
 
 
 
@@ -52,7 +52,7 @@ int strat_module_init()
 
 	strat_color = match_get_color();
 
-	usb_add_cmd(USB_CMD_STRAT, strat_cmd);
+	usb_add_cmd(USB_CMD_STRAT, strat_cmd, NULL);
 
 	return 0;
 }
@@ -213,7 +213,7 @@ static void strat_task(void* arg)
 
 
 
-static void strat_cmd(void* /*arg*/)
+static void strat_cmd(void* /*arg*/, void* /*data*/)
 {
 	// TODO test des actions unitairement
 }

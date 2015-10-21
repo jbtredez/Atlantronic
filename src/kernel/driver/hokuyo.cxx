@@ -6,7 +6,6 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
-#include "kernel/location/location.h"
 #include "kernel/fault.h"
 #include <string.h>
 
@@ -32,45 +31,13 @@ const char* hokuyo_hs_cmd = "HS0\n";
 const char* hokuyo_laser_on_cmd = "BM\n";
 const char* hokuyo_scan_all = "GS0044072500\n";
 
-Hokuyo hokuyo[HOKUYO_MAX];
-
-int hokuyo_module_init()
+int Hokuyo::init(enum usart_id id, const char* name, int hokuyo_id, Location* location)
 {
-	int err = hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1);
-	if(err)
-	{
-		return err;
-	}
-
-/*	err = hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2);
-
-	if(err)
-	{
-		return err;
-	}
-*/
-	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
-	hokuyo[0].scan.theta_min = -M_PI;
-	hokuyo[0].scan.theta_max = M_PI;
-	hokuyo[0].scan.min_object_size = 1;
-	hokuyo[0].scan.min_distance = 125;
-	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
-	hokuyo[1].scan.theta_min = -M_PI;
-	hokuyo[1].scan.theta_max = M_PI;
-	hokuyo[1].scan.min_object_size = 1;
-	hokuyo[1].scan.min_distance = 100;
-
-	return err;
-}
-
-module_init(hokuyo_module_init, INIT_HOKUYO);
-
-int Hokuyo::init(enum usart_id id, const char* name, int hokuyo_id)
-{
-	usartId = id;
+	m_usartId = id;
 	scan.id = hokuyo_id;
-	callback = NULL;
-	last_error = 0;
+	m_callback = NULL;
+	m_lastError = 0;
+	m_location = location;
 
 	portBASE_TYPE err = xTaskCreate(task_wrapper, name, HOKUYO_STACK_SIZE, this, PRIORITY_TASK_HOKUYO, NULL);
 
@@ -94,19 +61,20 @@ void Hokuyo::setPosition(VectPlan pos, int sens)
 	scan.sens = sens;
 }
 
-void Hokuyo::register_callback(hokuyo_callback _callback)
+void Hokuyo::registerCallback(HokuyoCallback callback, void* arg)
 {
-	callback = _callback;
+	m_callback = callback;
+	m_callbackArg = arg;
 }
 
 void Hokuyo::fault_update(uint32_t err)
 {
-	if(err && ! last_error)
+	if(err && ! m_lastError)
 	{
 		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_ACTIVE);
 		log_format(LOG_ERROR, "%s disconnected", pcTaskGetTaskName(NULL));
 	}
-	else if( !err && last_error)
+	else if( !err && m_lastError)
 	{
 		log_format(LOG_ERROR, "%s connected", pcTaskGetTaskName(NULL));
 		fault(FAULT_HOKUYO_DISCONNECTED, FAULT_CLEAR);
@@ -122,7 +90,7 @@ void Hokuyo::fault_update(uint32_t err)
 		fault(FAULT_HOKUYO_DATA_CORRUPTION, FAULT_CLEAR);
 	}
 
-	last_error = err;
+	m_lastError = err;
 }
 
 uint32_t Hokuyo::init_com()
@@ -135,14 +103,14 @@ uint32_t Hokuyo::init_com()
 	{
 		err = 0;
 		// tentative a la vitesse d'utilisation (hokuyo déjà configuré)
-		usart_open(usartId, HOKUYO_SPEED);
-		usart_set_read_dma_buffer(usartId, read_dma_buffer);
+		usart_open(m_usartId, HOKUYO_SPEED);
+		usart_set_read_dma_buffer(m_usartId, m_readDmaBuffer);
 
 		// on vide tout ce qui traine sur la ligne de reception
 		while(err != ERR_USART_TIMEOUT)
 		{
-			usart_set_read_dma_size(usartId, HOKUYO_SCAN_BUFFER_SIZE);
-			err = usart_wait_read(usartId, ms_to_tick(100));
+			usart_set_read_dma_size(m_usartId, HOKUYO_SCAN_BUFFER_SIZE);
+			err = usart_wait_read(m_usartId, ms_to_tick(100));
 		}
 
 		err = scip2();
@@ -151,7 +119,7 @@ uint32_t Hokuyo::init_com()
 		{
 			// pas de réponse à HOKUYO_SPEED, le hokuyo n'est peut être pas configuré
 			// => on tente à la vitesse de base 19200
-			usart_set_frequency(usartId, 19200);
+			usart_set_frequency(m_usartId, 19200);
 
 			err = scip2();
 
@@ -169,7 +137,7 @@ uint32_t Hokuyo::init_com()
 				goto retry;
 			}
 
-			usart_set_frequency(usartId, HOKUYO_SPEED);
+			usart_set_frequency(m_usartId, HOKUYO_SPEED);
 		}
 #endif
 		if(err)
@@ -217,7 +185,7 @@ void Hokuyo::task()
 	{
 		// on attend la fin du nouveau scan
 		err = wait_decode_scan();
-		scan.pos_robot = location_get_position(); // TODO voir si meilleur moment
+		scan.pos_robot = m_location->getPosition(); // TODO voir si meilleur moment
 		fault_update(err);
 		if(err)
 		{
@@ -246,9 +214,9 @@ void Hokuyo::task()
 		{
 			scan.date = current_time;
 
-			if(callback)
+			if(m_callback)
 			{
-				callback();
+				m_callback(m_callbackArg);
 			}
 
 			// on envoi les donnees par usb pour le debug
@@ -264,7 +232,7 @@ uint32_t Hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
 {
 	for(uint32_t i = 0; i < size; i++)
 	{
-		if(cmd[i] != read_dma_buffer[i])
+		if(cmd[i] != m_readDmaBuffer[i])
 		{
 			return ERR_HOKUYO_CHECK_CMD;
 		}
@@ -280,13 +248,13 @@ uint32_t Hokuyo::check_sum(uint32_t start, uint32_t end)
 
 	for(; start < end; start++)
 	{
-		sum += read_dma_buffer[start];
+		sum += m_readDmaBuffer[start];
 	}
 
 	sum &= 0x3F;
 	sum += 0x30;
 
-	if(sum != read_dma_buffer[end])
+	if(sum != m_readDmaBuffer[end])
 	{
 		err = ERR_HOKUYO_CHECKSUM;
 	}
@@ -298,11 +266,11 @@ uint32_t Hokuyo::check_sum(uint32_t start, uint32_t end)
 //! @return 0 si ok
 uint32_t Hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout)
 {
-	usart_set_write_dma_buffer(usartId, buf);
+	usart_set_write_dma_buffer(m_usartId, buf);
 
-	usart_set_read_dma_size(usartId, read_size);
-	usart_send_dma_buffer(usartId, write_size);
-	uint32_t err = usart_wait_read(usartId, timeout);
+	usart_set_read_dma_size(m_usartId, read_size);
+	usart_send_dma_buffer(m_usartId, write_size);
+	uint32_t err = usart_wait_read(m_usartId, timeout);
 
 	if(err)
 	{
@@ -344,12 +312,12 @@ uint32_t Hokuyo::scip2()
 		return err;
 	}
 
-	if( read_dma_buffer[8] != '0')
+	if( m_readDmaBuffer[8] != '0')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
-	if( read_dma_buffer[9] != '0' &&  read_dma_buffer[9] != 'E')
+	if( m_readDmaBuffer[9] != '0' &&  m_readDmaBuffer[9] != 'E')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
@@ -366,12 +334,12 @@ uint32_t Hokuyo::set_speed()
 		return err;
 	}
 
-	if( read_dma_buffer[9] != '0')
+	if( m_readDmaBuffer[9] != '0')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
-	switch(read_dma_buffer[10])
+	switch(m_readDmaBuffer[10])
 	{
 		case '0':
 		case '3':
@@ -398,12 +366,12 @@ uint32_t Hokuyo::hs()
 		return err;
 	}
 
-	if( read_dma_buffer[4] != '0')
+	if( m_readDmaBuffer[4] != '0')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
-	if( read_dma_buffer[5] != '0' && read_dma_buffer[5] != '2')
+	if( m_readDmaBuffer[5] != '0' && m_readDmaBuffer[5] != '2')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
@@ -422,13 +390,13 @@ uint32_t Hokuyo::laser_on()
 		return err;
 	}
 
-	if( read_dma_buffer[3] != '0')
+	if( m_readDmaBuffer[3] != '0')
 	{
-		log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
+		log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), m_readDmaBuffer[3], m_readDmaBuffer[4]);
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
-	switch(read_dma_buffer[4])
+	switch(m_readDmaBuffer[4])
 	{
 		case '0':
 		case '2':
@@ -437,7 +405,7 @@ uint32_t Hokuyo::laser_on()
 		case '1':
 			return ERR_HOKUYO_LASER_MALFUNCTION;
 		default:
-			log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), read_dma_buffer[3], read_dma_buffer[4]);
+			log_format(LOG_ERROR, "%s - laser on - unknown status %c%c", pcTaskGetTaskName(NULL), m_readDmaBuffer[3], m_readDmaBuffer[4]);
 			return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
@@ -446,14 +414,14 @@ uint32_t Hokuyo::laser_on()
 
 void Hokuyo::start_scan()
 {
-	usart_set_write_dma_buffer(usartId, (unsigned char*)hokuyo_scan_all);
-	usart_set_read_dma_size(usartId, HOKUYO_SCAN_BUFFER_SIZE);
-	usart_send_dma_buffer(usartId, 13);
+	usart_set_write_dma_buffer(m_usartId, (unsigned char*)hokuyo_scan_all);
+	usart_set_read_dma_size(m_usartId, HOKUYO_SCAN_BUFFER_SIZE);
+	usart_send_dma_buffer(m_usartId, 13);
 }
 
 uint32_t Hokuyo::wait_decode_scan()
 {
-	uint32_t err = usart_wait_read(usartId, ms_to_tick(150));
+	uint32_t err = usart_wait_read(m_usartId, ms_to_tick(150));
 
 	if(err)
 	{
@@ -490,12 +458,12 @@ uint32_t Hokuyo::wait_decode_scan()
 		return err;
 	}
 	
-	if( read_dma_buffer[13] != '0')
+	if( m_readDmaBuffer[13] != '0')
 	{
 		return ERR_HOKUYO_UNKNOWN_STATUS;
 	}
 
-	switch(read_dma_buffer[14])
+	switch(m_readDmaBuffer[14])
 	{
 		case '0':
 		case '2':
@@ -526,7 +494,7 @@ uint16_t Hokuyo::decode16(const unsigned char* data)
 
 int Hokuyo::decode_scan()
 {
-	const unsigned char* buffer = read_dma_buffer;
+	const unsigned char* buffer = m_readDmaBuffer;
 	uint16_t* distance = scan.distance;
 
 	int j = 0;

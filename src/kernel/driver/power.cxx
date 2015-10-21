@@ -7,7 +7,7 @@
 #include "kernel/task.h"
 
 int power_state = POWER_ON;
-static void power_cmd(void* arg);
+static void power_cmd(void* arg, void* data);
 
 #define POWER_GPIO_ENABLE               GPIOD
 #define POWER_GPIO_ENABLE_PIN              11
@@ -29,7 +29,7 @@ int power_module_init()
 
 	gpio_pin_init(POWER_GPIO_ENABLE, POWER_GPIO_ENABLE_PIN, GPIO_MODE_OUT, GPIO_SPEED_50MHz, GPIO_OTYPE_PP, GPIO_PUPD_UP); // on/off
 
-	usb_add_cmd(USB_CMD_POWER, power_cmd);
+	usb_add_cmd(USB_CMD_POWER, power_cmd, NULL);
 
 	gpio_power_on();
 
@@ -133,9 +133,10 @@ void power_clear(int powerEventMask)
 	}
 }
 
-static void power_cmd(void* arg)
+static void power_cmd(void* arg, void* data)
 {
-	struct power_cmd_arg* cmd_arg = (struct power_cmd_arg*) arg;
+	(void) arg;
+	struct power_cmd_arg* cmd_arg = (struct power_cmd_arg*) data;
 	if( cmd_arg->power_off )
 	{
 		power_set(POWER_OFF);

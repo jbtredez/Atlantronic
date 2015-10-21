@@ -29,13 +29,15 @@ struct detection_object
 	float size;
 } __attribute__((packed));
 
-typedef void (*detection_callback)(void);
+#ifndef LINUX
+
+typedef void (*DetectionCallback)(void* arg);
 
 class Detection
 {
 	public:
-		int init(); // TODO init en fonction du numbre d'hokuyo et de leur position (en haut ou pas)
-		void registerCallback(detection_callback callback);
+		int init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location);
+		void registerCallback(DetectionCallback callback, void* arg);
 
 		//!< Calcule en fonction de la position (actuelle ou non) pos du robot le segment [a b] (repère table) tel
 		//!< que [a b] soit la projection - sur l'axe Y du repère robot - de l'obstacle le plus proche dans l'axe du robot.
@@ -51,9 +53,9 @@ class Detection
 
 		float computeOpponentDistance(Vect2 a);
 
-		xQueueHandle m_queue;
-
 	protected:
+		static void hokuyo1Callback(void* arg);
+		static void hokuyo2Callback(void* arg);
 		static void taskWrapper(void* arg);
 		void task();
 		void compute();
@@ -62,11 +64,15 @@ class Detection
 		float computeObjectOnTrajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b);
 
 		// données privées à la tache detection
-		detection_callback m_callbackFunction;
+		DetectionCallback m_callbackFunction;
+		void* m_callbackArg;
 		Vect2 m_hokuyoPos[HOKUYO_NUM_POINTS];
 		int m_regEcart;
+		Hokuyo* m_hokuyo1;
+		Hokuyo* m_hokuyo2;
 
 		// données partagées par la tache et des méthodes d'accés
+		xQueueHandle m_queue;
 		xSemaphoreHandle m_mutex;
 		Vect2 m_hokuyoReg[HOKUYO_REG_SEG];
 		Vect2 m_omronRectangle[5];
@@ -77,8 +83,9 @@ class Detection
 		int m_numObj;
 
 		Vect2 m_detectionOpponentRobotPt[5];
+		Location* m_location;
 };
 
-extern Detection detection;
+#endif
 
 #endif

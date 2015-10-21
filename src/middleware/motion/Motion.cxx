@@ -15,7 +15,6 @@
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
 #include "disco/robot_parameters.h"
-#include "middleware/detection.h"
 #include "kernel/match.h"
 #include "MotionDisabledState.h"
 #include "MotionTryEnableState.h"
@@ -24,8 +23,6 @@
 #include "MotionSpeedState.h"
 #include "MotionTrajectoryState.h"
 #include "MotionInterruptingState.h"
-
-Motion motion;
 
 static MotionDisabledState motionDisabledState;
 static MotionTryEnableState motionTryEnableState;
@@ -44,21 +41,6 @@ StateMachineState* Motion::m_motionStates[MOTION_MAX_STATE] = {
 	&motionTrajectoryState,
 	&motionInterrputingState
 };
-
-static int motion_module_init()
-{
-	usb_add_cmd(USB_CMD_MOTION_GOTO, &Motion::cmd_goto);
-	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &Motion::cmd_set_speed);
-	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &Motion::cmd_set_max_current);
-	usb_add_cmd(USB_CMD_MOTION_ENABLE, &Motion::cmd_enable);
-	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &Motion::cmd_set_actuator_kinematics);
-	usb_add_cmd(USB_CMD_MOTION_PRINT_PARAM, &Motion::cmd_print_param);
-	usb_add_cmd(USB_CMD_MOTION_PARAM, &Motion::cmd_set_param);
-
-	return motion.init();
-}
-
-module_init(motion_module_init, INIT_MOTION);
 
 Motion::Motion() :
 	m_linearSpeedCheck(100, 10),
@@ -87,14 +69,24 @@ Motion::Motion() :
 	}
 }
 
-int Motion::init()
+int Motion::init(Detection* detection, Location* location)
 {
+	m_location = location;
+	m_detection = detection;
 	m_mutex = xSemaphoreCreateMutex();
 
 	if( ! m_mutex )
 	{
 		return ERR_INIT_CONTROL;
 	}
+
+	usb_add_cmd(USB_CMD_MOTION_GOTO, &Motion::cmd_goto, this);
+	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &Motion::cmd_set_speed, this);
+	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &Motion::cmd_set_max_current, this);
+	usb_add_cmd(USB_CMD_MOTION_ENABLE, &Motion::cmd_enable, this);
+	usb_add_cmd(USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS, &Motion::cmd_set_actuator_kinematics, this);
+	usb_add_cmd(USB_CMD_MOTION_PRINT_PARAM, &Motion::cmd_print_param, this);
+	usb_add_cmd(USB_CMD_MOTION_PARAM, &Motion::cmd_set_param, this);
 
 	return 0;
 }
@@ -120,7 +112,7 @@ void Motion::compute()
 	if( motor_mes_valid )
 	{
 		// mise à jour de la position
-		location_update(VOIE_MOT_INV, m_kinematicsMes, CONTROL_DT);
+		m_location->update(VOIE_MOT_INV, m_kinematicsMes, CONTROL_DT);
 	}
 #else
 	// mise à jour de la position
@@ -133,10 +125,10 @@ void Motion::compute()
 	m_kinematicsMes[0].pos = p1;
 	m_kinematicsMes[1].pos = p2;
 
-	location_update(VOIE_ODO_INV, m_kinematicsMes, CONTROL_DT);
+	m_location->update(VOIE_ODO_INV, m_kinematicsMes, CONTROL_DT);
 #endif
-	m_posMes = location_get_position();
-	m_speedMes = location_get_speed();
+	m_posMes = m_location->getPosition();
+	m_speedMes = m_location->getSpeed();
 
 	m_motionStateMachine.execute();
 
@@ -217,52 +209,58 @@ float Motion::motionComputeTime(float ds, KinematicsParameters param)
 	return ds / param.vMax + 0.5f * param.vMax * ainv;
 }
 
-void Motion::cmd_print_param(void* /*arg*/)
+void Motion::cmd_print_param(void* arg, void* /*data*/)
 {
-	log_format(LOG_INFO, "axe x     : kp %d ki %d kd %d", (int)(motion.m_xPid.kp), (int)(motion.m_xPid.ki), (int)(motion.m_xPid.kd));
-	log_format(LOG_INFO, "axe theta : kp %d ki %d kd %d", (int)(motion.m_thetaPid.kp), (int)(motion.m_thetaPid.ki), (int)(motion.m_thetaPid.kd));
+	Motion* m = (Motion*) arg;
+	log_format(LOG_INFO, "axe x     : kp %d ki %d kd %d", (int)(m->m_xPid.kp), (int)(m->m_xPid.ki), (int)(m->m_xPid.kd));
+	log_format(LOG_INFO, "axe theta : kp %d ki %d kd %d", (int)(m->m_thetaPid.kp), (int)(m->m_thetaPid.ki), (int)(m->m_thetaPid.kd));
 }
 
-void Motion::cmd_set_param(void* arg)
+void Motion::cmd_set_param(void* arg, void* data)
 {
-	struct motion_cmd_param_arg* cmd = (struct motion_cmd_param_arg*) arg;
-	motion.m_xPid.kp = cmd->kp_av;
-	motion.m_xPid.ki = cmd->ki_av;
-	motion.m_xPid.kd = cmd->kd_av;
-	motion.m_thetaPid.kp = cmd->kp_rot;
-	motion.m_thetaPid.ki = cmd->ki_rot;
-	motion.m_thetaPid.kd = cmd->kd_rot;
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_param_arg* cmd = (struct motion_cmd_param_arg*) data;
+	m->m_xPid.kp = cmd->kp_av;
+	m->m_xPid.ki = cmd->ki_av;
+	m->m_xPid.kd = cmd->kd_av;
+	m->m_thetaPid.kp = cmd->kp_rot;
+	m->m_thetaPid.ki = cmd->ki_rot;
+	m->m_thetaPid.kd = cmd->kd_rot;
 }
 
-void Motion::cmd_goto(void* arg)
+void Motion::cmd_goto(void* arg, void* data)
 {
-	struct motion_cmd_goto_arg* cmd = (struct motion_cmd_goto_arg*) arg;
-	motion.goTo(cmd->dest, cmd->cp, (enum motion_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_goto_arg* cmd = (struct motion_cmd_goto_arg*) data;
+	m->goTo(cmd->dest, cmd->cp, (enum motion_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
 }
 
-void Motion::cmd_set_speed(void* arg)
+void Motion::cmd_set_speed(void* arg, void* data)
 {
-	struct motion_cmd_set_speed_arg* cmd = (struct motion_cmd_set_speed_arg*) arg;
-	motion.setSpeed(cmd->u, cmd->v);
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_set_speed_arg* cmd = (struct motion_cmd_set_speed_arg*) data;
+	m->setSpeed(cmd->u, cmd->v);
 }
 
-void Motion::cmd_set_max_current(void* arg)
+void Motion::cmd_set_max_current(void* arg, void* data)
 {
-	struct motion_cmd_set_max_driving_current_arg* cmd = (struct motion_cmd_set_max_driving_current_arg*) arg;
-	motion.setMaxDrivingCurrent(cmd->maxDrivingCurrent);
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_set_max_driving_current_arg* cmd = (struct motion_cmd_set_max_driving_current_arg*) data;
+	m->setMaxDrivingCurrent(cmd->maxDrivingCurrent);
 }
 
-void Motion::cmd_enable(void* arg)
+void Motion::cmd_enable(void* arg, void* data)
 {
-	struct motion_cmd_enable_arg* cmd_arg = (struct motion_cmd_enable_arg*) arg;
-
-	motion.enable(cmd_arg->enable != 0);
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_enable_arg* cmd_arg = (struct motion_cmd_enable_arg*) data;
+	m->enable(cmd_arg->enable != 0);
 }
 
-void Motion::cmd_set_actuator_kinematics(void* arg)
+void Motion::cmd_set_actuator_kinematics(void* arg, void* data)
 {
-	struct motion_cmd_set_actuator_kinematics_arg* cmd = (struct motion_cmd_set_actuator_kinematics_arg*) arg;
-	motion.setActuatorKinematics(*cmd);
+	Motion* m = (Motion*) arg;
+	struct motion_cmd_set_actuator_kinematics_arg* cmd = (struct motion_cmd_set_actuator_kinematics_arg*) data;
+	m->setActuatorKinematics(*cmd);
 }
 
 void Motion::enable(bool enable)

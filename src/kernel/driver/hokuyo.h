@@ -15,6 +15,7 @@
 #include "kernel/semphr.h"
 #endif
 #include "kernel/systick.h"
+#include "kernel/location/location.h"
 
 #define HOKUYO_NUM_POINTS            682
 //!< taille de la réponse maxi avec hokuyo_scan_all :
@@ -27,13 +28,6 @@
 #define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
 #define HOKUYO_MAX_RANGE                                                           4000
 #define HOKUYO_POINT_TO_POINT_DT                                         (0.1f/1024.0f)
-
-enum hokuyo_id
-{
-	HOKUYO1 = 0,
-	HOKUYO2,
-	HOKUYO_MAX,
-};
 
 struct hokuyo_scan
 {
@@ -51,16 +45,16 @@ struct hokuyo_scan
 
 #ifndef LINUX
 
-typedef void (*hokuyo_callback)();
+typedef void (*HokuyoCallback)(void* arg);
 
 class Hokuyo
 {
 	public:
-		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int hokuyo_id);
+		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int hokuyo_id, Location* location);
 		void setPosition(VectPlan pos, int sens);
 
 		//!< enregistrement d'une callback
-		void register_callback(hokuyo_callback callback);
+		void registerCallback(HokuyoCallback callback, void* arg);
 
 		xSemaphoreHandle scan_mutex;
 		struct hokuyo_scan scan;
@@ -83,14 +77,14 @@ class Hokuyo
 
 		static uint16_t decode16(const unsigned char* data);
 
-		hokuyo_callback callback;
-		uint32_t last_error;
-		enum usart_id usartId;
+		HokuyoCallback m_callback;
+		void* m_callbackArg;
+		uint32_t m_lastError;
+		enum usart_id m_usartId;
 		// variable alignee pour le dma
-		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
+		uint8_t m_readDmaBuffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
+		Location* m_location;
 };
-
-extern struct Hokuyo hokuyo[HOKUYO_MAX];
 
 #endif
 

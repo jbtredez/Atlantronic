@@ -6,7 +6,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/dynamixel.h"
 
-static void carpet_cmd(void* arg);
+static void carpet_cmd(void* arg, void* data);
 
 static int carpet_module_init()
 {
@@ -17,7 +17,7 @@ static int carpet_module_init()
 	ax12.set_goal_limit(AX12_LEFT_CARPET, 0, 1.4);
 	ax12.set_goal_limit(AX12_RIGHT_CARPET, -1.4, 0);
 
-	usb_add_cmd(USB_CMD_CARPET, carpet_cmd);
+	usb_add_cmd(USB_CMD_CARPET, carpet_cmd, NULL);
 	return 0;
 }
 
@@ -52,8 +52,8 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 	}
 }
 
-static void carpet_cmd(void* arg)
+static void carpet_cmd(void* /*arg*/, void* data)
 {
-	struct carpet_cmd_arg* cmd_arg = (struct carpet_cmd_arg*) arg;
+	struct carpet_cmd_arg* cmd_arg = (struct carpet_cmd_arg*) data;
 	carpet_set_pos((enum carpet_type)cmd_arg->right, (enum carpet_type)cmd_arg->left);
 }

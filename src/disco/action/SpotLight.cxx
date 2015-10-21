@@ -27,7 +27,7 @@ int SpotLight::do_action()
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
 	int result = 0;
 	int nbelement =  m_elevator->getnumberelement();
-	VectPlan position = location_get_position();
+	VectPlan position = location.getPosition();
 	Action * p_action;
 
 	Action::do_action();

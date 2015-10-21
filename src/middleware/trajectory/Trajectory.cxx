@@ -17,24 +17,17 @@
 #define TRAJECTORY_APPROX_DIST      150      //!< distance d'approche d'un objet
 #define TRAJECTORY_PERIOD            10
 
-void trajectoryCmd(void* arg);
-static void trajectory_detection_callback();
-
-Trajectory trajectory;
-
-static int trajectory_module_init()
+int Trajectory::init(Detection* detection, Motion* motion, Location* location)
 {
-	usb_add_cmd(USB_CMD_TRAJECTORY, &trajectoryCmd);
+	xTaskHandle xHandle;
 
-	detection.registerCallback(trajectory_detection_callback);
+	usb_add_cmd(USB_CMD_TRAJECTORY, &trajectoryCmd, this);
 
-	return trajectory.init();
-}
+	m_location = location;
+	m_detection = detection;
+	m_detection->registerCallback(detectionCallback, this);
+	m_motion = motion;
 
-module_init(trajectory_module_init, INIT_TRAJECTORY);
-
-Trajectory::Trajectory()
-{
 	m_trajectoryState = TRAJECTORY_STATE_NONE;
 	m_hokuyoEnableCheck = true;
 	m_staticCheckEnable = true;
@@ -45,12 +38,6 @@ Trajectory::Trajectory()
 	m_angularParam.vMax = 3;
 	m_angularParam.aMax = 5;
 	m_angularParam.dMax = 5;
-}
-
-int Trajectory::init()
-{
-	xTaskHandle xHandle;
-
 	m_mutex = xSemaphoreCreateMutex();
 
 	if(m_mutex == NULL)
@@ -83,8 +70,8 @@ void Trajectory::trajectoryTask()
 
 	while(1)
 	{
-		m_pos = location_get_position();
-		motion.getState(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
+		m_pos = m_location->getPosition();
+		m_motion->getState(&motion_state, &motion_status, &motion_traj_step, &motion_wanted_state);
 
 		if( m_newRequest )
 		{
@@ -159,7 +146,7 @@ void Trajectory::trajectoryTask()
 						traj_type = MOTION_AXIS_A;
 					}
 
-					motion.goTo(dest, VectPlan(), m_way, traj_type, m_linearParam, m_angularParam);
+					m_motion->goTo(dest, VectPlan(), m_way, traj_type, m_linearParam, m_angularParam);
 					m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
 				}
 				break;
@@ -172,7 +159,7 @@ void Trajectory::trajectoryTask()
 						int i = m_graph.m_way[m_graphWayId];
 						log_format(LOG_INFO, "goto graph node %d", i);
 						VectPlan dest(m_graph.getNode(i), 0);
-						motion.goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, m_linearParam, m_angularParam);
+						m_motion->goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, m_linearParam, m_angularParam);
 					}
 					else
 					{
@@ -181,7 +168,7 @@ void Trajectory::trajectoryTask()
 						{
 							traj_type = MOTION_AXIS_XY;
 						}
-						motion.goTo(m_dest, VectPlan(), m_way, traj_type, m_linearParam, m_angularParam);
+						m_motion->goTo(m_dest, VectPlan(), m_way, traj_type, m_linearParam, m_angularParam);
 						m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
 					}
 				}
@@ -193,7 +180,7 @@ void Trajectory::trajectoryTask()
 					int i = m_graph.m_way[0];
 					VectPlan dest(m_graph.getNode(i), 0);
 					log_format(LOG_INFO, "goto graph node %d : %d %d", i, (int)dest.x, (int)dest.y);
-					motion.goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, m_linearParam, m_angularParam);
+					m_motion->goTo(dest, VectPlan(), WAY_FORWARD, MOTION_AXIS_XY, m_linearParam, m_angularParam);
 				}
 				break;
 		}
@@ -229,7 +216,7 @@ void Trajectory::simplifyPath(enum detection_type type)
 		float dy = m_dest.y - pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection.computeFrontObject(type, pos, &a_table, &b_table);
+		float xmin = m_detection->computeFrontObject(type, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( dist2 < xmin2)
@@ -250,7 +237,7 @@ void Trajectory::simplifyPath(enum detection_type type)
 			dy = p.y - pos.y;
 			pos.theta = atan2f(dy, dx);
 
-			xmin = detection.computeFrontObject(type, pos, &a_table, &b_table);
+			xmin = m_detection->computeFrontObject(type, pos, &a_table, &b_table);
 			dist2 = dx * dx +  dy * dy;
 			xmin2 = xmin * xmin;
 			if( dist2 < xmin2)
@@ -287,7 +274,7 @@ void Trajectory::computeGraph(enum detection_type type)
 			VectPlan pos;
 			GraphLink link = m_graph.getLink(i);
 			pos = VectPlan(m_graph.getNode(link.a), link.alpha);
-			float xmin = detection.computeFrontObject(type, pos, NULL, NULL);
+			float xmin = m_detection->computeFrontObject(type, pos, NULL, NULL);
 			m_graph.setValidLink(i, link.dist < xmin);
 			//log_format(LOG_INFO, "lien %d : %d (%d -> %d)", i, trajectory_graph_valid_links[i], (int)graph_link[i].a, (int)graph_link[i].b);
 		}
@@ -355,7 +342,7 @@ void Trajectory::update()
 			break;
 		case TRAJECTORY_ROTATE_TO:
 			log_format(LOG_INFO, "rotate_to %d", (int)(req.dest.theta * 180 / M_PI));
-			m_dest.theta += motion.findRotate(m_dest.theta, req.dest.theta);
+			m_dest.theta += m_motion->findRotate(m_dest.theta, req.dest.theta);
 			break;
 		case TRAJECTORY_GOTO_XY:
 			m_dest.x = req.dest.x;
@@ -378,7 +365,7 @@ void Trajectory::update()
 		case TRAJECTORY_FREE:
 		default:
 			m_type = TRAJECTORY_FREE;
-			motion.enable(false);
+			m_motion->enable(false);
 			return;
 	}
 
@@ -399,7 +386,7 @@ void Trajectory::update()
 		float dy = m_dest.y - m_pos.y;
 		pos.theta = atan2f(dy, dx);
 
-		float xmin = detection.computeFrontObject(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
+		float xmin = m_detection->computeFrontObject(DETECTION_STATIC_OBJ, pos, &a_table, &b_table);
 		float dist2 = dx * dx +  dy * dy;
 		float xmin2 = xmin * xmin;
 		if( xmin2 < dist2)
@@ -444,7 +431,7 @@ int Trajectory::findWayToGraph(VectPlan pos, enum detection_type detect_type)
 		float dx = p.x - pos.x;
 		float dy = p.y - pos.y;
 		pos.theta = atan2f(dy, dx);
-		xmin = detection.computeFrontObject(detect_type, pos, &a_table, &b_table);
+		xmin = m_detection->computeFrontObject(detect_type, pos, &a_table, &b_table);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
@@ -463,7 +450,7 @@ int Trajectory::findWayToGraph(VectPlan pos, enum detection_type detect_type)
 	return id;
 }
 
-static void trajectory_detection_callback()
+void Trajectory::detectionCallback(void* /*arg*/)
 {
 	// TODO
 }
@@ -494,12 +481,13 @@ void Trajectory::getKinematicsParam(KinematicsParameters* linParam, KinematicsPa
 	xSemaphoreGive(m_mutex);
 }
 
-void trajectoryCmd(void* arg)
+void Trajectory::trajectoryCmd(void* arg, void* data)
 {
-	xSemaphoreTake(trajectory.m_mutex, portMAX_DELAY);
-	memcpy(&trajectory.m_request, arg, sizeof(struct trajectory_cmd_arg));
-	trajectory.updateRequest();
-	xSemaphoreGive(trajectory.m_mutex);
+	Trajectory* traj = (Trajectory*) arg;
+	xSemaphoreTake(traj->m_mutex, portMAX_DELAY);
+	memcpy(&traj->m_request, data, sizeof(struct trajectory_cmd_arg));
+	traj->updateRequest();
+	xSemaphoreGive(traj->m_mutex);
 }
 
 void Trajectory::freeWheel()

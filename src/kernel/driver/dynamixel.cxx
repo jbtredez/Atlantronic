@@ -28,7 +28,7 @@
 static uint8_t dynamixel_checksum(uint8_t* buffer, uint8_t size);
 
 // fonctions de commandes (utilisation par usb uniquement)
-void dynamixel_cmd(void* arg);
+void dynamixel_cmd(void* arg, void* data);
 static void dynamixel_cmd_scan(DynamixelManager* manager);
 static void dynamixel_cmd_set_id(DynamixelManager* manager, uint8_t old_id, uint8_t id);
 
@@ -40,7 +40,7 @@ static int dynamixel_module_init()
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, 12);
 	rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, 24);
 
-	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd);
+	usb_add_cmd(USB_CMD_DYNAMIXEL, &dynamixel_cmd, NULL);
 
 	return 0;
 }
@@ -804,9 +804,9 @@ float DynamixelManager::get_position(uint8_t id, struct dynamixel_error* error)
 	return (alpha - 0x1ff) * DYNAMIXEL_POS_TO_RD;
 }
 
-__OPTIMIZE_SIZE__ void dynamixel_cmd(void* arg)
+__OPTIMIZE_SIZE__ void dynamixel_cmd(void* /*arg*/, void* data)
 {
-	struct dynamixel_cmd_param* param = (struct dynamixel_cmd_param*)arg;
+	struct dynamixel_cmd_param* param = (struct dynamixel_cmd_param*)data;
 	struct dynamixel_error err;
 	float theta;
 

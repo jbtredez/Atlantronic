@@ -41,6 +41,7 @@ core_baz += kernel/driver/dynamixel.o
 core_baz += kernel/driver/xbee.o
 core_baz += kernel/driver/can.o
 
+core_robot += disco/mainRobot.o
 core_robot += kernel/control.o
 core_robot += kernel/location/location.o
 core_robot += kernel/math/VectPlan.o

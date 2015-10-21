@@ -23,26 +23,16 @@
 enum
 {
 	DETECTION_EVENT_HOKUYO_1,
-//	DETECTION_EVENT_HOKUYO_2,
+	DETECTION_EVENT_HOKUYO_2,
 };
 
-static int detection_module_init();
-static void detection_hokuyo1_callback();
-//static void detection_hokuyo2_callback();
-
-Detection detection;
-
-int detection_module_init()
-{
-	return detection.init();
-}
-
-module_init(detection_module_init, INIT_DETECTION);
-
-int Detection::init()
+int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location)
 {
 	m_regEcart = 25;
-	m_callbackFunction = (detection_callback)nop_function;
+	m_callbackFunction = (DetectionCallback)nop_function;
+	m_hokuyo1 = hokuyo1;
+	m_hokuyo2 = hokuyo2;
+	m_location = location;
 
 	portBASE_TYPE err = xTaskCreate(Detection::taskWrapper, "detect", DETECTION_STACK_SIZE, this, PRIORITY_TASK_DETECTION, NULL);
 
@@ -65,8 +55,15 @@ int Detection::init()
 		return ERR_INIT_DETECTION;
 	}
 
-	hokuyo[HOKUYO1].register_callback(detection_hokuyo1_callback);
-//	hokuyo[HOKUYO2].register_callback(detection_hokuyo2_callback);
+	if( m_hokuyo1 )
+	{
+		m_hokuyo1->registerCallback(hokuyo1Callback, this);
+	}
+
+	if( m_hokuyo2 )
+	{
+		m_hokuyo2->registerCallback(hokuyo2Callback, this);
+	}
 
 	m__regSize = 0;
 
@@ -90,16 +87,16 @@ void Detection::task()
 		{
 			if( event == DETECTION_EVENT_HOKUYO_1 )
 			{
-				xSemaphoreTake(hokuyo[HOKUYO1].scan_mutex, portMAX_DELAY);
+				xSemaphoreTake(m_hokuyo1->scan_mutex, portMAX_DELAY);
 		//		struct systime last_time = systick_get_time();
 				compute();
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
 
-				xSemaphoreGive(hokuyo[HOKUYO1].scan_mutex);
+				xSemaphoreGive(m_hokuyo1->scan_mutex);
 			}
-			m_callbackFunction();
+			m_callbackFunction(m_callbackArg);
 		}
 
 		int16_t detect_size = m_numObj;
@@ -119,33 +116,36 @@ void Detection::task()
 	}
 }
 
-void Detection::registerCallback(detection_callback callback)
+void Detection::registerCallback(DetectionCallback callback, void* arg)
 {
 	m_callbackFunction = callback;
+	m_callbackArg = arg;
 }
 
-static void detection_hokuyo1_callback()
+void Detection::hokuyo1Callback(void* arg)
 {
+	Detection* detect = (Detection*) arg;
 	unsigned char event = DETECTION_EVENT_HOKUYO_1;
-	xQueueSend(detection.m_queue, &event, 0);
+	xQueueSend(detect->m_queue, &event, 0);
 }
 
-/*static void detection_hokuyo2_callback()
+void Detection::hokuyo2Callback(void* arg)
 {
+	Detection* detect = (Detection*) arg;
 	unsigned char event = DETECTION_EVENT_HOKUYO_2;
-	xQueueSend(detection_queue, &event, 0);
-}*/
+	xQueueSend(detect->m_queue, &event, 0);
+}
 
 void Detection::compute()
 {
 	int i;
 
 	// scan et position des points en x,y privé à la tache hokuyo
-	hokuyo_compute_xy(&hokuyo[HOKUYO1].scan, m_hokuyoPos);
+	hokuyo_compute_xy(&m_hokuyo1->scan, m_hokuyoPos);
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_numObj = hokuyo_find_objects(&hokuyo[HOKUYO1].scan, m_hokuyoPos, HOKUYO_NUM_POINTS, m__objectPolyline, DETECTION_NUM_OBJECT);
+	m_numObj = hokuyo_find_objects(&m_hokuyo1->scan, m_hokuyoPos, HOKUYO_NUM_POINTS, m__objectPolyline, DETECTION_NUM_OBJECT);
 	m__regSize = 0;
 
 	for( i = 0 ; i < m_numObj ; i++)
@@ -159,7 +159,7 @@ void Detection::compute()
 
 	// TODO revoir comment c est fait pour separer objets calcules par hokuyo et ceux par sick
 	// TODO pour le moment, on utilise un seul tableau et on met a jour les omron ici
-	VectPlan pos = location_get_position();
+	VectPlan pos = m_location->getPosition();
 	bool opponentBehind = ! gpio_get(IO_OMRON1) || ! gpio_get(IO_OMRON2) || ! gpio_get(IO_OMRON3);
 	if( opponentBehind )
 	{

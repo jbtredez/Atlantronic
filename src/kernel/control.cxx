@@ -17,6 +17,7 @@
 #include "kernel/match.h"
 #include "disco/elevator.h"
 #include "control.h"
+#include "disco/mainRobot.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -60,7 +61,7 @@ static void control_task(void* /*arg*/)
 
 		motion.updateUsbData(&control_usb_data);
 		control_usb_data.current_time = systick_get_time();
-		control_usb_data.pos = location_get_position();
+		control_usb_data.pos = location.getPosition();
 //		control_usb_data.raw_data_gyro = gyro_get_raw_data();
 //		control_usb_data.omega_gyro = gyro_get_omega();
 //		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();

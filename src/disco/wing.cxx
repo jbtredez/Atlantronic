@@ -6,7 +6,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 
-static void wing_cmd(void* arg);
+static void wing_cmd(void* arg, void* data);
 
 ////////////////////////////////////////////////
 /// function    : wing_module_init()
@@ -16,7 +16,7 @@ static void wing_cmd(void* arg);
 ////////////////////////////////////////////////
 static int wing_module_init()
 {
-	usb_add_cmd(USB_CMD_WING, &wing_cmd);
+	usb_add_cmd(USB_CMD_WING, &wing_cmd, NULL);
 
 	// configuration des ax12
 	ax12.set_torque_limit(AX12_LEFT_WING, 0.8);
@@ -84,9 +84,9 @@ void wing_set_position(bool sym, enum wing_cmd_type left, enum wing_cmd_type rig
 	}
 }
 
-static void wing_cmd(void* arg)
+static void wing_cmd(void* /*arg*/, void* data)
 {
-	struct wing_cmd_arg* cmd_arg = (struct wing_cmd_arg*) arg;
+	struct wing_cmd_arg* cmd_arg = (struct wing_cmd_arg*) data;
 
 	wing_set_position((enum wing_cmd_type)cmd_arg->type_left, (enum wing_cmd_type)cmd_arg->type_right);
 }

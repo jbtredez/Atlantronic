@@ -6,7 +6,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/dynamixel.h"
 
-static void finger_cmd(void* arg);
+static void finger_cmd(void* arg, void* data);
 
 static int finger_module_init()
 {
@@ -19,7 +19,7 @@ static int finger_module_init()
 	ax12.set_goal_limit(AX12_LOW_FINGER, -1.8, 0);
 	ax12.set_goal_limit(AX12_HIGH_FINGER, 0, 1.8);
 
-	usb_add_cmd(USB_CMD_FINGER, finger_cmd);
+	usb_add_cmd(USB_CMD_FINGER, finger_cmd, NULL);
 	return 0;
 }
 
@@ -106,9 +106,9 @@ void finger_bottom_set_pos(enum finger_bottom_type right, enum finger_bottom_typ
 	}
 }
 
-static void finger_cmd(void* arg)
+static void finger_cmd(void* /*arg*/, void* data)
 {
-	struct finger_cmd_arg* cmd_arg = (struct finger_cmd_arg*) arg;
+	struct finger_cmd_arg* cmd_arg = (struct finger_cmd_arg*) data;
 	finger_set_pos((enum finger_type)cmd_arg->low, (enum finger_type)cmd_arg->high);
 	finger_bottom_set_pos((enum finger_bottom_type)cmd_arg->right, (enum finger_bottom_type)cmd_arg->left);
 }

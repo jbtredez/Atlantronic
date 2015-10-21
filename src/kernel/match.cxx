@@ -27,9 +27,9 @@ volatile int match_end;
 
 static void match_task(void *arg);
 
-static void match_cmd_set_time(void* arg);
-static void match_cmd_go(void* arg);
-static void match_cmd_color(void* arg);
+static void match_cmd_set_time(void* arg, void* data);
+static void match_cmd_go(void* arg, void* data);
+static void match_cmd_color(void* arg, void* data);
 static void match_wait_recal();
 
 static int match_module_init()
@@ -49,9 +49,9 @@ static int match_module_init()
 		return ERR_INIT_END;
 	}
 
-	usb_add_cmd(USB_CMD_MATCH, &match_cmd_go);
-	usb_add_cmd(USB_CMD_COLOR, &match_cmd_color);
-	usb_add_cmd(USB_CMD_MATCH_TIME, &match_cmd_set_time);
+	usb_add_cmd(USB_CMD_MATCH, &match_cmd_go, NULL);
+	usb_add_cmd(USB_CMD_COLOR, &match_cmd_color, NULL);
+	usb_add_cmd(USB_CMD_MATCH_TIME, &match_cmd_set_time, NULL);
 
 	// on force la lecture io au boot
 	match_set_color_from_isr();
@@ -96,10 +96,10 @@ void match_wait_recal()
 	xQueuePeek(match_queue_recal, NULL, portMAX_DELAY);
 }
 
-static void match_cmd_set_time(void* arg)
+static void match_cmd_set_time(void* /*arg*/, void* data)
 {
 	// temps passé en ms
-	uint32_t time = *((uint32_t*) arg);
+	uint32_t time = *((uint32_t*) data);
 	if( ! match_go )
 	{
 		match_time = time;
@@ -107,9 +107,9 @@ static void match_cmd_set_time(void* arg)
 	}
 }
 
-static void match_cmd_go(void * arg)
+static void match_cmd_go(void* /*arg*/, void* data)
 {
-	struct gpio_cmd_match_arg* cmd_arg = (struct gpio_cmd_match_arg*) arg;
+	struct gpio_cmd_match_arg* cmd_arg = (struct gpio_cmd_match_arg*) data;
 
 	switch(cmd_arg->cmd)
 	{
@@ -138,9 +138,9 @@ static void match_cmd_go(void * arg)
 	}
 }
 
-static void match_cmd_color(void* arg)
+static void match_cmd_color(void* /*arg*/, void* data)
 {
-	int8_t new_color = *((int8_t*) arg);
+	int8_t new_color = *((int8_t*) data);
 	if(match_go == 0 && match_color_change_enable)
 	{
 		if(new_color == COLOR_GREEN)

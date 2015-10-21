@@ -17,6 +17,7 @@
 #define ADC_MAX_DATA                  128
 #define ADC_FILTER_GAIN        0.9284497216f// exp(-period/tau) avec period = 1/(2694Hz) et tau = 5ms
 #define ADC_UNDERVOLTAGE_DELAY         10
+#define ADC_DMA_CHAN               DMA2_Stream0
 
 typedef struct
 {
@@ -25,11 +26,6 @@ typedef struct
 	uint8_t an;
 }AnParam;
 
-#if ! defined(__disco__)
-#error unknown card
-#endif
-
-#define ADC_DMA_CHAN               DMA2_Stream0
 AnParam anParam[] =
 {
 	{GPIOA, 4, 4},  // MOT1
@@ -227,4 +223,3 @@ void adc_update()
 		adc_undervoltage = 0;
 	}
 }
-

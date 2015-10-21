@@ -195,7 +195,7 @@ class DynamixelManager
 		int max_devices_id;
 		Dynamixel* devices;
 		bool disabled;
-		friend void dynamixel_cmd(void* arg);
+		friend void dynamixel_cmd(void* arg, void* data);
 		friend void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel);
 		friend void dynamixel_disable();
 		friend void dynamixel_enable();

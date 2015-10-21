@@ -49,12 +49,11 @@ struct trajectory_cmd_arg
 	float dist;
 } __attribute__ (( packed ));
 
+#ifndef LINUX
 class Trajectory
 {
 	public:
-		Trajectory();
-
-		int init();
+		int init(Detection* detection, Motion* motion, Location* location);
 
 		void getKinematicsParam(KinematicsParameters* linParam, KinematicsParameters* angParam);
 
@@ -110,7 +109,8 @@ class Trajectory
 		static void trajectory_task(void* arg);
 
 	protected:
-		friend void trajectoryCmd(void* arg);
+		static void trajectoryCmd(void* arg, void* data);
+		static void detectionCallback(void* arg);
 		void trajectoryTask();
 		void simplifyPath(enum detection_type type);
 		void computeGraph(enum detection_type type);
@@ -137,8 +137,10 @@ class Trajectory
 		KinematicsParameters m_linearParam;
 		KinematicsParameters m_angularParam;
 		Graph m_graph;
+		Location* m_location;
+		Detection* m_detection;
+		Motion* m_motion;
 };
 
-extern Trajectory trajectory;
-
+#endif
 #endif

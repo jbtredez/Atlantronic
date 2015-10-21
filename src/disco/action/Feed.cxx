@@ -27,7 +27,7 @@ Feed::Feed(VectPlan firstcheckpoint,char * name, RobotState * elevator):ActionCo
 int Feed::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
-	VectPlan position = location_get_position();
+	VectPlan position = location.getPosition();
 	Action * p_action;
 
 

@@ -14,6 +14,7 @@
 #include "middleware/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
 #include "pid.h"
+#include "middleware/detection.h"
 
 #ifndef WEAK_MOTION
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
@@ -118,11 +119,12 @@ struct motion_cmd_set_max_driving_current_arg
 
 #define MOTION_AUTO_ENABLE
 
+#ifndef LINUX
 class Motion
 {
 	public:
 		Motion();
-		int init();
+		int init(Detection* detection, Location* location);
 
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state);
 
@@ -151,15 +153,6 @@ class Motion
 
 		void enableAntico(bool enable);
 
-		// interface usb
-		static void cmd_goto(void* arg);
-		static void cmd_set_speed(void* arg);
-		static void cmd_enable(void* arg);
-		static void cmd_set_actuator_kinematics(void* arg);
-		static void cmd_set_max_current(void* arg);
-		static void cmd_print_param(void* arg);
-		static void cmd_set_param(void* arg);
-
 	protected:
 		friend class MotionDisabledState;
 		friend class MotionTryEnableState;
@@ -169,6 +162,15 @@ class Motion
 		friend class MotionSpeedState;
 		friend class MotionTrajectoryState;
 		friend class MotionInterruptingState;
+
+		// interface usb
+		static void cmd_goto(void* arg, void* data);
+		static void cmd_set_speed(void* arg, void* data);
+		static void cmd_enable(void* arg, void* data);
+		static void cmd_set_actuator_kinematics(void* arg, void* data);
+		static void cmd_set_max_current(void* arg, void* data);
+		static void cmd_print_param(void* arg, void* data);
+		static void cmd_set_param(void* arg, void* data);
 
 		void motionUpdateMotors();
 		float motionComputeTime(float ds, KinematicsParameters param);
@@ -203,8 +205,10 @@ class Motion
 		static StateMachineState* m_motionStates[MOTION_MAX_STATE];
 		StateMachine m_motionStateMachine;
 		CanMipMotor m_canMotor[CAN_MOTOR_MAX];
+		Detection* m_detection;
+		Location* m_location;
 };
 
-extern Motion motion;
+#endif
 
 #endif

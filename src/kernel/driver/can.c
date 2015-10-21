@@ -13,8 +13,8 @@
 #include "gpio.h"
 
 static void can_write_mailbox(struct can_msg *msg);
-static void can_cmd_write(void* arg);
-__OPTIMIZE_SIZE__ static void can_cmd_set_baudrate(void* arg);
+static void can_cmd_write(void* arg, void* data);
+__OPTIMIZE_SIZE__ static void can_cmd_set_baudrate(void* arg, void* data);
 __OPTIMIZE_SIZE__ static void can_set_baudrate(enum can_baudrate speed, int debug);
 __OPTIMIZE_SIZE__ static int can_set_mask(int id, uint32_t mask);
 static void can_write_task(void *arg);
@@ -81,8 +81,8 @@ __OPTIMIZE_SIZE__ int can_open(enum can_baudrate baudrate, xQueueHandle _can_rea
 	can_set_mask(0, 0x00);
 
 	// commandes can
-	usb_add_cmd(USB_CMD_CAN_SET_BAUDRATE, &can_cmd_set_baudrate);
-	usb_add_cmd(USB_CMD_CAN_WRITE, &can_cmd_write);
+	usb_add_cmd(USB_CMD_CAN_SET_BAUDRATE, &can_cmd_set_baudrate, NULL);
+	usb_add_cmd(USB_CMD_CAN_WRITE, &can_cmd_write, NULL);
 
 	return 0;
 }
@@ -375,15 +375,17 @@ void can_write_mailbox(struct can_msg *msg)
 	}
 }
 
-static void can_cmd_write(void* arg)
+static void can_cmd_write(void* arg, void* data)
 {
-	struct can_msg* msg = (struct can_msg*) arg;
+	(void) arg;
+	struct can_msg* msg = (struct can_msg*) data;
 	can_write(msg, 0);
 }
 
-static void can_cmd_set_baudrate(void* arg)
+static void can_cmd_set_baudrate(void* arg, void* data)
 {
-	char* buffer = (char*) arg;
+	(void) arg;
+	char* buffer = (char*) data;
 	can_set_baudrate(buffer[0], buffer[1]);
 }
 

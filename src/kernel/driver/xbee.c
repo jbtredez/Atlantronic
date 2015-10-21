@@ -19,7 +19,7 @@ static unsigned char xbee_rx_buffer_dma[256];
 static uint32_t xbee_configure(uint16_t at_cmd, uint32_t val);
 static uint32_t xbee_send_data_api(const unsigned char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l);
 static uint32_t xbee_wait_send_data_api();
-static void xbee_cmd(void* arg);
+static void xbee_cmd(void* arg, void* data);
 static XbeeStatus xbee_init();
 
 
@@ -55,7 +55,7 @@ int xbee_module_init()
 	xSemaphoreTake(xbee_write_sem, 0);
 
 	xbee_status = XBEE_STATUS_DISCONNECTED;
-	usb_add_cmd(USB_CMD_XBEE, &xbee_cmd);
+	usb_add_cmd(USB_CMD_XBEE, &xbee_cmd, NULL);
 
 	return 0;
 }
@@ -367,9 +367,10 @@ static uint32_t xbee_wait_send_data_api()
 	return 0;
 }
 
-static void xbee_cmd(void* arg)
+static void xbee_cmd(void* arg, void* data)
 {
-	struct xbee_cmd_param* cmd_arg = (struct xbee_cmd_param*) arg;
+	(void) arg;
+	struct xbee_cmd_param* cmd_arg = (struct xbee_cmd_param*) data;
 	switch(cmd_arg->cmd_id)
 	{
 		case XBEE_CMD_SET_MANAGER_BAUDRATE:
