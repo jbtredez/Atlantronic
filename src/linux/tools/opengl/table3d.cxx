@@ -273,34 +273,35 @@ bool Table3d::initQemuObjects()
 		return false;
 	}
 
+	int objFlags = OBJECT_MOBILE;// | OBJECT_SEEN_BY_HOKUYO;
 	for(unsigned int i = TABLE_OBJ_SAND_CONE_START; i < TABLE_OBJ_SAND_CONE_START + NUM_SAND_CONE; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cylinder, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, cylinder, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_SAND_CUBE_START; i < TABLE_OBJ_SAND_CUBE_START + NUM_SAND_CUBE; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cube, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, cube, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_SAND_CYLINDER_START; i < TABLE_OBJ_SAND_CYLINDER_START + NUM_SAND_CYLINDER; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, cylinder, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, cylinder, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_WHITE_SEA_SHELL_START; i < TABLE_OBJ_WHITE_SEA_SHELL_START + NUM_WHITE_SEA_SHELL; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_GREEN_SEA_SHELL_START; i < TABLE_OBJ_GREEN_SEA_SHELL_START + NUM_GREEN_SEA_SHELL; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_PURPLE_SEA_SHELL_START; i < TABLE_OBJ_PURPLE_SEA_SHELL_START + NUM_PURPLE_SEA_SHELL; i++)
 	{
-		m_qemu->add_object(OBJECT_MOBILE | OBJECT_SEEN_BY_HOKUYO, seaShell, &m_qemuObjId[i]);
+		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
 	}
 
 	for(unsigned int i = TABLE_OBJ_GREEN_FISH_START; i < TABLE_OBJ_GREEN_FISH_START + NUM_GREEN_FISH; i++)
