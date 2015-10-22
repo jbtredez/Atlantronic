@@ -138,11 +138,13 @@ void Trajectory::trajectoryTask()
 				}
 				break;
 			case TRAJECTORY_STATE_MOVE_TO_DEST:
+
 				if( motion_state == MOTION_ENABLED && motion_wanted_state == MOTION_UNKNOWN_STATE )
 				{
 					VectPlan dest = m_dest;
 					VectPlan u = m_dest - m_pos;
 					float ds = u.norm();
+					log_format(LOG_INFO, "Move to dest");
 					motion_trajectory_type traj_type = MOTION_AXIS_XYA;
 					if( fabsf(ds) > EPSILON )
 					{

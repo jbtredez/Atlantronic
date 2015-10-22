@@ -22,10 +22,16 @@ int StateMachine::execute()
 
 	if( m_lastStateId != m_currentStateId)
 	{
+		log_format(LOG_INFO, "%s", m_states[m_currentStateId]->m_name);
+		log_format(LOG_ERROR, "Entry state %d ol state %d", m_currentStateId, m_lastStateId);
 		m_states[m_currentStateId]->entry(m_data);
 		m_lastStateId = m_currentStateId;
 	}
-
+	int index = 0;
+	while(index != 100) 
+	{
+		index++;
+	}
 	m_states[m_currentStateId]->run(m_data);
 
 	unsigned int nextStateId = m_states[m_currentStateId]->transition(m_data);
@@ -37,10 +43,11 @@ int StateMachine::execute()
 
 	if( nextStateId != m_currentStateId )
 	{
-		m_currentStateId = nextStateId;
-		log_format(LOG_INFO, "%s", m_states[m_currentStateId]->m_name);
 		m_states[m_currentStateId]->out(m_data);
 		m_lastStateId = m_currentStateId;
+		m_currentStateId = nextStateId;
+		
+		
 	}
 
 	return 0;

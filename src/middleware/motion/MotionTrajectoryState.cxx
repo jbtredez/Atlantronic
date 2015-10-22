@@ -135,6 +135,198 @@ void MotionTrajectoryState::entry(void* data)
 	m->m_thetaPid.reset();
 	m->m_linearSpeedCheck.reset();
 }
+/*
+void MotionTrajectoryState::run(void* data)
+{
+	Motion* m = (Motion*) data;
+	Kinematics kinematics = m->m_curvilinearKinematics;
+	KinematicsParameters curvilinearKinematicsParam;
+	float ds = 0;
+	float k;
+	float n;
+	VectPlan u;
+	VectPlan u_loc;
+	VectPlan error_loc;
+	Kinematics motion_kinematics_th[CAN_MOTOR_MAX];
+	VectPlan v;
+	VectPlan v_th;
+
+	enum motion_check_speed res = m->m_linearSpeedCheck.compute(m->m_speedCmd.x, m->m_speedMes.x);
+	if( res != MOTION_SPEED_OK )
+	{
+		log(LOG_INFO, "MOTION_COLSISION");
+		m->m_status = MOTION_COLSISION;
+		goto error;
+	}
+
+	ds = m->m_ds[m->m_trajStep];
+	if( m->m_trajStep == MOTION_TRAJECTORY_PRE_ROTATE || m->m_trajStep == MOTION_TRAJECTORY_ROTATE )
+	{
+		u = VectPlan(0, 0, 1);
+		curvilinearKinematicsParam = m->m_wantedAngularParam;
+		if( m->m_anticoOn )
+		{
+			float opponentMinDistance = detection_compute_opponent_distance(Vect2(m->m_posMes.x, m->m_posMes.y));
+			if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
+			{
+				//reduction de la vitesse max de rotation si l'adversaire est tres proche
+				curvilinearKinematicsParam.vMax = 1;
+			}
+			else if( opponentMinDistance < 2*PARAM_RIGHT_CORNER_X )
+			{
+				// reduction de la vitesse max de rotation si l'adversaire est proche
+				curvilinearKinematicsParam.vMax /= 1.5;
+			}
+		}
+	}
+	else
+	{
+		u = m->m_u;
+		curvilinearKinematicsParam = m->m_wantedLinearParam;
+		if( m->m_anticoOn )
+		{
+			// detection adverse
+			float opponentMinDistance = detection_compute_opponent_in_range_distance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
+			opponentMinDistance = opponentMinDistance - PARAM_RIGHT_CORNER_X - PARAM_FINGER_SIZE_X;
+			opponentMinDistance /= 2; // facteur de securite
+
+			// detection statique
+			VectPlan dir = m->m_posMes;
+			if( u.x < 0 )
+			{
+				dir.theta += M_PI;
+			}
+			float tableBorderDistance = detection_compute_front_object(DETECTION_STATIC_OBJ, dir, NULL, NULL) + PARAM_NP_X;
+			if( tableBorderDistance < 10 )
+			{
+				tableBorderDistance = 10;
+			}
+			float maxDistance = tableBorderDistance;
+			if( opponentMinDistance < maxDistance)
+			{
+				maxDistance = opponentMinDistance;
+			}
+
+			if( maxDistance < 0 )
+			{
+				maxDistance = 0;
+			}
+
+			float corr = curvilinearKinematicsParam.dMax * CONTROL_DT / 2;
+			float vMaxSlowDown = sqrtf(corr * corr + 2 * fabsf(maxDistance) * curvilinearKinematicsParam.dMax) - corr;
+			if(vMaxSlowDown < curvilinearKinematicsParam.vMax )
+			{
+				curvilinearKinematicsParam.vMax = vMaxSlowDown;
+			}
+
+			if( vMaxSlowDown < EPSILON )
+			{
+				log(LOG_INFO, "MOTION_COLSISION");
+				m->m_status = MOTION_COLSISION;
+				goto error;
+			}
+		}
+	}
+
+	error_loc = abs_to_loc(m->m_posMes, m->m_posCmdTh);
+
+	// calcul de la commande theorique
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		motion_kinematics_th[i] = m->m_kinematics[i];
+	}
+	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
+	u_loc = abs_to_loc_speed(m->m_posCmdTh.theta, u);
+	k = kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
+	m->m_curvilinearKinematics.v = k * kinematics.v;
+	m->m_curvilinearKinematics.pos += m->m_curvilinearKinematics.v * CONTROL_DT;
+	v_th = m->m_curvilinearKinematics.v * u;
+	m->m_posCmdTh = m->m_posCmdTh + CONTROL_DT * v_th;
+
+	// correction en fonction de l'erreur
+	v = abs_to_loc_speed(m->m_posMes.theta, v_th);
+	// TODO pas de correction laterale pour le moment
+	v.x += m->m_xPid.compute(error_loc.x, CONTROL_DT);
+	v.theta += m->m_thetaPid.compute(error_loc.theta, CONTROL_DT);
+
+	n = v.norm();
+	if( n > EPSILON )
+	{
+		u_loc = v / n;
+	}
+	else
+	{
+		n = v.theta;
+		u_loc = VectPlan(0, 0, 1);
+	}
+	kinematics_model_compute_actuator_cmd(VOIE_MOT, u_loc, n, CONTROL_DT, m->m_kinematics);
+
+	if(fabsf(m->m_curvilinearKinematics.pos - ds) < EPSILON && fabsf(m->m_curvilinearKinematics.v) < EPSILON )
+	{
+		if( m->m_trajStep == MOTION_TRAJECTORY_PRE_ROTATE)
+		{
+			log_format(LOG_DEBUG1, "ds %d pos %d", (int)(1000*ds), (int)(1000*m->m_curvilinearKinematics.pos));
+			m->m_curvilinearKinematics.reset();
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
+			{
+				m->m_kinematics[i].v = 0;
+			}
+			m->m_trajStep = MOTION_TRAJECTORY_STRAIGHT;
+		}
+		else if( m->m_trajStep == MOTION_TRAJECTORY_STRAIGHT)
+		{
+			m->m_curvilinearKinematics.reset();
+			for(int i = 0; i < CAN_MOTOR_MAX; i++)
+			{
+				m->m_kinematics[i].v = 0;
+			}
+			m->m_trajStep = MOTION_TRAJECTORY_ROTATE;
+		}
+		else
+		{
+			m->m_curvilinearKinematics.v = 0;
+			m->m_curvilinearKinematics.a = 0;
+
+			VectPlan err = m->m_dest - m->m_posMes;
+			if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+			{
+				log(LOG_INFO, "MOTION_TARGET_REACHED");
+				m->m_status = MOTION_TARGET_REACHED;
+			}
+			else
+			{
+				systime t = systick_get_time();
+				if( m->m_targetNotReachedStartTime.ms == 0)
+				{
+					log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
+					m->m_targetNotReachedStartTime = t;
+				}
+				else
+				{
+					systime detla = t - m->m_targetNotReachedStartTime;
+					if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
+					{
+						log_format(LOG_INFO, "MOTION_TARGET_NOT_REACHED error %d %d %d", (int)err.x, (int)err.y, (int)(err.theta * 180 / M_PI));
+						m->m_status = MOTION_TARGET_NOT_REACHED;
+						goto error;
+					}
+				}
+			}
+		}
+	}
+
+	m->motionUpdateMotors();
+	return;
+
+error:
+	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	{
+		m->m_kinematics[i].v = 0;
+	}
+	m->motionUpdateMotors();
+}
+*/
+
 
 void MotionTrajectoryState::run(void* data)
 {
@@ -332,11 +524,15 @@ void MotionTrajectoryState::Stop(Motion* m)
 unsigned int MotionTrajectoryState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
-	unsigned int newState = MotionMoveState::transition(data);
-
-	///Si le prochain etat n'est pas motion disabled et que le robot est arrete on passe forcement dans l'etat d'arret de moteur pour retomberr dans l'etat ENABLE
-	if( newState != MOTION_DISABLED || m->m_status != MOTION_IN_MOTION)
+	unsigned int new_State = MotionMoveState::transition(data);
+	if(new_State == MOTION_DISABLED)
 	{
+		return MOTION_DISABLED;
+	}
+	///Si le prochain etat n'est pas motion disabled et que le robot est arrete on passe forcement dans l'etat d'arret de moteur pour retomberr dans l'etat ENABLE, new State nesera jamais en DISABLED
+	if( m->m_status != MOTION_IN_MOTION )
+	{
+		log(LOG_INFO, "new state MOTION_INTERRUPTING");
 		return MOTION_INTERRUPTING;
 	}
 

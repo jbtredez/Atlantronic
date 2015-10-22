@@ -335,6 +335,7 @@ void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_t
 	m_wantedLinearParam = linearParam;
 	m_wantedAngularParam = angularParam;
 	m_status = MOTION_UPDATING_TRAJECTORY;
+	
 	xSemaphoreGive(m_mutex);
 }
 
