@@ -15,6 +15,7 @@
 #include "motion_speed_check.h"
 #include "pid.h"
 #include "middleware/detection.h"
+#include "kernel/kinematics_model/KinematicsModel.h"
 
 #ifndef WEAK_MOTION
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
@@ -124,7 +125,7 @@ class Motion
 {
 	public:
 		Motion();
-		int init(Detection* detection, Location* location);
+		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel);
 
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state);
 
@@ -207,6 +208,7 @@ class Motion
 		CanMipMotor m_canMotor[CAN_MOTOR_MAX];
 		Detection* m_detection;
 		Location* m_location;
+		KinematicsModel* m_kinematicsModel;
 };
 
 #endif

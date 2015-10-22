@@ -2,7 +2,7 @@
 //! @brief Kinematics model
 //! @author Atlantronic
 
-#include "kinematics_model.h"
+#include "KinematicsModelDiff.h"
 #include "disco/robot_parameters.h"
 #include "kernel/log.h"
 
@@ -12,7 +12,7 @@ static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
+float KinematicsModelDiff::computeActuatorCmd(double voie, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
 {
 	float kmin = 1;
 
@@ -46,7 +46,7 @@ float kinematics_model_compute_actuator_cmd(double voie, VectPlan u, float speed
 	return kmin;
 }
 
-VectPlan kinematics_model_compute_speed(double voie_inv, Kinematics* kinematics_mes)
+VectPlan KinematicsModelDiff::computeSpeed(double voie_inv, Kinematics* kinematics_mes)
 {
 	VectPlan v;
 	v.x = 0.5 * (kinematics_mes[RIGHT_WHEEL].v + kinematics_mes[LEFT_WHEEL].v);

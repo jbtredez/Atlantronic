@@ -5,7 +5,6 @@
 #include "kernel/log.h"
 #include "kernel/driver/xbee.h"
 #include "kernel/location/location.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro/gyro.h"
 #include "kernel/driver/adc.h"

@@ -2,11 +2,13 @@
 #include "mainRobot.h"
 #include "kernel/driver/hokuyo.h"
 #include "middleware/trajectory/Trajectory.h"
+#include "kernel/kinematics_model/KinematicsModelDiff.h"
 
 
 Location location;
 Hokuyo hokuyo[HOKUYO_MAX];
 Detection detection;
+KinematicsModelDiff kinematicsModelDiff;
 Motion motion;
 Trajectory trajectory;
 
@@ -26,8 +28,9 @@ static int main_robot_module_init()
 	hokuyo[1].scan.min_object_size = 1;
 	hokuyo[1].scan.min_distance = 100;
 */
+	location.init(&kinematicsModelDiff);
 	detection.init(&hokuyo[0], &hokuyo[1], &location);
-	motion.init(&detection, &location);
+	motion.init(&detection, &location, &kinematicsModelDiff);
 	trajectory.init(&detection, &motion, &location);
 
 	return 0;

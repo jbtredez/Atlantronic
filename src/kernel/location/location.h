@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "kernel/math/VectPlan.h"
 #include "kernel/control/kinematics.h"
+#include "kernel/kinematics_model/KinematicsModel.h"
 
 #ifndef LINUX
 
@@ -18,7 +19,7 @@
 class Location
 {
 	public:
-		void init();
+		void init(KinematicsModel* kinematicsModel);
 
 		void update(double voie_inv, Kinematics* kinematics_mes, float dt);
 
@@ -32,6 +33,7 @@ class Location
 		static void cmdSetPosition(void* arg, void* data);
 		VectPlan location_pos;
 		VectPlan location_speed;
+		KinematicsModel* m_kinematicsModel;
 };
 #endif
 

@@ -9,7 +9,6 @@
 #include "kernel/control.h"
 #include "Motion.h"
 #include "kernel/location/location.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/pwm.h"
 #include "kernel/fault.h"
@@ -69,11 +68,12 @@ Motion::Motion() :
 	}
 }
 
-int Motion::init(Detection* detection, Location* location)
+int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel)
 {
 	m_location = location;
 	m_detection = detection;
 	m_mutex = xSemaphoreCreateMutex();
+	m_kinematicsModel = kinematicsModel;
 
 	if( ! m_mutex )
 	{
@@ -166,7 +166,7 @@ void Motion::motionUpdateMotors()
 		pwm_set(PWM_2, pwm);
 	}
 
-	m_speedCmd = kinematics_model_compute_speed(VOIE_MOT_INV, m_kinematics);
+	m_speedCmd = m_kinematicsModel->computeSpeed(VOIE_MOT_INV, m_kinematics);
 }
 
 void Motion::enableAntico(bool enable)

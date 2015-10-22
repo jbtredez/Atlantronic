@@ -6,17 +6,17 @@
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
 #include "kernel/driver/usb.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/log.h"
 
-void Location::init()
+void Location::init(KinematicsModel* kinematicsModel)
 {
+	m_kinematicsModel = kinematicsModel;
 	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, cmdSetPosition, this);
 }
 
 void Location::update(double voie_inv, Kinematics* kinematics_mes, float dt)
 {
-	VectPlan speed = kinematics_model_compute_speed(voie_inv, kinematics_mes);
+	VectPlan speed = m_kinematicsModel->computeSpeed(voie_inv, kinematics_mes);
 
 	portENTER_CRITICAL();
 	location_speed = speed;
@@ -53,7 +53,6 @@ void Location::setPosition(VectPlan pos)
 void Location::cmdSetPosition(void* arg, void* data)
 {
 	Location* loc = (Location*) arg;
-	(void) arg;
 	VectPlan* pos = (VectPlan*) data;
 	loc->setPosition(*pos);
 }
