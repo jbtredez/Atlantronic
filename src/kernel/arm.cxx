@@ -131,7 +131,7 @@ static void arm_task(void* arg)
 static void arm_update_position()
 {
 	bool allDynamixelsOk = 1;
-	struct dynamixel_error error;
+	struct DynamixelError error;
 	arm_pos_mes.val[ARM_AXIS_SHOULDER] = ax12.get_position(AX12_ARM_SHOULDER, &error);
 	if( error.transmit_error )
 	{

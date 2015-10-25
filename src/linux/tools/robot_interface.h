@@ -47,9 +47,10 @@ enum RobotVersion
 
 struct dynamixel_data
 {
+	int id;
 	float pos;           //!< position
 	uint16_t flags;      //!< flags
-	struct dynamixel_error error; //!< erreurs
+	struct DynamixelError error; //!< erreurs
 };
 
 class RobotInterface
@@ -205,8 +206,8 @@ class RobotInterface
 		struct detection_object detection_obj2[DETECTION_NUM_OBJECT_USB];
 		int16_t detection_dynamic_object_count2;
 
-		struct dynamixel_data ax12[AX12_MAX_ID];
-		struct dynamixel_data rx24[RX24_MAX_ID];
+		struct dynamixel_data ax12[DYNAMIXEL_MAX_ON_BUS];
+		//struct dynamixel_data rx24[DYNAMIXEL_MAX_ON_BUS];
 
 		// calculs
 		struct Vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];

@@ -82,7 +82,8 @@ static void control_task(void* /*arg*/)
 		// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data
 		memcpy(&control_usb_data_light, &control_usb_data, sizeof(control_usb_data_light));
 
-		dynamixel_update_usb_data(&control_usb_data.dynamixel);
+		ax12.updateUsbData(&control_usb_data.ax12);
+		//rx24.updateUsbData(&control_usb_data.rx24);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 

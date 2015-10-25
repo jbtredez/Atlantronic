@@ -22,9 +22,7 @@
 #define ODO2_WAY                                 1
 
 #define VOIE_MOT                            290.0f
-#define VOIE_MOT_INV                    1/VOIE_MOT
 #define VOIE_ODO                            218.8f
-#define VOIE_ODO_INV                    1/VOIE_ODO
 
 #define MOTOR_RED                             5.2f
 #define MOTOR_ENCODER_RESOLUTION              1024

@@ -236,7 +236,7 @@ void MotionTrajectoryState::run(void* data)
 	}
 	kinematics.setPosition(ds, 0, curvilinearKinematicsParam, CONTROL_DT);
 	u_loc = abs_to_loc_speed(m->m_posCmdTh.theta, u);
-	k = m->m_kinematicsModel->computeActuatorCmd(VOIE_MOT, u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
+	k = m->m_kinematicsModel->computeActuatorCmd(u_loc, kinematics.v, CONTROL_DT, motion_kinematics_th);
 	m->m_curvilinearKinematics.v = k * kinematics.v;
 	m->m_curvilinearKinematics.pos += m->m_curvilinearKinematics.v * CONTROL_DT;
 	v_th = m->m_curvilinearKinematics.v * u;
@@ -258,7 +258,7 @@ void MotionTrajectoryState::run(void* data)
 		n = v.theta;
 		u_loc = VectPlan(0, 0, 1);
 	}
-	m->m_kinematicsModel->computeActuatorCmd(VOIE_MOT, u_loc, n, CONTROL_DT, m->m_kinematics);
+	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics);
 
 	if(fabsf(m->m_curvilinearKinematics.pos - ds) < EPSILON && fabsf(m->m_curvilinearKinematics.v) < EPSILON )
 	{

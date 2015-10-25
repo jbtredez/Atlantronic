@@ -102,7 +102,9 @@ enum
 #define DYNAMIXEL_MAX_MOVING_SPEED_RD      11.938f       // 114 rpm
 #define DYNAMIXEL_RDS_TO_SPEED       (DYNAMIXEL_MAX_MOVING_SPEED_RD / 0x3ff)
 
-struct dynamixel_error
+#define DYNAMIXEL_MAX_ON_BUS         10
+
+struct DynamixelError
 {
 	//!< bit 7 à 4 : ERR_DYNAMIXEL_SEND_CHECK, ERR_DYNAMIXEL_PROTO ou ERR_DYNAMIXEL_CHECKSUM
 	//!< bit 4 à 0 : erreur usart sur les 4 bits de poids faible
@@ -111,99 +113,127 @@ struct dynamixel_error
 	uint8_t internal_error;
 } __attribute((packed));
 
-struct Dynamixel
+class DynamixelManager;
+class Dynamixel
 {
-	uint16_t min_goal;                        //!< position min
-	uint16_t max_goal;                        //!< position max
-	uint16_t goal_pos;                        //!< position desiree
-	uint16_t pos;                             //!< position actuelle
-	uint16_t target_reached_threshold;        //!< tolerance pour target reached
-	uint16_t max_torque;                      //!< couple max
-	uint16_t flags;                           //!< flags - champ de bit ( DYNAMIXEL_FLAG_TARGET_REACHED, DYNAMIXEL_FLAG_STUCK)
-	uint32_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
-	struct dynamixel_error last_error;        //!< derniere erreur
+	public:
+		int init(DynamixelManager* manager, int id);
+
+		uint8_t id;                               //!< id
+		uint16_t min_goal;                        //!< position min
+		uint16_t max_goal;                        //!< position max
+		uint16_t goal_pos;                        //!< position desiree
+		uint16_t pos;                             //!< position actuelle
+		uint16_t target_reached_threshold;        //!< tolerance pour target reached
+		uint16_t max_torque;                      //!< couple max
+		uint16_t flags;                           //!< flags - champ de bit ( DYNAMIXEL_FLAG_TARGET_REACHED, DYNAMIXEL_FLAG_STUCK)
+		uint32_t timeStartMoving_ms;              //!< temps en ms du debut du mouvement
+		DynamixelError last_error;        //!< derniere erreur
+
+		DynamixelError set_goal_position(float theta);  //!< deplacement vers l'angle theta (en rd)
+		DynamixelError set_torque_limit(float torque_limit);
+		void set_goal_limit(float min, float max);  //!< configuration des limites d'un dynamixel (limites mécaniques par exemple pour ne pas forcer)
+		void set_target_reached_threshold(float threshold);
+		bool isFlagActive(uint32_t mask);
+		float get_position(DynamixelError* error); //!< angle donné en rd
+
+	protected:
+		DynamixelManager* m_manager;
 };
 
-struct dynamixel_status
+struct DynamixelStatus
 {
-	struct dynamixel_error error;
+	DynamixelError error;
 	uint8_t argc;
 	uint8_t arg[DYNAMIXEL_ARG_MAX];
 };
 
-struct dynamixel_request
+struct DynamixelRequest
 {
 	uint8_t id;
 	uint8_t instruction;
 	uint8_t argc;
 	uint8_t arg[DYNAMIXEL_ARG_MAX];
-	struct dynamixel_status status;
+	struct DynamixelStatus status;
 };
+
+struct DynamixelUsbDeviceData
+{
+	uint8_t id;
+	uint16_t pos;           //!< position
+	uint16_t flags;         //!< flags
+	DynamixelError error; //!< erreurs
+} __attribute((packed));
+
+struct DynamixelUsbData
+{
+	DynamixelUsbDeviceData dynamixel[DYNAMIXEL_MAX_ON_BUS];
+} __attribute((packed));
 
 class DynamixelManager
 {
 	public:
 		int init(const char* name, enum usart_id usart_id, uint32_t frequency, int max_devices_id, uint8_t type);
 
+		int registerDynamixel(Dynamixel* dynamixel);
+
 		//!< affichage d'une erreur
-		void print_error(int id, struct dynamixel_error err);
+		void print_error(int id, DynamixelError err);
 
-		struct dynamixel_error ping(uint8_t id);
-		struct dynamixel_error action(uint8_t id);
-		struct dynamixel_error reset(uint8_t id);
+		DynamixelError ping(uint8_t id);
+		DynamixelError action(uint8_t id);
+		DynamixelError reset(uint8_t id);
 
-		struct dynamixel_error set_led(uint8_t id, uint8_t on);
-		struct dynamixel_error set_moving_speed(uint8_t id, float speed);
-		struct dynamixel_error set_goal_position(uint8_t id, float theta);  //!< deplacement vers l'angle theta (en rd)
-		struct dynamixel_error set_torque_limit(uint8_t id, float torque_limit);
-		struct dynamixel_error set_torque_limit_eeprom(uint8_t id, float torque_limit);
-		struct dynamixel_error set_torque_enable(uint8_t id, uint8_t enable);
-		struct dynamixel_error set_cw_angle_limit(uint8_t id, uint16_t val);
-		struct dynamixel_error set_ccw_angle_limit(uint8_t id, uint16_t val);
-
-		void set_goal_limit(uint8_t id, float min, float max);  //!< configuration des limites d'un dynamixel (limites mécaniques par exemple pour ne pas forcer)
-		void set_target_reached_threshold(uint8_t id, float threshold);
-
-		float get_position(uint8_t id, struct dynamixel_error* error); //!< angle donné en rd
-
-		uint8_t read8(uint8_t id, uint8_t offset, struct dynamixel_error* error);
-		uint16_t read16(uint8_t id, uint8_t offset, struct dynamixel_error* error);
-
-		struct dynamixel_error write8(uint8_t id, uint8_t offset, uint8_t data);
-		struct dynamixel_error write16(uint8_t id, uint8_t offset, uint16_t data);
+		// TODO a deplacer dans la classe Dynamixel
+		DynamixelError setLed(uint8_t id, uint8_t on);
+		DynamixelError set_moving_speed(uint8_t id, float speed);
+		DynamixelError set_torque_limit_eeprom(uint8_t id, float torque_limit);
+		DynamixelError set_torque_enable(uint8_t id, uint8_t enable);
+		DynamixelError set_cw_angle_limit(uint8_t id, uint16_t val);
+		DynamixelError set_ccw_angle_limit(uint8_t id, uint16_t val);
 
 		inline int getType()
 		{
-			return type;
+			return m_type;
 		}
 
-		bool isFlagActive(uint8_t id, uint32_t mask);
+		inline void enable()
+		{
+			m_disabled = false;
+		}
+
+		inline void disable()
+		{
+			m_disabled = true;
+		}
+
+		void updateUsbData(DynamixelUsbData* dynamixel);
 
 	protected:
 		static void task_wrapper(void* arg);
 		void task();
-		void send(struct dynamixel_request *req);
+		void send(struct DynamixelRequest *req);
+		uint8_t read8(uint8_t id, uint8_t offset, DynamixelError* error);
+		uint16_t read16(uint8_t id, uint8_t offset, DynamixelError* error);
+		DynamixelError write8(uint8_t id, uint8_t offset, uint8_t data);
+		DynamixelError write16(uint8_t id, uint8_t offset, uint16_t data);
+
+		static void cmd(void* arg, void* data);
+		void cmd_scan();
+		void cmd_set_id(uint8_t old_id, uint8_t id);
 
 		// variables alignees pour le dma
-		uint8_t write_dma_buffer[6 + DYNAMIXEL_ARG_MAX] __attribute__ ((aligned (16)));
-		uint8_t read_dma_buffer[2*(6 + DYNAMIXEL_ARG_MAX)] __attribute__ ((aligned (16)));
-		enum usart_id usart;
-		xSemaphoreHandle mutex;
-		xSemaphoreHandle usart_mutex;
+		uint8_t m_writeDmaBuffer[6 + DYNAMIXEL_ARG_MAX] __attribute__ ((aligned (16)));
+		uint8_t m_readDmaBuffer[2*(6 + DYNAMIXEL_ARG_MAX)] __attribute__ ((aligned (16)));
+		enum usart_id m_usart;
+		xSemaphoreHandle m_mutex;
+		xSemaphoreHandle m_usartMutex;
 
-		// donnes des dynamixel d'id 1 a max_devices_id-1
-		int max_devices_id;
-		Dynamixel* devices;
-		bool disabled;
-		friend void dynamixel_cmd(void* arg, void* data);
-		friend void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel);
-		friend void dynamixel_disable();
-		friend void dynamixel_enable();
-		uint8_t type;
+		int m_devicesCount;
+		Dynamixel* m_devices[DYNAMIXEL_MAX_ON_BUS];
+		bool m_disabled;
+		uint8_t m_type;
 };
-
-extern DynamixelManager ax12;
-extern DynamixelManager rx24;
 
 // ------------------ interface usb ------------------
 enum
@@ -223,31 +253,10 @@ enum
 
 struct dynamixel_cmd_param
 {
-	uint8_t type;           //!< type de dynamixel (ax12 ou rx24)
 	uint8_t cmd_id;         //!< id de la commande
 	uint8_t id;             //!< id du dynamixel
 	uint8_t reserved;       //!< reserve
 	float param;            //!< parametre
 } __attribute((packed));
-
-struct dynamixel_usb_device_data
-{
-	uint16_t pos;           //!< position
-	uint16_t flags;         //!< flags
-	struct dynamixel_error error; //!< erreurs
-} __attribute((packed));
-
-struct dynamixel_usb_data
-{
-	struct dynamixel_usb_device_data ax12[AX12_MAX_ID];
-	struct dynamixel_usb_device_data rx24[RX24_MAX_ID];
-
-} __attribute((packed));
-
-void dynamixel_update_usb_data(struct dynamixel_usb_data* dynamixel) WEAK_DYNAMIXEL;
-
-void dynamixel_disable() WEAK_DYNAMIXEL;
-
-void dynamixel_enable() WEAK_DYNAMIXEL;
 
 #endif

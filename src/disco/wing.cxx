@@ -5,6 +5,7 @@
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
+#include "mainRobot.h"
 
 static void wing_cmd(void* arg, void* data);
 
@@ -19,24 +20,16 @@ static int wing_module_init()
 	usb_add_cmd(USB_CMD_WING, &wing_cmd, NULL);
 
 	// configuration des ax12
-	ax12.set_torque_limit(AX12_LEFT_WING, 0.8);
-	ax12.set_torque_limit(AX12_RIGHT_WING, 0.8);
+	leftWing.set_torque_limit(0.8);
+	rightWing.set_torque_limit(0.8);
 
-	ax12.set_goal_limit(AX12_LEFT_WING, -M_PI_2, 0);
-	ax12.set_goal_limit(AX12_RIGHT_WING, 0, M_PI_2);
-/*
-	ax12.set_moving_speed(AX12_LEFT_WING, DYNAMIXEL_MAX_MOVING_SPEED_RD);
-	ax12.set_moving_speed(AX12_RIGHT_WING, DYNAMIXEL_MAX_MOVING_SPEED_RD);
+	leftWing.set_goal_limit(-M_PI_2, 0);
+	rightWing.set_goal_limit(0, M_PI_2);
 
-	ax12.set_torque_enable(AX12_LEFT_WING, 1);
-	ax12.set_torque_enable(AX12_RIGHT_WING, 1);
-*/
 	return 0;
 }
 
 module_init(wing_module_init, INIT_WING);
-
-
 
 ////////////////////////////////////////////////
 /// function    : wing_set_position()
@@ -50,10 +43,10 @@ void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 	switch(left)
 	{
 		case WING_PARK:
-			ax12.set_goal_position(AX12_LEFT_WING, 0);
+			leftWing.set_goal_position(0);
 			break;
 		case WING_OPEN:
-			ax12.set_goal_position(AX12_LEFT_WING, -M_PI/2);
+			leftWing.set_goal_position(-M_PI/2);
 			break;
 		default:
 			break;
@@ -62,10 +55,10 @@ void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 	switch(right)
 	{	
 		case WING_PARK:
-			ax12.set_goal_position(AX12_RIGHT_WING, 0);
+			rightWing.set_goal_position(0);
 			break;
 		case WING_OPEN:
-			ax12.set_goal_position(AX12_RIGHT_WING, M_PI/2);
+			rightWing.set_goal_position(M_PI/2);
 			break;
 		default:
 			break;

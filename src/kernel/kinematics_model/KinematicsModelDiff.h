@@ -10,11 +10,16 @@
 class KinematicsModelDiff : public KinematicsModel
 {
 	public:
-		VectPlan computeSpeed(double voie, Kinematics* kinematics_mes);
+		KinematicsModelDiff(float voie);
+
+		VectPlan computeSpeed(Kinematics* kinematics_mes);
 
 		//!< calcul des consignes au niveau des moteurs avec saturations
 		//!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-		float computeActuatorCmd(double voie_inv, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd);
+		float computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd);
+
+	protected:
+		float m_voie;
 };
 
 #endif

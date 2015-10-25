@@ -213,12 +213,31 @@ void TableScene::drawRobot(Graphique* graph)
 		m_shader->setColor(0, 0, 0);
 		m_robot2d.render(GL_LINE_STRIP);
 
-		m_robot3d.rightWingTheta = m_robotItf->ax12[AX12_RIGHT_WING].pos;
-		m_robot3d.leftWingTheta = m_robotItf->ax12[AX12_LEFT_WING].pos;
-		m_robot3d.lowFingerTheta = m_robotItf->ax12[AX12_LOW_FINGER].pos;
-		m_robot3d.highFingerTheta = m_robotItf->ax12[AX12_HIGH_FINGER].pos;
-		m_robot3d.rightCarpetTheta = m_robotItf->ax12[AX12_RIGHT_CARPET].pos;
-		m_robot3d.leftCarpetTheta = m_robotItf->ax12[AX12_LEFT_CARPET].pos;
+		for(int i =0; i < DYNAMIXEL_MAX_ON_BUS; i++)
+		{
+			dynamixel_data* dynamixel = &m_robotItf->ax12[i];
+			switch(dynamixel->id)
+			{
+				case AX12_RIGHT_WING:
+					m_robot3d.rightWingTheta = dynamixel->pos;
+					break;
+				case AX12_LEFT_WING:
+					m_robot3d.leftWingTheta = dynamixel->pos;
+					break;
+				case AX12_LOW_FINGER:
+					m_robot3d.lowFingerTheta = dynamixel->pos;
+					break;
+				case AX12_HIGH_FINGER:
+					m_robot3d.highFingerTheta = dynamixel->pos;
+					break;
+				case AX12_RIGHT_CARPET:
+					m_robot3d.rightCarpetTheta = dynamixel->pos;
+					break;
+				case AX12_LEFT_CARPET:
+					m_robot3d.leftCarpetTheta = dynamixel->pos;
+					break;
+			}
+		}
 		m_robot3d.elevatorHeight = m_robotItf->last_control_usb_data.elevatorHeight;
 		m_robot3d.draw();
 
@@ -323,24 +342,30 @@ void TableScene::printInfos(Graphique* graph)
 			((data->pumpState >> 2) & 0x01),
 			((data->pumpState >> 3) & 0x01));
 	y += lineHeight;
-	for(int i = 2; i < AX12_MAX_ID; i++)
+	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", i,
-				m_robotItf->ax12[i].pos * 180 / M_PI,
-				(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-				(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-				(m_robotItf->ax12[i].error.transmit_error << 8) + m_robotItf->ax12[i].error.internal_error);
-		y += lineHeight;
+		if( m_robotItf->ax12[i].id != 0)
+		{
+			m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", m_robotItf->ax12[i].id,
+					m_robotItf->ax12[i].pos * 180 / M_PI,
+					(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+					(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+					(m_robotItf->ax12[i].error.transmit_error << 8) + m_robotItf->ax12[i].error.internal_error);
+			y += lineHeight;
+		}
 	}
-	for(int i = 2; i < RX24_MAX_ID; i++)
+	/*for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", i,
-				m_robotItf->rx24[i].pos * 180 / M_PI,
-				(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-				(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-				(m_robotItf->rx24[i].error.transmit_error << 8) + m_robotItf->rx24[i].error.internal_error);
-		y += lineHeight;
-	}
+		if( m_robotItf->rx24[i].id != 0)
+		{
+			m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", m_robotItf->rx24[i].id,
+					m_robotItf->rx24[i].pos * 180 / M_PI,
+					(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+					(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+					(m_robotItf->rx24[i].error.transmit_error << 8) + m_robotItf->rx24[i].error.internal_error);
+			y += lineHeight;
+		}
+	}*/
 	m_glfont->glPrintf(x, y, rx, ry, "elevator %5.2f", data->elevatorHeight);
 	y += lineHeight;
 	/*float* mat = data->arm_matrix.val;

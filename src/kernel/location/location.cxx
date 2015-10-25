@@ -14,9 +14,9 @@ void Location::init(KinematicsModel* kinematicsModel)
 	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, cmdSetPosition, this);
 }
 
-void Location::update(double voie_inv, Kinematics* kinematics_mes, float dt)
+void Location::update(Kinematics* kinematics_mes, float dt)
 {
-	VectPlan speed = m_kinematicsModel->computeSpeed(voie_inv, kinematics_mes);
+	VectPlan speed = m_kinematicsModel->computeSpeed(kinematics_mes);
 
 	portENTER_CRITICAL();
 	location_speed = speed;

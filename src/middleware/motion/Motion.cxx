@@ -125,7 +125,7 @@ void Motion::compute()
 	m_kinematicsMes[0].pos = p1;
 	m_kinematicsMes[1].pos = p2;
 
-	m_location->update(VOIE_ODO_INV, m_kinematicsMes, CONTROL_DT);
+	m_location->update(m_kinematicsMes, CONTROL_DT);
 #endif
 	m_posMes = m_location->getPosition();
 	m_speedMes = m_location->getSpeed();
@@ -166,7 +166,7 @@ void Motion::motionUpdateMotors()
 		pwm_set(PWM_2, pwm);
 	}
 
-	m_speedCmd = m_kinematicsModel->computeSpeed(VOIE_MOT_INV, m_kinematics);
+	m_speedCmd = m_kinematicsModel->computeSpeed(m_kinematics);
 }
 
 void Motion::enableAntico(bool enable)

@@ -41,7 +41,6 @@
 
 #define INIT_ENCODERS                 "31"
 #define INIT_PWM                      "32"
-#define INIT_DYNAMIXEL                "33"
 #define INIT_END                      "39"
 #define INIT_MAIN_ROBOT               "40"
 #define INIT_CONTROL                  "41"

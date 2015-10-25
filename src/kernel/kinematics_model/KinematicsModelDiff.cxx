@@ -10,9 +10,14 @@
 
 static KinematicsParameters paramDriving = {1800, 1500, 1500};
 
+KinematicsModelDiff::KinematicsModelDiff(float voie)
+{
+	m_voie = voie;
+}
+
 //!< calcul des consignes au niveau des moteurs avec saturations
 //!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-float KinematicsModelDiff::computeActuatorCmd(double voie, VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
+float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd)
 {
 	float kmin = 1;
 
@@ -20,8 +25,8 @@ float KinematicsModelDiff::computeActuatorCmd(double voie, VectPlan u, float spe
 	float vtheta = u.theta * speed;
 	float v[2];
 
-	v[RIGHT_WHEEL] = vx + 0.5 * voie * vtheta;
-	v[LEFT_WHEEL] = vx - 0.5 * voie * vtheta;
+	v[RIGHT_WHEEL] = vx + 0.5 * m_voie * vtheta;
+	v[LEFT_WHEEL] = vx - 0.5 * m_voie * vtheta;
 
 	int i;
 	for(i = 0; i < 2; i++)
@@ -46,12 +51,12 @@ float KinematicsModelDiff::computeActuatorCmd(double voie, VectPlan u, float spe
 	return kmin;
 }
 
-VectPlan KinematicsModelDiff::computeSpeed(double voie_inv, Kinematics* kinematics_mes)
+VectPlan KinematicsModelDiff::computeSpeed(Kinematics* kinematics_mes)
 {
 	VectPlan v;
 	v.x = 0.5 * (kinematics_mes[RIGHT_WHEEL].v + kinematics_mes[LEFT_WHEEL].v);
 	v.y = 0;
-	v.theta = voie_inv * (kinematics_mes[RIGHT_WHEEL].v -  kinematics_mes[LEFT_WHEEL].v);
+	v.theta = (kinematics_mes[RIGHT_WHEEL].v -  kinematics_mes[LEFT_WHEEL].v) / m_voie;
 
 	return v;
 }

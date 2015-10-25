@@ -21,7 +21,7 @@ class Location
 	public:
 		void init(KinematicsModel* kinematicsModel);
 
-		void update(double voie_inv, Kinematics* kinematics_mes, float dt);
+		void update(Kinematics* kinematics_mes, float dt);
 
 		VectPlan getPosition() WEAK_LOCATION;
 
