@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "wing.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
@@ -20,11 +20,11 @@ static int wing_module_init()
 	usb_add_cmd(USB_CMD_WING, &wing_cmd, NULL);
 
 	// configuration des ax12
-	leftWing.set_torque_limit(0.8);
-	rightWing.set_torque_limit(0.8);
+	leftWing.setTorqueLimit(0.8);
+	rightWing.setTorqueLimit(0.8);
 
-	leftWing.set_goal_limit(-M_PI_2, 0);
-	rightWing.set_goal_limit(0, M_PI_2);
+	leftWing.setGoalLimits(-M_PI_2, 0);
+	rightWing.setGoalLimits(0, M_PI_2);
 
 	return 0;
 }
@@ -43,10 +43,10 @@ void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 	switch(left)
 	{
 		case WING_PARK:
-			leftWing.set_goal_position(0);
+			leftWing.setGoalPosition(0);
 			break;
 		case WING_OPEN:
-			leftWing.set_goal_position(-M_PI/2);
+			leftWing.setGoalPosition(-M_PI/2);
 			break;
 		default:
 			break;
@@ -55,10 +55,10 @@ void wing_set_position(enum wing_cmd_type left, enum wing_cmd_type right)
 	switch(right)
 	{	
 		case WING_PARK:
-			rightWing.set_goal_position(0);
+			rightWing.setGoalPosition(0);
 			break;
 		case WING_OPEN:
-			rightWing.set_goal_position(M_PI/2);
+			rightWing.setGoalPosition(M_PI/2);
 			break;
 		default:
 			break;

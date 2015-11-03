@@ -2,7 +2,7 @@
 #define MAIN_ROBOT_H
 
 #include "middleware/trajectory/Trajectory.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/DynamixelManager.h"
 
 enum hokuyo_id
 {

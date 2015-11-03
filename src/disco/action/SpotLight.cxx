@@ -2,7 +2,7 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "elevator.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 

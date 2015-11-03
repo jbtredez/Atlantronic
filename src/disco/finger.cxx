@@ -4,7 +4,7 @@
 #include "finger.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "mainRobot.h"
 
 static void finger_cmd(void* arg, void* data);
@@ -12,13 +12,13 @@ static void finger_cmd(void* arg, void* data);
 static int finger_module_init()
 {
 	// configuration des ax12
-	lowFinger.set_torque_limit(0.6);
-	highFinger.set_torque_limit(0.6);
-	rightFinger.set_torque_limit(0.6);
-	leftFinger.set_torque_limit(0.6);
+	lowFinger.setTorqueLimit(0.6);
+	highFinger.setTorqueLimit(0.6);
+	rightFinger.setTorqueLimit(0.6);
+	leftFinger.setTorqueLimit(0.6);
 
-	lowFinger.set_goal_limit(-1.8, 0);
-	highFinger.set_goal_limit(0, 1.8);
+	lowFinger.setGoalLimits(-1.8, 0);
+	highFinger.setGoalLimits(0, 1.8);
 
 	usb_add_cmd(USB_CMD_FINGER, finger_cmd, NULL);
 
@@ -43,19 +43,19 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 	switch(low)
 	{
 		case FINGER_CLOSE:
-			lowFinger.set_goal_position(0);
+			lowFinger.setGoalPosition(0);
 			break;
 		case FINGER_HALF_CLOSE:
-			lowFinger.set_goal_position(-22*M_PI/180);
+			lowFinger.setGoalPosition(-22*M_PI/180);
 			break;
 		case FINGER_GOBLET:
-			lowFinger.set_goal_position(-60*M_PI/180);
+			lowFinger.setGoalPosition(-60*M_PI/180);
 			break;
 		case FINGER_HALF_OPEN:
-			lowFinger.set_goal_position(-70*M_PI/180);
+			lowFinger.setGoalPosition(-70*M_PI/180);
 			break;
 		case FINGER_OPEN:
-			lowFinger.set_goal_position(-M_PI_2);
+			lowFinger.setGoalPosition(-M_PI_2);
 			break;
 		default:
 			break;
@@ -64,17 +64,17 @@ void finger_set_pos(enum finger_type low, enum finger_type high)
 	switch(high)
 	{
 		case FINGER_CLOSE:
-			highFinger.set_goal_position(30*M_PI/180);
+			highFinger.setGoalPosition(30*M_PI/180);
 			break;
 		case FINGER_HALF_CLOSE:
-			highFinger.set_goal_position(50*M_PI/180);
+			highFinger.setGoalPosition(50*M_PI/180);
 			break;
 		case FINGER_GOBLET:
 		case FINGER_HALF_OPEN:
-			highFinger.set_goal_position(60*M_PI/180);
+			highFinger.setGoalPosition(60*M_PI/180);
 			break;
 		case FINGER_OPEN:
-			highFinger.set_goal_position(M_PI_2);
+			highFinger.setGoalPosition(M_PI_2);
 			break;
 		default:
 			break;
@@ -86,10 +86,10 @@ void finger_bottom_set_pos(enum finger_bottom_type right, enum finger_bottom_typ
 	switch(right)
 	{
 		case FINGER_BOTTOM_CLOSE:
-			rightFinger.set_goal_position(100*M_PI/180);
+			rightFinger.setGoalPosition(100*M_PI/180);
 			break;
 		case FINGER_BOTTOM_OPEN:
-			rightFinger.set_goal_position(-60*M_PI/180);
+			rightFinger.setGoalPosition(-60*M_PI/180);
 			break;
 		default:
 			break;
@@ -98,10 +98,10 @@ void finger_bottom_set_pos(enum finger_bottom_type right, enum finger_bottom_typ
 	switch(left)
 	{
 		case FINGER_BOTTOM_CLOSE:
-			leftFinger.set_goal_position(-100*M_PI/180);
+			leftFinger.setGoalPosition(-100*M_PI/180);
 			break;
 		case FINGER_BOTTOM_OPEN:
-			leftFinger.set_goal_position(60*M_PI/180);
+			leftFinger.setGoalPosition(60*M_PI/180);
 			break;
 		default:
 			break;

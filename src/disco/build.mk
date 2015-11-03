@@ -37,7 +37,8 @@ core_baz += kernel/driver/io.o
 core_baz += kernel/match.o
 core_baz += kernel/driver/usart.o
 core_baz += kernel/driver/hokuyo.o
-core_baz += kernel/driver/dynamixel.o
+core_baz += kernel/driver/Dynamixel.o
+core_baz += kernel/driver/DynamixelManager.o
 core_baz += kernel/driver/xbee.o
 core_baz += kernel/driver/can.o
 

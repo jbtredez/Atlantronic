@@ -2,7 +2,7 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "disco/robot_state.h"
 #include "elevator.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/feet.h"

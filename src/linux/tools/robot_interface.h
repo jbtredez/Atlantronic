@@ -15,7 +15,7 @@
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
 #include "kernel/driver/usb.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
 #include "kernel/arm.h"

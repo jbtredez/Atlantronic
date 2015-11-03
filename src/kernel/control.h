@@ -12,7 +12,7 @@
 #include "kernel/math/matrix_homogeneous.h"
 #include "middleware/motion/Motion.h"
 #include "kernel/driver/encoder.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/DynamixelManager.h"
 
 //! période de la tache de controle en ms
 #define CONTROL_PERIOD                            5
