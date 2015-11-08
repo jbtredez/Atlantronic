@@ -60,20 +60,20 @@ class Hokuyo
 		struct hokuyo_scan scan;
 
 	protected:
-		static void task_wrapper(void* arg);
+		static void taskWrapper(void* arg);
 		void task();
-		uint32_t wait_decode_scan();
-		__OPTIMIZE_SIZE__ uint32_t init_com();
+		uint32_t waitDecodeScan();
+		__OPTIMIZE_SIZE__ uint32_t initCom();
 		uint32_t scip2();
 		uint32_t transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout);
-		uint32_t check_cmd(unsigned char* cmd, uint32_t size);
-		uint32_t check_sum(uint32_t start, uint32_t end);
-		uint32_t set_speed();
+		uint32_t checkCmd(unsigned char* cmd, uint32_t size);
+		uint32_t checkSum(uint32_t start, uint32_t end);
+		uint32_t setSpeed();
 		uint32_t hs();
-		uint32_t laser_on();
-		int decode_scan();
-		void fault_update(uint32_t err);
-		void start_scan();
+		uint32_t laserOn();
+		int decodeScan();
+		void faultUpdate(uint32_t err);
+		void startScan();
 
 		static uint16_t decode16(const unsigned char* data);
 

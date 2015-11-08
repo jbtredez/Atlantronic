@@ -39,7 +39,7 @@ int Hokuyo::init(enum usart_id id, const char* name, int hokuyo_id, Location* lo
 	m_lastError = 0;
 	m_location = location;
 
-	portBASE_TYPE err = xTaskCreate(task_wrapper, name, HOKUYO_STACK_SIZE, this, PRIORITY_TASK_HOKUYO, NULL);
+	portBASE_TYPE err = xTaskCreate(taskWrapper, name, HOKUYO_STACK_SIZE, this, PRIORITY_TASK_HOKUYO, NULL);
 
 	if(err != pdPASS)
 	{
@@ -67,7 +67,7 @@ void Hokuyo::registerCallback(HokuyoCallback callback, void* arg)
 	m_callbackArg = arg;
 }
 
-void Hokuyo::fault_update(uint32_t err)
+void Hokuyo::faultUpdate(uint32_t err)
 {
 	if(err && ! m_lastError)
 	{
@@ -93,7 +93,7 @@ void Hokuyo::fault_update(uint32_t err)
 	m_lastError = err;
 }
 
-uint32_t Hokuyo::init_com()
+uint32_t Hokuyo::initCom()
 {
 	uint32_t err = 0;
 
@@ -130,7 +130,7 @@ uint32_t Hokuyo::init_com()
 
 			log_format(LOG_INFO, "%s - set speed", pcTaskGetTaskName(NULL));
 			// mise a la bonne vitesse
-			err = set_speed();
+			err = setSpeed();
 
 			if(err)
 			{
@@ -145,7 +145,7 @@ uint32_t Hokuyo::init_com()
 			goto retry;
 		}
 
-		err = laser_on();
+		err = laserOn();
 
 		if(err)
 		{
@@ -154,7 +154,7 @@ uint32_t Hokuyo::init_com()
 
 		err = hs();
 retry:
-		fault_update(err);
+		faultUpdate(err);
 	}
 	while(err);
 
@@ -163,7 +163,7 @@ retry:
 	return 0;
 }
 
-void Hokuyo::task_wrapper(void* arg)
+void Hokuyo::taskWrapper(void* arg)
 {
 	Hokuyo* h = (Hokuyo*) arg;
 	h->task();
@@ -174,9 +174,9 @@ void Hokuyo::task()
 	uint32_t err;
 	struct systime last_scan_time;
 	struct systime current_time;
-	init_com();
+	initCom();
 
-	start_scan();
+	startScan();
 	// on gruge, le premier scan est plus long
 	last_scan_time = systick_get_time();
 	last_scan_time.ms += 100;
@@ -184,12 +184,12 @@ void Hokuyo::task()
 	while(1)
 	{
 		// on attend la fin du nouveau scan
-		err = wait_decode_scan();
+		err = waitDecodeScan();
 		scan.pos_robot = m_location->getPosition(); // TODO voir si meilleur moment
-		fault_update(err);
+		faultUpdate(err);
 		if(err)
 		{
-			init_com();
+			initCom();
 			// on gruge, le premier scan est plus long
 			last_scan_time = systick_get_time();
 			last_scan_time.ms += 100;
@@ -207,7 +207,7 @@ void Hokuyo::task()
 		}
 
 		// on lance le prochain scan avant de faire les calculs sur le scan actuel
-		start_scan();
+		startScan();
 
 		// si le dernier scan n'a pas echoue on reveille la tache detection
 		if( ! err)
@@ -228,7 +228,7 @@ void Hokuyo::task()
 //! Vérifie que la commande envoyée est bien renvoyée par le hokuyo
 //! @return 0 si c'est bon
 //! @return ERR_HOKUYO_CHECK_CMD sinon
-uint32_t Hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
+uint32_t Hokuyo::checkCmd(unsigned char* cmd, uint32_t size)
 {
 	for(uint32_t i = 0; i < size; i++)
 	{
@@ -241,7 +241,7 @@ uint32_t Hokuyo::check_cmd(unsigned char* cmd, uint32_t size)
 	return 0;
 }
 
-uint32_t Hokuyo::check_sum(uint32_t start, uint32_t end)
+uint32_t Hokuyo::checkSum(uint32_t start, uint32_t end)
 {
 	uint8_t sum = 0;
 	uint32_t err = 0;
@@ -293,14 +293,14 @@ uint32_t Hokuyo::transaction(unsigned char* buf, uint32_t write_size, uint32_t r
 		return err;
 	}
 
-	err = check_cmd(buf, write_size);
+	err = checkCmd(buf, write_size);
 
 	if(err)
 	{
 		return err;
 	}
 
-	return check_sum(write_size, write_size+2);
+	return checkSum(write_size, write_size+2);
 }
 
 uint32_t Hokuyo::scip2()
@@ -325,7 +325,7 @@ uint32_t Hokuyo::scip2()
 	return 0;
 }
 
-uint32_t Hokuyo::set_speed()
+uint32_t Hokuyo::setSpeed()
 {
 	uint32_t err = transaction((unsigned char*) hokuyo_speed_cmd, 9, 14, ms_to_tick(100));
 
@@ -379,7 +379,7 @@ uint32_t Hokuyo::hs()
 	return 0;
 }
 
-uint32_t Hokuyo::laser_on()
+uint32_t Hokuyo::laserOn()
 {
 	log_format(LOG_INFO, "%s - laser on", pcTaskGetTaskName(NULL));
 
@@ -412,14 +412,14 @@ uint32_t Hokuyo::laser_on()
 	return 0;
 }
 
-void Hokuyo::start_scan()
+void Hokuyo::startScan()
 {
 	usart_set_write_dma_buffer(m_usartId, (unsigned char*)hokuyo_scan_all);
 	usart_set_read_dma_size(m_usartId, HOKUYO_SCAN_BUFFER_SIZE);
 	usart_send_dma_buffer(m_usartId, 13);
 }
 
-uint32_t Hokuyo::wait_decode_scan()
+uint32_t Hokuyo::waitDecodeScan()
 {
 	uint32_t err = usart_wait_read(m_usartId, ms_to_tick(150));
 
@@ -444,14 +444,14 @@ uint32_t Hokuyo::wait_decode_scan()
 		return err;
 	}
 
-	err = check_cmd((unsigned char*)hokuyo_scan_all, 13);
+	err = checkCmd((unsigned char*)hokuyo_scan_all, 13);
 
 	if(err)
 	{
 		return err;
 	}
 
-	err = check_sum(13, 15);
+	err = checkSum(13, 15);
 
 	if(err)
 	{
@@ -476,7 +476,7 @@ uint32_t Hokuyo::wait_decode_scan()
 	}
 
 	xSemaphoreTake(scan_mutex, portMAX_DELAY);
-	err = decode_scan();
+	err = decodeScan();
 	xSemaphoreGive(scan_mutex);
 
 	return err;
@@ -492,7 +492,7 @@ uint16_t Hokuyo::decode16(const unsigned char* data)
 	return val;
 }
 
-int Hokuyo::decode_scan()
+int Hokuyo::decodeScan()
 {
 	const unsigned char* buffer = m_readDmaBuffer;
 	uint16_t* distance = scan.distance;
