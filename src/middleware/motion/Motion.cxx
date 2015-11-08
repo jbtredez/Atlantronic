@@ -41,12 +41,23 @@ StateMachineState* Motion::m_motionStates[MOTION_MAX_STATE] = {
 	&motionInterrputingState
 };
 
-Motion::Motion() :
-	m_linearSpeedCheck(100, 10),
-	m_xPid(2, 1, 0, 100),// TODO voir saturation
-	m_thetaPid(8, 1, 0, 1), // TODO voir saturation
-	m_motionStateMachine(m_motionStates, MOTION_MAX_STATE, this)
+int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel)
 {
+	m_location = location;
+	m_detection = detection;
+	m_kinematicsModel = kinematicsModel;
+
+	m_mutex = xSemaphoreCreateMutex();
+	if( ! m_mutex )
+	{
+		return ERR_INIT_CONTROL;
+	}
+
+	m_linearSpeedCheck.init(100, 10);
+	m_xPid.init(2, 1, 0, 100),// TODO voir saturation
+	m_thetaPid.init(8, 1, 0, 1), // TODO voir saturation
+	m_motionStateMachine.init(m_motionStates, MOTION_MAX_STATE, this);
+
 	m_anticoOn = true;
 	m_wantedState = MOTION_UNKNOWN_STATE;
 
@@ -65,19 +76,6 @@ Motion::Motion() :
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{
 		can_mip_register_node(&m_canMotor[i]);
-	}
-}
-
-int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel)
-{
-	m_location = location;
-	m_detection = detection;
-	m_mutex = xSemaphoreCreateMutex();
-	m_kinematicsModel = kinematicsModel;
-
-	if( ! m_mutex )
-	{
-		return ERR_INIT_CONTROL;
 	}
 
 	usb_add_cmd(USB_CMD_MOTION_GOTO, &Motion::cmd_goto, this);

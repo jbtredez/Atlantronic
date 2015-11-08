@@ -1,7 +1,7 @@
 #include "kernel/log.h"
 #include "StateMachine.h"
 
-StateMachine::StateMachine(StateMachineState** states, unsigned int size, void* data)
+void StateMachine::init(StateMachineState** states, unsigned int size, void* data)
 {
 	m_data = data;
 	m_states = states;

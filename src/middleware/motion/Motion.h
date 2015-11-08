@@ -124,7 +124,6 @@ struct motion_cmd_set_max_driving_current_arg
 class Motion
 {
 	public:
-		Motion();
 		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel);
 
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state);

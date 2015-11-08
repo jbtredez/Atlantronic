@@ -8,7 +8,7 @@
 class StateMachine
 {
 	public:
-		StateMachine(StateMachineState** states, unsigned int size, void* data = 0);
+		void init(StateMachineState** states, unsigned int size, void* data = 0);
 
 		int execute();
 		inline int getCurrentState()

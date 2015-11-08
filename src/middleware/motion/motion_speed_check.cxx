@@ -2,7 +2,7 @@
 #include "motion_speed_check.h"
 #include "kernel/log.h"
 
-MotionSpeedCheck::MotionSpeedCheck(float deltaMax, int delayInCycle)
+void MotionSpeedCheck::init(float deltaMax, int delayInCycle)
 {
 	m_deltaMax = deltaMax;
 	m_delayInCycle = delayInCycle;
