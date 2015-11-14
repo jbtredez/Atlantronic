@@ -54,7 +54,6 @@ int cmd_help(const char* arg);
 int cmd_localization_set_position(const char* arg);
 int cmd_max_speed(const char* arg);
 int cmd_motion_enable(const char* arg);
-int cmd_motion_goto(const char*arg);
 int cmd_motion_set_param(const char* arg);
 int cmd_motion_print_param(const char* arg);
 int cmd_motion_set_max_driving_current(const char* arg);
@@ -111,7 +110,6 @@ COMMAND usb_commands[] = {
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
-	{ "motion_goto", cmd_motion_goto, "motion_goto x y theta way type cpx cpy cptheta" },
 	{ "motion_set_param", cmd_motion_set_param, "motion_set_param kp_av ki_av kd_av kp_rot ki_rot kd_rot" },
 	{ "motion_print_param", cmd_motion_print_param, "control_print_param"},
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
@@ -667,27 +665,6 @@ int cmd_goto_xy(const char* arg)
 
 	cmd_robot->goto_near_xy(x, y, dist, way, avoidance_type);
 
-	return CMD_SUCESS;
-}
-
-int cmd_motion_goto(const char* arg)
-{
-	VectPlan dest;
-	VectPlan cp;
-	int way = WAY_ANY;
-	int type = MOTION_AXIS_XYA;
-
-	int count = sscanf(arg, "%f %f %f %d %d %f %f %f", &dest.x, &dest.y, &dest.theta, &way, &type, &cp.x, &cp.y, &cp.theta);
-
-	if(count != 8 && count != 5 && count != 4 && count != 3)
-	{
-		return CMD_ERROR;
-	}
-
-	KinematicsParameters linearParam = {1000, 1000, 1000}; // TODO
-	KinematicsParameters angularParam = {M_PI, 2*M_PI, 2*M_PI}; // TODO
-
-	cmd_robot->motion_goto(dest, cp, (enum motion_way)way, (enum motion_trajectory_type)type, linearParam, angularParam);
 	return CMD_SUCESS;
 }
 

@@ -987,20 +987,6 @@ int RobotInterface::motion_set_param(float kp_av, float ki_av, float kd_av, floa
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam)
-{
-	struct motion_cmd_goto_arg cmd_arg;
-
-	cmd_arg.dest = dest;
-	cmd_arg.cp = cp;
-	cmd_arg.type = way;
-	cmd_arg.way = type;
-	cmd_arg.linearParam = linearParam;
-	cmd_arg.angularParam = angularParam;
-
-	return usb_write(USB_CMD_MOTION_GOTO, &cmd_arg, sizeof(cmd_arg));
-}
-
 int RobotInterface::motion_set_speed(VectPlan u, float v)
 {
 	struct motion_cmd_set_speed_arg cmd_arg;

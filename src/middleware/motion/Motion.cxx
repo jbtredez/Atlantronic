@@ -22,6 +22,7 @@
 #include "MotionSpeedState.h"
 #include "MotionTrajectoryState.h"
 #include "MotionInterruptingState.h"
+#include "kernel/math/findRotation.h"
 
 static MotionDisabledState motionDisabledState;
 static MotionTryEnableState motionTryEnableState;
@@ -54,8 +55,9 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 	}
 
 	m_linearSpeedCheck.init(100, 10);
-	m_xPid.init(2, 1, 0, 100),// TODO voir saturation
-	m_thetaPid.init(8, 1, 0, 1), // TODO voir saturation
+	m_xPid.init(2, 1, 0, 100);// TODO voir saturation
+	m_yPid.init(0.01, 0, 0, 1);// TODO voir saturation + regler
+	m_thetaPid.init(8, 1, 0, 1); // TODO voir saturation
 	m_motionStateMachine.init(m_motionStates, MOTION_MAX_STATE, this);
 
 	m_anticoOn = true;
@@ -78,7 +80,6 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 		can_mip_register_node(&m_canMotor[i]);
 	}
 
-	usb_add_cmd(USB_CMD_MOTION_GOTO, &Motion::cmd_goto, this);
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &Motion::cmd_set_speed, this);
 	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &Motion::cmd_set_max_current, this);
 	usb_add_cmd(USB_CMD_MOTION_ENABLE, &Motion::cmd_enable, this);
@@ -172,27 +173,6 @@ void Motion::enableAntico(bool enable)
 	m_anticoOn = enable;
 }
 
-float Motion::findRotate(float start, float end)
-{
-	float dtheta = end - start;
-	bool neg = dtheta < 0;
-
-	// modulo 1 tour => retour dans [ 0 ; 2*M_PI [
-	dtheta = fmodf(dtheta, 2*M_PI);
-	if( neg )
-	{
-		dtheta += 2*M_PI;
-	}
-
-	// retour dans ] -M_PI ; M_PI ] tour
-	if( dtheta > M_PI )
-	{
-		dtheta -= 2*M_PI;
-	}
-
-	return dtheta;
-}
-
 float Motion::motionComputeTime(float ds, KinematicsParameters param)
 {
 	ds = fabsf(ds);
@@ -224,13 +204,6 @@ void Motion::cmd_set_param(void* arg, void* data)
 	m->m_thetaPid.kp = cmd->kp_rot;
 	m->m_thetaPid.ki = cmd->ki_rot;
 	m->m_thetaPid.kd = cmd->kd_rot;
-}
-
-void Motion::cmd_goto(void* arg, void* data)
-{
-	Motion* m = (Motion*) arg;
-	struct motion_cmd_goto_arg* cmd = (struct motion_cmd_goto_arg*) data;
-	m->goTo(cmd->dest, cmd->cp, (enum motion_way)cmd->way, (enum motion_trajectory_type)cmd->type, cmd->linearParam, cmd->angularParam);
 }
 
 void Motion::cmd_set_speed(void* arg, void* data)
@@ -281,18 +254,64 @@ void Motion::setMaxDrivingCurrent(float maxCurrent)
 	m_canMotor[1].set_max_current(maxCurrent);
 }
 
-void Motion::goTo(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
+void Motion::clearTrajectory()
+{
+	// arret au cas ou la trajectoire est en cours d'utilisation
+	stop();
+	xSemaphoreTake(m_mutex, portMAX_DELAY);
+	m_path.clear();
+	xSemaphoreGive(m_mutex);
+}
+
+void Motion::addTrajectoryPoints(PathPoint* pt, int size)
+{
+	// pas d arret, on peut ajouter la fin de la trajectoire alors qu'elle est en cours d execution
+	xSemaphoreTake(m_mutex, portMAX_DELAY);
+	m_path.add(pt, size);
+	xSemaphoreGive(m_mutex);
+}
+
+void Motion::setTrajectory(PathPoint* pt, int size)
+{
+	// arret au cas ou la trajectoire est en cours d'utilisation avant le clear()
+	stop();
+	xSemaphoreTake(m_mutex, portMAX_DELAY);
+	m_path.clear();
+	m_path.add(pt, size);
+	xSemaphoreGive(m_mutex);
+}
+
+void Motion::startTrajectory(const KinematicsParameters &linearParam, const KinematicsParameters &angularParam)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_wantedState = MOTION_TRAJECTORY;
-	m_wantedDest = loc_to_abs(dest, -cp);
-	m_wantedTrajectoryType = type;
-	m_wantedWay = way;
-	m_wantedLinearParam = linearParam;
-	m_wantedAngularParam = angularParam;
-	m_status = MOTION_UPDATING_TRAJECTORY;
-	
+	if( m_path.getCount() < 2)
+	{
+		log_format(LOG_ERROR, "path is invalid (%d points)", m_path.getCount());
+	}
+	else
+	{
+		m_wantedState = MOTION_TRAJECTORY;
+		m_wantedLinearParam = linearParam;
+		m_wantedAngularParam = angularParam;
+		m_status = MOTION_UPDATING_TRAJECTORY;
+	}
 	xSemaphoreGive(m_mutex);
+}
+
+VectPlan Motion::getLastPathPoint()
+{
+	VectPlan res;
+	xSemaphoreTake(m_mutex, portMAX_DELAY);
+	if( m_path.getCount() )
+	{
+		res = m_path.getLastPoint();
+	}
+	else
+	{
+		res = m_posMes;
+	}
+	xSemaphoreGive(m_mutex);
+	return res;
 }
 
 void Motion::setSpeed(VectPlan u, float v)
@@ -333,12 +352,11 @@ void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg
 	xSemaphoreGive(m_mutex);
 }
 
-void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_trajectory_step* step, enum motion_state* wanted_state)
+void Motion::getState(enum motion_state* state, enum motion_status* status, enum motion_state* wanted_state)
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 	*state = (enum motion_state)m_motionStateMachine.getCurrentState();
 	*status = m_status;
-	*step = m_trajStep;
 	*wanted_state = m_wantedState;
 	xSemaphoreGive(m_mutex);
 }
@@ -348,9 +366,8 @@ void Motion::updateUsbData(struct control_usb_data* data)
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 
 	data->motion_state = m_motionStateMachine.getCurrentState();
-	data->cons = m_posCmdTh;
-
-	data->wanted_pos = m_dest;
+	data->cons = m_path.getLastPosCmd();
+	data->wanted_pos = m_path.getLastPoint();
 
 	for(int i = 0; i < CAN_MOTOR_MAX; i++)
 	{

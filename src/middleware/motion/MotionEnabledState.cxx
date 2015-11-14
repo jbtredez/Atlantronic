@@ -50,7 +50,7 @@ unsigned int MotionEnabledState::transition(void* data)
 	 || m->m_wantedState == MOTION_SPEED
 	 || m->m_wantedState == MOTION_TRAJECTORY)
 	{
-		log_format(LOG_INFO, "WantedState %d ",m->m_wantedState);
+		//log_format(LOG_INFO, "WantedState %d ",m->m_wantedState);
 		return m->m_wantedState; 
 	}
 

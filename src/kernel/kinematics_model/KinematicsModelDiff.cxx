@@ -28,22 +28,24 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 	v[RIGHT_WHEEL] = vx + 0.5 * m_voie * vtheta;
 	v[LEFT_WHEEL] = vx - 0.5 * m_voie * vtheta;
 
-	int i;
-	for(i = 0; i < 2; i++)
+#if 1
+	// TODO voir si ca marche bien
+	for(int i = 0; i < 2; i++)
 	{
 		Kinematics kinematics = kinematics_cmd[i];
 		kinematics.setSpeed(v[i], paramDriving, dt);
 
 		// reduction si saturation
-		/*if( fabsf(v[i]) > 1 )
+		if( fabsf(v[i]) > 1 )
 		{
 			float k = fabsf(kinematics.v / v[i]);
 			if( k < kmin )
 			{
 				kmin = k;
 			}
-		}*/
+		}
 	}
+#endif
 
 	kinematics_cmd[0].setSpeed(kmin * v[0], paramDriving, dt);
 	kinematics_cmd[1].setSpeed(kmin * v[1], paramDriving, dt);

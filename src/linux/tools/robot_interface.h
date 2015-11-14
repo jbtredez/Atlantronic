@@ -121,7 +121,6 @@ class RobotInterface
 		int motion_set_max_driving_current(float maxCurrent);
 		int motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 		int motion_set_speed(VectPlan u, float v);
-		int motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam);
 
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);
