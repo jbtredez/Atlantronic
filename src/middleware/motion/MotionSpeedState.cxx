@@ -2,7 +2,6 @@
 #include "kernel/log.h"
 #include "disco/robot_parameters.h"
 #include "kernel/control.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 
 MotionSpeedState::MotionSpeedState() :
 	MotionMoveState("MOTION_SPEED",MOTION_SPEED)
@@ -24,7 +23,7 @@ void MotionSpeedState::entry(void* data)
 void MotionSpeedState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	kinematics_model_compute_actuator_cmd(VOIE_MOT, m->m_u, m->m_v, CONTROL_DT, m->m_kinematics);
+	m->m_kinematicsModel->computeActuatorCmd(m->m_u, m->m_v, CONTROL_DT, m->m_kinematics);
 	m->motionUpdateMotors();
 }
 

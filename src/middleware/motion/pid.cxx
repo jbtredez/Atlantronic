@@ -4,7 +4,7 @@
 
 #include "pid.h"
 
-Pid::Pid(float Kp, float Ki, float Kd, float Max)
+void Pid::init(float Kp, float Ki, float Kd, float Max)
 {
 	kp = Kp;
 	ki = Ki;

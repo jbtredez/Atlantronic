@@ -44,34 +44,41 @@ class VectPlan : public Vect2
 			}
 		}
 
-		inline VectPlan operator=(VectPlan a)
+		inline bool operator ==(const VectPlan &v) const
 		{
-		    x = a.x;
-		    y = a.y;
-		    theta = a.theta;
-		    return *this;
-		};
+			return (fabsf(v.x - x) < EPSILON) && (fabsf(v.y - y) < EPSILON) && (fabsf(v.theta - theta) < EPSILON);
+		}
 
-		inline VectPlan operator+( VectPlan b)
+		inline VectPlan operator+( VectPlan b) const
 		{
 			return VectPlan(x + b.x, y + b.y, theta + b.theta);
 		};
 
-		inline VectPlan operator-(VectPlan b)
+		inline VectPlan operator-(VectPlan b) const
 		{
 			return VectPlan(x - b.x,y - b.y, theta - b.theta);
 		};
 
-		inline VectPlan operator*(float k)
+		inline VectPlan operator*(float k) const
 		{
 			return VectPlan(k * x, k * y, k * theta);
 		};
 
 
-		inline VectPlan operator/( float k)
+		inline VectPlan operator/( float k) const
 		{
 			return VectPlan(x / k, y / k, theta / k);
 		};
+
+		inline float norm(float thetaWeight = 0) const
+		{
+			return sqrtf(x * x + y * y + thetaWeight * thetaWeight * theta * theta);
+		}
+
+		inline float scalarProd(const VectPlan& v, float thetaWeight = 0) const
+		{
+			return x * v.x + y * v.y + thetaWeight * thetaWeight * theta * v.theta;
+		}
 
 		float theta;      //!< orientation en rd
 }__attribute__((packed));

@@ -13,6 +13,7 @@
 #include "disco/wing.h"
 #include "disco/elevator.h"
 #include "disco/finger.h"
+#include "disco/mainRobot.h"
 
 void recalage()
 {
@@ -25,7 +26,7 @@ void recalage()
 
 	log(LOG_INFO, "recalage...");
 
-	location_set_position(pos.symetric(color));
+	location.setPosition(pos.symetric(color));
 	setTableColor(color);
 
 	wing_set_position(WING_PARK, WING_PARK);
@@ -60,10 +61,10 @@ void recalage()
 		goto free;
 	}
 
-	pos = location_get_position();
+	pos = location.getPosition();
 	pos.y = 200 - PARAM_LEFT_CORNER_X;
 	pos.theta = M_PI_2;
-	location_set_position(pos);
+	location.setPosition(pos);
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
@@ -94,10 +95,10 @@ void recalage()
 		goto free;
 	}
 
-	pos = location_get_position();
+	pos = location.getPosition();
 	pos.x = 1430 - PARAM_LEFT_CORNER_X;
 	pos.theta = 0;
-	location_set_position(pos.symetric(color));
+	location.setPosition(pos.symetric(color));
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position

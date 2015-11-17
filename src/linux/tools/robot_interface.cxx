@@ -707,20 +707,22 @@ int RobotInterface::process_control_light(char* msg, uint16_t size)
 	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
-	for(int i = 0; i < AX12_MAX_ID; i++)
+	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		ax12[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		ax12[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
-		ax12[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+		ax12[i].id = last_control_usb_data.ax12.dynamixel[i].id;
+		ax12[i].pos = (last_control_usb_data.ax12.dynamixel[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		ax12[i].flags = last_control_usb_data.ax12.dynamixel[i].flags;
+		ax12[i].error = last_control_usb_data.ax12.dynamixel[i].error;
 	}
-
-	for(int i = 0; i < RX24_MAX_ID; i++)
+/*
+	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		rx24[i].pos = (last_control_usb_data.dynamixel.rx24[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		rx24[i].flags = last_control_usb_data.dynamixel.rx24[i].flags;
-		rx24[i].error = last_control_usb_data.dynamixel.rx24[i].error;
+		rx24[i].id = last_control_usb_data.rx24.dynamixel[i].id;
+		rx24[i].pos = (last_control_usb_data.rx24.dynamixel[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		rx24[i].flags = last_control_usb_data.rx24.dynamixel[i].flags;
+		rx24[i].error = last_control_usb_data.rx24.dynamixel[i].error;
 	}
-
+*/
 	pthread_mutex_unlock(&mutex);
 
 end:
@@ -752,20 +754,22 @@ int RobotInterface::process_control(char* msg, uint16_t size)
 	current_time = t.ms / 1000.0f + t.ns / 1000000000.0f;
 	control_usb_data_count = (control_usb_data_count + 1) % CONTROL_USB_DATA_MAX;
 
-	for(int i = 0; i < AX12_MAX_ID; i++)
+	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		ax12[i].pos = (last_control_usb_data.dynamixel.ax12[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		ax12[i].flags = last_control_usb_data.dynamixel.ax12[i].flags;
-		ax12[i].error = last_control_usb_data.dynamixel.ax12[i].error;
+		ax12[i].id = last_control_usb_data.ax12.dynamixel[i].id;
+		ax12[i].pos = (last_control_usb_data.ax12.dynamixel[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		ax12[i].flags = last_control_usb_data.ax12.dynamixel[i].flags;
+		ax12[i].error = last_control_usb_data.ax12.dynamixel[i].error;
 	}
-
-	for(int i = 0; i < RX24_MAX_ID; i++)
+/*
+	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		rx24[i].pos = (last_control_usb_data.dynamixel.rx24[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
-		rx24[i].flags = last_control_usb_data.dynamixel.rx24[i].flags;
-		rx24[i].error = last_control_usb_data.dynamixel.rx24[i].error;
+		rx24[i].id = last_control_usb_data.rx24.dynamixel[i].id;
+		rx24[i].pos = (last_control_usb_data.rx24.dynamixel[i].pos - 0x1ff) * DYNAMIXEL_POS_TO_RD;
+		rx24[i].flags = last_control_usb_data.rx24.dynamixel[i].flags;
+		rx24[i].error = last_control_usb_data.rx24.dynamixel[i].error;
 	}
-
+*/
 	pthread_mutex_unlock(&mutex);
 
 end:
@@ -872,11 +876,21 @@ int RobotInterface::dynamixel_cmd(uint8_t cmd, int dynamixel_type, uint8_t id, f
 	struct dynamixel_cmd_param cmd_arg;
 
 	cmd_arg.cmd_id = cmd;
-	cmd_arg.type = dynamixel_type;
 	cmd_arg.id = id;
 	cmd_arg.param = param;
-
-	return usb_write(USB_CMD_DYNAMIXEL, &cmd_arg, sizeof(cmd_arg));
+	if( dynamixel_type == DYNAMIXEL_TYPE_AX12)
+	{
+		return usb_write(USB_CMD_AX12, &cmd_arg, sizeof(cmd_arg));
+	}
+	else if( dynamixel_type == DYNAMIXEL_TYPE_RX24)
+	{
+		return usb_write(USB_CMD_RX24, &cmd_arg, sizeof(cmd_arg));
+	}
+	else
+	{
+		log_error("unknown dynamixel type %d", dynamixel_type);
+		return -1;
+	}
 }
 
 //! realise un scan de tout les id
@@ -971,20 +985,6 @@ int RobotInterface::motion_set_param(float kp_av, float ki_av, float kd_av, floa
 	cmd_arg.kd_rot = kd_rot;
 
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam)
-{
-	struct motion_cmd_goto_arg cmd_arg;
-
-	cmd_arg.dest = dest;
-	cmd_arg.cp = cp;
-	cmd_arg.type = way;
-	cmd_arg.way = type;
-	cmd_arg.linearParam = linearParam;
-	cmd_arg.angularParam = angularParam;
-
-	return usb_write(USB_CMD_MOTION_GOTO, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::motion_set_speed(VectPlan u, float v)

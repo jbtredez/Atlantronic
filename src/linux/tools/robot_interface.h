@@ -15,7 +15,7 @@
 #include "kernel/fault.h"
 #include "kernel/math/polyline.h"
 #include "kernel/driver/usb.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "kernel/driver/power.h"
 #include "kernel/pump.h"
 #include "kernel/arm.h"
@@ -28,6 +28,7 @@
 #include "disco/finger.h"
 #include "disco/carpet.h"
 #include "server_tcp.h"
+#include "disco/mainRobot.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 
@@ -46,9 +47,10 @@ enum RobotVersion
 
 struct dynamixel_data
 {
+	int id;
 	float pos;           //!< position
 	uint16_t flags;      //!< flags
-	struct dynamixel_error error; //!< erreurs
+	struct DynamixelError error; //!< erreurs
 };
 
 class RobotInterface
@@ -119,7 +121,6 @@ class RobotInterface
 		int motion_set_max_driving_current(float maxCurrent);
 		int motion_set_actuator_kinematics(struct motion_cmd_set_actuator_kinematics_arg cmd);
 		int motion_set_speed(VectPlan u, float v);
-		int motion_goto(VectPlan dest, VectPlan cp, enum motion_way way, enum motion_trajectory_type type, KinematicsParameters linearParam, KinematicsParameters angularParam);
 
 		// ---------- gestion trajectoire ----------------------------------------------
 		int straight(float dist);
@@ -204,8 +205,8 @@ class RobotInterface
 		struct detection_object detection_obj2[DETECTION_NUM_OBJECT_USB];
 		int16_t detection_dynamic_object_count2;
 
-		struct dynamixel_data ax12[AX12_MAX_ID];
-		struct dynamixel_data rx24[RX24_MAX_ID];
+		struct dynamixel_data ax12[DYNAMIXEL_MAX_ON_BUS];
+		//struct dynamixel_data rx24[DYNAMIXEL_MAX_ON_BUS];
 
 		// calculs
 		struct Vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];

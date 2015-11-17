@@ -31,13 +31,26 @@ enum trajectory_state
 {
 	TRAJECTORY_STATE_NONE = 0,
 	TRAJECTORY_STATE_UPDATING_TRAJECTORY,
-	TRAJECTORY_STATE_MOVE_TO_DEST,
 	TRAJECTORY_STATE_MOVING_TO_DEST,
-	TRAJECTORY_STATE_MOVE_TO_GRAPH,
-	TRAJECTORY_STATE_USING_GRAPH,
 	TRAJECTORY_STATE_TARGET_REACHED,
 	TRAJECTORY_STATE_TARGET_NOT_REACHED,
 	TRAJECTORY_STATE_COLISION,
+};
+
+enum TrajectoryWay
+{
+	WAY_BACKWARD = -1,    //!< marche arriere
+	WAY_ANY  = 0,         //!< marche avant ou marche arriere (selon le plus rapide)
+	WAY_FORWARD  = 1,     //!< marche avant
+};
+
+enum TrajectoryType
+{
+	TRAJECTORY_AXIS_XYA = 0,     //!< aller a la position x,y, alpha en ligne droite (=> rotation puis avance puis rotation)
+	TRAJECTORY_AXIS_A,           //!< rotation sur place
+	TRAJECTORY_AXIS_XY,          //!< aller a la position x,y en ligne droite (=> rotation puis avance)
+	TRAJECTORY_CURVILINEAR_XY,   //!< deplacement curviligne vers x,y
+	TRAJECTORY_CURVILINEAR_XYA,  //!< deplacement curviligne vers x,y,a
 };
 
 struct trajectory_cmd_arg
@@ -49,12 +62,11 @@ struct trajectory_cmd_arg
 	float dist;
 } __attribute__ (( packed ));
 
+#ifndef LINUX
 class Trajectory
 {
 	public:
-		Trajectory();
-
-		int init();
+		int init(Detection* detection, Motion* motion, Location* location);
 
 		void getKinematicsParam(KinematicsParameters* linParam, KinematicsParameters* angParam);
 
@@ -66,13 +78,13 @@ class Trajectory
 		//!< rejoindre le graph
 		void goToGraph();
 
-		void goToGraphNode(uint32_t node_id, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		void goToGraphNode(uint32_t node_id, float dist, enum TrajectoryWay way, enum avoidance_type avoidance_type);
 
-		void goToNearXy(float x, float y, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		void goToNearXy(float x, float y, float dist, enum TrajectoryWay way, enum avoidance_type avoidance_type);
 
-		void goToNear(VectPlan dest, float dist, enum motion_way way, enum avoidance_type avoidance_type);
+		void goToNear(VectPlan dest, float dist, enum TrajectoryWay way, enum avoidance_type avoidance_type);
 
-		void goTo(VectPlan dest, enum motion_way way, enum avoidance_type avoidance_type);
+		void goTo(VectPlan dest, enum TrajectoryWay way, enum avoidance_type avoidance_type);
 
 		void rotate(float theta);
 
@@ -110,13 +122,17 @@ class Trajectory
 		static void trajectory_task(void* arg);
 
 	protected:
-		friend void trajectoryCmd(void* arg);
+		static void trajectoryCmd(void* arg, void* data);
+		static void detectionCallback(void* arg);
 		void trajectoryTask();
 		void simplifyPath(enum detection_type type);
 		void computeGraph(enum detection_type type);
 		void update();
 		int findWayToGraph(VectPlan pos, enum detection_type detect_type);
 		void updateRequest();
+		void motionAddGoTo(bool newTrajectory, VectPlan dest, VectPlan cp, enum TrajectoryWay way, enum TrajectoryType type);
+		void motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, VectPlan cp, enum TrajectoryWay way, enum TrajectoryType type);
+		void motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, VectPlan cp, enum TrajectoryWay way, enum TrajectoryType type);
 
 		// requete pour la tache trajectory + mutex
 		struct trajectory_cmd_arg m_request;
@@ -127,18 +143,19 @@ class Trajectory
 		VectPlan m_pos; //!< position du robot au moment du reveil de la tache
 		VectPlan m_dest;
 		float m_approxDist;
-		enum motion_way m_way;
+		enum TrajectoryWay m_way;
 		enum trajectory_cmd_type m_type;
 		enum avoidance_type m_avoidanceType;
 		enum trajectory_state m_trajectoryState;
 		bool m_hokuyoEnableCheck; //!< utilisation ou non des hokuyos
 		bool m_staticCheckEnable; //!< verification des éléments statiques
-		uint8_t m_graphWayId;
 		KinematicsParameters m_linearParam;
 		KinematicsParameters m_angularParam;
 		Graph m_graph;
+		Location* m_location;
+		Detection* m_detection;
+		Motion* m_motion;
 };
 
-extern Trajectory trajectory;
-
+#endif
 #endif

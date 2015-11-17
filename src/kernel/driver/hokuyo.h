@@ -15,6 +15,7 @@
 #include "kernel/semphr.h"
 #endif
 #include "kernel/systick.h"
+#include "kernel/location/location.h"
 
 #define HOKUYO_NUM_POINTS            682
 //!< taille de la réponse maxi avec hokuyo_scan_all :
@@ -27,13 +28,6 @@
 #define HOKUYO_START_ANGLE               ((- 135 * M_PI / 180.0f) + 44 * HOKUYO_DTHETA)      //!< 135 degrés + 44 HOKUYO_DTHETA
 #define HOKUYO_MAX_RANGE                                                           4000
 #define HOKUYO_POINT_TO_POINT_DT                                         (0.1f/1024.0f)
-
-enum hokuyo_id
-{
-	HOKUYO1 = 0,
-	HOKUYO2,
-	HOKUYO_MAX,
-};
 
 struct hokuyo_scan
 {
@@ -51,46 +45,46 @@ struct hokuyo_scan
 
 #ifndef LINUX
 
-typedef void (*hokuyo_callback)();
+typedef void (*HokuyoCallback)(void* arg);
 
 class Hokuyo
 {
 	public:
-		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int hokuyo_id);
+		__OPTIMIZE_SIZE__ int init(enum usart_id id, const char* name, int hokuyo_id, Location* location);
 		void setPosition(VectPlan pos, int sens);
 
 		//!< enregistrement d'une callback
-		void register_callback(hokuyo_callback callback);
+		void registerCallback(HokuyoCallback callback, void* arg);
 
 		xSemaphoreHandle scan_mutex;
 		struct hokuyo_scan scan;
 
 	protected:
-		static void task_wrapper(void* arg);
+		static void taskWrapper(void* arg);
 		void task();
-		uint32_t wait_decode_scan();
-		__OPTIMIZE_SIZE__ uint32_t init_com();
+		uint32_t waitDecodeScan();
+		__OPTIMIZE_SIZE__ uint32_t initCom();
 		uint32_t scip2();
 		uint32_t transaction(unsigned char* buf, uint32_t write_size, uint32_t read_size, portTickType timeout);
-		uint32_t check_cmd(unsigned char* cmd, uint32_t size);
-		uint32_t check_sum(uint32_t start, uint32_t end);
-		uint32_t set_speed();
+		uint32_t checkCmd(unsigned char* cmd, uint32_t size);
+		uint32_t checkSum(uint32_t start, uint32_t end);
+		uint32_t setSpeed();
 		uint32_t hs();
-		uint32_t laser_on();
-		int decode_scan();
-		void fault_update(uint32_t err);
-		void start_scan();
+		uint32_t laserOn();
+		int decodeScan();
+		void faultUpdate(uint32_t err);
+		void startScan();
 
 		static uint16_t decode16(const unsigned char* data);
 
-		hokuyo_callback callback;
-		uint32_t last_error;
-		enum usart_id usartId;
+		HokuyoCallback m_callback;
+		void* m_callbackArg;
+		uint32_t m_lastError;
+		enum usart_id m_usartId;
 		// variable alignee pour le dma
-		uint8_t read_dma_buffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
+		uint8_t m_readDmaBuffer[HOKUYO_SCAN_BUFFER_SIZE] __attribute__ ((aligned (16)));
+		Location* m_location;
 };
-
-extern struct Hokuyo hokuyo[HOKUYO_MAX];
 
 #endif
 

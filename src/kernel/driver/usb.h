@@ -46,14 +46,14 @@ enum usb_cmd
 	USB_CMD_MOTION_PARAM,
 	USB_CMD_MOTION_PRINT_PARAM,
 	USB_CMD_MOTION_MAX_SPEED,
-	USB_CMD_MOTION_GOTO,
 	USB_CMD_MOTION_SET_SPEED,
 	USB_CMD_MOTION_SET_MAX_CURRENT,
 	USB_CMD_MOTION_SET_ACTUATOR_KINEMATICS,
 	USB_CMD_MOTION_ENABLE,
 	USB_CMD_LOCATION_SET_POSITION,
 	USB_CMD_WING,
-	USB_CMD_DYNAMIXEL,
+	USB_CMD_AX12,
+	USB_CMD_RX24,
 	USB_CMD_MATCH,
 	USB_CMD_MATCH_TIME,
 	USB_CMD_COLOR,
@@ -87,7 +87,7 @@ void usb_add_log(unsigned char level, const char* func, uint16_t line, const cha
 
 //!< ajout d'une commande
 //!< peut être appelée avant l'initialisation du module usb
-void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*));
+void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*, void*), void* arg);
 
 static inline unsigned char usb_is_get_version_done()
 {

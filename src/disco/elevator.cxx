@@ -21,7 +21,7 @@ static StepperDriver elevatorMotor(IO_ELEVATOR_STEP, IO_ELEVATOR_DIR, 5, ELEVATO
 
 
 static void elevator_task(void* arg);
-static void elevator_cmd(void* arg);
+static void elevator_cmd(void* arg, void* data);
 
 static int elevator_module_init()
 {
@@ -32,7 +32,7 @@ static int elevator_module_init()
 		return ERR_INIT_CONTROL;
 	}
 
-	usb_add_cmd(USB_CMD_ELEVATOR, elevator_cmd);
+	usb_add_cmd(USB_CMD_ELEVATOR, elevator_cmd, NULL);
 	return 0;
 }
 
@@ -104,8 +104,8 @@ float elevator_get_position()
 	return elevatorMotor.getCurrentPosition();
 }
 
-static void elevator_cmd(void* arg)
+static void elevator_cmd(void* /*arg*/, void* data)
 {
-	struct elevator_cmd_arg* cmd_arg = (struct elevator_cmd_arg*) arg;
+	struct elevator_cmd_arg* cmd_arg = (struct elevator_cmd_arg*) data;
 	elevator_set_position(cmd_arg->pos);
 }

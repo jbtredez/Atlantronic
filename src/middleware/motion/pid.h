@@ -10,7 +10,7 @@
 class Pid
 {
 	public:
-		Pid(float kp, float ki, float kd, float max);
+		void init(float kp, float ki, float kd, float max);
 
 		float compute(float error, float dt);
 		void reset();

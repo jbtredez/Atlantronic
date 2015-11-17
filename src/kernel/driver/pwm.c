@@ -28,7 +28,7 @@ PwmMapping pwm_map[PWM_MAX];
 
 static void pwm_timer_init(TIM_TypeDef* tim, uint32_t arr, uint32_t pwm_ch_mask);
 static void pwn_pin_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch, uint32_t pin_ch, volatile uint32_t* ccrx, uint32_t arr, uint32_t gpio_af, GPIO_TypeDef* gpio_dir, uint32_t pin_dir);
-static void pwm_cmd(void* arg);
+static void pwm_cmd(void* arg, void* data);
 
 static int pwm_module_init()
 {
@@ -48,7 +48,7 @@ static int pwm_module_init()
 	RCC->APB2ENR |= RCC_APB2ENR_TIM9EN;
 	pwm_timer_init(TIM9, PWM_ARR2, PWM_CH1 | PWM_CH2);
 
-	usb_add_cmd(USB_CMD_PWM, pwm_cmd);
+	usb_add_cmd(USB_CMD_PWM, pwm_cmd, NULL);
 
 	pwm_on = 1;
 
@@ -203,9 +203,10 @@ void pwm_disable()
 	}
 }
 
-static void pwm_cmd(void* arg)
+static void pwm_cmd(void* arg, void* data)
 {
-	struct pwm_usb_cmd* cmd = (struct pwm_usb_cmd*) arg;
+	(void) arg;
+	struct pwm_usb_cmd* cmd = (struct pwm_usb_cmd*) data;
 
 	pwm_set(cmd->id, cmd->val);
 }

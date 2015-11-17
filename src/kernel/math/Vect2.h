@@ -23,32 +23,32 @@ class Vect2
 			y = Y;
 		}
 
-		inline float norm()
+		inline float norm() const
 		{
 			return sqrtf(x * x + y * y);
 		}
 
-		inline float norm2()
+		inline float norm2() const
 		{
 			return x * x + y * y;
 		}
 
-		inline Vect2 operator+(const Vect2 b)
+		inline Vect2 operator+(const Vect2 b) const
 		{
 			return Vect2(x + b.x, y + b.y);
 		}
 
-		inline Vect2 operator*(float k)
+		inline Vect2 operator*(float k) const
 		{
 			return Vect2(k * x, k * y);
 		}
 
-		inline Vect2 operator/( float k)
+		inline Vect2 operator/( float k) const
 		{
 			return Vect2(x / k, y / k);
 		}
 
-		inline Vect2 operator-(const Vect2 b)
+		inline Vect2 operator-(const Vect2 b) const
 		{
 			return Vect2(x-b.x, y-b.y);
 		}
@@ -56,7 +56,7 @@ class Vect2
 		//!< @brief calcul le produit avec le vecteur v
 		//!< @param vecteur v
 		//!< @return produit calculé avec les positions en mm
-		inline Vect2 operator*(const Vect2 v)
+		inline Vect2 operator*(const Vect2 v) const
 		{
 			return Vect2(x * v.x, y * v.y);
 		}
@@ -64,7 +64,7 @@ class Vect2
 		//!< @brief calcul le produit scalaire avec le vecteur v
 		//!< @param vecteur v
 		//!< @return produit scalaire calculé avec les positions en mm
-		inline float scalarProd(const Vect2& v)
+		inline float scalarProd(const Vect2& v) const
 		{
 			return x * v.x + y * v.y;
 		}
@@ -73,7 +73,7 @@ class Vect2
 		//!< @brief calcule la compose sur Oz du produit vectoriel avec v (appartenant à (Ox,Oy))
 		//!< @param vecteur v
 		//!< @return composante sur Oz du produit vectoriel calculé avec les positions en mm
-		inline float crossProd_z(const Vect2& v)
+		inline float crossProd_z(const Vect2& v) const
 		{
 			return x * v.y - y * v.x;
 		}

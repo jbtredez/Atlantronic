@@ -3,7 +3,7 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "elevator.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 
@@ -27,7 +27,7 @@ Feed::Feed(VectPlan firstcheckpoint,char * name, RobotState * elevator):ActionCo
 int Feed::do_action()
 {
 	Eelevator_state elevator_state = m_elevator->getelevatorstate();
-	VectPlan position = location_get_position();
+	VectPlan position = location.getPosition();
 	Action * p_action;
 
 

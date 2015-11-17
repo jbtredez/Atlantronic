@@ -5,7 +5,6 @@
 #include "kernel/log.h"
 #include "kernel/driver/xbee.h"
 #include "kernel/location/location.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro/gyro.h"
 #include "kernel/driver/adc.h"
@@ -17,6 +16,7 @@
 #include "kernel/match.h"
 #include "disco/elevator.h"
 #include "control.h"
+#include "disco/mainRobot.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -60,7 +60,7 @@ static void control_task(void* /*arg*/)
 
 		motion.updateUsbData(&control_usb_data);
 		control_usb_data.current_time = systick_get_time();
-		control_usb_data.pos = location_get_position();
+		control_usb_data.pos = location.getPosition();
 //		control_usb_data.raw_data_gyro = gyro_get_raw_data();
 //		control_usb_data.omega_gyro = gyro_get_omega();
 //		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
@@ -82,7 +82,8 @@ static void control_task(void* /*arg*/)
 		// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data
 		memcpy(&control_usb_data_light, &control_usb_data, sizeof(control_usb_data_light));
 
-		dynamixel_update_usb_data(&control_usb_data.dynamixel);
+		ax12.updateUsbData(&control_usb_data.ax12);
+		//rx24.updateUsbData(&control_usb_data.rx24);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 

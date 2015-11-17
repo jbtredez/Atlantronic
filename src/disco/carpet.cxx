@@ -4,20 +4,21 @@
 #include "carpet.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/Dynamixel.h"
+#include "mainRobot.h"
 
-static void carpet_cmd(void* arg);
+static void carpet_cmd(void* arg, void* data);
 
 static int carpet_module_init()
 {
 	// configuration des ax12
-	ax12.set_torque_limit(AX12_LEFT_CARPET, 1);
-	ax12.set_torque_limit(AX12_RIGHT_CARPET, 1);
+	leftCarpet.setTorqueLimit(1);
+	rightCarpet.setTorqueLimit(1);
 
-	ax12.set_goal_limit(AX12_LEFT_CARPET, 0, 1.4);
-	ax12.set_goal_limit(AX12_RIGHT_CARPET, -1.4, 0);
+	leftCarpet.setGoalLimits(0, 1.4);
+	rightCarpet.setGoalLimits(-1.4, 0);
 
-	usb_add_cmd(USB_CMD_CARPET, carpet_cmd);
+	usb_add_cmd(USB_CMD_CARPET, carpet_cmd, NULL);
 	return 0;
 }
 
@@ -28,10 +29,10 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 	switch(right)
 	{
 		case CARPET_UP:
-			ax12.set_goal_position(AX12_RIGHT_CARPET, 0);
+			rightCarpet.setGoalPosition(0);
 			break;
 		case CARPET_DOWN:
-			ax12.set_goal_position(AX12_RIGHT_CARPET, -1);
+			rightCarpet.setGoalPosition(-1);
 			break;
 		case CARPET_NO_MOVE:
 		default:
@@ -41,10 +42,10 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 	switch(left)
 	{
 		case CARPET_UP:
-			ax12.set_goal_position(AX12_LEFT_CARPET, 0);
+			leftCarpet.setGoalPosition(0);
 			break;
 		case CARPET_DOWN:
-			ax12.set_goal_position(AX12_LEFT_CARPET, 1);
+			leftCarpet.setGoalPosition(1);
 			break;
 		case CARPET_NO_MOVE:
 		default:
@@ -52,8 +53,8 @@ void carpet_set_pos(enum carpet_type right, enum carpet_type left)
 	}
 }
 
-static void carpet_cmd(void* arg)
+static void carpet_cmd(void* /*arg*/, void* data)
 {
-	struct carpet_cmd_arg* cmd_arg = (struct carpet_cmd_arg*) arg;
+	struct carpet_cmd_arg* cmd_arg = (struct carpet_cmd_arg*) data;
 	carpet_set_pos((enum carpet_type)cmd_arg->right, (enum carpet_type)cmd_arg->left);
 }

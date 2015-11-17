@@ -6,25 +6,17 @@
 #include "kernel/module.h"
 #include "kernel/portmacro.h"
 #include "kernel/driver/usb.h"
-#include "kernel/kinematics_model/kinematics_model.h"
 #include "kernel/log.h"
 
-static void location_cmd_set_position(void* arg);
-VectPlan location_pos;
-VectPlan location_speed;
-
-static int location_module_init()
+void Location::init(KinematicsModel* kinematicsModel)
 {
-	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, location_cmd_set_position);
+	m_kinematicsModel = kinematicsModel;
+	usb_add_cmd(USB_CMD_LOCATION_SET_POSITION, cmdSetPosition, this);
+}
 
-	return 0;
-};
-
-module_init(location_module_init, INIT_LOCATION);
-
-void location_update(double voie_inv, Kinematics* kinematics_mes, float dt)
+void Location::update(Kinematics* kinematics_mes, float dt)
 {
-	VectPlan speed = kinematics_model_compute_speed(voie_inv, kinematics_mes);
+	VectPlan speed = m_kinematicsModel->computeSpeed(kinematics_mes);
 
 	portENTER_CRITICAL();
 	location_speed = speed;
@@ -32,7 +24,7 @@ void location_update(double voie_inv, Kinematics* kinematics_mes, float dt)
 	portEXIT_CRITICAL();
 }
 
-VectPlan location_get_position()
+VectPlan Location::getPosition()
 {
 	VectPlan p;
 	portENTER_CRITICAL();
@@ -41,7 +33,7 @@ VectPlan location_get_position()
 	return p;
 }
 
-VectPlan location_get_speed()
+VectPlan Location::getSpeed()
 {
 	VectPlan p;
 	portENTER_CRITICAL();
@@ -50,7 +42,7 @@ VectPlan location_get_speed()
 	return p;
 }
 
-void location_set_position(VectPlan pos)
+void Location::setPosition(VectPlan pos)
 {
 	log_format(LOG_INFO, "set position %d %d %d", (int)pos.x, (int)pos.y, (int)(pos.theta * 180 / M_PI));
 	portENTER_CRITICAL();
@@ -58,8 +50,9 @@ void location_set_position(VectPlan pos)
 	portEXIT_CRITICAL();
 }
 
-static void location_cmd_set_position(void* arg)
+void Location::cmdSetPosition(void* arg, void* data)
 {
-	VectPlan* pos = (VectPlan*) arg;
-	location_set_position(*pos);
+	Location* loc = (Location*) arg;
+	VectPlan* pos = (VectPlan*) data;
+	loc->setPosition(*pos);
 }

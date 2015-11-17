@@ -12,7 +12,7 @@
 #include "kernel/math/matrix_homogeneous.h"
 #include "middleware/motion/Motion.h"
 #include "kernel/driver/encoder.h"
-#include "kernel/driver/dynamixel.h"
+#include "kernel/driver/DynamixelManager.h"
 
 //! période de la tache de controle en ms
 #define CONTROL_PERIOD                            5
@@ -27,30 +27,18 @@ struct control_usb_data_light
 	VectPlan pos;
 	VectPlan wanted_pos;
 	uint32_t gpio;
-	uint8_t pumpState;
-	uint8_t color;
-	float vBat;
-	uint32_t power_state;
-	float elevatorHeight;
-	struct dynamixel_usb_data dynamixel;
-} __attribute__((packed));
-
-struct control_usb_data
-{
-	struct systime current_time;
-	int32_t motion_state;
-	VectPlan cons;
-	VectPlan pos;
-	VectPlan wanted_pos;
-	uint32_t gpio;
 	uint16_t encoder[ENCODER_MAX];
 	uint8_t pumpState;
 	uint8_t color;
 	float vBat;
 	uint32_t power_state;
 	float elevatorHeight;
-	struct dynamixel_usb_data dynamixel;
+	struct DynamixelUsbData ax12;
+	//struct dynamixel_usb_data rx24;
+} __attribute__((packed));
 
+struct control_usb_data : control_usb_data_light
+{
 	float cons_motors_v[CAN_MOTOR_MAX];
 	Kinematics mes_motors[CAN_MOTOR_MAX];
 	float mes_motor_current[CAN_MOTOR_MAX];

@@ -41,15 +41,16 @@ static volatile unsigned int usb_rx_buffer_count; //!< taille du buffer usb de r
 static unsigned int usb_rx_buffer_ep_used;
 static int usb_rx_waiting; //!< overflow sur usb - reception. Vaut 1 si on doit relancer la reception
 static xSemaphoreHandle usb_mutex;
-static void (*usb_cmd[USB_CMD_NUM])(void*);
+static void (*usb_cmd[USB_CMD_NUM])(void* arg, void* data);
+static void* usb_cmd_arg[USB_CMD_NUM];
 static const char version[41] = VERSION;
 unsigned char usb_get_version_done = 0;
 static unsigned char usb_ready = 0;
 
 void usb_read_task(void *);
 void usb_write_task(void *);
-void usb_cmd_ptask(void*);
-void usb_cmd_get_version(void*);
+void usb_cmd_ptask(void* arg, void* data);
+void usb_cmd_get_version(void* arg, void* data);
 uint8_t* usb_get_device_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
 uint8_t* usb_get_lang_id_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
 uint8_t* usb_get_manufacturer_str_descriptor( USBD_SpeedTypeDef speed , uint16_t *length);
@@ -188,9 +189,9 @@ static int usb_module_init(void)
 		return ERR_INIT_USB;
 	}
 
-	usb_add_cmd(USB_CMD_GET_VERSION, usb_cmd_get_version);
-	usb_add_cmd(USB_CMD_PTASK, usb_cmd_ptask);
-	usb_add_cmd(USB_CMD_REBOOT, (void (*)(void*))reboot);
+	usb_add_cmd(USB_CMD_GET_VERSION, usb_cmd_get_version, NULL);
+	usb_add_cmd(USB_CMD_PTASK, usb_cmd_ptask, NULL);
+	usb_add_cmd(USB_CMD_REBOOT, (void (*)(void*, void*))reboot, NULL);
 
 	return 0;
 }
@@ -476,9 +477,10 @@ void usb_add_log(unsigned char level, const char* func, uint16_t line, const cha
 	xSemaphoreGive(usb_write_sem);
 }
 
-void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*))
+void usb_add_cmd(enum usb_cmd id, void (*cmd)(void*, void*), void* arg)
 {
 	usb_cmd[id] = cmd;
+	usb_cmd_arg[id] = arg;
 }
 
 //! Usb read task
@@ -508,13 +510,13 @@ void usb_read_task(void * arg)
 					if( size <= nMax )
 					{
 						// message deja contigu en memoire
-						usb_cmd[id](&usb_rx_buffer[usb_rx_buffer_tail+2]);
+						usb_cmd[id](usb_cmd_arg[id], &usb_rx_buffer[usb_rx_buffer_tail+2]);
 					}
 					else
 					{
 						memcpy(usb_rx_buffer_one_msg, &usb_rx_buffer[usb_rx_buffer_tail], nMax);
 						memcpy(&usb_rx_buffer_one_msg[nMax], usb_rx_buffer, size - nMax);
-						usb_cmd[id](&usb_rx_buffer_one_msg[2]);
+						usb_cmd[id](usb_cmd_arg[id], &usb_rx_buffer_one_msg[2]);
 					}
 				}
 				else
@@ -609,17 +611,19 @@ void isr_otg_fs(void)
 	HAL_PCD_IRQHandler(usb_handle.pData);
 }
 
-void usb_cmd_ptask(void* arg)
+void usb_cmd_ptask(void* arg, void* data)
 {
 	(void) arg;
+	(void) data;
 	char usb_ptask_buffer[400];
 	vTaskGetRunTimeStats(usb_ptask_buffer, sizeof(usb_ptask_buffer));
 	log(LOG_INFO, usb_ptask_buffer);
 }
 
-void usb_cmd_get_version(void* arg)
+void usb_cmd_get_version(void* arg, void* data)
 {
 	(void) arg;
+	(void) data;
 	usb_get_version_done = 1;
 	usb_add(USB_CMD_GET_VERSION, (void*)version, 41);
 }
