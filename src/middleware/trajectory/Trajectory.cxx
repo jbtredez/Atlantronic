@@ -72,12 +72,13 @@ void Trajectory::trajectoryTask()
 	while(1)
 	{
 		m_pos = m_location->getPosition();
-		m_motion->getState(&motion_state, &motion_status, &motion_wanted_state);
 
 		if( m_newRequest )
 		{
 			update();
 		}
+
+		m_motion->getState(&motion_state, &motion_status, &motion_wanted_state);
 
 		switch(m_trajectoryState)
 		{
@@ -866,7 +867,7 @@ int Trajectory::wait(enum trajectory_state wanted_state, uint32_t timeout)
 
 	if( state != wanted_state )
 	{
-		log_format(LOG_ERROR, "incorrect state : %d", state);
+		log_format(LOG_ERROR, "incorrect state : %d, wanted %d", state, wanted_state);
 		return -1;
 	}
 
