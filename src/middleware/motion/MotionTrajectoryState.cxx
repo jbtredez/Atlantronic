@@ -127,7 +127,12 @@ void MotionTrajectoryState::run(void* data)
 	VectPlan v = abs_to_loc_speed(m->m_posMes.theta, v_th);
 	v.x += m->m_xPid.compute(error_loc.x, CONTROL_DT);
 	v.theta += m->m_thetaPid.compute(error_loc.theta, CONTROL_DT);
-	v.theta += m->m_yPid.compute(error_loc.y, CONTROL_DT);
+	float dthetaCorr = m->m_yPid.compute(error_loc.y, CONTROL_DT);
+	if( v.x < 0 )
+	{
+		dthetaCorr *= -1;
+	}
+	v.theta += dthetaCorr;
 
 	VectPlan u_loc;
 	float n = v.norm();
