@@ -184,7 +184,7 @@ void Trajectory::motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, Vec
 	float u[6] = { n, 0, 0, 0, 0, 0};
 	if( type == TRAJECTORY_CURVILINEAR_XYA )
 	{
-		u[2] = n;
+		u[1] = n;
 	}
 
 	if( way == WAY_ANY )
