@@ -11,9 +11,12 @@ int main()
 	float b[8];
 	VectPlan delta = end - start;
 	float n = delta.norm();
-	//float u[6] = { n, n, 0, 0, 0, 0};
-	float u[6] = { n, 0, 0, 0, 0, 0};
-	poly7f_full(start, end, a, b, u);
+	computePoly7Traj(start, end, a, b, n, n);
+
+	printf("a = %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
+			a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]);
+	printf("b = %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f %6.3f\n",
+			b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]);
 
 	FILE* p = popen("gnuplot", "w");
 	if(p == NULL)

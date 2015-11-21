@@ -95,7 +95,7 @@ void Path::planify(KinematicsParameters vParam, KinematicsParameters wParam)
 		VectPlan ab = b->pos - a->pos;
 		ab.theta = modulo2pi(ab.theta);
 		float distLin = ab.norm();
-		float distAng = fabs(ab.theta);
+		float distAng = fabsf(ab.theta);
 
 		VectPlan ba = a->pos - b->pos;
 		ba.theta = modulo2pi(ba.theta);
@@ -124,6 +124,15 @@ void Path::planify(KinematicsParameters vParam, KinematicsParameters wParam)
 		vmax = min(vmaxSlowDown, vParam.vMax);
 		float wmaxSlowDown = sqrtf(b->wMax * b->wMax + 2 * wParam.dMax * distAng);
 		wmax = min(wmaxSlowDown, wParam.vMax);
+
+		if( distLin > EPSILON && distAng > EPSILON )
+		{
+			// translation rotation combinee - reduction de vitesse
+			// prise en compte de la courbure
+			float sigmaAbs = distAng / distLin;
+			wmax = min(wmax, sigmaAbs * vmax);
+			vmax = min(vmax, wmax/sigmaAbs);
+		}
 	}
 }
 

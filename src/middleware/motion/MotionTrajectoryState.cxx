@@ -19,8 +19,8 @@ void MotionTrajectoryState::entry(void* data)
 	m->m_wantedState = MOTION_UNKNOWN_STATE;
 	m->m_path.planify(m->m_wantedLinearParam,  m->m_wantedAngularParam);
 
-	// TODO DEBUG : a virer ?
-	m->m_path.display();
+	// DEBUG : laisser commente
+	//m->m_path.display();
 
 	// TODO fonction computeTime dans path pour passer sur traj courbe
 	/*t = m->motionComputeTime(dtheta1, m->m_wantedAngularParam);
@@ -148,7 +148,7 @@ void MotionTrajectoryState::run(void* data)
 	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics);
 
 	VectPlan err = m->m_path.getLastPoint() - m->m_posMes;
-	if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+	if( v_th == VectPlan() && err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
 	{
 		log(LOG_INFO, "MOTION_TARGET_REACHED");
 		m->m_status = MOTION_TARGET_REACHED;

@@ -1,7 +1,44 @@
 #include "kernel/math/poly7.h"
 #include <math.h>
 
-void poly7f_full(VectPlan start, VectPlan end, float* a, float* b, float* u)
+void computePoly7Traj(VectPlan start, VectPlan end, float* a, float* b, float n1, float n2)
+{
+	float ca1 = cosf(start.theta);
+	float sa1 = sinf(start.theta);
+
+	float ca2 = cosf(end.theta);
+	float sa2 = sinf(end.theta);
+
+	float dx = end.x - start.x;
+	float dy = end.y - start.y;
+
+	a[0] = start.x;
+	b[0] = start.y;
+
+	a[1] = n1 * ca1;
+	b[1] = n1 * sa1;
+
+	a[2] = 0;
+	b[2] = 0;
+
+	a[3] = 0;
+	b[3] = 0;
+
+	a[4] = 35 * dx - 20 * n1 * ca1 - 15 * n2 * ca2;
+	b[4] = 35 * dy - 20 * n1 * sa1 - 15 * n2 * sa2;
+
+	a[5] = -84 * dx + 45 * n1 * ca1 + 39 * n2 * ca2;
+	b[5] = -84 * dy + 45 * n1 * sa1 + 39 * n2 * sa2;
+
+	a[6] = 70 * dx - 36 * n1 * ca1 - 34 * n2 * ca2;
+	b[6] = 70 * dy - 36 * n1 * sa1 - 34 * n2 * sa2;
+
+	a[7] = -20 * dx + 10 * n1 * ca1 + 10 * n2 * ca2;
+	b[7] = -20 * dy + 10 * n1 * sa1 + 10 * n2 * sa2;
+}
+
+#if 0
+void computePoly7Traj(VectPlan start, VectPlan end, float* a, float* b, float* u)
 {
 	float ca1 = cosf(start.theta);
 	float sa1 = sinf(start.theta);
@@ -48,3 +85,5 @@ void poly7f_full(VectPlan start, VectPlan end, float* a, float* b, float* u)
 	b[7] = -20 * dy + (10 * u[0] + 2 * u[2] + 1/6.0f * u[4]) * sa1 + (2 * u[0] * u[0] * k1 + 1/6.0f * u[0] * u[0] * u[0] * dk1 + 0.5f * u[0] * u[3] * k1) * ca1
 			+ (10 * u[1] - 2 * u[3] + 1/6.0f * u[5]) * sa2 - (2 * u[1] * u[1] * k2 - 1/6.0f * u[1] * u[1] * u[1] * dk2 - 0.5 * u[1] * u[3] * k2) * ca2;
 }
+#endif
+

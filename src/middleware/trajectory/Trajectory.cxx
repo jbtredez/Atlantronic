@@ -136,17 +136,13 @@ void Trajectory::motionAddGoTo(bool newTrajectory, VectPlan dest, VectPlan cp, T
 	switch(type)
 	{
 		case TRAJECTORY_AXIS_XYA:
-			//type = TRAJECTORY_CURVILINEAR_XYA;
-			//motionAddGoToCurvilinear(newTrajectory, dest, cp, way, type);
-			//break;
 		case TRAJECTORY_AXIS_A:
 		case TRAJECTORY_AXIS_XY:
 			motionAddGoToStraightRotate(newTrajectory, dest, cp, way, type);
-			//type = TRAJECTORY_CURVILINEAR_XY;
-			//motionAddGoToCurvilinear(newTrajectory, dest, cp, way, type);
 			break;
 		case TRAJECTORY_CURVILINEAR_XY:
 		case TRAJECTORY_CURVILINEAR_XYA:
+			// TODO : attention, ne marche pas pour les rotation pure. Le detecter et faire motionAddGoToStraightRotate à la place
 			motionAddGoToCurvilinear(newTrajectory, dest, cp, way, type);
 			break;
 		default:
@@ -181,21 +177,21 @@ void Trajectory::motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, Vec
 	float b2[8];
 	VectPlan delta = wantedDest - start;
 	float n = delta.norm();
-	float u[6] = { n, 0, 0, 0, 0, 0};
-	if( type == TRAJECTORY_CURVILINEAR_XYA )
+	if( type != TRAJECTORY_CURVILINEAR_XYA )
 	{
-		u[1] = n;
+		// TODO pas super mais si on met n2 a 0, on a un probleme de continuite sur sigma
+		wantedDest.theta = atan2f(delta.y, delta.x);
 	}
 
 	if( way == WAY_ANY )
 	{
 		// test en marche avant
-		poly7f_full(start, wantedDest, a1, b1, u);
+		computePoly7Traj(start, wantedDest, a1, b1, n, n);
 
 		// test en marche arriere
 		start.theta += M_PI;
 		wantedDest.theta += M_PI;
-		poly7f_full(start, wantedDest, a2, b2, u);
+		computePoly7Traj(start, wantedDest, a2, b2, n, n);
 		wantedDest.theta -= M_PI;
 		start.theta -= M_PI;
 
@@ -235,14 +231,14 @@ void Trajectory::motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, Vec
 	}
 	else if( way == WAY_FORWARD )
 	{
-		poly7f_full(start, wantedDest, a1, b1, u);
+		computePoly7Traj(start, wantedDest, a1, b1, n, n);
 	}
 	else
 	{
 		// test en marche arriere
 		start.theta += M_PI;
 		wantedDest.theta += M_PI;
-		poly7f_full(start, wantedDest, a2, b2, u);
+		computePoly7Traj(start, wantedDest, a2, b2, n, n);
 		wantedDest.theta -= M_PI;
 		start.theta -= M_PI;
 	}
