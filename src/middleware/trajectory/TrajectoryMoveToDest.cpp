@@ -63,7 +63,7 @@ void TrajectoryMoveToDest::entry(void* data)
 	{
 		//On initialise la postion de destination final
 		m_dest.position = req.dest;
-		m_dest.approxDist = 0;
+		m_dest.approxDist = req.dist;
 		m_dest.way = (enum TrajectoryWay)req.way;
 		m_dest.avoidance = (enum avoidance_type)req.avoidance_type;
 		m_dest.type = (enum trajectory_cmd_type)req.type;
@@ -78,16 +78,19 @@ void TrajectoryMoveToDest::run(void* data)
 {
 	Trajectory* t = (Trajectory*) data;
 
+	//On recupére le position actuelle
+	VectPlan robotPosition = t->m_pos;
 	//détermine quelle est le type de mouvement demandé
 	switch(m_dest.type)
 	{
 		//Cas de déplacement rectiligne (on se déplace suivant un angle et une distance)
 		case TRAJECTORY_STRAIGHT:
-			log_format(LOG_INFO, "straight %d", (int)req.dist);
-			m_dest.position.x += cosf(m_dest.position.theta) * req.dist;
-			m_dest.position.y += sinf(m_dest.position.theta) * req.dist;
+		{
+			log_format(LOG_INFO, "straight %d", (int)m_dest.approxDist);
+			m_dest.position.x += cosf(robotPosition.theta) * m_dest.approxDist;
+			m_dest.position.y += sinf(robotPosition.theta) * m_dest.approxDist;
 
-			if(req.dist > 0)
+			if(m_dest.approxDist > 0)
 			{
 				m_dest.way = WAY_FORWARD;
 			}
@@ -95,20 +98,21 @@ void TrajectoryMoveToDest::run(void* data)
 			{
 				m_dest.way = WAY_BACKWARD;
 			}
+			m_dest.approxDist = 0;
 			break;
-
+		}
 			//Cas de Rotation simple  (on fait une simple rotation relative)
 		case TRAJECTORY_ROTATE:
-			log_format(LOG_INFO, "rotate %d", (int)(req.dest.theta * 180 / M_PI));
-			m_dest.position.theta += req.dest.theta;
+			log_format(LOG_INFO, "rotate %d", (int)(m_dest.position.theta * 180 / M_PI));
+			m_dest.position.theta += robotPosition.theta;
 			break;
 
 
 			//Cas de Rotation simple  (on fait une simple rotation dans le repere fixe)
-			//On calcul la rotation relative pour la convertire la cmd en rotation relative
+			//On calcul la rotation relative pour la convertir la cmd en rotation relative
 		case TRAJECTORY_ROTATE_TO:
-			log_format(LOG_INFO, "rotate_to %d", (int)(req.dest.theta * 180 / M_PI));
-			m_dest.position.theta += findRotation(m_dest.position.theta, req.dest.theta);
+			log_format(LOG_INFO, "rotate_to %d", (int)(m_dest.position.theta * 180 / M_PI));
+			m_dest.position.theta += findRotation(robotPosition.theta, m_dest.position.theta);
 			m_dest.type = TRAJECTORY_ROTATE;
 			break;
 
@@ -116,21 +120,18 @@ void TrajectoryMoveToDest::run(void* data)
 
 			//Cas de deplacement à une position X et Y dans un repere fixe sans contrainte de rotation
 		case TRAJECTORY_GOTO_XY:
-			m_dest.position = req.dest;
-			m_dest.position.theta = atan2f(m_dest.position.y - m_dest.position.y, m_dest.position.x - m_dest.position.x);
-			m_dest.approxDist = req.dist;
+			m_dest.position.theta = atan2f(m_dest.position.y - robotPosition.y, m_dest.position.x - robotPosition.x);
 			break;
 
 			//Cas de deplacement à une position X et Y dans un repere fixe avec contrainte de rotation
 		case TRAJECTORY_GOTO_XYA:
-			m_dest.position = req.dest;
-			m_dest.approxDist = req.dist;
+			//Rien à faire tous les paramètres sont déjà sauvegardés
 			break;
 
 			//Cas de deplacement à un noeud du graph
 		case TRAJECTORY_GOTO_GRAPH:
 			///Recherche du point le plus proche du graph
-			id = findWayToGraph(t->m_pos, DETECTION_STATIC_OBJ);
+			id = findWayToGraph(robotPosition, DETECTION_STATIC_OBJ);
 			log_format(LOG_INFO, "point graph : %d", id);
 			//L'objectif en graph node vers le position
 			m_dest = VectPlan(t->m_graph.getNode(id), 0);
@@ -145,7 +146,7 @@ void TrajectoryMoveToDest::run(void* data)
 
 	// verification : trajectoire possible ?
 		bool useGraph = false;
-		if(t->m_staticCheckEnable && (req.type == TRAJECTORY_GOTO_XY || req.type == TRAJECTORY_GOTO_XYA))
+		if(t->m_staticCheckEnable && (m_dest.type == TRAJECTORY_GOTO_XY || m_dest.type == TRAJECTORY_GOTO_XYA))
 		{
 			// TODO : check fait pour la marche avant, tolérance plus grande si on le fait en marche arrière ?
 			// on regarde si c'est possible / objets statiques de la table
@@ -153,14 +154,13 @@ void TrajectoryMoveToDest::run(void* data)
 			Vect2 a_table;
 			Vect2 b_table;
 
-			// position actuelle avec alignement (marche avant) avec la destination
-			VectPlan positionActuelle = t->m_pos;
-
-			float dx = m_dest.position.x - positionActuelle.x;
-			float dy = m_dest.position.y - positionActuelle.y;
-			positionActuelle.theta = atan2f(dy, dx);
+			// calcul du vecteur de trajectoire du robot pour aller à la position final
+			VectPlan Movevector = robotPosition;
+			float dx = m_dest.position.x - robotPosition.x;
+			float dy = m_dest.position.y - robotPosition.y;
+			Movevector.theta = atan2f(dy, dx);
 			//Vérifie la présence d'objet static sur le chemin
-			float xmin = t->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, positionActuelle, &a_table, &b_table);
+			float xmin = t->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, robotPosition, &a_table, &b_table);
 
 			float dist2 = dx * dx +  dy * dy;
 			float xmin2 = xmin * xmin;
