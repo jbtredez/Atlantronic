@@ -30,13 +30,17 @@ enum avoidance_type
 enum trajectory_state
 {
 	TRAJECTORY_STATE_NONE = 0,
-	TRAJECTORY_STATE_UPDATING_TRAJECTORY,
-	TRAJECTORY_STATE_MOVING_TO_DEST,
-	TRAJECTORY_STATE_TARGET_REACHED,
-	TRAJECTORY_STATE_TARGET_NOT_REACHED,
-	TRAJECTORY_STATE_COLISION,
+	TRAJECTORY_STATE_IDLE ,         //En attente d'ordre de déplacement
+	TRAJECTORY_STATE_MOVE_TO_DEST,  //Ordre de se déplacer à une position calcul de déplacement
+	TRAJECTORY_STATE_MOVING_TO_DEST,  //Déplacement à une position avec une kinematics spécifique
 };
-
+enum trajectory_status
+{
+	TRAJECTORY_STATE_MOVING,       			//!< déplacement en cours
+	TRAJECTORY_STATE_TARGET_REACHED,        //!<Position atteintes
+	TRAJECTORY_STATE_TARGET_NOT_REACHED,    //!<Position pas atteintes
+	TRAJECTORY_STATE_COLISION,              //!< collision
+};
 enum TrajectoryWay
 {
 	WAY_BACKWARD = -1,    //!< marche arriere
@@ -146,7 +150,12 @@ class Trajectory
 		enum TrajectoryWay m_way;
 		enum trajectory_cmd_type m_type;
 		enum avoidance_type m_avoidanceType;
+
+       ///////////////Utile pour la machine d'etat
 		enum trajectory_state m_trajectoryState;
+		enum trajectory_state m_wantedState;
+
+
 		bool m_hokuyoEnableCheck; //!< utilisation ou non des hokuyos
 		bool m_staticCheckEnable; //!< verification des éléments statiques
 		KinematicsParameters m_linearParam;
