@@ -77,9 +77,8 @@ void TrajectoryMoveToDest::entry(void* data)
 void TrajectoryMoveToDest::run(void* data)
 {
 	Trajectory* t = (Trajectory*) data;
+	m_position = t->m_location->getPosition();
 
-	//On recupére le position actuelle
-	VectPlan robotPosition = t->m_pos;
 	//détermine quelle est le type de mouvement demandé
 	switch(m_dest.type)
 	{
@@ -104,7 +103,7 @@ void TrajectoryMoveToDest::run(void* data)
 			//Cas de Rotation simple  (on fait une simple rotation relative)
 		case TRAJECTORY_ROTATE:
 			log_format(LOG_INFO, "rotate %d", (int)(m_dest.position.theta * 180 / M_PI));
-			m_dest.position.theta += robotPosition.theta;
+			m_dest.position.theta += m_position.theta;
 			break;
 
 
@@ -112,7 +111,7 @@ void TrajectoryMoveToDest::run(void* data)
 			//On calcul la rotation relative pour la convertir la cmd en rotation relative
 		case TRAJECTORY_ROTATE_TO:
 			log_format(LOG_INFO, "rotate_to %d", (int)(m_dest.position.theta * 180 / M_PI));
-			m_dest.position.theta += findRotation(robotPosition.theta, m_dest.position.theta);
+			m_dest.position.theta += findRotation(m_position.theta, m_dest.position.theta);
 			m_dest.type = TRAJECTORY_ROTATE;
 			break;
 
@@ -120,7 +119,7 @@ void TrajectoryMoveToDest::run(void* data)
 
 			//Cas de deplacement à une position X et Y dans un repere fixe sans contrainte de rotation
 		case TRAJECTORY_GOTO_XY:
-			m_dest.position.theta = atan2f(m_dest.position.y - robotPosition.y, m_dest.position.x - robotPosition.x);
+			m_dest.position.theta = atan2f(m_dest.position.y - m_position.y, m_dest.position.x - m_position.x);
 			break;
 
 			//Cas de deplacement à une position X et Y dans un repere fixe avec contrainte de rotation
@@ -131,7 +130,7 @@ void TrajectoryMoveToDest::run(void* data)
 			//Cas de deplacement à un noeud du graph
 		case TRAJECTORY_GOTO_GRAPH:
 			///Recherche du point le plus proche du graph
-			id = findWayToGraph(robotPosition, DETECTION_STATIC_OBJ);
+			id = findWayToGraph(m_position, DETECTION_STATIC_OBJ);
 			log_format(LOG_INFO, "point graph : %d", id);
 			//L'objectif en graph node vers le position
 			m_dest = VectPlan(t->m_graph.getNode(id), 0);
@@ -155,12 +154,12 @@ void TrajectoryMoveToDest::run(void* data)
 			Vect2 b_table;
 
 			// calcul du vecteur de trajectoire du robot pour aller à la position final
-			VectPlan Movevector = robotPosition;
-			float dx = m_dest.position.x - robotPosition.x;
-			float dy = m_dest.position.y - robotPosition.y;
+			VectPlan Movevector = m_position;
+			float dx = m_dest.position.x - m_position.x;
+			float dy = m_dest.position.y - m_position.y;
 			Movevector.theta = atan2f(dy, dx);
 			//Vérifie la présence d'objet static sur le chemin
-			float xmin = t->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, robotPosition, &a_table, &b_table);
+			float xmin = t->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, Movevector, &a_table, &b_table);
 
 			float dist2 = dx * dx +  dy * dy;
 			float xmin2 = xmin * xmin;
@@ -172,13 +171,12 @@ void TrajectoryMoveToDest::run(void* data)
 				log(LOG_INFO, "goto - obstacle statique, utilisation du graph");
 				computeGraph(DETECTION_STATIC_OBJ);
 				return ;
-				useGraph = true;
 			}
 		}
 		VectPlan dest = m_dest.position;
 
 		///Calcul du delta pour la future destination
-		VectPlan u = m_dest - t->m_pos;
+		VectPlan u = m_dest - m_position;
 		float ds = u.norm();
 
 
@@ -214,6 +212,61 @@ void TrajectoryMoveToDest::run(void* data)
 		t->m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
 
 }
+
+void TrajectoryMoveToDest::computeGraph(enum detection_type type)
+{
+	int startId = findWayToGraph(m_position, type);
+	int endId = findWayToGraph(m_dest, type);
+	if(startId != endId)
+	{
+		// calcul du trajet dans le graph
+
+		// on active tout les chemins ou passe le robot
+		for(int i = 0; i < GRAPH_NUM_LINK; i++)
+		{
+			// position du noeud avec alignement (marche avant) avec la destination
+			VectPlan pos;
+			GraphLink link = m_graph.getLink(i);
+			pos = VectPlan(m_graph.getNode(link.a), link.alpha);
+			float xmin = m_detection->computeFrontObject(type, pos, NULL, NULL);
+			m_graph.setValidLink(i, link.dist < xmin);
+			//log_format(LOG_INFO, "lien %d : %d (%d -> %d)", i, trajectory_graph_valid_links[i], (int)graph_link[i].a, (int)graph_link[i].b);
+		}
+		//log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_graph_way[0], trajectory_last_graph_id);
+		int res = m_graph.dijkstra(startId, endId);
+		if(res)
+		{
+			log_format(LOG_INFO, "aucun chemin trouvé de %d à %d", startId, endId);
+			m_trajectoryState = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+		}
+	}
+
+	simplifyPath(type);
+
+	bool newTraj = true;
+	if( m_graph.m_wayCount > 0)
+	{
+		log_format(LOG_INFO, "passage par %d points", m_graph.m_wayCount);
+		for(int i = 0 ; i < m_graph.m_wayCount; i++)
+		{
+			log_format(LOG_INFO, "point passage graph : %d", m_graph.m_way[i]);
+			VectPlan dest = VectPlan(m_graph.getNode(m_graph.m_way[i]), 0);
+			motionAddGoTo(newTraj, dest, VectPlan(), WAY_FORWARD, TRAJECTORY_AXIS_XY);
+			newTraj = false;
+		}
+	}
+
+	TrajectoryType traj_type = TRAJECTORY_AXIS_XYA;
+	if( m_type == TRAJECTORY_GOTO_XY )
+	{
+		traj_type = TRAJECTORY_AXIS_XY;
+	}
+	motionAddGoTo(newTraj, m_dest, VectPlan(), m_way, traj_type);
+	m_motion->startTrajectory(m_linearParam, m_angularParam);
+	m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
+}
+
+
 
 int TrajectoryMoveToDest::findWayToGraph(VectPlan pos, enum detection_type detect_type)
 {

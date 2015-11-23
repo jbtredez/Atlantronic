@@ -23,6 +23,7 @@ class TrajectoryMoveToDest: public StateMachineState
 {
 	private:
 		trajectory_dest	m_dest;
+		VectPlan	m_position;
 	public:
 		TrajectoryMoveToDest();
 		virtual ~TrajectoryMoveToDest();
@@ -33,6 +34,7 @@ class TrajectoryMoveToDest: public StateMachineState
 
 
 
+		void computeGraph(enum detection_type type);
 		//Ajout d'une destination pour state move
 		motionAddGoToCurvilinear();
 		void motionAddGoTo
