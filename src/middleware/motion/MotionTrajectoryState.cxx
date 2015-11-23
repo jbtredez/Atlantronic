@@ -70,11 +70,35 @@ void MotionTrajectoryState::run(void* data)
 			// reduction de la vitesse max de rotation si l'adversaire est proche
 			wParam.vMax /= 1.5;
 		}
+	}
 
-		// TODO ne marche pas avec trajectoire courbe. On suppose que c'est une ligne droite de direction m_u...
-#if 0
+	// TODO voir si on regarde uniquement l'erreur en dy/dtheta par rapport a la traj
+	VectPlan errorLoc = abs_to_loc(m->m_posMes, m->m_path.getLastPosCmd());
+
+	// calcul de la commande theorique
+	VectPlan vTh = m->m_path.getNextCommand(m->m_posMes, CONTROL_DT, vParam, wParam);
+	float nth2 = vTh.norm();
+	if( nth2 > EPSILON )
+	{
+		m->m_u = vTh / nth2;
+	}
+	else if( vTh.theta > EPSILON )
+	{
+		m->m_u = VectPlan(0,0,1);
+	}
+	else if( vTh.theta < -EPSILON )
+	{
+		m->m_u = VectPlan(0,0,-1);
+	}
+	else
+	{
+		m->m_u = VectPlan();
+	}
+
+	if( m->m_anticoOn )
+	{
 		VectPlan u = m->m_u;
-		opponentMinDistance = m->m_detection->computeOpponentInRangeDistance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
+		float opponentMinDistance = m->m_detection->computeOpponentInRangeDistance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
 		opponentMinDistance = opponentMinDistance - PARAM_RIGHT_CORNER_X - PARAM_FINGER_SIZE_X;
 		opponentMinDistance /= 2; // facteur de securite
 
@@ -114,20 +138,13 @@ void MotionTrajectoryState::run(void* data)
 			stop(m);
 			return;
 		}
-#endif
 	}
 
-	// TODO voir si on regarde uniquement l'erreur en dy/dtheta par rapport a la traj
-	VectPlan error_loc = abs_to_loc(m->m_posMes, m->m_path.getLastPosCmd());
-
-	// calcul de la commande theorique
-	VectPlan v_th = m->m_path.getNextCommand(m->m_posMes, CONTROL_DT, vParam, wParam);
-
 	// correction en fonction de l'erreur
-	VectPlan v = abs_to_loc_speed(m->m_posMes.theta, v_th);
-	v.x += m->m_xPid.compute(error_loc.x, CONTROL_DT);
-	v.theta += m->m_thetaPid.compute(error_loc.theta, CONTROL_DT);
-	float dthetaCorr = m->m_yPid.compute(error_loc.y, CONTROL_DT);
+	VectPlan v = abs_to_loc_speed(m->m_posMes.theta, vTh);
+	v.x += m->m_xPid.compute(errorLoc.x, CONTROL_DT);
+	v.theta += m->m_thetaPid.compute(errorLoc.theta, CONTROL_DT);
+	float dthetaCorr = m->m_yPid.compute(errorLoc.y, CONTROL_DT);
 	if( v.x < 0 )
 	{
 		dthetaCorr *= -1;
@@ -148,7 +165,7 @@ void MotionTrajectoryState::run(void* data)
 	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics);
 
 	VectPlan err = m->m_path.getLastPoint() - m->m_posMes;
-	if( v_th == VectPlan() && err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+	if( vTh == VectPlan() && err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
 	{
 		log(LOG_INFO, "MOTION_TARGET_REACHED");
 		m->m_status = MOTION_TARGET_REACHED;
