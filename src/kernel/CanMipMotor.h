@@ -63,8 +63,6 @@ enum MotorWriteConfIndex
 #define CAN_MIP_MOTOR_STATE_ERR_CMD_VS_MES        0x80
 #define CAN_MIP_MOTOR_STATE_ERROR                 0xf0
 
-#define CAN_MIP_MOTOR_HISTORY_SIZE                  28
-
 class CanMipMotor : public CanMipNode
 {
 	public:
