@@ -43,23 +43,23 @@ class Graph
 {
 	public:
 		//! lancement de l'algo dijkstra entre a et b
-		int dijkstra(int a, int b);
+		uint32_t dijkstra(uint32_t a, uint32_t b);
 
 		//! calcule la distance entre le point et tout les noeuds du graph
 		//! resultat dans un tableau trié de la plus petite distance à la plus grande
-		int computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist);
+		uint32_t computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist);
 
-		inline void setValidLink(int id, bool valid)
+		inline void setValidLink(uint32_t id, bool valid)
 		{
 			m_validLinks[id] = valid;
 		}
 
-		inline static Vect2 getNode(int id)
+		inline static Vect2 getNode(uint32_t id)
 		{
 			return m_graphNode[id].pos;
 		}
 
-		inline static GraphLink getLink(int id)
+		inline static GraphLink getLink(uint32_t id)
 		{
 			return m_graphLink[id];
 		}

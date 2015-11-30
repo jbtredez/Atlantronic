@@ -142,10 +142,10 @@ const struct GraphLink Graph::m_graphLink[GRAPH_NUM_LINK] =
 };
 
 
-int Graph::dijkstra(int a, int b)
+uint32_t Graph::dijkstra(uint32_t a, uint32_t b)
 {
-	int i;
-	int j;
+	unsigned int i;
+	unsigned int j;
 
 	// init
 	for( i=0 ; i < GRAPH_NUM_NODE; i++)
@@ -228,28 +228,30 @@ int Graph::dijkstra(int a, int b)
 	return 0;
 }
 
-int Graph::computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist )
+uint32_t Graph::computeNodeDistance(struct Vect2 pos, struct GraphNodeDist* node_dist )
 {
-	int i;
-	int j;
+	uint32_t i;
+	uint32_t j;
 	float dx;
 	float dy;
-	uint16_t dist;
+	uint32_t dist;
 
 	for(i = 0; i< GRAPH_NUM_NODE; i++)
 	{
 		dx = pos.x - m_graphNode[i].pos.x;
 		dy = pos.y - m_graphNode[i].pos.y;
-		dist = (uint16_t)sqrtf(dx * dx + dy * dy);
-
-		j = i-1;
-		while(j >= 0 && node_dist[j].dist > dist)
+		dist = (uint32_t)sqrtf(dx * dx + dy * dy);
+		if(i !=0)
 		{
-			node_dist[j+1] = node_dist[j];
-			j--;
+			j = i-1;
+			while(node_dist[j].dist > dist)
+			{
+				node_dist[j+1] = node_dist[j];
+				j--;
+			}
+			node_dist[j+1].dist = dist;
+			node_dist[j+1].id = i;
 		}
-		node_dist[j+1].dist = dist;
-		node_dist[j+1].id = i;
 	}
 
 	return 0;
