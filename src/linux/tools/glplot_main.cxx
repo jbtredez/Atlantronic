@@ -3,45 +3,58 @@
 #include <unistd.h>
 #include <stdio.h>
 #include "glplot.h"
-#include "linux/tools/com/com_usb.h"
-#include "linux/tools/com/com_tcp.h"
-#include "linux/tools/com/com_xbee.h"
 
-static Qemu qemu;
-static RobotInterface robotItf;
+enum
+{
+	ROBOT_MAIN = 0,
+	ROBOT_PMI,
+	ROBOT_MAX,
+};
+
+static const char* robotName[ROBOT_MAX] =
+{
+	"main",
+	"pmi",
+};
+
+static Robot robot[ROBOT_MAX];
 
 void robotItfCallback(void* arg);
 
 int main(int argc, char *argv[])
 {
-	const char* file_stm_read = NULL;
-	const char* file_stm_write = NULL;
-	const char* prog_stm = NULL;
+	const char* file_stm = "/dev/discovery0";
+	const char* prog_stm[ROBOT_MAX];
 	const char* ip = NULL;
-	int gdb_port = 0;
-	int simulation = 0;
-	bool serverTcp = true; // TODO option ?
+	int gdb_port[ROBOT_MAX] = {0, 0};
+	bool simulation[ROBOT_MAX] = {false, false};
+	bool serverTcp = false; // TODO option ?
 	bool xbee = false;
-	Com* com;
 
 	setenv("LC_ALL","C",1);
 
+	// lecture des options
 	if(argc > 1)
 	{
 		int option = -1;
-		while( (option = getopt(argc, argv, "gi:s:x")) != -1)
+		while( (option = getopt(argc, argv, "gi:p:s:x")) != -1)
 		{
 			switch(option)
 			{
 				case 'g':
-					gdb_port = 1235;
+					gdb_port[ROBOT_MAIN] = 1235;
+					gdb_port[ROBOT_PMI] = 1236;
 					break;
 				case 'i':
 					ip = optarg;
 					break;
+				case 'p':
+					simulation[ROBOT_PMI] = true;
+					prog_stm[ROBOT_PMI] = optarg;
+					break;
 				case 's':
-					simulation = 1;
-					prog_stm = optarg;
+					simulation[ROBOT_MAIN] = true;
+					prog_stm[ROBOT_MAIN] = optarg;
 					break;
 				case 'x':
 					xbee = true;
@@ -54,49 +67,46 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	// gestion des arguments restants
 	if( argc - optind > 0)
 	{
-		file_stm_read = argv[optind];
-		file_stm_write = file_stm_read;
-	}
-
-	if(simulation)
-	{
-		int res = qemu.init("qemu/arm-softmmu/qemu-system-arm", prog_stm, gdb_port);
-		if( res )
+		if( ! simulation[ROBOT_MAIN] && ! simulation[ROBOT_PMI] )
 		{
-			fprintf(stderr, "qemu_init : error");
+			file_stm = argv[optind];
+		}
+		else
+		{
+			for(int i = 0; i < argc - optind; i++)
+			{
+				fprintf(stderr, "unknown arguments %s\n", argv[optind+i]);
+			}
 			return -1;
 		}
-
-		file_stm_read = qemu.m_file_board_read;
-		file_stm_write = qemu.m_file_board_write;
 	}
 
-	if(file_stm_read)
+	// init
+	for(int i = 0; i < ROBOT_MAX; i++)
 	{
-		com = new ComUsb(file_stm_read, file_stm_write);
+		int res = robot[i].init(robotName[i],
+				simulation[i], "", prog_stm[i], gdb_port[i],  // TODO path = argv[0] ?;
+				ip,
+				xbee, serverTcp,
+				file_stm,
+				robotItfCallback, NULL);
+		if( ! res )
+		{
+			fprintf(stderr, "robot init failed\n");
+			return -1;
+		}
 	}
-	else if(ip)
+
+	int res = glplot_main(true, robot, ROBOT_MAX);
+
+	// destruction
+	for(int i = 0; i < ROBOT_MAX; i++)
 	{
-		com = new ComTcp(ip);
+		robot[i].destroy();
 	}
-	else if( xbee )
-	{
-		com = new ComXbee("/dev/ttyUSB0");
-	}
-	else
-	{
-		com = new ComUsb("/dev/discovery0", "/dev/discovery0");
-	}
-
-	robotItf.init("discovery", com, serverTcp, robotItfCallback, NULL);
-
-	int res = glplot_main("", simulation, true, &qemu, &robotItf);
-
-	robotItf.destroy();
-
-	qemu.destroy();
 
 	return res;
 }
@@ -105,3 +115,4 @@ void robotItfCallback(void* /*arg*/)
 {
 	glplot_update();
 }
+

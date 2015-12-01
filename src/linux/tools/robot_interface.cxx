@@ -90,15 +90,12 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 		detection_reg_num[i] = 0;
 	}
 
-	for( i = 0; i < COM_MAX ; i++)
+	stop_task = 0;
+	res = pthread_create(&tid, NULL, RobotInterface::task_wrapper, this);
+	if(res)
 	{
-		stop_task = 0;
-		res = pthread_create(&tid, NULL, RobotInterface::task_wrapper, this);
-		if(res)
-		{
-			err = res;
-			log_error_errno("pthread_create");
-		}
+		err = res;
+		log_error_errno("pthread_create");
 	}
 
 	versionCompatible = ROBOT_VERSION_UNKNOWN;

@@ -32,21 +32,22 @@ struct polyline oponent_robot =
 
 TableScene::TableScene()
 {
-	m_qemu = NULL;
+	m_robot = NULL;
 	m_opponentRobotPos = VectPlan(-2000, 1000, 0);
 	m_viewMatrix.rotateX(M_PI/6);
 	m_viewMatrix.translate(0, 0, 3000);
 }
 
-bool TableScene::init(GlFont* font, Qemu* qemu, RobotInterface* robot, MainShader* shader)
+bool TableScene::init(GlFont* font, Robot* robot, int robotCount, MainShader* shader)
 {
 	m_glfont = font;
-	m_robotItf = robot;
-	m_qemu = qemu;
+	m_robot = robot;
+	m_robotCount = robotCount;
 	m_shader = shader;
 
-	bool res = m_table3d.init(GL_NAME_TABLE_ELEMENTS_0, shader, m_qemu);
-	res &= m_robot3d.init(shader);
+	bool res = m_table3d.init(GL_NAME_TABLE_ELEMENTS_0, shader, m_robot, robotCount);
+	res &= m_mainRobot3d.init(shader);
+	res &= m_pmiRobot3d.init(shader);
 	res &= m_opponentRobot3d.init("media/opponentRobot.obj", shader);
 	res &= m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
 
@@ -66,24 +67,25 @@ bool TableScene::init(GlFont* font, Qemu* qemu, RobotInterface* robot, MainShade
 
 bool TableScene::initQemuObjects()
 {
-	if( ! m_qemu )
+	for(int i = 0; i < m_robotCount; i++)
 	{
-		return false;
+		if( m_robot[i].m_simulation )
+		{
+			// ajout de la table dans qemu
+			setTableColor(0); // pas de couleur pour qemu
+			for(int j = 0; j < TABLE_OBJ_SIZE; j++)
+			{
+				m_robot[i].m_qemu.add_object(OBJECT_SEEN_BY_HOKUYO, table_obj[j]);
+			}
+
+			// ajout d'un robot adverse
+			m_robot[i].m_qemu.add_object(OBJECT_SEEN_BY_HOKUYO | OBJECT_SEEN_BY_OMRON, oponent_robot, &m_qemuObjectOpponentId);
+
+			// on le met a sa position de depart
+			Vect2 origin(0, 0);
+			m_robot[i].m_qemu.move_object(m_qemuObjectOpponentId, origin, m_opponentRobotPos);
+		}
 	}
-
-	// ajout de la table dans qemu
-	setTableColor(0); // pas de couleur pour qemu
-	for(int i = 0; i < TABLE_OBJ_SIZE; i++)
-	{
-		m_qemu->add_object(OBJECT_SEEN_BY_HOKUYO, table_obj[i]);
-	}
-
-	// ajout d'un robot adverse
-	m_qemu->add_object(OBJECT_SEEN_BY_HOKUYO | OBJECT_SEEN_BY_OMRON, oponent_robot, &m_qemuObjectOpponentId);
-
-	// on le met a sa position de depart
-	Vect2 origin(0, 0);
-	m_qemu->move_object(m_qemuObjectOpponentId, origin, m_opponentRobotPos);
 
 	m_table3d.initQemuObjects();
 
@@ -164,10 +166,13 @@ void TableScene::mouseMoveSelection(int x, int y)
 
 	if( m_opponentRobot3d.selected )
 	{
-		if( m_qemu )
+		for(int i = 0; i < m_robotCount; i++)
 		{
-			Vect2 origin(m_opponentRobotPos.x, m_opponentRobotPos.y);
-			m_qemu->move_object(m_qemuObjectOpponentId, origin, delta);
+			if( m_robot[i].m_simulation )
+			{
+				Vect2 origin(m_opponentRobotPos.x, m_opponentRobotPos.y);
+				m_robot[i].m_qemu.move_object(m_qemuObjectOpponentId, origin, delta);
+			}
 		}
 		m_opponentRobotPos = m_opponentRobotPos + delta;
 	}
@@ -199,11 +204,17 @@ void TableScene::drawOpponentRobot(Graphique* graph)
 
 void TableScene::drawRobot(Graphique* graph)
 {
-	int max = m_robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
-	if( graph->courbes_activated[SUBGRAPH_TABLE_ROBOT] && max > 0)
+	if( ! graph->courbes_activated[SUBGRAPH_TABLE_ROBOT] )
 	{
-		// robot
-		VectPlan pos_robot = m_robotItf->control_usb_data[max-1].pos;
+		return;
+	}
+
+	RobotInterface* robotItf = &m_robot[0].m_robotItf;
+	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
+	if( max > 0)
+	{
+		// gros robot
+		VectPlan pos_robot = robotItf->control_usb_data[max-1].pos;
 		glStencilFunc(GL_ALWAYS, GL_NAME_ROBOT, ~0);
 		glm::mat4 oldModelView = m_shader->getModelView();
 		glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(pos_robot.x, pos_robot.y, 0));
@@ -215,39 +226,65 @@ void TableScene::drawRobot(Graphique* graph)
 
 		for(int i =0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 		{
-			dynamixel_data* dynamixel = &m_robotItf->ax12[i];
+			dynamixel_data* dynamixel = &robotItf->ax12[i];
 			switch(dynamixel->id)
 			{
 				case AX12_RIGHT_WING:
-					m_robot3d.rightWingTheta = dynamixel->pos;
+					m_mainRobot3d.rightWingTheta = dynamixel->pos;
 					break;
 				case AX12_LEFT_WING:
-					m_robot3d.leftWingTheta = dynamixel->pos;
+					m_mainRobot3d.leftWingTheta = dynamixel->pos;
 					break;
 				case AX12_LOW_FINGER:
-					m_robot3d.lowFingerTheta = dynamixel->pos;
+					m_mainRobot3d.lowFingerTheta = dynamixel->pos;
 					break;
 				case AX12_HIGH_FINGER:
-					m_robot3d.highFingerTheta = dynamixel->pos;
+					m_mainRobot3d.highFingerTheta = dynamixel->pos;
 					break;
 				case AX12_RIGHT_CARPET:
-					m_robot3d.rightCarpetTheta = dynamixel->pos;
+					m_mainRobot3d.rightCarpetTheta = dynamixel->pos;
 					break;
 				case AX12_LEFT_CARPET:
-					m_robot3d.leftCarpetTheta = dynamixel->pos;
+					m_mainRobot3d.leftCarpetTheta = dynamixel->pos;
 					break;
 			}
 		}
-		m_robot3d.elevatorHeight = m_robotItf->last_control_usb_data.elevatorHeight;
-		m_robot3d.draw();
+		m_mainRobot3d.elevatorHeight = robotItf->last_control_usb_data.elevatorHeight;
+		m_mainRobot3d.draw();
 
 		m_shader->setModelView(oldModelView);
+
 		glStencilFunc(GL_ALWAYS, 0, ~0);
+	}
+
+	// petit robot
+	if( m_robotCount > 1 )
+	{
+		robotItf = &m_robot[1].m_robotItf;
+
+		int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
+		if( max > 0)
+		{
+			VectPlan pos_robot = robotItf->control_usb_data[max-1].pos;
+			glStencilFunc(GL_ALWAYS, GL_NAME_ROBOT, ~0);
+			glm::mat4 oldModelView = m_shader->getModelView();
+			glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(pos_robot.x, pos_robot.y, 0));
+			modelView = glm::rotate(modelView, pos_robot.theta, glm::vec3(0, 0, 1));
+			m_shader->setModelView(modelView);
+
+			m_shader->setColor(0, 0, 0);
+			m_robot2d.render(GL_LINE_STRIP);
+			m_pmiRobot3d.draw();
+			m_shader->setModelView(oldModelView);
+
+			glStencilFunc(GL_ALWAYS, 0, ~0);
+		}
 	}
 }
 
 void TableScene::printInfos(Graphique* graph)
 {
+	RobotInterface* robotItf = &m_robot[0].m_robotItf;
 	m_glfont->m_textShader.setProjection(m_tableProjection * m_tableModelview);
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH_LINK] )
@@ -285,13 +322,13 @@ void TableScene::printInfos(Graphique* graph)
 	int lineHeight = -1.5*m_glfont->digitHeight * ry;
 	float x = graph->roi_xmax - 45*m_glfont->width*rx;
 	float y = graph->roi_ymax + lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "time  %13.6f", m_robotItf->current_time);
+	m_glfont->glPrintf(x, y, rx, ry, "time  %13.6f", robotItf->current_time);
 	y += lineHeight;
-	struct control_usb_data* data = &m_robotItf->last_control_usb_data;
+	struct control_usb_data* data = &robotItf->last_control_usb_data;
 	double match_time = 0;
-	if( m_robotItf->start_time )
+	if( robotItf->start_time )
 	{
-		match_time = m_robotItf->current_time - m_robotItf->start_time;
+		match_time = robotItf->current_time - robotItf->start_time;
 	}
 	m_glfont->glPrintf(x, y, rx, ry, "match %13.6f", match_time);
 	y += lineHeight;
@@ -344,25 +381,25 @@ void TableScene::printInfos(Graphique* graph)
 	y += lineHeight;
 	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		if( m_robotItf->ax12[i].id != 0)
+		if( robotItf->ax12[i].id != 0)
 		{
-			m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", m_robotItf->ax12[i].id,
-					m_robotItf->ax12[i].pos * 180 / M_PI,
-					(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-					(m_robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-					(m_robotItf->ax12[i].error.transmit_error << 8) + m_robotItf->ax12[i].error.internal_error);
+			m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", robotItf->ax12[i].id,
+					robotItf->ax12[i].pos * 180 / M_PI,
+					(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+					(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+					(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
 			y += lineHeight;
 		}
 	}
 	/*for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 	{
-		if( m_robotItf->rx24[i].id != 0)
+		if( robotItf->rx24[i].id != 0)
 		{
-			m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", m_robotItf->rx24[i].id,
-					m_robotItf->rx24[i].pos * 180 / M_PI,
-					(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-					(m_robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-					(m_robotItf->rx24[i].error.transmit_error << 8) + m_robotItf->rx24[i].error.internal_error);
+			m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", robotItf->rx24[i].id,
+					robotItf->rx24[i].pos * 180 / M_PI,
+					(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+					(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+					(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
 			y += lineHeight;
 		}
 	}*/
@@ -379,8 +416,9 @@ void TableScene::printInfos(Graphique* graph)
 void TableScene::draw(Graphique* graph)
 {
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
+	RobotInterface* robotItf = &m_robot[0].m_robotItf;
 
-	int res = pthread_mutex_lock(&m_robotItf->mutex);
+	int res = pthread_mutex_lock(&robotItf->mutex);
 	if(res != 0)
 	{
 		return;
@@ -419,36 +457,36 @@ void TableScene::draw(Graphique* graph)
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1_SEG])
 	{
 		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1_SEG]);
-		for(int i = 0; i < m_robotItf->detection_dynamic_object_size; i++)
+		for(int i = 0; i < robotItf->detection_dynamic_object_size; i++)
 		{
-			if(m_robotItf->detection_dynamic_obj[i].size > 1)
+			if(robotItf->detection_dynamic_obj[i].size > 1)
 			{
-				m_graphPointObject.update((float*)m_robotItf->detection_dynamic_obj[i].pt, m_robotItf->detection_dynamic_obj[i].size);
+				m_graphPointObject.update((float*)robotItf->detection_dynamic_obj[i].pt, robotItf->detection_dynamic_obj[i].size);
 				m_graphPointObject.render(GL_LINE_STRIP);
 			}
 		}
 	}
 
-	for(int i = 0; i < (int)m_robotItf->detection_dynamic_object_count1; i++)
+	for(int i = 0; i < (int)robotItf->detection_dynamic_object_count1; i++)
 	{
 		m_shader->setColor(0,0,1);
-		pt[i].x = m_robotItf->detection_obj1[i].x;
-		pt[i].y = m_robotItf->detection_obj1[i].y;
+		pt[i].x = robotItf->detection_obj1[i].x;
+		pt[i].y = robotItf->detection_obj1[i].y;
 		//printf("obj_h1 : %7.2f %7.2f\n", robotItf->detection_obj1[i].x, robotItf->detection_obj1[i].y);
 	}
 
-	m_graphPointObject.update((float*)pt, (int)m_robotItf->detection_dynamic_object_count1);
+	m_graphPointObject.update((float*)pt, (int)robotItf->detection_dynamic_object_count1);
 	m_graphPointObject.render(GL_POINTS);
 
-	for(int i = 0; i < (int)m_robotItf->detection_dynamic_object_count2; i++)
+	for(int i = 0; i < (int)robotItf->detection_dynamic_object_count2; i++)
 	{
 		m_shader->setColor(0,1,1);
-		pt[i].x = m_robotItf->detection_obj2[i].x;
-		pt[i].y = m_robotItf->detection_obj2[i].y;
+		pt[i].x = robotItf->detection_obj2[i].x;
+		pt[i].y = robotItf->detection_obj2[i].y;
 		//printf("obj_h2 : %7.2f %7.2f\n", robotItf->detection_obj2[i].x, robotItf->detection_obj2[i].y);
 	}
 
-	m_graphPointObject.update((float*)pt, (int)m_robotItf->detection_dynamic_object_count2);
+	m_graphPointObject.update((float*)pt, (int)robotItf->detection_dynamic_object_count2);
 	m_graphPointObject.render(GL_POINTS);
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_HOKUYO1] )
@@ -456,7 +494,7 @@ void TableScene::draw(Graphique* graph)
 		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO1]);
 		for(int i=HOKUYO1*HOKUYO_NUM_POINTS; i < (HOKUYO1+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			pt[i] = m_robotItf->detection_hokuyo_pos[i];
+			pt[i] = robotItf->detection_hokuyo_pos[i];
 		}
 		m_graphPointObject.update((float*)pt, HOKUYO_NUM_POINTS);
 		m_graphPointObject.render(GL_POINTS);
@@ -467,13 +505,13 @@ void TableScene::draw(Graphique* graph)
 		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_HOKUYO2]);
 		for(int i=HOKUYO2*HOKUYO_NUM_POINTS; i < (HOKUYO2+1)*HOKUYO_NUM_POINTS; i++)
 		{
-			pt[i] = m_robotItf->detection_hokuyo_pos[i];
+			pt[i] = robotItf->detection_hokuyo_pos[i];
 		}
 		m_graphPointObject.update((float*)pt, HOKUYO_NUM_POINTS);
 		m_graphPointObject.render(GL_POINTS);
 	}
 
-	int max = m_robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
+	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
 	{
@@ -482,10 +520,10 @@ void TableScene::draw(Graphique* graph)
 
 		for(int i=0; i< max; i++)
 		{
-			int state = m_robotItf->control_usb_data[i].motion_state;
+			int state = robotItf->control_usb_data[i].motion_state;
 			if( state != MOTION_ENABLED && state != MOTION_DISABLED)
 			{
-				pt[pointCount] = m_robotItf->control_usb_data[i].cons;
+				pt[pointCount] = robotItf->control_usb_data[i].cons;
 				pointCount++;
 			}
 		}
@@ -498,7 +536,7 @@ void TableScene::draw(Graphique* graph)
 		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_POS_MES]);
 		for(int i=0; i < max; i++)
 		{
-			pt[i] = m_robotItf->control_usb_data[i].pos;
+			pt[i] = robotItf->control_usb_data[i].pos;
 		}
 		m_graphPointObject.update((float*)pt, max);
 		m_graphPointObject.render(GL_POINTS);
@@ -544,5 +582,5 @@ void TableScene::draw(Graphique* graph)
 	// affichage du robot
 	drawRobot(graph);
 
-	pthread_mutex_unlock(&m_robotItf->mutex);
+	pthread_mutex_unlock(&robotItf->mutex);
 }

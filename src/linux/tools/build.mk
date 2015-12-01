@@ -9,6 +9,7 @@ obj-linux-itf-core += linux/tools/robot_interface.o
 obj-linux-itf-core += linux/tools/qemu.o
 obj-linux-itf-core += linux/tools/ring_buffer.o
 obj-linux-itf-core += linux/tools/server_tcp.o
+obj-linux-itf-core += linux/tools/Robot.o
 obj-linux-itf-core += middleware/hokuyo_tools.o
 obj-linux-itf-core += kernel/math/regression.o
 obj-linux-itf-core += kernel/math/VectPlan.o

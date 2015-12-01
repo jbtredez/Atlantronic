@@ -5,8 +5,7 @@
 #include "linux/tools/opengl/robot3d.h"
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/graphique.h"
-#include "linux/tools/robot_interface.h"
-#include "linux/tools/qemu.h"
+#include "linux/tools/Robot.h"
 #include "disco/table.h"
 #include "middleware/trajectory/Graph.h"
 #include "disco/robot_parameters.h"
@@ -42,7 +41,7 @@ class TableScene
 {
 	public:
 		TableScene();
-		bool init(GlFont* glfont, Qemu* qemu, RobotInterface* robotItf, MainShader* shader);
+		bool init(GlFont* glfont, Robot* robot, int robotCount, MainShader* shader);
 		bool initQemuObjects();
 
 		void draw(Graphique* graph);
@@ -68,11 +67,12 @@ class TableScene
 		void drawOpponentRobot(Graphique* graph);
 		void drawRobot(Graphique* graph);
 
-		Qemu* m_qemu;
+		Robot* m_robot;
+		int m_robotCount;
 		int m_qemuObjectOpponentId;
-		RobotInterface* m_robotItf;
 		Table3d m_table3d;
-		Robot3d m_robot3d;
+		Robot3d m_mainRobot3d;
+		Robot3d m_pmiRobot3d;
 		GlObject m_opponentRobot3d;
 		VectPlan m_opponentRobotPos;
 		GlFont* m_glfont;

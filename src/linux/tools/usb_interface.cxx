@@ -10,9 +10,22 @@
 #include "linux/tools/robot_interface.h"
 #include "linux/tools/qemu.h"
 #include "disco/table.h"
+#include "linux/tools/Robot.h"
 
-static RobotInterface robotItf;
-static Qemu qemu;
+enum
+{
+	ROBOT_MAIN = 0,
+	ROBOT_PMI,
+	ROBOT_MAX,
+};
+
+static const char* robotName[ROBOT_MAX] =
+{
+	"main",
+	"pmi",
+};
+
+static Robot robot[ROBOT_MAX];
 static pthread_mutex_t quitMutex;
 static pthread_cond_t quitCond;
 
@@ -20,35 +33,41 @@ void cli_quit();
 
 int main(int argc, char** argv)
 {
-	const char* file_stm_read = NULL;
-	const char* file_stm_write = NULL;
-	const char* prog_stm = NULL;
+	const char* file_stm = "/dev/discovery0";
+	const char* prog_stm[ROBOT_MAX];
 	const char* ip = NULL;
-	int gdb_port = 0;
-	int simulation = 0;
-	bool serverTcp = false;
+	int gdb_port[ROBOT_MAX] = {0, 0};
+	bool simulation[ROBOT_MAX] = {false, false};
+	bool serverTcp = false; // TODO option ?
 	bool xbee = false;
-	Com* com;
+
+	setenv("LC_ALL","C",1);
 
 	pthread_mutex_init(&quitMutex, NULL);
 	pthread_cond_init(&quitCond, NULL);
 
+	// lecture des options
 	if(argc > 1)
 	{
 		int option = -1;
-		while( (option = getopt(argc, argv, "gi:s:")) != -1)
+		while( (option = getopt(argc, argv, "gi:p:s:x")) != -1)
 		{
 			switch(option)
 			{
 				case 'g':
-					gdb_port = 1235;
+					gdb_port[ROBOT_MAIN] = 1235;
+					gdb_port[ROBOT_PMI] = 1236;
 					break;
 				case 'i':
 					ip = optarg;
 					break;
+				case 'p':
+					simulation[ROBOT_PMI] = true;
+					prog_stm[ROBOT_PMI] = optarg;
+					break;
 				case 's':
-					simulation = 1;
-					prog_stm = optarg;
+					simulation[ROBOT_MAIN] = true;
+					prog_stm[ROBOT_MAIN] = optarg;
 					break;
 				case 'x':
 					xbee = true;
@@ -61,58 +80,55 @@ int main(int argc, char** argv)
 		}
 	}
 
+	// gestion des arguments restants
 	if( argc - optind > 0)
 	{
-		file_stm_read = argv[optind];
-		file_stm_write = file_stm_read;
-	}
-
-	if(simulation)
-	{
-		int res = qemu.init("qemu/arm-softmmu/qemu-system-arm", prog_stm, gdb_port);
-		if( res )
+		if( ! simulation[ROBOT_MAIN] && ! simulation[ROBOT_PMI] )
 		{
-			fprintf(stderr, "qemu_init : error");
+			file_stm = argv[optind];
+		}
+		else
+		{
+			for(int i = 0; i < argc - optind; i++)
+			{
+				fprintf(stderr, "unknown arguments %s\n", argv[optind+i]);
+			}
 			return -1;
 		}
+	}
 
-		file_stm_read = qemu.m_file_board_read;
-		file_stm_write = qemu.m_file_board_write;
+	// init
+	for(int i = 0; i < ROBOT_MAX; i++)
+	{
+		int res = robot[i].init(robotName[i],
+				simulation[i], "", prog_stm[i], gdb_port[i],  // TODO path = argv[0] ?;
+				ip,
+				xbee, serverTcp,
+				file_stm,
+				NULL, NULL);
+		if( ! res )
+		{
+			fprintf(stderr, "robot init failed\n");
+			return -1;
+		}
 
 		// ajout de la table dans qemu
 		for(int i = 0; i < TABLE_OBJ_SIZE; i++)
 		{
-			qemu.add_object(OBJECT_SEEN_BY_HOKUYO, table_obj[i]);
+			robot[0].m_qemu.add_object(OBJECT_SEEN_BY_HOKUYO, table_obj[i]);
 		}
 	}
 
-	if(file_stm_read)
-	{
-		com = new ComUsb(file_stm_read, file_stm_write);
-	}
-	else if(ip)
-	{
-		com = new ComTcp(ip);
-	}
-	else if( xbee )
-	{
-		com = new ComXbee("/dev/ttyUSB0");
-	}
-	else
-	{
-		com = new ComUsb("/dev/discovery0", "/dev/discovery0");
-	}
-
-	robotItf.init("discovery", com, serverTcp, NULL, NULL);
-
 	pthread_mutex_lock(&quitMutex);
-	cmd_init(&robotItf, &qemu, cli_quit);
+	cmd_init(&robot[0].m_robotItf, &robot[0].m_qemu, cli_quit);
 	pthread_cond_wait(&quitCond, &quitMutex);
 	pthread_mutex_unlock(&quitMutex);
 
-	robotItf.destroy();
-
-	qemu.destroy();
+	// destruction
+	for(int i = 0; i < ROBOT_MAX; i++)
+	{
+		robot[i].destroy();
+	}
 
 	return 0;
 }

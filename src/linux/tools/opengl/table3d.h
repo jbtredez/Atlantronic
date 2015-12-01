@@ -2,7 +2,7 @@
 #define TABLE_3D_H
 
 #include "linux/tools/opengl/object3d.h"
-#include "linux/tools/qemu.h"
+#include "linux/tools/Robot.h"
 
 #define NUM_SAND_CONE               9
 #define NUM_SAND_CUBE              40
@@ -29,7 +29,7 @@ enum
 class Table3d
 {
 	public:
-		bool init(int glSelectBaseId, MainShader* shader, Qemu* qemu);
+		bool init(int glSelectBaseId, MainShader* shader, Robot* robot, int robotCount);
 		bool initQemuObjects();
 		void draw();
 
@@ -56,7 +56,8 @@ class Table3d
 		int m_qemuObjId[TABLE_OBJ_MAX];
 
 		MainShader* m_shader;
-		Qemu* m_qemu;
+		Robot* m_robot;
+		int m_robotCount;
 };
 
 #endif

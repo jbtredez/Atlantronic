@@ -470,7 +470,7 @@ int cmd_qemu_set_io(const char* arg)
 
 	if( cmd_qemu )
 	{
-		cmd_qemu->set_io(id, val?1:0);
+		cmd_qemu->setIo(id, val?1:0);
 	}
 
 	return CMD_SUCESS;

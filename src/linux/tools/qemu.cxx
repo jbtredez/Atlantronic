@@ -36,20 +36,22 @@ Qemu::Qemu()
 {
 	m_com = NULL;
 	m_lastObjectId = -1;
+	m_name[0] = 0;
 }
 
-int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
+int Qemu::init(const char* name, const char* qemu_path, const char* prog_name, int gdb_port)
 {
 	pid_t current_pid = getpid();
+	snprintf(m_name, sizeof(m_name), "%s-%i", name, current_pid);
 
 	strncpy(m_qemu_path, qemu_path, sizeof(m_qemu_path));
 	strncpy(m_prog_name, prog_name, sizeof(m_prog_name));
 	m_gdb_port = gdb_port;
 
-	snprintf(m_file_qemu_read, sizeof(m_file_qemu_read), "/tmp/qemu-%i.out", current_pid);
-	snprintf(m_file_qemu_write, sizeof(m_file_qemu_write), "/tmp/qemu-%i.in", current_pid);
-	snprintf(m_file_board_read, sizeof(m_file_board_read), "/tmp/carte-%i.out", current_pid);
-	snprintf(m_file_board_write, sizeof(m_file_board_write), "/tmp/carte-%i.in", current_pid);
+	snprintf(m_file_qemu_read, sizeof(m_file_qemu_read), "/tmp/qemu-%s.out", m_name);
+	snprintf(m_file_qemu_write, sizeof(m_file_qemu_write), "/tmp/qemu-%s.in", m_name);
+	snprintf(m_file_board_read, sizeof(m_file_board_read), "/tmp/carte-%s.out", m_name);
+	snprintf(m_file_board_write, sizeof(m_file_board_write), "/tmp/carte-%s.in", m_name);
 
 	m_com = new ComUsb(m_file_qemu_read, m_file_qemu_write);
 
@@ -60,8 +62,6 @@ int Qemu::init(const char* qemu_path, const char* prog_name, int gdb_port)
 
 void Qemu::startQemu()
 {
-	pid_t current_pid = getpid();
-
 	m_com->close();
 	m_lastObjectId = -1;
 
@@ -70,14 +70,17 @@ void Qemu::startQemu()
 	mkfifo(m_file_board_read, 0666);
 	mkfifo(m_file_board_write, 0666);
 
+	// copie du nom avant le fork car m_name ne sera plus accessible
+	char name[256];
+	strncpy(name, m_name, sizeof(name));
 	m_pid = fork();
 
 	if(m_pid == 0)
 	{
 		char pipe_usb[64];
 		char pipe_model[64];
-		snprintf(pipe_usb, sizeof(pipe_usb), "pipe,id=foo_usb,path=/tmp/carte-%i", current_pid);
-		snprintf(pipe_model, sizeof(pipe_model), "pipe,id=foo_model,path=/tmp/qemu-%i", current_pid);
+		snprintf(pipe_usb, sizeof(pipe_usb), "pipe,id=foo_usb,path=/tmp/carte-%s", m_name);
+		snprintf(pipe_model, sizeof(pipe_model), "pipe,id=foo_model,path=/tmp/qemu-%s", m_name);
 
 		char* arg[15];
 		char buf_tcp[64];
@@ -221,7 +224,7 @@ int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 	return m_com->write((void*) &event, sizeof(event));
 }
 
-int Qemu::set_io(uint32_t id, bool val)
+int Qemu::setIo(uint32_t id, bool val)
 {
 	struct atlantronic_model_tx_event event;
 	event.type = EVENT_SET_IO;

@@ -19,6 +19,7 @@
 #include "kernel/math/matrix_homogeneous.h"
 #include "opengl/main_shader.h"
 #include "point_texture.h"
+#include "linux/tools/Robot.h"
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus
@@ -63,8 +64,8 @@ static char fontName[] = "DejaVuSerif.ttf";
 static int fontSize = 12;
 static int screen_width = 0;
 static int screen_height = 0;
-static RobotInterface* robotItf;
-static Qemu* qemu;
+static Robot* robot;
+static int robotCount = 1;
 static float mouse_x1 = 0;
 static float mouse_y1 = 0;
 static float mouse_x2 = 0;
@@ -75,8 +76,6 @@ static int drawing_zoom_selection = 0;
 static int current_graph = GRAPH_TABLE;
 static GtkWidget* opengl_window = NULL;
 static GtkWidget* main_window = NULL;
-static int simulation = 0;
-static char* atlantronicPath;
 static bool glplot_show_legend = false;
 static TableScene tableScene;
 Graphique graph[GRAPH_NUM];
@@ -116,16 +115,10 @@ static void plot_axes_lines(Graphique* graph);
 static void qemu_set_parameters();
 static void gtk_end();
 
-int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qemu, RobotInterface* RobotItf)
+int glplot_main(bool cli, Robot* _robot, int RobotCount)
 {
-	atlantronicPath = strdup(AtlantronicPath);
-	simulation = Simulation;
-	if( ! simulation )
-	{
-		Qemu = NULL;
-	}
-	qemu = Qemu;
-	robotItf = RobotItf;
+	robot = _robot;
+	robotCount = RobotCount;
 
 	graph[GRAPH_TABLE].init("Table", -1600, 1600, -1100, 1100, 800, 600, 0, 0);
 	graph[GRAPH_TABLE].add_courbe(SUBGRAPH_TABLE_ROBOT, "Robot", 1, 0, 0, 0);
@@ -334,13 +327,10 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 	if( cli )
 	{
-		cmd_init(robotItf, qemu, gtk_end);
+		cmd_init(&robot[0].m_robotItf, &robot[0].m_qemu, gtk_end);
 	}
 
-	if( simulation )
-	{
-		qemu_set_parameters();
-	}
+	qemu_set_parameters();
 
 	gtk_main();
 
@@ -351,8 +341,14 @@ int glplot_main(const char* AtlantronicPath, int Simulation, bool cli, Qemu* Qem
 
 void qemu_set_parameters()
 {
-	qemu->setPosition(qemuStartPos.symetric(color));
-	qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
+	for(int i = 0; i < robotCount ; i++)
+	{
+		if( robot[i].m_simulation )
+		{
+			robot[i].m_qemu.setPosition(qemuStartPos.symetric(color));
+			robot[i].m_qemu.setIo(GPIO_MASK(IO_COLOR), ioColor);
+		}
+	}
 
 	tableScene.initQemuObjects();
 }
@@ -469,7 +465,7 @@ static void init(GtkGLArea *area)
 		exit(-1);
 	}
 
-	res = tableScene.init(&glfont, qemu, robotItf, &shader);
+	res = tableScene.init(&glfont, robot, robotCount, &shader);
 	if( ! res )
 	{
 		exit(-1);
@@ -549,6 +545,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg*/)
 {
 	Graphique* g = &graph[current_graph];
+	RobotInterface* robotItf = &robot[0].m_robotItf;
 
 	// on efface le frame buffer
 	glClearStencil(0);
@@ -778,6 +775,7 @@ static void plot_hokuyo_hist(Graphique* graph)
 	{
 		pt[2*i] = i;
 	}
+	RobotInterface* robotItf = &robot[0].m_robotItf;
 
 	shader.setSprite(pointTexture.width/4);
 	glBindTexture(GL_TEXTURE_2D, pointTextureId);
@@ -808,6 +806,8 @@ static void plot_hokuyo_hist(Graphique* graph)
 
 static void plot_speed_dist(Graphique* graph)
 {
+	RobotInterface* robotItf = &robot[0].m_robotItf;
+
 //TODO passer avec GL_POINT_SPRITE (	glEnable(GL_POINT_SPRITE); glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);) ? (pour texture sur point)
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
 	for(int i=1; i < robotItf->control_usb_data_count; i++)
@@ -1067,11 +1067,14 @@ static gboolean keyboard_press(GtkWidget* widget, GdkEventKey* event, gpointer a
 			tableScene.translateView(0, 0, 40);
 			break;
 		case GDK_KEY_r:
-			res = pthread_mutex_lock(&robotItf->mutex);
-			if(res == 0)
+			for(int i = 0; i < robotCount; i++)
 			{
-				robotItf->control_usb_data_count = 0;
-				pthread_mutex_unlock(&robotItf->mutex);
+				res = pthread_mutex_lock(&robot[i].m_robotItf.mutex);
+				if(res == 0)
+				{
+					robot[i].m_robotItf.control_usb_data_count = 0;
+					pthread_mutex_unlock(&robot[i].m_robotItf.mutex);
+				}
 			}
 			break;
 		case GDK_KEY_u:
@@ -1118,20 +1121,23 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 
 	tableScene.setColor(color);
 
-	if(qemu)
+	ioColor = !ioColor;
+	for(int i = 0; i < robotCount; i++)
 	{
-		// simulation : on change l'io
-		ioColor = !ioColor;
-		if( robotItf->last_control_usb_data.pos.x == 0 && robotItf->last_control_usb_data.pos.y == 0 && ! robotItf->get_gpio(1 << (GPIO_IN_GO+1)))
+		if(robot[i].m_simulation)
 		{
-			qemu->setPosition(qemuStartPos.symetric(color));
+			// simulation : on change l'io
+			if( robot[i].m_robotItf.last_control_usb_data.pos.x == 0 && robot[i].m_robotItf.last_control_usb_data.pos.y == 0 && ! robot[i].m_robotItf.get_gpio(1 << (GPIO_IN_GO+1)))
+			{
+				robot[i].m_qemu.setPosition(qemuStartPos.symetric(color));
+			}
+			robot[i].m_qemu.setIo(GPIO_MASK(IO_COLOR), ioColor);
 		}
-		qemu->set_io(GPIO_MASK(IO_COLOR), ioColor);
-	}
-	else
-	{
-		// en reel, on passe par l'interface de com
-		robotItf->color(color);
+		else
+		{
+			// en reel, on passe par l'interface de com
+			robot[i].m_robotItf.color(color);
+		}
 	}
 
 	GtkColorButton* switchColorBtn = (GtkColorButton*) widget;
@@ -1161,15 +1167,19 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
 {
 	static bool go = false;
-	if(qemu)
+	go = !go;
+
+	for(int i = 0; i < robotCount; i++)
 	{
-		// simulation
-		go = !go;
-		qemu->set_io(GPIO_MASK_IN_GO, go);
-	}
-	else
-	{
-		robotItf->go();
+		if(robot[i].m_simulation)
+		{
+			// simulation
+			robot[i].m_qemu.setIo(GPIO_MASK_IN_GO, go);
+		}
+		else
+		{
+			robot[i].m_robotItf.go();
+		}
 	}
 }
 
@@ -1188,23 +1198,26 @@ static void reboot_robot(GtkWidget* /*widget*/, gpointer /*arg*/)
 	}
 #endif
 
-	if(qemu)
+	for(int i = 0; i < robotCount; i++)
 	{
-		// simulation
-		robotItf->current_time = 0;
-		robotItf->start_time = 0;
-		robotItf->control_usb_data_count = 0;
-		qemu->reboot();
-		qemu_set_parameters();
-		tableScene.setColor(color);
+		if(robot[i].m_simulation)
+		{
+			// simulation
+			robot[i].m_robotItf.current_time = 0;
+			robot[i].m_robotItf.start_time = 0;
+			robot[i].m_robotItf.control_usb_data_count = 0;
+			robot[i].m_qemu.reboot();
+		}
+		else
+		{
+			robot[i].m_robotItf.reboot();
+		}
 	}
-	else
-	{
-		robotItf->reboot();
-	}
+	qemu_set_parameters();
+	tableScene.setColor(color);
 }
 
-static void joystick_event(int event, float val)
+static void joystick_event(int event, float /*val*/)
 {
 	if(event & JOYSTICK_BTN_BASE)
 	{
@@ -1235,13 +1248,13 @@ static void joystick_event(int event, float val)
 		switch(event)
 		{
 			case 0: // joystick gauche (xbox)
-				robotItf->motion_set_speed(VectPlan(0,0,1), val);
+				//robotItf->motion_set_speed(VectPlan(0,0,1), val);
 				break;
 			case 2: // gachette gauche (xbox)
-				robotItf->motion_set_speed(VectPlan(1,0,0), val*1000);
+				//robotItf->motion_set_speed(VectPlan(1,0,0), val*1000);
 				break;
 			case 5: // gachette droite (xbox)
-				robotItf->motion_set_speed(VectPlan(0,1,0), val*1000);
+				//robotItf->motion_set_speed(VectPlan(0,1,0), val*1000);
 				break;
 			default:
 				break;

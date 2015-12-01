@@ -42,12 +42,13 @@ struct polyline cube = { cubePt, sizeof(cubePt) / sizeof(cubePt[0]) };
 struct polyline seaShell = { seaShellPt, sizeof(seaShellPt) / sizeof(seaShellPt[0]) };
 struct polyline cylinder = { cylinderPt, sizeof(cylinderPt) / sizeof(cylinderPt[0]) };
 
-bool Table3d::init(int glSelectBaseId, MainShader* shader, Qemu* qemu)
+bool Table3d::init(int glSelectBaseId, MainShader* shader, Robot* robot, int robotCount)
 {
 	showTable = true;
 	showElements = true;
 	m_shader = shader;
-	m_qemu = qemu;
+	m_robot = robot;
+	m_robotCount = robotCount;
 
 	bool res = m_glTable.init("media/2016/table2016.obj", shader);
 	res &= m_glSandCone.init("media/2016/cone_sable.obj", shader);
@@ -268,55 +269,56 @@ void Table3d::initElementPosition(int configuration)
 
 bool Table3d::initQemuObjects()
 {
-	if( ! m_qemu )
-	{
-		return false;
-	}
-
 	int objFlags = OBJECT_MOBILE;// | OBJECT_SEEN_BY_HOKUYO;
-	for(unsigned int i = TABLE_OBJ_SAND_CONE_START; i < TABLE_OBJ_SAND_CONE_START + NUM_SAND_CONE; i++)
+	for(int j = 0; j < m_robotCount; j++ )
 	{
-		m_qemu->add_object(objFlags, cylinder, &m_qemuObjId[i]);
-	}
+		if( m_robot[j].m_simulation )
+		{
+			for(unsigned int i = TABLE_OBJ_SAND_CONE_START; i < TABLE_OBJ_SAND_CONE_START + NUM_SAND_CONE; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, cylinder, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_SAND_CUBE_START; i < TABLE_OBJ_SAND_CUBE_START + NUM_SAND_CUBE; i++)
-	{
-		m_qemu->add_object(objFlags, cube, &m_qemuObjId[i]);
-	}
+			for(unsigned int i = TABLE_OBJ_SAND_CUBE_START; i < TABLE_OBJ_SAND_CUBE_START + NUM_SAND_CUBE; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, cube, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_SAND_CYLINDER_START; i < TABLE_OBJ_SAND_CYLINDER_START + NUM_SAND_CYLINDER; i++)
-	{
-		m_qemu->add_object(objFlags, cylinder, &m_qemuObjId[i]);
-	}
+			for(unsigned int i = TABLE_OBJ_SAND_CYLINDER_START; i < TABLE_OBJ_SAND_CYLINDER_START + NUM_SAND_CYLINDER; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, cylinder, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_WHITE_SEA_SHELL_START; i < TABLE_OBJ_WHITE_SEA_SHELL_START + NUM_WHITE_SEA_SHELL; i++)
-	{
-		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
-	}
+			for(unsigned int i = TABLE_OBJ_WHITE_SEA_SHELL_START; i < TABLE_OBJ_WHITE_SEA_SHELL_START + NUM_WHITE_SEA_SHELL; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, seaShell, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_GREEN_SEA_SHELL_START; i < TABLE_OBJ_GREEN_SEA_SHELL_START + NUM_GREEN_SEA_SHELL; i++)
-	{
-		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
-	}
+			for(unsigned int i = TABLE_OBJ_GREEN_SEA_SHELL_START; i < TABLE_OBJ_GREEN_SEA_SHELL_START + NUM_GREEN_SEA_SHELL; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, seaShell, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_PURPLE_SEA_SHELL_START; i < TABLE_OBJ_PURPLE_SEA_SHELL_START + NUM_PURPLE_SEA_SHELL; i++)
-	{
-		m_qemu->add_object(objFlags, seaShell, &m_qemuObjId[i]);
-	}
+			for(unsigned int i = TABLE_OBJ_PURPLE_SEA_SHELL_START; i < TABLE_OBJ_PURPLE_SEA_SHELL_START + NUM_PURPLE_SEA_SHELL; i++)
+			{
+				m_robot[j].m_qemu.add_object(objFlags, seaShell, &m_qemuObjId[i]);
+			}
 
-	for(unsigned int i = TABLE_OBJ_GREEN_FISH_START; i < TABLE_OBJ_GREEN_FISH_START + NUM_GREEN_FISH; i++)
-	{
-		m_qemuObjId[i] = -1;
-	}
+			for(unsigned int i = TABLE_OBJ_GREEN_FISH_START; i < TABLE_OBJ_GREEN_FISH_START + NUM_GREEN_FISH; i++)
+			{
+				m_qemuObjId[i] = -1;
+			}
 
-	for(unsigned int i = TABLE_OBJ_PURPLE_FISH_START; i < TABLE_OBJ_PURPLE_FISH_START + NUM_PURPLE_FISH; i++)
-	{
-		m_qemuObjId[i] = -1;
-	}
+			for(unsigned int i = TABLE_OBJ_PURPLE_FISH_START; i < TABLE_OBJ_PURPLE_FISH_START + NUM_PURPLE_FISH; i++)
+			{
+				m_qemuObjId[i] = -1;
+			}
 
-	for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
-	{
-		m_qemu->move_object(m_qemuObjId[i], Vect2(), VectPlan(m_obj[i].position.x, m_obj[i].position.y, m_obj[i].theta));
+			for(unsigned int i = 0; i < TABLE_OBJ_MAX; i++)
+			{
+				m_robot[j].m_qemu.move_object(m_qemuObjId[i], Vect2(), VectPlan(m_obj[i].position.x, m_obj[i].position.y, m_obj[i].theta));
+			}
+		}
 	}
 
 	return true;
@@ -347,9 +349,12 @@ void Table3d::moveSelected(float dx, float dy)
 	{
 		if( m_obj[i].selected )
 		{
-			if( m_qemu )
+			for(int j = 0; j < m_robotCount; j++ )
 			{
-				m_qemu->move_object(m_qemuObjId[i], Vect2(m_obj[i].position.x, m_obj[i].position.y), VectPlan(dx, dy, 0));
+				if( m_robot[j].m_simulation )
+				{
+					m_robot[j].m_qemu.move_object(m_qemuObjId[i], Vect2(m_obj[i].position.x, m_obj[i].position.y), VectPlan(dx, dy, 0));
+				}
 			}
 			m_obj[i].position.x += dx;
 			m_obj[i].position.y += dy;

@@ -32,12 +32,6 @@
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 
-enum
-{
-	COM_DISCO,
-	COM_MAX
-};
-
 enum RobotVersion
 {
 	ROBOT_VERSION_UNKNOWN,

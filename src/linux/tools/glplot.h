@@ -1,10 +1,9 @@
 #ifndef GLPLOT_H
 #define GLPLOT_H
 
-#include "qemu.h"
-#include "robot_interface.h"
+#include "Robot.h"
 
-int glplot_main(const char* atlantronicPath, int simulation, bool cli, Qemu* qemu, RobotInterface* robotItf);
+int glplot_main(bool cli, Robot* robot, int RobotCount);
 
 void glplot_update();
 
