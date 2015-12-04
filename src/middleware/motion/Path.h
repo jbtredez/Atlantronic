@@ -3,6 +3,7 @@
 
 #include "kernel/math/VectPlan.h"
 #include "kernel/control/kinematics.h"
+#include "kernel/kinematics_model/KinematicsModel.h"
 
 // remarque : la taille du path doit etre une puissance de 2 pour avoir un code optimal
 #define PATH_SIZE            512
@@ -22,7 +23,7 @@ class Path
 		void clear();
 		bool add(PathPoint* pt, unsigned int size);
 
-		void planify(KinematicsParameters vParam, KinematicsParameters wParam);
+		void planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam);
 		VectPlan getNextCommand(VectPlan mes, float dt, KinematicsParameters vParam, KinematicsParameters wParam);
 		void display();
 		VectPlan getLastPoint();

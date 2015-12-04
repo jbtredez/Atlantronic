@@ -273,7 +273,9 @@ void Trajectory::motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, Vec
 		float t7 = t6 * t;
 		float x = a[0] + a[1] * t + a[2] * t2 + a[3] * t3 + a[4] * t4 + a[5] * t5 + a[6] * t6 + a[7] * t7;
 		float y = b[0] + b[1] * t + b[2] * t2 + b[3] * t3 + b[4] * t4 + b[5] * t5 + b[6] * t6 + b[7] * t7;
-		pt.pos.theta = atan2f(y - pt.pos.y, x - pt.pos.x);
+		float dx = a[1] + 2 * a[2] * t + 3 * a[3] * t2 + 4 * a[4] * t3 + 5 * a[5] * t4 + 6 * a[6] * t5 + 7 * a[7] * t6;
+		float dy = b[1] + 2 * b[2] * t + 3 * b[3] * t2 + 4 * b[4] * t3 + 5 * b[5] * t4 + 6 * b[6] * t5 + 7 * b[7] * t6;
+		pt.pos.theta = atan2f(dy, dx);
 		if( way == WAY_BACKWARD )
 		{
 			pt.pos.theta += M_PI;

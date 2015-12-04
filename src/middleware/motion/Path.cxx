@@ -61,7 +61,7 @@ VectPlan Path::getLastPoint()
 	return m_pt[(m_tail + m_count - 1)%PATH_SIZE].pos;
 }
 
-void Path::planify(KinematicsParameters vParam, KinematicsParameters wParam)
+void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam)
 {
 	if( m_count < 1)
 	{
@@ -94,9 +94,6 @@ void Path::planify(KinematicsParameters vParam, KinematicsParameters wParam)
 		ab.theta = modulo2pi(ab.theta);
 		float distLin = ab.norm();
 		float distAng = fabsf(ab.theta);
-
-		VectPlan ba = a->pos - b->pos;
-		ba.theta = modulo2pi(ba.theta);
 
 		if( i != m_tail + m_count - 1 )
 		{
@@ -131,6 +128,31 @@ void Path::planify(KinematicsParameters vParam, KinematicsParameters wParam)
 			wmax = min(wmax, sigmaAbs * vmax);
 			vmax = min(vmax, wmax/sigmaAbs);
 		}
+
+		// reduction de vitesse selon les contraintes cinematiques
+		VectPlan u = ab;
+		float speed = vmax;
+		if( distLin > EPSILON )
+		{
+			u = ab / distLin;
+		}
+		else
+		{
+			u = VectPlan(0,0,1);
+			speed = wmax;
+		}
+		float deltat = 0;
+		if( fabsf(vmax) > 0)
+		{
+			deltat = fabsf(distLin / vmax);
+		}
+		else if( fabsf(wmax) > 0 )
+		{
+			deltat = fabsf(distAng / wmax);
+		}
+		float k = kinematicsModel->computeActuatorCmd(u, -speed, deltat, kinematicsCmdTmp);
+		vmax *= k;
+		wmax *= k;
 	}
 }
 

@@ -17,7 +17,8 @@ void MotionTrajectoryState::entry(void* data)
 
 	//Satisfaction de la volonte operateur
 	m->m_wantedState = MOTION_UNKNOWN_STATE;
-	m->m_path.planify(m->m_wantedLinearParam,  m->m_wantedAngularParam);
+	Kinematics kinematicsTmp[CAN_MOTOR_MAX];
+	m->m_path.planify(m->m_kinematicsModel, kinematicsTmp, m->m_wantedLinearParam,  m->m_wantedAngularParam);
 
 	// DEBUG : laisser commente
 	//m->m_path.display();
