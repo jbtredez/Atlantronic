@@ -24,7 +24,7 @@ void Path::clear()
 	m_cpSpeedCmd = VectPlan();
 }
 
-bool Path::add(PathPoint* pt, unsigned int n)
+bool Path::add(PathPoint* pt, uint32_t n)
 {
 	if (m_count + n > PATH_SIZE)
 	{
@@ -32,7 +32,7 @@ bool Path::add(PathPoint* pt, unsigned int n)
 	}
 
 	// nombre d elements max pouvant etre copies sans cycler sur le buffer
-	unsigned int nMax = PATH_SIZE - m_head;
+	uint32_t nMax = PATH_SIZE - m_head;
 	if(n < nMax)
 	{
 		nMax = n;
@@ -71,7 +71,7 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 
 	// correction de tout les angles si ce n'est pas bon, pas de discontinuite en theta
 	// on garde le premier point tel quel
-	for(unsigned int i = m_tail + 1; i < m_tail + m_count; i++)
+	for(uint32_t i = m_tail + 1; i < m_tail + m_count; i++)
 	{
 		float oldTheta = m_pt[(i-1)%PATH_SIZE].pos.theta;
 		m_pt[i%PATH_SIZE].pos.theta = oldTheta + findRotation(oldTheta, m_pt[i%PATH_SIZE].pos.theta);
@@ -85,7 +85,7 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 	float vmax = 0;
 	float wmax = 0;
 
-	for(unsigned int i = m_tail + m_count - 1; i > m_tail; i--)
+	for(uint32_t i = m_tail + m_count - 1; i > m_tail; i--)
 	{
 		PathPoint* a = &m_pt[(i-1)%PATH_SIZE];
 		PathPoint* b = &m_pt[i%PATH_SIZE];
@@ -159,14 +159,14 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 //! mise a jour de la vitesse max pour l'ensemble des points du path
 void Path::setMaxSpeed(float vMax, float wMax)
 {
-	for(unsigned int i = m_tail; i < m_tail + m_count; i++)
+	for(uint32_t i = m_tail; i < m_tail + m_count; i++)
 	{
 		m_pt[i % PATH_SIZE].vMax = vMax;
 		m_pt[i % PATH_SIZE].wMax = wMax;
 	}
 }
 
-unsigned int Path::moveId(unsigned int id, unsigned int count)
+uint32_t Path::moveId(uint32_t id, uint32_t count)
 {
 	if( m_tail < m_head)
 	{
@@ -285,12 +285,12 @@ VectPlan projectOnSegment(const VectPlan &A, const VectPlan &B, VectPlan C)
 	return H;
 }
 
-void Path::project(VectPlan pt, unsigned int startId, unsigned int count, VectPlan* ptProj, int* id)
+void Path::project(VectPlan pt, uint32_t startId, uint32_t count, VectPlan* ptProj, int* id)
 {
 	float dmin = HUGE_VALF;
 	int bestId = -1;
 	VectPlan bestProjection;
-	unsigned int endId = startId;
+	uint32_t endId = startId;
 
 	if( m_count == 0 )
 	{
@@ -314,7 +314,7 @@ void Path::project(VectPlan pt, unsigned int startId, unsigned int count, VectPl
 		bestId = startId;
 	}
 
-	for(unsigned int i = startId; i < endId - 1; i++)
+	for(uint32_t i = startId; i < endId - 1; i++)
 	{
 		PathPoint a = m_pt[i % PATH_SIZE];
 		PathPoint b = m_pt[(i+1) % PATH_SIZE];
@@ -346,13 +346,13 @@ void Path::project(VectPlan pt, unsigned int startId, unsigned int count, VectPl
 	}
 }
 
-unsigned int Path::getRemainingCount(unsigned int id)
+uint32_t Path::getRemainingCount(uint32_t id)
 {
-	unsigned int remainingCount = 0;
+	uint32_t remainingCount = 0;
 
 	if( m_count < 2)
 	{
-		log_format(LOG_ERROR, "path empty (< 2 points) : %d points", m_count);
+		log_format(LOG_ERROR, "path empty (< 2 points) : %d points", (unsigned int)m_count);
 		return -1;
 	}
 
@@ -361,7 +361,7 @@ unsigned int Path::getRemainingCount(unsigned int id)
 		// verification de la coherence de l'id. Il doit etre dans [m_tail m_head-1]
 		if( id < m_tail || id >= m_head )
 		{
-			log_format(LOG_ERROR, "id %d out of range [%d - %d[", id, m_tail, m_head);
+			log_format(LOG_ERROR, "id %d out of range [%d - %d[", (unsigned int)id, (unsigned int)m_tail, (unsigned int)m_head);
 			return -1;
 		}
 		remainingCount = m_head - 1 - id;
@@ -371,7 +371,7 @@ unsigned int Path::getRemainingCount(unsigned int id)
 		// verification de la coherence de l'id
 		if( (id < m_tail && id >= m_head) || id >= PATH_SIZE )
 		{
-			log_format(LOG_ERROR, "id %d out of range [%d - %d] U [ 0 - %d]", id, m_tail, PATH_SIZE-1, m_head-1);
+			log_format(LOG_ERROR, "id %d out of range [%d - %d] U [ 0 - %d]", (unsigned int)id, (unsigned int)m_tail, PATH_SIZE-1, (unsigned int)m_head-1);
 			return -1;
 		}
 		remainingCount = m_head -1 + PATH_SIZE - id;
@@ -408,7 +408,7 @@ int Path::moveCmd(float dt, KinematicsParameters vParam, KinematicsParameters wP
 		return -1;
 	}
 
-	unsigned int endId = (m_cpCmdId + 1) % PATH_SIZE;
+	uint32_t endId = (m_cpCmdId + 1) % PATH_SIZE;
 	if( endId == m_head )
 	{
 		return -1;
@@ -483,11 +483,11 @@ void Path::display()
 {
 	log_format(LOG_INFO, "%3s %4s %4s %6s %6s %6s", "id", "x", "y", "theta", "vMax", "wMax" );
 
-	for(unsigned int i = m_tail; i < m_tail + m_count; i++)
+	for(uint32_t i = m_tail; i < m_tail + m_count; i++)
 	{
 		PathPoint* pt = &m_pt[i % PATH_SIZE];
 
-		log_format(LOG_INFO, "%3d %4d %4d %6d %6d %6d", i, (int)pt->pos.x, (int)pt->pos.y, (int)(pt->pos.theta*180/M_PI), (int)pt->vMax, (int)(pt->wMax*180/M_PI));
+		log_format(LOG_INFO, "%3d %4d %4d %6d %6d %6d", (unsigned int)i, (int)pt->pos.x, (int)pt->pos.y, (int)(pt->pos.theta*180/M_PI), (int)pt->vMax, (int)(pt->wMax*180/M_PI));
 	}
 
 	log_format(LOG_INFO, "cpCmdId %d", m_cpCmdId);
