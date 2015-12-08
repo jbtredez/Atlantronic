@@ -144,8 +144,8 @@ const struct GraphLink Graph::m_graphLink[GRAPH_NUM_LINK] =
 
 uint32_t Graph::dijkstra(uint32_t a, uint32_t b)
 {
-	unsigned int i;
-	unsigned int j;
+	uint32_t i;
+	uint32_t j;
 
 	// init
 	for( i=0 ; i < GRAPH_NUM_NODE; i++)
@@ -163,7 +163,7 @@ uint32_t Graph::dijkstra(uint32_t a, uint32_t b)
 	{
 		m_info[i].is_best = 1;
 
-		int max = m_graphNode[i].link_id + m_graphNode[i].link_num;
+		uint32_t max = m_graphNode[i].link_id + m_graphNode[i].link_num;
 		for(j = m_graphNode[i].link_id; j < max; j++)
 		{
 			if( m_validLinks[j])

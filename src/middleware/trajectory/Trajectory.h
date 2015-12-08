@@ -34,6 +34,7 @@ enum trajectory_state
 	TRAJECTORY_STATE_MOVE_TO_DEST,  //Ordre de se déplacer à une position calcul de déplacement
 	TRAJECTORY_STATE_MOVING_TO_DEST,  //Déplacement à une position avec une kinematics spécifique
 };
+
 enum trajectory_status
 {
 	TRAJECTORY_STATE_MOVING,       			//!< déplacement en cours
@@ -117,11 +118,11 @@ class Trajectory
 		////////////////////////////////////////////////
 		/// function    : trajectory_wait()
 		/// descrition  : Waiting function of trajectory move functions
-		/// param       : wanted_state = enum trajectory_state
+		/// param       : wanted_status = enum trajectory_status
 		/// param       : timeout = uint32_t time_out (<0 no time-out but buffer overflow!!!!)
 		/// retrun      : -1 if fail or 0 if sucess
 		////////////////////////////////////////////////
-		int wait(enum trajectory_state wanted_state, uint32_t timeout);
+		int wait(enum trajectory_status wanted_status, uint32_t timeout);
 
 		static void trajectory_task(void* arg);
 
@@ -154,6 +155,8 @@ class Trajectory
        ///////////////Utile pour la machine d'etat
 		enum trajectory_state m_trajectoryState;
 		enum trajectory_state m_wantedState;
+
+		enum trajectory_status m_status;
 
 
 		bool m_hokuyoEnableCheck; //!< utilisation ou non des hokuyos

@@ -15,7 +15,6 @@
 #include "kernel/log.h"
 #include "kernel/math/findRotation.h"
 #include "disco/robot_parameters.h"
-#include "Trajectory.h"
 #include "kernel/math/poly7.h"
 
 #define TRAJECTORY_STACK_SIZE       400
@@ -26,10 +25,12 @@
 
 #include "TrajectoryMoveToDest.h"
 
-TrajectoryMoveToDest::TrajectoryMoveToDest()
+TrajectoryMoveToDest::TrajectoryMoveToDest(Motion pmotion, Detection pdetection, Location plocation):
 StateMachineState("TRAJECTORY_MoveTodest",TRAJECTORY_STATE_MOVE_TO_DEST)
 {
-
+	m_pmotion = pmotion;
+	m_pdetection = pdetection;
+	m_plocation = plocation;
 
 }
 
@@ -66,7 +67,7 @@ void TrajectoryMoveToDest::entry(void* data)
 		m_dest.approxDist = req.dist;
 		m_dest.way = (enum TrajectoryWay)req.way;
 		m_dest.avoidance = (enum avoidance_type)req.avoidance_type;
-		m_dest.type = (enum trajectory_cmd_type)req.type;
+		m_dest.cmdType = (enum trajectory_cmd_type)req.type;
 	}
 
 
@@ -80,14 +81,14 @@ void TrajectoryMoveToDest::run(void* data)
 	m_position = t->m_location->getPosition();
 
 	//détermine quelle est le type de mouvement demandé
-	switch(m_dest.type)
+	switch(m_dest.cmdType)
 	{
 		//Cas de déplacement rectiligne (on se déplace suivant un angle et une distance)
 		case TRAJECTORY_STRAIGHT:
 		{
 			log_format(LOG_INFO, "straight %d", (int)m_dest.approxDist);
-			m_dest.position.x += cosf(robotPosition.theta) * m_dest.approxDist;
-			m_dest.position.y += sinf(robotPosition.theta) * m_dest.approxDist;
+			m_dest.position.x += cosf(m_position.theta) * m_dest.approxDist;
+			m_dest.position.y += sinf(m_position.theta) * m_dest.approxDist;
 
 			if(m_dest.approxDist > 0)
 			{
@@ -112,7 +113,7 @@ void TrajectoryMoveToDest::run(void* data)
 		case TRAJECTORY_ROTATE_TO:
 			log_format(LOG_INFO, "rotate_to %d", (int)(m_dest.position.theta * 180 / M_PI));
 			m_dest.position.theta += findRotation(m_position.theta, m_dest.position.theta);
-			m_dest.type = TRAJECTORY_ROTATE;
+			m_dest.cmdType = TRAJECTORY_ROTATE;
 			break;
 
 
@@ -130,15 +131,15 @@ void TrajectoryMoveToDest::run(void* data)
 			//Cas de deplacement à un noeud du graph
 		case TRAJECTORY_GOTO_GRAPH:
 			///Recherche du point le plus proche du graph
-			id = findWayToGraph(m_position, DETECTION_STATIC_OBJ);
+			uint16_t id = findWayToGraph(DETECTION_STATIC_OBJ);
 			log_format(LOG_INFO, "point graph : %d", id);
 			//L'objectif en graph node vers le position
-			m_dest = VectPlan(t->m_graph.getNode(id), 0);
+			m_dest.position = VectPlan(t->m_graph.getNode(id), 0);
 			break;
 		case TRAJECTORY_FREE:
 		default:
 			///Roue libre
-			t->m_type = TRAJECTORY_FREE;
+			m_dest.type = TRAJECTORY_FREE;
 			t->m_motion->enable(false);
 			return;
 	}
@@ -169,14 +170,22 @@ void TrajectoryMoveToDest::run(void* data)
 			{
 				// trajectoire impossible, on passe par le graph
 				log(LOG_INFO, "goto - obstacle statique, utilisation du graph");
-				computeGraph(DETECTION_STATIC_OBJ);
+				bool res = computeGraph(DETECTION_STATIC_OBJ);
+				//Le graph n'a pas trouver de chemin
+				if(!res)
+				{
+					t->m_wantedState = TRAJECTORY_STATE_IDLE;
+					t->m_status = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+
+				}
+				//Une liste de point onts étés calculés puis envoyer à motion
+				t->m_wantedState = TRAJECTORY_STATE_MOVING_TO_DEST;
 				return ;
 			}
 		}
-		VectPlan dest = m_dest.position;
 
 		///Calcul du delta pour la future destination
-		VectPlan u = m_dest - m_position;
+		VectPlan u = m_dest.position - m_position;
 		float ds = u.norm();
 
 
@@ -187,100 +196,108 @@ void TrajectoryMoveToDest::run(void* data)
 		//Si la distance est plus grande que ESPSILON
 		if( fabsf(ds) > EPSILON )
 		{
-			///Bizzard plus la distance est grande moins on tolère une approximation de distance  ????
-			//Ce n'est pas un calcul de la sorte
-			//if(u.x < 0)
-			// dest.x -= m_dest.approxDisti
-			//else
-			//dest.x -= m_dest.approxDist ? ->idem en Y
-			if( t->m_type == TRAJECTORY_GOTO_XY )
+			if( m_dest.type == TRAJECTORY_GOTO_XY )
 			{
-				traj_type = TRAJECTORY_AXIS_XY;
+				m_dest.type = TRAJECTORY_AXIS_XY;
 			}
-			dest.x -= t->m_approxDist * u.x / ds;
-			dest.y -= t->m_approxDist * u.y / ds;
+			m_dest.position.x -= t->m_approxDist * u.x / ds;
+			m_dest.position.y -= t->m_approxDist * u.y / ds;
 		}
-		//Si c'est une petite trajectoire c'est forcement un de rotation
-		else if( m_dest->type == TRAJECTORY_ROTATE )
+		//Si c'est une petite trajectoire c'est forcement une rotation
+		else if( m_dest.type == TRAJECTORY_ROTATE )
 		{
-			traj_type = TRAJECTORY_AXIS_A;
+			m_dest.type = TRAJECTORY_AXIS_A;
 		}
-		//Ajout d'une position à atteindre
-		motionAddGoTo(true, dest, VectPlan(), m_dest->way, traj_type);
+		//Ajout d'une nouvelle position à atteindre
+		motionAddGoTo(true);
 
 		t->m_motion->startTrajectory(t->m_linearParam, t->m_angularParam);
-		t->m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
+		t->m_wantedState = TRAJECTORY_STATE_MOVING_TO_DEST;
 
 }
 
-void TrajectoryMoveToDest::computeGraph(enum detection_type type)
+bool TrajectoryMoveToDest::computeGraph(enum detection_type type)
 {
-	int startId = findWayToGraph(m_position, type);
-	int endId = findWayToGraph(m_dest, type);
+	uint32_t startId = findWayToGraph(type);
+	uint32_t endId = findWayToGraph( type);
 	if(startId != endId)
 	{
 		// calcul du trajet dans le graph
 
 		// on active tout les chemins ou passe le robot
-		for(int i = 0; i < GRAPH_NUM_LINK; i++)
+		for(uint32_t i = 0; i < GRAPH_NUM_LINK; i++)
 		{
 			// position du noeud avec alignement (marche avant) avec la destination
 			VectPlan pos;
 			GraphLink link = m_graph.getLink(i);
+
 			pos = VectPlan(m_graph.getNode(link.a), link.alpha);
-			float xmin = m_detection->computeFrontObject(type, pos, NULL, NULL);
+
+			float xmin = m_pdetection->computeFrontObject(type, pos, NULL, NULL);
 			m_graph.setValidLink(i, link.dist < xmin);
+
 			//log_format(LOG_INFO, "lien %d : %d (%d -> %d)", i, trajectory_graph_valid_links[i], (int)graph_link[i].a, (int)graph_link[i].b);
 		}
 		//log_format(LOG_INFO, "graph_dijkstra de %d à %d", trajectory_graph_way[0], trajectory_last_graph_id);
-		int res = m_graph.dijkstra(startId, endId);
+
+		uint32_t res = m_graph.dijkstra(startId, endId);
+
 		if(res)
 		{
 			log_format(LOG_INFO, "aucun chemin trouvé de %d à %d", startId, endId);
-			m_trajectoryState = TRAJECTORY_STATE_TARGET_NOT_REACHED;
+			return false;
 		}
 	}
 
 	simplifyPath(type);
+	trajectory_dest tpdest;
 
 	bool newTraj = true;
 	if( m_graph.m_wayCount > 0)
 	{
 		log_format(LOG_INFO, "passage par %d points", m_graph.m_wayCount);
-		for(int i = 0 ; i < m_graph.m_wayCount; i++)
+		tpdest = m_dest;
+		m_dest.way = WAY_FORWARD;
+		m_dest.type = TRAJECTORY_AXIS_XY;
+
+		for(uint32_t i = 0 ; i < m_graph.m_wayCount; i++)
 		{
 			log_format(LOG_INFO, "point passage graph : %d", m_graph.m_way[i]);
-			VectPlan dest = VectPlan(m_graph.getNode(m_graph.m_way[i]), 0);
-			motionAddGoTo(newTraj, dest, VectPlan(), WAY_FORWARD, TRAJECTORY_AXIS_XY);
+
+			m_dest.position = VectPlan(m_graph.getNode(m_graph.m_way[i]), 0);
+
+			//On va en position X du noeud
+			motionAddGoTo(newTraj);
 			newTraj = false;
 		}
 	}
-
+	 m_dest = tpdest;
 	TrajectoryType traj_type = TRAJECTORY_AXIS_XYA;
 	if( m_type == TRAJECTORY_GOTO_XY )
 	{
 		traj_type = TRAJECTORY_AXIS_XY;
 	}
-	motionAddGoTo(newTraj, m_dest, VectPlan(), m_way, traj_type);
-	m_motion->startTrajectory(m_linearParam, m_angularParam);
+	motionAddGoTo(newTraj);
+	m_pmotion->startTrajectory(m_linearParam, m_angularParam);
 	m_trajectoryState = TRAJECTORY_STATE_MOVING_TO_DEST;
+	return true;
 }
 
 
 
-int TrajectoryMoveToDest::findWayToGraph(VectPlan pos, enum detection_type detect_type)
+uint32_t TrajectoryMoveToDest::findWayToGraph( enum detection_type detect_type)
 {
 	// passe en stack, pas trop de noeuds
 	struct GraphNodeDist node_dist[GRAPH_NUM_NODE];
-	struct Vect2 p(pos.x, pos.y);
+	struct Vect2 p(m_position.x, m_position.y);
 
 	m_graph.computeNodeDistance(p, node_dist);
 
 	Vect2 a_table;
 	Vect2 b_table;
 	float xmin;
-	int i;
-	int id = 0;
+	uint32_t i;
+	uint32_t id = 0;
 	float dist;
 
 	if(!m_staticCheckEnable && !m_hokuyoEnableCheck)
@@ -293,10 +310,12 @@ int TrajectoryMoveToDest::findWayToGraph(VectPlan pos, enum detection_type detec
 	{
 		id = node_dist[i].id;
 		Vect2 p = m_graph.getNode(id);
-		float dx = p.x - pos.x;
-		float dy = p.y - pos.y;
-		pos.theta = atan2f(dy, dx);
-		xmin = m_detection->computeFrontObject(detect_type, pos, &a_table, &b_table);
+		float dx = p.x - m_position.x;
+		float dy = p.y - m_position.y;
+		m_position.theta = atan2f(dy, dx);
+
+		//Vérifie
+		xmin = m_pdetection->computeFrontObject(detect_type, m_position, &a_table, &b_table);
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
@@ -314,7 +333,7 @@ int TrajectoryMoveToDest::findWayToGraph(VectPlan pos, enum detection_type detec
 
 	return id;
 }
-unsigned int TrajectoryMoveToDest::transition(void* data)
+uint32_t TrajectoryMoveToDest::transition(void* data)
 {
 	Trajectory* traj = (Trajectory*) data;
 
@@ -330,23 +349,23 @@ unsigned int TrajectoryMoveToDest::transition(void* data)
 	return m_stateId;
 }
 
-void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan dest, VectPlan cp, TrajectoryWay way, TrajectoryType type)
+void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory)
 {
-	VectPlan wantedDest = loc_to_abs(dest, -cp);
+	VectPlan wantedDest = loc_to_abs(m_dest.position, -VectPlan());
 
 	PathPoint pt;
 	VectPlan start;
 
 	if( newTrajectory )
 	{
-		m_motion->clearTrajectory();
-		start = m_pos;
+		m_pmotion->clearTrajectory();
+		start = m_position;
 		pt.pos = start;
-		m_motion->addTrajectoryPoints(&pt, 1);
+		m_pmotion->addTrajectoryPoints(&pt, 1);
 	}
 	else
 	{
-		start = m_motion->getLastPathPoint();
+		start = m_pmotion->getLastPathPoint();
 		pt.pos = start;
 	}
 
@@ -357,12 +376,12 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 	VectPlan delta = wantedDest - start;
 	float n = delta.norm();
 	float u[6] = { n, 0, 0, 0, 0, 0};
-	if( type == TRAJECTORY_CURVILINEAR_XYA )
+	if( m_dest.type == TRAJECTORY_CURVILINEAR_XYA )
 	{
 		u[2] = n;
 	}
 
-	if( way == WAY_ANY )
+	if( m_dest.way == WAY_ANY )
 	{
 		// test en marche avant
 		poly7f_full(start, wantedDest, a1, b1, u);
@@ -378,7 +397,7 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 		float ds2 = 0;
 		PathPoint pt1 = pt;
 		PathPoint pt2 = pt;
-		for(int i = 1; i < 100; i++)
+		for(uint32_t i = 1; i < 100; i++)
 		{
 			float t = i / 100.0f;
 			float t2 = t*t;
@@ -401,14 +420,14 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 
 		if( ds1 < ds2 )
 		{
-			way = WAY_FORWARD;
+			m_dest.way = WAY_FORWARD;
 		}
 		else
 		{
-			way = WAY_BACKWARD;
+			m_dest.way = WAY_BACKWARD;
 		}
 	}
-	else if( way == WAY_FORWARD )
+	else if( m_dest.way == WAY_FORWARD )
 	{
 		poly7f_full(start, wantedDest, a1, b1, u);
 	}
@@ -424,9 +443,9 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 
 	float a[8];
 	float b[8];
-	if( way == WAY_FORWARD )
+	if( m_dest.way == WAY_FORWARD )
 	{
-		for(int i = 0; i < 8; i++)
+		for(uint32_t i = 0; i < 8; i++)
 		{
 			a[i] = a1[i];
 			b[i] = b1[i];
@@ -434,14 +453,14 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 	}
 	else
 	{
-		for(int i = 0; i < 8; i++)
+		for(uint32_t i = 0; i < 8; i++)
 		{
 			a[i] = a2[i];
 			b[i] = b2[i];
 		}
 	}
 
-	for(int i = 1; i < 99; i++)
+	for(uint32_t i = 1; i < 99; i++)
 	{
 		float t = i / 100.0f;
 		float t2 = t*t;
@@ -453,46 +472,46 @@ void TrajectoryMoveToDest::motionAddGoToCurvilinear(bool newTrajectory, VectPlan
 		float x = a[0] + a[1] * t + a[2] * t2 + a[3] * t3 + a[4] * t4 + a[5] * t5 + a[6] * t6 + a[7] * t7;
 		float y = b[0] + b[1] * t + b[2] * t2 + b[3] * t3 + b[4] * t4 + b[5] * t5 + b[6] * t6 + b[7] * t7;
 		pt.pos.theta = atan2f(y - pt.pos.y, x - pt.pos.x);
-		if( way == WAY_BACKWARD )
+		if( m_dest.way == WAY_BACKWARD )
 		{
 			pt.pos.theta += M_PI;
 		}
 		pt.pos.x = x;
 		pt.pos.y = y;
-		m_motion->addTrajectoryPoints(&pt, 1);
+		m_pmotion->addTrajectoryPoints(&pt, 1);
 	}
 
-	if( type == TRAJECTORY_CURVILINEAR_XY )
+	if( m_dest.type == TRAJECTORY_CURVILINEAR_XY )
 	{
 		wantedDest.theta = pt.pos.theta;
 	}
 	pt.pos = wantedDest;
-	m_motion->addTrajectoryPoints(&pt, 1);
+	m_pmotion->addTrajectoryPoints(&pt, 1);
 }
 
-void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, VectPlan cp, TrajectoryWay way, TrajectoryType type)
+void TrajectoryMoveToDest::motionAddGoToStraightRotate(bool newTrajectory )
 {
-	VectPlan wantedDest = loc_to_abs(dest, -cp);
+	VectPlan wantedDest = loc_to_abs(m_dest.position, -VectPlan());
 	float dtheta1 = 0;
 	float ds = 0;
 	float dtheta2 = 0;
 	PathPoint pts[4];
-	int nbPts = 0;
+	uint32_t nbPts = 0;
 	VectPlan start;
 
 	if( newTrajectory )
 	{
-		m_motion->clearTrajectory();
-		start = m_pos;
+		m_pmotion->clearTrajectory();
+		start = m_position;
 		pts[0].pos = start;
 		nbPts++;
 	}
 	else
 	{
-		start = m_motion->getLastPathPoint();
+		start = m_pmotion->getLastPathPoint();
 	}
 
-	if( type == TRAJECTORY_AXIS_A)
+	if( m_dest.type == TRAJECTORY_AXIS_A)
 	{
 		wantedDest.x = start.x;
 		wantedDest.y = start.y;
@@ -506,18 +525,18 @@ void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, 
 		float theta1 = atan2f(ab.y, ab.x);
 		ds = nab;
 
-		if(way == WAY_FORWARD)
+		if(m_dest.way == WAY_FORWARD)
 		{
 			dtheta1 = findRotation(start.theta, theta1);
-			if( type == TRAJECTORY_AXIS_XYA )
+			if( m_dest.type == TRAJECTORY_AXIS_XYA )
 			{
 				dtheta2 = findRotation(start.theta + dtheta1, wantedDest.theta);
 			}
 		}
-		else if( way == WAY_BACKWARD)
+		else if( m_dest.way == WAY_BACKWARD)
 		{
 			dtheta1 = findRotation(start.theta, theta1 + M_PI);
-			if( type == TRAJECTORY_AXIS_XYA )
+			if( m_dest.type == TRAJECTORY_AXIS_XYA )
 			{
 				dtheta2 = findRotation(start.theta + dtheta1, wantedDest.theta);
 			}
@@ -529,7 +548,7 @@ void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, 
 			float dtheta2_forward = 0;
 			float dtheta2_backward = 0;
 
-			if( type == TRAJECTORY_AXIS_XYA )
+			if( m_dest.type == TRAJECTORY_AXIS_XYA )
 			{
 				dtheta2_forward = findRotation(start.theta + dtheta1_forward, wantedDest.theta);
 				dtheta2_backward = findRotation(start.theta + dtheta1_backward, wantedDest.theta);
@@ -547,9 +566,9 @@ void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, 
 			}
 		}
 	}
-	else if( type != TRAJECTORY_AXIS_XY)
+	else if( m_dest.type != TRAJECTORY_AXIS_XY)
 	{
-		if( type == TRAJECTORY_AXIS_A )
+		if( m_dest.type == TRAJECTORY_AXIS_A )
 		{
 			// rotation demandee explicitement. Pas d'optimisation de la rotation a faire.
 			// utile pour calibration odometrie principalement
@@ -577,7 +596,7 @@ void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, 
 		pts[nbPts].pos.theta = start.theta + dtheta1;
 		nbPts++;
 
-		if( fabsf(dtheta2) > EPSILON && type == TRAJECTORY_AXIS_XYA)
+		if( fabsf(dtheta2) > EPSILON && m_dest.type == TRAJECTORY_AXIS_XYA)
 		{
 			pts[nbPts].pos.x = wantedDest.x;
 			pts[nbPts].pos.y = wantedDest.y;
@@ -587,15 +606,15 @@ void Trajectory::motionAddGoToStraightRotate(bool newTrajectory, VectPlan dest, 
 	}
 #if 0
 	log_format(LOG_INFO, "goto %d %d %d : rotate %d translate %d, rotate %d",
-			(int)dest.x, (int)dest.y, (int)(dest.theta*180/M_PI),
-			(int)(dtheta1 * 180 / M_PI), (int)ds, (int)(dtheta2 * 180 / M_PI));
+			(int32_t)dest.x, (int32_t)dest.y, (int32_t)(dest.theta*180/M_PI),
+			(int32_t)(dtheta1 * 180 / M_PI), (int32_t)ds, (int32_t)(dtheta2 * 180 / M_PI));
 #endif
-	m_motion->addTrajectoryPoints(pts, nbPts);
+	m_pmotion->addTrajectoryPoints(pts, nbPts);
 }
 
-void TrajectoryMoveToDest::motionAddGoTo(bool newTrajectory, VectPlan dest, VectPlan cp, TrajectoryWay way, TrajectoryType type)
+void TrajectoryMoveToDest::motionAddGoTo(bool newTrajectory)
 {
-	switch(type)
+	switch(m_dest.type)
 	{
 		case TRAJECTORY_AXIS_XYA:
 			//type = TRAJECTORY_CURVILINEAR_XYA;
@@ -603,13 +622,13 @@ void TrajectoryMoveToDest::motionAddGoTo(bool newTrajectory, VectPlan dest, Vect
 			//break;
 		case TRAJECTORY_AXIS_A:
 		case TRAJECTORY_AXIS_XY:
-			motionAddGoToStraightRotate(newTrajectory, dest, cp, way, type);
+			motionAddGoToStraightRotate(newTrajectory);
 			//type = TRAJECTORY_CURVILINEAR_XY;
 			//motionAddGoToCurvilinear(newTrajectory, dest, cp, way, type);
 			break;
 		case TRAJECTORY_CURVILINEAR_XY:
 		case TRAJECTORY_CURVILINEAR_XYA:
-			motionAddGoToCurvilinear(newTrajectory, dest, cp, way, type);
+			motionAddGoToCurvilinear(newTrajectory);
 			break;
 		default:
 			log(LOG_ERROR, "unknown trajectory type");
