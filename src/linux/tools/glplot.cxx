@@ -138,7 +138,7 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO1_HIST, "Hokuyo 1", 1, 1, 0, 0);
 	graph[GRAPH_HOKUYO_HIST].add_courbe(GRAPH_HOKUYO2_HIST, "Hokuyo 2", 1, 0, 0, 1);
 
-	graph[GRAPH_SPEED_DIST].init("Control", 0, 90000, -1500, 1500, 800, 600, 0, 0);
+	graph[GRAPH_SPEED_DIST].init("Control", 0, 90000, -3100, 3100, 800, 600, 0, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_MES, "Vitesse d'avance mesuree", 1, 0, 1, 0);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_DIST_CONS, "Vitesse d'avance de consigne", 1, 0, 0, 1);
 	graph[GRAPH_SPEED_DIST].add_courbe(SUBGRAPH_MOTION_SPEED_ROT_MES, "Vitesse de rotation mesuree", 1, 0.5, 0.5, 0);
@@ -710,7 +710,7 @@ static void plot_axes_lines(Graphique* graph)
 		ptCount++;
 	}
 
-	shader.setSprite(pointTexture.width/2);
+	shader.setSprite(pointTexture.width);
 	glBindTexture(GL_TEXTURE_2D, pointTextureId);
 	graphPointObject.update(pt, ptCount);
 	graphPointObject.render(GL_POINTS);
@@ -777,28 +777,28 @@ static void plot_hokuyo_hist(Graphique* graph)
 	}
 	RobotInterface* robotItf = &robot[0].m_robotItf;
 
-	shader.setSprite(pointTexture.width/4);
+	shader.setSprite(pointTexture.width);
 	glBindTexture(GL_TEXTURE_2D, pointTextureId);
 
 	if( graph->courbes_activated[GRAPH_HOKUYO1_HIST] )
 	{
-		shader.setColor(graph->color[3*GRAPH_HOKUYO1_HIST], graph->color[3*GRAPH_HOKUYO1_HIST+1], graph->color[3*GRAPH_HOKUYO1_HIST+2]);
+		shader.setColor3f(&graph->color[3*GRAPH_HOKUYO1_HIST]);
 		for(int i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			pt[2*i+1] = robotItf->hokuyo_scan[HOKUYO1].distance[i];
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update(pt, HOKUYO_NUM_POINTS);
 		graphPointObject.render(GL_POINTS);
 	}
 
 	if( graph->courbes_activated[GRAPH_HOKUYO2_HIST] )
 	{
-		shader.setColor(graph->color[3*GRAPH_HOKUYO2_HIST], graph->color[3*GRAPH_HOKUYO2_HIST+1], graph->color[3*GRAPH_HOKUYO2_HIST+2]);
+		shader.setColor3f(&graph->color[3*GRAPH_HOKUYO2_HIST]);
 		for(int i = 0; i < HOKUYO_NUM_POINTS; i++)
 		{
 			pt[2*i+1] = robotItf->hokuyo_scan[HOKUYO2].distance[i];
 		}
-		graphPointObject.update(pt, robotItf->control_usb_data_count-1);
+		graphPointObject.update(pt, HOKUYO_NUM_POINTS);
 		graphPointObject.render(GL_POINTS);
 	}
 	shader.setSprite(0);
@@ -808,14 +808,13 @@ static void plot_speed_dist(Graphique* graph)
 {
 	RobotInterface* robotItf = &robot[0].m_robotItf;
 
-//TODO passer avec GL_POINT_SPRITE (	glEnable(GL_POINT_SPRITE); glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);) ? (pour texture sur point)
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
 	for(int i=1; i < robotItf->control_usb_data_count; i++)
 	{
 		pt[i-1].x = 1000 * CONTROL_DT * i;
 	}
 
-	shader.setSprite(pointTexture.width/4);
+	shader.setSprite(pointTexture.width);
 	glBindTexture(GL_TEXTURE_2D, pointTextureId);
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_SPEED_DIST_CONS] && robotItf->control_usb_data_count > 1)
@@ -882,7 +881,7 @@ static void plot_speed_dist(Graphique* graph)
 	{
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1 + j] )
 		{
-			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1 + j]);
+			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_V1 + j)]);
 			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
 				pt[i-1].y = robotItf->control_usb_data[i].cons_motors_v[j];
@@ -892,7 +891,7 @@ static void plot_speed_dist(Graphique* graph)
 		}
 		if( graph->courbes_activated[SUBGRAPH_MOTION_V1_MES + j] )
 		{
-			shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_V1_MES + j]);
+			shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_V1_MES + j)]);
 			for(int i=0; i < robotItf->control_usb_data_count; i++)
 			{
 				pt[i-1].y = robotItf->control_usb_data[i].mes_motors[j].v;
@@ -904,7 +903,7 @@ static void plot_speed_dist(Graphique* graph)
 
 	if( graph->courbes_activated[SUBGRAPH_MOTION_VBAT] )
 	{
-		shader.setColor3f(&graph->color[3*(SUBGRAPH_MOTION_VBAT)]);
+		shader.setColor3f(&graph->color[3*SUBGRAPH_MOTION_VBAT]);
 		for(int i=1; i < robotItf->control_usb_data_count; i++)
 		{
 			pt[i-1].y = robotItf->control_usb_data[i].vBat;

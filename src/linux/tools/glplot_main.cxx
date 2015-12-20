@@ -23,7 +23,7 @@ void robotItfCallback(void* arg);
 
 int main(int argc, char *argv[])
 {
-	const char* file_stm = "/dev/discovery0";
+	const char* file_stm[ROBOT_MAX] = {"/dev/discovery0", "/dev/discovery1"};
 	const char* prog_stm[ROBOT_MAX];
 	const char* ip = NULL;
 	int gdb_port[ROBOT_MAX] = {0, 0};
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 	{
 		if( ! simulation[ROBOT_MAIN] && ! simulation[ROBOT_PMI] )
 		{
-			file_stm = argv[optind];
+			file_stm[0] = argv[optind];
 		}
 		else
 		{
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 				simulation[i], "", prog_stm[i], gdb_port[i],  // TODO path = argv[0] ?;
 				ip,
 				xbee, serverTcp,
-				file_stm,
+				file_stm[i],
 				robotItfCallback, NULL);
 		if( ! res )
 		{
