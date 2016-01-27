@@ -29,13 +29,14 @@ void recalage()
 	location.setPosition(pos.symetric(color));
 	setTableColor(color);
 
+// TODO coder recalage 2016
+return;
 	wing_set_position(WING_PARK, WING_PARK);
 	elevator_set_position(85);
 	finger_set_pos(FINGER_CLOSE, FINGER_HALF_OPEN);
 	finger_bottom_set_pos(FINGER_BOTTOM_OPEN, FINGER_BOTTOM_OPEN);
 	vTaskDelay(500);
 	finger_set_pos(FINGER_CLOSE, FINGER_CLOSE);
-	// TODO ranger porte tapis ?
 
 	KinematicsParameters linParamOrig;
 	KinematicsParameters angParamOrig;

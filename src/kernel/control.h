@@ -15,8 +15,8 @@
 #include "kernel/driver/DynamixelManager.h"
 
 //! période de la tache de controle en ms
-#define CONTROL_PERIOD                            5
-#define CONTROL_DT                            0.005f
+#define CONTROL_PERIOD                           10
+#define CONTROL_DT                            0.010f
 #define CONTROL_HZ          (1000.0f/CONTROL_PERIOD)
 
 struct control_usb_data_light

@@ -51,6 +51,7 @@ enum MotorWriteConfIndex
 #define CAN_MIP_CMD_RAZ                    0x60
 #define CAN_MIP_CMD_DISABLE                0x70
 #define CAN_MIP_CMD_ENABLE                 0x80
+#define CAN_MIP_CMD_CONFIGURE              0xb0
 
 
 #define CAN_MIP_MOTOR_STATE_TRAJ_PTS_FULL         0x01

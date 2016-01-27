@@ -40,7 +40,7 @@ uint32_t CanMipMotor::configure(MotorWriteConfIndex idx, uint32_t val)
 	msg.size = 6;
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
-	msg.data[0] = 0xb0;
+	msg.data[0] = CAN_MIP_CMD_CONFIGURE;
 	msg.data[1] = idx;
 	msg.data[2] = val & 0xff;
 	msg.data[3] = (val >> 8) & 0xff;
@@ -68,7 +68,7 @@ void CanMipMotor::update(portTickType absTimeout)
 		fault(fault_disconnected_id, FAULT_ACTIVE);
 		kinematics.a = 0;
 		kinematics.v = 0;
-		if( (t - last_communication_time).ms > 200 )
+		/*if( (t - last_communication_time).ms > 200 )
 		{
 			if( (power_get() & (~POWER_OFF_MIP_MOTOR)) || adc_filtered_data.vBat < 10 )
 			{
@@ -86,7 +86,7 @@ void CanMipMotor::update(portTickType absTimeout)
 				// on a coupe pendant 100 ms, on remet la puissance
 				power_clear(POWER_OFF_MIP_MOTOR);
 			}
-		}
+		}*/
 		state = CAN_MOTOR_MIP_DISCONNECTED;
 	}
 	else
@@ -266,8 +266,8 @@ void CanMipMotor::set_speed(float v)
 	msg.data[1] = speed & 0xff;
 	msg.data[2] = (speed >> 8) & 0xff;
 	msg.data[3] = v >= 0 ? 1 : 0;
-	msg.data[4] = 0;
-	msg.data[5] = 100;
+	msg.data[4] = 0xf4;
+	msg.data[5] = 1;
 
 	can_write(&msg, 0);
 }
