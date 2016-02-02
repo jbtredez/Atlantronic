@@ -155,7 +155,7 @@ int cmd_dynamixel_scan(const char* arg)
 	}
 
 	cmd_robot->dynamixel_scan(type);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_id(const char* arg)
@@ -171,7 +171,7 @@ int cmd_dynamixel_set_id(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_id(type, id, new_id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_goal_position(const char* arg)
@@ -187,7 +187,7 @@ int cmd_dynamixel_set_goal_position(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_goal_position(type, id, alpha);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_op_baudrate(const char* arg)
@@ -202,7 +202,7 @@ int cmd_dynamixel_set_op_baudrate(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_op_baudrate(type, id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_manager_baudrate(const char* arg)
@@ -217,7 +217,7 @@ int cmd_dynamixel_set_manager_baudrate(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_manager_baudrate(type, freq);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_max_torque(const char* arg)
@@ -233,7 +233,7 @@ int cmd_dynamixel_set_max_torque(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_max_torque(type, id, torque);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_target_reached_threshold(const char* arg)
@@ -249,7 +249,7 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_target_reached_threshold(type, id, threshold);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_enable_endless_turn_mode(const char* arg)
@@ -265,7 +265,7 @@ int cmd_dynamixel_enable_endless_turn_mode(const char* arg)
 	}
 
 	cmd_robot->dynamixel_enable_endless_turn_mode(type, id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_disable_endless_turn_mode(const char* arg)
@@ -281,7 +281,7 @@ int cmd_dynamixel_disable_endless_turn_mode(const char* arg)
 	}
 
 	cmd_robot->dynamixel_disable_endless_turn_mode(type, id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_set_speed(const char* arg)
@@ -298,7 +298,7 @@ int cmd_dynamixel_set_speed(const char* arg)
 	}
 
 	cmd_robot->dynamixel_set_speed(type, id, speed);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_dynamixel_get_position(const char* arg)
@@ -313,7 +313,7 @@ int cmd_dynamixel_get_position(const char* arg)
 	}
 
 	cmd_robot->dynamixel_get_position(type, id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_elevator_set_position(const char* arg)
@@ -327,7 +327,7 @@ int cmd_elevator_set_position(const char* arg)
 	}
 
 	cmd_robot->elevator_set_position(pos);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_finger_set_position(const char* arg)
@@ -344,13 +344,13 @@ int cmd_finger_set_position(const char* arg)
 	}
 
 	cmd_robot->finger_set_position((enum finger_type)low, (enum finger_type)high, (enum finger_bottom_type) right, (enum finger_bottom_type)left);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_free(const char* /*arg*/)
 {
 	cmd_robot->free();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_carpet_set_position(const char* arg)
@@ -365,7 +365,7 @@ int cmd_carpet_set_position(const char* arg)
 	}
 
 	cmd_robot->carpet_set_position((enum carpet_type)right, (enum carpet_type)left);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_can_set_baudrate(const char* arg)
@@ -380,7 +380,7 @@ int cmd_can_set_baudrate(const char* arg)
 	}
 
 	cmd_robot->can_set_baudrate((can_baudrate)id, debug);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_can_write(const char* arg)
@@ -407,7 +407,7 @@ int cmd_can_write(const char* arg)
 	msg.type = CAN_DATA_FRAME;
 
 	cmd_robot->can_write(&msg);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_can_lss(const char* arg)
@@ -421,7 +421,7 @@ int cmd_can_lss(const char* arg)
 	}
 
 	cmd_robot->can_lss(on);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_can_lss_set_nodeid(const char* arg)
@@ -435,14 +435,14 @@ int cmd_can_lss_set_nodeid(const char* arg)
 	}
 
 	cmd_robot->can_lss_set_nodeid(id);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_can_lss_save(const char* arg)
 {
 	(void) arg;
 	cmd_robot->can_lss_save();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_help(const char* arg)
@@ -454,7 +454,7 @@ int cmd_help(const char* arg)
 		log_info("%s : %s", usb_commands[i].name, usb_commands[i].doc);
 	}
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_qemu_set_io(const char* arg)
@@ -473,7 +473,7 @@ int cmd_qemu_set_io(const char* arg)
 		cmd_qemu->setIo(id, val?1:0);
 	}
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_qemu_manage_canopen_connexion(const char* arg)
@@ -492,7 +492,7 @@ int cmd_qemu_manage_canopen_connexion(const char* arg)
 		cmd_qemu->manage_canopen_connexion(nodeid, connected);
 	}
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_quit(const char* arg)
@@ -525,7 +525,7 @@ int cmd_motion_set_param(const char* arg)
 
 	cmd_robot->motion_set_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_motion_print_param(const char* arg)
@@ -533,7 +533,7 @@ int cmd_motion_print_param(const char* arg)
 	(void) arg;
 	cmd_robot->motion_print_param();
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_localization_set_position(const char* arg)
@@ -553,7 +553,7 @@ int cmd_localization_set_position(const char* arg)
 
 	cmd_robot->set_position(pos);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_straight(const char* arg)
@@ -568,7 +568,7 @@ int cmd_straight(const char* arg)
 
 	cmd_robot->straight(dist);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_rotate(const char* arg)
@@ -583,7 +583,7 @@ int cmd_rotate(const char* arg)
 
 	cmd_robot->rotate(alpha);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_rotate_to(const char* arg)
@@ -598,7 +598,7 @@ int cmd_rotate_to(const char* arg)
 
 	cmd_robot->rotate_to(alpha);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_motion_enable(const char* arg)
@@ -613,7 +613,7 @@ int cmd_motion_enable(const char* arg)
 
 	cmd_robot->motion_enable(enable);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_motion_set_max_driving_current(const char* arg)
@@ -628,7 +628,7 @@ int cmd_motion_set_max_driving_current(const char* arg)
 
 	cmd_robot->motion_set_max_driving_current(maxCurrent);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_goto(const char* arg)
@@ -646,7 +646,7 @@ int cmd_goto(const char* arg)
 
 	cmd_robot->goto_near(dest, dist, way, avoidance_type);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_goto_xy(const char* arg)
@@ -665,7 +665,7 @@ int cmd_goto_xy(const char* arg)
 
 	cmd_robot->goto_near_xy(x, y, dist, way, avoidance_type);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_goto_graph(const char* arg)
@@ -688,21 +688,21 @@ int cmd_goto_graph(const char* arg)
 		cmd_robot->goto_graph_node(node);
 	}
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_gyro_calib_start(const char* arg)
 {
 	(void) arg;
 	cmd_robot->gyro_calibration(GYRO_CALIBRATION_START);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_gyro_calib_stop(const char* arg)
 {
 	(void) arg;
 	cmd_robot->gyro_calibration(GYRO_CALIBRATION_STOP);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_gyro_set_theta(const char* arg)
@@ -715,7 +715,7 @@ int cmd_gyro_set_theta(const char* arg)
 		return CMD_ERROR;
 	}
 	cmd_robot->gyro_set_position(theta);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 
@@ -731,7 +731,7 @@ int cmd_gyro_set_calibration_values(const char* arg)
 		return CMD_ERROR;
 	}
 	cmd_robot->gyro_set_calibration_values(scale, bias, dead_zone);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_max_speed(const char* arg)
@@ -747,7 +747,7 @@ int cmd_max_speed(const char* arg)
 
 	cmd_robot->set_max_speed(v_max_av, v_max_rot);
 
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_wing_set_position(const char* arg)
@@ -762,13 +762,13 @@ int cmd_wing_set_position(const char* arg)
 	}
 
 	cmd_robot->wing((wing_cmd_type)wing_left, (wing_cmd_type)wing_right);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_ptask(const char*)
 {
 	cmd_robot->ptask();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_power_off(const char* arg)
@@ -782,7 +782,7 @@ int cmd_power_off(const char* arg)
 	}
 
 	cmd_robot->power_off(val != 0);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_pwm_set(const char* arg)
@@ -797,7 +797,7 @@ int cmd_pwm_set(const char* arg)
 	}
 
 	cmd_robot->pwm_set(id, val);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_pump(const char* arg)
@@ -812,31 +812,31 @@ int cmd_pump(const char* arg)
 	}
 
 	cmd_robot->pump(id, val);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_reboot(const char* )
 {
 	cmd_robot->reboot();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_recalage(const char*)
 {
 	cmd_robot->recalage();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_go(const char*)
 {
 	cmd_robot->go();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_go_enable(const char*)
 {
 	cmd_robot->go_enable();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_set_match_time(const char* arg)
@@ -851,7 +851,7 @@ int cmd_set_match_time(const char* arg)
 	}
 
 	cmd_robot->set_match_time(time);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_set_color(const char* arg)
@@ -866,7 +866,7 @@ int cmd_set_color(const char* arg)
 	}
 
 	cmd_robot->color((uint8_t) color);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_motion_set_speed(const char* arg)
@@ -882,7 +882,7 @@ int cmd_motion_set_speed(const char* arg)
 	}
 
 	cmd_robot->motion_set_speed(u, v);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_motion_set_actuator_kinematics(const char* arg)
@@ -899,7 +899,7 @@ int cmd_motion_set_actuator_kinematics(const char* arg)
 	}
 
 	cmd_robot->motion_set_actuator_kinematics(cmd);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_arm_abz(const char* arg)
@@ -916,7 +916,7 @@ int cmd_arm_abz(const char* arg)
 	}
 
 	cmd_robot->arm_abz(a, b, z);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_arm_cmd(const char* arg)
@@ -931,7 +931,7 @@ int cmd_arm_cmd(const char* arg)
 	}
 
 	cmd_robot->arm_cmd(cmdType);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_arm_xyz(const char* arg)
@@ -949,7 +949,7 @@ int cmd_arm_xyz(const char* arg)
 	}
 
 	cmd_robot->arm_xyz(x, y, z, (arm_cmd_type)type);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_arm_ventouse(const char* arg)
@@ -969,13 +969,13 @@ int cmd_arm_ventouse(const char* arg)
 	}
 
 	cmd_robot->arm_ventouse(x1, y1, x2, y2, z, tool_way);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_xbee_set_op_baudrate(const char* /*arg*/)
 {
 	cmd_robot->xbee_set_op_baudrate();
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
 
 int cmd_xbee_set_manager_baudrate(const char* arg)
@@ -989,5 +989,5 @@ int cmd_xbee_set_manager_baudrate(const char* arg)
 		return CMD_ERROR;
 	}
 	cmd_robot->xbee_set_manager_baudrate(baudrate);
-	return CMD_SUCESS;
+	return CMD_SUCCESS;
 }
