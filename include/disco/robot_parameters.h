@@ -18,13 +18,13 @@
 #define DRIVING2_WHEEL_RADIUS               100.0f
 #define ODO1_WHEEL_RADIUS                    39.7f
 #define ODO2_WHEEL_RADIUS                    39.7f
-#define ODO1_WAY                                -1
-#define ODO2_WAY                                 1
+#define ODO1_WAY                                 1
+#define ODO2_WAY                                -1
 
-#define VOIE_MOT                            290.0f
-#define VOIE_ODO                            218.8f
+#define VOIE_MOT                            164.0f
+#define VOIE_ODO                            110.0f
 
-#define MOTOR_RED                   (5.2*25/88.0f)
+#define MOTOR_RED                   (5.2*88/25.0f)
 #define MOTOR_ENCODER_RESOLUTION              1024
 #define ODO_ENCODER_RESOLUTION                4096
 
