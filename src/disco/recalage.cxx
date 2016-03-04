@@ -13,7 +13,7 @@
 #include "disco/wing.h"
 #include "disco/elevator.h"
 #include "disco/finger.h"
-#include "disco/mainRobot.h"
+#include "disco/star.h"
 
 void recalage()
 {

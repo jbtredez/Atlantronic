@@ -6,6 +6,7 @@
 #include "kernel/driver/Dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
+#include "disco/star.h"
 
 Feed::Feed(VectPlan firstcheckpoint,char * name, RobotState * elevator):ActionComposite(firstcheckpoint, name)
 {

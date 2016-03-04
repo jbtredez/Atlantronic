@@ -6,7 +6,7 @@
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/Move.h"
-
+#include "disco/star.h"
 
 Move::Move(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, name)
 {

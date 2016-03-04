@@ -4,6 +4,7 @@
 #include "disco/carpet.h"
 #include "disco/wing.h"
 #include "clapet.h"
+#include "disco/star.h"
 
 Clapet::Clapet(VectPlan firstcheckpoint, const char * name, RobotState * robot):Action(firstcheckpoint, name)
 {

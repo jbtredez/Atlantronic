@@ -1,5 +1,5 @@
 #include "kernel/module.h"
-#include "mainRobot.h"
+#include "gate.h"
 #include "kernel/driver/hokuyo.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
@@ -24,7 +24,7 @@ KinematicsModelDiff motorKinematicsModelDiff(VOIE_MOT);
 Motion motion;
 Trajectory trajectory;
 
-static int main_robot_module_init()
+static int gate_robot_module_init()
 {
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
@@ -60,4 +60,4 @@ static int main_robot_module_init()
 	return 0;
 }
 
-module_init(main_robot_module_init, INIT_MAIN_ROBOT);
+module_init(gate_robot_module_init, INIT_MAIN_ROBOT);

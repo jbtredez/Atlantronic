@@ -6,6 +6,7 @@
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/feet.h"
+#include "disco/star.h"
 
 #define FEET_APPROX_DIST       85
 feet::feet(VectPlan firstcheckpoint, const char * name, RobotState * elevator):Action(firstcheckpoint, name)

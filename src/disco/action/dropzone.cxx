@@ -6,6 +6,7 @@
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/dropzone.h"
+#include "disco/star.h"
 
 DropZone::DropZone(VectPlan firstcheckpoint, const char * name, RobotState * elevator):Action(firstcheckpoint, name)
 {

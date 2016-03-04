@@ -6,6 +6,7 @@
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/gobelet.h"
+#include "disco/star.h"
 
 #define GOBELET_APPROX_DIST       150
 

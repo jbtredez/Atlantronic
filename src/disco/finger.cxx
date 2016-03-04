@@ -5,7 +5,7 @@
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
 #include "kernel/driver/Dynamixel.h"
-#include "mainRobot.h"
+#include "disco/star.h"
 
 static void finger_cmd(void* arg, void* data);
 

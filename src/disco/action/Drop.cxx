@@ -6,6 +6,7 @@
 
 #include "disco/finger.h"
 #include "kernel/location/location.h"
+#include "disco/star.h"
 
 Drop::Drop(VectPlan firstcheckpoint,char * name, RobotState * elevator) :
 	Action(firstcheckpoint, name)

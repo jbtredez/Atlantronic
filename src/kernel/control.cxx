@@ -16,7 +16,7 @@
 #include "kernel/match.h"
 #include "disco/elevator.h"
 #include "control.h"
-#include "disco/mainRobot.h"
+#include "disco/star.h"
 
 #define CONTROL_STACK_SIZE       350
 

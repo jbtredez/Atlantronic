@@ -7,6 +7,7 @@
 
 #include "disco/robot_state.h"
 #include "deposecarpette.h"
+#include "disco/star.h"
 
 DeposeCarpette::DeposeCarpette(VectPlan firstcheckpoint, const char * name,RobotState * robot, bool right):Action(firstcheckpoint,name)
 {

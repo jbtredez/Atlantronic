@@ -7,7 +7,6 @@
 
 #include "kernel/log.h"
 #include "kernel/math/VectPlan.h"
-#include "disco/mainRobot.h"
 
 #define ACTION_NONE		-1
 

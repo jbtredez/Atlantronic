@@ -5,7 +5,7 @@
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
 #include "kernel/log.h"
-#include "mainRobot.h"
+#include "disco/star.h"
 
 static void wing_cmd(void* arg, void* data);
 

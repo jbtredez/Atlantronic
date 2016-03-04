@@ -7,6 +7,7 @@
 #include "kernel/driver/Dynamixel.h"
 #include "disco/finger.h"
 #include "kernel/location/location.h"
+#include "disco/star.h"
 
 Light::Light(VectPlan firstcheckpoint, const char * name, RobotState * elevator, bool light2):Action(firstcheckpoint, name)
 {

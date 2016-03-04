@@ -6,6 +6,7 @@
 #include "disco/finger.h"
 #include "kernel/location/location.h"
 #include "disco/action/feet_lateral.h"
+#include "disco/star.h"
 
 FeetLateral::FeetLateral(VectPlan firstcheckpoint, const char * name, RobotState * elevator):Action(firstcheckpoint, name)
 {
