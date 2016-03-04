@@ -17,8 +17,8 @@ extern "C" {
 //! on utilise des ms et ns au lieu des secondes et ns pour simplifier le code
 typedef struct systime
 {
-	uint32_t ms; //!< temps en ms
-	int32_t ns; //!< reste du temps en ns
+	int32_t ms; //!< temps en ms
+	uint32_t ns; //!< reste du temps en ns
 } Systime;
 
 //!< soustraction entre 2 systime

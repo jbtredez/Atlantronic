@@ -92,7 +92,7 @@ void systick_start_match()
 Systime timediff(const Systime t2, const Systime t1)
 {
 	Systime t;
-	if( t2.ns - t1.ns < 0 )
+	if( t2.ns < t1.ns )
 	{
 		t.ms = t2.ms - t1.ms - 1;
 		t.ns = 1000000 + t2.ns - t1.ns;
