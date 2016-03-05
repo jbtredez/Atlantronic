@@ -29,3 +29,4 @@ Module.markers
 *.mcs
 *.mcw
 .metadata
+xtensa-lx106-elf/

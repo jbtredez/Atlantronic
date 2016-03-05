@@ -1,3 +1,6 @@
 [submodule "qemu"]
 	path = qemu
 	url = git@github.com:jbtredez/qemu.git
+[submodule "Esp8266_SPI_UART_mode"]
+	path = Esp8266_SPI_UART_mode
+	url = git@github.com:jbtredez/Esp8266_SPI_UART_mode.git

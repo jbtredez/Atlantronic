@@ -86,6 +86,13 @@ $(obj)/$(ARCH)/%.o: $(src)/%.S
 	pdflatex -output-directory doc $<
 	pdflatex -output-directory doc $<
 
+define check_submodule
+all: $1/Makefile
+$1/Makefile:
+	@echo "submodule $1 not found, fetching submodules"
+	git submodule update --init --recursive
+endef
+
 # cibles
 # cible par defaut :
 ifneq ($(ARCH),)
@@ -115,6 +122,9 @@ endif
 
 .PHONY: all
 
+$(eval $(call check_submodule,qemu))
+$(eval $(call check_submodule,Esp8266_SPI_UART_mode))
+
 modules:
 	+make MAKEFLAGS=--no-print-directory -C /lib/modules/`uname -r`/build M=`pwd`/src/linux/modules
 
@@ -135,6 +145,11 @@ qemu:
 	+make -C qemu
 
 .PHONY: qemu
+
+wifi:
+	$(MAKE) -C Esp8266_SPI_UART_mode XTENSA_TOOLS_ROOT=$(PWD)/xtensa-lx106-elf/bin BUILD_BASE=$(PWD)/bin/esp8266/build FW_BASE=$(PWD)/bin/esp8266/firmware
+
+,PHONY: wifi
 
 $(foreach var,$(bin-$(ARCH)),$(eval $(bin)/$(ARCH)/$(var):$(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var)) )))
 $(foreach var,$(bin-$(ARCH)),$(eval DEP += $(addprefix $(obj)/$(ARCH)/,$(obj-$(ARCH)-$(var):.o=.d))))
