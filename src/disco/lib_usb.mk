@@ -1,0 +1,9 @@
+lib-usb += kernel/driver/usb/usb.o
+lib-usb += kernel/driver/usb/usb_descriptor.o
+lib-usb += kernel/driver/usb/stm32f4xx/stm32f4xx_hal_pcd.o
+lib-usb += kernel/driver/usb/stm32f4xx/stm32f4xx_hal_pcd_ex.o
+lib-usb += kernel/driver/usb/stm32f4xx/stm32f4xx_ll_usb.o
+lib-usb += kernel/driver/usb/stm32f4xx/usbd_core.o
+lib-usb += kernel/driver/usb/stm32f4xx/usbd_ctlreq.o
+lib-usb += kernel/driver/usb/stm32f4xx/usbd_ioreq.o
+lib-usb += kernel/driver/usb/stm32f4xx/usbd_conf.o

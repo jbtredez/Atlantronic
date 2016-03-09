@@ -14,9 +14,9 @@
 #include "kernel/fault.h"
 #include "kernel/pump.h"
 #include "kernel/match.h"
-#include "disco/elevator.h"
+//#include "disco/elevator.h"
 #include "control.h"
-#include "disco/star.h"
+#include "disco/star/star.h"
 
 #define CONTROL_STACK_SIZE       350
 
@@ -76,7 +76,7 @@ static void control_task(void* /*arg*/)
 		control_usb_data.gpio = gpio_get_state();
 		control_usb_data.power_state = power_get();
 		control_usb_data.color = match_get_color();
-		control_usb_data.elevatorHeight = elevator_get_position();
+//		control_usb_data.elevatorHeight = elevator_get_position();
 //		arm_get_matrix(&control_usb_data.arm_matrix);
 
 		// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data

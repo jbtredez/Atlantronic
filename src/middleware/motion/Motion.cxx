@@ -42,7 +42,7 @@ StateMachineState* Motion::m_motionStates[MOTION_MAX_STATE] = {
 	&motionInterrputingState
 };
 
-int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel)
+int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight)
 {
 	m_location = location;
 	m_detection = detection;
@@ -54,31 +54,16 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 		return ERR_INIT_CONTROL;
 	}
 
-	m_linearSpeedCheck.init(100, 10);
-	m_xPid.init(2, 1, 0, 100);// TODO voir saturation
-	m_yPid.init(0.01, 0, 0, 1);// TODO voir saturation + regler
-	m_thetaPid.init(8, 1, 0, 1); // TODO voir saturation
+	m_linearSpeedCheck.init(1000, 100);
+	m_xPid.init(0, 0, 0, 100);// TODO voir saturation
+	m_yPid.init(0, 0, 0, 1);// TODO voir saturation + regler
+	m_thetaPid.init(0, 0, 0, 1); // TODO voir saturation
 	m_motionStateMachine.init(m_motionStates, MOTION_MAX_STATE, this);
 
 	m_anticoOn = true;
 	m_wantedState = MOTION_UNKNOWN_STATE;
-
-	m_canMotor[CAN_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
-	m_canMotor[CAN_MOTOR_RIGHT].inputGain = 60 * MOTOR_DRIVING2_RED / (float)(2 * M_PI * DRIVING2_WHEEL_RADIUS);
-	m_canMotor[CAN_MOTOR_RIGHT].outputGain = 2 * M_PI * DRIVING2_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING2_RED);
-	m_canMotor[CAN_MOTOR_RIGHT].name = "moteur droit";
-	m_canMotor[CAN_MOTOR_RIGHT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
-
-	m_canMotor[CAN_MOTOR_LEFT].nodeId = CAN_MOTOR_LEFT_NODEID;
-	m_canMotor[CAN_MOTOR_LEFT].inputGain = 60 * MOTOR_DRIVING1_RED / (float)(2 * M_PI * DRIVING1_WHEEL_RADIUS);
-	m_canMotor[CAN_MOTOR_LEFT].outputGain = 2 * M_PI * DRIVING1_WHEEL_RADIUS / (float)(MOTOR_ENCODER_RESOLUTION * MOTOR_DRIVING1_RED);
-	m_canMotor[CAN_MOTOR_LEFT].name = "moteur gauche";
-	m_canMotor[CAN_MOTOR_LEFT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_1;
-
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
-	{
-		can_mip_register_node(&m_canMotor[i]);
-	}
+	m_motionMotor[MOTION_MOTOR_LEFT] = motorLeft;
+	m_motionMotor[MOTION_MOTOR_RIGHT] = motorRight;
 
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &Motion::cmd_set_speed, this);
 	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &Motion::cmd_set_max_current, this);
@@ -98,20 +83,20 @@ void Motion::compute()
 #if 0
 	int motor_mes_valid = 1;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		if( ! m_canMotor[i].is_op_enable() )
+		if( ! m_motionMotor[i]->is_op_enable() )
 		{
 			motor_mes_valid = 0;
 		}
 
-		m_kinematicsMes[i] = m_canMotor[i].kinematics;
+		m_kinematicsMes[i] = m_motionMotor[i]->kinematics;
 	}
 
 	if( motor_mes_valid )
 	{
 		// mise à jour de la position
-		m_location->update(VOIE_MOT_INV, m_kinematicsMes, CONTROL_DT);
+		m_location->update(m_kinematicsMes, CONTROL_DT);
 	}
 #else
 	// mise à jour de la position
@@ -136,15 +121,15 @@ void Motion::compute()
 
 void Motion::motionUpdateMotors()
 {
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		if( m_kinematics[i].mode == KINEMATICS_SPEED )
 		{
-			m_canMotor[i].set_speed(m_kinematics[i].v);
+			m_motionMotor[i]->set_speed(m_kinematics[i].v);
 		}
 		else if( m_kinematics[i].mode == KINEMATICS_POSITION )
 		{
-			m_canMotor[i].set_position(m_kinematics[i].pos);
+			m_motionMotor[i]->set_position(m_kinematics[i].pos);
 		}
 	}
 
@@ -156,13 +141,13 @@ void Motion::motionUpdateMotors()
 		{
 			pwm = 1;
 		}
-		pwm_set(PWM_1, pwm);
+		//pwm_set(PWM_1, pwm);
 		pwm = fabsf(m_kinematics[LEFT_WHEEL].v) / 1000;
 		if( pwm > 1)
 		{
 			pwm = 1;
 		}
-		pwm_set(PWM_2, pwm);
+		//pwm_set(PWM_2, pwm);
 	}
 
 	m_speedCmd = m_kinematicsModel->computeSpeed(m_kinematics);
@@ -250,8 +235,8 @@ void Motion::enable(bool enable)
 
 void Motion::setMaxDrivingCurrent(float maxCurrent)
 {
-	m_canMotor[0].set_max_current(maxCurrent);
-	m_canMotor[1].set_max_current(maxCurrent);
+	m_motionMotor[0]->set_max_current(maxCurrent);
+	m_motionMotor[1]->set_max_current(maxCurrent);
 }
 
 void Motion::clearTrajectory()
@@ -321,7 +306,7 @@ void Motion::setSpeed(VectPlan u, float v)
 	m_wantedState = MOTION_SPEED;
 	m_u = u;
 	m_v = v;
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m_kinematics[i] = m_kinematicsMes[i];
 	}
@@ -340,7 +325,7 @@ void Motion::setActuatorKinematics(struct motion_cmd_set_actuator_kinematics_arg
 	m_wantedState = MOTION_ACTUATOR_KINEMATICS;
 	m_wantedKinematics = cmd;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		if( cmd.mode[i] != KINEMATICS_POSITION && cmd.mode[i] != KINEMATICS_SPEED)
 		{
@@ -369,11 +354,12 @@ void Motion::updateUsbData(struct control_usb_data* data)
 	data->cons = m_path.getLastPosCmd();
 	data->wanted_pos = m_path.getLastPoint();
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		data->cons_motors_v[i] = m_kinematics[i].v;
+		data->cons_motors_v[i] = m_kinematics[i].v * m_motionMotor[i]->inputGain;
 		data->mes_motors[i] = m_kinematicsMes[i];
-		data->mes_motor_current[i] = m_canMotor[i].current;
+		data->mes_motors[i].v *= m_motionMotor[i]->inputGain;
+		data->mes_motor_current[i] = m_motionMotor[i]->current;
 	}
 
 	xSemaphoreGive(m_mutex);

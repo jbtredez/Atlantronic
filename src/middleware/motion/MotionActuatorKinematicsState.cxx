@@ -16,7 +16,7 @@ void MotionActuatorKinematicsState::entry(void* data)
 void MotionActuatorKinematicsState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		if(m->m_wantedKinematics.mode[i] == KINEMATICS_SPEED)
 		{

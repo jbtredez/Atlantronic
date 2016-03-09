@@ -17,7 +17,7 @@ void MotionTrajectoryState::entry(void* data)
 
 	//Satisfaction de la volonte operateur
 	m->m_wantedState = MOTION_UNKNOWN_STATE;
-	Kinematics kinematicsTmp[CAN_MOTOR_MAX];
+	Kinematics kinematicsTmp[MOTION_MOTOR_MAX];
 	m->m_path.planify(m->m_kinematicsModel, kinematicsTmp, m->m_wantedLinearParam,  m->m_wantedAngularParam);
 
 	// DEBUG : laisser commente
@@ -31,7 +31,7 @@ void MotionTrajectoryState::entry(void* data)
 	log(LOG_INFO, "IN_MOTION");
 	m->m_status = MOTION_IN_MOTION;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i] = m->m_kinematicsMes[i];
 	}
@@ -201,7 +201,7 @@ void MotionTrajectoryState::run(void* data)
 
 void MotionTrajectoryState::stop(Motion* m)
 {
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i].v = 0;
 	}

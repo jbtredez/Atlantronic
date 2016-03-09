@@ -9,7 +9,7 @@
 
 #include "kernel/systick.h"
 #include "kernel/asm/asm_base_func.h"
-#include "kernel/CanMipMotor.h"
+#include "kernel/MotorInterface.h"
 #include "kernel/math/VectPlan.h"
 #include "middleware/state_machine/StateMachine.h"
 #include "motion_speed_check.h"
@@ -74,8 +74,8 @@ struct motion_cmd_set_speed_arg
 
 struct motion_cmd_set_actuator_kinematics_arg
 {
-	int mode[CAN_MOTOR_MAX];
-	float val[CAN_MOTOR_MAX];
+	int mode[MOTION_MOTOR_MAX];
+	float val[MOTION_MOTOR_MAX];
 }  __attribute__((packed));
 
 struct motion_cmd_enable_arg
@@ -94,7 +94,7 @@ struct motion_cmd_set_max_driving_current_arg
 class Motion
 {
 	public:
-		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel);
+		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight);
 
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_state* wanted_state);
 
@@ -151,8 +151,8 @@ class Motion
 		enum motion_state m_wantedState;
 		enum motion_status m_status;
 		struct motion_cmd_set_actuator_kinematics_arg m_wantedKinematics; // cinematique desiree (mode MOTION_ACTUATOR_KINEMATICS)
-		Kinematics m_kinematics[CAN_MOTOR_MAX];
-		Kinematics m_kinematicsMes[CAN_MOTOR_MAX];
+		Kinematics m_kinematics[MOTION_MOTOR_MAX];
+		Kinematics m_kinematicsMes[MOTION_MOTOR_MAX];
 		xSemaphoreHandle m_mutex;
 		KinematicsParameters m_wantedLinearParam;
 		KinematicsParameters m_wantedAngularParam;
@@ -169,7 +169,7 @@ class Motion
 		bool m_anticoOn;
 		static StateMachineState* m_motionStates[MOTION_MAX_STATE];
 		StateMachine m_motionStateMachine;
-		CanMipMotor m_canMotor[CAN_MOTOR_MAX];
+		MotorInterface* m_motionMotor[MOTION_MOTOR_MAX];
 		Detection* m_detection;
 		Location* m_location;
 		KinematicsModel* m_kinematicsModel;

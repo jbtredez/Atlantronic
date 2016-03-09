@@ -21,11 +21,11 @@ void MotionDisabledState::entry(void* data)
 void MotionDisabledState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i].pos = m->m_kinematicsMes[i].pos;
 		m->m_kinematics[i].v = 0;
-		m->m_canMotor[i].enable(false);
+		m->m_motionMotor[i]->enable(false);
 	}
 }
 

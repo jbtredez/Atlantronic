@@ -39,9 +39,9 @@ struct control_usb_data_light
 
 struct control_usb_data : control_usb_data_light
 {
-	float cons_motors_v[CAN_MOTOR_MAX];
-	Kinematics mes_motors[CAN_MOTOR_MAX];
-	float mes_motor_current[CAN_MOTOR_MAX];
+	float cons_motors_v[MOTION_MOTOR_MAX];
+	Kinematics mes_motors[MOTION_MOTOR_MAX];
+	float mes_motor_current[MOTION_MOTOR_MAX];
 	float iPwm[4];
 	//	int16_t raw_data_gyro;
 	//	float omega_gyro;

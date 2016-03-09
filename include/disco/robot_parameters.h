@@ -14,22 +14,12 @@
 #define PARAM_NP_X                            -125
 #define PARAM_FINGER_SIZE_X                     50
 
-#define DRIVING1_WHEEL_RADIUS               100.0f
-#define DRIVING2_WHEEL_RADIUS               100.0f
 #define ODO1_WHEEL_RADIUS                    39.7f
 #define ODO2_WHEEL_RADIUS                    39.7f
 #define ODO1_WAY                                 1
 #define ODO2_WAY                                -1
 
-#define VOIE_MOT                            164.0f
-#define VOIE_ODO                            110.0f
-
-#define MOTOR_RED                   (5.2*88/25.0f)
-#define MOTOR_ENCODER_RESOLUTION              1024
 #define ODO_ENCODER_RESOLUTION                4096
-
-#define MOTOR_DRIVING1_RED              -MOTOR_RED  //!< reduction moteur 1
-#define MOTOR_DRIVING2_RED               MOTOR_RED  //!< reduction moteur 2
 
 #define LEFT_WHEEL                               0
 #define RIGHT_WHEEL                              1

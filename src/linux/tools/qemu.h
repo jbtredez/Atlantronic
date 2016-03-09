@@ -27,6 +27,7 @@ class Qemu
 		int manage_canopen_connexion(int nodeId, bool connected);
 		int setIo(uint32_t id, bool val);
 		int setPosition(VectPlan pos);
+		bool isInitDone(){return m_com!=NULL;};
 
 	protected:
 		void startQemu();

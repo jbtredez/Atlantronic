@@ -24,11 +24,11 @@
 #include "kernel/driver/io.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/wing.h"
-#include "disco/finger.h"
-#include "disco/carpet.h"
+#include "disco/star/wing.h"
+#include "disco/star/finger.h"
+#include "disco/star/carpet.h"
 #include "server_tcp.h"
-#include "disco/star.h"
+#include "disco/star/star.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 

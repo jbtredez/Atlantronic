@@ -6,13 +6,7 @@
 #include "kernel/CanMipNode.h"
 #include "kernel/control/kinematics.h"
 #include "kernel/fault.h"
-
-enum
-{
-	CAN_MOTOR_LEFT = 0,
-	CAN_MOTOR_RIGHT,
-	CAN_MOTOR_MAX,
-};
+#include "MotorInterface.h"
 
 enum MotorState
 {
@@ -64,21 +58,18 @@ enum MotorWriteConfIndex
 #define CAN_MIP_MOTOR_STATE_ERR_CMD_VS_MES        0x80
 #define CAN_MIP_MOTOR_STATE_ERROR                 0xf0
 
-class CanMipMotor : public CanMipNode
+class CanMipMotor : public CanMipNode, public MotorInterface
 {
 	public:
 		CanMipMotor();
 
-		const char* name;
 		// donnees brutes
 		uint8_t mipState;
 		uint32_t old_raw_position;
 		uint32_t raw_position; //!< position brute (en increments encodeurs)
-		uint16_t current; // TODO pas utilise
 		Kinematics kinematics;
 		uint16_t lastSpeedCmd;
 
-		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
 		float outputGain;   //!< gain pour convertir la position en unites robot
 		enum fault fault_disconnected_id;
 		MotorState state;
@@ -93,7 +84,6 @@ class CanMipMotor : public CanMipNode
 		systime lastMotionEnable;
 
 		void update(portTickType absTimeout);
-		void rxMsg(struct can_msg *msg);
 		void set_speed(float v);
 		void enable(bool enable);
 
@@ -119,6 +109,7 @@ class CanMipMotor : public CanMipNode
 
 	protected:
 		uint32_t configure(MotorWriteConfIndex idx, uint32_t val);
+		void rxMsg(struct can_msg *msg);
 };
 
 #endif

@@ -327,7 +327,12 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 
 	if( cli )
 	{
-		cmd_init(&robot[0].m_robotItf, &robot[0].m_qemu, gtk_end);
+		Qemu* qemu = NULL;
+		if( robot[0].m_qemu.isInitDone() )
+		{
+			qemu = &robot[0].m_qemu;
+		}
+		cmd_init(&robot[0].m_robotItf, qemu, gtk_end);
 	}
 
 	qemu_set_parameters();
@@ -763,7 +768,7 @@ static void plot_legende(Graphique* graph)
 		{
 			glfont.setColor(graph->color[3*i], graph->color[3*i+1], graph->color[3*i+2], 1);
 			glfont.glPrintf_xright2_yhigh(graph->roi_xmax, graph->roi_ymax + dy, graph->ratio_x, graph->ratio_y, "%s", graph->courbes_names[i]);
-			dy -= 2*glfont.digitHeight;
+			dy -= 2*glfont.digitHeight * graph->ratio_y;
 		}
 	}
 }

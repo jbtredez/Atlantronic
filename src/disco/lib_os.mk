@@ -1,0 +1,12 @@
+lib-os += kernel/main.o
+lib-os += kernel/asm/isr_stm32f4xx.o
+lib-os += kernel/rcc.o
+lib-os += kernel/systick.o
+lib-os += kernel/tasks.o
+lib-os += kernel/queue.o
+lib-os += kernel/port.o
+lib-os += kernel/list.o
+lib-os += kernel/heap_1.o
+lib-os += kernel/fault.o
+lib-os += kernel/driver/gpio.o
+lib-os += kernel/log.o

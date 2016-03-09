@@ -19,7 +19,7 @@ void MotionEnabledState::entry(void* data)
 void MotionEnabledState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i].v = 0;
 		m->m_kinematics[i].mode = KINEMATICS_SPEED;
@@ -33,9 +33,9 @@ unsigned int MotionEnabledState::transition(void* data)
 	Motion* m = (Motion*) data;
 	bool all_op_enable = true;
 
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		all_op_enable &= m->m_canMotor[i].is_op_enable();
+		all_op_enable &= m->m_motionMotor[i]->is_op_enable();
 	}
 
 	// si Aucun moteur actif

@@ -9,7 +9,7 @@ MotionInterruptingState::MotionInterruptingState() :
 void MotionInterruptingState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	for(int i = 0; i < CAN_MOTOR_MAX; i++)
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i].v = 0;
 	}
@@ -20,9 +20,9 @@ unsigned int MotionInterruptingState::transition(void* data)
 {
 	Motion* m = (Motion*) data;
 	
-	for(int i = 0; i < CAN_MOTOR_MAX; i++ )
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++ )
 	{
-		if( m->m_canMotor[i].is_in_motion() )
+		if( m->m_motionMotor[i]->is_in_motion() )
 		{
 			return MOTION_INTERRUPTING;
 		}

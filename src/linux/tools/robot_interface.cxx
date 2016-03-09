@@ -13,7 +13,7 @@
 #include "kernel/pump.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Graph.h"
-#include "disco/elevator.h"
+#include "disco/star/elevator.h"
 
 #ifndef VERSION
 #error VERSION not defined
