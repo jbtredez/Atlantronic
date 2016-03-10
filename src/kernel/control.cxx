@@ -21,7 +21,6 @@
 #define CONTROL_STACK_SIZE       350
 
 static struct control_usb_data control_usb_data;
-static struct control_usb_data_light control_usb_data_light;// TODO mettre en commun avec control_usb_data
 
 static void control_task(void* arg);
 
@@ -79,9 +78,6 @@ static void control_task(void* /*arg*/)
 //		control_usb_data.elevatorHeight = elevator_get_position();
 //		arm_get_matrix(&control_usb_data.arm_matrix);
 
-		// TODO pas propre, mettre en commun control_usb_data_light et control_usb_data
-		memcpy(&control_usb_data_light, &control_usb_data, sizeof(control_usb_data_light));
-
 		ax12.updateUsbData(&control_usb_data.ax12);
 		//rx24.updateUsbData(&control_usb_data.rx24);
 
@@ -91,7 +87,8 @@ static void control_task(void* /*arg*/)
 		xbeeCycleCount++;
 		if( xbeeCycleCount > 100)
 		{
-			xbee_add(USB_CONTROL_LIGHT, &control_usb_data_light, sizeof(control_usb_data_light));
+			struct control_usb_data_light* data = &control_usb_data;
+			xbee_add(USB_CONTROL_LIGHT, data, sizeof(*data));
 			xbeeCycleCount = 0;
 		}
 
