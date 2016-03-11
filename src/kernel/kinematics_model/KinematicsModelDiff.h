@@ -10,7 +10,7 @@
 class KinematicsModelDiff : public KinematicsModel
 {
 	public:
-		KinematicsModelDiff(float voie);
+		KinematicsModelDiff(float voie, KinematicsParameters paramDriving);
 
 		VectPlan computeSpeed(Kinematics* kinematics_mes);
 
@@ -20,6 +20,7 @@ class KinematicsModelDiff : public KinematicsModel
 
 	protected:
 		float m_voie;
+		KinematicsParameters m_paramDriving;
 };
 
 #endif

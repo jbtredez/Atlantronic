@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "kernel/control/kinematics.h"
 #include "kernel/portmacro.h"
+
 enum
 {
 	MOTION_MOTOR_LEFT = 0,
@@ -50,7 +51,7 @@ class MotorInterface
 		}
 
 		const char* name;
-		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm)
+		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm ou V)
 		float current;
 };
 

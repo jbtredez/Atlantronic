@@ -8,11 +8,10 @@
 
 #include <math.h>
 
-static KinematicsParameters paramDriving = {1800, 1500, 1500};
-
-KinematicsModelDiff::KinematicsModelDiff(float voie)
+KinematicsModelDiff::KinematicsModelDiff(float voie, KinematicsParameters paramDriving)
 {
 	m_voie = voie;
+	m_paramDriving = paramDriving;
 }
 
 //!< calcul des consignes au niveau des moteurs avec saturations
@@ -33,7 +32,7 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 	for(int i = 0; i < 2; i++)
 	{
 		Kinematics kinematics = kinematics_cmd[i];
-		kinematics.setSpeed(v[i], paramDriving, dt);
+		kinematics.setSpeed(v[i], m_paramDriving, dt);
 
 		// reduction si saturation
 		if( fabsf(v[i]) > 1 )
@@ -47,8 +46,8 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 	}
 #endif
 
-	kinematics_cmd[0].setSpeed(kmin * v[0], paramDriving, dt);
-	kinematics_cmd[1].setSpeed(kmin * v[1], paramDriving, dt);
+	kinematics_cmd[0].setSpeed(kmin * v[0], m_paramDriving, dt);
+	kinematics_cmd[1].setSpeed(kmin * v[1], m_paramDriving, dt);
 
 	return kmin;
 }

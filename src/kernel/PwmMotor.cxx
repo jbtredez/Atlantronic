@@ -1,7 +1,22 @@
 #include "PwmMotor.h"
-#include "kernel/driver/pwm.h"
+#include "kernel/driver/adc.h"
+#include "kernel/control.h"
 
 void PwmMotor::set_speed(float v)
 {
-	pwm_set(pwmId, v * inputGain);
+	float vBat = adc_filtered_data.vBat;
+	float cmd = 0;
+
+	encoder->update(CONTROL_DT);
+	float error = v - encoder->getSpeed();
+	v += pid.compute(error, CONTROL_DT);
+	cmd = v * inputGain / vBat;
+
+	if( vBat < ADC_VBAT_UNDERVOLTAGE )
+	{
+		cmd = 0;
+		pid.reset();
+	}
+
+	pwm_set(pwmId, cmd);
 }

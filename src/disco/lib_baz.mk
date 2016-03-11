@@ -1,5 +1,5 @@
 lib-baz += kernel/driver/pwm.o
-lib-baz += kernel/driver/encoder.o
+lib-baz += kernel/driver/encoder/EncoderAB.o
 lib-baz += kernel/driver/power.o
 lib-baz += kernel/driver/adc.o
 lib-baz += kernel/driver/io.o

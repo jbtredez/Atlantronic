@@ -66,7 +66,7 @@ struct trajectory_cmd_arg
 class Trajectory
 {
 	public:
-		int init(Detection* detection, Motion* motion, Location* location);
+		int init(Detection* detection, Motion* motion, Location* location, KinematicsParameters linearParam, KinematicsParameters angularParam);
 
 		void getKinematicsParam(KinematicsParameters* linParam, KinematicsParameters* angParam);
 

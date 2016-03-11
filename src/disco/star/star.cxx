@@ -3,6 +3,7 @@
 #include "kernel/driver/hokuyo.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
+#include "kernel/driver/encoder/EncoderAB.h"
 #include "robot_parameters.h"
 
 #define STAR_VOIE_MOT                            164.0f
@@ -11,9 +12,18 @@
 #define STAR_DRIVING2_WHEEL_RADIUS               100.0f
 #define STAR_MOTOR_RED                   (5.2*88/25.0f)
 #define STAR_MOTOR_ENCODER_RESOLUTION              1024
-#define STAR_MOTOR_DRIVING1_RED              -STAR_MOTOR_RED  //!< reduction moteur 1
-#define STAR_MOTOR_DRIVING2_RED               STAR_MOTOR_RED  //!< reduction moteur 2
+#define STAR_MOTOR_DRIVING1_RED         -STAR_MOTOR_RED  //!< reduction moteur 1
+#define STAR_MOTOR_DRIVING2_RED          STAR_MOTOR_RED  //!< reduction moteur 2
 
+#define STAR_ODO1_WHEEL_RADIUS                    39.7f
+#define STAR_ODO2_WHEEL_RADIUS                    39.7f
+#define STAR_ODO1_WAY                                 1
+#define STAR_ODO2_WAY                                -1
+#define STAR_ODO_ENCODER_RESOLUTION                4096
+
+KinematicsParameters paramDriving = {1800, 1500, 1500};
+KinematicsParameters linearParam = {700, 600, 600};
+KinematicsParameters angularParam = {3, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
 Dynamixel leftWing;
@@ -29,11 +39,12 @@ DynamixelManager ax12;
 
 Location location;
 Detection detection;
-KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO);
-KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT);
+KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO, paramDriving);
+KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT, paramDriving);
 Motion motion;
 Trajectory trajectory;
 CanMipMotor motionMotors[MOTION_MOTOR_MAX];
+EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 
 static int star_robot_module_init()
 {
@@ -66,12 +77,8 @@ static int star_robot_module_init()
 	location.init(&odoWheelKinematicsModelDiff);
 	detection.init(&hokuyo[0], &hokuyo[1], &location);
 
-
-	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
-	motionMotors[MOTION_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
-	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * STAR_MOTOR_DRIVING2_RED / (float)(2 * M_PI * STAR_DRIVING2_WHEEL_RADIUS);
-	motionMotors[MOTION_MOTOR_RIGHT].outputGain = 2 * M_PI * STAR_DRIVING2_WHEEL_RADIUS / (float)(STAR_MOTOR_ENCODER_RESOLUTION * STAR_MOTOR_DRIVING2_RED);
-	motionMotors[MOTION_MOTOR_RIGHT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
+	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, STAR_ODO1_WAY * 2 * M_PI * STAR_ODO1_WHEEL_RADIUS / (float)(STAR_ODO_ENCODER_RESOLUTION));
+	motionEncoders[MOTION_MOTOR_RIGHT].init(ENCODER_2, STAR_ODO2_WAY * 2 * M_PI * STAR_ODO2_WHEEL_RADIUS / (float)(STAR_ODO_ENCODER_RESOLUTION));
 
 	motionMotors[MOTION_MOTOR_LEFT].name = "moteur gauche";
 	motionMotors[MOTION_MOTOR_LEFT].nodeId = CAN_MOTOR_LEFT_NODEID;
@@ -79,13 +86,19 @@ static int star_robot_module_init()
 	motionMotors[MOTION_MOTOR_LEFT].outputGain = 2 * M_PI * STAR_DRIVING1_WHEEL_RADIUS / (float)(STAR_MOTOR_ENCODER_RESOLUTION * STAR_MOTOR_DRIVING1_RED);
 	motionMotors[MOTION_MOTOR_LEFT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_1;
 
+	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
+	motionMotors[MOTION_MOTOR_RIGHT].nodeId = CAN_MOTOR_RIGHT_NODEID;
+	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * STAR_MOTOR_DRIVING2_RED / (float)(2 * M_PI * STAR_DRIVING2_WHEEL_RADIUS);
+	motionMotors[MOTION_MOTOR_RIGHT].outputGain = 2 * M_PI * STAR_DRIVING2_WHEEL_RADIUS / (float)(STAR_MOTOR_ENCODER_RESOLUTION * STAR_MOTOR_DRIVING2_RED);
+	motionMotors[MOTION_MOTOR_RIGHT].fault_disconnected_id = FAULT_CAN_MOTOR_DISCONNECTED_0;
+
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		can_mip_register_node(&motionMotors[i]);
 	}
 
-	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT]);
-	trajectory.init(&detection, &motion, &location);
+	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
+	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
 
 	return 0;
 }

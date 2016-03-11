@@ -16,6 +16,7 @@
 #include "pid.h"
 #include "middleware/detection.h"
 #include "kernel/kinematics_model/KinematicsModel.h"
+#include "kernel/driver/encoder/EncoderInterface.h"
 #include "Path.h"
 
 #ifndef WEAK_MOTION
@@ -94,7 +95,7 @@ struct motion_cmd_set_max_driving_current_arg
 class Motion
 {
 	public:
-		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight);
+		int init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight, EncoderInterface* encoderLeft, EncoderInterface* encoderRight);
 
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_state* wanted_state);
 
@@ -170,6 +171,7 @@ class Motion
 		static StateMachineState* m_motionStates[MOTION_MAX_STATE];
 		StateMachine m_motionStateMachine;
 		MotorInterface* m_motionMotor[MOTION_MOTOR_MAX];
+		EncoderInterface* m_motionEncoder[MOTION_MOTOR_MAX];
 		Detection* m_detection;
 		Location* m_location;
 		KinematicsModel* m_kinematicsModel;

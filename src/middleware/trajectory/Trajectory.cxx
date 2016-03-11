@@ -19,7 +19,7 @@
 #define TRAJECTORY_APPROX_DIST      150      //!< distance d'approche d'un objet
 #define TRAJECTORY_PERIOD            10
 
-int Trajectory::init(Detection* detection, Motion* motion, Location* location)
+int Trajectory::init(Detection* detection, Motion* motion, Location* location, KinematicsParameters linearParam, KinematicsParameters angularParam)
 {
 	xTaskHandle xHandle;
 
@@ -34,12 +34,8 @@ int Trajectory::init(Detection* detection, Motion* motion, Location* location)
 	m_hokuyoEnableCheck = true;
 	m_staticCheckEnable = true;
 
-	m_linearParam.vMax = 700;
-	m_linearParam.aMax = 600;
-	m_linearParam.dMax = 600;
-	m_angularParam.vMax = 3;
-	m_angularParam.aMax = 5;
-	m_angularParam.dMax = 5;
+	m_linearParam = linearParam;
+	m_angularParam = angularParam;
 	m_mutex = xSemaphoreCreateMutex();
 
 	if(m_mutex == NULL)

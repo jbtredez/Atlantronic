@@ -2,32 +2,32 @@
 //! @brief Encoder
 //! @author Atlantronic
 
-#include "encoder.h"
+#include "EncoderAB.h"
 #include "kernel/module.h"
 #include "kernel/cpu/cpu.h"
 #include "kernel/driver/gpio.h"
 
 static volatile uint32_t* encoder_cnt[ENCODER_MAX];
 
-static void encoder_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_t pin_ch1, GPIO_TypeDef* GPIOx_ch2, uint32_t pin_ch2, TIM_TypeDef* tim, uint32_t gpio_af);
+static void encoder_ab_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_t pin_ch1, GPIO_TypeDef* GPIOx_ch2, uint32_t pin_ch2, TIM_TypeDef* tim, uint32_t gpio_af);
 
-static int encoder_module_init()
+static int encoder_ab_module_init()
 {
 	// activation GPIOA, GPIOB, GPIOC et GPIOD
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN;
 	// activation du timer 2, 3 et 4
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN;
 
-	encoder_init(ENCODER_1, GPIOA, 0, GPIOA, 1, TIM2, GPIO_AF_TIM2); // encoder 1
-	encoder_init(ENCODER_2, GPIOD, 12, GPIOB, 7, TIM4, GPIO_AF_TIM4); // encoder 2
-	encoder_init(ENCODER_3, GPIOB, 4, GPIOC, 7, TIM3, GPIO_AF_TIM3); // encoder 3
+	encoder_ab_init(ENCODER_1, GPIOA, 0, GPIOA, 1, TIM2, GPIO_AF_TIM2); // encoder 1
+	encoder_ab_init(ENCODER_2, GPIOD, 12, GPIOB, 7, TIM4, GPIO_AF_TIM4); // encoder 2
+	encoder_ab_init(ENCODER_3, GPIOB, 4, GPIOC, 7, TIM3, GPIO_AF_TIM3); // encoder 3
 
 	return 0;
 }
 
-module_init(encoder_module_init, INIT_ENCODERS);
+module_init(encoder_ab_module_init, INIT_ENCODERS);
 
-static void encoder_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_t pin_ch1, GPIO_TypeDef* GPIOx_ch2, uint32_t pin_ch2, TIM_TypeDef* tim, uint32_t gpio_af)
+static void encoder_ab_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_t pin_ch1, GPIO_TypeDef* GPIOx_ch2, uint32_t pin_ch2, TIM_TypeDef* tim, uint32_t gpio_af)
 {
 	if( id >= ENCODER_MAX )
 	{
@@ -65,7 +65,7 @@ static void encoder_init(const unsigned int id, GPIO_TypeDef* GPIOx_ch1, uint32_
 	encoder_cnt[id] = &tim->CNT;
 }
 
-uint16_t encoder_get(const unsigned int id)
+uint16_t encoder_ab_get(const unsigned int id)
 {
 	uint16_t val = 0;
 
@@ -77,3 +77,29 @@ uint16_t encoder_get(const unsigned int id)
 	return val;
 }
 
+void EncoderAB::init(int id, float outputFactor)
+{
+	m_id = id;
+	m_outputFactor = outputFactor;
+	m_rawPos = encoder_ab_get(m_id);
+	m_lastRawPos = m_rawPos;
+}
+
+void EncoderAB::update(float dt)
+{
+	m_lastRawPos = m_rawPos;
+	m_rawPos = encoder_ab_get(m_id);
+	// attention aux types, soustraction de 2 uint16_t qu'on met dans un int16_t
+	int16_t m_rawSpeed = (int16_t)(m_rawPos - m_lastRawPos);
+	m_speed = ((float)m_rawSpeed) * m_outputFactor / dt;
+}
+
+float EncoderAB::getPosition()
+{
+	return m_rawPos * m_outputFactor;
+}
+
+float EncoderAB::getSpeed()
+{
+	return m_speed;
+}

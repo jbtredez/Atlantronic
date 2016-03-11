@@ -42,7 +42,7 @@ StateMachineState* Motion::m_motionStates[MOTION_MAX_STATE] = {
 	&motionInterrputingState
 };
 
-int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight)
+int Motion::init(Detection* detection, Location* location, KinematicsModel* kinematicsModel, MotorInterface* motorLeft, MotorInterface* motorRight, EncoderInterface* encoderLeft, EncoderInterface* encoderRight)
 {
 	m_location = location;
 	m_detection = detection;
@@ -64,6 +64,8 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 	m_wantedState = MOTION_UNKNOWN_STATE;
 	m_motionMotor[MOTION_MOTOR_LEFT] = motorLeft;
 	m_motionMotor[MOTION_MOTOR_RIGHT] = motorRight;
+	m_motionEncoder[MOTION_MOTOR_LEFT] = encoderLeft;
+	m_motionEncoder[MOTION_MOTOR_RIGHT] = encoderRight;
 
 	usb_add_cmd(USB_CMD_MOTION_SET_SPEED, &Motion::cmd_set_speed, this);
 	usb_add_cmd(USB_CMD_MOTION_SET_MAX_CURRENT, &Motion::cmd_set_max_current, this);
@@ -99,15 +101,11 @@ void Motion::compute()
 		m_location->update(m_kinematicsMes, CONTROL_DT);
 	}
 #else
-	// mise à jour de la position
-	uint16_t p1 = encoder_get(ENCODER_1);
-	uint16_t p2 = encoder_get(ENCODER_2);
-	m_kinematicsMes[0].v = (int16_t)((uint16_t) p1 - (uint16_t)m_kinematicsMes[0].pos);
-	m_kinematicsMes[0].v *= ODO1_WAY * 2 * M_PI * ODO1_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
-	m_kinematicsMes[1].v = (int16_t)((uint16_t) p2 - (uint16_t)m_kinematicsMes[1].pos);
-	m_kinematicsMes[1].v *= ODO2_WAY * 2 * M_PI * ODO2_WHEEL_RADIUS / (float)(ODO_ENCODER_RESOLUTION * CONTROL_DT);
-	m_kinematicsMes[0].pos = p1;
-	m_kinematicsMes[1].pos = p2;
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
+	{
+		m_motionEncoder[i]->update(CONTROL_DT);
+		m_kinematicsMes[i].v = m_motionEncoder[i]->getSpeed();
+	}
 
 	m_location->update(m_kinematicsMes, CONTROL_DT);
 #endif
@@ -356,9 +354,9 @@ void Motion::updateUsbData(struct control_usb_data* data)
 
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		data->cons_motors_v[i] = m_kinematics[i].v * m_motionMotor[i]->inputGain;
+		data->cons_motors_v[i] = m_kinematics[i].v;// * m_motionMotor[i]->inputGain;
 		data->mes_motors[i] = m_kinematicsMes[i];
-		data->mes_motors[i].v *= m_motionMotor[i]->inputGain;
+		//data->mes_motors[i].v *= m_motionMotor[i]->inputGain;
 		data->mes_motor_current[i] = m_motionMotor[i]->current;
 	}
 

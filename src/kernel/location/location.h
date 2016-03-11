@@ -6,6 +6,7 @@
 //! @author Atlantronic
 
 #include <stdint.h>
+#include "kernel/asm/asm_base_func.h"
 #include "kernel/math/VectPlan.h"
 #include "kernel/control/kinematics.h"
 #include "kernel/kinematics_model/KinematicsModel.h"

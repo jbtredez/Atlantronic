@@ -3,36 +3,44 @@
 #include "kernel/driver/hokuyo.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
+#include "kernel/driver/encoder/EncoderSimulFromKinematicsModel.h"
+#include "kernel/driver/encoder/EncoderAB.h"
 #include "robot_parameters.h"
+#include "kernel/control.h"
 
-#define GATE_VOIE_MOT                            164.0f
-#define GATE_VOIE_ODO                            110.0f
+#define GATE_VOIE_MOT                            144.0f
+#define GATE_VOIE_ODO                             90.0f
 #define GATE_DRIVING1_WHEEL_RADIUS                90.0f
 #define GATE_DRIVING2_WHEEL_RADIUS                90.0f
-#define GATE_MOTOR_DRIVING1_RED              -(78/10.0f)  //!< reduction moteur 1
-#define GATE_MOTOR_DRIVING2_RED               (78/10.0f)  //!< reduction moteur 2
-#define GATE_MOTOR_RPM_TO_VOLT                 (1/163.5f)
+#define GATE_MOTOR_DRIVING1_RED             -(78/10.0f)  //!< reduction moteur 1
+#define GATE_MOTOR_DRIVING2_RED              (78/10.0f)  //!< reduction moteur 2
+#define GATE_MOTOR_RPM_TO_VOLT               (1/163.5f)
 
+#define GATE_ODO1_WHEEL_RADIUS                    39.7f
+#define GATE_ODO2_WHEEL_RADIUS                    39.7f
+#define GATE_ODO1_WAY                                 1
+#define GATE_ODO2_WAY                                -1
+#define GATE_ODO_ENCODER_RESOLUTION                4096
+
+KinematicsParameters paramDriving = {1800, 2000, 2000};
+KinematicsParameters linearParam = {1000, 2000, 2000};
+KinematicsParameters angularParam = {3, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
 Dynamixel leftWing;
 Dynamixel rightWing;
-Dynamixel leftCarpet;
-Dynamixel rightCarpet;
-Dynamixel lowFinger;
-Dynamixel highFinger;
-Dynamixel rightFinger;
-Dynamixel leftFinger;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
 Location location;
 Detection detection;
-KinematicsModelDiff odoWheelKinematicsModelDiff(GATE_VOIE_ODO);
-KinematicsModelDiff motorKinematicsModelDiff(GATE_VOIE_MOT);
+KinematicsModelDiff odoWheelKinematicsModelDiff(GATE_VOIE_ODO, paramDriving);
+KinematicsModelDiff motorKinematicsModelDiff(GATE_VOIE_MOT, paramDriving);
 Motion motion;
 Trajectory trajectory;
 PwmMotor motionMotors[MOTION_MOTOR_MAX];
+EncoderSimulFromKinematicsModel motionMotorEncoder[MOTION_MOTOR_MAX];
+EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 
 static int gate_robot_module_init()
 {
@@ -41,12 +49,6 @@ static int gate_robot_module_init()
 
 	leftWing.init(&ax12, AX12_LEFT_WING);
 	rightWing.init(&ax12, AX12_RIGHT_WING);
-	leftCarpet.init(&ax12, AX12_LEFT_CARPET);
-	rightCarpet.init(&ax12, AX12_RIGHT_CARPET);
-	lowFinger.init(&ax12, AX12_LOW_FINGER);
-	highFinger.init(&ax12, AX12_HIGH_FINGER);
-	rightFinger.init(&ax12, AX12_RIGHT_FINGER);
-	leftFinger.init(&ax12, AX12_LEFT_FINGER);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
@@ -65,16 +67,25 @@ static int gate_robot_module_init()
 	location.init(&odoWheelKinematicsModelDiff);
 	detection.init(&hokuyo[0], &hokuyo[1], &location);
 
-	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
-	motionMotors[MOTION_MOTOR_RIGHT].pwmId = 0;
-	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
+	motionMotorEncoder[MOTION_MOTOR_LEFT].init(&location, &motorKinematicsModelDiff, LEFT_WHEEL);
+	motionMotorEncoder[MOTION_MOTOR_RIGHT].init(&location, &motorKinematicsModelDiff, RIGHT_WHEEL);
+	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, GATE_ODO1_WAY * 2 * M_PI * GATE_ODO1_WHEEL_RADIUS / (float)(GATE_ODO_ENCODER_RESOLUTION));
+	motionEncoders[MOTION_MOTOR_RIGHT].init(ENCODER_2, GATE_ODO2_WAY * 2 * M_PI * GATE_ODO2_WHEEL_RADIUS / (float)(GATE_ODO_ENCODER_RESOLUTION));
 
 	motionMotors[MOTION_MOTOR_LEFT].name = "moteur gauche";
-	motionMotors[MOTION_MOTOR_LEFT].pwmId = 1;
+	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;
 	motionMotors[MOTION_MOTOR_LEFT].inputGain = 60 * GATE_MOTOR_DRIVING1_RED / (float)(2 * M_PI * GATE_DRIVING1_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
+	motionMotors[MOTION_MOTOR_LEFT].encoder = &motionMotorEncoder[MOTION_MOTOR_LEFT];
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(3, 0, 0, 1000);
 
-	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT]);
-	trajectory.init(&detection, &motion, &location);
+	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
+	motionMotors[MOTION_MOTOR_RIGHT].pwmId = PWM_2;
+	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
+	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(3, 0, 0, 1000);
+
+	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
+	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
 
 	return 0;
 }
