@@ -7,32 +7,6 @@
 
 #define  MIN(a, b)      (((a) < (b)) ? (a) : (b))
 
-enum
-{
-	EVENT_NEW_OBJECT = 1,
-	EVENT_MOVE_OBJECT,
-	EVENT_MANAGE_CAN_MOTOR,
-	EVENT_SET_IO,
-	EVENT_SET_POSITION,
-	EVENT_SET_MAX_CYCLE_COUNT,
-};
-
-enum
-{
-	EVENT_MANAGE_CAN_MOTOR_CONNECT,
-	EVENT_MANAGE_CAN_MOTOR_DISCONNECT,
-};
-
-struct atlantronic_model_tx_event
-{
-	uint32_t type;        //!< type
-	union
-	{
-		uint8_t data[256];    //!< données
-		uint32_t data32[64];  //!< données
-	};
-};
-
 Qemu::Qemu()
 {
 	m_com = NULL;
@@ -161,7 +135,7 @@ void Qemu::destroy()
 
 int Qemu::add_object(int flags, const struct polyline polyline, int* objectId)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 	unsigned int i = 0;
 
 	event.type = EVENT_NEW_OBJECT;
@@ -186,7 +160,7 @@ int Qemu::add_object(int flags, const struct polyline polyline, int* objectId)
 
 int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 
 	if( id < 0 )
 	{
@@ -209,7 +183,7 @@ int Qemu::move_object(int id, Vect2 origin, VectPlan delta)
 //! @param nodeId : nodeId ou 0 pour tous
 int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 
 	event.type = EVENT_MANAGE_CAN_MOTOR;
 	event.data32[0] = nodeId;
@@ -227,7 +201,7 @@ int Qemu::manage_canopen_connexion(int nodeId, bool connected)
 
 int Qemu::setIo(uint32_t id, bool val)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 	event.type = EVENT_SET_IO;
 	event.data32[0] = id;
 	event.data32[1] = val?1:0;
@@ -237,7 +211,7 @@ int Qemu::setIo(uint32_t id, bool val)
 
 int Qemu::setPosition(VectPlan pos)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 	event.type = EVENT_SET_POSITION;
 	memcpy(&event.data32[0], &pos, sizeof(pos));
 
@@ -246,9 +220,19 @@ int Qemu::setPosition(VectPlan pos)
 
 int Qemu::setMaxCycleCount(uint32_t maxCycleCount)
 {
-	struct atlantronic_model_tx_event event;
+	QemuAtlantronicModelEvent event;
 	event.type = EVENT_SET_MAX_CYCLE_COUNT;
 	event.data32[0] = maxCycleCount;
 
 	return m_com->write((void*) &event, sizeof(event));
 }
+
+int Qemu::setQemuRobotParameters(QemuRobotParameters param)
+{
+	QemuAtlantronicModelEvent event;
+	event.type = EVENT_SET_ROBOT_PARAMETERS;
+	memcpy(&event.data[0], &param, sizeof(param));
+
+	return m_com->write((void*) &event, sizeof(event));
+}
+

@@ -8,22 +8,8 @@
 #include "robot_parameters.h"
 #include "kernel/control.h"
 
-#define GATE_VOIE_MOT                            144.0f
-#define GATE_VOIE_ODO                             90.0f
-#define GATE_DRIVING1_WHEEL_RADIUS                90.0f
-#define GATE_DRIVING2_WHEEL_RADIUS                90.0f
-#define GATE_MOTOR_DRIVING1_RED             -(78/10.0f)  //!< reduction moteur 1
-#define GATE_MOTOR_DRIVING2_RED              (78/10.0f)  //!< reduction moteur 2
-#define GATE_MOTOR_RPM_TO_VOLT               (1/163.5f)
-
-#define GATE_ODO1_WHEEL_RADIUS                    39.7f
-#define GATE_ODO2_WHEEL_RADIUS                    39.7f
-#define GATE_ODO1_WAY                                 1
-#define GATE_ODO2_WAY                                -1
-#define GATE_ODO_ENCODER_RESOLUTION                4096
-
-KinematicsParameters paramDriving = {1800, 2000, 2000};
-KinematicsParameters linearParam = {1000, 2000, 2000};
+KinematicsParameters paramDriving = {1800, 1500, 1500};
+KinematicsParameters linearParam = {1000, 1500, 1500};
 KinematicsParameters angularParam = {3, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];

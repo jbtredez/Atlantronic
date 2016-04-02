@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include "glplot.h"
+#include "disco/star/star.h"
+#include "disco/gate/gate.h"
 
 enum
 {
@@ -19,6 +21,40 @@ static const char* robotName[ROBOT_MAX] =
 };
 
 static Robot robot[ROBOT_MAX];
+
+static QemuRobotParameters robotParam[ROBOT_MAX] =
+{
+	{
+		STAR_ODO1_WHEEL_RADIUS,
+		STAR_ODO2_WHEEL_RADIUS,
+		STAR_ODO1_WAY,
+		STAR_ODO2_WAY,
+		STAR_ODO_ENCODER_RESOLUTION,
+		STAR_VOIE_ODO,
+		STAR_VOIE_MOT,
+		STAR_DRIVING1_WHEEL_RADIUS,
+		STAR_DRIVING2_WHEEL_RADIUS,
+		STAR_MOTOR_ENCODER_RESOLUTION,
+		STAR_MOTOR_DRIVING1_RED,
+		STAR_MOTOR_DRIVING2_RED,
+		1,
+	},
+	{
+		GATE_ODO1_WHEEL_RADIUS,
+		GATE_ODO2_WHEEL_RADIUS,
+		GATE_ODO1_WAY,
+		GATE_ODO2_WAY,
+		GATE_ODO_ENCODER_RESOLUTION,
+		GATE_VOIE_ODO,
+		GATE_VOIE_MOT,
+		GATE_DRIVING1_WHEEL_RADIUS,
+		GATE_DRIVING2_WHEEL_RADIUS,
+		1024,
+		GATE_MOTOR_DRIVING1_RED,
+		GATE_MOTOR_DRIVING2_RED,
+		0,
+	}
+};
 
 void robotItfCallback(void* arg);
 
@@ -98,6 +134,11 @@ int main(int argc, char *argv[])
 		{
 			fprintf(stderr, "robot init failed\n");
 			return -1;
+		}
+
+		if( robot[i].m_qemu.isInitDone() )
+		{
+			robot[i].m_qemu.setQemuRobotParameters(robotParam[i]);
 		}
 	}
 

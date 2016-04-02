@@ -15,6 +15,13 @@
 #define DETECTION_OPPONENT_ROBOT_RADIUS     200
 #define HOKUYO_REG_SEG                      200
 
+enum hokuyo_id
+{
+	HOKUYO1 = 0,
+	HOKUYO2,
+	HOKUYO_MAX,
+};
+
 enum detection_type
 {
 	DETECTION_FULL,

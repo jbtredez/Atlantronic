@@ -4,6 +4,7 @@
 #include "linux/tools/com/com_usb.h"
 #include "kernel/math/polyline.h"
 #include "kernel/math/VectPlan.h"
+#include "qemu/hw/arm/atlantronic_model.h"
 
 #define OBJECT_MOBILE                1
 #define OBJECT_SEEN_BY_HOKUYO        2
@@ -28,6 +29,7 @@ class Qemu
 		int setIo(uint32_t id, bool val);
 		int setPosition(VectPlan pos);
 		int setMaxCycleCount(uint32_t maxCycleCount);
+		int setQemuRobotParameters(QemuRobotParameters param);
 		bool isInitDone(){return m_com!=NULL;};
 
 	protected:
