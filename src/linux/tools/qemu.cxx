@@ -14,6 +14,7 @@ enum
 	EVENT_MANAGE_CAN_MOTOR,
 	EVENT_SET_IO,
 	EVENT_SET_POSITION,
+	EVENT_SET_MAX_CYCLE_COUNT,
 };
 
 enum
@@ -239,6 +240,15 @@ int Qemu::setPosition(VectPlan pos)
 	struct atlantronic_model_tx_event event;
 	event.type = EVENT_SET_POSITION;
 	memcpy(&event.data32[0], &pos, sizeof(pos));
+
+	return m_com->write((void*) &event, sizeof(event));
+}
+
+int Qemu::setMaxCycleCount(uint32_t maxCycleCount)
+{
+	struct atlantronic_model_tx_event event;
+	event.type = EVENT_SET_MAX_CYCLE_COUNT;
+	event.data32[0] = maxCycleCount;
 
 	return m_com->write((void*) &event, sizeof(event));
 }

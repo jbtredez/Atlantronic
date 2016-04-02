@@ -21,8 +21,8 @@ enum
 
 static const char* robotName[ROBOT_MAX] =
 {
-	"main",
-	"pmi",
+	"Star",
+	"Gate",
 };
 
 static Robot robot[ROBOT_MAX];

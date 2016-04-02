@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <limits.h>
 #include "glplot.h"
 
 enum
@@ -13,8 +14,8 @@ enum
 
 static const char* robotName[ROBOT_MAX] =
 {
-	"main",
-	"pmi",
+	"Star",
+	"Gate",
 };
 
 static Robot robot[ROBOT_MAX];
@@ -114,5 +115,25 @@ int main(int argc, char *argv[])
 void robotItfCallback(void* /*arg*/)
 {
 	glplot_update();
+	int minCycleCount = INT_MAX;
+	for(int i = 0; i < ROBOT_MAX; i++)
+	{
+		if( robot[i].m_qemu.isInitDone() )
+		{
+			int t_ms = (int)(robot[i].m_robotItf.current_time * 1000);
+			if( t_ms < minCycleCount )
+			{
+				minCycleCount = t_ms;
+			}
+		}
+	}
+
+	for(int i = 0; i < ROBOT_MAX; i++)
+	{
+		if( robot[i].m_qemu.isInitDone() )
+		{
+			robot[i].m_qemu.setMaxCycleCount(minCycleCount + 500);
+		}
+	}
 }
 

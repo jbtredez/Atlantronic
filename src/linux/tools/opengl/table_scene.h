@@ -2,7 +2,8 @@
 #define TABLE_SCENE_H
 
 #include "linux/tools/opengl/table3d.h"
-#include "linux/tools/opengl/robot3d.h"
+#include "linux/tools/opengl/StarRobot3d.h"
+#include "linux/tools/opengl/GateRobot3d.h"
 #include "linux/tools/opengl/gl_font.h"
 #include "linux/tools/graphique.h"
 #include "linux/tools/Robot.h"
@@ -71,8 +72,8 @@ class TableScene
 		int m_robotCount;
 		int m_qemuObjectOpponentId;
 		Table3d m_table3d;
-		Robot3d m_mainRobot3d;
-		Robot3d m_pmiRobot3d;
+		StarRobot3d m_mainRobot3d;
+		GateRobot3d m_pmiRobot3d;
 		GlObject m_opponentRobot3d;
 		VectPlan m_opponentRobotPos;
 		GlFont* m_glfont;

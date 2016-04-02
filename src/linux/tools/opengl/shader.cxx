@@ -79,6 +79,12 @@ void Shader::printGlLog(GLuint object)
 GLuint Shader::createShader(int shader_type, const char *source)
 {
 	GLuint shader = glCreateShader(shader_type);
+	if( shader == 0 )
+	{
+		fprintf(stderr, "glCreateShader(%d) error %d", shader_type, glGetError());
+		return 0;
+	}
+
 	glShaderSource(shader, 1, &source, NULL);
 	glCompileShader(shader);
 

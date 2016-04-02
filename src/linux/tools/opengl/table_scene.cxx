@@ -223,7 +223,7 @@ void TableScene::drawRobot(Graphique* graph)
 
 		m_shader->setColor(0, 0, 0);
 		m_robot2d.render(GL_LINE_STRIP);
-
+#if 0
 		for(int i =0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 		{
 			dynamixel_data* dynamixel = &robotItf->ax12[i];
@@ -250,6 +250,7 @@ void TableScene::drawRobot(Graphique* graph)
 			}
 		}
 		m_mainRobot3d.elevatorHeight = robotItf->last_control_usb_data.elevatorHeight;
+#endif
 		m_mainRobot3d.draw();
 
 		m_shader->setModelView(oldModelView);
@@ -284,7 +285,6 @@ void TableScene::drawRobot(Graphique* graph)
 
 void TableScene::printInfos(Graphique* graph)
 {
-	RobotInterface* robotItf = &m_robot[0].m_robotItf;
 	m_glfont->m_textShader.setProjection(m_tableProjection * m_tableModelview);
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_GRAPH_LINK] )
@@ -322,97 +322,107 @@ void TableScene::printInfos(Graphique* graph)
 	int lineHeight = -1.5*m_glfont->digitHeight * ry;
 	float x = graph->roi_xmax - 45*m_glfont->width*rx;
 	float y = graph->roi_ymax + lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "time  %13.6f", robotItf->current_time);
-	y += lineHeight;
-	struct control_usb_data* data = &robotItf->last_control_usb_data;
-	double match_time = 0;
-	if( robotItf->start_time )
+
+	for(int i = 0; i < m_robotCount; i++)
 	{
-		match_time = robotItf->current_time - robotItf->start_time;
-	}
-	m_glfont->glPrintf(x, y, rx, ry, "match %13.6f", match_time);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "power off %#9x", data->power_state);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "pos  %6.0f %6.0f %6.2f",
-			data->pos.x, data->pos.y,
-			data->pos.theta * 180 / M_PI);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "wpos %6.0f %6.0f %6.2f",
-			data->wanted_pos.x, data->wanted_pos.y,
-			data->wanted_pos.theta * 180 / M_PI);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "v %5.2f %5.2f (wanted %5.2f %5.2f)",
-			data->mes_motors[0].v, data->mes_motors[1].v, data->cons_motors_v[0], data->cons_motors_v[1]);
-	y += lineHeight;
-/*	glfont->glPrintf(x, y, rx, ry, "gyro %6.2f",
-					data->pos_theta_gyro_euler * 180 / M_PI);
-	y += lineHeight;*/
-	m_glfont->glPrintf(x, y, rx, ry, "vBat  %6.3f", data->vBat);
-	y += lineHeight;
-	for(int i = 0; i < 4; i++)
-	{
-		m_glfont->glPrintf(x, y, rx, ry, "iPwm%i  %6.3f", i, data->iPwm[i]);
+		RobotInterface* robotItf = &m_robot[i].m_robotItf;
+
+		m_glfont->glPrintf(x, y, rx, ry, "%s", robotItf->getName());
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "time  %13.6f", robotItf->current_time);
+		y += lineHeight;
+		struct control_usb_data* data = &robotItf->last_control_usb_data;
+		double match_time = 0;
+		if( robotItf->start_time )
+		{
+			match_time = robotItf->current_time - robotItf->start_time;
+		}
+		m_glfont->glPrintf(x, y, rx, ry, "match %13.6f", match_time);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "power off %#9x", data->power_state);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "pos  %6.0f %6.0f %6.2f",
+				data->pos.x, data->pos.y,
+				data->pos.theta * 180 / M_PI);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "wpos %6.0f %6.0f %6.2f",
+				data->wanted_pos.x, data->wanted_pos.y,
+				data->wanted_pos.theta * 180 / M_PI);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "v %5.2f %5.2f (wanted %5.2f %5.2f)",
+				data->mes_motors[0].v, data->mes_motors[1].v, data->cons_motors_v[0], data->cons_motors_v[1]);
+		y += lineHeight;
+	/*	glfont->glPrintf(x, y, rx, ry, "gyro %6.2f",
+						data->pos_theta_gyro_euler * 180 / M_PI);
+		y += lineHeight;*/
+		m_glfont->glPrintf(x, y, rx, ry, "vBat  %6.3f", data->vBat);
+		y += lineHeight;
+		for(int i = 0; i < 4; i++)
+		{
+			m_glfont->glPrintf(x, y, rx, ry, "iPwm%i  %6.3f", i, data->iPwm[i]);
+			y += lineHeight;
+		}
+		m_glfont->glPrintf(x, y, rx, ry, "cod  %6d %6d %6d", data->encoder[0], data->encoder[1], data->encoder[2]);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "io %d%d %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
+				data->gpio & 0x01,
+				(data->gpio >> 1) & 0x01,
+				(data->gpio >> 2) & 0x01,
+				(data->gpio >> 3) & 0x01,
+				(data->gpio >> 4) & 0x01,
+				(data->gpio >> 5) & 0x01,
+				(data->gpio >> 6) & 0x01,
+				(data->gpio >> 7) & 0x01,
+				(data->gpio >> 8) & 0x01,
+				(data->gpio >> 9) & 0x01,
+				(data->gpio >> 10) & 0x01,
+				(data->gpio >> 11) & 0x01,
+				(data->gpio >> 12) & 0x01,
+				(data->gpio >> 13) & 0x01);
+		y += lineHeight;
+		m_glfont->glPrintf(x, y, rx, ry, "pump blocked %d %d %d %d",
+				(data->pumpState & 0x01),
+				((data->pumpState >> 1) & 0x01),
+				((data->pumpState >> 2) & 0x01),
+				((data->pumpState >> 3) & 0x01));
+		y += lineHeight;
+		for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
+		{
+			if( robotItf->ax12[i].id != 0)
+			{
+				m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", robotItf->ax12[i].id,
+						robotItf->ax12[i].pos * 180 / M_PI,
+						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+						(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
+				y += lineHeight;
+			}
+		}
+		/*for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
+		{
+			if( robotItf->rx24[i].id != 0)
+			{
+				m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", robotItf->rx24[i].id,
+						robotItf->rx24[i].pos * 180 / M_PI,
+						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
+						(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
+						(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
+				y += lineHeight;
+			}
+		}*/
+		m_glfont->glPrintf(x, y, rx, ry, "elevator %5.2f", data->elevatorHeight);
+		y += lineHeight;
+		/*float* mat = data->arm_matrix.val;
+		glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
+		y += lineHeight;
+		glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);
+		y += lineHeight;
+		glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[8], mat[9], mat[10], mat[11]);
+		y += lineHeight;*/
 		y += lineHeight;
 	}
-	m_glfont->glPrintf(x, y, rx, ry, "cod  %6d %6d %6d", data->encoder[0], data->encoder[1], data->encoder[2]);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "io %d%d %d%d %d%d %d%d %d%d %d%d ingo %d go %d",
-			data->gpio & 0x01,
-			(data->gpio >> 1) & 0x01,
-			(data->gpio >> 2) & 0x01,
-			(data->gpio >> 3) & 0x01,
-			(data->gpio >> 4) & 0x01,
-			(data->gpio >> 5) & 0x01,
-			(data->gpio >> 6) & 0x01,
-			(data->gpio >> 7) & 0x01,
-			(data->gpio >> 8) & 0x01,
-			(data->gpio >> 9) & 0x01,
-			(data->gpio >> 10) & 0x01,
-			(data->gpio >> 11) & 0x01,
-			(data->gpio >> 12) & 0x01,
-			(data->gpio >> 13) & 0x01);
-	y += lineHeight;
-	m_glfont->glPrintf(x, y, rx, ry, "pump blocked %d %d %d %d",
-			(data->pumpState & 0x01),
-			((data->pumpState >> 1) & 0x01),
-			((data->pumpState >> 2) & 0x01),
-			((data->pumpState >> 3) & 0x01));
-	y += lineHeight;
-	for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
-	{
-		if( robotItf->ax12[i].id != 0)
-		{
-			m_glfont->glPrintf(x, y, rx, ry, "ax12 %2d pos %7.2f target %d stuck %d error %2x", robotItf->ax12[i].id,
-					robotItf->ax12[i].pos * 180 / M_PI,
-					(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-					(robotItf->ax12[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-					(robotItf->ax12[i].error.transmit_error << 8) + robotItf->ax12[i].error.internal_error);
-			y += lineHeight;
-		}
-	}
-	/*for(int i = 0; i < DYNAMIXEL_MAX_ON_BUS; i++)
-	{
-		if( robotItf->rx24[i].id != 0)
-		{
-			m_glfont->glPrintf(x, y, rx, ry, "rx24 %2d pos %7.2f target %d stuck %d error %2x", robotItf->rx24[i].id,
-					robotItf->rx24[i].pos * 180 / M_PI,
-					(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_TARGET_REACHED)?1:0,
-					(robotItf->rx24[i].flags & DYNAMIXEL_FLAG_STUCK) ? 1:0,
-					(robotItf->rx24[i].error.transmit_error << 8) + robotItf->rx24[i].error.internal_error);
-			y += lineHeight;
-		}
-	}*/
-	m_glfont->glPrintf(x, y, rx, ry, "elevator %5.2f", data->elevatorHeight);
-	y += lineHeight;
-	/*float* mat = data->arm_matrix.val;
-	glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[0], mat[1], mat[2], mat[3]);
-	y += lineHeight;
-	glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[4], mat[5], mat[6], mat[7]);
-	y += lineHeight;
-	glfont->glPrintf(x, y, rx, ry, "arm_mat %5.2f %5.2f %5.2f %5.2f", mat[8], mat[9], mat[10], mat[11]);
-	y += lineHeight;*/
 }
+
 void TableScene::draw(Graphique* graph)
 {
 	static Vect2 pt[CONTROL_USB_DATA_MAX];

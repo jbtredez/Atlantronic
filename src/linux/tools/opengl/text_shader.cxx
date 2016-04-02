@@ -39,7 +39,7 @@ int TextShader::init()
 	m_uniform_color = getUniformLocation("color");
 	m_uniform_projection = getUniformLocation("projection");
 
-	if( m_attribute_coord == -1 || m_uniform_tex == -1 || m_uniform_color == -1)
+	if( m_attribute_coord == -1 || m_uniform_tex == -1 || m_uniform_color == -1 || m_uniform_projection == -1)
 	{
 		return -1;
 	}

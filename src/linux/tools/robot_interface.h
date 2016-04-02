@@ -210,6 +210,7 @@ class RobotInterface
 		RobotVersion versionCompatible;
 		char stm_code_version[41];
 		static const char expected_version[41];
+		const char* getName(){return name;};
 
 	protected:
 		char msg[65537]; // taille max = 65536 (header.size) + 1
