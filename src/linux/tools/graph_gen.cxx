@@ -8,32 +8,35 @@
 //!< à partir d'une liste de noeud et des liens bidirectionels
 
 #define SYM_POINT(x, y)        Vect2( x, y), Vect2( -x, y)
-#define SYM_LINK1(a,b)         { a, b }, {a+1, b+1}
-#define SYM_LINK2(a,b,c)       { a, b }, { a, c }, {a+1, b+1}, {a+1, c+1}
-#define SYM_LINK3(a,b,c,d)     { a, b }, { a, c }, { a, d }, {a+1, b+1}, {a+1, c+1}, {a+1, d+1}
-#define SYM_LINK4(a,b,c,d,e)   { a, b }, { a, c }, { a, d }, { a, e }, {a+1, b+1}, {a+1, c+1}, {a+1, d+1}, {a+1, e+1}
+#define SYM_LINK1(a,b)         		{ a, b }, {a+1, b+1}
+#define SYM_LINK2(a,b,c)       		{ a, b }, { a, c }, {a+1, b+1}, {a+1, c+1}
+#define SYM_LINK3(a,b,c,d)     		{ a, b }, { a, c }, { a, d }, {a+1, b+1}, {a+1, c+1}, {a+1, d+1}
+#define SYM_LINK4(a,b,c,d,e)   		{ a, b }, { a, c }, { a, d }, { a, e }, {a+1, b+1}, {a+1, c+1}, {a+1, d+1}, {a+1, e+1}
 
 const Vect2 pt[] =
 {
-	SYM_POINT( -1200  ,  700  ),   //  0
-	SYM_POINT( -1200  ,  500  ),   //  2
-	SYM_POINT(  -750  ,  700  ),   //  4
-    SYM_POINT(  -750  ,  200  ),   //  6
-    SYM_POINT(  -700  ,    0  ),   //  8
-    SYM_POINT(  -800  , -400  ),   //  10
-    SYM_POINT( -1200  , -400  ),   //  12
-    SYM_POINT( -1200  , -700  ),   //  14
-    SYM_POINT(  -800  , -700  ),   //  16
-    SYM_POINT(  -400  , -700  ),   //  18
-    SYM_POINT(  -400  , -400  ),   //  20
-    SYM_POINT(  -400  ,    0  ),   //  22
-    SYM_POINT(  -400  ,  200  ),   //  24
+	SYM_POINT( -1200	,  	-600), 	//0
+	SYM_POINT( -900		,   -800),	//2
+	SYM_POINT( -450		,   -800),	//4
+	SYM_POINT( -1200	,  	-300),	//6
+	SYM_POINT( -900		,   -500),	//8
+	SYM_POINT( -400		,   -450),	//10
+	SYM_POINT( -550		,  	-200),	//12
+	SYM_POINT( -950		,  	-150),	//14
+	SYM_POINT( -750		,  	  50),	//16
+	SYM_POINT( -1100	,  	 100),	//18
+	SYM_POINT( -800		,  	 350),	//20
+	SYM_POINT( -1100	,  	 500),	//22
+	SYM_POINT( -900		,  	 750),	//24
+	SYM_POINT( -550		,  	 400),	//26
+	SYM_POINT( -630		,  	 600),	//28
+	SYM_POINT( -200		,  	 450),	//30
+	SYM_POINT( -200		,  	 750),	//32
 
-    Vect2(     0  ,  200  ),   // 26
-    Vect2(     0  ,    0  ),   // 27
-    Vect2(     0  , -400  ),   // 28
-    Vect2(     0  , -600  ),   // 29
+    Vect2(     0  , -800  ),   // 28
+    Vect2(     0  , -500  ),   // 29
 };
+
 
 struct link
 {
@@ -41,36 +44,47 @@ struct link
 	uint8_t b;
 };
 
+
+
+
 const struct link link[] =
 {
-    SYM_LINK3(0,2,4,6),
-    SYM_LINK1(2,6),
-    SYM_LINK1(4,6),
-    SYM_LINK2(6,8,24),
-    SYM_LINK2(8,10,22),
-    SYM_LINK3(10,12,16,20),
-    SYM_LINK1(12,14),
-    SYM_LINK1(14,16),
-    SYM_LINK1(16,18),
-
-    { 18, 20 },
-    { 18, 29 },
-    { 19, 21 },
-    { 19, 29 },
-
-    { 20, 22 },
-    { 20, 28 },
-    { 21, 23 },
-    { 21, 28 },
-    { 22, 24 },
-    { 22, 27 },
-    { 23, 25 },
-    { 23, 27 },
-    { 24, 26 },
-    { 25, 26 },
-    { 26, 27 },
-    { 27, 28 },
-    { 28, 29 },
+	SYM_LINK3(0,2,6,8),
+	SYM_LINK3(2,4,8,10),
+	{ 4, 8},
+	{ 4, 10},
+	{ 4, 34},
+	{ 4, 35},
+	{ 5, 9},
+	{ 5, 11},
+	{ 5, 34},
+	{ 5, 35},
+	SYM_LINK3(6,8,14,18),
+	SYM_LINK3(8,10,12,14),
+	{10, 12},
+	{10, 14},
+	{10, 34},
+	{10, 35},
+	{11, 13},
+	{11, 15},
+	{11, 34},
+	{11, 35},
+	SYM_LINK2(12,14,16),
+	SYM_LINK2(14,16,18),
+	SYM_LINK2(16,18,20),
+	SYM_LINK2(18,20,22),
+	SYM_LINK4(20,22,24,26,28),
+	SYM_LINK1(22,24),
+	SYM_LINK1(24,28),
+	SYM_LINK3(26,28,30,32),
+	SYM_LINK2(28,30,32),
+	{30, 31},
+	{30, 32},
+	{30, 33},
+	{31, 32},
+	{31, 33},
+	{32, 33},
+	{34, 35},
 };
 
 int main()
@@ -159,7 +173,7 @@ int main()
 	}
 
 	printf("\n//!< noeuds du graph\n");
-	printf("const struct GraphNode Graph::graph_node[GRAPH_NUM_NODE] =\n{\n");
+	printf("const struct GraphNode Graph::m_graphNode[GRAPH_NUM_NODE] =\n{\n");
 	for( i = 0; i < num_nodes; i++)
 	{
 		printf("\t{Vect2( %8.2ff, %8.2ff), %2u, %2u},\n", gnode[i].pos.x, gnode[i].pos.y, gnode[i].link_id, gnode[i].link_num);
@@ -167,7 +181,7 @@ int main()
 	printf("};\n");
 
 	printf("\n//!< liens du graph.\n");
-	printf("const struct GraphLink Graph::graph_link[GRAPH_NUM_LINK] =\n{\n");
+	printf("const struct GraphLink Graph::m_graphLink[GRAPH_NUM_LINK] =\n{\n");
 	for( i = 0; i < 2*num_link; i++)
 	{
 		printf("\t{%2u, %2u, %4u, %9.6ff},\n", glink[i].a, glink[i].b, glink[i].dist, glink[i].alpha);
