@@ -157,6 +157,7 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 #ifndef GTK3
 	gdk_gl_query();
 #endif
+
 	// création de la fenêtre
 	main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(main_window),"USB Interface");
@@ -218,7 +219,7 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 			gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM (menuObj), TRUE);
 		}
 	}
-
+/*
 	for(long i = 0 ; i < GRAPH_NUM; i++)
 	{
 		menu1 = gtk_menu_new();	// menu "niveau 1"
@@ -237,7 +238,7 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 			}
 		}
 	}
-
+*/
 	menu1 = gtk_menu_new();	// menu "niveau 1"
 	menuObj = gtk_menu_item_new_with_label("Options");
 	gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuObj), menu1);
@@ -314,7 +315,22 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), reloadBtn, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), switchColorBtn, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), goBtn, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), toolbar, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(main_vboxToolBar), toolbar, FALSE, FALSE, 0);
+	for(long i = 0 ; i < GRAPH_NUM; i++)
+	{
+		for(long j = 0; j < MAX_COURBES; j++)
+		{
+			char* name = graph[i].courbes_names[j];
+			if( name )
+			{
+				GtkWidget* btn = gtk_check_button_new_with_label(name);
+
+				gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(btn), graph[i].courbes_activated[j]);
+				g_signal_connect(G_OBJECT(btn), "toggled", G_CALLBACK(select_active_courbe), &graph[i].courbes_activated[j]);
+				gtk_box_pack_start(GTK_BOX(main_vboxToolBar), btn, FALSE, FALSE, 0);
+			}
+		}
+	}
 
 	gtk_box_pack_start(GTK_BOX(main_hbox), main_vbox, TRUE, TRUE, 0);
 

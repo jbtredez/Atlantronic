@@ -15,8 +15,8 @@ static int carpet_module_init()
 	leftCarpet.setTorqueLimit(1);
 	rightCarpet.setTorqueLimit(1);
 
-	leftCarpet.setGoalLimits(0, 1.4);
-	rightCarpet.setGoalLimits(-1.4, 0);
+	//leftCarpet.setGoalLimits(0, 1.4);
+	//rightCarpet.setGoalLimits(-1.4, 0);
 
 	usb_add_cmd(USB_CMD_CARPET, carpet_cmd, NULL);
 	return 0;

@@ -23,8 +23,8 @@ static int wing_module_init()
 	leftWing.setTorqueLimit(0.8);
 	rightWing.setTorqueLimit(0.8);
 
-	leftWing.setGoalLimits(-M_PI_2, 0);
-	rightWing.setGoalLimits(0, M_PI_2);
+	//leftWing.setGoalLimits(-M_PI_2, 0);
+	//rightWing.setGoalLimits(0, M_PI_2);
 
 	return 0;
 }

@@ -7,6 +7,7 @@
 #include "kernel/control/kinematics.h"
 #include "kernel/fault.h"
 #include "MotorInterface.h"
+#include "kernel/driver/encoder/EncoderInterface.h"
 
 enum MotorState
 {
@@ -58,7 +59,7 @@ enum MotorWriteConfIndex
 #define CAN_MIP_MOTOR_STATE_ERR_CMD_VS_MES        0x80
 #define CAN_MIP_MOTOR_STATE_ERROR                 0xf0
 
-class CanMipMotor : public CanMipNode, public MotorInterface
+class CanMipMotor : public CanMipNode, public MotorInterface, public EncoderInterface
 {
 	public:
 		CanMipMotor();
@@ -82,6 +83,10 @@ class CanMipMotor : public CanMipNode, public MotorInterface
 		systime t_motor_online;
 		systime lastRaz;
 		systime lastMotionEnable;
+
+		void update(float /*dt*/){};
+		float getPosition(){return kinematics.pos;};
+		float getSpeed(){return kinematics.v;};
 
 		void update(portTickType absTimeout);
 		void set_speed(float v);
