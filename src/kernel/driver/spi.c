@@ -49,9 +49,9 @@ int spi_module_init()
 	spi_register_device(SPI_DEVICE_LCD, GPIOC, 2);
 	//spi_register_device(SPI_DEVICE_UNUSED_SPI5, GPIOF, 10);
 	spi_driver_init(SPI_DRIVER_5, SPI5, GPIOF, 7, GPIOF, 8, GPIOF, 9, GPIO_AF_SPI5, DMA2_Stream4, 2, DMA2_Stream3, 2);
-	//spi_register_device(SPI_DEVICE_UNUSED1_SPI6, GPIOB, 3);
+	spi_register_device(SPI_DEVICE_ESP8266, GPIOB, 3);
 	//spi_register_device(SPI_DEVICE_UNUSED2_SPI6, GPIOE, 2);
-	//spi_driver_init(SPI_DRIVER_6, SPI6, GPIOG, 13, GPIOG, 12, GPIOG, 14, GPIO_AF_SPI6, DMA2_Stream5, 1, DMA2_Stream6, 1);
+	spi_driver_init(SPI_DRIVER_6, SPI6, GPIOG, 13, GPIOG, 12, GPIOG, 14, GPIO_AF_SPI6, DMA2_Stream5, 1, DMA2_Stream6, 1);
 
 	NVIC_EnableIRQ(SPI5_IRQn);
 	NVIC_EnableIRQ(DMA2_Stream3_IRQn);
@@ -60,12 +60,12 @@ int spi_module_init()
 	NVIC_SetPriority(DMA2_Stream3_IRQn, PRIORITY_IRQ_DMA2_STREAM3);
 	NVIC_SetPriority(DMA2_Stream4_IRQn, PRIORITY_IRQ_DMA2_STREAM4);
 
-	//NVIC_EnableIRQ(SPI6_IRQn);
-	//NVIC_EnableIRQ(DMA2_Stream5_IRQn);
-	//NVIC_EnableIRQ(DMA2_Stream6_IRQn);
-	//NVIC_SetPriority(SPI6_IRQn, PRIORITY_IRQ_SPI);
-	//NVIC_SetPriority(DMA2_Stream5_IRQn, PRIORITY_IRQ_DMA2_STREAM5);
-	//NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
+	NVIC_EnableIRQ(SPI6_IRQn);
+	NVIC_EnableIRQ(DMA2_Stream5_IRQn);
+	NVIC_EnableIRQ(DMA2_Stream6_IRQn);
+	NVIC_SetPriority(SPI6_IRQn, PRIORITY_IRQ_SPI);
+	NVIC_SetPriority(DMA2_Stream5_IRQn, PRIORITY_IRQ_DMA2_STREAM5);
+	NVIC_SetPriority(DMA2_Stream6_IRQn, PRIORITY_IRQ_DMA2_STREAM6);
 
 	return 0;
 }
@@ -198,6 +198,46 @@ void isr_dma2_stream4()
 	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
 }
 
+void isr_dma2_stream5()
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
+	if( DMA2->HISR | DMA_HISR_TCIF5)
+	{
+		DMA2->HIFCR |= DMA_HIFCR_CTCIF5;
+		DMA2_Stream4->CR &= ~DMA_SxCR_EN;
+
+		if( SPI5->CR1 & SPI_CR1_BIDIOE )
+		{
+			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_6].sem, &xHigherPriorityTaskWoken);
+		}
+	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
+void isr_dma2_stream6()
+{
+	portBASE_TYPE xHigherPriorityTaskWoken = 0;
+	portSET_INTERRUPT_MASK_FROM_ISR();
+
+	if( DMA2->HISR | DMA_HISR_TCIF6)
+	{
+		DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
+		DMA2_Stream4->CR &= ~DMA_SxCR_EN;
+
+		if( SPI5->CR1 & SPI_CR1_BIDIOE )
+		{
+			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_6].sem, &xHigherPriorityTaskWoken);
+		}
+	}
+
+	portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+	portCLEAR_INTERRUPT_MASK_FROM_ISR(0);
+}
+
 void isr_spi5(void)
 {
 	int status = SPI5->SR;
@@ -210,6 +250,25 @@ void isr_spi5(void)
 
 		// on desactive le DMA de reception
 		DMA2_Stream3->CR &= ~DMA_SxCR_EN;
+
+		// clear overrun : lecture DR puis lecture SR
+		SPI5->DR;
+		SPI5->SR;
+	}
+}
+
+void isr_spi6(void)
+{
+	int status = SPI6->SR;
+	if( status & (SPI_SR_OVR | SPI_SR_MODF | SPI_SR_CRCERR) )
+	{
+		// TODO : remonter erreur + log erreur
+
+		// erreur MODF qui ne doit pas arriver (NSS soft et SSI = 1)
+		// erreur CRC qui ne doit pas arriver (pas active)
+
+		// on desactive le DMA de reception
+		DMA2_Stream5->CR &= ~DMA_SxCR_EN;
 
 		// clear overrun : lecture DR puis lecture SR
 		SPI5->DR;
