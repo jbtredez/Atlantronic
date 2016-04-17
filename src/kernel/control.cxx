@@ -106,15 +106,14 @@ static void control_task(void* /*arg*/)
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 
 
-		// en xbee, on diminue la frequence pour la bande passante
+		// en wifi, on diminue la frequence pour la bande passante
 		SPICycleCount++;
 		if( SPICycleCount > 10000)
 		{
 			//struct control_usb_data_light* data = &control_usb_data;
-		//	spi_write(SPI_DEVICE_ESP8266, SPIMess, SPI_SIZE);
+			spi_write(SPI_DEVICE_ESP8266, SPIMess, SPI_SIZE);
 			SPICycleCount = 0;
 		}
-
 
 		// en xbee, on diminue la frequence pour la bande passante
 		xbeeCycleCount++;
