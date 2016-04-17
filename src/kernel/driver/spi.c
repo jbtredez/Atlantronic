@@ -42,8 +42,8 @@ int spi_module_init()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_DMA2EN;
 
 	// reset SPI5 et SPI6
-	RCC->APB2RSTR |= RCC_APB2RSTR_SPI5RST /*| RCC_APB2RSTR_SPI6RST*/;
-	RCC->APB2RSTR &= ~(RCC_APB2RSTR_SPI5RST /*| RCC_APB2RSTR_SPI6RST*/);
+	RCC->APB2RSTR |= RCC_APB2RSTR_SPI5RST | RCC_APB2RSTR_SPI6RST;
+	RCC->APB2RSTR &= ~(RCC_APB2RSTR_SPI5RST | RCC_APB2RSTR_SPI6RST);
 
 	spi_register_device(SPI_DEVICE_GYRO, GPIOC, 1);
 	spi_register_device(SPI_DEVICE_LCD, GPIOC, 2);
@@ -271,8 +271,8 @@ void isr_spi6(void)
 		DMA2_Stream5->CR &= ~DMA_SxCR_EN;
 
 		// clear overrun : lecture DR puis lecture SR
-		SPI5->DR;
-		SPI5->SR;
+		SPI6->DR;
+		SPI6->SR;
 	}
 }
 

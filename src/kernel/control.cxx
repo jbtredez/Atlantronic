@@ -4,6 +4,7 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/driver/xbee.h"
+#include "kernel/driver/spi.h"
 #include "kernel/location/location.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro/gyro.h"
@@ -21,6 +22,11 @@
 #define CONTROL_STACK_SIZE       350
 
 static struct control_usb_data control_usb_data;
+
+#define SPI_SIZE 32
+static uint8_t SPIMess[SPI_SIZE] = {0};
+
+
 
 static void control_task(void* arg);
 
@@ -42,6 +48,22 @@ static void control_task(void* /*arg*/)
 {
 	uint32_t wake_time = 0;
 	int xbeeCycleCount = 0;
+	int SPICycleCount = 0;
+
+	///MESS ID Data 0x00
+	SPIMess[0] = 0x00;
+	//MESS Size
+	SPIMess[1] =0x04;
+	//MESS TOTO
+	SPIMess[2] = 'T';
+	SPIMess[3] = 'O';
+	SPIMess[4] = 'T';
+	SPIMess[5] = 'O';
+
+
+
+
+
 
 	while(1)
 	{
@@ -82,6 +104,17 @@ static void control_task(void* /*arg*/)
 		//rx24.updateUsbData(&control_usb_data.rx24);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
+
+
+		// en xbee, on diminue la frequence pour la bande passante
+		SPICycleCount++;
+		if( SPICycleCount > 10000)
+		{
+			//struct control_usb_data_light* data = &control_usb_data;
+			spi_write(SPI_DEVICE_ESP8266, SPIMess, SPI_SIZE);
+			SPICycleCount = 0;
+		}
+
 
 		// en xbee, on diminue la frequence pour la bande passante
 		xbeeCycleCount++;
