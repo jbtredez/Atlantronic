@@ -27,7 +27,6 @@ static struct control_usb_data control_usb_data;
 static uint8_t SPIMess[SPI_SIZE] = {0};
 
 
-
 static void control_task(void* arg);
 
 static int control_module_init()
@@ -59,7 +58,6 @@ static void control_task(void* /*arg*/)
 	SPIMess[3] = 'O';
 	SPIMess[4] = 'T';
 	SPIMess[5] = 'O';
-
 
 
 
