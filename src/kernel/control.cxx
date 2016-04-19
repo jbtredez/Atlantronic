@@ -24,7 +24,8 @@
 static struct control_usb_data control_usb_data;
 
 #define SPI_SIZE 32
-static uint8_t SPIMess[SPI_SIZE] = {0};
+static uint8_t SPIMess[SPI_SIZE] ;
+static uint8_t SPIRecp[SPI_SIZE];
 
 
 static void control_task(void* arg);
@@ -106,10 +107,11 @@ static void control_task(void* /*arg*/)
 
 		// en wifi, on diminue la frequence pour la bande passante
 		SPICycleCount++;
-		if( SPICycleCount > 10000)
+		if( SPICycleCount > 1000)
 		{
 			//struct control_usb_data_light* data = &control_usb_data;
-			spi_write(SPI_DEVICE_ESP8266, SPIMess, SPI_SIZE);
+			spi_transaction(SPI_DEVICE_ESP8266, SPIMess,SPIRecp, SPI_SIZE);
+			log_format(LOG_INFO, "Send SPI message");
 			SPICycleCount = 0;
 		}
 
