@@ -23,8 +23,8 @@
 
 static struct control_usb_data control_usb_data;
 
-#define SPI_SIZE 32
-static uint8_t SPIMess[SPI_SIZE] ;
+#define SPI_SIZE 34 /// cmd + adrr + 32 octets
+static uint8_t SPIMess[SPI_SIZE]  ;
 static uint8_t SPIRecp[SPI_SIZE];
 
 
@@ -50,15 +50,23 @@ static void control_task(void* /*arg*/)
 	int xbeeCycleCount = 0;
 	int SPICycleCount = 0;
 
+	for(int i= 0 ; i< SPI_SIZE;i++)
+	{
+		SPIMess[i] = 0xff;
+	}
 	///MESS ID Data 0x00
-	SPIMess[0] = 0x00;
+	SPIMess[0] = 0x02;
+	SPIMess[1] = 0x00;
+
+	///MESS ID Data 0x00
+	SPIMess[2] = 0x00;
 	//MESS Size
-	SPIMess[1] =0x04;
+	SPIMess[3] =0x04;
 	//MESS TOTO
-	SPIMess[2] = 'T';
-	SPIMess[3] = 'O';
 	SPIMess[4] = 'T';
 	SPIMess[5] = 'O';
+	SPIMess[6] = 'T';
+	SPIMess[7] = 'O';
 
 
 
