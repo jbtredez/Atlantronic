@@ -23,9 +23,9 @@
 
 static struct control_usb_data control_usb_data;
 
-#define SPI_SIZE 32
-static uint8_t SPIMess[SPI_SIZE] = {0};
-
+#define SPI_SIZE 34 /// cmd + adrr + 32 octets
+static uint8_t SPIMess[SPI_SIZE]  ;
+static uint8_t SPIRecp[SPI_SIZE];
 
 
 static void control_task(void* arg);
@@ -50,16 +50,23 @@ static void control_task(void* /*arg*/)
 	int xbeeCycleCount = 0;
 	int SPICycleCount = 0;
 
+	for(int i= 0 ; i< SPI_SIZE;i++)
+	{
+		SPIMess[i] = 0xff;
+	}
 	///MESS ID Data 0x00
-	SPIMess[0] = 0x00;
+	SPIMess[0] = 0x02;
+	SPIMess[1] = 0x00;
+
+	///MESS ID Data 0x00
+	SPIMess[2] = 0x00;
 	//MESS Size
-	SPIMess[1] =0x04;
+	SPIMess[3] =0x04;
 	//MESS TOTO
-	SPIMess[2] = 'T';
-	SPIMess[3] = 'O';
 	SPIMess[4] = 'T';
 	SPIMess[5] = 'O';
-
+	SPIMess[6] = 'T';
+	SPIMess[7] = 'O';
 
 
 
@@ -106,15 +113,14 @@ static void control_task(void* /*arg*/)
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
 
 
-		// en xbee, on diminue la frequence pour la bande passante
+		// en wifi, on diminue la frequence pour la bande passante
 		SPICycleCount++;
-		if( SPICycleCount > 10000)
+		if( SPICycleCount > 1000)
 		{
 			//struct control_usb_data_light* data = &control_usb_data;
-		//	spi_write(SPI_DEVICE_ESP8266, SPIMess, SPI_SIZE);
+			spi_transaction(SPI_DEVICE_ESP8266, SPIMess,SPIRecp, SPI_SIZE);
 			SPICycleCount = 0;
 		}
-
 
 		// en xbee, on diminue la frequence pour la bande passante
 		xbeeCycleCount++;

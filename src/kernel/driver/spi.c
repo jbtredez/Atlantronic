@@ -36,10 +36,11 @@ static void spi_driver_init(const enum spi_driver id, SPI_TypeDef* spi_reg, GPIO
 int spi_module_init()
 {
 	// activation du SPI5 et SPI6
-	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN /*| RCC_APB2ENR_SPI6EN*/;
+	RCC->APB2ENR |= RCC_APB2ENR_SPI5EN | RCC_APB2ENR_SPI6EN;
 
 	// activation GPIOC (CS du gyro et CS du lcd), GPIOF (SCK, MOSI et MISO sur le port F) et dma2
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_DMA2EN;
+	//GPIOB pour CS1 du spi6 et	GPIOF pour SCK, MOSI et MISO du spi 6.
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN| RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOFEN | RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_DMA2EN;
 
 	// reset SPI5 et SPI6
 	RCC->APB2RSTR |= RCC_APB2RSTR_SPI5RST | RCC_APB2RSTR_SPI6RST;
@@ -206,9 +207,9 @@ void isr_dma2_stream5()
 	if( DMA2->HISR | DMA_HISR_TCIF5)
 	{
 		DMA2->HIFCR |= DMA_HIFCR_CTCIF5;
-		DMA2_Stream4->CR &= ~DMA_SxCR_EN;
+		DMA2_Stream5->CR &= ~DMA_SxCR_EN;
 
-		if( SPI5->CR1 & SPI_CR1_BIDIOE )
+		if( SPI6->CR1 & SPI_CR1_BIDIOE )
 		{
 			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_6].sem, &xHigherPriorityTaskWoken);
 		}
@@ -226,9 +227,9 @@ void isr_dma2_stream6()
 	if( DMA2->HISR | DMA_HISR_TCIF6)
 	{
 		DMA2->HIFCR |= DMA_HIFCR_CTCIF6;
-		DMA2_Stream4->CR &= ~DMA_SxCR_EN;
+		DMA2_Stream6->CR &= ~DMA_SxCR_EN;
 
-		if( SPI5->CR1 & SPI_CR1_BIDIOE )
+		if( SPI6->CR1 & SPI_CR1_BIDIOE )
 		{
 			xSemaphoreGiveFromISR(spi_driver[SPI_DRIVER_6].sem, &xHigherPriorityTaskWoken);
 		}

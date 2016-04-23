@@ -62,6 +62,7 @@ enum fault
 #define ERR_INIT_PINCE          0x217
 #define ERR_INIT_ADC            0x218
 #define ERR_INIT_XBEE           0x219
+#define ERR_INIT_ESP8266        0x220
 #define ERR_INIT_TEST           0x221
 
 #endif

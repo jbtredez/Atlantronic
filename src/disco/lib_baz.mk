@@ -10,3 +10,4 @@ lib-baz += kernel/driver/Dynamixel.o
 lib-baz += kernel/driver/DynamixelManager.o
 lib-baz += kernel/driver/xbee.o
 lib-baz += kernel/driver/can.o
+lib-baz += kernel/driver/ESP8266.o
