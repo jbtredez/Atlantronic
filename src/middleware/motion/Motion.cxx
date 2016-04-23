@@ -81,26 +81,6 @@ void Motion::compute()
 {
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 
-// si odometrie sur roues motrices (utiliser uniquement pour tests sur cale)
-#if 0
-	int motor_mes_valid = 1;
-
-	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
-	{
-		if( ! m_motionMotor[i]->is_op_enable() )
-		{
-			motor_mes_valid = 0;
-		}
-
-		m_kinematicsMes[i] = m_motionMotor[i]->kinematics;
-	}
-
-	if( motor_mes_valid )
-	{
-		// mise à jour de la position
-		m_location->update(m_kinematicsMes, CONTROL_DT);
-	}
-#else
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m_motionEncoder[i]->update(CONTROL_DT);
@@ -108,7 +88,6 @@ void Motion::compute()
 	}
 
 	m_location->update(m_kinematicsMes, CONTROL_DT);
-#endif
 	m_posMes = m_location->getPosition();
 	m_speedMes = m_location->getSpeed();
 
@@ -354,9 +333,8 @@ void Motion::updateUsbData(struct control_usb_data* data)
 
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		data->cons_motors_v[i] = m_kinematics[i].v;// * m_motionMotor[i]->inputGain;
+		data->cons_motors_v[i] = m_kinematics[i].v;
 		data->mes_motors[i] = m_kinematicsMes[i];
-		//data->mes_motors[i].v *= m_motionMotor[i]->inputGain;
 		data->mes_motor_current[i] = m_motionMotor[i]->current;
 	}
 

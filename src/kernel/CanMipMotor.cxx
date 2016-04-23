@@ -7,8 +7,8 @@
 #include <math.h>
 
 #define CAN_MIP_MOTOR_MAX_SPEED            2800
-#define CAN_MIP_MOTOR_MAX_ACCELERATION     6000
-#define CAN_MIP_MOTOR_MAX_DECELERATION     3000
+#define CAN_MIP_MOTOR_MAX_ACCELERATION     12000
+#define CAN_MIP_MOTOR_MAX_DECELERATION     12000
 
 CanMipMotor::CanMipMotor()
 {
@@ -105,26 +105,6 @@ void CanMipMotor::update(portTickType absTimeout)
 	{
 		case CAN_MOTOR_MIP_INIT:
 			fault(fault_disconnected_id, FAULT_CLEAR);
-			log_format(LOG_INFO, "configure mip %d max voltage", nodeId);
-			configure(MOTOR_CONF_IDX_MANUAL_VOLTAGE, 28300);
-			{
-				struct can_msg msg;
-				msg.id = 0x01 + (nodeId << 3);
-				msg.format = CAN_STANDARD_FORMAT;
-				msg.type = CAN_DATA_FRAME;
-				// init position + enable
-				lastRaz = systick_get_time();
-				log_format(LOG_INFO, "mip init %d", nodeId);
-				msg.size = 2;
-				msg.data[0] = CAN_MIP_CMD_RAZ;
-				msg.data[1] = 0x01;
-				can_write(&msg, 0);
-
-				// disable
-				msg.size = 1;
-				msg.data[0] = CAN_MIP_CMD_DISABLE;
-				can_write(&msg, 0);
-			}
 			state = CAN_MOTOR_MIP_INIT_WAIT;
 			break;
 		case CAN_MOTOR_MIP_INIT_WAIT:
@@ -267,7 +247,7 @@ void CanMipMotor::set_speed(float v)
 	msg.data[2] = (speed >> 8) & 0xff;
 	msg.data[3] = v >= 0 ? 1 : 0;
 	msg.data[4] = 0xf4;
-	msg.data[5] = 1;
+	msg.data[5] = 5;
 
 	can_write(&msg, 0);
 }

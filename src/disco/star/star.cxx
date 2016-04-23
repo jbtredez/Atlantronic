@@ -5,6 +5,7 @@
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
 #include "kernel/driver/encoder/EncoderAB.h"
 #include "robot_parameters.h"
+#include "kernel/log.h"
 
 KinematicsParameters paramDriving = {1800, 1500, 1500};
 KinematicsParameters linearParam = {700, 600, 600};
@@ -30,6 +31,9 @@ Motion motion;
 Trajectory trajectory;
 CanMipMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
+
+// test odometrie sur roues motrice (tests sur cale par exemple)
+//#define TEST_ODO_MOT
 
 static int star_robot_module_init()
 {
@@ -59,7 +63,12 @@ static int star_robot_module_init()
 	hokuyo[1].scan.min_object_size = 1;
 	hokuyo[1].scan.min_distance = 100;
 */
+#ifndef TEST_ODO_MOT
 	location.init(&odoWheelKinematicsModelDiff);
+#else
+	log(LOG_ERROR, "Attention - orodemtrie sur roues motrices !!");
+	location.init(&motorKinematicsModelDiff); // TESTS odo sur roues motirces
+#endif
 	detection.init(&hokuyo[0], &hokuyo[1], &location);
 
 	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, STAR_ODO1_WAY * 2 * M_PI * STAR_ODO1_WHEEL_RADIUS / (float)(STAR_ODO_ENCODER_RESOLUTION));
@@ -82,7 +91,11 @@ static int star_robot_module_init()
 		can_mip_register_node(&motionMotors[i]);
 	}
 
+#ifndef TEST_ODO_MOT
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
+#else
+	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT]);
+#endif
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
 
 	return 0;
