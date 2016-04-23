@@ -16,7 +16,7 @@ class KinematicsModelDiff : public KinematicsModel
 
 		//!< calcul des consignes au niveau des moteurs avec saturations
 		//!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-		float computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd);
+		float computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, bool saturate);
 
 	protected:
 		float m_voie;

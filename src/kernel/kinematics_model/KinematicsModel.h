@@ -16,7 +16,7 @@ class KinematicsModel
 
 		//!< calcul des consignes au niveau des moteurs avec saturations
 		//!< @return coefficient multiplicateur applique sur speed pour respecter les saturations
-		virtual float computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd) = 0;
+		virtual float computeActuatorCmd(VectPlan u, float speed, float dt, Kinematics* kinematics_cmd, bool saturate) = 0;
 };
 
 #endif

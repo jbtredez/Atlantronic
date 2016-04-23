@@ -34,13 +34,13 @@ void MotionTrajectoryState::entry(void* data)
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
 		m->m_kinematics[i] = m->m_kinematicsMes[i];
+		m->m_linearSpeedCheck[i].reset();
 	}
 
 	m->m_targetNotReachedStartTime.ms = 0;
 	m->m_targetNotReachedStartTime.ns = 0;
 	m->m_xPid.reset();
 	m->m_thetaPid.reset();
-	m->m_linearSpeedCheck.reset();
 }
 
 void MotionTrajectoryState::run(void* data)
@@ -49,10 +49,20 @@ void MotionTrajectoryState::run(void* data)
 	KinematicsParameters vParam = m->m_wantedLinearParam;
 	KinematicsParameters wParam = m->m_wantedAngularParam;
 
-	enum motion_check_speed res = m->m_linearSpeedCheck.compute(m->m_speedCmd.x, m->m_speedMes.x);
-	if( res != MOTION_SPEED_OK )
+	bool collision = false;
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		log(LOG_INFO, "MOTION_COLSISION");
+		enum motion_check_speed res = m->m_linearSpeedCheck[i].compute(m->m_kinematics[i].v, m->m_kinematicsMes[i].v);
+		if( res != MOTION_SPEED_OK )
+		{
+			collision = true;
+			log_format(LOG_ERROR, "speed check error on motor %d", i);
+		}
+	}
+
+	if( collision )
+	{
+		log_format(LOG_INFO, "MOTION_COLSISION");
 		m->m_status = MOTION_COLSISION;
 		stop(m);
 		return;
@@ -163,7 +173,7 @@ void MotionTrajectoryState::run(void* data)
 		n = v.theta;
 		u_loc = VectPlan(0, 0, 1);
 	}
-	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics);
+	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics, true);
 
 	VectPlan err = m->m_path.getLastPoint() - m->m_posMes;
 	if( vTh == VectPlan() && err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )

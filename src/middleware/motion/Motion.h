@@ -163,7 +163,7 @@ class Motion
 		VectPlan m_posMes;
 		VectPlan m_speedMes;
 		systime m_targetNotReachedStartTime;
-		MotionSpeedCheck m_linearSpeedCheck;
+		MotionSpeedCheck m_linearSpeedCheck[MOTION_MOTOR_MAX];
 		Pid m_xPid;
 		Pid m_yPid;
 		Pid m_thetaPid;

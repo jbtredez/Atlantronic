@@ -150,7 +150,7 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 		{
 			deltat = fabsf(distAng / wmax);
 		}
-		float k = kinematicsModel->computeActuatorCmd(u, -speed, deltat, kinematicsCmdTmp);
+		float k = kinematicsModel->computeActuatorCmd(u, -speed, deltat, kinematicsCmdTmp, true);
 		vmax *= k;
 		wmax *= k;
 	}

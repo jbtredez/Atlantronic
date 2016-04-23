@@ -21,7 +21,7 @@ void EncoderSimulFromKinematicsModel::update(float dt)
 		n = v.theta;
 		u = VectPlan(0, 0, 1);
 	}
-	m_model->computeActuatorCmd(u, n, dt, m_kinematics);
+	m_model->computeActuatorCmd(u, n, dt, m_kinematics, false);
 }
 
 float EncoderSimulFromKinematicsModel::getPosition()

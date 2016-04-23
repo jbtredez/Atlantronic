@@ -23,7 +23,7 @@ void MotionSpeedState::entry(void* data)
 void MotionSpeedState::run(void* data)
 {
 	Motion* m = (Motion*) data;
-	m->m_kinematicsModel->computeActuatorCmd(m->m_u, m->m_v, CONTROL_DT, m->m_kinematics);
+	m->m_kinematicsModel->computeActuatorCmd(m->m_u, m->m_v, CONTROL_DT, m->m_kinematics, true);
 	m->motionUpdateMotors();
 }
 

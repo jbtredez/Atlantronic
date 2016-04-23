@@ -54,7 +54,10 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 		return ERR_INIT_CONTROL;
 	}
 
-	m_linearSpeedCheck.init(1000, 100);
+	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
+	{
+		m_linearSpeedCheck[i].init(100, 100);
+	}
 	m_xPid.init(0, 0, 0, 100);// TODO voir saturation
 	m_yPid.init(0, 0, 0, 1);// TODO voir saturation + regler
 	m_thetaPid.init(0, 0, 0, 1); // TODO voir saturation
@@ -88,8 +91,11 @@ void Motion::compute()
 	}
 
 	m_location->update(m_kinematicsMes, CONTROL_DT);
+
 	m_posMes = m_location->getPosition();
 	m_speedMes = m_location->getSpeed();
+	// on deplace la mesure sur les roues motrices
+	m_kinematicsModel->computeActuatorCmd(m_speedMes, 1, CONTROL_DT, m_kinematicsMes, false);
 
 	m_motionStateMachine.execute();
 
