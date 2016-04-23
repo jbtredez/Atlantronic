@@ -119,7 +119,6 @@ static void control_task(void* /*arg*/)
 		{
 			//struct control_usb_data_light* data = &control_usb_data;
 			spi_transaction(SPI_DEVICE_ESP8266, SPIMess,SPIRecp, SPI_SIZE);
-			log_format(LOG_INFO, "Send SPI message");
 			SPICycleCount = 0;
 		}
 
