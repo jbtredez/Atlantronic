@@ -5,18 +5,22 @@
 #include "kernel/semphr.h"
 #include "kernel/module.h"
 #include "kernel/driver/usb.h"
+#include "kernel/driver/spi.h"
 #include "kernel/log.h"
 #include <string.h>
 
-#define ESP8266_STACK_SIZE       350
-#define ESP8266_TX_BUFER_SIZE       4096
+#define ESP8266_STACK_SIZE       		350
+#define ESP8266_TX_BUFER_SIZE       	4096
+#define ESP8266_SPI_DATA_SIZE       	32  //32 octets d'un Packet vers le SPI
+#define ESP8266_SPI_TRANSACTION_SIZE    2 + ESP8266_SPI_DATA_SIZE  //2 octets de cmd (cmd+adresse) et 32 octets de msg
+#define ESP8266_USB_HEADER_SIZE			4
 
 static void esp8266_task(void* arg);
-static unsigned char esp8266_tx_buffer_dma[256];
-static unsigned char esp8266_rx_buffer_dma[256];
+static unsigned char esp8266_tx_buffer_dma[ESP8266_SPI_TRANSACTION_SIZE];
+static unsigned char esp8266_rx_buffer_dma[ESP8266_SPI_TRANSACTION_SIZE];
 static uint32_t esp8266_configure(uint16_t at_cmd, uint32_t val);
-static uint32_t esp8266_send_data_api(const unsigned char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l);
-static uint32_t esp8266_wait_send_data_api();
+static uint32_t esp8266_send_data_api(const unsigned char* msg, uint16_t size);
+
 static void esp8266_cmd(void* arg, void* data);
 static ESP8266Status esp8266_init();
 
@@ -67,7 +71,6 @@ void esp8266_task(void* arg)
 	vTaskDelay(ms_to_tick(1000));
 
 
-
 	while(1)
 	{
 		if( esp8266_status == ESP8266_STATUS_DISCONNECTED)
@@ -89,21 +92,19 @@ void esp8266_task(void* arg)
 				sizeMax = esp8266_buffer_size;
 			}
 
-			// limitation par paquets de 100 (buffer dma de 256 avec entete de message xbee)
-			if( sizeMax > 100 )
+			// limitation par paquets de 32 octets
+			if( sizeMax > ESP8266_SPI_TRANSACTION_SIZE )
 			{
-				sizeMax = 100;
+				sizeMax = ESP8266_SPI_TRANSACTION_SIZE;
 			}
-/*
 			esp8266_send_data_api(esp8266_buffer + esp8266_buffer_begin, sizeMax);
 			esp8266_buffer_size -= sizeMax;
-			esp8266_buffer_begin = (esp8266_buffer_begin + sizeMax) % XBEE_TX_BUFER_SIZE;
-			*/
+			esp8266_buffer_begin = (esp8266_buffer_begin + sizeMax) % ESP8266_TX_BUFER_SIZE;
+
 		}
 
 		xSemaphoreGive(esp8266_mutex);
 
-		esp8266_wait_send_data_api();
 		vTaskDelay(10);
 
 		if( esp8266_buffer_size == 0)
@@ -115,7 +116,9 @@ void esp8266_task(void* arg)
 
 static ESP8266Status esp8266_init()
 {
-	uint32_t res = 0;// =// esp8266_configure(XBEE_AT_NETWORK_ID, XBEE_NETWORK_ID);
+
+	esp8266_configure(0,0);
+	uint32_t res = 1;// =// esp8266_configure(XBEE_AT_NETWORK_ID, XBEE_NETWORK_ID);
 	if( res )
 	{
 		return ESP8266_STATUS_DISCONNECTED;
@@ -208,6 +211,7 @@ void esp8266_add(uint16_t type, void* msg, uint16_t size)
 // TODO mettre en commun les fonctions protocole avec le fichier usb.c
 void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const char* msg)
 {
+	uint8_t Esp_msg[ESP8266_MSG_SIZE_MAX +2 ] ;
 	uint16_t msg_size = strlen(msg);
 	char log_header[32];
 
@@ -236,73 +240,46 @@ void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const
 	uint16_t size = msg_size + len + 1;
 	struct usb_header usb_header = {USB_LOG, size};
 
+	uint8_t Espmsg_size =  2;
+	memcpy(Esp_msg + Espmsg_size , &usb_header,ESP8266_USB_HEADER_SIZE);
+
+	Espmsg_size += ESP8266_USB_HEADER_SIZE;
+	memcpy(Esp_msg + Espmsg_size , log_header, len);
+
+	Espmsg_size += len;
+	memcpy(Esp_msg + Espmsg_size, msg, msg_size);
+
+	Espmsg_size += msg_size;
+
+	Esp_msg[ Espmsg_size ] = '\n';
+	Espmsg_size++;
+
+	///Header de traitement du logiciel de L'ESP
+	Esp_msg[0] = ESP8266_CMD_DATA;
+	Esp_msg[1] = Espmsg_size;
+
 	xSemaphoreTake(esp8266_mutex, portMAX_DELAY);
 
-	esp8266_write(&usb_header, sizeof(usb_header));
-	esp8266_write(log_header, len);
-	esp8266_write(msg, msg_size);
-	esp8266_write_byte((unsigned  char)'\n');
+	esp8266_write(Esp_msg,Espmsg_size);
+
 
 	xSemaphoreGive(esp8266_mutex);
 
 	xSemaphoreGive(esp8266_write_sem);
 }
 
-static uint32_t esp8266_send_data_api(const unsigned char* msg, uint16_t size, uint32_t addr_h, uint32_t addr_l)
+static uint32_t esp8266_send_data_api(const unsigned char* msg, uint16_t size)
 {
-	uint16_t api_specific_size = size + 14;
 
-	esp8266_tx_buffer_dma[0] = 0x7e;
-	esp8266_tx_buffer_dma[1] = (api_specific_size >> 8) & 0xff;
-	esp8266_tx_buffer_dma[2] = api_specific_size & 0xff;
-	esp8266_tx_buffer_dma[3] = ESP8266_CMD_WRITE  ;  // type de trame
-	esp8266_tx_buffer_dma[4] = 1;              // id de la trame
-	esp8266_tx_buffer_dma[5] = addr_h >> 24;   // adresse destination 64 bits
-	esp8266_tx_buffer_dma[6] = addr_h >> 16;   // adresse destination 64 bits
-	esp8266_tx_buffer_dma[7] = addr_h >> 8;    // adresse destination 64 bits
-	esp8266_tx_buffer_dma[8] = addr_h;         // adresse destination 64 bits
-	esp8266_tx_buffer_dma[9] = addr_l >> 24;   // adresse destination 64 bits
-	esp8266_tx_buffer_dma[10] = addr_l >> 16;  // adresse destination 64 bits
-	esp8266_tx_buffer_dma[11] = addr_l >> 8;   // adresse destination 64 bits
-	esp8266_tx_buffer_dma[12] = addr_l;        // adresse destination 64 bits
-	esp8266_tx_buffer_dma[13] = 0xff;          // adresse destination 16 bit (0xfffe si pas connue)
-	esp8266_tx_buffer_dma[14] = 0xfe;          // adresse destination 16 bit (0xfffe si pas connue)
-	esp8266_tx_buffer_dma[15] = 0;             // broadcast radius
-	esp8266_tx_buffer_dma[16] = 0;             // options
-	memcpy(&esp8266_tx_buffer_dma[17], msg, size);
 
-	uint8_t checksum = 0;
-	int i;
-	for(i = 3; i < size + 17; i++)
-	{
-		checksum += esp8266_tx_buffer_dma[i];
-	}
-
-	esp8266_tx_buffer_dma[size+17] = 0xff - checksum;
-//	usart_set_read_dma_size(XBEE_USART, 11);
-//	usart_send_dma_buffer(XBEE_USART, size + 18);
+	esp8266_tx_buffer_dma[0] = ESP8266_CMD_SPI_WRITE; //Adresse CMD
+	esp8266_tx_buffer_dma[1] = ESP8266_CMD_SPI_ADDR_DATA;
+	memcpy(&esp8266_tx_buffer_dma[2], msg, size); //32  octets de données
+	spi_transaction(SPI_DEVICE_ESP8266, esp8266_tx_buffer_dma, esp8266_rx_buffer_dma, ESP8266_SPI_TRANSACTION_SIZE);
 
 	return 0;
 }
 
-static uint32_t esp8266_wait_send_data_api()
-{
-	//REAds
-	int ret = 0; //usart_wait_read(XBEE_USART, 500);
-	if( ret != 0)
-	{
-		// pas de log xbee pour ne pas partir en boucle d'erreur...
-		//usb_add_log(LOG_ERROR, __FUNCTION__, __LINE__, "usart_wait_read error");
-		//log_format(LOG_ERROR, "xbee send data usart error %d", ret);
-		return -1;
-	}
-
-	/*log_format(LOG_INFO, "tx status %x %x %x %x %x %x %x %x %x %x %x",
-			xbee_rx_buffer_dma[0], xbee_rx_buffer_dma[1], xbee_rx_buffer_dma[2], xbee_rx_buffer_dma[3],
-			xbee_rx_buffer_dma[4], xbee_rx_buffer_dma[5], xbee_rx_buffer_dma[6], xbee_rx_buffer_dma[7],
-			xbee_rx_buffer_dma[8], xbee_rx_buffer_dma[9], xbee_rx_buffer_dma[10]);*/
-	return 0;
-}
 
 static void esp8266_cmd(void* arg, void* data)
 {
