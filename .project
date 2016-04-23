@@ -26,7 +26,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1369421635304</id>
+			<id>1461417340260</id>
 			<name></name>
 			<type>10</type>
 			<matcher>
@@ -35,7 +35,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1369421635419</id>
+			<id>1461417340271</id>
 			<name></name>
 			<type>10</type>
 			<matcher>
@@ -44,12 +44,57 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1369421635510</id>
+			<id>1461417340280</id>
 			<name></name>
 			<type>10</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
 				<arguments>1.0-projectRelativePath-matches-false-false-qemu</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1461417340281</id>
+			<name></name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-projectRelativePath-matches-false-false-Esp8266_SPI_UART_mode</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1461417340424</id>
+			<name></name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-projectRelativePath-matches-false-false-obj</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1461417340426</id>
+			<name></name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-projectRelativePath-matches-false-false-bin</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1461417340427</id>
+			<name></name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-projectRelativePath-matches-false-false-qemu</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1461417340428</id>
+			<name></name>
+			<type>10</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-projectRelativePath-matches-false-false-Esp8266_SPI_UART_mode</arguments>
 			</matcher>
 		</filter>
 	</filteredResources>
