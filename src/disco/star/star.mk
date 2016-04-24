@@ -21,3 +21,4 @@ star_robot += disco/star/action/deposecarpette.o
 star_robot += disco/star/action/SpotLight.o
 star_robot += disco/star/action/Feed.o
 star_robot += disco/star/action/Move.o
+star_robot += disco/star/action/hut.o

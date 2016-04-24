@@ -23,6 +23,7 @@
 #include "disco/star/action/deposecarpette.h"
 #include "disco/star/action/gobelet.h"
 #include "disco/star/action/Move.h"
+#include "disco/star/action/hut.h"
 
 #include "strat/strat_simple.h"
 
@@ -69,6 +70,8 @@ static void strat_task(void* arg)
 
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint(690 ,-780,0.0f);
+
+	#if 0
 	Clapet clap1(firstcheckpoint, "Clapet 1", &robothomologation);
 
 	//start
@@ -158,12 +161,25 @@ static void strat_task(void* arg)
 	//firstcheckpoint.y = 500;
 	FeetLateral feet4(firstcheckpoint, "Feet 4", &robothomologation);
 
-/*	firstcheckpoint.x = 750;
+	/*	firstcheckpoint.x = 750;
 	firstcheckpoint.y = 650;
 	feet feet5(firstcheckpoint, "Feet 5", &robothomologation);
 */
+#endif
+
+	// Essai 1
+	firstcheckpoint.x = 900;
+	firstcheckpoint.y = 600;
+	firstcheckpoint.theta = -M_PI/2;
+	Hut hut1(firstcheckpoint, "Test hut strat", &robothomologation);
+
+
+
 	StratSimple strat;
 
+	strat.add_action(&hut1);
+
+#if 0
 //	strat.add_action(&light1);
 //	strat.add_action(&startzone);
 	strat.add_action(&feet1);
@@ -188,6 +204,7 @@ static void strat_task(void* arg)
 	strat.add_action(&dropcinema);
 	strat.add_action(&clap3);
 //	strat.add_action(&clap2);
+#endif
 
 	match_wait_go();
 	strat_color = match_get_color();
