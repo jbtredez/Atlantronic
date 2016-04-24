@@ -121,6 +121,7 @@ void Qemu::reboot()
 {
 	stopQemu();
 	startQemu();
+	setQemuRobotParameters(m_robotParam);
 }
 
 void Qemu::destroy()
@@ -229,6 +230,7 @@ int Qemu::setMaxCycleCount(uint32_t maxCycleCount)
 
 int Qemu::setQemuRobotParameters(QemuRobotParameters param)
 {
+	m_robotParam = param;
 	QemuAtlantronicModelEvent event;
 	event.type = EVENT_SET_ROBOT_PARAMETERS;
 	memcpy(&event.data[0], &param, sizeof(param));

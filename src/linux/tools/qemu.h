@@ -43,6 +43,7 @@ class Qemu
 		pid_t m_pid; //!< pid de qemu
 		int m_lastObjectId;
 		char m_name[256];
+		QemuRobotParameters m_robotParam;
 };
 
 #endif
