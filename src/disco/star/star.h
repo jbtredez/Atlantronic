@@ -25,14 +25,14 @@ extern Location location;
 extern Motion motion;
 extern Trajectory trajectory;
 extern DynamixelManager ax12;
-extern Dynamixel leftWing;
-extern Dynamixel rightWing;
-extern Dynamixel leftCarpet;
-extern Dynamixel rightCarpet;
-extern Dynamixel lowFinger;
-extern Dynamixel highFinger;
-extern Dynamixel rightFinger;
-extern Dynamixel leftFinger;
+extern Dynamixel leftFishWing;
+extern Dynamixel leftFishRemover;
+extern Dynamixel rightFishWing;
+extern Dynamixel rightFishRemover;
+extern Dynamixel leftDoor;
+extern Dynamixel rightDoor;
+extern Dynamixel towerPliers;
+extern Dynamixel parasol;
 #endif
 
 #endif

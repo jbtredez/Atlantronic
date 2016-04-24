@@ -13,8 +13,7 @@ KinematicsParameters linearParam = {1000, 1500, 1500};
 KinematicsParameters angularParam = {3, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
-Dynamixel leftWing;
-Dynamixel rightWing;
+Dynamixel parasol;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
@@ -33,8 +32,7 @@ static int gate_robot_module_init()
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
 
-	leftWing.init(&ax12, AX12_LEFT_WING);
-	rightWing.init(&ax12, AX12_RIGHT_WING);
+	parasol.init(&ax12, AX12_GATE_PARASOL);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);

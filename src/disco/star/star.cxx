@@ -12,14 +12,14 @@ KinematicsParameters linearParam = {700, 600, 600};
 KinematicsParameters angularParam = {3, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
-Dynamixel leftWing;
-Dynamixel rightWing;
-Dynamixel leftCarpet;
-Dynamixel rightCarpet;
-Dynamixel lowFinger;
-Dynamixel highFinger;
-Dynamixel rightFinger;
-Dynamixel leftFinger;
+Dynamixel leftFishWing;
+Dynamixel leftFishRemover;
+Dynamixel rightFishWing;
+Dynamixel rightFishRemover;
+Dynamixel leftDoor;
+Dynamixel rightDoor;
+Dynamixel towerPliers;
+Dynamixel parasol;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
@@ -40,14 +40,14 @@ static int star_robot_module_init()
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
 
-	leftWing.init(&ax12, AX12_LEFT_WING);
-	rightWing.init(&ax12, AX12_RIGHT_WING);
-	leftCarpet.init(&ax12, AX12_LEFT_CARPET);
-	rightCarpet.init(&ax12, AX12_RIGHT_CARPET);
-	lowFinger.init(&ax12, AX12_LOW_FINGER);
-	highFinger.init(&ax12, AX12_HIGH_FINGER);
-	rightFinger.init(&ax12, AX12_RIGHT_FINGER);
-	leftFinger.init(&ax12, AX12_LEFT_FINGER);
+	leftFishWing.init(&ax12, AX12_STAR_LEFT_FISH_WING);
+	leftFishRemover.init(&ax12, AX12_STAR_LEFT_FISH_REMOVER);
+	rightFishWing.init(&ax12, AX12_STAR_RIGHT_FISH_WING);
+	rightFishRemover.init(&ax12, AX12_STAR_RIGHT_FISH_REMOVER);
+	leftDoor.init(&ax12, AX12_STAR_LEFT_DOOR);
+	rightDoor.init(&ax12, AX12_STAR_RIGHT_DOOR);
+	towerPliers.init(&ax12, AX12_STAR_TOWER_PLIERS);
+	parasol.init(&ax12, AX12_STAR_PARASOL);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
