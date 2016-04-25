@@ -56,7 +56,7 @@ typedef enum io
 #define IO_ELEVATOR_STEP   GPIO_11
 #define IO_GO              GPIO_IN_GO
 
-uint32_t gpio_get_state(void);
+uint16_t gpio_get_state(void);
 
 int gpio_get(Io io);
 

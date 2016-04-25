@@ -5,6 +5,7 @@
 //! @brief Gestion puissance
 //! @author Atlantronic
 
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,7 +31,7 @@ struct power_cmd_arg
 //------------------ fonctions inline------------------
 
 //! @return 0 si on a la puissance, masque POWER_OFF_* sinon
-static inline int power_get()
+static inline uint8_t power_get()
 {
 	extern int power_state;
 	return power_state;

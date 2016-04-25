@@ -36,7 +36,8 @@ Package Ubuntu:
 	- libgtkgl2.0-dev
 	- libepoxy-dev
 	- libglm-dev
-
+pb d'installation du driver usb utiliser la ligne suivante:
+sudo insmod /Atlantronic/src/linux/modules/atlantronic_usb.ko
 ---------------------------------------------------------
 B/ Compilation
 
@@ -61,7 +62,7 @@ cd Atlantronic
 --------------------------------------------------------
 D/ Installation sur cible
 dans un premier terminal : ./scripts/jtag/gdb_server_discovery
-dans un second terminal : arm-none-eabi-gdb -q bin/disco/homologation -ex "target remote localhost:1234"
+dans un second terminal : arm-none-eabi-gdb -q bin/disco/homologation -ex "target remote localhost:3333"
 programmer : prog
 
 ---------------------------------------------------------

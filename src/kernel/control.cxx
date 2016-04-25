@@ -4,7 +4,7 @@
 #include "kernel/module.h"
 #include "kernel/log.h"
 #include "kernel/driver/xbee.h"
-#include "kernel/driver/spi.h"
+#include "kernel/driver/ESP8266.h"
 #include "kernel/location/location.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/gyro/gyro.h"
@@ -23,9 +23,6 @@
 
 static struct control_usb_data control_usb_data;
 
-#define SPI_SIZE 34 /// cmd + adrr + 32 octets
-static uint8_t SPIMess[SPI_SIZE]  ;
-static uint8_t SPIRecp[SPI_SIZE];
 
 
 static void control_task(void* arg);
@@ -50,25 +47,6 @@ static void control_task(void* /*arg*/)
 	int xbeeCycleCount = 0;
 	int SPICycleCount = 0;
 
-	for(int i= 0 ; i< SPI_SIZE;i++)
-	{
-		SPIMess[i] = 0xff;
-	}
-	///MESS ID Data 0x00
-	SPIMess[0] = 0x02;
-	SPIMess[1] = 0x00;
-
-	///MESS ID Data 0x00
-	SPIMess[2] = 0x00;
-	//MESS Size
-	SPIMess[3] =0x04;
-	//MESS TOTO
-	SPIMess[4] = 'T';
-	SPIMess[5] = 'O';
-	SPIMess[6] = 'T';
-	SPIMess[7] = 'O';
-
-
 
 
 
@@ -87,27 +65,27 @@ static void control_task(void* /*arg*/)
 		control_usb_data.pumpState = pump_update();
 
 		motion.updateUsbData(&control_usb_data);
-		control_usb_data.current_time = systick_get_time();
-		control_usb_data.pos = location.getPosition();
+		control_usb_data.current_time = systick_get_time();//2*4
+		control_usb_data.pos = location.getPosition();//4 * 3
 //		control_usb_data.raw_data_gyro = gyro_get_raw_data();
 //		control_usb_data.omega_gyro = gyro_get_omega();
 //		control_usb_data.pos_theta_gyro_euler = gyro_get_theta_euler();
 //		control_usb_data.pos_theta_gyro_simpson = gyro_get_theta_simpson();
-		control_usb_data.vBat = adc_filtered_data.vBat;
-		control_usb_data.iPwm[0] = adc_filtered_data.i[0];
-		control_usb_data.iPwm[1] = adc_filtered_data.i[1];
-		control_usb_data.iPwm[2] = adc_filtered_data.i[2];
-		control_usb_data.iPwm[3] = adc_filtered_data.i[3];
-		control_usb_data.encoder[ENCODER_1] = encoder_ab_get(ENCODER_1);
-		control_usb_data.encoder[ENCODER_2] = encoder_ab_get(ENCODER_2);
-		control_usb_data.encoder[ENCODER_3] = encoder_ab_get(ENCODER_3);
-		control_usb_data.gpio = gpio_get_state();
-		control_usb_data.power_state = power_get();
-		control_usb_data.color = match_get_color();
+		control_usb_data.vBat = adc_filtered_data.vBat;//4
+		control_usb_data.iPwm[0] = adc_filtered_data.i[0];//4
+		control_usb_data.iPwm[1] = adc_filtered_data.i[1];//4
+		control_usb_data.iPwm[2] = adc_filtered_data.i[2];//4
+		control_usb_data.iPwm[3] = adc_filtered_data.i[3];//4
+		control_usb_data.encoder[ENCODER_1] = encoder_ab_get(ENCODER_1);//2
+		control_usb_data.encoder[ENCODER_2] = encoder_ab_get(ENCODER_2);//2
+		control_usb_data.encoder[ENCODER_3] = encoder_ab_get(ENCODER_3);//2
+		control_usb_data.gpio = gpio_get_state();//2
+		control_usb_data.power_state = power_get();//1
+		control_usb_data.color = match_get_color();  //1
 //		control_usb_data.elevatorHeight = elevator_get_position();
 //		arm_get_matrix(&control_usb_data.arm_matrix);
 
-		ax12.updateUsbData(&control_usb_data.ax12);
+		ax12.updateUsbData(&control_usb_data.ax12);  //7 *9 = 63
 		//rx24.updateUsbData(&control_usb_data.rx24);
 
 		usb_add(USB_CONTROL, &control_usb_data, sizeof(control_usb_data));
@@ -115,10 +93,11 @@ static void control_task(void* /*arg*/)
 
 		// en wifi, on diminue la frequence pour la bande passante
 		SPICycleCount++;
-		if( SPICycleCount > 1000)
+		if( SPICycleCount > 10)
 		{
-			//struct control_usb_data_light* data = &control_usb_data;
-			spi_transaction(SPI_DEVICE_ESP8266, SPIMess,SPIRecp, SPI_SIZE);
+			struct control_usb_data_light* data = &control_usb_data;
+			esp8266_add(USB_CONTROL_LIGHT,data,sizeof(control_usb_data_light));
+			//log_format(LOG_INFO, "Send SPI message");
 			SPICycleCount = 0;
 		}
 

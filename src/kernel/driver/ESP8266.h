@@ -44,7 +44,7 @@ typedef enum
 
 
 //CMD Data
-#define  ESP8266_CMD_DATA	 0x00 //Donnees Transmisent avec une taille MAX de 256
+#define  ESP8266_CMD_DATA	 0xF1 //Donnees Transmisent avec une taille MAX de 256
 
 // CMD Definit dans le mode de la puce (STATION OU/ET AP)
 #define  ESP8266_CM_MODE	 0x01
@@ -82,7 +82,7 @@ typedef enum
 
 void esp8266_add(uint16_t type, void* msg, uint16_t size) WEAK_ESP8266;
 
-void esp82666_add_log(unsigned char level, const char* func, uint16_t line, const char* msg) WEAK_ESP8266;
+void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const char* msg) WEAK_ESP8266;
 
 #ifdef __cplusplus
 }

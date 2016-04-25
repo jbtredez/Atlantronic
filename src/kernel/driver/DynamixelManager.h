@@ -13,7 +13,7 @@
 #include "kernel/semphr.h"
 #include "Dynamixel.h"
 
-#define DYNAMIXEL_MAX_ON_BUS         10
+#define DYNAMIXEL_MAX_ON_BUS         9
 
 struct DynamixelStatus
 {

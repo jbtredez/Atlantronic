@@ -17,7 +17,7 @@ typedef struct
 }IoParam;
 
 
-// io sur les connecteurs io generiques
+// io sur les connecteurs io generiques seulement 12 Pins utilisés
 static const IoParam io_param[] =
 {
 	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 - couleur
@@ -57,9 +57,9 @@ static int io_module_init(void)
 
 module_init(io_module_init, INIT_GPIO);
 
-uint32_t gpio_get_state()
+uint16_t gpio_get_state()
 {
-	uint32_t res = 0;
+	uint16_t res = 0;
 
 	unsigned int i = 0;
 	for(i = 0; i < sizeof(io_param)/sizeof(io_param[0]); i++)

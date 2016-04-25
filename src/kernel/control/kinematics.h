@@ -26,7 +26,7 @@ struct Kinematics
 	float pos;   //!< position
 	float v;     //!< vitesse
 	float a;     //!< acceleration
-	int mode;    //!< KINEMATICS_SPEED ou KINEMATICS_POSITION
+	uint8_t mode;    //!< KINEMATICS_SPEED ou KINEMATICS_POSITION
 
 	void setSpeed(float wantedSpeed, const KinematicsParameters &param, float dt);
 	void setPosition(float wantedPos, float wantedSpeed, KinematicsParameters param, float dt);

@@ -46,7 +46,7 @@ int ESP8266_module_init()
 
 	if(esp8266_mutex == NULL)
 	{
-		return ERR_INIT_XBEE;
+		return ERR_INIT_ESP8266;
 	}
 
 	vSemaphoreCreateBinary(esp8266_write_sem);
@@ -93,9 +93,9 @@ void esp8266_task(void* arg)
 			}
 
 			// limitation par paquets de 32 octets
-			if( sizeMax > ESP8266_SPI_TRANSACTION_SIZE )
+			if( sizeMax > ESP8266_SPI_DATA_SIZE )
 			{
-				sizeMax = ESP8266_SPI_TRANSACTION_SIZE;
+				sizeMax = ESP8266_SPI_DATA_SIZE;
 			}
 			esp8266_send_data_api(esp8266_buffer + esp8266_buffer_begin, sizeMax);
 			esp8266_buffer_size -= sizeMax;
@@ -105,7 +105,7 @@ void esp8266_task(void* arg)
 
 		xSemaphoreGive(esp8266_mutex);
 
-		vTaskDelay(10);
+		vTaskDelay(20);
 
 		if( esp8266_buffer_size == 0)
 		{
@@ -118,7 +118,7 @@ static ESP8266Status esp8266_init()
 {
 
 	esp8266_configure(0,0);
-	uint32_t res = 1;// =// esp8266_configure(XBEE_AT_NETWORK_ID, XBEE_NETWORK_ID);
+	uint32_t res = 0;// =// esp8266_configure(XBEE_AT_NETWORK_ID, XBEE_NETWORK_ID);
 	if( res )
 	{
 		return ESP8266_STATUS_DISCONNECTED;
@@ -185,23 +185,30 @@ void esp8266_write_byte(unsigned char byte)
 
 void esp8266_add(uint16_t type, void* msg, uint16_t size)
 {
+	uint8_t Esp_msg[ESP8266_MSG_SIZE_MAX + 2 ] ;
 	if(size == 0)
 	{
 		return;
 	}
-
-	// on se reserve le buffer circulaire pour les log si le xbee n'est pas pret
-	if( esp8266_status == ESP8266_STATUS_DISCONNECTED)
+	if(size > ESP8266_MSG_SIZE_MAX)
 	{
-		return;
+		size = ESP8266_MSG_SIZE_MAX;
 	}
+	// on se reserve le buffer circulaire pour les log si le xbee n'est pas pret
+	//if( esp8266_status == ESP8266_STATUS_DISCONNECTED)
+	//{
+	//	return;
+	//}
 
-	struct usb_header header = {type, size};
+	//struct usb_header header = {type, size};
 
+	///Header de traitement du logiciel de L'ESP
+	Esp_msg[0] = ESP8266_CMD_DATA;
+	Esp_msg[1] = size;
+	memcpy(Esp_msg +2 , msg, size);
 	xSemaphoreTake(esp8266_mutex, portMAX_DELAY);
 
-	esp8266_write(&header, sizeof(header));
-	esp8266_write(msg, size);
+	esp8266_write(Esp_msg, size );
 
 	xSemaphoreGive(esp8266_mutex);
 
@@ -219,6 +226,7 @@ void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const
 	{
 		return;
 	}
+
 
 	struct systime current_time = systick_get_time();
 	memcpy(log_header, &current_time, 8);
@@ -245,7 +253,10 @@ void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const
 
 	Espmsg_size += ESP8266_USB_HEADER_SIZE;
 	memcpy(Esp_msg + Espmsg_size , log_header, len);
-
+	if((Espmsg_size + len) > 256)
+	{
+			len = Espmsg_size - 256;
+	}
 	Espmsg_size += len;
 	memcpy(Esp_msg + Espmsg_size, msg, msg_size);
 
@@ -256,7 +267,7 @@ void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const
 
 	///Header de traitement du logiciel de L'ESP
 	Esp_msg[0] = ESP8266_CMD_DATA;
-	Esp_msg[1] = Espmsg_size;
+	Esp_msg[1] = Espmsg_size - 2;
 
 	xSemaphoreTake(esp8266_mutex, portMAX_DELAY);
 
@@ -271,7 +282,8 @@ void esp8266_add_log(unsigned char level, const char* func, uint16_t line, const
 static uint32_t esp8266_send_data_api(const unsigned char* msg, uint16_t size)
 {
 
-
+	memset(esp8266_tx_buffer_dma,0,ESP8266_SPI_TRANSACTION_SIZE);
+	memset(esp8266_rx_buffer_dma,0,ESP8266_SPI_TRANSACTION_SIZE);
 	esp8266_tx_buffer_dma[0] = ESP8266_CMD_SPI_WRITE; //Adresse CMD
 	esp8266_tx_buffer_dma[1] = ESP8266_CMD_SPI_ADDR_DATA;
 	memcpy(&esp8266_tx_buffer_dma[2], msg, size); //32  octets de données
