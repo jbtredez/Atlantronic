@@ -223,32 +223,27 @@ void TableScene::drawRobot(Graphique* graph)
 
 		m_shader->setColor(0, 0, 0);
 		m_robot2d.render(GL_LINE_STRIP);
-#if 0
+
 		for(int i =0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 		{
 			dynamixel_data* dynamixel = &robotItf->ax12[i];
 			switch(dynamixel->id)
 			{
-				case AX12_RIGHT_WING:
-					m_mainRobot3d.rightWingTheta = dynamixel->pos;
+				case AX12_STAR_LEFT_FISH_WING:
+					m_mainRobot3d.leftFishWingTheta = dynamixel->pos;
 					break;
-				case AX12_LEFT_WING:
-					m_mainRobot3d.leftWingTheta = dynamixel->pos;
+				case AX12_STAR_LEFT_FISH_REMOVER:
+					m_mainRobot3d.leftFishRemoverTheta = dynamixel->pos;
 					break;
-				case AX12_LOW_FINGER:
-					m_mainRobot3d.lowFingerTheta = dynamixel->pos;
+				case AX12_STAR_RIGHT_FISH_WING:
+					m_mainRobot3d.rightFishWingTheta = dynamixel->pos;
 					break;
-				case AX12_HIGH_FINGER:
-					m_mainRobot3d.highFingerTheta = dynamixel->pos;
-					break;
-				case AX12_RIGHT_CARPET:
-					m_mainRobot3d.rightCarpetTheta = dynamixel->pos;
-					break;
-				case AX12_LEFT_CARPET:
-					m_mainRobot3d.leftCarpetTheta = dynamixel->pos;
+				case AX12_STAR_RIGHT_FISH_REMOVER:
+					m_mainRobot3d.rightFishRemoverTheta = dynamixel->pos;
 					break;
 			}
 		}
+#if 0
 		m_mainRobot3d.elevatorHeight = robotItf->last_control_usb_data.elevatorHeight;
 #endif
 		m_mainRobot3d.draw();

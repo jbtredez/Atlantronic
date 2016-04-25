@@ -9,10 +9,19 @@ class StarRobot3d
 		bool init(MainShader* shader);
 		void draw();
 
+		float leftFishWingTheta;
+		float rightFishWingTheta;
+		float leftFishRemoverTheta;
+		float rightFishRemoverTheta;
+
 	protected:
 		void drawMobileBase();
+		void drawFishWings();
 
 		GlObject m_mobileBase;
+		GlObject m_leftFishWing;
+		GlObject m_rightFishWing;
+		GlObject m_fishRemover;
 		MainShader* m_shader;
 };
 
