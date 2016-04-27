@@ -185,6 +185,7 @@ void esp8266_write_byte(unsigned char byte)
 
 void esp8266_add(uint16_t type, void* msg, uint16_t size)
 {
+	(void) type;
 	uint8_t Esp_msg[ESP8266_MSG_SIZE_MAX + 2 ] ;
 	if(size == 0)
 	{
