@@ -1,6 +1,7 @@
 obj-linux-itf-core += linux/tools/com/com.o
 obj-linux-itf-core += linux/tools/com/com_usb.o
 obj-linux-itf-core += linux/tools/com/com_tcp.o
+obj-linux-itf-core += linux/tools/com/com_udp.o
 obj-linux-itf-core += linux/tools/com/rs.o
 obj-linux-itf-core += linux/tools/com/com_xbee.o
 obj-linux-itf-core += linux/tools/cli.o
@@ -9,6 +10,7 @@ obj-linux-itf-core += linux/tools/robot_interface.o
 obj-linux-itf-core += linux/tools/qemu.o
 obj-linux-itf-core += linux/tools/ring_buffer.o
 obj-linux-itf-core += linux/tools/server_tcp.o
+obj-linux-itf-core += linux/tools/server_udp.o
 obj-linux-itf-core += linux/tools/Robot.o
 obj-linux-itf-core += middleware/hokuyo_tools.o
 obj-linux-itf-core += kernel/math/regression.o

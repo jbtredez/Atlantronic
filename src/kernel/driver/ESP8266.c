@@ -190,9 +190,9 @@ void esp8266_add(uint16_t type, void* msg, uint16_t size)
 	{
 		return;
 	}
-	if(size > ESP8266_MSG_SIZE_MAX)
+	if(size > ESP8266_MSG_SIZE_MAX - 3)
 	{
-		size = ESP8266_MSG_SIZE_MAX;
+		size = ESP8266_MSG_SIZE_MAX - 3;
 	}
 	// on se reserve le buffer circulaire pour les log si le xbee n'est pas pret
 	//if( esp8266_status == ESP8266_STATUS_DISCONNECTED)
@@ -200,12 +200,13 @@ void esp8266_add(uint16_t type, void* msg, uint16_t size)
 	//	return;
 	//}
 
-	//struct usb_header header = {type, size};
+	struct usb_header header = {type, size};
 
 	///Header de traitement du logiciel de L'ESP
 	Esp_msg[0] = ESP8266_CMD_DATA;
-	Esp_msg[1] = size;
-	memcpy(Esp_msg +2 , msg, size);
+	Esp_msg[1] = size + sizeof(header);
+	memcpy(Esp_msg + 2 ,&header, 3);
+	memcpy(Esp_msg + 2 + sizeof(header) , msg, size);
 	xSemaphoreTake(esp8266_mutex, portMAX_DELAY);
 
 	esp8266_write(Esp_msg, size );

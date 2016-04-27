@@ -30,7 +30,7 @@ enum
 	USB_DETECTION_DYNAMIC_OBJECT,
 	USB_DETECTION_DYNAMIC_OBJECT2,
 	USB_CAN_TRACE,
-	USB_DATA_MAX,     //!< nombre d'id, laisser en dernier
+	USB_DATA_MAX,     //!< nombre d'id, laisser en dernier //Limitation à 256 ID
 };
 
 enum usb_cmd
@@ -76,7 +76,7 @@ enum usb_cmd
 
 struct usb_header
 {
-	uint16_t type;
+	uint8_t type;
 	uint16_t size;
 } __attribute__((packed));
 
