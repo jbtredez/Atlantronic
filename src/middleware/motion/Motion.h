@@ -53,12 +53,15 @@ enum motion_status
 
 struct motion_cmd_param_arg
 {
-	float kp_av;
-	float ki_av;
-	float kd_av;
-	float kp_rot;
-	float ki_rot;
-	float kd_rot;
+	float kp_x;
+	float ki_x;
+	float kd_x;
+	float kp_y;
+	float ki_y;
+	float kd_y;
+	float kp_theta;
+	float ki_theta;
+	float kd_theta;
 }  __attribute__((packed));
 
 struct motion_cmd_max_speed_arg

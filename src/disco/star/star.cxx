@@ -8,8 +8,8 @@
 #include "kernel/log.h"
 
 KinematicsParameters paramDriving = {1800, 1500, 1500};
-KinematicsParameters linearParam = {700, 600, 600};
-KinematicsParameters angularParam = {3, 5, 5};
+KinematicsParameters linearParam = {1000, 1000, 1000};
+KinematicsParameters angularParam = {5, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
 Dynamixel leftFishWing;

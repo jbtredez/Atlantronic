@@ -128,7 +128,7 @@ class RobotInterface
 
 		// ---------- gestion motion --------------------------------------------------
 		int motion_print_param();
-		int motion_set_param(float kp_av, float ki_av, float kd_av, float kp_rot, float ki_rot, float kd_rot);
+		int motion_set_param(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float kp_theta, float ki_theta, float kd_theta);
 
 		// ---------- gestion gyro -----------------------------------------------------
 		int gyro_calibration(enum GyroCalibrationCmd cmd);

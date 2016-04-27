@@ -58,9 +58,10 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 	{
 		m_linearSpeedCheck[i].init(100, 100);
 	}
-	m_xPid.init(0, 0, 0, 100);// TODO voir saturation
+	// TODO deplacer dans star et gate (parametrage pas forcemenbt identique)
+	m_xPid.init(2, 0, 0, 100);// TODO voir saturation
 	m_yPid.init(0, 0, 0, 1);// TODO voir saturation + regler
-	m_thetaPid.init(0, 0, 0, 1); // TODO voir saturation
+	m_thetaPid.init(15, 0, 0, 1); // TODO voir saturation
 	m_motionStateMachine.init(m_motionStates, MOTION_MAX_STATE, this);
 
 	m_anticoOn = true;
@@ -159,6 +160,7 @@ void Motion::cmd_print_param(void* arg, void* /*data*/)
 {
 	Motion* m = (Motion*) arg;
 	log_format(LOG_INFO, "axe x     : kp %d ki %d kd %d", (int)(m->m_xPid.kp), (int)(m->m_xPid.ki), (int)(m->m_xPid.kd));
+	log_format(LOG_INFO, "axe y     : kp %d ki %d kd %d", (int)(m->m_yPid.kp), (int)(m->m_yPid.ki), (int)(m->m_yPid.kd));
 	log_format(LOG_INFO, "axe theta : kp %d ki %d kd %d", (int)(m->m_thetaPid.kp), (int)(m->m_thetaPid.ki), (int)(m->m_thetaPid.kd));
 }
 
@@ -166,12 +168,15 @@ void Motion::cmd_set_param(void* arg, void* data)
 {
 	Motion* m = (Motion*) arg;
 	struct motion_cmd_param_arg* cmd = (struct motion_cmd_param_arg*) data;
-	m->m_xPid.kp = cmd->kp_av;
-	m->m_xPid.ki = cmd->ki_av;
-	m->m_xPid.kd = cmd->kd_av;
-	m->m_thetaPid.kp = cmd->kp_rot;
-	m->m_thetaPid.ki = cmd->ki_rot;
-	m->m_thetaPid.kd = cmd->kd_rot;
+	m->m_xPid.kp = cmd->kp_x;
+	m->m_xPid.ki = cmd->ki_x;
+	m->m_xPid.kd = cmd->kd_x;
+	m->m_yPid.kp = cmd->kp_y;
+	m->m_yPid.ki = cmd->ki_y;
+	m->m_yPid.kd = cmd->kd_y;
+	m->m_thetaPid.kp = cmd->kp_theta;
+	m->m_thetaPid.ki = cmd->ki_theta;
+	m->m_thetaPid.kd = cmd->kd_theta;
 }
 
 void Motion::cmd_set_speed(void* arg, void* data)

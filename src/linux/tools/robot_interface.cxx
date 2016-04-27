@@ -970,16 +970,19 @@ int RobotInterface::motion_print_param()
 	return usb_write(USB_CMD_MOTION_PRINT_PARAM, NULL, 0);
 }
 
-int RobotInterface::motion_set_param(float kp_av, float ki_av, float kd_av, float kp_rot, float ki_rot, float kd_rot)
+int RobotInterface::motion_set_param(float kp_x, float ki_x, float kd_x, float kp_y, float ki_y, float kd_y, float kp_theta, float ki_theta, float kd_theta)
 {
 	struct motion_cmd_param_arg cmd_arg;
 
-	cmd_arg.kp_av = kp_av;
-	cmd_arg.ki_av = ki_av;
-	cmd_arg.kd_av = kd_av;
-	cmd_arg.kp_rot = kp_rot;
-	cmd_arg.ki_rot = ki_rot;
-	cmd_arg.kd_rot = kd_rot;
+	cmd_arg.kp_x = kp_x;
+	cmd_arg.ki_x = ki_x;
+	cmd_arg.kd_x = kd_x;
+	cmd_arg.kp_y = kp_y;
+	cmd_arg.ki_y = ki_y;
+	cmd_arg.kd_y = kd_y;
+	cmd_arg.kp_theta = kp_theta;
+	cmd_arg.ki_theta = ki_theta;
+	cmd_arg.kd_theta = kd_theta;
 
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }

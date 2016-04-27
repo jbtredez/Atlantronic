@@ -110,7 +110,7 @@ COMMAND usb_commands[] = {
 	{ "localization_set_position", cmd_localization_set_position, "set robot position : localization_set_position x y alpha"},
 	{ "max_speed", cmd_max_speed, "vitesse max en % (av, rot) : max_speed v_max_av v_max_rot" },
 	{ "motion_enable", cmd_motion_enable, "motion_enable enable" },
-	{ "motion_set_param", cmd_motion_set_param, "motion_set_param kp_av ki_av kd_av kp_rot ki_rot kd_rot" },
+	{ "motion_set_param", cmd_motion_set_param, "motion_set_param kp_x ki_x kd_x kp_y ki_y kd_y kp_theta ki_theta kd_theta" },
 	{ "motion_print_param", cmd_motion_print_param, "control_print_param"},
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
 	{ "motion_set_actuator_kinematics", cmd_motion_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
@@ -509,21 +509,24 @@ int cmd_quit(const char* arg)
 
 int cmd_motion_set_param(const char* arg)
 {
-	float kp_av;
-	float ki_av;
-	float kd_av;
-	float kp_rot;
-	float ki_rot;
-	float kd_rot;
+	float kp_x;
+	float ki_x;
+	float kd_x;
+	float kp_y;
+	float ki_y;
+	float kd_y;
+	float kp_theta;
+	float ki_theta;
+	float kd_theta;
 
-	int count = sscanf(arg, "%f %f %f %f %f %f", &kp_av, &ki_av, &kd_av, &kp_rot, &ki_rot, &kd_rot);
+	int count = sscanf(arg, "%f %f %f %f %f %f %f %f %f", &kp_x, &ki_x, &kd_x, &kp_y, &ki_y, &kd_y, &kp_theta, &ki_theta, &kd_theta);
 
-	if(count != 6)
+	if(count != 9)
 	{
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_param(kp_av, ki_av, kd_av, kp_rot, ki_rot, kd_rot);
+	cmd_robot->motion_set_param(kp_x, ki_x, kd_x, kp_y, ki_y, kd_y, kp_theta, ki_theta, kd_theta);
 
 	return CMD_SUCCESS;
 }

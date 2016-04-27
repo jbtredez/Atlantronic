@@ -176,34 +176,36 @@ void MotionTrajectoryState::run(void* data)
 	m->m_kinematicsModel->computeActuatorCmd(u_loc, n, CONTROL_DT, m->m_kinematics, true);
 
 	VectPlan err = m->m_path.getLastPoint() - m->m_posMes;
-	if( vTh == VectPlan() && err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
+	if( vTh == VectPlan() )
 	{
-		log(LOG_INFO, "MOTION_TARGET_REACHED");
-		m->m_status = MOTION_TARGET_REACHED;
-	}
-#if 0
-	// TODO timeout en fonction du temps prevu + marge ?
-	else
-	{
-		systime t = systick_get_time();
-		if( m->m_targetNotReachedStartTime.ms == 0)
+		if( err.norm2() < MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE && fabsf(err.theta) < MOTION_TARGET_REACHED_ANG_THRESHOLD )
 		{
-			log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
-			m->m_targetNotReachedStartTime = t;
+			log(LOG_INFO, "MOTION_TARGET_REACHED");
+			m->m_status = MOTION_TARGET_REACHED;
 		}
 		else
 		{
-			systime detla = t - m->m_targetNotReachedStartTime;
-			if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
+			// TODO timeout en fonction du temps prevu + marge ?
+			systime t = systick_get_time();
+			if( m->m_targetNotReachedStartTime.ms == 0)
 			{
-				log_format(LOG_INFO, "MOTION_TARGET_NOT_REACHED error %d %d %d", (int)err.x, (int)err.y, (int)(err.theta * 180 / M_PI));
-				m->m_status = MOTION_TARGET_NOT_REACHED;
-				stop(m);
-				return;
+				log(LOG_INFO, "MOTION_TARGET_NOT_REACHED ARMED");
+				m->m_targetNotReachedStartTime = t;
+			}
+			else
+			{
+				systime detla = t - m->m_targetNotReachedStartTime;
+				if( detla.ms > MOTION_TARGET_NOT_REACHED_TIMEOUT)
+				{
+					log_format(LOG_INFO, "MOTION_TARGET_NOT_REACHED error %d %d %d", (int)err.x, (int)err.y, (int)(err.theta * 180 / M_PI));
+					m->m_status = MOTION_TARGET_NOT_REACHED;
+					stop(m);
+					return;
+				}
 			}
 		}
 	}
-#endif
+
 	m->motionUpdateMotors();
 	return;
 
