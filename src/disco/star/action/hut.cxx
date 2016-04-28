@@ -48,11 +48,12 @@ int Hut::do_action()
 	do
 	{
 		vTaskDelay(100);
-		trajectory.goToNear(m_firstcheckpoint, 100, WAY_BACKWARD, AVOIDANCE_STOP) ;
+		trajectory.goToNear(m_firstcheckpoint, 0, WAY_BACKWARD, AVOIDANCE_STOP) ;
 
 	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
 	// On s'approche de la première cabane
+	log_format(LOG_INFO, "##################On s'approche de la première cabane");
 	do
 	{
 		vTaskDelay(100);
@@ -60,12 +61,14 @@ int Hut::do_action()
 
 	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
+	log_format(LOG_INFO, "##################Premiere cabane");
 	// On ferme la porte
 	bresult = goToWall();
 
 	if ( ! bresult)
 	{
 		// On s'approche de la deuxième cabane
+		log_format(LOG_INFO, "##################On s'approche de la deuxième cabane");
 		do
 		{
 			vTaskDelay(100);
@@ -102,7 +105,8 @@ int Hut::goToWall(void)
 
 	motion.enable(true);
 	vTaskDelay(500);
-	trajectory.straight(-300);
+	log_format(LOG_INFO, "##################on avance");
+	trajectory.straight(-400);
 
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 5000) != 0)
 	{
@@ -114,8 +118,8 @@ int Hut::goToWall(void)
 	motion.enableAntico(true);
 	trajectory.setKinematicsParam(linParamOrig, angParamOrig);
 
-	motion.enable(true);
-	vTaskDelay(1000);
+	log_format(LOG_INFO, "##################on recule");
+	vTaskDelay(300);
 	trajectory.straight(200);
 	trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000);
 

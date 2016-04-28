@@ -81,7 +81,11 @@ static TableScene tableScene;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
-static VectPlan qemuStartPos(1200, 0, M_PI/2);
+#if 0
+static VectPlan qemuStartPos(1000, -600, M_PI/2);
+#else
+static VectPlan qemuStartPos(1200, 0, 0);
+#endif
 static GlObjectBasic selectionObject;
 static GlObjectBasic axisObject;
 static GlObjectBasic graphPointObject;

@@ -22,3 +22,4 @@ star_robot += disco/star/recalage.o
 #star_robot += disco/star/action/Feed.o
 star_robot += disco/star/action/Move.o
 star_robot += disco/star/action/hut.o
+star_robot += disco/star/action/fishes.o

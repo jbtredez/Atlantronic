@@ -21,6 +21,7 @@
 #define ACTION_MOVE		9
 #define	ACTION_ENDLIST		10
 #define ACTION_HUT		11
+#define ACTION_FISHES	12
 
 enum Eelevator_state
 {
