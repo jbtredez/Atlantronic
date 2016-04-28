@@ -6,6 +6,7 @@ lib-baz += kernel/driver/io.o
 lib-baz += kernel/match.o
 lib-baz += kernel/driver/usart.o
 lib-baz += kernel/driver/hokuyo.o
+lib-baz += kernel/driver/rplidar.o
 lib-baz += kernel/driver/Dynamixel.o
 lib-baz += kernel/driver/DynamixelManager.o
 lib-baz += kernel/driver/xbee.o

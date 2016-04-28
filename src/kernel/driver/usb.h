@@ -30,6 +30,7 @@ enum
 	USB_DETECTION_DYNAMIC_OBJECT,
 	USB_DETECTION_DYNAMIC_OBJECT2,
 	USB_CAN_TRACE,
+	USB_RPLIDAR,
 	USB_DATA_MAX,     //!< nombre d'id, laisser en dernier
 };
 

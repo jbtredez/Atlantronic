@@ -7,7 +7,7 @@
 
 //! @enum fault
 //! defauts
-//! ne pas oublier de mettre a jour la description dans foo_interface
+//! ne pas oublier de mettre a jour la description dans robot_interface
 enum fault
 {
 	// erreurs OS
@@ -17,6 +17,10 @@ enum fault
 	// HOKUYO
 	FAULT_HOKUYO_DISCONNECTED,
 	FAULT_HOKUYO_DATA_CORRUPTION, // erreur FE/NE/ORE sur usart, check_cmd, unknown status, checksum
+
+	// RPLIDAR
+	FAULT_RPLIDAR_DISCONNECTED,
+	FAULT_RPLIDAR_DATA_CORRUPTION, // erreur FE/NE/ORE sur usart
 
 	// CAN
 	FAULT_CAN_NOT_CONNECTED,

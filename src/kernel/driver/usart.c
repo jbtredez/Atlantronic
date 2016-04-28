@@ -26,6 +26,9 @@ struct usart_device usart_device[USART_MAX_DEVICE] =
 	{ USART6, DMA2_Stream1, DMA2_Stream7, 0, 0},
 };
 
+int usart1Used = 0;
+int usart6Used = 0;
+
 __OPTIMIZE_SIZE__ void usart_set_frequency(enum usart_id id, uint32_t frequency)
 {
 	uint32_t pclk;
@@ -99,6 +102,11 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 	switch(id)
 	{
 		case USART1_FULL_DUPLEX:
+			if( usart6Used )
+			{
+				log(LOG_ERROR, "mutex entre buffer dma usart1_tx et usart6_tx non implemente, usart1 desactive");
+				return -1;
+			}
 			// USART1 : Tx = PA9, Rx = PA10
 			// activation USART1
 			RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
@@ -110,6 +118,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			// reset USART1
 			RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART1RST;
+			usart1Used = 1;
 			break;
 		case USART2_FULL_DUPLEX:
 			// USART2 : Tx = PD5, Rx = PD6
@@ -164,8 +173,11 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			RCC->APB1RSTR &= ~RCC_APB1RSTR_UART5RST;
 			break;
 		case USART6_FULL_DUPLEX:
-			log(LOG_ERROR, "mutex entre buffer dma usart1_tx et usart6_tx non implemente, usart6 desactive");
-			return -1;
+			if( usart1Used )
+			{
+				log(LOG_ERROR, "mutex entre buffer dma usart1_tx et usart6_tx non implemente, usart6 desactive");
+				return -1;
+			}
 			// USART6 Tx = PC6, Rx = PG9
 			// activation USART6
 			RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
@@ -177,6 +189,7 @@ __OPTIMIZE_SIZE__ int usart_open(enum usart_id id, uint32_t frequency)
 			// reset USART6
 			RCC->APB2RSTR |= RCC_APB2RSTR_USART6RST;
 			RCC->APB2RSTR &= ~RCC_APB2RSTR_USART6RST;
+			usart6Used = 1;
 			break;
 		default:
 			log_format(LOG_ERROR, "unknown usart id %d", id);
