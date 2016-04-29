@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include "linux/tools/com/com.h"
 #include "kernel/driver/hokuyo.h"
+#include "kernel/driver/rplidar.h"
 #include "kernel/driver/can.h"
 #include "kernel/driver/gyro/gyro.h"
 #include "kernel/driver/pwm.h"
@@ -165,6 +166,7 @@ class RobotInterface
 		pthread_mutex_t mutex; //!< mutex de protection des donnees ci-dessous
 
 		// données brutes
+		struct rplidar_scan rplidar_scan;
 		struct hokuyo_scan hokuyo_scan[HOKUYO_MAX];
 		struct control_usb_data control_usb_data[CONTROL_USB_DATA_MAX];
 		struct control_usb_data last_control_usb_data;
@@ -199,6 +201,8 @@ class RobotInterface
 		struct Vect2 detection_hokuyo_pos[HOKUYO_NUM_POINTS*HOKUYO_MAX];
 		struct Vect2 detection_hokuyo_reg[HOKUYO_NUM_POINTS*HOKUYO_MAX]; // TODO à virer
 		int detection_reg_num[HOKUYO_MAX];
+		struct Vect2 detection_rplidar_pos[RPLIDAR_MAX_NUM_POINTS];
+		int detection_rplidar_pos_count;
 
 		RobotVersion versionCompatible;
 		char stm_code_version[41];
@@ -223,6 +227,7 @@ class RobotInterface
 		int process_control(char* msg, uint16_t size);
 		int process_control_light(char* msg, uint16_t size);
 		int process_go(char* msg, uint16_t size);
+		int process_rplidar(char* msg, uint16_t size);
 		int process_hokuyo(char* msg, uint16_t size);
 		int process_hokuyo_seg(char* msg, uint16_t size);
 		int process_fault(char* msg, uint16_t size);

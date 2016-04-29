@@ -43,6 +43,34 @@ void hokuyo_compute_xy(struct hokuyo_scan* scan, Vect2 *pos)
 	}
 }
 
+// TODO voir /factoriser fonctions et placement (ou nom du fichier...)
+int rplidar_compute_xy(struct rplidar_scan* scan, Vect2 *pos)
+{
+	int size = scan->pointCount;
+	uint16_t* distance = scan->distance;
+	uint16_t* theta = scan->theta;
+	VectPlan laser_pos_table = loc_to_abs(scan->pos_robot, scan->pos_laser);
+	int nbPoint = 0;
+
+	for( ; size--; )
+	{
+		if(*distance > scan->min_distance /*&& *distance < HOKUYO_MAX_RANGE && hokuyoTheta > scan->theta_min && hokuyoTheta < scan->theta_max*/)
+		{
+			float theta_rd = ((float)*theta) / 64.0f * M_PI / 180 + laser_pos_table.theta;
+			float distance_mm = ((float)*distance) / 4.0f;
+			pos->x = distance_mm * cosf(theta_rd) + laser_pos_table.x;
+			pos->y = distance_mm * sinf(theta_rd) + laser_pos_table.y;
+			pos++;
+			nbPoint++;
+		}
+
+		distance++;
+		theta++;
+	}
+	return nbPoint;
+}
+
+
 int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned int size, struct polyline* obj, unsigned int obj_size)
 {
 	int res = 0;

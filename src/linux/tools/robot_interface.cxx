@@ -28,6 +28,10 @@ const char* fault_description[FAULT_MAX] =
 	"hokuyo disconnected",
 	"hokuyo - data corruption",
 
+	// RPLIDAR
+	"rplidar disconnected",
+	"rplidar - data corruption",
+
 	// CAN
 	"can : not connected - init failed",
 	"can : queue de lecture pleine",
@@ -107,6 +111,7 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 	add_usb_data_callback(USB_ERR, &RobotInterface::process_fault);
 	add_usb_data_callback(USB_HOKUYO, &RobotInterface::process_hokuyo);
 	add_usb_data_callback(USB_HOKUYO_SEG, &RobotInterface::process_hokuyo_seg);
+	add_usb_data_callback(USB_RPLIDAR, &RobotInterface::process_rplidar);
 	add_usb_data_callback(USB_CONTROL, &RobotInterface::process_control);
 	add_usb_data_callback(USB_CONTROL_LIGHT, &RobotInterface::process_control_light);
 	add_usb_data_callback(USB_GO, &RobotInterface::process_go);
@@ -608,6 +613,34 @@ int RobotInterface::can_trace(char* msg, uint16_t size)
 	log_info("%s", buffer);
 
 	res = 0;
+
+end:
+	return res;
+}
+
+int RobotInterface::process_rplidar(char* msg, uint16_t size)
+{
+	int res = 0;
+
+	if(size != sizeof(struct rplidar_scan))
+	{
+		res = -1;
+		goto end;
+	}
+
+	res = pthread_mutex_lock(&mutex);
+
+	if(res)
+	{
+		log_error("pthread_mutex_lock : %i", res);
+		goto end;
+	}
+
+	memcpy(&rplidar_scan, msg, size);
+
+	detection_rplidar_pos_count = rplidar_compute_xy(&rplidar_scan, detection_rplidar_pos);
+
+	pthread_mutex_unlock(&mutex);
 
 end:
 	return res;

@@ -516,6 +516,17 @@ void TableScene::draw(Graphique* graph)
 		m_graphPointObject.render(GL_POINTS);
 	}
 
+	if( graph->courbes_activated[SUBGRAPH_TABLE_RPLIDAR] )
+	{
+		m_shader->setColor3f(&graph->color[3*SUBGRAPH_TABLE_RPLIDAR]);
+		for(int i=0; i < robotItf->detection_rplidar_pos_count; i++)
+		{
+			pt[i] = robotItf->detection_rplidar_pos[i];
+		}
+		m_graphPointObject.update((float*)pt, robotItf->detection_rplidar_pos_count);
+		m_graphPointObject.render(GL_POINTS);
+	}
+
 	int max = robotItf->control_usb_data_count % CONTROL_USB_DATA_MAX;
 
 	if( graph->courbes_activated[SUBGRAPH_TABLE_POS_CONS] )
