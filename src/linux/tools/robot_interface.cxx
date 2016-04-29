@@ -13,7 +13,6 @@
 #include "kernel/pump.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Graph.h"
-#include "disco/star/elevator.h"
 
 #ifndef VERSION
 #error VERSION not defined
@@ -1140,41 +1139,6 @@ int RobotInterface::gyro_set_calibration_values(float scale, float bias, float d
 	cmd_arg.dead_zone = dead_zone;
 
 	return usb_write(USB_CMD_GYRO_SET_CALIBRATION_VALUES, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right)
-{
-	struct wing_cmd_arg cmd_arg;
-
-	cmd_arg.type_left = cmd_type_left;
-	cmd_arg.type_right = cmd_type_right;
-
-	return usb_write(USB_CMD_WING, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::elevator_set_position(float pos)
-{
-	struct elevator_cmd_arg cmd_arg;
-	cmd_arg.pos = pos;
-	return usb_write(USB_CMD_ELEVATOR, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::finger_set_position(enum finger_type low, enum finger_type high, enum finger_bottom_type right, enum finger_bottom_type left)
-{
-	struct finger_cmd_arg cmd_arg;
-	cmd_arg.low = low;
-	cmd_arg.high = high;
-	cmd_arg.right = right;
-	cmd_arg.left = left;
-	return usb_write(USB_CMD_FINGER, &cmd_arg, sizeof(cmd_arg));
-}
-
-int RobotInterface::carpet_set_position(enum carpet_type right, enum carpet_type left)
-{
-	struct carpet_cmd_arg cmd_arg;
-	cmd_arg.right = right;
-	cmd_arg.left = left;
-	return usb_write(USB_CMD_CARPET, &cmd_arg, sizeof(cmd_arg));
 }
 
 int RobotInterface::arm_cmd(uint32_t cmdType)

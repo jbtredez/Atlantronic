@@ -19,6 +19,7 @@ Dynamixel rightFishRemover;
 Dynamixel leftDoor;
 Dynamixel rightDoor;
 Dynamixel towerPliers;
+Dynamixel towerPliersTidier;
 Dynamixel parasol;
 DynamixelManager ax12;
 //DynamixelManager rx24;
@@ -47,6 +48,7 @@ static int star_robot_module_init()
 	leftDoor.init(&ax12, AX12_STAR_LEFT_DOOR);
 	rightDoor.init(&ax12, AX12_STAR_RIGHT_DOOR);
 	towerPliers.init(&ax12, AX12_STAR_TOWER_PLIERS);
+	towerPliersTidier.init(&ax12, AX12_STAR_TOWER_PLIERS_TIDIER);
 	parasol.init(&ax12, AX12_STAR_PARASOL);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);

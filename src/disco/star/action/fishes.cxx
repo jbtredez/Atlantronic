@@ -2,37 +2,11 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
 #include "disco/star/star.h"
+#include "disco/star/servos.h"
 #include "fishes.h"
 
 
-void fishes_set_pos(enum fishes_type right, enum fishes_type left)
-{
-	switch(right)
-	{
-		case CARPET_UP:
-			leftFishWing.setGoalPosition(0);
-			break;
-		case CARPET_DOWN:
-			leftFishWing.setGoalPosition(-1);
-			break;
-		case CARPET_NO_MOVE:
-		default:
-			break;
-	}
 
-	switch(left)
-	{
-		case CARPET_UP:
-			leftFishWing.setGoalPosition(0);
-			break;
-		case CARPET_DOWN:
-			leftFishWing.setGoalPosition(1);
-			break;
-		case CARPET_NO_MOVE:
-		default:
-			break;
-	}
-}
 
 ////////////////////////////////////////////////
 /// function    : Fishes()
@@ -50,6 +24,8 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	}
 
 	m_actiontype = ACTION_FISHES;
+
+	log_format(LOG_INFO, "Fishes: %d : %d : %f", firstcheckpoint.x, firstcheckpoint.y, firstcheckpoint.theta);
 }
 
 ////////////////////////////////////////////////
@@ -64,10 +40,10 @@ void Fishes::Initialise(int stratcolor)
 	this->stratColor = stratcolor;
 
 	leftFishWing.setTorqueLimit(1);
-	leftFishWing.setGoalLimits(0, 1.4);
+	leftFishWing.setGoalLimits(-1.4, 1.4);
 
 	rightFishWing.setTorqueLimit(1);
-	rightFishWing.setGoalLimits(0, -1.4);
+	rightFishWing.setGoalLimits(-1.4, 1.4);
 
 }
 
@@ -81,6 +57,8 @@ int Fishes::do_action()
 {
 	int bresult = 0;
 	Action::do_action();
+	VectPlan dest(900, -850, M_PI);
+	dest = dest.symetric(stratColor);
 
 	if(m_try < 0 )
 	{
@@ -91,10 +69,40 @@ int Fishes::do_action()
 	do
 	{
 		vTaskDelay(100);
-		trajectory.goToNear(m_firstcheckpoint, 100, WAY_BACKWARD, AVOIDANCE_STOP) ;
+		trajectory.goTo(dest, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
-	fishes_set_pos(FISHES_DOWN,  FISHES_NO_MOVE);
+	if(stratColor == COLOR_GREEN)
+		Servos::setWingPos(WING_OPEN, WING_CLOSE);
+	else
+		Servos::setWingPos(WING_CLOSE, WING_OPEN);
+
+	vTaskDelay(500);
+	trajectory.straight(200);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
+	{
+		bresult = 1;
+	}
+
+	vTaskDelay(300);
+	if(stratColor == COLOR_GREEN)
+		Servos::setWingPos(WING_MIDDLE, WING_CLOSE);
+	else
+		Servos::setWingPos(WING_CLOSE, WING_MIDDLE);
+
+	vTaskDelay(500);
+	VectPlan netPos(400, -850, M_PI);
+	netPos = netPos.symetric(stratColor);
+	// A mettre dans une sous strat
+	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
+
+	vTaskDelay(500);
+	if(stratColor == COLOR_GREEN)
+		Servos::setWingPos(WING_OPEN, WING_CLOSE);
+	else
+		Servos::setWingPos(WING_CLOSE, WING_OPEN);
+
+	return bresult;
 }
 

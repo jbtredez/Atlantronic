@@ -15,7 +15,6 @@ int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
 int cmd_arm_abz(const char* arg);
 int cmd_arm_cmd(const char* arg);
-int cmd_carpet_set_position(const char* arg);
 int cmd_can_lss(const char* arg);
 int cmd_can_lss_set_nodeid(const char* arg);
 int cmd_can_lss_save(const char* arg);
@@ -32,8 +31,6 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg);
 int cmd_dynamixel_enable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_disable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_set_speed(const char* arg);
-int cmd_elevator_set_position(const char* arg);
-int cmd_finger_set_position(const char* arg);
 int cmd_free(const char* arg);
 int cmd_power_off(const char* arg);
 int cmd_pwm_set(const char* arg);
@@ -76,7 +73,6 @@ COMMAND usb_commands[] = {
 	{ "arm_ventouse", cmd_arm_ventouse, "deplacement de la ventouse perpendiculairement au segment [(x1,y1,z) (x2, y2, z)] : arm_ventouse x1 y1 x2 y2 z"},
 	{ "arm_abz", cmd_arm_abz, "deplacement du bras (a, b, z)"},
 	{ "arm_cmd", cmd_arm_cmd, "arm_cmd type"},
-	{ "carpet_set_position", cmd_carpet_set_position, "carpet_set_position right left"},
 	{ "can_lss", cmd_can_lss, "can_lss on/off"},
 	{ "can_lss_set_nodeid", cmd_can_lss_set_nodeid, "can_lss_set_nodeid id"},
 	{ "can_lss_save", cmd_can_lss_save, "can_lss_save"},
@@ -93,8 +89,6 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_enable_endless_turn_mode", cmd_dynamixel_enable_endless_turn_mode, "dynamixel_enable_endless_turn_mode  id type"},
 	{ "dynamixel_disable_endless_turn_mode", cmd_dynamixel_disable_endless_turn_mode, "dynamixel_disable_endless_turn_mode  id type"},
 	{ "dynamixel_set_speed", cmd_dynamixel_set_speed, "dynamixel_set_speed  id type speed"},
-	{ "elevator_set_position", cmd_elevator_set_position, "elevator_set_position pos"},
-	{ "finger_set_position", cmd_finger_set_position, "finger_set_position low high right left"},
 	{ "free", cmd_free, "free"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
@@ -129,7 +123,6 @@ COMMAND usb_commands[] = {
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "straight", cmd_straight, "straight dist" },
-	{ "wing_set_position", cmd_wing_set_position, "wing_set_position gauche droite"},
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
 	{ "xbee_set_manager_baudrate", cmd_xbee_set_manager_baudrate, "xbee_set_manager_baudrate baudrate"},
 	{ "?", cmd_help, "Synonym for `help'" },
@@ -316,57 +309,12 @@ int cmd_dynamixel_get_position(const char* arg)
 	return CMD_SUCCESS;
 }
 
-int cmd_elevator_set_position(const char* arg)
-{
-	float pos;
-	int count = sscanf(arg, "%f", &pos);
-
-	if(count != 1)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->elevator_set_position(pos);
-	return CMD_SUCCESS;
-}
-
-int cmd_finger_set_position(const char* arg)
-{
-	int low;
-	int high;
-	int right;
-	int left;
-	int count = sscanf(arg, "%d %d %d %d", &low, &high, &right, &left);
-
-	if(count != 4)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->finger_set_position((enum finger_type)low, (enum finger_type)high, (enum finger_bottom_type) right, (enum finger_bottom_type)left);
-	return CMD_SUCCESS;
-}
-
 int cmd_free(const char* /*arg*/)
 {
 	cmd_robot->free();
 	return CMD_SUCCESS;
 }
 
-int cmd_carpet_set_position(const char* arg)
-{
-	int right;
-	int left;
-	int count = sscanf(arg, "%d %d", &right, &left);
-
-	if(count != 2)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->carpet_set_position((enum carpet_type)right, (enum carpet_type)left);
-	return CMD_SUCCESS;
-}
 
 int cmd_can_set_baudrate(const char* arg)
 {
@@ -753,20 +701,6 @@ int cmd_max_speed(const char* arg)
 	return CMD_SUCCESS;
 }
 
-int cmd_wing_set_position(const char* arg)
-{
-	int wing_left;
-	int wing_right;
-	int count = sscanf(arg, "%d %d", &wing_left, &wing_right);
-
-	if(count != 2)
-	{
-		return CMD_ERROR;
-	}
-
-	cmd_robot->wing((wing_cmd_type)wing_left, (wing_cmd_type)wing_right);
-	return CMD_SUCCESS;
-}
 
 int cmd_ptask(const char*)
 {

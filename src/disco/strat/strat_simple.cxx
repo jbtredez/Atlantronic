@@ -61,11 +61,13 @@ int StratSimple::run()
 					{
 						allDone = false;
 						m_list_action[i]->m_try++;
+						/*
 						if( ACTION_DROP != m_list_action[i]->get_actiontype() &&
 							ACTION_DROPZONE != m_list_action[i]->get_actiontype()  )
 						{
 							busefullaction = true;
-						}						
+						}
+						*/
 					}
 					else
 					{

@@ -9,10 +9,6 @@
 #include "kernel/location/location.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/wing.h"
-#include "disco/star/elevator.h"
-#include "disco/star/finger.h"
-
 #include "disco/star/robot_state.h"
 #include "middleware/stratege_machine/stratege.h"
 
@@ -33,9 +29,9 @@
 static void strat_task(void* arg);
 static void strat_cmd(void* arg, void* data);
 
-
-
 static int strat_color;
+
+
 
 int strat_module_init()
 {
@@ -60,23 +56,14 @@ static void strat_task(void* arg)
 	(void) arg;
 
 	RobotState robothomologation;
-	robothomologation.setnumberelement(0);
-	robothomologation.setelevatorstate(ELEVATOR_EMPTY);
-
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(0 ,0 ,0);
+	VectPlan firstcheckpoint(900,600,-M_PI/2);
 
-	// Cabanes
-	firstcheckpoint.x = 900;
-	firstcheckpoint.y = 600;
-	firstcheckpoint.theta = -M_PI/2;
+
 	Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
 
 	// Poissons
-	firstcheckpoint.x = 1000;
-	firstcheckpoint.y = -900;
-	firstcheckpoint.theta = 0;
 	Fishes fishes(firstcheckpoint, "Fishes", &robothomologation);
 
 

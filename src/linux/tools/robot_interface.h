@@ -24,9 +24,6 @@
 #include "kernel/driver/io.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/wing.h"
-#include "disco/star/finger.h"
-#include "disco/star/carpet.h"
 #include "server_tcp.h"
 #include "disco/star/star.h"
 
@@ -150,11 +147,7 @@ class RobotInterface
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);
 
-		// ---------- gestion robot 2015 -----------------------------------------------
-		int wing(enum wing_cmd_type cmd_type_left, enum wing_cmd_type cmd_type_right);
-		int elevator_set_position(float pos);
-		int finger_set_position(enum finger_type low, enum finger_type high, enum finger_bottom_type right, enum finger_bottom_type left);
-		int carpet_set_position(enum carpet_type right, enum carpet_type left);
+
 
 /////////////////// TODO a mettre a jour
 		// ---------- gestion du bras --------------------------------------------------

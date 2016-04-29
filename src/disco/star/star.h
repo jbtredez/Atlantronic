@@ -32,6 +32,7 @@ extern Dynamixel rightFishRemover;
 extern Dynamixel leftDoor;
 extern Dynamixel rightDoor;
 extern Dynamixel towerPliers;
+extern Dynamixel towerPliersTidier;
 extern Dynamixel parasol;
 #endif
 

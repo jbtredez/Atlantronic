@@ -4,12 +4,7 @@
 #include "middleware/stratege_machine/action.h"
 #include "disco/star/robot_state.h"
 
-enum fishes_type
-{
-	FISHES_UP,
-	FISHES_DOWN,
-	FISHES_NO_MOVE,
-};
+
 
 class Fishes  : public Action
 {
