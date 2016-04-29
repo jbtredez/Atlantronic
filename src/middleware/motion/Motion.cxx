@@ -56,7 +56,7 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 
 	for(int i = 0; i < MOTION_MOTOR_MAX; i++)
 	{
-		m_linearSpeedCheck[i].init(100, 100);
+		m_linearSpeedCheck[i].init(100, 50);
 	}
 	m_xPid.init(Bot::xKP, Bot::xKI, Bot::xKD, Bot::xMax);
 	m_yPid.init(Bot::yKP, Bot::yKI, Bot::yKD, Bot::yMax);
