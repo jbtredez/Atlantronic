@@ -42,7 +42,7 @@ void recalage()
 	KinematicsParameters angParamOrig;
 	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
 
-	KinematicsParameters linParam = {100, 300, 300};
+	KinematicsParameters linParam = {300, 600, 600};
 	KinematicsParameters angParam = angParamOrig;
 	angParam.vMax /= 2;
 	angParam.aMax /= 2;
@@ -77,7 +77,7 @@ void recalage()
 	}
 
 	vTaskDelay(500);
-	if( color == COLOR_GREEN )
+	if( color == COLOR_PURPLE )
 	{
 		trajectory.rotateTo(M_PI);
 	}
@@ -91,7 +91,7 @@ void recalage()
 	}
 
 	vTaskDelay(500);
-	trajectory.straight(-1000);
+	trajectory.straight(1000);
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
@@ -99,14 +99,14 @@ void recalage()
 
 	pos = location.getPosition();
 	pos.x = 1500 - PARAM_LEFT_CORNER_X;
-	pos.theta = M_PI;
+	pos.theta = 0;
 	location.setPosition(pos.symetric(color));
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory.straight(75);
+	trajectory.straight(-75);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;

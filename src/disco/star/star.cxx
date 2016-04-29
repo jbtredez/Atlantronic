@@ -6,6 +6,7 @@
 #include "kernel/driver/encoder/EncoderAB.h"
 #include "robot_parameters.h"
 #include "kernel/log.h"
+#include "disco/star/servos.h"
 
 KinematicsParameters paramDriving = {1800, 1500, 1500};
 KinematicsParameters linearParam = {1000, 1000, 1000};
@@ -50,6 +51,8 @@ static int star_robot_module_init()
 	towerPliers.init(&ax12, AX12_STAR_TOWER_PLIERS);
 	towerPliersTidier.init(&ax12, AX12_STAR_TOWER_PLIERS_TIDIER);
 	parasol.init(&ax12, AX12_STAR_PARASOL);
+
+	Servos::setTorque(true);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);

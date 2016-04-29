@@ -1,4 +1,5 @@
 #include "servos.h"
+#include "kernel/log.h"
 
 void Servos::setTorque(bool enable)
 {
@@ -15,15 +16,19 @@ void Servos::setTorque(bool enable)
 		towerPliersTidier.setTorqueLimit(1);
 		parasol.setTorqueLimit(1);
 
-		leftFishWing.setGoalLimits(0, 1.4);
+		// Angles limites
+		leftFishWing.setGoalLimits(0, 1.49);
 		leftFishRemover.setGoalLimits(-0.5, 0.5);
-		rightFishWing.setGoalLimits(-1.4, 0);
+		rightFishWing.setGoalLimits(-1.49, 0);
 		rightFishRemover.setGoalLimits(-0.5, 0.5);
 		leftDoor.setGoalLimits(-M_PI_2, M_PI_2);
 		rightDoor.setGoalLimits(-M_PI_2, M_PI_2);
 		towerPliers.setGoalLimits(0, 0);
 		towerPliersTidier.setGoalLimits(0, 0);
 		parasol.setGoalLimits(0, M_PI_4);
+
+		// Tolérence target reached
+		rightFishWing.setTargetReachedThreshold(0.1);
 	}else
 	{
 		// Mise Hors tension
@@ -66,12 +71,14 @@ int Servos::setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy wait)
 	bool reached = false;
 
 	servo->setGoalPosition(angle);
+	log_format(LOG_INFO, "AX12 ID = %d", servo->id());
 
 	if (wait == SERVO_POLICY_WAIT_END)
 	{
 		do {
 			reached = servo->isFlagActive(DYNAMIXEL_FLAG_TARGET_REACHED);
 			stucked = servo->isFlagActive(DYNAMIXEL_FLAG_STUCK);
+			vTaskDelay(50);
 		} while(reached == false && stucked == false);
 
 		if (stucked == true)
@@ -90,13 +97,13 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 	switch(right)
 	{
 		case WING_OPEN:
-			rightFishWing.setGoalPosition(-1.4);
+			setAngle(&rightFishWing, -1.49, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
-			rightFishWing.setGoalPosition(-0.7);
+			setAngle(&rightFishWing, 0, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_CLOSE:
-			rightFishWing.setGoalPosition(0);
+			setAngle(&rightFishWing, 0, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_NO_MOVE:
 			break;
@@ -107,13 +114,13 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 	switch(left)
 	{
 		case WING_OPEN:
-			leftFishWing.setGoalPosition(1.4);
+			setAngle(&leftFishWing, 1.49, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
-			leftFishWing.setGoalPosition(0.7);
+			setAngle(&leftFishWing, 0, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_CLOSE:
-			leftFishWing.setGoalPosition(0);
+			setAngle(&leftFishWing, 0, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_NO_MOVE:
 			break;
