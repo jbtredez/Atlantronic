@@ -71,10 +71,13 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 
 	// correction de tout les angles si ce n'est pas bon, pas de discontinuite en theta
 	// on garde le premier point tel quel
-	for(uint32_t i = m_tail + 1; i < m_tail + m_count; i++)
+	if( m_count > 2)
 	{
-		float oldTheta = m_pt[(i-1)%PATH_SIZE].pos.theta;
-		m_pt[i%PATH_SIZE].pos.theta = oldTheta + findRotation(oldTheta, m_pt[i%PATH_SIZE].pos.theta);
+		for(uint32_t i = m_tail + 1; i < m_tail + m_count; i++)
+		{
+			float oldTheta = m_pt[(i-1)%PATH_SIZE].pos.theta;
+			m_pt[i%PATH_SIZE].pos.theta = oldTheta + findRotation(oldTheta, m_pt[i%PATH_SIZE].pos.theta);
+		}
 	}
 
 	// on met toute les vitesses a fond
@@ -216,7 +219,7 @@ VectPlan projectOnSegment(const VectPlan &A, const VectPlan &B, VectPlan C)
 	float nab = AB.norm(PROJECTION_THETA_WEIGHT);
 
 	// on met C.theta entre A.theta et B.theta si possible et avec abs(B.theta - C.theta) le plus court possible
-	float dTheta = modulo2pi(C.theta - B.theta);
+/*	float dTheta = modulo2pi(C.theta - B.theta);
 	if(dTheta > 0)
 	{
 		dTheta -= 2*M_PI;
@@ -252,7 +255,7 @@ VectPlan projectOnSegment(const VectPlan &A, const VectPlan &B, VectPlan C)
 			}
 		}
 	}
-
+*/
 	VectPlan AC = C - A;
 	float factor = 0;
 
