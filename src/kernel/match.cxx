@@ -17,6 +17,7 @@
 
 #define MATCH_STACK_SIZE           300
 uint32_t match_time = 90000; //!< duree du match en ms
+uint32_t funny_action_time = 5000; //!< duree du match en ms
 volatile int match_color;
 volatile uint8_t match_go;
 static volatile uint8_t match_color_change_enable;
@@ -80,6 +81,9 @@ static void match_task(void *arg)
 
 	vTaskDelay(match_time);
 	log(LOG_INFO, "Fin du match");
+	// TODO Arret moteur + servos
+	// TODO Appel funny action
+	vTaskDelay(funny_action_time);
 	exitModules();
 	match_end = 1;
 

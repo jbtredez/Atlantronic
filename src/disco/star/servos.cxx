@@ -16,17 +16,17 @@ void Servos::setTorque(bool enable)
 		parasol.setTorqueLimit(1);
 
 		leftFishWing.setGoalLimits(0, 1.4);
-		leftFishRemover.setGoalLimits(0, 0);
+		leftFishRemover.setGoalLimits(-0.5, 0.5);
 		rightFishWing.setGoalLimits(-1.4, 0);
-		rightFishRemover.setGoalLimits(0, 0);
-		leftDoor.setGoalLimits(0, 0);
-		rightDoor.setGoalLimits(0, 0);
+		rightFishRemover.setGoalLimits(-0.5, 0.5);
+		leftDoor.setGoalLimits(-M_PI_2, M_PI_2);
+		rightDoor.setGoalLimits(-M_PI_2, M_PI_2);
 		towerPliers.setGoalLimits(0, 0);
 		towerPliersTidier.setGoalLimits(0, 0);
-		parasol.setGoalLimits(0, 0);
+		parasol.setGoalLimits(0, M_PI_4);
 	}else
 	{
-		// Mise sous tension
+		// Mise Hors tension
 		leftFishWing.setTorqueLimit(0);
 		leftFishRemover.setTorqueLimit(0);
 		rightFishWing.setTorqueLimit(0);
@@ -99,6 +99,7 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 			rightFishWing.setGoalPosition(0);
 			break;
 		case WING_NO_MOVE:
+			break;
 		default:
 			break;
 	}
@@ -115,6 +116,109 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 			leftFishWing.setGoalPosition(0);
 			break;
 		case WING_NO_MOVE:
+			break;
+		default:
+			break;
+	}
+}
+
+
+void Servos::setFishRemoverState(enum FishRemover_state left, enum FishRemover_state right)
+{
+	switch(right)
+	{
+		case FISH_REMOVER_TIDY:
+			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case FISH_REMOVER_SHAKE:
+			Servos::setAngle(&rightFishRemover, 0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightFishRemover, -0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case FISH_REMOVER_NO_MOVE:
+			break;
+		default:
+			break;
+	}
+
+	switch(left)
+	{
+		case FISH_REMOVER_TIDY:
+			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case FISH_REMOVER_SHAKE:
+			Servos::setAngle(&rightFishRemover, -0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightFishRemover, 0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case FISH_REMOVER_NO_MOVE:
+			break;
+		default:
+			break;
+	}
+}
+
+void Servos::setDoorsState(enum Door_state doorState)
+{
+	switch(doorState)
+	{
+		case DOOR_CLOSE:
+			Servos::setAngle(&leftDoor, -M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightDoor, M_PI_2, SERVO_POLICY_WAIT_END);
+			break;
+		case DOOR_OPEN:
+			Servos::setAngle(&leftDoor, 0, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightDoor, 0, SERVO_POLICY_WAIT_END);
+			break;
+		case DOOR_OPEN_WIDE:
+			Servos::setAngle(&leftDoor, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightDoor, -M_PI_2, SERVO_POLICY_WAIT_END);
+			break;
+		case DOOR_GRIP:
+			Servos::setAngle(&leftDoor, -0.2, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&rightDoor, 0.2, SERVO_POLICY_NON_BLOCKING);
+			break;
+		default:
+			break;
+	}
+}
+
+
+void Servos::setParasolState(enum Parasol_state parasolState)
+{
+	switch(parasolState)
+	{
+		case PARASOL_CLOSE:
+			Servos::setAngle(&parasol, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case PARASOL_OPEN:
+			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_NON_BLOCKING);
+			break;
+		default:
+			break;
+	}
+}
+
+void Servos::setTowerPlierState(enum TowerPlier_state plierState)
+{
+	switch(plierState)
+	{
+		case TOWER_PLIER_TIDY:
+			Servos::setAngle(&towerPliers, 0, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&towerPliersTidier, 0, SERVO_POLICY_NON_BLOCKING);
+			break;
+		case TOWER_PLIER_CLOSE:
+			Servos::setAngle(&towerPliersTidier, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&towerPliers, -0.5, SERVO_POLICY_WAIT_END);
+			break;
+		case TOWER_PLIER_OPEN:
+			Servos::setAngle(&towerPliersTidier, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&towerPliers, 0.5, SERVO_POLICY_WAIT_END);
+			break;
+		case TOWER_PLIER_GRIP:
+			Servos::setAngle(&towerPliersTidier, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&towerPliers, -0.1, SERVO_POLICY_WAIT_END);
+			break;
 		default:
 			break;
 	}

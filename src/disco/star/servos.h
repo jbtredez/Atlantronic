@@ -14,8 +14,8 @@ enum Wing_state
 enum FishRemover_state
 {
 	FISH_REMOVER_TIDY,		// Position milieux collé à l'aile
-	FISH_REMOVER_FORWARD,	// Rotation vers l'avant du robot
-	FISH_REMOVER_BACKWARD,	// Rotation vers l'arrière du robot
+	FISH_REMOVER_SHAKE,		// Rotation vers l'avant du robot
+	FISH_REMOVER_NO_MOVE,
 };
 
 enum Door_state
@@ -54,6 +54,10 @@ class Servos
 	static void closeAll(void);
 	static int setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy);
 	static void setWingState(enum Wing_state left, enum Wing_state right);
+	static void setFishRemoverState(enum FishRemover_state left, enum FishRemover_state right);
+	static void setParasolState(enum Parasol_state parasolState);
+	static void setDoorsState(enum Door_state doorState);
+	static void setTowerPlierState(enum TowerPlier_state plierState);
 };
 
 #endif /* SRC_DISCO_STAR_SERVOS_H_ */

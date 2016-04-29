@@ -16,7 +16,7 @@
 void recalage()
 {
 	VectPlan pos(1200, 0, 0);
-	VectPlan posInit(1000, -600, M_PI_2);
+	VectPlan posInit(1000, -600, -M_PI_2);
 	VectPlan firstcheckpoint(0, -750, M_PI_2);
 	//posInit.theta = atan2f(firstcheckpoint.y - posInit.y, firstcheckpoint.x - posInit.x);
 
@@ -25,7 +25,7 @@ void recalage()
 	Servos::setTorque(true);
 	Servos::closeAll();
 
-#if 0
+#if 1
 	location.setPosition(posInit.symetric(color));
 	setTableColor(color);
 #else
@@ -55,7 +55,7 @@ void recalage()
 	motion.enableAntico(false);
 
 	motion.enable(true);
-	trajectory.straight(-1000);
+	trajectory.straight(1000);
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
@@ -63,14 +63,14 @@ void recalage()
 
 	pos = location.getPosition();
 	pos.y = -1000 + PARAM_LEFT_CORNER_Y;
-	pos.theta = M_PI_2;
+	pos.theta = -M_PI_2;
 	location.setPosition(pos);
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory.straight(900);
+	trajectory.straight(-900);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 20000) )
 	{
 		goto free;
