@@ -68,6 +68,10 @@ static int gate_robot_module_init()
 	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
 	motionMotors[MOTION_MOTOR_RIGHT].pid.init(3, 0, 0, 1000);
 
+
+
+
+
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
 
