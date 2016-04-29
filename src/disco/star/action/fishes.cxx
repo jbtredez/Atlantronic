@@ -25,7 +25,7 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 
 	m_actiontype = ACTION_FISHES;
 
-	log_format(LOG_INFO, "Fishes: %d : %d : %f", firstcheckpoint.x, firstcheckpoint.y, firstcheckpoint.theta);
+	log_format(LOG_INFO, "Fishes: %d : %d : %d", (int)firstcheckpoint.x, (int)firstcheckpoint.y, (int)(firstcheckpoint.theta*180/M_PI));
 }
 
 ////////////////////////////////////////////////
@@ -74,9 +74,9 @@ int Fishes::do_action()
 	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
 	if(stratColor == COLOR_GREEN)
-		Servos::setWingPos(WING_OPEN, WING_CLOSE);
+		Servos::setWingState(WING_OPEN, WING_CLOSE);
 	else
-		Servos::setWingPos(WING_CLOSE, WING_OPEN);
+		Servos::setWingState(WING_CLOSE, WING_OPEN);
 
 	vTaskDelay(500);
 	trajectory.straight(200);
@@ -87,9 +87,9 @@ int Fishes::do_action()
 
 	vTaskDelay(300);
 	if(stratColor == COLOR_GREEN)
-		Servos::setWingPos(WING_MIDDLE, WING_CLOSE);
+		Servos::setWingState(WING_MIDDLE, WING_CLOSE);
 	else
-		Servos::setWingPos(WING_CLOSE, WING_MIDDLE);
+		Servos::setWingState(WING_CLOSE, WING_MIDDLE);
 
 	vTaskDelay(500);
 	VectPlan netPos(400, -850, M_PI);
@@ -99,9 +99,9 @@ int Fishes::do_action()
 
 	vTaskDelay(500);
 	if(stratColor == COLOR_GREEN)
-		Servos::setWingPos(WING_OPEN, WING_CLOSE);
+		Servos::setWingState(WING_OPEN, WING_CLOSE);
 	else
-		Servos::setWingPos(WING_CLOSE, WING_OPEN);
+		Servos::setWingState(WING_CLOSE, WING_OPEN);
 
 	return bresult;
 }
