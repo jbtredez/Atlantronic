@@ -15,6 +15,7 @@ class Robot
 				const char* ip,
 				bool xbee,
 				bool serverTcp,
+				bool serverUdp,
 				const char* file_stm,
 				void (*_callback)(void*), void* arg);
 

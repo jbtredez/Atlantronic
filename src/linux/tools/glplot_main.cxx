@@ -66,6 +66,7 @@ int main(int argc, char *argv[])
 	int gdb_port[ROBOT_MAX] = {0, 0};
 	bool simulation[ROBOT_MAX] = {false, false};
 	bool serverTcp = false; // TODO option ?
+	bool serverUdp = true; // TODO option ?
 	bool xbee = false;
 
 	setenv("LC_ALL","C",1);
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
 		int res = robot[i].init(robotName[i],
 				simulation[i], "", prog_stm[i], gdb_port[i],  // TODO path = argv[0] ?;
 				ip,
-				xbee, serverTcp,
+				xbee, serverTcp,serverUdp,
 				file_stm[i],
 				robotItfCallback, NULL);
 		if( ! res )

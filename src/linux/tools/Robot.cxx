@@ -1,6 +1,7 @@
 #include "Robot.h"
 #include "linux/tools/com/com_usb.h"
 #include "linux/tools/com/com_tcp.h"
+#include "linux/tools/com/com_udp.h"
 #include "linux/tools/com/com_xbee.h"
 
 Robot::Robot()
@@ -13,6 +14,7 @@ int Robot::init(const char* name,
 		const char* ip,
 		bool xbee,
 		bool serverTcp,
+		bool serverUdp,
 		const char* file_stm,
 		void (*_callback)(void*), void* arg)
 {
@@ -31,9 +33,13 @@ int Robot::init(const char* name,
 
 		m_com = new ComUsb(m_qemu.m_file_board_read, m_qemu.m_file_board_write);
 	}
-	else if(ip)
+	else if(ip && serverTcp)
 	{
 		m_com = new ComTcp(ip);
+	}
+	else if(ip && serverUdp)
+	{
+		m_com = new ComUdp(ip);
 	}
 	else if( xbee )
 	{
@@ -44,7 +50,7 @@ int Robot::init(const char* name,
 		m_com = new ComUsb(file_stm, file_stm);
 	}
 
-	m_robotItf.init(name, m_com, serverTcp, _callback, arg);
+	m_robotItf.init(name, m_com, serverTcp,serverUdp, _callback, arg);
 	return true;
 }
 

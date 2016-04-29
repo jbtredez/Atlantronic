@@ -1,10 +1,11 @@
-#include "server_udp.h"
 #include "linux/tools/cli.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+
+#include "server_udp.h"
 
 ServerUdp::ServerUdp()
 {
@@ -82,20 +83,14 @@ void ServerUdp::task()
 			continue;
 		}
 
-		log_info("nouveau client tcp %d : %s", clientId, inet_ntoa(addr.sin_addr));
+		log_info("nouveau client udp  %s", inet_ntoa(addr.sin_addr));
 		ServerClientUdp* client = new ServerClientUdp;
 		client->socket = clientSocket;
-		client->stopTask = false;
+		client->addr = addr;
 		client->id = clientId;
 		client->com = com;
 		client->server = this;
 
-		res = pthread_create(&tid, NULL, ServerClientUdp::task_wrapper, client);
-		if( res < 0 )
-		{
-			log_error_errno("pthread_create");
-			continue;
-		}
 
 		clientId++;
 		clientList.push_back(client);
@@ -130,16 +125,20 @@ void ServerUdp::deleteClient(ServerClientUdp* client)
 	}
 }
 
-void ServerUdp::write(void* buffer, unsigned int size)
+void ServerUdp::write(void* buffer, unsigned int size,struct sockaddr_in addr)
 {
 	std::list<ServerClientUdp*>::iterator it;
 	for(it = clientList.begin(); it != clientList.end(); ++it)
 	{
-		int res = ::write((*it)->socket, buffer, size);
-		if( res < 0)
+		if((uint32_t) ((*it)->addr.sin_addr.s_addr) !=( (uint32_t) addr.sin_addr.s_addr ))
 		{
-			log_error_errno("write");
+			int res = ::write((*it)->socket, buffer, size);
+			if( res < 0)
+			{
+				log_error_errno("write");
+			}
 		}
+
 	}
 }
 

@@ -68,7 +68,7 @@ const char* log_level_color_end[LOG_MAX] =
 
 const char RobotInterface::expected_version[41] = VERSION;
 
-int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_callback)(void*), void* _callback_arg)
+int RobotInterface::init(const char* _name, Com* _com, bool server_tcp,bool server_Udp, void (*_callback)(void*), void* _callback_arg)
 {
 	int i;
 	int err = 0;
@@ -125,6 +125,11 @@ int RobotInterface::init(const char* _name, Com* _com, bool server_tcp, void (*_
 		serverTcp.start();
 	}
 
+	if(server_Udp )
+	{
+		serverUdp.configure(com, 55056);
+		serverUdp.start();
+	}
 //	detection_dynamic_object_count = 0;
 
 	detection_dynamic_object_count1 = 0;
