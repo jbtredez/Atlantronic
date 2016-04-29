@@ -24,8 +24,6 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	}
 
 	m_actiontype = ACTION_FISHES;
-
-	log_format(LOG_INFO, "Fishes: %d : %d : %d", (int)firstcheckpoint.x, (int)firstcheckpoint.y, (int)(firstcheckpoint.theta*180/M_PI));
 }
 
 ////////////////////////////////////////////////
@@ -78,8 +76,26 @@ int Fishes::do_action()
 	else
 		Servos::setWingState(WING_NO_MOVE, WING_OPEN);
 
-	vTaskDelay(500);
-	trajectory.straight(200);
+	vTaskDelay(300);
+	trajectory.straight(250	);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
+	{
+		bresult = 1;
+	}
+
+	vTaskDelay(300);
+	if(stratColor == COLOR_GREEN)
+		Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
+	else
+		Servos::setWingState(WING_NO_MOVE, WING_CLOSE);
+
+	vTaskDelay(300);
+	VectPlan netPos(400, -850, M_PI);
+	netPos = netPos.symetric(stratColor);
+
+
+	// A mettre dans une sous strat
+	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
 	{
 		bresult = 1;
@@ -91,17 +107,10 @@ int Fishes::do_action()
 	else
 		Servos::setWingState(WING_NO_MOVE, WING_MIDDLE);
 
-	vTaskDelay(500);
-	VectPlan netPos(400, -850, M_PI);
-	netPos = netPos.symetric(stratColor);
-	// A mettre dans une sous strat
-	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
-
-	vTaskDelay(500);
 	if(stratColor == COLOR_GREEN)
-		Servos::setWingState(WING_OPEN, WING_NO_MOVE);
+		Servos::setFishRemoverState(FISH_REMOVER_SHAKE, FISH_REMOVER_NO_MOVE);
 	else
-		Servos::setWingState(WING_NO_MOVE, WING_OPEN);
+		Servos::setFishRemoverState(FISH_REMOVER_NO_MOVE, FISH_REMOVER_SHAKE);
 
 	return bresult;
 }

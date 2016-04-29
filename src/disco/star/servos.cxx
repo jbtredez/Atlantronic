@@ -97,10 +97,10 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 	switch(right)
 	{
 		case WING_OPEN:
-			setAngle(&rightFishWing, -1.49, SERVO_POLICY_WAIT_END);
+			setAngle(&rightFishWing, -1.22, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
-			setAngle(&rightFishWing, 0, SERVO_POLICY_WAIT_END);
+			setAngle(&rightFishWing, -1.13, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_CLOSE:
 			setAngle(&rightFishWing, 0, SERVO_POLICY_WAIT_END);
@@ -114,10 +114,10 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 	switch(left)
 	{
 		case WING_OPEN:
-			setAngle(&leftFishWing, 1.49, SERVO_POLICY_WAIT_END);
+			setAngle(&leftFishWing, 1.22, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
-			setAngle(&leftFishWing, 0, SERVO_POLICY_WAIT_END);
+			setAngle(&leftFishWing, 1.13, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_CLOSE:
 			setAngle(&leftFishWing, 0, SERVO_POLICY_WAIT_END);

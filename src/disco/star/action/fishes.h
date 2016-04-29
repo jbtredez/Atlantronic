@@ -45,10 +45,7 @@ class Fishes  : public Action
 		////////////////////////////////////////////////
 		void Exit();
 
-
 	private:
-		int goToWall();
-
 		int stratColor;
 };
 

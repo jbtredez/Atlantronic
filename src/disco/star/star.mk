@@ -9,3 +9,5 @@ star_robot += disco/star/recalage.o
 star_robot += disco/star/action/Move.o
 star_robot += disco/star/action/hut.o
 star_robot += disco/star/action/fishes.o
+star_robot += disco/star/action/fellowCastle.o
+star_robot += disco/star/action/dropCastle.o

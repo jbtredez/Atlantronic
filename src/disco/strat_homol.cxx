@@ -16,6 +16,8 @@
 #include "disco/star/action/Move.h"
 #include "disco/star/action/hut.h"
 #include "disco/star/action/fishes.h"
+#include "disco/star/action/fellowCastle.h"
+#include "disco/star/action/dropCastle.h"
 
 #include "strat/strat_simple.h"
 
@@ -30,8 +32,6 @@ static void strat_task(void* arg);
 static void strat_cmd(void* arg, void* data);
 
 static int strat_color;
-
-
 
 int strat_module_init()
 {
@@ -58,19 +58,29 @@ static void strat_task(void* arg)
 	RobotState robothomologation;
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(900,600,-M_PI/2);
+	VectPlan firstcheckpoint(-900,600,-M_PI/2);
 
-
+	// Cabanes
 	Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
 
 	// Poissons
 	Fishes fishes(firstcheckpoint, "Fishes", &robothomologation);
 
+	//Chateau ami
+	FellowCastle fellowCastle(firstcheckpoint, "Fellow Castle", &robothomologation);
+
+	firstcheckpoint.x = 400;
+	firstcheckpoint.y = -200;
+	firstcheckpoint.theta = -M_PI_4;
+	// Depose chateau 1
+	DropCastle dropCastle1(firstcheckpoint, "Drop first checkpoint", &robothomologation);
 
 	StratSimple strat;
 
 	//strat.add_action(&hut1);
-	strat.add_action(&fishes);
+	//strat.add_action(&fishes);
+	strat.add_action(&fellowCastle);
+	strat.add_action(&dropCastle1);
 
 	match_wait_go();
 	strat_color = match_get_color();
@@ -99,3 +109,4 @@ static void strat_cmd(void* /*arg*/, void* /*data*/)
 {
 	// TODO test des actions unitairement
 }
+
