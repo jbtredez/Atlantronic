@@ -25,7 +25,7 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 
 	m_actiontype = ACTION_FISHES;
 
-	log_format(LOG_INFO, "Fishes: %d : %d : %f", firstcheckpoint.x, firstcheckpoint.y, firstcheckpoint.theta);
+	log_format(LOG_INFO, "Fishes: %d : %d : %d", (int)firstcheckpoint.x, (int)firstcheckpoint.y, (int)(firstcheckpoint.theta*180/M_PI));
 }
 
 ////////////////////////////////////////////////
