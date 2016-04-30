@@ -13,7 +13,7 @@
 class Action
 {
 	public:
-		int get_try(){return m_try;};
+		int get_try(){return m_retry;};
 		VectPlan get_firstcheckpoint(){return m_firstcheckpoint;};
 		const char* get_name(){return m_name;};
 
@@ -52,8 +52,9 @@ class Action
 		////////////////////////////////////////////////
 		virtual int do_action();
 
-		//nb of try of the action -1 if the action it's done
-		int m_try;
+		// Nombre de re-tentative en cas d'échec: 0: on retente pas, 1 on retente une fois,...
+		// Strat décrémente à chaque essai, arrivé à -1 elle n'est plus appelée
+		int m_retry;
 		VectPlan m_firstcheckpoint;
 
 		int m_actiontype;

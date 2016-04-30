@@ -1,4 +1,3 @@
-#include "disco/star/action/Light.h"
 #include "disco/star/action/MoveBackward.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
@@ -58,7 +57,7 @@ static void strat_task(void* arg)
 	RobotState robothomologation;
 
 	//création et chargement des actions à faire
-	VectPlan firstcheckpoint(-900,600,-M_PI/2);
+	VectPlan firstcheckpoint;
 
 	// Cabanes
 	Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
@@ -71,16 +70,24 @@ static void strat_task(void* arg)
 
 	firstcheckpoint.x = 400;
 	firstcheckpoint.y = -200;
-	firstcheckpoint.theta = -M_PI_4;
+	firstcheckpoint.theta = 3*M_PI_4;
+
 	// Depose chateau 1
 	DropCastle dropCastle1(firstcheckpoint, "Drop first checkpoint", &robothomologation);
 
+	firstcheckpoint.x = 1315;
+	firstcheckpoint.y = 0;
+	firstcheckpoint.theta = 0;
+	Move moveToBase(firstcheckpoint, " Go back to base", 10);
+
 	StratSimple strat;
 
-	//strat.add_action(&hut1);
-	//strat.add_action(&fishes);
+
 	strat.add_action(&fellowCastle);
 	strat.add_action(&dropCastle1);
+	strat.add_action(&hut1);
+	strat.add_action(&fishes);
+	strat.add_action(&moveToBase);
 
 	match_wait_go();
 	strat_color = match_get_color();

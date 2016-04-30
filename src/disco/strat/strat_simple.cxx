@@ -34,7 +34,6 @@ int StratSimple::run()
 {
 	int result =0;
 	bool allDone = false;
-	bool busefullaction = false;
 	if(m_size_actionlist == 0)
 	{
 		return -1;
@@ -46,7 +45,6 @@ int StratSimple::run()
 	do
 	{
 		allDone = true;
-		busefullaction = false;
 		for(int i = 0 ; i < m_size_actionlist ; i++)
 		{
 			if( m_list_action[i] != 0 )
@@ -60,18 +58,12 @@ int StratSimple::run()
 					if(result == -1)
 					{
 						allDone = false;
-						m_list_action[i]->m_try++;
-						/*
-						if( ACTION_DROP != m_list_action[i]->get_actiontype() &&
-							ACTION_DROPZONE != m_list_action[i]->get_actiontype()  )
-						{
-							busefullaction = true;
-						}
-						*/
+						m_list_action[i]->m_retry--;
+						log_format(LOG_INFO,"Action %s failed, decrementing m_retry to %d", m_list_action[i]->m_name, m_list_action[i]->m_retry);
 					}
 					else
 					{
-						m_list_action[i]->m_try = -1;
+						m_list_action[i]->m_retry = -1;
 					}
 				}
 
@@ -79,7 +71,7 @@ int StratSimple::run()
 
 		}
 		vTaskDelay(1000);
-	}while( ! allDone &&  busefullaction );
+	}while( ! allDone );
 	
 	// Idle
 	/*VectPlan pos(390, -200, 0.0f);

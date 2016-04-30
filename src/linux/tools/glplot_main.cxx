@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <limits.h>
+#include <time.h>
 #include "glplot.h"
 #include "disco/star/star.h"
 #include "disco/gate/gate.h"
+
 
 enum
 {

@@ -38,41 +38,31 @@ int Hut::do_action()
 	flagInt = flagInt.symetric(stratColor);
 	flagExt = flagExt.symetric(stratColor);
 
-	if(m_try < 0 )
+	if(m_retry < 0 )
 	{
 		return 0;
 	}
 
-	// On va  a la position de l'action
-	nextToHut1 = this->m_firstcheckpoint;
-	do
-	{
-		vTaskDelay(100);
-		trajectory.goToNear(m_firstcheckpoint, 0, WAY_BACKWARD, AVOIDANCE_STOP) ;
-
-	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
-
 	// On s'approche de la première cabane
-	log_format(LOG_INFO, "##################On s'approche de la première cabane");
-	do
+	trajectory.goTo(flagInt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) != 0)
 	{
-		vTaskDelay(100);
-		trajectory.goTo(flagInt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+		return -1;
+	}
+	vTaskDelay(100);
 
-	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
-	log_format(LOG_INFO, "##################Premiere cabane");
+
 	// On ferme la porte
 	bresult = goToWall();
 
 	if ( ! bresult)
 	{
 		// On s'approche de la deuxième cabane
-		log_format(LOG_INFO, "##################On s'approche de la deuxième cabane");
 		do
 		{
-			vTaskDelay(100);
 			trajectory.goTo(flagExt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+			vTaskDelay(100);
 		}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
 		// On ferme la porte
@@ -104,11 +94,10 @@ int Hut::goToWall(void)
 	motion.enableAntico(false);
 
 	motion.enable(true);
-	vTaskDelay(500);
-	log_format(LOG_INFO, "##################on avance");
+	vTaskDelay(300);
 	trajectory.straight(-400);
 
-	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 5000) != 0)
+	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 4000) != 0)
 	{
 		bresult = 1;
 	}
@@ -118,10 +107,10 @@ int Hut::goToWall(void)
 	motion.enableAntico(true);
 	trajectory.setKinematicsParam(linParamOrig, angParamOrig);
 
-	log_format(LOG_INFO, "##################on recule");
 	vTaskDelay(300);
 	trajectory.straight(200);
-	trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000);
+	trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 4000);
+	vTaskDelay(100);
 
 	return bresult;
 }

@@ -39,6 +39,9 @@ int FellowCastle::do_action()
 	}
 
 	// Ouvrir les pinces
+	Servos::setDoorsState(DOOR_OPEN);
+
+	this->slowSpeed();
 
 	//Avancer
 	vTaskDelay(300);
@@ -48,6 +51,36 @@ int FellowCastle::do_action()
 		bresult = -1;
 	}
 
+	// Position de serrage des pinces
+	vTaskDelay(300);
+	Servos::setDoorsState(DOOR_GRIP);
+	vTaskDelay(300);
+
+	this->resetSpeed();
+
+
 free:
 	return bresult;
+}
+
+
+void FellowCastle::slowSpeed(void)
+{
+	trajectory.getKinematicsParam(&this->linParamOrig, &this->angParamOrig);
+
+	KinematicsParameters linParam = {300, 600, 600};
+	KinematicsParameters angParam = angParamOrig;
+	angParam.vMax /= 2;
+	angParam.aMax /= 2;
+	angParam.dMax /= 2;
+
+	trajectory.setKinematicsParam(linParam, angParam);
+
+	vTaskDelay(100);
+}
+
+void FellowCastle::resetSpeed(void)
+{
+	trajectory.setKinematicsParam(this->linParamOrig, this->angParamOrig);
+	vTaskDelay(100);
 }

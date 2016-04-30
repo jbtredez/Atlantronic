@@ -11,11 +11,17 @@ Move::Move(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, 
 	set_actiontype(ACTION_MOVE);
 }
 
+Move::Move(VectPlan firstcheckpoint,const char  * name, int nretry):Action(firstcheckpoint, name)
+{
+	set_actiontype(ACTION_MOVE);
+	m_retry = nretry;
+}
+
 ////////////////////////////////////////////////
 /// function    : do_action()
 /// descrition  : execute the action
 /// param       : none
-/// retrun      : -1 if fail or 0 if sucess
+/// retrun      : -1 if fail or 0 if success
 ////////////////////////////////////////////////
 int Move::do_action()
 {

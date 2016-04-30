@@ -2169,7 +2169,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 		/* See if any tasks have been deleted. */
 		prvCheckTasksWaitingTermination();
 
-		*((volatile unsigned int*)0xe000ee00);
+		//*((volatile unsigned int*)0xe000ee00);
 
 		#if ( configUSE_PREEMPTION == 0 )
 		{

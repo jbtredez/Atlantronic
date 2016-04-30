@@ -3,8 +3,16 @@
 
 #include "middleware/stratege_machine/action.h"
 #include "disco/star/robot_state.h"
+#include "disco/star/action/fishing.h"
+#include "disco/star/action/dropFishes.h"
 
-
+typedef enum
+{
+	FISHES_IDLE = 0,
+	FISHES_GRAB,
+	FISHES_DROP,
+	FISHES_FINISHED
+} FishesState;
 
 class Fishes  : public Action
 {
@@ -12,41 +20,18 @@ class Fishes  : public Action
 		RobotState * m_robot;
 
 	public:
-		////////////////////////////////////////////////
-		/// function    : Fishes()
-		/// descrition  : constructor
-		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
-		/// retrun      : none
-		////////////////////////////////////////////////
 		Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot);
-
-		////////////////////////////////////////////////
-		/// function    : Initialise()
-		/// descrition  : intialise the action color
-		/// param       : none
-		/// retrun      : none
-		////////////////////////////////////////////////
 		void Initialise(int stratcolor);
-
-		////////////////////////////////////////////////
-		/// function    : do_action()
-		/// descrition  : execute the action
-		/// param       : astratcolor : int the color (GREEN OR PURPLE)
-		/// retrun      : -1 if fail or 0 if sucess
-		////////////////////////////////////////////////
 		int do_action();
-
-
-		////////////////////////////////////////////////
-		/// function    : Exit()
-		/// descrition  : action effectue pour sortir de l'action proprement
-		/// param       : none
-		/// retrun      : none
-		////////////////////////////////////////////////
 		void Exit();
 
 	private:
-		int stratColor;
+		int m_stratColor;
+		Fishing m_fishingAction;
+		DropFishes m_dropFishesAction;
+		FishesState m_state;
+
+
 };
 
 #endif /* FISHES_H_ */

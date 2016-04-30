@@ -1,12 +1,9 @@
+#include "fishes.h"
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
-#include "fishes.h"
-
-
-
 
 ////////////////////////////////////////////////
 /// function    : Fishes()
@@ -16,7 +13,10 @@
 /// param       : robot: The instance of the robot which executes the action
 /// retrun      : none
 ////////////////////////////////////////////////
-Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):Action(firstcheckpoint, name)
+Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
+	Action(firstcheckpoint, name),
+		m_fishingAction(firstcheckpoint, "Fishing Action", robot),
+		m_dropFishesAction(firstcheckpoint, "Fishing Action", robot)
 {
 	if(robot != 0)
 	{
@@ -24,94 +24,75 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	}
 
 	m_actiontype = ACTION_FISHES;
+	m_retry = 4;
+	m_state = FISHES_IDLE;
+	m_stratColor = 0;
 }
 
-////////////////////////////////////////////////
-/// function    : Initialise()
-/// description  : Initialises the action
-/// param       : none
-/// retrun      : none
-////////////////////////////////////////////////
 void Fishes::Initialise(int stratcolor)
 {
-	Action::Initialise(stratcolor);
-	this->stratColor = stratcolor;
-
-	leftFishWing.setTorqueLimit(1);
-	leftFishWing.setGoalLimits(-1.4, 1.4);
-
-	rightFishWing.setTorqueLimit(1);
-	rightFishWing.setGoalLimits(-1.4, 1.4);
-
+	m_stratColor = stratcolor;
+	m_fishingAction.Initialise(m_stratColor);
 }
 
-////////////////////////////////////////////////
-/// function    : do_action()
-/// description  : execute the action
-/// param       : none
-/// retrun      : -1 if fail or 0 if success
-////////////////////////////////////////////////
 int Fishes::do_action()
 {
-	int bresult = 0;
-	Action::do_action();
-	VectPlan dest(900, -850, M_PI);
-	dest = dest.symetric(stratColor);
+	int result = 0;
+	int run = 1;
+	VectPlan actionStart;
 
-	if(m_try < 0 )
+	while(run)
 	{
-		return 0;
+		switch(m_state)
+		{
+			case FISHES_IDLE:
+				m_state = FISHES_GRAB;
+				break;
+
+			case FISHES_GRAB:
+				result = m_fishingAction.do_action();
+				if (result == -1)
+				{
+					m_state = FISHES_IDLE;
+					run = 0;
+				} else
+				{
+					m_state = FISHES_DROP;
+				}
+				break;
+
+			case FISHES_DROP:
+				actionStart.x = 400;
+				actionStart.y = -850;
+				actionStart.theta = M_PI;
+
+
+				m_dropFishesAction.m_firstcheckpoint = actionStart.symetric(m_stratColor);
+				result = m_dropFishesAction.do_action();
+				if(result == -1)
+				{
+					// On change pas d'état (on souhaite redémarrer ici au prochain essai)
+					run = 0;
+				} else
+				{
+					m_state = FISHES_FINISHED;
+				}
+				break;
+
+			case FISHES_FINISHED:
+				// Etat puit, on reste là
+				run = 0;
+				break;
+
+			default:
+				result = -1;
+				run = 0;
+				m_state = FISHES_IDLE;
+				log_format(LOG_ERROR, "Fishes: default state");
+				break;
+		}
 	}
 
-	// On va a la position de l'action
-	do
-	{
-		vTaskDelay(100);
-		trajectory.goTo(dest, WAY_FORWARD, AVOIDANCE_STOP) ;
-
-	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
-
-	if(stratColor == COLOR_GREEN)
-		Servos::setWingState(WING_OPEN, WING_NO_MOVE);
-	else
-		Servos::setWingState(WING_NO_MOVE, WING_OPEN);
-
-	vTaskDelay(300);
-	trajectory.straight(250	);
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
-	{
-		bresult = 1;
-	}
-
-	vTaskDelay(300);
-	if(stratColor == COLOR_GREEN)
-		Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
-	else
-		Servos::setWingState(WING_NO_MOVE, WING_CLOSE);
-
-	vTaskDelay(300);
-	VectPlan netPos(400, -850, M_PI);
-	netPos = netPos.symetric(stratColor);
-
-
-	// A mettre dans une sous strat
-	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
-	{
-		bresult = 1;
-	}
-
-	vTaskDelay(300);
-	if(stratColor == COLOR_GREEN)
-		Servos::setWingState(WING_MIDDLE, WING_NO_MOVE);
-	else
-		Servos::setWingState(WING_NO_MOVE, WING_MIDDLE);
-
-	if(stratColor == COLOR_GREEN)
-		Servos::setFishRemoverState(FISH_REMOVER_SHAKE, FISH_REMOVER_NO_MOVE);
-	else
-		Servos::setFishRemoverState(FISH_REMOVER_NO_MOVE, FISH_REMOVER_SHAKE);
-
-	return bresult;
+	return result;
 }
 

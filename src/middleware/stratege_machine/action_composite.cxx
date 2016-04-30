@@ -54,7 +54,7 @@ Action * ActionComposite::find_action_not_done(int type, VectPlan position)
 
 		
 		if( (m_list_action[i]->m_actiontype == type) 
-			&& m_list_action[i]->m_try > -1)
+			&& m_list_action[i]->m_retry > -1)
 		{
 			Vectdistance = (position - (m_list_action[i]->get_firstcheckpoint()));
 			distance = Vectdistance.norm();

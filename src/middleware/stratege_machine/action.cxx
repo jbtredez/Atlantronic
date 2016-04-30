@@ -10,7 +10,7 @@
 Action::Action(VectPlan firstcheckpoint, const char * name)
 {
 	m_name = name;
-	m_try = 0;
+	m_retry = 0;
 	m_actiontype = -1;
 	m_firstcheckpoint = firstcheckpoint;
 	initialized = false;

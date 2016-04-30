@@ -13,6 +13,7 @@ class Move : public Action
 		/// retrun      : none
 		////////////////////////////////////////////////
 		Move(VectPlan firstcheckpoint, const char  * name);
+		Move(VectPlan firstcheckpoint, const char  * name, int nretry);
 
 		////////////////////////////////////////////////
 		/// function    : do_action()
