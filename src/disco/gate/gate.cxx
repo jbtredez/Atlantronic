@@ -29,9 +29,25 @@ EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 static int gate_robot_module_init()
 {
 	Bot::init();
-
+	Bot::halfLength = GATE_HALF_LENGTH;
+	Bot::halfWidth = GATE_HALF_WIDTH;
+	Bot::rearOmronRange = GATE_REAR_OMRON_RANGE;
 	Bot::leftWheel = GATE_LEFT_WHEEL;
 	Bot::rightWheel = GATE_RIGHT_WHEEL;
+	Bot::xKP = GATE_XKP;
+	Bot::xKI = GATE_XKI;
+	Bot::xKD = GATE_XKD;
+	Bot::xMax = GATE_XMAX;
+	Bot::yKP = GATE_YKP;
+	Bot::yKI = GATE_YKI;
+	Bot::yKD = GATE_YKD;
+	Bot::yMax = GATE_YMAX;
+	Bot::tethaKP = GATE_THETAKP;
+	Bot::tethaKI = GATE_THETAKI;
+	Bot::tethaKD = GATE_THETAKD;
+	Bot::tethaMax = GATE_THETAMAX;
+	Bot::voieMot = GATE_VOIE_MOT;
+	Bot::voieOdo = GATE_VOIE_ODO;
 	Bot::voieMot = GATE_VOIE_MOT;
 	Bot::voieOdo = GATE_VOIE_ODO;
 	Bot::driving1WheelRadius = GATE_DRIVING1_WHEEL_RADIUS;
@@ -44,9 +60,7 @@ static int gate_robot_module_init()
 	Bot::odo1Way = GATE_ODO1_WAY;
 	Bot::odo2Way = GATE_ODO2_WAY;
 	Bot::odoEncoderResolution = GATE_ODO_ENCODER_RESOLUTION;
-	Bot::halfLength = GATE_HALF_LENGTH;
-	Bot::halfWidth = GATE_HALF_WIDTH;
-	Bot::rearOmronRange = GATE_REAR_OMRON_RANGE;
+
 
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
@@ -79,13 +93,13 @@ static int gate_robot_module_init()
 	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;
 	motionMotors[MOTION_MOTOR_LEFT].inputGain = 60 * GATE_MOTOR_DRIVING1_RED / (float)(2 * M_PI * GATE_DRIVING1_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_LEFT].encoder = &motionMotorEncoder[MOTION_MOTOR_LEFT];
-	motionMotors[MOTION_MOTOR_LEFT].pid.init(3, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(6, 5, 0, 1000);
 
 	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
 	motionMotors[MOTION_MOTOR_RIGHT].pwmId = PWM_2;
 	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
-	motionMotors[MOTION_MOTOR_RIGHT].pid.init(3, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(6, 5, 0, 1000);
 
 
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);

@@ -58,10 +58,9 @@ int Motion::init(Detection* detection, Location* location, KinematicsModel* kine
 	{
 		m_linearSpeedCheck[i].init(100, 100);
 	}
-	// TODO deplacer dans star et gate (parametrage pas forcemenbt identique)
-	m_xPid.init(2, 0, 0, 100);// TODO voir saturation
-	m_yPid.init(0, 0, 0, 1);// TODO voir saturation + regler
-	m_thetaPid.init(15, 0, 0, 1); // TODO voir saturation
+	m_xPid.init(Bot::xKP, Bot::xKI, Bot::xKD, Bot::xMax);
+	m_yPid.init(Bot::yKP, Bot::yKI, Bot::yKD, Bot::yMax);
+	m_thetaPid.init(Bot::tethaKP, Bot::tethaKI, Bot::tethaKD, Bot::tethaMax);
 	m_motionStateMachine.init(m_motionStates, MOTION_MAX_STATE, this);
 
 	m_anticoOn = true;

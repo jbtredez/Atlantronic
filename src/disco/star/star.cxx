@@ -40,8 +40,23 @@ static int star_robot_module_init()
 {
 	Bot::init();
 
+	Bot::halfLength = STAR_HALF_LENGTH;
+	Bot::halfWidth = STAR_HALF_WIDTH;
+	Bot::rearOmronRange = STAR_REAR_OMRON_RANGE;
 	Bot::leftWheel = STAR_LEFT_WHEEL;
 	Bot::rightWheel = STAR_RIGHT_WHEEL;
+	Bot::xKP = STAR_XKP;
+	Bot::xKI = STAR_XKI;
+	Bot::xKD = STAR_XKD;
+	Bot::xMax = STAR_XMAX;
+	Bot::yKP = STAR_YKP;
+	Bot::yKI = STAR_YKI;
+	Bot::yKD = STAR_YKD;
+	Bot::yMax = STAR_YMAX;
+	Bot::tethaKP = STAR_THETAKP;
+	Bot::tethaKI = STAR_THETAKI;
+	Bot::tethaKD = STAR_THETAKD;
+	Bot::tethaMax = STAR_THETAMAX;
 	Bot::voieMot = STAR_VOIE_MOT;
 	Bot::voieOdo = STAR_VOIE_ODO;
 	Bot::driving1WheelRadius = STAR_DRIVING1_WHEEL_RADIUS;
@@ -54,9 +69,6 @@ static int star_robot_module_init()
 	Bot::odo1Way = STAR_ODO1_WAY;
 	Bot::odo2Way = STAR_ODO2_WAY;
 	Bot::odoEncoderResolution = STAR_ODO_ENCODER_RESOLUTION;
-	Bot::halfLength = STAR_HALF_LENGTH;
-	Bot::halfWidth = STAR_HALF_WIDTH;
-	Bot::rearOmronRange = STAR_REAR_OMRON_RANGE;
 
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);

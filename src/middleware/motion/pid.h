@@ -17,7 +17,7 @@ class Pid
 
 		float kp;            //!< gain proportionnel
 		float ki;            //!< gain integral
-		float kd;            //!< gai derive
+		float kd;            //!< gain derive
 
 		float max_integral;  //!< saturation de l'integrale
 		float max_out;       //!< saturation de la sortie
