@@ -1,7 +1,7 @@
 #include "MotionTrajectoryState.h"
 #include "kernel/log.h"
 #include "middleware/detection.h"
-#include "disco/robot_parameters.h"
+#include "disco/bot.h"
 #include "kernel/control.h"
 #include "kernel/math/findRotation.h"
 
@@ -71,12 +71,12 @@ void MotionTrajectoryState::run(void* data)
 	if( m->m_anticoOn )
 	{
 		float opponentMinDistance = m->m_detection->computeOpponentDistance(Vect2(m->m_posMes.x, m->m_posMes.y));
-		if( opponentMinDistance < 1.5*PARAM_RIGHT_CORNER_X )
+		if( opponentMinDistance < 1.5*Bot::halfLength )
 		{
 			//reduction de la vitesse max de rotation si l'adversaire est tres proche
 			wParam.vMax = 1;
 		}
-		else if( opponentMinDistance < 2*PARAM_RIGHT_CORNER_X )
+		else if( opponentMinDistance < 2*Bot::halfLength )
 		{
 			// reduction de la vitesse max de rotation si l'adversaire est proche
 			wParam.vMax /= 1.5;
@@ -110,7 +110,7 @@ void MotionTrajectoryState::run(void* data)
 	{
 		VectPlan u = m->m_u;
 		float opponentMinDistance = m->m_detection->computeOpponentInRangeDistance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
-		opponentMinDistance = opponentMinDistance - PARAM_RIGHT_CORNER_X - PARAM_FINGER_SIZE_X;
+		opponentMinDistance = opponentMinDistance - Bot::halfLength;
 		opponentMinDistance /= 2; // facteur de securite
 
 		// detection statique
@@ -119,7 +119,7 @@ void MotionTrajectoryState::run(void* data)
 		{
 			dir.theta += M_PI;
 		}
-		float tableBorderDistance = m->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, dir, NULL, NULL) + PARAM_NP_X;
+		float tableBorderDistance = m->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, dir, NULL, NULL) + -Bot::halfLength;
 		if( tableBorderDistance < 10 )
 		{
 			tableBorderDistance = 10;

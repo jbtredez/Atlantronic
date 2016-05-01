@@ -4,7 +4,6 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
 #include "kernel/driver/encoder/EncoderAB.h"
-#include "robot_parameters.h"
 #include "kernel/log.h"
 #include "disco/star/servos.h"
 
@@ -39,6 +38,26 @@ EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 
 static int star_robot_module_init()
 {
+	Bot::init();
+
+	Bot::leftWheel = STAR_LEFT_WHEEL;
+	Bot::rightWheel = STAR_RIGHT_WHEEL;
+	Bot::voieMot = STAR_VOIE_MOT;
+	Bot::voieOdo = STAR_VOIE_ODO;
+	Bot::driving1WheelRadius = STAR_DRIVING1_WHEEL_RADIUS;
+	Bot::driving2WheelRadius = STAR_DRIVING2_WHEEL_RADIUS;
+	Bot::motorDriving1Red = STAR_MOTOR_DRIVING1_RED;
+	Bot::motorDriving2Red = STAR_MOTOR_DRIVING2_RED;
+	Bot::motorRpmToVolt = 1;	 // unused
+	Bot::odo1WheelRadius = STAR_ODO1_WHEEL_RADIUS;
+	Bot::odo2WheelRadius = STAR_ODO2_WHEEL_RADIUS;
+	Bot::odo1Way = STAR_ODO1_WAY;
+	Bot::odo2Way = STAR_ODO2_WAY;
+	Bot::odoEncoderResolution = STAR_ODO_ENCODER_RESOLUTION;
+	Bot::halfLength = STAR_HALF_LENGTH;
+	Bot::halfWidth = STAR_HALF_WIDTH;
+	Bot::rearOmronRange = STAR_REAR_OMRON_RANGE;
+
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
 

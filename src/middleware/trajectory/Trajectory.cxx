@@ -11,9 +11,9 @@
 #include "kernel/rcc.h"
 #include "kernel/log.h"
 #include "kernel/math/findRotation.h"
-#include "disco/robot_parameters.h"
 #include "Trajectory.h"
 #include "kernel/math/poly7.h"
+#include "disco/bot.h"
 
 #define TRAJECTORY_STACK_SIZE       400
 #define TRAJECTORY_APPROX_DIST      150      //!< distance d'approche d'un objet
@@ -689,7 +689,7 @@ int Trajectory::findWayToGraph(VectPlan pos, enum detection_type detect_type)
 		// TODO prendre en compte la rotation sur place en plus de la ligne droite
 		// 10mm de marge / control
 		dist = node_dist[i].dist;
-		if( dist < xmin - PARAM_LEFT_CORNER_X - TRAJECTORY_APPROX_DIST - 10)
+		if( dist < xmin - Bot::halfLength - TRAJECTORY_APPROX_DIST - 10)
 		{
 			break;
 		}

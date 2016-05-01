@@ -3,8 +3,8 @@
 //! @author Atlantronic
 
 #include "KinematicsModelDiff.h"
-#include "disco/robot_parameters.h"
 #include "kernel/log.h"
+#include "disco/bot.h"
 
 #include <math.h>
 
@@ -24,8 +24,8 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 	float vtheta = u.theta * speed;
 	float v[2];
 
-	v[RIGHT_WHEEL] = vx + 0.5 * m_voie * vtheta;
-	v[LEFT_WHEEL] = vx - 0.5 * m_voie * vtheta;
+	v[Bot::rightWheel] = vx + 0.5 * m_voie * vtheta;
+	v[Bot::leftWheel] = vx - 0.5 * m_voie * vtheta;
 
 	if( saturate )
 	{
@@ -60,9 +60,9 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 VectPlan KinematicsModelDiff::computeSpeed(Kinematics* kinematics_mes)
 {
 	VectPlan v;
-	v.x = 0.5 * (kinematics_mes[RIGHT_WHEEL].v + kinematics_mes[LEFT_WHEEL].v);
+	v.x = 0.5 * (kinematics_mes[Bot::rightWheel].v + kinematics_mes[Bot::leftWheel].v);
 	v.y = 0;
-	v.theta = (kinematics_mes[RIGHT_WHEEL].v -  kinematics_mes[LEFT_WHEEL].v) / m_voie;
+	v.theta = (kinematics_mes[Bot::rightWheel].v -  kinematics_mes[Bot::leftWheel].v) / m_voie;
 
 	return v;
 }

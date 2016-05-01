@@ -4,7 +4,6 @@
 #include "kernel/systick.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-#include "disco/robot_parameters.h"
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
@@ -58,7 +57,7 @@ void recalage()
 	}
 
 	pos = location.getPosition();
-	pos.y = -1000 + PARAM_LEFT_CORNER_Y;
+	pos.y = -1000 + Bot::halfLength;
 	pos.theta = -M_PI_2;
 	location.setPosition(pos);
 

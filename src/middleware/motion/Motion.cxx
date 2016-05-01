@@ -7,13 +7,13 @@
 #include "kernel/can/can_id.h"
 #include "kernel/canopen.h"
 #include "kernel/control.h"
+#include "disco/bot.h"
 #include "Motion.h"
 #include "kernel/location/location.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/pwm.h"
 #include "kernel/fault.h"
 #include "kernel/driver/power.h"
-#include "disco/robot_parameters.h"
 #include "kernel/match.h"
 #include "MotionDisabledState.h"
 #include "MotionTryEnableState.h"
@@ -120,13 +120,13 @@ void Motion::motionUpdateMotors()
 	if( match_get_go() )
 	{
 		// ambiance selon la vitesse des roues
-		float pwm = fabsf(m_kinematics[RIGHT_WHEEL].v) / 1000;
+		float pwm = fabsf(m_kinematics[Bot::rightWheel].v) / 1000;
 		if( pwm > 1)
 		{
 			pwm = 1;
 		}
 		//pwm_set(PWM_1, pwm);
-		pwm = fabsf(m_kinematics[LEFT_WHEEL].v) / 1000;
+		pwm = fabsf(m_kinematics[Bot::leftWheel].v) / 1000;
 		if( pwm > 1)
 		{
 			pwm = 1;

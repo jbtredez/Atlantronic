@@ -1,6 +1,5 @@
 #include "MotionSpeedState.h"
 #include "kernel/log.h"
-#include "disco/robot_parameters.h"
 #include "kernel/control.h"
 
 MotionSpeedState::MotionSpeedState() :

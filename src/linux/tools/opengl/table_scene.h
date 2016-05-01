@@ -9,7 +9,6 @@
 #include "linux/tools/Robot.h"
 #include "disco/table.h"
 #include "middleware/trajectory/Graph.h"
-#include "disco/robot_parameters.h"
 #include "kernel/math/VectPlan.h"
 #include "main_shader.h"
 
@@ -84,7 +83,8 @@ class TableScene
 		int m_mouseX;
 		int m_mouseY;
 		MainShader* m_shader;
-		GlObjectBasic m_robot2d;
+		GlObjectBasic m_mainRobot2d;
+		GlObjectBasic m_pmiRobot2d;
 		GlObjectBasic m_table2d[TABLE_OBJ_SIZE];
 		GlObjectBasic m_graphPointObject;
 };

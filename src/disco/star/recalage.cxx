@@ -4,7 +4,6 @@
 #include "kernel/systick.h"
 #include "kernel/rcc.h"
 #include "kernel/log.h"
-#include "disco/robot_parameters.h"
 #include "kernel/driver/usb.h"
 #include "kernel/location/location.h"
 #include "kernel/match.h"
@@ -71,7 +70,7 @@ void recalage()
 	}
 
 	pos = location.getPosition();
-	pos.y = -1000 + PARAM_LEFT_CORNER_Y;
+	pos.y = -1000 + STAR_HALF_LENGTH;
 	pos.theta = OPPOSED_ANGLE(M_PI_2);
 	location.setPosition(pos);
 
@@ -107,7 +106,7 @@ void recalage()
 	}
 
 	pos = location.getPosition();
-	pos.x = 1500 - PARAM_LEFT_CORNER_X;
+	pos.x = 1500 - STAR_HALF_LENGTH;
 	pos.theta = OPPOSED_ANGLE(M_PI);
 	location.setPosition(pos.symetric(color));
 

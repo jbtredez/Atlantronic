@@ -1,9 +1,13 @@
 #ifndef GATE_H
 #define GATE_H
 
+#include "disco/bot.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/driver/DynamixelManager.h"
 #include "kernel/PwmMotor.h"
+
+#define GATE_LEFT_WHEEL                               0
+#define GATE_RIGHT_WHEEL                              1
 
 #define GATE_VOIE_MOT                            144.0f
 #define GATE_VOIE_ODO                             90.0f
@@ -18,6 +22,11 @@
 #define GATE_ODO1_WAY                                 1
 #define GATE_ODO2_WAY                                -1
 #define GATE_ODO_ENCODER_RESOLUTION                4096
+
+#define GATE_HALF_LENGTH							90
+#define GATE_HALF_WIDTH								90
+
+#define GATE_REAR_OMRON_RANGE                       400
 
 #ifndef LINUX
 extern Location location;

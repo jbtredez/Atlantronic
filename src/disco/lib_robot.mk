@@ -9,6 +9,7 @@ core_robot += kernel/kinematics_model/KinematicsModelDiff.o
 core_robot += kernel/control/kinematics.o
 core_robot += middleware/hokuyo_tools.o
 core_robot += middleware/detection.o
+core_robot += disco/bot.o
 core_robot += disco/table.o
 #core_robot += kernel/driver/gyro/adxrs453.o
 #core_robot += kernel/math/simpson_integrator.o

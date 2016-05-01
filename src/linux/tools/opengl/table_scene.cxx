@@ -1,12 +1,23 @@
 #include "table_scene.h"
+#include "disco/star/star.h"
+#include "disco/gate/gate.h"
 
-static float robot2dVectrices[] =
+static float mainRobot2dVectrices[] =
 {
-	PARAM_NP_X, PARAM_RIGHT_CORNER_Y,
-	PARAM_NP_X, PARAM_LEFT_CORNER_Y,
-	PARAM_LEFT_CORNER_X, PARAM_LEFT_CORNER_Y,
-	PARAM_RIGHT_CORNER_X, PARAM_RIGHT_CORNER_Y,
-	PARAM_NP_X, PARAM_RIGHT_CORNER_Y
+	-STAR_HALF_LENGTH, -STAR_HALF_WIDTH,
+	-STAR_HALF_LENGTH, STAR_HALF_WIDTH,
+	STAR_HALF_LENGTH, STAR_HALF_WIDTH,
+	STAR_HALF_LENGTH, -STAR_HALF_WIDTH,
+	-STAR_HALF_LENGTH, -STAR_HALF_WIDTH
+};
+
+static float pmiRobot2dVectrices[] =
+{
+	-GATE_HALF_LENGTH, -GATE_HALF_WIDTH,
+	-GATE_HALF_LENGTH, GATE_HALF_WIDTH,
+	GATE_HALF_LENGTH, GATE_HALF_WIDTH,
+	GATE_HALF_LENGTH, -GATE_HALF_WIDTH,
+	-GATE_HALF_LENGTH, -GATE_HALF_WIDTH
 };
 
 #define OPPONENT_R         150.0f
@@ -49,7 +60,8 @@ bool TableScene::init(GlFont* font, Robot* robot, int robotCount, MainShader* sh
 	res &= m_mainRobot3d.init(shader);
 	res &= m_pmiRobot3d.init(shader);
 	res &= m_opponentRobot3d.init("media/opponentRobot.obj", shader);
-	res &= m_robot2d.init(robot2dVectrices, 2, sizeof(robot2dVectrices)/sizeof(robot2dVectrices[0]), shader);
+	res &= m_mainRobot2d.init(mainRobot2dVectrices, 2, sizeof(mainRobot2dVectrices)/(2*sizeof(mainRobot2dVectrices[0])), shader);
+	res &= m_pmiRobot2d.init(pmiRobot2dVectrices, 2, sizeof(pmiRobot2dVectrices)/(2*sizeof(pmiRobot2dVectrices[0])), shader);
 
 	float plus_pt[2*CONTROL_USB_DATA_MAX];
 	memset(plus_pt, 0, sizeof(plus_pt));
@@ -222,7 +234,7 @@ void TableScene::drawRobot(Graphique* graph)
 		m_shader->setModelView(modelView);
 
 		m_shader->setColor(0, 0, 0);
-		m_robot2d.render(GL_LINE_STRIP);
+		m_mainRobot2d.render(GL_LINE_STRIP);
 
 		for(int i =0; i < DYNAMIXEL_MAX_ON_BUS; i++)
 		{
@@ -269,7 +281,7 @@ void TableScene::drawRobot(Graphique* graph)
 			m_shader->setModelView(modelView);
 
 			m_shader->setColor(0, 0, 0);
-			m_robot2d.render(GL_LINE_STRIP);
+			m_pmiRobot2d.render(GL_LINE_STRIP);
 			m_pmiRobot3d.draw();
 			m_shader->setModelView(oldModelView);
 

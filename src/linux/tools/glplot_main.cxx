@@ -40,6 +40,8 @@ static QemuRobotParameters robotParam[ROBOT_MAX] =
 		STAR_MOTOR_DRIVING1_RED,
 		STAR_MOTOR_DRIVING2_RED,
 		1,
+		STAR_HALF_LENGTH,
+		STAR_HALF_WIDTH,
 	},
 	{
 		GATE_ODO1_WHEEL_RADIUS,
@@ -55,6 +57,8 @@ static QemuRobotParameters robotParam[ROBOT_MAX] =
 		GATE_MOTOR_DRIVING1_RED,
 		GATE_MOTOR_DRIVING2_RED,
 		0,
+		GATE_HALF_LENGTH,
+		GATE_HALF_WIDTH,
 	}
 };
 

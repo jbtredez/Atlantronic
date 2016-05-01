@@ -1,9 +1,13 @@
 #ifndef STAR_H
 #define STAR_H
 
+#include "disco/bot.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/driver/DynamixelManager.h"
 #include "kernel/CanMipMotor.h"
+
+#define STAR_LEFT_WHEEL                               0
+#define STAR_RIGHT_WHEEL                              1
 
 #define STAR_VOIE_MOT                            164.0f
 #define STAR_VOIE_ODO                            112.0f
@@ -19,6 +23,11 @@
 #define STAR_ODO1_WAY                                 1
 #define STAR_ODO2_WAY                                -1
 #define STAR_ODO_ENCODER_RESOLUTION                4096
+
+#define STAR_HALF_LENGTH							110
+#define STAR_HALF_WIDTH								100
+
+#define STAR_REAR_OMRON_RANGE                       400
 
 #ifndef LINUX
 extern Location location;

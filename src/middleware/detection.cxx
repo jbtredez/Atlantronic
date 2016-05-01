@@ -7,7 +7,7 @@
 #include "kernel/log.h"
 #include "kernel/driver/usb.h"
 #include "kernel/driver/io.h"
-#include "disco/robot_parameters.h"
+#include "disco/bot.h"
 #include "kernel/math/regression.h"
 #include "kernel/math/segment_intersection.h"
 #include "kernel/location/location.h"
@@ -165,10 +165,10 @@ void Detection::compute()
 	{
 		// TODO ameliorer avec le lidarlite
 		// objet derriere
-		m_omronRectangle[0] = loc_to_abs(pos, Vect2(PARAM_NP_X, PARAM_LEFT_CORNER_Y));
-		m_omronRectangle[1] = loc_to_abs(pos, Vect2(PARAM_NP_X, PARAM_RIGHT_CORNER_Y));
-		m_omronRectangle[2] = loc_to_abs(pos, Vect2(PARAM_NP_X - REAR_OMRON_RANGE, PARAM_RIGHT_CORNER_Y));
-		m_omronRectangle[3] = loc_to_abs(pos, Vect2(PARAM_NP_X - REAR_OMRON_RANGE, PARAM_LEFT_CORNER_Y));
+		m_omronRectangle[0] = loc_to_abs(pos, Vect2(-Bot::halfLength, Bot::halfWidth));
+		m_omronRectangle[1] = loc_to_abs(pos, Vect2(-Bot::halfLength, -Bot::halfWidth));
+		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, - Bot::halfWidth));
+		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, Bot::halfWidth));
 		m_omronRectangle[4] = m_omronRectangle[0];
 
 		// on regarde si ce n'est pas un point en dehors de la table
@@ -182,8 +182,8 @@ void Detection::compute()
 		}
 
 		// on ne sait pas ou il est exactement. Dans le pire des cas, le robot est colle. On ajoute un rectangle d'un robot virtuel colle au notre
-		m_omronRectangle[2] = loc_to_abs(pos, Vect2(PARAM_NP_X - 2*DETECTION_OPPONENT_ROBOT_RADIUS, PARAM_RIGHT_CORNER_Y));
-		m_omronRectangle[3] = loc_to_abs(pos, Vect2(PARAM_NP_X - 2*DETECTION_OPPONENT_ROBOT_RADIUS, PARAM_LEFT_CORNER_Y));
+		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, -Bot::halfWidth));
+		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, Bot::halfWidth));
 
 		if( allInsideTable )
 		{
@@ -319,10 +319,10 @@ float Detection::getSegmentSimilarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n
 
 float Detection::computeObjectOnTrajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b)
 {
-	Vect2 a1( 0,    PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN);
-	Vect2 b1( 1e30, PARAM_LEFT_CORNER_Y  * AVOIDANCE_MARGIN);
-	Vect2 a2( 0,    PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN);
-	Vect2 b2( 1e30, PARAM_RIGHT_CORNER_Y * AVOIDANCE_MARGIN);
+	Vect2 a1( 0,    Bot::halfWidth  * AVOIDANCE_MARGIN);
+	Vect2 b1( 1e30, Bot::halfWidth  * AVOIDANCE_MARGIN);
+	Vect2 a2( 0,    -Bot::halfWidth * AVOIDANCE_MARGIN);
+	Vect2 b2( 1e30, -Bot::halfWidth * AVOIDANCE_MARGIN);
 
 	Vect2 c;
 	Vect2 d;
@@ -447,10 +447,10 @@ float Detection::computeFrontObject(enum detection_type type, const VectPlan& po
 	else
 	{
 		c.x = x_min;
-		d.y = PARAM_LEFT_CORNER_Y;
+		d.y = Bot::halfWidth;
 
 		d.x = x_min;
-		d.y = PARAM_RIGHT_CORNER_Y;
+		d.y = - Bot::halfWidth;
 
 		if( a )
 		{
