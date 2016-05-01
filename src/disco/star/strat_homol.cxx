@@ -12,7 +12,7 @@
 #include "middleware/stratege_machine/stratege.h"
 
 
-#include "disco/star/action/Move.h"
+#include "disco/action/Move.h"
 #include "disco/star/action/hut.h"
 #include "disco/star/action/fishes.h"
 #include "disco/star/action/fellowCastle.h"
@@ -24,8 +24,6 @@
 #define STRAT_STACK_SIZE       500
 
 //Action : recherche la balle, les pieds puis basse le clapet et fini par déposer le spotlight dans la zone principale
-
-
 
 static void strat_task(void* arg);
 static void strat_cmd(void* arg, void* data);

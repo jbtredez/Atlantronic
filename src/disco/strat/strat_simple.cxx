@@ -2,7 +2,7 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "disco/star/robot_state.h"
-#include "disco/star/action/Move.h"
+#include "disco/action/Move.h"
 
 ////////////////////////////////////////////////
 /// function    : Initialise()

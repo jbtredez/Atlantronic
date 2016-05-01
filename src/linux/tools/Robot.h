@@ -5,6 +5,9 @@
 #include "robot_interface.h"
 #include "linux/tools/com/com.h"
 
+//TODO Provisoire
+#define ROBOT_SELECTED 0
+
 class Robot
 {
 	public:

@@ -333,11 +333,11 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 	if( cli )
 	{
 		Qemu* qemu = NULL;
-		if( robot[0].m_qemu.isInitDone() )
+		if( robot[ROBOT_SELECTED].m_qemu.isInitDone() )
 		{
-			qemu = &robot[0].m_qemu;
+			qemu = &robot[ROBOT_SELECTED].m_qemu;
 		}
-		cmd_init(&robot[0].m_robotItf, qemu, gtk_end);
+		cmd_init(&robot[ROBOT_SELECTED].m_robotItf, qemu, gtk_end);
 	}
 
 	qemu_set_parameters();
@@ -555,7 +555,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg*/)
 {
 	Graphique* g = &graph[current_graph];
-	RobotInterface* robotItf = &robot[0].m_robotItf;
+	RobotInterface* robotItf = &robot[ROBOT_SELECTED].m_robotItf;
 
 	// on efface le frame buffer
 	glClearStencil(0);
@@ -816,7 +816,7 @@ static void plot_hokuyo_hist(Graphique* graph)
 
 static void plot_speed_dist(Graphique* graph)
 {
-	RobotInterface* robotItf = &robot[0].m_robotItf;
+	RobotInterface* robotItf = &robot[ROBOT_SELECTED].m_robotItf;
 
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
 	for(int i=1; i < robotItf->control_usb_data_count; i++)

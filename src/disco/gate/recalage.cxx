@@ -11,14 +11,25 @@
 #include "disco/table.h"
 #include "disco/gate/gate.h"
 
+
+//#define STAR_RECALAGE_AVANT
+#ifdef STAR_RECALAGE_AVANT
+#define OPPOSED_ANGLE(x) ((x) - M_PI)
+#define RECALAGE_WAY(x) (-1 * (x))
+#else
+#define OPPOSED_ANGLE(x) (x)
+#define RECALAGE_WAY(x) (x)
+#endif
+
 void recalage()
 {
 	VectPlan pos(1200, 0, 0);
-	VectPlan posInit(1000, -600, -M_PI_2);
+	VectPlan posInit(1000, -600, OPPOSED_ANGLE(M_PI_2));
 	VectPlan firstcheckpoint(0, -750, M_PI_2);
 	//posInit.theta = atan2f(firstcheckpoint.y - posInit.y, firstcheckpoint.x - posInit.x);
 
 	int color = match_get_color();
+	// Initialiser les ax 12
 
 #if 1
 	location.setPosition(posInit.symetric(color));
@@ -37,7 +48,7 @@ void recalage()
 	KinematicsParameters angParamOrig;
 	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
 
-	KinematicsParameters linParam = {100, 300, 300};
+	KinematicsParameters linParam = {300, 600, 600};
 	KinematicsParameters angParam = angParamOrig;
 	angParam.vMax /= 2;
 	angParam.aMax /= 2;
@@ -50,35 +61,35 @@ void recalage()
 	motion.enableAntico(false);
 
 	motion.enable(true);
-	trajectory.straight(1000);
+	trajectory.straight(RECALAGE_WAY(-1000));
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
 
 	pos = location.getPosition();
-	pos.y = -1000 + Bot::halfLength;
-	pos.theta = -M_PI_2;
+	pos.y = -1000 + GATE_HALF_LENGTH;
+	pos.theta = OPPOSED_ANGLE(M_PI_2);
 	location.setPosition(pos);
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-//	trajectory.straight(-900);
+	trajectory.straight(RECALAGE_WAY(1200));
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 20000) )
 	{
 		goto free;
 	}
-/*
+
 	vTaskDelay(500);
 	if( color == COLOR_GREEN )
 	{
-		trajectory.rotateTo(M_PI);
+		trajectory.rotateTo(OPPOSED_ANGLE(M_PI));
 	}
 	else
 	{
-		trajectory.rotateTo(0);
+		trajectory.rotateTo(OPPOSED_ANGLE(0));
 	}
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
@@ -86,22 +97,22 @@ void recalage()
 	}
 
 	vTaskDelay(500);
-	trajectory.straight(-1000);
+	trajectory.straight(RECALAGE_WAY(-1000));
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 10000) )
 	{
 		goto free;
 	}
 
 	pos = location.getPosition();
-	pos.x = 1500 - PARAM_LEFT_CORNER_X;
-	pos.theta = M_PI;
+	pos.x = 1500 - GATE_HALF_LENGTH;
+	pos.theta = OPPOSED_ANGLE(M_PI);
 	location.setPosition(pos.symetric(color));
 
 	// on doit attendre au moins un cycle de la tache control
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory.straight(75);
+	trajectory.straight(RECALAGE_WAY(75));
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;

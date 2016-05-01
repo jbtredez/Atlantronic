@@ -17,6 +17,11 @@ void PwmMotor::set_speed(float v)
 		cmd = 0;
 		pid.reset();
 	}
-
 	pwm_set(pwmId, cmd);
+}
+
+bool PwmMotor::is_in_motion()
+{
+	float encoderSpeed = encoder->getSpeed();
+	return encoderSpeed > 1;
 }

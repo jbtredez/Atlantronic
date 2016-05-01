@@ -6,7 +6,7 @@ star_robot += kernel/driver/StepperDriver.o
 star_robot += disco/star/recalage.o
 
 
-star_robot += disco/star/action/Move.o
+star_robot += disco/action/Move.o
 star_robot += disco/star/action/hut.o
 star_robot += disco/star/action/fishes.o
 star_robot += disco/star/action/fishing.o

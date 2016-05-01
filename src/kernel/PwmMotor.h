@@ -13,6 +13,7 @@ class PwmMotor : public MotorInterface
 {
 	public:
 		void set_speed(float v);
+		bool is_in_motion();
 		int pwmId;
 		Pid pid;
 		EncoderInterface* encoder;

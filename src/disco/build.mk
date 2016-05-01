@@ -34,7 +34,7 @@ obj-disco-homologation_star += $(lib-baz)
 obj-disco-homologation_star += $(core_robot)
 obj-disco-homologation_star += $(star_robot)
 obj-disco-homologation_star += disco/strat/strat_simple.o
-obj-disco-homologation_star += disco/strat_homol.o
+obj-disco-homologation_star += disco/star/strat_homol.o
 bin-disco += homologation_star
 
 obj-disco-homologation_gate += ${lib-os}
@@ -43,4 +43,6 @@ obj-disco-homologation_gate += ${lib-cpu_board}
 obj-disco-homologation_gate += ${lib-baz}
 obj-disco-homologation_gate += $(core_robot)
 obj-disco-homologation_gate += $(gate_robot)
+obj-disco-homologation_gate += disco/strat/strat_simple.o
+obj-disco-homologation_gate += disco/gate/strat_homol.o
 bin-disco += homologation_gate

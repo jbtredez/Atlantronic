@@ -433,7 +433,7 @@ void TableScene::printInfos(Graphique* graph)
 void TableScene::draw(Graphique* graph)
 {
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
-	RobotInterface* robotItf = &m_robot[0].m_robotItf;
+	RobotInterface* robotItf = &m_robot[ROBOT_SELECTED].m_robotItf;
 
 	int res = pthread_mutex_lock(&robotItf->mutex);
 	if(res != 0)
