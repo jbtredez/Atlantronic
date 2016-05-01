@@ -176,9 +176,18 @@ uint32_t Rplidar::getScan()
 		{
 			for(int i = 0; i < 100; i++)
 			{
+				if( (mes[i].startScan != 1 && mes[i].startScan != 2) ||
+					mes[i].c != 1)
+				{
+					// erreur de communication
+					log(LOG_ERROR, "rplidar - com error c != 1");
+					return ERR_RPLIDAR_CHECK_HEADER;
+				}
 				if( mes[i].startScan == 1)
 				{
-					/*if( scanCount == -1)
+					/*
+					// tests de perf
+					if( scanCount == -1)
 					{
 						t0 = systick_get_time();
 						log_format(LOG_INFO, "new scan");

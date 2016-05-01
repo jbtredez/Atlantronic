@@ -1,6 +1,7 @@
 #include "kernel/module.h"
 #include "star.h"
 #include "kernel/driver/hokuyo.h"
+#include "kernel/driver/rplidar.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/kinematics_model/KinematicsModelDiff.h"
 #include "kernel/driver/encoder/EncoderAB.h"
@@ -12,6 +13,7 @@ KinematicsParameters linearParam = {1000, 1000, 1000};
 KinematicsParameters angularParam = {5, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
+Rplidar rplidar;
 Dynamixel leftFishWing;
 Dynamixel leftFishRemover;
 Dynamixel rightFishWing;
@@ -85,6 +87,7 @@ static int star_robot_module_init()
 
 	Servos::setTorque(true);
 
+
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
 	hokuyo[0].scan.theta_min = -M_PI;
@@ -99,6 +102,8 @@ static int star_robot_module_init()
 	hokuyo[1].scan.min_object_size = 1;
 	hokuyo[1].scan.min_distance = 100;
 */
+	rplidar.init(USART6_FULL_DUPLEX, "rplidar", &location);
+
 #ifndef TEST_ODO_MOT
 	location.init(&odoWheelKinematicsModelDiff);
 #else
