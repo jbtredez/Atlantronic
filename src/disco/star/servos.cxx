@@ -199,7 +199,7 @@ void Servos::setParasolState(enum Parasol_state parasolState)
 			Servos::setAngle(&parasol, 0, SERVO_POLICY_NON_BLOCKING);
 			break;
 		case PARASOL_OPEN:
-			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_WAIT_END);
 			break;
 		default:
 			break;
