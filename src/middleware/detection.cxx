@@ -28,10 +28,21 @@ enum
 
 int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location)
 {
+	return Detection::init(hokuyo1, hokuyo2, NULL, location);
+}
+
+int Detection::init(Rplidar* rplidar, Location* location)
+{
+	return this->init(NULL, NULL, rplidar, location);
+}
+
+int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Rplidar* rplidar, Location* location)
+{
 	m_regEcart = 25;
 	m_callbackFunction = (DetectionCallback)nop_function;
 	m_hokuyo1 = hokuyo1;
 	m_hokuyo2 = hokuyo2;
+	m_rpLidar = rplidar;
 	m_location = location;
 
 	portBASE_TYPE err = xTaskCreate(Detection::taskWrapper, "detect", DETECTION_STACK_SIZE, this, PRIORITY_TASK_DETECTION, NULL);
@@ -63,6 +74,11 @@ int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location)
 	if( m_hokuyo2 )
 	{
 		m_hokuyo2->registerCallback(hokuyo2Callback, this);
+	}
+
+	if( m_rpLidar )
+	{
+		//m_rpLidar->registerCallback
 	}
 
 	m__regSize = 0;

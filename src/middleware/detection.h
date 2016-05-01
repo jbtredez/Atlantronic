@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include "kernel/math/VectPlan.h"
 #include "kernel/driver/hokuyo.h"
+#include "kernel/driver/rplidar.h"
 #include "kernel/math/polyline.h"
 
 #define DETECTION_NUM_OBJECT                100
@@ -44,6 +45,8 @@ class Detection
 {
 	public:
 		int init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location);
+		int init(Rplidar* rplidar, Location* location);
+		int init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Rplidar* rplidar,  Location* location);
 		void registerCallback(DetectionCallback callback, void* arg);
 
 		//!< Calcule en fonction de la position (actuelle ou non) pos du robot le segment [a b] (repère table) tel
@@ -77,6 +80,7 @@ class Detection
 		int m_regEcart;
 		Hokuyo* m_hokuyo1;
 		Hokuyo* m_hokuyo2;
+		Rplidar* m_rpLidar;
 
 		// données partagées par la tache et des méthodes d'accés
 		xQueueHandle m_queue;

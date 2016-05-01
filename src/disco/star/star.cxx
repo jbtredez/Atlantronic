@@ -12,7 +12,7 @@ KinematicsParameters paramDriving = {1800, 1500, 1500};
 KinematicsParameters linearParam = {1000, 1000, 1000};
 KinematicsParameters angularParam = {5, 5, 5};
 
-Hokuyo hokuyo[HOKUYO_MAX];
+//Hokuyo hokuyo[HOKUYO_MAX];
 Rplidar rplidar;
 Dynamixel leftFishWing;
 Dynamixel leftFishRemover;
@@ -88,20 +88,20 @@ static int star_robot_module_init()
 	Servos::setTorque(true);
 
 
-	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
-	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
-	hokuyo[0].scan.theta_min = -M_PI;
-	hokuyo[0].scan.theta_max = M_PI;
-	hokuyo[0].scan.min_object_size = 1;
-	hokuyo[0].scan.min_distance = 125;
-/*
-	hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2, &location);
-	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
-	hokuyo[1].scan.theta_min = -M_PI;
-	hokuyo[1].scan.theta_max = M_PI;
-	hokuyo[1].scan.min_object_size = 1;
-	hokuyo[1].scan.min_distance = 100;
-*/
+//	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
+//	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
+//	hokuyo[0].scan.theta_min = -M_PI;
+//	hokuyo[0].scan.theta_max = M_PI;
+//	hokuyo[0].scan.min_object_size = 1;
+//	hokuyo[0].scan.min_distance = 125;
+//
+//	hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2, &location);
+//	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
+//	hokuyo[1].scan.theta_min = -M_PI;
+//	hokuyo[1].scan.theta_max = M_PI;
+//	hokuyo[1].scan.min_object_size = 1;
+//	hokuyo[1].scan.min_distance = 100;
+
 	rplidar.init(USART6_FULL_DUPLEX, "rplidar", &location);
 
 #ifndef TEST_ODO_MOT
@@ -110,7 +110,8 @@ static int star_robot_module_init()
 	log(LOG_ERROR, "Attention - orodemtrie sur roues motrices !!");
 	location.init(&motorKinematicsModelDiff); // TESTS odo sur roues motirces
 #endif
-	detection.init(&hokuyo[0], &hokuyo[1], &location);
+
+	detection.init(&rplidar, &location);
 
 	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, STAR_ODO1_WAY * 2 * M_PI * STAR_ODO1_WHEEL_RADIUS / (float)(STAR_ODO_ENCODER_RESOLUTION));
 	motionEncoders[MOTION_MOTOR_RIGHT].init(ENCODER_2, STAR_ODO2_WAY * 2 * M_PI * STAR_ODO2_WHEEL_RADIUS / (float)(STAR_ODO_ENCODER_RESOLUTION));

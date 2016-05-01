@@ -1,12 +1,12 @@
-#ifndef SRC_DISCO_STAR_ACTION_FELLOWCASTLE_H_
-#define SRC_DISCO_STAR_ACTION_FELLOWCASTLE_H_
+#ifndef SRC_DISCO_STAR_ACTION_DUNECASTLE_H_
+#define SRC_DISCO_STAR_ACTION_DUNECASTLE_H_
 
 #include "middleware/stratege_machine/action.h"
 #include "disco/star/robot_state.h"
 #include "middleware/trajectory/Trajectory.h"
 
 
-class FellowCastle: public Action
+class DuneCastle: public Action
 {
 	private :
 		RobotState * m_robot;
@@ -14,9 +14,8 @@ class FellowCastle: public Action
 		KinematicsParameters angParamOrig;
 		int stratColor;
 
-
 	public:
-		FellowCastle(VectPlan firstcheckpoint, const char * name, RobotState * robot);
+		DuneCastle(VectPlan firstcheckpoint, const char * name, RobotState * robot);
 		void Initialise(int stratcolor);
 		int do_action();
 		void Exit();
@@ -24,4 +23,4 @@ class FellowCastle: public Action
 		void resetSpeed(void);
 };
 
-#endif /* SRC_DISCO_STAR_ACTION_FELLOWCASTLE_H_ */
+#endif /* SRC_DISCO_STAR_ACTION_DUNECASTLE_H_ */

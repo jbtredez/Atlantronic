@@ -1,11 +1,11 @@
-#include "fellowCastle.h"
+#include "duneCastle.h"
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
 
-FellowCastle::FellowCastle(VectPlan firstcheckpoint, const char * name, RobotState * robot):
+DuneCastle::DuneCastle(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name)
 {
 	if(robot != 0)
@@ -16,7 +16,7 @@ FellowCastle::FellowCastle(VectPlan firstcheckpoint, const char * name, RobotSta
 }
 
 
-void FellowCastle::Initialise(int stratcolor)
+void DuneCastle::Initialise(int stratcolor)
 {
 	Action::Initialise(stratcolor);
 	this->stratColor = stratcolor;
@@ -24,11 +24,11 @@ void FellowCastle::Initialise(int stratcolor)
 }
 
 
-int FellowCastle::do_action()
+int DuneCastle::do_action()
 {
 	int bresult = 0;
 	Action::do_action();
-	VectPlan checkpoint(1100.0, 100.0, M_PI);
+	VectPlan checkpoint(1000, 830, M_PI);
 	checkpoint = checkpoint.symetric(stratColor);
 
 
@@ -40,14 +40,17 @@ int FellowCastle::do_action()
 	}
 
 	// Ouvrir les pinces
-	Servos::setDoorsState(DOOR_OPEN);
+	if(stratColor == COLOR_GREEN)
+		Servos::setWingState(WING_NO_MOVE, WING_OPEN);
+	else
+		Servos::setWingState(WING_OPEN, WING_NO_MOVE);
 
 	this->slowSpeed();
 
 	//Avancer
 	vTaskDelay(300);
-	trajectory.straight(300);
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 3000) != 0 )
+	trajectory.straight(200);
+	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 3000) != 0 )
 	{
 		bresult = -1;
 	}
@@ -57,13 +60,21 @@ int FellowCastle::do_action()
 	Servos::setDoorsState(DOOR_GRIP);
 	vTaskDelay(300);
 
+	// Reculer
+	vTaskDelay(300);
+	trajectory.straight(-150);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 3000) != 0 )
+	{
+		bresult = -1;
+	}
+
 free:
 	this->resetSpeed();
 	return bresult;
 }
 
 
-void FellowCastle::slowSpeed(void)
+void DuneCastle::slowSpeed(void)
 {
 	trajectory.getKinematicsParam(&this->linParamOrig, &this->angParamOrig);
 
@@ -78,7 +89,7 @@ void FellowCastle::slowSpeed(void)
 	vTaskDelay(100);
 }
 
-void FellowCastle::resetSpeed(void)
+void DuneCastle::resetSpeed(void)
 {
 	trajectory.setKinematicsParam(this->linParamOrig, this->angParamOrig);
 	vTaskDelay(100);
