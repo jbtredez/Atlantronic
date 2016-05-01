@@ -861,7 +861,7 @@ int Trajectory::wait(enum trajectory_state wanted_state, uint32_t timeout)
 
 	if( state != wanted_state )
 	{
-		log_format(LOG_ERROR, "incorrect state : %d, wanted %d and timeout = %d", state, wanted_state, timeout);
+		log_format(LOG_ERROR, "incorrect state : %d, wanted %d and timeout = %u", state, wanted_state, (unsigned int)timeout);
 		return -1;
 	}
 

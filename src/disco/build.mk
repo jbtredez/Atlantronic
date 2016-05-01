@@ -44,5 +44,5 @@ obj-disco-homologation_gate += ${lib-baz}
 obj-disco-homologation_gate += $(core_robot)
 obj-disco-homologation_gate += $(gate_robot)
 obj-disco-homologation_gate += disco/strat/strat_simple.o
-obj-disco-homologation_gate += disco/gate/strat_homol.o
+#obj-disco-homologation_gate += disco/gate/strat_homol.o
 bin-disco += homologation_gate

@@ -253,6 +253,12 @@ void TableScene::drawRobot(Graphique* graph)
 				case AX12_STAR_RIGHT_FISH_REMOVER:
 					m_mainRobot3d.rightFishRemoverTheta = dynamixel->pos;
 					break;
+				case AX12_STAR_RIGHT_DOOR:
+					m_mainRobot3d.rightDoorTheta = dynamixel->pos;
+					break;
+				case AX12_STAR_LEFT_DOOR:
+					m_mainRobot3d.leftDoorTheta = dynamixel->pos;
+					break;
 			}
 		}
 #if 0

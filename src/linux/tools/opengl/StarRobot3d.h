@@ -13,15 +13,20 @@ class StarRobot3d
 		float rightFishWingTheta;
 		float leftFishRemoverTheta;
 		float rightFishRemoverTheta;
+		float leftDoorTheta;
+		float rightDoorTheta;
 
 	protected:
 		void drawMobileBase();
 		void drawFishWings();
+		void drawDoors();
 
 		GlObject m_mobileBase;
 		GlObject m_leftFishWing;
 		GlObject m_rightFishWing;
 		GlObject m_fishRemover;
+		GlObject m_leftDoor;
+		GlObject m_rightDoor;
 		MainShader* m_shader;
 };
 

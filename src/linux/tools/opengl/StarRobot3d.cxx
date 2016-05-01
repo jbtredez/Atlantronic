@@ -7,11 +7,15 @@ bool StarRobot3d::init(MainShader* shader)
 	res &= m_leftFishWing.init("media/2016/leftFishWing.obj", shader);
 	res &= m_rightFishWing.init("media/2016/rightFishWing.obj", shader);
 	res &= m_fishRemover.init("media/2016/fishRemover.obj", shader);
+	res &= m_rightDoor.init("media/2016/pince_cube_droite.obj", shader);
+	res &= m_leftDoor.init("media/2016/pince_cube_gauche.obj", shader);
 
 	leftFishWingTheta = 0;
 	rightFishWingTheta = 0;
 	leftFishRemoverTheta = 0;
 	rightFishRemoverTheta = 0;
+	leftDoorTheta = 0;
+	rightDoorTheta = 0;
 
 	return res;
 }
@@ -26,6 +30,7 @@ void StarRobot3d::draw()
 
 	drawMobileBase();
 	drawFishWings();
+	drawDoors();
 
 	m_shader->setModelView(oldModelView);
 }
@@ -70,5 +75,21 @@ void StarRobot3d::drawFishWings()
 	modelView = glm::rotate(modelView, (float)-M_PI/2, glm::vec3(0, 0, 1));
 	m_shader->setModelView(modelView);
 	m_fishRemover.draw();
+	m_shader->setModelView(oldModelView);
+}
+
+void StarRobot3d::drawDoors()
+{
+	glm::mat4 oldModelView = m_shader->getModelView();
+	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(107, -64, 190));
+	modelView = glm::rotate(modelView, rightDoorTheta - (float)M_PI/2, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
+	m_rightDoor.draw();
+	m_shader->setModelView(oldModelView);
+
+	modelView = glm::translate(oldModelView, glm::vec3(107, 64, 190));
+	modelView = glm::rotate(modelView, leftDoorTheta + (float)M_PI/2, glm::vec3(0, 0, 1));
+	m_shader->setModelView(modelView);
+	m_leftDoor.draw();
 	m_shader->setModelView(oldModelView);
 }
