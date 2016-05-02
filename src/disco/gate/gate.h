@@ -26,16 +26,16 @@
 #define GATE_YKD									0
 #define GATE_YMAX									1 // TODO voir saturation + regler
 
-#define GATE_THETAKP								0
+#define GATE_THETAKP								1
 #define GATE_THETAKI								0
 #define GATE_THETAKD								0
 #define GATE_THETAMAX								1 // TODO voir saturation
 
 // Parametres des roues
 #define GATE_VOIE_MOT                            144.0f
-#define GATE_VOIE_ODO                             90.0f
+#define GATE_VOIE_ODO                             92.0f
 #define GATE_DRIVING1_WHEEL_RADIUS                90.0f
-#define GATE_DRIVING2_WHEEL_RADIUS                90.0f
+#define GATE_DRIVING2_WHEEL_RADIUS                90.7f
 #define GATE_MOTOR_DRIVING1_RED             -(78/10.0f)  //!< reduction moteur 1
 #define GATE_MOTOR_DRIVING2_RED              (78/10.0f)  //!< reduction moteur 2
 #define GATE_MOTOR_RPM_TO_VOLT               (3/163.5f)
