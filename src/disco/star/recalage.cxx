@@ -12,7 +12,7 @@
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
 
-//#define STAR_RECALAGE_AVANT
+#define STAR_RECALAGE_AVANT
 #ifdef STAR_RECALAGE_AVANT
 #define OPPOSED_ANGLE(x) ((x) - M_PI)
 #define RECALAGE_WAY(x) (-1 * (x))
@@ -114,11 +114,24 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory.straight(RECALAGE_WAY(75));
+	trajectory.straight(RECALAGE_WAY(300));
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) )
 	{
 		goto free;
 	}
+
+	do
+	{
+		vTaskDelay(100);
+		VectPlan postion;
+		postion.x = 1315;
+		postion.y = 9;
+		postion.theta = OPPOSED_ANGLE(M_PI);
+
+
+		trajectory.goToNear(postion.symetric(color), 0, WAY_FORWARD, AVOIDANCE_STOP) ;
+
+	}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 /*
 	vTaskDelay(500);
 	trajectory.rotateTo(0);

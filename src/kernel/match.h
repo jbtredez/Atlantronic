@@ -11,6 +11,7 @@ extern volatile int match_end;
 
 portBASE_TYPE match_go_from_isr(void);
 portBASE_TYPE match_set_color_from_isr(void);
+portBASE_TYPE match_set_strat_isr(void);
 
 static inline int match_get_color()
 {

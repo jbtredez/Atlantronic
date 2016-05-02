@@ -78,7 +78,7 @@ int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Rplidar* rplidar, Location
 
 	if( m_rpLidar )
 	{
-		//m_rpLidar->registerCallback
+		//m_rpLidar->registerCallback()
 	}
 
 	m__regSize = 0;

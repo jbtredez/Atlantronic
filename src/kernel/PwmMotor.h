@@ -9,11 +9,13 @@
 #include "middleware/motion/pid.h"
 #include "kernel/driver/encoder/EncoderInterface.h"
 
+
 class PwmMotor : public MotorInterface
 {
 	public:
 		void set_speed(float v);
 		bool is_in_motion();
+		void disable();
 		int pwmId;
 		Pid pid;
 		EncoderInterface* encoder;

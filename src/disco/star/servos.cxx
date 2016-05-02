@@ -55,13 +55,12 @@ void Servos::closeAll(void)
 	towerPliers.setGoalPosition(0);
 	parasol.setGoalPosition(0);
 
+	setDoorsState(DOOR_CLOSE);
 	// Attente de la fin des mouvements
 
 	// Fermeture des ailes et rangement des ailes
 	leftFishWing.setGoalPosition(0);
 	rightFishWing.setGoalPosition(0);
-	rightDoor.setGoalPosition(0);
-
 }
 
 int Servos::setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy wait)
@@ -170,20 +169,20 @@ void Servos::setDoorsState(enum Door_state doorState)
 	switch(doorState)
 	{
 		case DOOR_CLOSE:
-			Servos::setAngle(&leftDoor, -M_PI_2, SERVO_POLICY_WAIT_END);
-			Servos::setAngle(&rightDoor, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&leftDoor, M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightDoor,-M_PI_2, SERVO_POLICY_WAIT_END);
 			break;
 		case DOOR_OPEN:
 			Servos::setAngle(&leftDoor, 0, SERVO_POLICY_WAIT_END);
 			Servos::setAngle(&rightDoor, 0, SERVO_POLICY_WAIT_END);
 			break;
 		case DOOR_OPEN_WIDE:
-			Servos::setAngle(&leftDoor, M_PI_2, SERVO_POLICY_WAIT_END);
-			Servos::setAngle(&rightDoor, -M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&leftDoor, -M_PI_2, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&rightDoor, M_PI_2, SERVO_POLICY_WAIT_END);
 			break;
 		case DOOR_GRIP:
-			Servos::setAngle(&leftDoor, -0.2, SERVO_POLICY_NON_BLOCKING);
-			Servos::setAngle(&rightDoor, 0.2, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&leftDoor, 0.2, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&rightDoor, -0.2, SERVO_POLICY_NON_BLOCKING);
 			break;
 		default:
 			break;
@@ -199,7 +198,7 @@ void Servos::setParasolState(enum Parasol_state parasolState)
 			Servos::setAngle(&parasol, 0, SERVO_POLICY_NON_BLOCKING);
 			break;
 		case PARASOL_OPEN:
-			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_WAIT_END);
 			break;
 		default:
 			break;

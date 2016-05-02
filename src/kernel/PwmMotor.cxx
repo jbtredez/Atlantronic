@@ -25,3 +25,10 @@ bool PwmMotor::is_in_motion()
 	float encoderSpeed = encoder->getSpeed();
 	return encoderSpeed > 1;
 }
+
+
+void PwmMotor::disable()
+{
+	pwm_disable();
+}
+
