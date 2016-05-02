@@ -6,7 +6,7 @@
 #include "kernel/systick.h"
 #include "kernel/math/Vect2.h"
 #include "kernel/error_codes.h"
-
+#include "kernel/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -55,7 +55,7 @@ int rplidar_compute_xy(struct rplidar_scan* scan, Vect2 *pos)
 	{
 		if(*distance > scan->min_distance /*&& *distance < HOKUYO_MAX_RANGE && hokuyoTheta > scan->theta_min && hokuyoTheta < scan->theta_max*/)
 		{
-			float theta_rd = ((float)*theta) / 64.0f * M_PI / 180;// + laser_pos_table.theta;
+			float theta_rd = ((float)*theta) / 64.0f * M_PI / 180 + laser_pos_table.theta;
 			float distance_mm = ((float)*distance) / 4.0f;
 			pos->x = distance_mm * cosf(theta_rd) + laser_pos_table.x;
 			pos->y = distance_mm * sinf(theta_rd) + laser_pos_table.y;

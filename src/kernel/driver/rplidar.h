@@ -30,8 +30,8 @@ class Rplidar
 {
 	public:
 		int init(enum usart_id id, const char* name, Location* location);
-
-		//xSemaphoreHandle scan_mutex;
+//
+	//	SemaphoreHandle scan_mutex;
 		struct rplidar_scan scan;
 
 	protected:

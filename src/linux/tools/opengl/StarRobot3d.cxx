@@ -82,13 +82,13 @@ void StarRobot3d::drawDoors()
 {
 	glm::mat4 oldModelView = m_shader->getModelView();
 	glm::mat4 modelView = glm::translate(oldModelView, glm::vec3(107, -64, 190));
-	modelView = glm::rotate(modelView, rightDoorTheta - (float)M_PI/2, glm::vec3(0, 0, 1));
+	modelView = glm::rotate(modelView, - rightDoorTheta - (float)M_PI/2, glm::vec3(0, 0, 1));
 	m_shader->setModelView(modelView);
 	m_rightDoor.draw();
 	m_shader->setModelView(oldModelView);
 
 	modelView = glm::translate(oldModelView, glm::vec3(107, 64, 190));
-	modelView = glm::rotate(modelView, leftDoorTheta + (float)M_PI/2, glm::vec3(0, 0, 1));
+	modelView = glm::rotate(modelView, - leftDoorTheta + (float)M_PI/2, glm::vec3(0, 0, 1));
 	m_shader->setModelView(modelView);
 	m_leftDoor.draw();
 	m_shader->setModelView(oldModelView);

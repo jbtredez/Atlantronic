@@ -42,8 +42,8 @@ typedef enum io
 // maping
 #define GPIO_MASK(a)       (1<<a)
 
-#define IO_COLOR           GPIO_0
-#define IO_OMRON1          GPIO_1
+#define IO_COLOR           GPIO_1
+#define IO_OMRON1          GPIO_0
 #define IO_OMRON2          GPIO_2
 #define IO_OMRON3          GPIO_3
 #define IO_OMRON_ELEVATOR  GPIO_4
