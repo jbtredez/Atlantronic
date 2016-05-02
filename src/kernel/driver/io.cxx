@@ -20,15 +20,15 @@ typedef struct
 // io sur les connecteurs io generiques seulement 12 Pins utilisés
 static const IoParam io_param[] =
 {
-	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0
+	{GPIOC, 15, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_0 - Led rouge
 	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1 - couleur
 	{GPIOE,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_2 - pull up pour les omron
-	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - pull up pour les omron
+	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - Bouton Choix(pull up pour les omron)
 	{GPIOG, 10, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_4 - pull up pour les omron
-	{GPIOG, 11, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_5
-	{GPIOD,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_6
-	{GPIOD,  7, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_7
-	{GPIOD,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_8
+	{GPIOG, 11, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_5 - Led orange 1
+	{GPIOD,  4, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_6 - Led orange 2
+	{GPIOD,  7, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_7 - Led verte
+	{GPIOD,  3, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_8 - Led bleu
 	{GPIOD,  2, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_9 - switch elevateur
 	{GPIOG,  7, GPIO_MODE_OUT, GPIO_PUPD_UP}, // attention pull up 4k7 sur carte cpu - IO_10 - sortie
 	{GPIOG,  6, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_11 - sortie
@@ -50,6 +50,7 @@ static int io_module_init(void)
 
 	// boutons en IT (GO et couleur)
 	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_go_from_isr);
+	exti_register(EXTI_PC, 3, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_strat_isr);
 	exti_register(EXTI_PC, 13, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_color_from_isr);
 
 	return 0;
