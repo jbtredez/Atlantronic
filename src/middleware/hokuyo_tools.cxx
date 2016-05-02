@@ -6,7 +6,7 @@
 #include "kernel/systick.h"
 #include "kernel/math/Vect2.h"
 #include "kernel/error_codes.h"
-
+#include "kernel/log.h"
 #include <stdio.h>
 #include <stdlib.h>
 
