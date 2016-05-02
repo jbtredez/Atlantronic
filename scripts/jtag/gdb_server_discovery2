@@ -1,0 +1,5 @@
+#!/bin/bash
+
+#openocd -d3 -f scripts/jtag/conf_discovery2 -c "init" -c targets -c "reset halt"
+openocd -d0 -f scripts/jtag/conf_discovery2 -c "init" -c targets -c "reset halt"
+
