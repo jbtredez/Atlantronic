@@ -72,6 +72,18 @@ int Rplidar::init(enum usart_id id, const char* name, Location* location)
 	return 0;
 }
 
+void Rplidar::setPosition(VectPlan pos, int sens)
+{
+	scan.pos_laser = pos;
+	scan.sens = sens;
+}
+
+void Rplidar::registerCallback(LaserCallback callback, void* arg)
+{
+	m_callback = callback;
+	m_callbackArg = arg;
+}
+
 void Rplidar::taskWrapper(void* arg)
 {
 	Rplidar* h = (Rplidar*) arg;

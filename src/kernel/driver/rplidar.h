@@ -3,10 +3,13 @@
 
 #include "kernel/driver/usart.h"
 #include "kernel/location/location.h"
+#include "kernel/semphr.h"
 
 #define RPLIDAR_READ_BUFFER_SIZE         2048
 #define RPLIDAR_WRITE_BUFFER_SIZE           2
 #define RPLIDAR_MAX_NUM_POINTS            768
+
+typedef void (*LaserCallback)(void* arg);
 
 struct rplidar_scan
 {
@@ -30,8 +33,12 @@ class Rplidar
 {
 	public:
 		int init(enum usart_id id, const char* name, Location* location);
-//
-	//	SemaphoreHandle scan_mutex;
+		void setPosition(VectPlan pos, int sens);
+
+		//!< enregistrement d'une callback
+		void registerCallback(LaserCallback callback, void* arg);
+
+		xSemaphoreHandle scan_mutex;
 		struct rplidar_scan scan;
 
 	protected:
@@ -42,6 +49,8 @@ class Rplidar
 		uint32_t getScan();
 		void faultUpdate(uint32_t err);
 
+		LaserCallback m_callback;
+		void* m_callbackArg;
 		enum usart_id m_usartId;
 		Location* m_location;
 		uint32_t m_lastError;

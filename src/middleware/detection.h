@@ -66,6 +66,7 @@ class Detection
 	protected:
 		static void hokuyo1Callback(void* arg);
 		static void hokuyo2Callback(void* arg);
+		static void LaserCallback(void* arg);
 		static void taskWrapper(void* arg);
 		void task();
 		void compute();

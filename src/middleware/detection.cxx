@@ -78,7 +78,7 @@ int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Rplidar* rplidar, Location
 
 	if( m_rpLidar )
 	{
-		//m_rpLidar->registerCallback()
+		m_rpLidar->registerCallback(LaserCallback, this);
 	}
 
 	m__regSize = 0;
@@ -149,6 +149,12 @@ void Detection::hokuyo2Callback(void* arg)
 {
 	Detection* detect = (Detection*) arg;
 	unsigned char event = DETECTION_EVENT_HOKUYO_2;
+	xQueueSend(detect->m_queue, &event, 0);
+}
+void Detection::LaserCallback(void* arg)
+{
+	Detection* detect = (Detection*) arg;
+	unsigned char event = DETECTION_EVENT_HOKUYO_1;
 	xQueueSend(detect->m_queue, &event, 0);
 }
 
