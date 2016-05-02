@@ -203,6 +203,7 @@ uint32_t Rplidar::getScan()
 					usb_add(USB_RPLIDAR, &scan, sizeof(scan));
 					scan.pointCount = 0;
 					scan.koPointCount = 0;
+					scan.pos_robot = m_location->getPosition();
 				}
 				if( mes[i].quality )
 				{
