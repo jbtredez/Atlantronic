@@ -16,6 +16,4 @@ int hokuyo_find_objects(struct hokuyo_scan* scan, Vect2* hokuyo_pos, unsigned in
 
 int rplidar_compute_xy(struct rplidar_scan* scan, Vect2 *pos);
 
-int rplidar_find_objects(struct rplidar_scan* scan, Vect2* rplidar_pos, unsigned int size, struct polyline* obj, unsigned int obj_size);
-
 #endif

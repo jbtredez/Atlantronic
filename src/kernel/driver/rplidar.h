@@ -21,9 +21,9 @@ struct rplidar_scan
 	int pointCount;
 	int koPointCount;
 	systime date;
-	float theta_min;
-	float theta_max;
-	int16_t min_object_size;
+//	float theta_min;
+//	float theta_max;
+//	int16_t min_object_size;
 	int16_t min_distance;
 } __attribute__((packed));
 

@@ -1,4 +1,4 @@
-#include "disco/action/MoveBackward.h"
+#include "disco/star/action/MoveBackward.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -18,8 +18,6 @@
 #include "disco/star/action/fellowCastle.h"
 #include "disco/star/action/duneCastle.h"
 #include "disco/star/action/dropCastle.h"
-
-#include "disco/action/avoidanceTest.h"
 
 #include "strat/strat_simple.h"
 
@@ -93,19 +91,16 @@ static void strat_task(void* arg)
 	firstcheckpoint.theta = 0;
 	Move moveToBase(firstcheckpoint, " Go back to base", 10);
 
-	AvoidanceTest avoidanceTest(firstcheckpoint, "simple avoidance Test");
-
 	StratSimple strat;
 
 
 //	strat.add_action(&fellowCastle);
 //	strat.add_action(&dropCastle1);
-//	strat.add_action(&duneCastle);
-//	strat.add_action(&dropCastle2);
+	strat.add_action(&duneCastle);
+	strat.add_action(&dropCastle2);
 //	strat.add_action(&hut1);
 //	strat.add_action(&fishes);
 //	strat.add_action(&moveToBase);
-	strat.add_action(&avoidanceTest);
 
 	match_wait_go();
 	strat_color = match_get_color();

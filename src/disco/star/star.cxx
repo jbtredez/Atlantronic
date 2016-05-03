@@ -103,8 +103,6 @@ static int star_robot_module_init()
 //	hokuyo[1].scan.min_distance = 100;
 
 	rplidar.init(USART6_FULL_DUPLEX, "rplidar", &location);
-	rplidar.scan.min_object_size = 1;
-
 
 #ifndef TEST_ODO_MOT
 	location.init(&odoWheelKinematicsModelDiff);

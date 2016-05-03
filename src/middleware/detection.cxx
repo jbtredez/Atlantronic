@@ -24,7 +24,6 @@ enum
 {
 	DETECTION_EVENT_HOKUYO_1,
 	DETECTION_EVENT_HOKUYO_2,
-	DETECTION_EVENT_RPLIDAR,
 };
 
 int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location)
@@ -110,15 +109,8 @@ void Detection::task()
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
+
 				xSemaphoreGive(m_hokuyo1->scan_mutex);
-			}
-
-			if( event == DETECTION_EVENT_RPLIDAR)
-			{
-				xSemaphoreTake(m_rpLidar->scan_mutex, portMAX_DELAY);
-				computeRplidar();
-
-				xSemaphoreGive(m_rpLidar->scan_mutex);
 			}
 			m_callbackFunction(m_callbackArg);
 		}
@@ -162,23 +154,20 @@ void Detection::hokuyo2Callback(void* arg)
 void Detection::LaserCallback(void* arg)
 {
 	Detection* detect = (Detection*) arg;
-	unsigned char event = DETECTION_EVENT_RPLIDAR;
+	unsigned char event = DETECTION_EVENT_HOKUYO_1;
 	xQueueSend(detect->m_queue, &event, 0);
 }
 
 void Detection::compute()
 {
 	int i;
-	int rplidarNbPoints;
 
 	// scan et position des points en x,y privé à la tache hokuyo
 	hokuyo_compute_xy(&m_hokuyo1->scan, m_hokuyoPos);
-	rplidarNbPoints = rplidar_compute_xy(&m_rpLidar->scan, m_laserPos);
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
 	m_numObj = hokuyo_find_objects(&m_hokuyo1->scan, m_hokuyoPos, HOKUYO_NUM_POINTS, m__objectPolyline, DETECTION_NUM_OBJECT);
-	m_numObj = rplidar_find_objects(&m_rpLidar->scan, m_laserPos, rplidarNbPoints, m__objectPolyline, DETECTION_NUM_OBJECT);
 	m__regSize = 0;
 
 	for( i = 0 ; i < m_numObj ; i++)
@@ -193,109 +182,43 @@ void Detection::compute()
 	// TODO revoir comment c est fait pour separer objets calcules par hokuyo et ceux par sick
 	// TODO pour le moment, on utilise un seul tableau et on met a jour les omron ici
 	VectPlan pos = m_location->getPosition();
-//	bool opponentBehind = ! gpio_get(IO_OMRON1) || ! gpio_get(IO_OMRON2) || ! gpio_get(IO_OMRON3);
-//	if( opponentBehind )
-//	{
-//		// TODO ameliorer avec le lidarlite
-//		// objet derriere
-//		m_omronRectangle[0] = loc_to_abs(pos, Vect2(-Bot::halfLength, Bot::halfWidth));
-//		m_omronRectangle[1] = loc_to_abs(pos, Vect2(-Bot::halfLength, -Bot::halfWidth));
-//		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, - Bot::halfWidth));
-//		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, Bot::halfWidth));
-//		m_omronRectangle[4] = m_omronRectangle[0];
-//
-//		// on regarde si ce n'est pas un point en dehors de la table
-//		bool allInsideTable = true;
-//		for(int i = 2; i < 4; i++)
-//		{
-//			if( fabsf(m_omronRectangle[i].x) > 1400 || fabsf(m_omronRectangle[i].y) > 900 )
-//			{
-//				allInsideTable = false;
-//			}
-//		}
-//
-//		// on ne sait pas ou il est exactement. Dans le pire des cas, le robot est colle. On ajoute un rectangle d'un robot virtuel colle au notre
-//		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, -Bot::halfWidth));
-//		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, Bot::halfWidth));
-//
-//		if( allInsideTable )
-//		{
-//			int num = m_numObj;
-//			Vect2 u(cosf(pos.theta), sinf(pos.theta));
-//			Vect2 v(u.y, -u.x);
-//			Vect2 p(pos.x, pos.y);
-//
-//			m__objectPolyline[num].pt = m_omronRectangle;
-//			m__objectPolyline[num].size = 5;
-//			m_numObj++;
-//		}
-//	}
-
-	for( i = 0; i < m_numObj ; i++)
+	bool opponentBehind = ! gpio_get(IO_OMRON1) || ! gpio_get(IO_OMRON2) || ! gpio_get(IO_OMRON3);
+	if( opponentBehind )
 	{
-		float xmin = m__objectPolyline[i].pt[0].x;
-		float xmax = xmin;
-		float ymin = m__objectPolyline[i].pt[0].y;
-		float ymax = ymin;
-		for(int j = 1; j < m__objectPolyline[i].size; j++ )
-		{
-			if( m__objectPolyline[i].pt[j].x < xmin )
-			{
-				xmin = m__objectPolyline[i].pt[j].x;
-			}
-			else if( m__objectPolyline[i].pt[j].x > xmax )
-			{
-				xmax = m__objectPolyline[i].pt[j].x;
-			}
+		// TODO ameliorer avec le lidarlite
+		// objet derriere
+		m_omronRectangle[0] = loc_to_abs(pos, Vect2(-Bot::halfLength, Bot::halfWidth));
+		m_omronRectangle[1] = loc_to_abs(pos, Vect2(-Bot::halfLength, -Bot::halfWidth));
+		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, - Bot::halfWidth));
+		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - Bot::rearOmronRange, Bot::halfWidth));
+		m_omronRectangle[4] = m_omronRectangle[0];
 
-			if( m__objectPolyline[i].pt[j].y < ymin )
+		// on regarde si ce n'est pas un point en dehors de la table
+		bool allInsideTable = true;
+		for(int i = 2; i < 4; i++)
+		{
+			if( fabsf(m_omronRectangle[i].x) > 1400 || fabsf(m_omronRectangle[i].y) > 900 )
 			{
-				ymin = m__objectPolyline[i].pt[j].y;
-			}
-			else if( m__objectPolyline[i].pt[j].y > ymax )
-			{
-				ymax = m__objectPolyline[i].pt[j].y;
+				allInsideTable = false;
 			}
 		}
 
-		m__obj[i].x = (xmin + xmax) / 2;
-		m__obj[i].y = (ymin + ymax) / 2;
-		m__obj[i].size = xmax - xmin;
-		if( ymax - ymin > m__obj[i].size)
+		// on ne sait pas ou il est exactement. Dans le pire des cas, le robot est colle. On ajoute un rectangle d'un robot virtuel colle au notre
+		m_omronRectangle[2] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, -Bot::halfWidth));
+		m_omronRectangle[3] = loc_to_abs(pos, Vect2(-Bot::halfLength - 2*DETECTION_OPPONENT_ROBOT_RADIUS, Bot::halfWidth));
+
+		if( allInsideTable )
 		{
-			m__obj[i].size = ymax - ymin;
+			int num = m_numObj;
+			Vect2 u(cosf(pos.theta), sinf(pos.theta));
+			Vect2 v(u.y, -u.x);
+			Vect2 p(pos.x, pos.y);
+
+			m__objectPolyline[num].pt = m_omronRectangle;
+			m__objectPolyline[num].size = 5;
+			m_numObj++;
 		}
 	}
-
-	xSemaphoreGive(m_mutex);
-}
-
-void Detection::computeRplidar()
-{
-	int i;
-	int rplidarNbPoints;
-
-	// scan et position des points en x,y privé à la tache rplidar
-	rplidarNbPoints = rplidar_compute_xy(&m_rpLidar->scan, m_laserPos);
-
-	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
-	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_numObj = rplidar_find_objects(&m_rpLidar->scan, m_laserPos, rplidarNbPoints, m__objectPolyline, DETECTION_NUM_OBJECT);
-	m__regSize = 0;
-
-	for( i = 0 ; i < m_numObj ; i++)
-	{
-		m__objectPolyline[i].size = regression_poly(m__objectPolyline[i].pt, m__objectPolyline[i].size, m_regEcart, m_hokuyoReg + m__regSize, HOKUYO_REG_SEG - m__regSize);
-		m__objectPolyline[i].pt = &m_hokuyoReg[m__regSize];
-		m__regSize += m__objectPolyline[i].size;
-	}
-
-	removeStaticElementsFromDynamicList();
-
-	// TODO revoir comment c est fait pour separer objets calcules par hokuyo et ceux par sick
-	// TODO pour le moment, on utilise un seul tableau et on met a jour les omron ici
-	VectPlan pos = m_location->getPosition();
-
 
 	for( i = 0; i < m_numObj ; i++)
 	{
@@ -406,8 +329,6 @@ void Detection::removeStaticElementsFromDynamicList()
 
 	m_numObj = new_num_obj;
 }
-
-
 
 //méthode heuristique pour estimer une resemblance entre deux segments
 float Detection::getSegmentSimilarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n)
