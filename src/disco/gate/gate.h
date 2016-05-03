@@ -16,8 +16,8 @@
 #define GATE_RIGHT_WHEEL                            1
 
 // Gains d'asservissement
-#define GATE_XKP									12
-#define GATE_XKI									0
+#define GATE_XKP									10
+#define GATE_XKI									5
 #define GATE_XKD									0
 #define GATE_XMAX									100 // TODO voir saturation
 
@@ -26,7 +26,7 @@
 #define GATE_YKD									0
 #define GATE_YMAX									1 // TODO voir saturation + regler
 
-#define GATE_THETAKP								110
+#define GATE_THETAKP								10
 #define GATE_THETAKI								50
 #define GATE_THETAKD								0
 #define GATE_THETAMAX								1 // TODO voir saturation
