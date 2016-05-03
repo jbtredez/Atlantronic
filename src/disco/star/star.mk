@@ -14,3 +14,5 @@ star_robot += disco/star/action/dropFishes.o
 star_robot += disco/star/action/fellowCastle.o
 star_robot += disco/star/action/duneCastle.o
 star_robot += disco/star/action/dropCastle.o
+
+star_robot += disco/action/avoidanceTest.o

@@ -1106,8 +1106,6 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 
 static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 {
-	printf("toggle color!!\n");
-
 #ifndef GTK3
 	if(!gtk_gl_area_make_current (GTK_GL_AREA (opengl_window)))
 	{

@@ -1,0 +1,73 @@
+#include "avoidanceTest.h"
+#include "kernel/log.h"
+#include "middleware/trajectory/Trajectory.h"
+#include "disco/star/robot_state.h"
+#include "kernel/location/location.h"
+#include "disco/star/star.h"
+
+
+AvoidanceTest::AvoidanceTest(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, name)
+{
+	set_actiontype(ACTION_MOVE);
+	pts[0].x = 1200;
+	pts[0].y = 650;
+	pts[0].theta = 0;
+	pts[1].x = -1200;
+	pts[1].y = 650;
+	pts[1].theta = 0;
+	pts[2].x = -1200;
+	pts[2].y =  -650;
+	pts[2].theta = 0;
+	pts[3].x = 1200;
+	pts[3].y = -650;
+	pts[3].theta = 0;
+
+	bool sens = true;
+}
+
+void AvoidanceTest::Initialise(int stratcolor)
+{
+	Action::Initialise(stratcolor);
+	this->stratColor = stratcolor;
+}
+
+
+////////////////////////////////////////////////
+/// function    : do_action()
+/// descrition  : execute the action
+/// param       : none
+/// retrun      : -1 if fail or 0 if success
+////////////////////////////////////////////////
+int AvoidanceTest::do_action()
+{
+	int i = 3;
+	while (1)
+	{
+		VectPlan nextPoint;
+
+		if (sens == true)
+			i++;
+		else
+			i--;
+
+		if (i > 3)
+			i = 0;
+		if (i < 0)
+			i = 3;
+
+		nextPoint = pts[i].symetric(stratColor);
+
+		log_format(LOG_INFO, "Avoidance test: Go to point: %d [%d ; %d]",i, (int)nextPoint.x, (int)nextPoint.y);
+
+		vTaskDelay(1000);
+		trajectory.goToNear(nextPoint, 0, WAY_ANY, AVOIDANCE_STOP) ;
+
+		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0)
+		{
+			sens = !sens;
+		}
+
+
+	}
+	return 0;
+}
