@@ -2,7 +2,7 @@
 #define HUT_H
 
 #include "middleware/stratege_machine/action.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 
 class Hut : public Action
 {

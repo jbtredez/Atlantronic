@@ -2,7 +2,7 @@
 #define SRC_DISCO_STAR_ACTION_DROPFISHES_H_
 
 #include "middleware/stratege_machine/action.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 
 class DropFishes:
 		public Action

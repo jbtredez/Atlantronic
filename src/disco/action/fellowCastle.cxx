@@ -2,8 +2,8 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
-#include "disco/star/star.h"
-#include "disco/star/servos.h"
+#include "robot_state.h"
+#include "bot.h"
 
 FellowCastle::FellowCastle(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name)
@@ -39,8 +39,6 @@ int FellowCastle::do_action()
 		goto free;
 	}
 
-	// Ouvrir les pinces
-	Servos::setDoorsState(DOOR_OPEN);
 
 	this->slowSpeed();
 
@@ -53,8 +51,6 @@ int FellowCastle::do_action()
 	}
 
 	// Position de serrage des pinces
-	vTaskDelay(300);
-	Servos::setDoorsState(DOOR_GRIP);
 	vTaskDelay(300);
 
 free:

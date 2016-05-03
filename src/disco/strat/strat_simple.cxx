@@ -1,7 +1,7 @@
 #include "strat_simple.h"
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/robot_state.h"
+#include "disco/bot.h"
 #include "disco/action/Move.h"
 
 ////////////////////////////////////////////////

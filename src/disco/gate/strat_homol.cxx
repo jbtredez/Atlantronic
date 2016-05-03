@@ -1,4 +1,4 @@
-#include "disco/star/action/MoveBackward.h"
+#include "disco/action/MoveBackward.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/task.h"
 #include "kernel/module.h"
@@ -8,16 +8,12 @@
 #include "kernel/location/location.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/robot_state.h"
+#include "disco/gate/robot_state.h"
 #include "middleware/stratege_machine/stratege.h"
 
 
 #include "disco/action/Move.h"
-#include "disco/star/action/hut.h"
-#include "disco/star/action/fishes.h"
-#include "disco/star/action/fellowCastle.h"
-#include "disco/star/action/dropCastle.h"
-
+#include "disco/action/fellowCastle.h"
 #include "strat/strat_simple.h"
 
 
@@ -60,10 +56,19 @@ static void strat_task(void* arg)
 	firstcheckpoint.x = -1315;
 	firstcheckpoint.y = 0;
 	firstcheckpoint.theta = 0;
-	Move moveToBase(firstcheckpoint, " Go back to base", 10);
+
+	//Chateau ami
+	FellowCastle fellowCastle(firstcheckpoint, "Fellow Castle", &robothomologation);
+
+	// Cabanes
+		Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
+
+
+
+
 
 	StratSimple strat;
-	strat.add_action(&moveToBase);
+	strat.add_action(&fellowCastle);
 
 	match_wait_go();
 	strat_color = match_get_color();

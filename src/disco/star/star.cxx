@@ -30,8 +30,8 @@ Location location;
 Detection detection;
 KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO, paramDriving);
 KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT, paramDriving);
-Motion motion;
-Trajectory trajectory;
+//Motion motion;
+//Trajectory trajectory;
 CanMipMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 

@@ -3,7 +3,7 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/location/location.h"
-#include "disco/star/star.h"
+
 
 MoveBackward::MoveBackward(VectPlan firstcheckpoint, const char * name):Action(firstcheckpoint, name)
 {

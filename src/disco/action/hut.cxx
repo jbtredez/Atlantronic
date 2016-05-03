@@ -2,7 +2,10 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
 #include "hut.h"
-#include "disco/star/star.h"
+#include "robot_state.h"
+
+#include "bot.h"
+//#include "disco/star/star.h"
 
 
 Hut::Hut(VectPlan firstcheckpoint, const char * name, RobotState * robot):Action(firstcheckpoint, name)

@@ -3,7 +3,7 @@
 
 
 #include "middleware/stratege_machine/action.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 #include "middleware/trajectory/Trajectory.h"
 
 

@@ -35,3 +35,6 @@ int Bot::odo1Way;
 int Bot::odo2Way;
 int Bot::odoEncoderResolution;
 
+Trajectory trajectory;
+
+Motion motion;

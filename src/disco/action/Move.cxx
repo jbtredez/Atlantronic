@@ -1,6 +1,6 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 #include "kernel/driver/Dynamixel.h"
 #include "kernel/location/location.h"
 #include "Move.h"

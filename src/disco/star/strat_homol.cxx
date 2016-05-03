@@ -8,14 +8,14 @@
 #include "kernel/location/location.h"
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 #include "middleware/stratege_machine/stratege.h"
 
 
 #include "disco/action/Move.h"
-#include "disco/star/action/hut.h"
+#include "disco/action/hut.h"
 #include "disco/star/action/fishes.h"
-#include "disco/star/action/fellowCastle.h"
+#include "disco/action/fellowCastle.h"
 #include "disco/star/action/duneCastle.h"
 #include "disco/star/action/dropCastle.h"
 

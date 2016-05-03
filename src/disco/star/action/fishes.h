@@ -2,7 +2,7 @@
 #define FISHES_H_
 
 #include "middleware/stratege_machine/action.h"
-#include "disco/star/robot_state.h"
+#include "disco/robot_state.h"
 #include "disco/star/action/fishing.h"
 #include "disco/star/action/dropFishes.h"
 

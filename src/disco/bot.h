@@ -1,6 +1,7 @@
 #ifndef SRC_DISCO_BOT_H_
 #define SRC_DISCO_BOT_H_
 
+#include "middleware/trajectory/Trajectory.h"
 class Bot
 {
 	public:
@@ -45,5 +46,10 @@ class Bot
 		static int odo2Way;
 		static int odoEncoderResolution;
 };
+#ifndef LINUX
+extern Trajectory trajectory;
+
+extern Motion motion;
+#endif
 
 #endif /* SRC_DISCO_BOT_H_ */

@@ -50,8 +50,6 @@
 
 #ifndef LINUX
 extern Location location;
-extern Motion motion;
-extern Trajectory trajectory;
 extern DynamixelManager ax12;
 extern Dynamixel leftFishWing;
 extern Dynamixel leftFishRemover;
