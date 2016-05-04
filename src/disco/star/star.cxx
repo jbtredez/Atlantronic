@@ -25,7 +25,7 @@ Dynamixel towerPliersTidier;
 Dynamixel parasol;
 DynamixelManager ax12;
 //DynamixelManager rx24;
-
+Bot PramBot;
 Location location;
 Detection detection;
 KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO, paramDriving);
@@ -40,7 +40,7 @@ EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 
 static int star_robot_module_init()
 {
-	Bot::init();
+	PramBot.init();
 
 	Bot::halfLength = STAR_HALF_LENGTH;
 	Bot::halfWidth = STAR_HALF_WIDTH;

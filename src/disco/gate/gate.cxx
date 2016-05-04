@@ -16,6 +16,7 @@ Dynamixel parasol;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
+Bot PramBot;
 Location location;
 Detection detection;
 KinematicsModelDiff odoWheelKinematicsModelDiff(GATE_VOIE_ODO, paramDriving);
@@ -28,7 +29,7 @@ EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 
 static int gate_robot_module_init()
 {
-	Bot::init();
+	PramBot.init();
 	Bot::halfLength = GATE_HALF_LENGTH;
 	Bot::halfWidth = GATE_HALF_WIDTH;
 	Bot::rearOmronRange = GATE_REAR_OMRON_RANGE;
@@ -46,8 +47,6 @@ static int gate_robot_module_init()
 	Bot::tethaKI = GATE_THETAKI;
 	Bot::tethaKD = GATE_THETAKD;
 	Bot::tethaMax = GATE_THETAMAX;
-	Bot::voieMot = GATE_VOIE_MOT;
-	Bot::voieOdo = GATE_VOIE_ODO;
 	Bot::voieMot = GATE_VOIE_MOT;
 	Bot::voieOdo = GATE_VOIE_ODO;
 	Bot::driving1WheelRadius = GATE_DRIVING1_WHEEL_RADIUS;
@@ -86,8 +85,8 @@ static int gate_robot_module_init()
 
 	motionMotorEncoder[MOTION_MOTOR_LEFT].init(&location, &motorKinematicsModelDiff, Bot::leftWheel);
 	motionMotorEncoder[MOTION_MOTOR_RIGHT].init(&location, &motorKinematicsModelDiff, Bot::rightWheel);
-	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, GATE_ODO1_WAY * 2 * M_PI * GATE_ODO1_WHEEL_RADIUS / (float)(GATE_ODO_ENCODER_RESOLUTION));
-	motionEncoders[MOTION_MOTOR_RIGHT].init(ENCODER_2, GATE_ODO2_WAY * 2 * M_PI * GATE_ODO2_WHEEL_RADIUS / (float)(GATE_ODO_ENCODER_RESOLUTION));
+	motionEncoders[MOTION_MOTOR_LEFT].init(ENCODER_1, Bot::odo1Way * 2 * M_PI * Bot::odo1WheelRadius / (float)(Bot::odoEncoderResolution ));
+	motionEncoders[MOTION_MOTOR_RIGHT].init(ENCODER_2, Bot::odo2Way * 2 * M_PI * Bot::odo2WheelRadius / (float)(Bot::odoEncoderResolution ));
 
 	motionMotors[MOTION_MOTOR_LEFT].name = "moteur gauche";
 	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;

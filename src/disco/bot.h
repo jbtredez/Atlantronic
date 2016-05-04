@@ -2,10 +2,13 @@
 #define SRC_DISCO_BOT_H_
 
 #include "middleware/trajectory/Trajectory.h"
+#include "kernel/driver/encoder/EncoderAB.h"
+#include "kernel/kinematics_model/KinematicsModelDiff.h"
+
 class Bot
 {
 	public:
-		static void init();
+		void init();
 
 	public:
 		// Dimensions
@@ -45,11 +48,31 @@ class Bot
 		static int odo1Way;
 		static int odo2Way;
 		static int odoEncoderResolution;
+
+		static void cmd_print_odo_wheel_radius(void* arg, void* data);
+		static void cmd_print_odo_voie(void* arg, void* data);
+		static void cmd_set_odo_voie(void* arg, void* data);
+		static void cmd_set_odo_wheel_radius(void* arg, void* data);
 };
+
+
+struct Bot_cmd_odo_wheel_radius_arg
+{
+	float odo1WheelRadius;
+	float odo2WheelRadius;
+
+}  __attribute__((packed));
+
+struct motion_cmd_odo_voie_arg
+{
+	float voieOdo;
+}  __attribute__((packed));
+
 #ifndef LINUX
 extern Trajectory trajectory;
-
+extern EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 extern Motion motion;
+extern KinematicsModelDiff odoWheelKinematicsModelDiff;
 #endif
 
 #endif /* SRC_DISCO_BOT_H_ */

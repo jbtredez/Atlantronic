@@ -1,7 +1,41 @@
 #include "bot.h"
-
+#include "kernel/driver/usb.h"
+#include "kernel/log.h"
 void Bot::init()
 {
+	usb_add_cmd(USB_CMD_ODO_WHEEL, &Bot::cmd_set_odo_wheel_radius, this);
+	usb_add_cmd(USB_CMD_ODO_WAY, &Bot::cmd_set_odo_voie, this);
+}
+
+
+void Bot::cmd_set_odo_voie(void* arg, void* data)
+{
+	Bot* m = (Bot*) arg;
+	struct motion_cmd_odo_voie_arg* cmd = (struct motion_cmd_odo_voie_arg*) data;
+	m->voieOdo = cmd->voieOdo;
+	odoWheelKinematicsModelDiff.setOdoVoie(cmd->voieOdo);
+}
+void Bot::cmd_set_odo_wheel_radius(void* arg, void* data)
+{
+	Bot* m = (Bot*) arg;
+	struct Bot_cmd_odo_wheel_radius_arg* cmd = (struct Bot_cmd_odo_wheel_radius_arg*) data;
+
+	m->odo1WheelRadius = cmd->odo1WheelRadius;
+	m->odo2WheelRadius = cmd->odo2WheelRadius;
+	motionEncoders[MOTION_MOTOR_LEFT].setOutputFactor( m->odo1Way * 2 * M_PI * m->odo1WheelRadius / (float)(m->odoEncoderResolution ));
+    motionEncoders[MOTION_MOTOR_RIGHT].setOutputFactor(m->odo2Way * 2 * M_PI * m->odo2WheelRadius / (float)(m->odoEncoderResolution ));
+
+}
+void Bot::cmd_print_odo_wheel_radius(void* arg, void* /*data*/)
+{
+	Bot* m = (Bot*) arg;
+	log_format(LOG_INFO, "Taille roue odo : %d , %d", (int)(m->odo1WheelRadius),(int)(m->odo2WheelRadius));
+}
+
+void Bot::cmd_print_odo_voie(void* arg, void*/* data*/)
+{
+	Bot* m = (Bot*) arg;
+	log_format(LOG_INFO, "Voie odo : %d", (int)(m->voieOdo));
 
 }
 
