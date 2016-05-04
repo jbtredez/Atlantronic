@@ -24,6 +24,7 @@ enum
 {
 	DETECTION_EVENT_HOKUYO_1,
 	DETECTION_EVENT_HOKUYO_2,
+	DETECTION_EVENT_RPLIDAR,
 };
 
 int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Location* location)
@@ -81,7 +82,7 @@ int Detection::init(Hokuyo* hokuyo1, Hokuyo* hokuyo2, Rplidar* rplidar, Location
 		m_rpLidar->registerCallback(LaserCallback, this);
 	}
 
-	m__regSize = 0;
+	m_regSize = 0;
 
 	return 0;
 }
@@ -109,8 +110,15 @@ void Detection::task()
 		//		struct systime current_time = systick_get_time();
 		//		struct systime dt = timediff(current_time, last_time);
 		//		log_format(LOG_INFO, "compute_time : %lu us", dt.ms * 1000 + dt.ns/1000);
-
 				xSemaphoreGive(m_hokuyo1->scan_mutex);
+			}
+
+			if( event == DETECTION_EVENT_RPLIDAR)
+			{
+				xSemaphoreTake(m_rpLidar->scan_mutex, portMAX_DELAY);
+				computeRplidar();
+
+				xSemaphoreGive(m_rpLidar->scan_mutex);
 			}
 			m_callbackFunction(m_callbackArg);
 		}
@@ -121,10 +129,10 @@ void Detection::task()
 		//log_format(LOG_INFO, "%d obj", (int)detection_num_obj);
 		for(int i = 0 ; i < detect_size; i++)
 		{
-			usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, m__objectPolyline[i].pt, sizeof(m__objectPolyline[i].pt[0]) * m__objectPolyline[i].size);
+			usb_add(USB_DETECTION_DYNAMIC_OBJECT_POLYLINE, m_objectPolyline[i].pt, sizeof(m_objectPolyline[i].pt[0]) * m_objectPolyline[i].size);
 		}
 
-		usb_add(USB_DETECTION_DYNAMIC_OBJECT, m__obj, DETECTION_NUM_OBJECT_USB * sizeof(m__obj[0]));
+		usb_add(USB_DETECTION_DYNAMIC_OBJECT, m_obj, DETECTION_NUM_OBJECT_USB * sizeof(m_obj[0]));
 		/*for(int i = 0 ; i < detect_size; i++)
 		{
 			log_format(LOG_INFO, "obj = %3d %3d size %3d", (int)detection_obj1[i].x, (int)detection_obj1[i].y, detection_object_polyline[i].size);
@@ -154,7 +162,7 @@ void Detection::hokuyo2Callback(void* arg)
 void Detection::LaserCallback(void* arg)
 {
 	Detection* detect = (Detection*) arg;
-	unsigned char event = DETECTION_EVENT_HOKUYO_1;
+	unsigned char event = DETECTION_EVENT_RPLIDAR;
 	xQueueSend(detect->m_queue, &event, 0);
 }
 
@@ -167,18 +175,19 @@ void Detection::compute()
 
 	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
 	xSemaphoreTake(m_mutex, portMAX_DELAY);
-	m_numObj = hokuyo_find_objects(&m_hokuyo1->scan, m_hokuyoPos, HOKUYO_NUM_POINTS, m__objectPolyline, DETECTION_NUM_OBJECT);
-	m__regSize = 0;
+	m_numObj = hokuyo_find_objects(&m_hokuyo1->scan, m_hokuyoPos, HOKUYO_NUM_POINTS, m_objectPolyline, DETECTION_NUM_OBJECT);
+	m_regSize = 0;
 
 	for( i = 0 ; i < m_numObj ; i++)
 	{
-		m__objectPolyline[i].size = regression_poly(m__objectPolyline[i].pt, m__objectPolyline[i].size, m_regEcart, m_hokuyoReg + m__regSize, HOKUYO_REG_SEG - m__regSize);
-		m__objectPolyline[i].pt = &m_hokuyoReg[m__regSize];
-		m__regSize += m__objectPolyline[i].size;
+		m_objectPolyline[i].size = regression_poly(m_objectPolyline[i].pt, m_objectPolyline[i].size, m_regEcart, m_hokuyoReg + m_regSize, HOKUYO_REG_SEG - m_regSize);
+		m_objectPolyline[i].pt = &m_hokuyoReg[m_regSize];
+		m_regSize += m_objectPolyline[i].size;
 	}
 
 	removeStaticElementsFromDynamicList();
 
+#if 0
 	// TODO revoir comment c est fait pour separer objets calcules par hokuyo et ceux par sick
 	// TODO pour le moment, on utilise un seul tableau et on met a jour les omron ici
 	VectPlan pos = m_location->getPosition();
@@ -214,45 +223,107 @@ void Detection::compute()
 			Vect2 v(u.y, -u.x);
 			Vect2 p(pos.x, pos.y);
 
-			m__objectPolyline[num].pt = m_omronRectangle;
-			m__objectPolyline[num].size = 5;
+			m_objectPolyline[num].pt = m_omronRectangle;
+			m_objectPolyline[num].size = 5;
 			m_numObj++;
 		}
 	}
+#endif
 
 	for( i = 0; i < m_numObj ; i++)
 	{
-		float xmin = m__objectPolyline[i].pt[0].x;
+		float xmin = m_objectPolyline[i].pt[0].x;
 		float xmax = xmin;
-		float ymin = m__objectPolyline[i].pt[0].y;
+		float ymin = m_objectPolyline[i].pt[0].y;
 		float ymax = ymin;
-		for(int j = 1; j < m__objectPolyline[i].size; j++ )
+		for(int j = 1; j < m_objectPolyline[i].size; j++ )
 		{
-			if( m__objectPolyline[i].pt[j].x < xmin )
+			if( m_objectPolyline[i].pt[j].x < xmin )
 			{
-				xmin = m__objectPolyline[i].pt[j].x;
+				xmin = m_objectPolyline[i].pt[j].x;
 			}
-			else if( m__objectPolyline[i].pt[j].x > xmax )
+			else if( m_objectPolyline[i].pt[j].x > xmax )
 			{
-				xmax = m__objectPolyline[i].pt[j].x;
+				xmax = m_objectPolyline[i].pt[j].x;
 			}
 
-			if( m__objectPolyline[i].pt[j].y < ymin )
+			if( m_objectPolyline[i].pt[j].y < ymin )
 			{
-				ymin = m__objectPolyline[i].pt[j].y;
+				ymin = m_objectPolyline[i].pt[j].y;
 			}
-			else if( m__objectPolyline[i].pt[j].y > ymax )
+			else if( m_objectPolyline[i].pt[j].y > ymax )
 			{
-				ymax = m__objectPolyline[i].pt[j].y;
+				ymax = m_objectPolyline[i].pt[j].y;
 			}
 		}
 
-		m__obj[i].x = (xmin + xmax) / 2;
-		m__obj[i].y = (ymin + ymax) / 2;
-		m__obj[i].size = xmax - xmin;
-		if( ymax - ymin > m__obj[i].size)
+		m_obj[i].x = (xmin + xmax) / 2;
+		m_obj[i].y = (ymin + ymax) / 2;
+		m_obj[i].size = xmax - xmin;
+		if( ymax - ymin > m_obj[i].size)
 		{
-			m__obj[i].size = ymax - ymin;
+			m_obj[i].size = ymax - ymin;
+		}
+	}
+
+	xSemaphoreGive(m_mutex);
+}
+
+void Detection::computeRplidar()
+{
+	int i;
+	int rplidarNbPoints;
+
+	// scan et position des points en x,y privé à la tache rplidar
+	rplidarNbPoints = rplidar_compute_xy(&m_rpLidar->scan, m_laserPos);
+
+	// section critique - objets et segments partagés par les méthodes de calcul et la tache de mise à jour
+	xSemaphoreTake(m_mutex, portMAX_DELAY);
+	m_numObj = rplidar_find_objects(&m_rpLidar->scan, m_laserPos, rplidarNbPoints, m_objectPolyline, DETECTION_NUM_OBJECT);
+	m_regSize = 0;
+
+	for( i = 0 ; i < m_numObj ; i++)
+	{
+		m_objectPolyline[i].size = regression_poly(m_objectPolyline[i].pt, m_objectPolyline[i].size, m_regEcart, m_hokuyoReg + m_regSize, HOKUYO_REG_SEG - m_regSize);
+		m_objectPolyline[i].pt = &m_hokuyoReg[m_regSize];
+		m_regSize += m_objectPolyline[i].size;
+	}
+
+	removeStaticElementsFromDynamicList();
+
+	for( i = 0; i < m_numObj ; i++)
+	{
+		float xmin = m_objectPolyline[i].pt[0].x;
+		float xmax = xmin;
+		float ymin = m_objectPolyline[i].pt[0].y;
+		float ymax = ymin;
+		for(int j = 1; j < m_objectPolyline[i].size; j++ )
+		{
+			if( m_objectPolyline[i].pt[j].x < xmin )
+			{
+				xmin = m_objectPolyline[i].pt[j].x;
+			}
+			else if( m_objectPolyline[i].pt[j].x > xmax )
+			{
+				xmax = m_objectPolyline[i].pt[j].x;
+			}
+
+			if( m_objectPolyline[i].pt[j].y < ymin )
+			{
+				ymin = m_objectPolyline[i].pt[j].y;
+			}
+			else if( m_objectPolyline[i].pt[j].y > ymax )
+			{
+				ymax = m_objectPolyline[i].pt[j].y;
+			}
+		}
+
+		m_obj[i].x = (xmin + xmax) / 2;
+		m_obj[i].y = (ymin + ymax) / 2;
+		m_obj[i].size = xmax - xmin;
+		if( ymax - ymin > m_obj[i].size)
+		{
+			m_obj[i].size = ymax - ymin;
 		}
 	}
 
@@ -268,7 +339,7 @@ void Detection::removeStaticElementsFromDynamicList()
 	//pour chaque objet détecté
 	for(i=0; i<nb_objects_to_test; i++)
 	{
-		struct polyline* current_dyn_object=&m__objectPolyline[i];
+		struct polyline* current_dyn_object=&m_objectPolyline[i];
 		int8_t dynamic_segment_in_object = 0;
 		//tester chaque segment (itération sur second point du segment)
 		for(j=1; j< current_dyn_object->size; j++)
@@ -304,10 +375,10 @@ void Detection::removeStaticElementsFromDynamicList()
 				{
 					//On réduit l'objet aux segments dynamiques précédents et
 					//on reporte les segments non évalués dans un nouvel objet
-					m__objectPolyline[m_numObj].pt=(current_dyn_object->pt)+j;
-					m__objectPolyline[m_numObj].size=(current_dyn_object->size)-j;
+					m_objectPolyline[m_numObj].pt=(current_dyn_object->pt)+j;
+					m_objectPolyline[m_numObj].size=(current_dyn_object->size)-j;
 					current_dyn_object->size=j;
-					current_dyn_object=&(m__objectPolyline[m_numObj]);
+					current_dyn_object=&(m_objectPolyline[m_numObj]);
 					m_numObj++;
 					j = 0;
 					dynamic_segment_in_object = 0;
@@ -322,13 +393,15 @@ void Detection::removeStaticElementsFromDynamicList()
 		if(current_dyn_object->size > 1)
 		{
 			//si un objet contient au moins un segment (2 points), on le garde
-			m__objectPolyline[new_num_obj] = m__objectPolyline[i];
+			m_objectPolyline[new_num_obj] = m_objectPolyline[i];
 			new_num_obj++;
 		}
 	}
 
 	m_numObj = new_num_obj;
 }
+
+
 
 //méthode heuristique pour estimer une resemblance entre deux segments
 float Detection::getSegmentSimilarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n)
@@ -450,7 +523,7 @@ float Detection::computeFrontObject(enum detection_type type, const VectPlan& po
 		for(int i = 0 ; i < detect_size; i++)
 		{
 			struct polyline detectionOpponentRobot = {m_detectionOpponentRobotPt, sizeof(m_detectionOpponentRobotPt)/sizeof(m_detectionOpponentRobotPt[0])};
-			Vect2 opponentRobotPos(m__obj[i].x, m__obj[i].y);
+			Vect2 opponentRobotPos(m_obj[i].x, m_obj[i].y);
 			m_detectionOpponentRobotPt[0] = opponentRobotPos + Vect2(DETECTION_OPPONENT_ROBOT_RADIUS/2, DETECTION_OPPONENT_ROBOT_RADIUS/2);
 			m_detectionOpponentRobotPt[1] = opponentRobotPos + Vect2(DETECTION_OPPONENT_ROBOT_RADIUS/2, -DETECTION_OPPONENT_ROBOT_RADIUS/2);
 			m_detectionOpponentRobotPt[2] = opponentRobotPos + Vect2(-DETECTION_OPPONENT_ROBOT_RADIUS/2, -DETECTION_OPPONENT_ROBOT_RADIUS/2);
@@ -517,7 +590,7 @@ float Detection::computeOpponentInRangeDistance(Vect2 a, Vect2 u)
 	int16_t detect_size = m_numObj;
 	for(int i = 0 ; i < detect_size; i++)
 	{
-		Vect2 b(m__obj[i].x, m__obj[i].y);
+		Vect2 b(m_obj[i].x, m_obj[i].y);
 		Vect2 ab = b - a;
 		float ps = u.scalarProd(ab);
 		if( ps > 0 )
@@ -551,7 +624,7 @@ float Detection::computeOpponentDistance(Vect2 a)
 	int16_t detect_size = m_numObj;
 	for(int i = 0 ; i < detect_size; i++)
 	{
-		Vect2 b(m__obj[i].x, m__obj[i].y);
+		Vect2 b(m_obj[i].x, m_obj[i].y);
 		Vect2 ab = b - a;
 		float d = ab.norm();
 		if( d < minDistance )

@@ -70,6 +70,7 @@ class Detection
 		static void taskWrapper(void* arg);
 		void task();
 		void compute();
+		void computeRplidar();
 		void removeStaticElementsFromDynamicList();
 		float getSegmentSimilarity( Vect2* a,  Vect2* b,  Vect2* m,  Vect2* n);
 		float computeObjectOnTrajectory(const VectPlan& pos, const struct polyline* polyline, int size, Vect2* a, Vect2* b);
@@ -78,6 +79,7 @@ class Detection
 		DetectionCallback m_callbackFunction;
 		void* m_callbackArg;
 		Vect2 m_hokuyoPos[HOKUYO_NUM_POINTS];
+		Vect2 m_laserPos[RPLIDAR_MAX_NUM_POINTS];
 		int m_regEcart;
 		Hokuyo* m_hokuyo1;
 		Hokuyo* m_hokuyo2;
@@ -88,9 +90,9 @@ class Detection
 		xSemaphoreHandle m_mutex;
 		Vect2 m_hokuyoReg[HOKUYO_REG_SEG];
 		Vect2 m_omronRectangle[5];
-		int m__regSize;
-		struct polyline m__objectPolyline[DETECTION_NUM_OBJECT];
-		struct detection_object m__obj[DETECTION_NUM_OBJECT];
+		int m_regSize;
+		struct polyline m_objectPolyline[DETECTION_NUM_OBJECT];
+		struct detection_object m_obj[DETECTION_NUM_OBJECT];
 		//static struct detection_object detection_obj2[DETECTION_NUM_OBJECT];
 		int m_numObj;
 
