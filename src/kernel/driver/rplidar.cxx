@@ -66,7 +66,13 @@ int Rplidar::init(enum usart_id id, const char* name, Location* location)
 
 	if(err != pdPASS)
 	{
-		return ERR_INIT_HOKUYO;
+		return ERR_INIT_RPLIDAR;
+	}
+
+	scan_mutex = xSemaphoreCreateMutex();
+	if( ! scan_mutex )
+	{
+		return ERR_INIT_RPLIDAR;
 	}
 
 	return 0;
@@ -74,8 +80,8 @@ int Rplidar::init(enum usart_id id, const char* name, Location* location)
 
 void Rplidar::setPosition(VectPlan pos, int sens)
 {
-	scan.pos_laser = pos;
-	scan.sens = sens;
+	scanTmp.pos_laser = pos;
+	scanTmp.sens = sens;
 }
 
 void Rplidar::registerCallback(LaserCallback callback, void* arg)
@@ -95,7 +101,6 @@ void Rplidar::task()
 	while(1)
 	{
 		initCom();
-
 		getScan();
 
 		vTaskDelay(ms_to_tick(100));
@@ -209,27 +214,37 @@ uint32_t Rplidar::getScan()
 					{
 						scanCount++;
 						systime t1 = systick_get_time();
-						log_format(LOG_INFO, "new scan - mean delay %d - last %d pt (%d valid)", (int) (t1 - t0).ms/scanCount, scan.pointCount + scan.koPointCount, scan.pointCount );
+						log_format(LOG_INFO, "new scan - mean delay %d - last %d pt (%d valid)", (int) (t1 - t0).ms/scanCount, scanTmp.pointCount + scanTmp.koPointCount, scanTmp.pointCount );
 					}*/
 
+					xSemaphoreTake(scan_mutex, portMAX_DELAY);
+					memcpy(&scan, &scanTmp, sizeof(scan));
+					xSemaphoreGive(scan_mutex);
+
+					if(m_callback)
+					{
+						m_callback(m_callbackArg);
+					}
+
 					usb_add(USB_RPLIDAR, &scan, sizeof(scan));
-					scan.pointCount = 0;
-					scan.koPointCount = 0;
-					scan.pos_robot = m_location->getPosition();
+					scanTmp.pointCount = 0;
+					scanTmp.koPointCount = 0;
+					scanTmp.pos_robot = m_location->getPosition();
+
 				}
 				if( mes[i].quality )
 				{
-					if( scan.pointCount < RPLIDAR_MAX_NUM_POINTS )
+					if( scanTmp.pointCount < RPLIDAR_MAX_NUM_POINTS )
 					{
-						scan.theta[scan.pointCount] = mes[i].theta;
-						scan.distance[scan.pointCount] = mes[i].distance;
-						scan.pointCount++;
+						scanTmp.theta[scanTmp.pointCount] = mes[i].theta;
+						scanTmp.distance[scanTmp.pointCount] = mes[i].distance;
+						scanTmp.pointCount++;
 					}
 					//log_format(LOG_INFO, "ss %d theta %d distance %d qualite %d", (int)mes[i].startScan, (int)(mes[i].theta/64.0f), (int)(mes[i].distance/4.0f), mes[i].quality);
 				}
 				else
 				{
-					scan.koPointCount++;
+					scanTmp.koPointCount++;
 				}
 			}
 		}

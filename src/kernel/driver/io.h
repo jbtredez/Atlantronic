@@ -43,26 +43,26 @@ typedef enum io
 #define GPIO_MASK(a)       (1<<a)
 
 
-//#define IO_LED_RED         GPIO_0
-#define IO_COLOR           GPIO_1
 #define IO_OMRON1        GPIO_0
-#define IO_OMRON2          GPIO_2
-#define IO_OMRON3        GPIO_3
-//#define IO_BOUTON_STRAT    GPIO_3
-//#define IO_LED_ORANGE_1    GPIO_5
-//#define IO_LED_ORANGE_2    GPIO_6
-//#define IO_LED_VERTE       GPIO_7
-//#define IO_LED_BLEU        GPIO_8
-#define IO_OMRON_ELEVATOR  GPIO_4
-#define IO_OMRON5          GPIO_5
-#define IO_OMRON6          GPIO_6
-#define IO_LIDAR_LITE_1    GPIO_7
-#define IO_LIDAR_LITE_2    GPIO_8
+#define IO_COLOR           GPIO_1
+#define IO_BOUTON_STRAT    GPIO_2
+#define IO_LED_RED  		GPIO_3
+#define IO_LED_ORANGE_1    GPIO_4
+#define IO_LED_ORANGE_2    GPIO_5
+#define IO_LED_VERTE       GPIO_6
+#define IO_LED_BLEU        GPIO_7
+#define IO_OMRON_ELEVATOR  GPIO_8
 #define IO_ELEVATOR_SWITCH GPIO_9
 #define IO_ELEVATOR_DIR    GPIO_10
 #define IO_ELEVATOR_STEP   GPIO_11
 #define IO_GO              GPIO_IN_GO
 
+//#define IO_OMRON2          GPIO_2
+//#define IO_OMRON3        GPIO_3
+//#define IO_OMRON5          GPIO_5
+//#define IO_OMRON6          GPIO_6
+//#define IO_LIDAR_LITE_1    GPIO_7
+//#define IO_LIDAR_LITE_2    GPIO_8
 uint16_t gpio_get_state(void);
 
 int gpio_get(Io io);
