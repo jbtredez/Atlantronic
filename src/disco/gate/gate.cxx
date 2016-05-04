@@ -13,6 +13,8 @@ KinematicsParameters angularParam = {2, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
 Dynamixel parasol;
+Dynamixel armPump;
+Dynamixel pincerPump;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
