@@ -20,10 +20,10 @@ typedef struct
 // io sur les connecteurs io generiques seulement 12 Pins utilisés
 static const IoParam io_param[] =
 {
-	{GPIOC, 15, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_0 - Led rouge
+	{GPIOC, 15, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_0 -  Bouton Choix
 	{GPIOC, 13, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_1 - couleur
 	{GPIOE,  3, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_2 - pull up pour les omron
-	{GPIOE,  4, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_3 - Bouton Choix(pull up pour les omron)
+	{GPIOE,  4, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_3 - Led Rouge(pull up pour les omron)
 	{GPIOG, 10, GPIO_MODE_IN, GPIO_PUPD_UP}, // IO_4 - pull up pour les omron
 	{GPIOG, 11, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_5 - Led orange 1
 	{GPIOD,  4, GPIO_MODE_OUT, GPIO_PUPD_UP}, // IO_6 - Led orange 2
@@ -50,7 +50,7 @@ static int io_module_init(void)
 
 	// boutons en IT (GO et couleur)
 	exti_register(EXTI_PC, 14, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_go_from_isr);
-	exti_register(EXTI_PC, 3, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_strat_isr);
+	exti_register(EXTI_PC, 15, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_strat_isr);
 	exti_register(EXTI_PC, 13, EXTI_TYPE_DOWN | EXTI_TYPE_UP, match_set_color_from_isr);
 
 	return 0;

@@ -19,7 +19,7 @@
 uint32_t match_time = 90000; //!< duree du match en ms
 uint32_t funny_action_time = 5000; //!< duree du match en ms
 volatile int match_color;
-volatile int match_start = 1;
+volatile int match_strat ;
 volatile uint8_t match_go;
 static volatile uint8_t match_color_change_enable;
 volatile uint8_t match_enable_go = 0;
@@ -72,7 +72,7 @@ static void match_task(void *arg)
 	match_color_change_enable = 0;
 	match_enable_go = 1;
 	match_wait_go();
-	match_start = 0;
+	match_strat = 0;
 	uint32_t msg[3];
 	struct systime t = systick_get_time();
 	msg[0] = t.ms;
@@ -194,21 +194,36 @@ portBASE_TYPE match_set_strat_isr(void)
 {
 	if(match_go == 0 )
 	{
-		int ioColor = GPIO_MASK(IO_COLOR) & gpio_get_state();
-
-		match_start ++;
-		match_start = match_start%5;
-/*		switch(match_start)
+		///On tourne de led Rouge-> Orange1 -> Orange 2-> Vert-> Blue
+		match_strat ++;
+		match_strat = match_strat%5;
+		switch(match_strat)
 		{
-			case 0:
+			case 0:///Cas rouge
+				gpio_reset(IO_LED_BLEU);
+				gpio_set(IO_LED_RED);
+				break;
 
-			case 1:
-			case 2:
-			case 3:
-			case 4:
+			case 1: ///cas Orange1
+				gpio_reset(IO_LED_RED);
+				gpio_set(IO_LED_ORANGE_1);
+				break;
+			case 2:///cas Orange2
+				gpio_reset(IO_LED_ORANGE_1);
+				gpio_set(IO_LED_ORANGE_2);
+				break;
+			case 3:///cas Vert
+				gpio_reset(IO_LED_ORANGE_2);
+				gpio_set(IO_LED_VERTE);
+				break;
+			case 4:///cas Orange2
+				gpio_reset(IO_LED_VERTE);
+				gpio_set(IO_LED_BLEU);
+				break;
 			default:
+				break;
 
-		}*/
+		}
 
 	}
 	return 0;
