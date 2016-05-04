@@ -34,15 +34,16 @@
 
 // Parametres des roues
 #define STAR_VOIE_MOT                            164.0f
-#define STAR_VOIE_ODO                            112.03f
+#define STAR_VOIE_ODO_POS                        112.9f // sens + : , sens - : 112.45
+#define STAR_VOIE_ODO_NEG                       112.45f // sens + : 112.9, sens - : 112.45
 #define STAR_DRIVING1_WHEEL_RADIUS               100.0f
 #define STAR_DRIVING2_WHEEL_RADIUS               100.0f
 #define STAR_MOTOR_RED                   (5.2*88/25.0f)
 #define STAR_MOTOR_ENCODER_RESOLUTION              1024
 #define STAR_MOTOR_DRIVING1_RED         -STAR_MOTOR_RED  //!< reduction moteur 1
 #define STAR_MOTOR_DRIVING2_RED          STAR_MOTOR_RED  //!< reduction moteur 2
-#define STAR_ODO1_WHEEL_RADIUS                    38.7f
-#define STAR_ODO2_WHEEL_RADIUS                    39.3f
+#define STAR_ODO1_WHEEL_RADIUS                    38.25f
+#define STAR_ODO2_WHEEL_RADIUS                    38.5f
 #define STAR_ODO1_WAY                                 1
 #define STAR_ODO2_WAY                                -1
 #define STAR_ODO_ENCODER_RESOLUTION                4096

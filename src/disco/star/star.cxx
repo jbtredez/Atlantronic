@@ -9,8 +9,8 @@
 #include "disco/star/servos.h"
 
 KinematicsParameters paramDriving = {1800, 1500, 1500};
-KinematicsParameters linearParam = {1000, 1000, 1000};
-KinematicsParameters angularParam = {5, 5, 5};
+KinematicsParameters linearParam = {500, 500, 500};
+KinematicsParameters angularParam = {5, 5, 5}; // ne pas modifier, robot calibre pour cela ! (bug odometrie calibre selon sens de rotation et vitesse)
 
 //Hokuyo hokuyo[HOKUYO_MAX];
 Rplidar rplidar;
@@ -28,8 +28,8 @@ DynamixelManager ax12;
 Bot PramBot;
 Location location;
 Detection detection;
-KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO, paramDriving);
-KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT, paramDriving);
+KinematicsModelDiff odoWheelKinematicsModelDiff(STAR_VOIE_ODO_POS, STAR_VOIE_ODO_NEG, paramDriving);
+KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT, STAR_VOIE_MOT, paramDriving);
 //Motion motion;
 //Trajectory trajectory;
 CanMipMotor motionMotors[MOTION_MOTOR_MAX];
@@ -60,7 +60,7 @@ static int star_robot_module_init()
 	Bot::tethaKD = STAR_THETAKD;
 	Bot::tethaMax = STAR_THETAMAX;
 	Bot::voieMot = STAR_VOIE_MOT;
-	Bot::voieOdo = STAR_VOIE_ODO;
+	//Bot::voieOdo = STAR_VOIE_ODO; // TODO
 	Bot::driving1WheelRadius = STAR_DRIVING1_WHEEL_RADIUS;
 	Bot::driving2WheelRadius = STAR_DRIVING2_WHEEL_RADIUS;
 	Bot::motorDriving1Red = STAR_MOTOR_DRIVING1_RED;

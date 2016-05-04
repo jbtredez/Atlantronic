@@ -884,6 +884,25 @@ int RobotInterface::power_off(bool power_off)
 	return usb_write(USB_CMD_POWER, &msg, sizeof(msg));
 }
 
+int RobotInterface::set_odo_wheel_radius(float odo1WheelRadius, float odo2WheelRadius)
+{
+	struct Bot_cmd_odo_wheel_radius_arg cmd_arg;
+
+	cmd_arg.odo1WheelRadius = odo1WheelRadius;
+	cmd_arg.odo2WheelRadius = odo2WheelRadius;
+
+	return usb_write(USB_CMD_ODO_WHEEL, &cmd_arg, sizeof(cmd_arg));
+}
+
+int RobotInterface::set_odo_voie(float voieOdo)
+{
+	struct motion_cmd_odo_voie_arg cmd_arg;
+
+	cmd_arg.voieOdo = voieOdo;
+
+	return usb_write(USB_CMD_ODO_WAY, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::pwm_set(int id, float val)
 {
 	struct pwm_usb_cmd msg;
