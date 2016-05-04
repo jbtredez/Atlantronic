@@ -5,6 +5,16 @@
 #include "disco/robot_state.h"
 #include "middleware/trajectory/Trajectory.h"
 
+
+typedef enum
+{
+	DUNE_SUCKER_GOTO_ZONE = 0,
+	DUNE_SUCKER_GRAB,
+	DUNE_SUCKER_EXTRACT,
+	DUNE_SUCKER_LEAVE,
+	DUNE_SUCKER_DROP,
+}DuneSucker_state;
+
 class DuneSucker: public Action
 {
 	public:
@@ -21,7 +31,7 @@ class DuneSucker: public Action
 		RobotState * m_robot;
 		KinematicsParameters m_linParamOrig;
 		KinematicsParameters m_angParamOrig;
-
+		DuneSucker_state m_state;
 };
 
 #endif /* SRC_DISCO_STAR_ACTION_DUNESUCKER_H_ */

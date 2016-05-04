@@ -11,6 +11,8 @@ DuneSucker::DuneSucker(VectPlan firstcheckpoint, const char * name, RobotState *
 	{
 		m_robot =  robot;
 	}
+	m_state = DUNE_SUCKER_GRAB;
+	m_stratColor = 0;
 }
 
 
@@ -26,42 +28,83 @@ int DuneSucker::do_action()
 {
 	int bresult = 0;
 	Action::do_action();
-	VectPlan startPoint(-1000, 500, M_PI_2);
+	VectPlan startPoint(180, 750, M_PI_2);
 	startPoint = startPoint.symetric(m_stratColor);
+	m_retry = 3;
+	int local_retry = 3;
+	bool run = true;
 
-	vTaskDelay(300);
-	trajectory.goTo(startPoint, WAY_FORWARD, AVOIDANCE_GRAPH);
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) != 0 )
+
+	while(run)
 	{
-		bresult = -1;
+		switch (m_state)
+		{
+			case DUNE_SUCKER_GOTO_ZONE:
+				trajectory.goTo(startPoint, WAY_FORWARD, AVOIDANCE_GRAPH);
+				if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) == 0 )
+				{
+					m_state = DUNE_SUCKER_EXTRACT;
+				} else
+				{
+					bresult = -1;
+					run = false;
+				}
+				break;
+
+			case DUNE_SUCKER_GRAB:
+				// Ouvrir les pinces
+				//Servos::setPumpArmState(PUMP_ARM_OPEN);
+				trajectory.straight(200);
+				if( trajectory.wait(TRAJECTORY_STATE_COLISION, 15000) == 0 )
+				{
+					m_state = DUNE_SUCKER_EXTRACT;
+				} else
+				{
+					// Fermer les pinces
+					//Servos::setPumpArmState(PUMP_ARM_UP);
+					m_state = DUNE_SUCKER_GOTO_ZONE;
+					bresult = -1;
+					run = false;
+				}
+				break;
+
+			case DUNE_SUCKER_EXTRACT:
+				trajectory.straight(100);
+				if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) == 0 )
+				{
+					m_state = DUNE_SUCKER_LEAVE;
+				} else
+				{
+					bresult = -1;
+					run = false;
+				}
+				break;
+
+			case DUNE_SUCKER_LEAVE:
+				break;
+
+			case DUNE_SUCKER_DROP:
+				break;
+
+			default:
+				break;
+		}
+		vTaskDelay(200);
 	}
 
-	return 0;
-
-	// Ouvrir les pinces
-	//Servos::setPumpArmState(PUMP_ARM_OPEN);
-
-	this->slowSpeed();
 
 	vTaskDelay(300);
-	trajectory.straight(100);
-	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 3000) != 0 )
-	{
-		bresult = -1;
-	}
-	vTaskDelay(100);
-
-	vTaskDelay(300);
-	trajectory.straight(-100);
+	trajectory.straight(-200);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 3000) != 0 )
 	{
 		bresult = -1;
 	}
 
 	vTaskDelay(300);
-	startPoint.theta = M_PI;
+	startPoint.x = 800;
+	startPoint.y = 400;
 	startPoint = startPoint.symetric(m_stratColor);
-	trajectory.rotateTo(startPoint.theta);
+	trajectory.goToNearXy(startPoint.x, startPoint.y, 100, WAY_BACKWARD, AVOIDANCE_GRAPH);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 4000) != 0 )
 	{
 		bresult = -1;
