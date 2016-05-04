@@ -25,7 +25,8 @@ class EncoderAB : public EncoderInterface
 		void update(float dt);
 		float getPosition();
 		float getSpeed();
-
+		float getOutputFactor(){return m_outputFactor;};
+		void  setOutputFactor(float outputFactor){m_outputFactor = outputFactor;};
 	protected:
 		int m_id;
 		float m_outputFactor;
