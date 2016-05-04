@@ -32,6 +32,8 @@ int cmd_dynamixel_enable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_disable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_set_speed(const char* arg);
 int cmd_free(const char* arg);
+int cmd_odo_wheel_radius(const char* arg);
+int cmd_odo_voie(const char* arg);
 int cmd_power_off(const char* arg);
 int cmd_pwm_set(const char* arg);
 int cmd_pump(const char* arg);
@@ -109,6 +111,8 @@ COMMAND usb_commands[] = {
 	{ "motion_set_max_driving_current", cmd_motion_set_max_driving_current, "motion_set_max_driving_current val"},
 	{ "motion_set_actuator_kinematics", cmd_motion_set_actuator_kinematics, "set actuators kinematics mode val (x6)"},
 	{ "motion_set_speed", cmd_motion_set_speed, "set speed direction valeur"},
+	{ "odo_wheel_radius", cmd_odo_wheel_radius, "radius1 radius2"},
+	{ "odo_voie", cmd_odo_voie, "voie"},
 	{ "ptask", cmd_ptask, "print tasks"},
 	{ "power_off", cmd_power_off, "power off {0,1}"},
 	{ "pwm_set", cmd_pwm_set, "pwm_set id val"},
@@ -705,6 +709,34 @@ int cmd_max_speed(const char* arg)
 int cmd_ptask(const char*)
 {
 	cmd_robot->ptask();
+	return CMD_SUCCESS;
+}
+
+int cmd_odo_wheel_radius(const char* arg)
+{
+	float r1, r2;
+	int count = sscanf(arg, "%f %f", &r1, &r2);
+
+	if(count != 2)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->set_odo_wheel_radius(r1, r2);
+	return CMD_SUCCESS;
+}
+
+int cmd_odo_voie(const char* arg)
+{
+	float val;
+	int count = sscanf(arg, "%f", &val);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot->set_odo_voie(val);
 	return CMD_SUCCESS;
 }
 

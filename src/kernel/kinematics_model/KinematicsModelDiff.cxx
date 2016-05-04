@@ -8,9 +8,10 @@
 
 #include <math.h>
 
-KinematicsModelDiff::KinematicsModelDiff(float voie, KinematicsParameters paramDriving)
+KinematicsModelDiff::KinematicsModelDiff(float voieSensPositif, float voieSensNegatif, KinematicsParameters paramDriving)
 {
-	m_voie = voie;
+	m_voieSensPositif = voieSensPositif;
+	m_voieSensNegatif = voieSensNegatif;
 	m_paramDriving = paramDriving;
 }
 
@@ -24,8 +25,16 @@ float KinematicsModelDiff::computeActuatorCmd(VectPlan u, float speed, float dt,
 	float vtheta = u.theta * speed;
 	float v[2];
 
-	v[Bot::rightWheel] = vx + 0.5 * m_voie * vtheta;
-	v[Bot::leftWheel] = vx - 0.5 * m_voie * vtheta;
+	if( vtheta >= 0)
+	{
+		v[Bot::rightWheel] = vx + 0.5 * m_voieSensPositif * vtheta;
+		v[Bot::leftWheel] = vx - 0.5 * m_voieSensPositif * vtheta;
+	}
+	else
+	{
+		v[Bot::rightWheel] = vx + 0.5 * m_voieSensNegatif * vtheta;
+		v[Bot::leftWheel] = vx - 0.5 * m_voieSensNegatif * vtheta;
+	}
 
 	if( saturate )
 	{
@@ -62,7 +71,14 @@ VectPlan KinematicsModelDiff::computeSpeed(Kinematics* kinematics_mes)
 	VectPlan v;
 	v.x = 0.5 * (kinematics_mes[Bot::rightWheel].v + kinematics_mes[Bot::leftWheel].v);
 	v.y = 0;
-	v.theta = (kinematics_mes[Bot::rightWheel].v -  kinematics_mes[Bot::leftWheel].v) / m_voie;
+	if( kinematics_mes[Bot::rightWheel].v >= kinematics_mes[Bot::leftWheel].v)
+	{
+		v.theta = (kinematics_mes[Bot::rightWheel].v -  kinematics_mes[Bot::leftWheel].v) / m_voieSensPositif;
+	}
+	else
+	{
+		v.theta = (kinematics_mes[Bot::rightWheel].v -  kinematics_mes[Bot::leftWheel].v) / m_voieSensNegatif;
+	}
 
 	return v;
 }

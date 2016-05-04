@@ -64,6 +64,10 @@ class RobotInterface
 
 		int power_off(bool power_off);
 
+		// parametrage calibration
+		int set_odo_wheel_radius(float odo1WheelRadius, float odo2WheelRadius);
+		int set_odo_voie(float voieOdo);
+
 		// ---------- gestion des pwm (bas lv) -----------------------------------------
 		int pwm_set(int id, float val);
 
