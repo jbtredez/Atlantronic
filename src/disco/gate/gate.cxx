@@ -21,7 +21,7 @@ DynamixelManager ax12;
 Bot PramBot;
 Location location;
 Detection detection;
-KinematicsModelDiff odoWheelKinematicsModelDiff(GATE_VOIE_ODO, GATE_VOIE_ODO, paramDriving);
+KinematicsModelDiff odoWheelKinematicsModelDiff(GATE_VOIE_ODO_POSITIF, GATE_VOIE_ODO_NEGATIF, paramDriving);
 KinematicsModelDiff motorKinematicsModelDiff(GATE_VOIE_MOT, GATE_VOIE_MOT, paramDriving);
 //Motion motion;
 //Trajectory trajectory;
