@@ -24,9 +24,15 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	}
 
 	m_actiontype = ACTION_FISHES;
-	m_retry = 4;
+	m_retry = 10;
 	m_state = FISHES_IDLE;
 	m_stratColor = 0;
+	m_finshingPos[0] = VectPlan(940, -848.5, M_PI);
+	m_finshingPos[1] = VectPlan(840, -848.5, M_PI);
+	m_finshingPos[2] = VectPlan(740, -848.5, M_PI);
+	m_droppingPos[0] = VectPlan(400, -848.5, M_PI);
+	m_droppingPos[1] = VectPlan(300, -848.5, M_PI);
+	m_droppingPos[2] = VectPlan(200, -848.5, M_PI);
 }
 
 void Fishes::Initialise(int stratcolor)
@@ -41,6 +47,7 @@ int Fishes::do_action()
 	int result = 0;
 	int run = 1;
 	VectPlan actionStart;
+	int fishesPos = 0;
 	int i = 0;
 
 	while(run)
@@ -48,10 +55,22 @@ int Fishes::do_action()
 		switch(m_state)
 		{
 			case FISHES_IDLE:
+				actionStart.x = 1075;
+				actionStart.y = -100;
+				actionStart = actionStart.symetric(m_stratColor);
+				vTaskDelay(100);
+				trajectory.goToNearXy(actionStart.x, actionStart.y, 100, WAY_ANY, AVOIDANCE_GRAPH);
+				if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000))
+				{
+					run = 0;
+					result = 0;
+					break;
+				}
 				m_state = FISHES_GRAB;
 				break;
 
 			case FISHES_GRAB:
+				m_fishingAction.m_firstcheckpoint = m_finshingPos[fishesPos];
 				result = m_fishingAction.do_action();
 				if (result == -1)
 				{
@@ -59,15 +78,22 @@ int Fishes::do_action()
 					run = 0;
 				} else
 				{
-					m_state = FISHES_DROP;
+					m_state = FISHES_TRANSIT;
 				}
 				break;
 
-			case FISHES_DROP:
-				actionStart.x = 400;
-				actionStart.y = -850;
+			case FISHES_TRANSIT:
+				actionStart.x = 572;
+				actionStart.y = -830;
 				actionStart.theta = M_PI;
-				m_dropFishesAction.m_firstcheckpoint = actionStart.symetric(m_stratColor);
+				trajectory.goTo(actionStart.symetric(m_stratColor), WAY_FORWARD, AVOIDANCE_STOP);
+				trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000);
+				m_state = FISHES_DROP;
+				break;
+
+			case FISHES_DROP:
+				m_dropFishesAction.m_firstcheckpoint = m_droppingPos[fishesPos];
+				fishesPos = (fishesPos+1)%3;
 
 				result = m_dropFishesAction.do_action();
 				if(result == -1)
@@ -83,14 +109,17 @@ int Fishes::do_action()
 			case FISHES_FINISHED:
 				// Etat puit, on reste là
 				i++;
-				if (i == 3)
+				if (i == 10)
 				{
 					run = 0;
 					result = 0;
 					break;
 				}
 
-				trajectory.straight(-500);
+				actionStart.x = 572;
+				actionStart.y = -830;
+				actionStart.theta = M_PI;
+				trajectory.goTo(actionStart.symetric(m_stratColor), WAY_BACKWARD, AVOIDANCE_STOP);
 				trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000);
 				m_state = FISHES_GRAB;
 				break;

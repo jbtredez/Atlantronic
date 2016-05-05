@@ -10,6 +10,7 @@ typedef enum
 {
 	FISHES_IDLE = 0,
 	FISHES_GRAB,
+	FISHES_TRANSIT,
 	FISHES_DROP,
 	FISHES_FINISHED
 } FishesState;
@@ -30,8 +31,8 @@ class Fishes  : public Action
 		Fishing m_fishingAction;
 		DropFishes m_dropFishesAction;
 		FishesState m_state;
-
-
+		VectPlan m_finshingPos[3];
+		VectPlan m_droppingPos[3];
 };
 
 #endif /* FISHES_H_ */

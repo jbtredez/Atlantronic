@@ -34,8 +34,7 @@ void DropFishes::Initialise(int stratcolor)
 int DropFishes::do_action()
 {
 	int bresult = 0;
-	VectPlan netPos(400, -850, M_PI);
-	netPos = netPos.symetric(m_stratColor);
+	VectPlan netPos = m_firstcheckpoint.symetric(m_stratColor);
 
 	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
 //	trajectory.goTo(m_firstcheckpoint, WAY_FORWARD,AVOIDANCE_STOP);

@@ -35,8 +35,7 @@ int Fishing::do_action()
 {
 	int bresult = 0;
 	Action::do_action();
-	VectPlan dest(900, -850, M_PI);
-	dest = dest.symetric(m_stratColor);
+	VectPlan dest = m_firstcheckpoint.symetric(m_stratColor);
 
 	if(m_retry < 0 )
 	{
@@ -46,7 +45,6 @@ int Fishing::do_action()
 	// On va a la position de l'action
 	vTaskDelay(100);
 	trajectory.goTo(dest, WAY_ANY, AVOIDANCE_STOP) ;
-
 	if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0)
 	{
 		bresult = -1;
@@ -61,7 +59,7 @@ int Fishing::do_action()
 			Servos::setWingState(WING_NO_MOVE, WING_OPEN);
 
 		vTaskDelay(300);
-		trajectory.straight(250	);
+		trajectory.straight(100);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
 		{
 			bresult = -1;
