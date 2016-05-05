@@ -14,6 +14,7 @@ void cutMotorsOff(void)
 }
 void cutServosOff(void)
 {
+	Servos::closeAll();
 	funnyAction();
 	Servos::setTorque(false);
 

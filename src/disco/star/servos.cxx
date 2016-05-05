@@ -25,7 +25,7 @@ void Servos::setTorque(bool enable)
 		rightDoor.setGoalLimits(-M_PI_2, M_PI_2);
 		towerPliers.setGoalLimits(0, 0);
 		towerPliersTidier.setGoalLimits(0, 0);
-		parasol.setGoalLimits(0, M_PI_4);
+		parasol.setGoalLimits(-M_PI_2, 0);
 
 		// Tolérence target reached
 		leftFishWing.setTargetReachedThreshold(0.1);
@@ -55,7 +55,7 @@ void Servos::closeAll(void)
 	leftFishRemover.setGoalPosition(0);
 	rightFishRemover.setGoalPosition(0);
 	towerPliers.setGoalPosition(0);
-	parasol.setGoalPosition(0);
+	parasol.setGoalPosition(-0.05);
 
 	setDoorsState(DOOR_CLOSE);
 	// Attente de la fin des mouvements
@@ -199,10 +199,10 @@ void Servos::setParasolState(enum Parasol_state parasolState)
 	switch(parasolState)
 	{
 		case PARASOL_CLOSE:
-			Servos::setAngle(&parasol, 0, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&parasol, -0.05, SERVO_POLICY_NON_BLOCKING);
 			break;
 		case PARASOL_OPEN:
-			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&parasol, (float)(-70*M_PI/180), SERVO_POLICY_WAIT_END); // -70 °
 			break;
 		default:
 			break;
