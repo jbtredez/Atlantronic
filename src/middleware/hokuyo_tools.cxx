@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 #define GAP 90 //150
-#define HOKUYO_TABLE_DELTA       150
+#define HOKUYO_TABLE_DELTA       200
 
 void hokuyo_compute_xy(struct hokuyo_scan* scan, Vect2 *pos)
 {

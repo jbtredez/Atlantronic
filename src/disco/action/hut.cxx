@@ -14,7 +14,7 @@ Hut::Hut(VectPlan firstcheckpoint, const char * name, RobotState * robot):Action
 	{
 		m_robot =  robot;
 	}
-	
+	m_retry = 10;
 	m_actiontype = ACTION_HUT;
 }
 
@@ -47,8 +47,8 @@ int Hut::do_action()
 	}
 
 	// On s'approche de la première cabane
-	trajectory.goTo(flagInt, WAY_FORWARD, AVOIDANCE_STOP) ;
-	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) != 0)
+	trajectory.goTo(flagInt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 7000) != 0)
 	{
 		return -1;
 	}
@@ -62,11 +62,12 @@ int Hut::do_action()
 	if ( ! bresult)
 	{
 		// On s'approche de la deuxième cabane
-		do
+		vTaskDelay(100);
+		trajectory.goTo(flagExt, WAY_FORWARD, AVOIDANCE_STOP) ;
+		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 7000) != 0)
 		{
-			trajectory.goTo(flagExt, WAY_FORWARD, AVOIDANCE_STOP) ;
-			vTaskDelay(100);
-		}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
+			return -1;
+		}
 
 		// On ferme la porte
 		bresult = goToWall();

@@ -52,7 +52,7 @@ int FellowCastle::do_action()
 
 	//Avancer
 	vTaskDelay(300);
-	trajectory.straight(-500);
+	trajectory.straight(-600);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
 		bresult = -1;

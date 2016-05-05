@@ -41,6 +41,7 @@ int Fishes::do_action()
 	int result = 0;
 	int run = 1;
 	VectPlan actionStart;
+	int i = 0;
 
 	while(run)
 	{
@@ -81,9 +82,18 @@ int Fishes::do_action()
 
 			case FISHES_FINISHED:
 				// Etat puit, on reste là
-				run = 0;
-				break;
+				i++;
+				if (i == 3)
+				{
+					run = 0;
+					result = 0;
+					break;
+				}
 
+				trajectory.straight(-500);
+				trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000);
+				m_state = FISHES_GRAB;
+				break;
 			default:
 				result = -1;
 				run = 0;
