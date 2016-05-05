@@ -13,7 +13,7 @@
 
 #define DETECTION_NUM_OBJECT                100
 #define DETECTION_NUM_OBJECT_USB             10
-#define DETECTION_OPPONENT_ROBOT_RADIUS     200
+#define DETECTION_OPPONENT_ROBOT_RADIUS     300
 #define HOKUYO_REG_SEG                      200
 
 enum hokuyo_id
