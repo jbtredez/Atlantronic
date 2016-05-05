@@ -1,6 +1,7 @@
 #include "MotionEnabledState.h"
 #include "kernel/log.h"
 #include "kernel/driver/power.h"
+#include "kernel/match.h"
 
 MotionEnabledState::MotionEnabledState() :
 	StateMachineState("MOTION_ENABLED",MOTION_ENABLED)
@@ -39,7 +40,7 @@ unsigned int MotionEnabledState::transition(void* data)
 	}
 
 	// si Aucun moteur actif
-	if(power_get() || !all_op_enable )
+	if(power_get() || !all_op_enable  || match_end != 0)
 	{
 		return MOTION_DISABLED;
 	}

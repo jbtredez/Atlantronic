@@ -1,5 +1,6 @@
 #include "MotionMoveState.h"
 #include "kernel/driver/power.h"	
+#include "kernel/match.h"
 
 MotionMoveState::MotionMoveState(const char* name,unsigned int stateId)
 	: StateMachineState(name, stateId)
@@ -20,7 +21,7 @@ unsigned int MotionMoveState::transition(void* data)
 
 	///En gros on veut éteindre les moteur cad passer dans l'etat DISABLE
 	/// On par en Disable si pas de puissance dans les moteur ou on veut eteindre les moteur en partant en DISABLE
-	if( power_get() || ! all_op_enable || m->m_wantedState == MOTION_DISABLED)
+	if( power_get() || ! all_op_enable || m->m_wantedState == MOTION_DISABLED || match_end == 1)
 	{
 		return MOTION_DISABLED;
 	}

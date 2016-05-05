@@ -1,6 +1,6 @@
 #include "MotionTryEnableState.h"
-
 #include "kernel/driver/power.h"
+#include "kernel/match.h"
 
 MotionTryEnableState::MotionTryEnableState() :
 	StateMachineState("MOTION_TRY_ENABLE",MOTION_TRY_ENABLE)
@@ -25,7 +25,7 @@ unsigned int MotionTryEnableState::transition(void* data)
 	bool all_op_enable = true;
 
 	//Volonte de l'utilisateur de couper l'etat ou pas de puissance
-	if( power_get() || m->m_wantedState == MOTION_DISABLED )
+	if( power_get() || m->m_wantedState == MOTION_DISABLED || match_end == 1)
 	{
 		// puissance desactivee
 		return MOTION_DISABLED;

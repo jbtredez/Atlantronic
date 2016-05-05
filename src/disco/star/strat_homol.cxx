@@ -19,6 +19,10 @@
 #include "disco/star/action/duneCastle.h"
 #include "disco/star/action/dropCastle.h"
 
+
+#include "disco/star/action/duneSucker.h"
+
+
 #include "strat/strat_simple.h"
 
 
@@ -55,7 +59,7 @@ static void strat_task(void* arg)
 
 	RobotState robothomologation;
 
-	//cr��ation et chargement des actions �� faire
+	//création et chargement des actions à faire
 	VectPlan firstcheckpoint;
 
 	// Cabanes
@@ -77,30 +81,15 @@ static void strat_task(void* arg)
 	//Chateau ami
 	DuneCastle duneCastle(firstcheckpoint, "Dune Castle", &robothomologation);
 
-	firstcheckpoint.x = 400;
-	firstcheckpoint.y = -200;
-	firstcheckpoint.theta = 3*M_PI_4;
-
-	// Depose chateau 2
-	DropCastle dropCastle2(firstcheckpoint, "Drop first checkpoint", &robothomologation);
-
-
-
-	firstcheckpoint.x = 1315;
-	firstcheckpoint.y = 0;
+	firstcheckpoint.x = 0;
+	firstcheckpoint.y = 600;
 	firstcheckpoint.theta = 0;
-	Move moveToBase(firstcheckpoint, " Go back to base", 10);
+	Move mvToPos(firstcheckpoint, "go to a point");
 
 	StratSimple strat;
 
-
-//	strat.add_action(&fellowCastle);
-//	strat.add_action(&dropCastle1);
-	strat.add_action(&duneCastle);
-	strat.add_action(&dropCastle2);
-//	strat.add_action(&hut1);
-//	strat.add_action(&fishes);
-//	strat.add_action(&moveToBase);
+	strat.add_action(&fellowCastle);
+	strat.add_action(&fishes);
 
 	match_wait_go();
 	strat_color = match_get_color();

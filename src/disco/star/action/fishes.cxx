@@ -33,6 +33,7 @@ void Fishes::Initialise(int stratcolor)
 {
 	m_stratColor = stratcolor;
 	m_fishingAction.Initialise(m_stratColor);
+	m_dropFishesAction.Initialise(m_stratColor);
 }
 
 int Fishes::do_action()
@@ -65,9 +66,8 @@ int Fishes::do_action()
 				actionStart.x = 400;
 				actionStart.y = -850;
 				actionStart.theta = M_PI;
-
-
 				m_dropFishesAction.m_firstcheckpoint = actionStart.symetric(m_stratColor);
+
 				result = m_dropFishesAction.do_action();
 				if(result == -1)
 				{

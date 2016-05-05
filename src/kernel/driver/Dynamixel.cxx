@@ -371,7 +371,7 @@ DynamixelError Dynamixel::setTorqueLimit(float torque_limit)
 {
 	DynamixelError err;
 
-	if( match_end || torque_limit < 0)
+	if( torque_limit < 0)
 	{
 		torque_limit = 0;
 	}

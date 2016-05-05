@@ -14,6 +14,7 @@
 
 #include "disco/action/Move.h"
 #include "disco/action/fellowCastle.h"
+#include "disco/action/hut.h"
 #include "strat/strat_simple.h"
 
 
@@ -63,12 +64,9 @@ static void strat_task(void* arg)
 	// Cabanes
 		Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
 
-
-
-
-
 	StratSimple strat;
-	strat.add_action(&fellowCastle);
+	//strat.add_action(&fellowCastle);
+	strat.add_action(&hut1);
 
 	match_wait_go();
 	strat_color = match_get_color();

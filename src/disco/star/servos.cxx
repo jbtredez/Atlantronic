@@ -28,7 +28,9 @@ void Servos::setTorque(bool enable)
 		parasol.setGoalLimits(0, M_PI_4);
 
 		// Tolérence target reached
+		leftFishWing.setTargetReachedThreshold(0.1);
 		rightFishWing.setTargetReachedThreshold(0.1);
+
 	}else
 	{
 		// Mise Hors tension
@@ -93,10 +95,12 @@ int Servos::setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy wait)
 
 void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 {
+	rightFishWing.setMovingSpeed(0.85);
+	leftFishWing.setMovingSpeed(0.85);
 	switch(right)
 	{
 		case WING_OPEN:
-			setAngle(&rightFishWing, -1.22, SERVO_POLICY_WAIT_END);
+			setAngle(&rightFishWing, -1.5, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
 			setAngle(&rightFishWing, -1.13, SERVO_POLICY_WAIT_END);
@@ -113,7 +117,7 @@ void Servos::setWingState(enum Wing_state left, enum Wing_state right)
 	switch(left)
 	{
 		case WING_OPEN:
-			setAngle(&leftFishWing, 1.22, SERVO_POLICY_WAIT_END);
+			setAngle(&leftFishWing, 1.5, SERVO_POLICY_WAIT_END);
 			break;
 		case WING_MIDDLE:
 			setAngle(&leftFishWing, 1.13, SERVO_POLICY_WAIT_END);
@@ -150,12 +154,12 @@ void Servos::setFishRemoverState(enum FishRemover_state left, enum FishRemover_s
 	switch(left)
 	{
 		case FISH_REMOVER_TIDY:
-			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&leftFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
 			break;
 		case FISH_REMOVER_SHAKE:
-			Servos::setAngle(&rightFishRemover, -0.5, SERVO_POLICY_WAIT_END);
-			Servos::setAngle(&rightFishRemover, 0.5, SERVO_POLICY_WAIT_END);
-			Servos::setAngle(&rightFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
+			Servos::setAngle(&leftFishRemover, -0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&leftFishRemover, 0.5, SERVO_POLICY_WAIT_END);
+			Servos::setAngle(&leftFishRemover, 0, SERVO_POLICY_NON_BLOCKING);
 			break;
 		case FISH_REMOVER_NO_MOVE:
 			break;

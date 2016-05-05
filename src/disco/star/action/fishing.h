@@ -6,8 +6,6 @@
 
 class Fishing: public Action
 {
-	private :
-		RobotState * m_robot;
 
 	public:
 		Fishing(VectPlan firstcheckpoint, const char * name, RobotState * robot);
@@ -16,7 +14,8 @@ class Fishing: public Action
 		void Exit();
 
 	private:
-		int stratColor;
+		int m_stratColor;
+		RobotState * m_robot;
 };
 
 #endif /* SRC_DISCO_STAR_ACTION_FISHING_H_ */

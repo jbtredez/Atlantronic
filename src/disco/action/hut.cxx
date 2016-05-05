@@ -47,7 +47,7 @@ int Hut::do_action()
 	}
 
 	// On s'approche de la première cabane
-	trajectory.goTo(flagInt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+	trajectory.goTo(flagInt, WAY_FORWARD, AVOIDANCE_STOP) ;
 	if(trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 15000) != 0)
 	{
 		return -1;
@@ -64,7 +64,7 @@ int Hut::do_action()
 		// On s'approche de la deuxième cabane
 		do
 		{
-			trajectory.goTo(flagExt, WAY_BACKWARD, AVOIDANCE_STOP) ;
+			trajectory.goTo(flagExt, WAY_FORWARD, AVOIDANCE_STOP) ;
 			vTaskDelay(100);
 		}while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0) ;
 
@@ -84,7 +84,7 @@ int Hut::goToWall(void)
 	KinematicsParameters angParamOrig;
 	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
 
-	KinematicsParameters linParam = {100, 300, 300};
+	KinematicsParameters linParam = {150, 300, 300};
 	KinematicsParameters angParam = angParamOrig;
 	angParam.vMax /= 2;
 	angParam.aMax /= 2;

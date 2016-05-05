@@ -13,7 +13,9 @@
 #include "kernel/driver/io.h"
 #include "kernel/driver/pwm.h"
 #include "match.h"
+#include "disco/power.h"
 #include "disco/recalage.h"
+
 
 #define MATCH_STACK_SIZE           300
 uint32_t match_time = 90000; //!< duree du match en ms
@@ -82,11 +84,10 @@ static void match_task(void *arg)
 
 	vTaskDelay(match_time);
 	log(LOG_INFO, "Fin du match");
-	// TODO Arret moteur + servos
-	// TODO Appel funny action
-	vTaskDelay(funny_action_time);
-	exitModules();
 	match_end = 1;
+	cutMotorsOff();
+	cutServosOff();
+	exitModules();
 
 	vTaskSuspend(0);
 }

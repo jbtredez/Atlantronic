@@ -14,14 +14,14 @@ Fishing::Fishing(VectPlan firstcheckpoint, const char * name, RobotState * robot
 	}
 
 	m_actiontype = ACTION_FISHING;
-	stratColor = 0;
+	m_stratColor = 0;
 }
 
 
 void Fishing::Initialise(int stratcolor)
 {
 	Action::Initialise(stratcolor);
-	this->stratColor = stratcolor;
+	m_stratColor = stratcolor;
 
 	leftFishWing.setTorqueLimit(1);
 	leftFishWing.setGoalLimits(-1.4, 1.4);
@@ -36,7 +36,7 @@ int Fishing::do_action()
 	int bresult = 0;
 	Action::do_action();
 	VectPlan dest(900, -850, M_PI);
-	dest = dest.symetric(stratColor);
+	dest = dest.symetric(m_stratColor);
 
 	if(m_retry < 0 )
 	{
@@ -55,7 +55,7 @@ int Fishing::do_action()
 	// Si on est arrivé à destination
 	if(bresult != -1)
 	{
-		if(stratColor == COLOR_GREEN)
+		if(m_stratColor == COLOR_GREEN)
 			Servos::setWingState(WING_OPEN, WING_NO_MOVE);
 		else
 			Servos::setWingState(WING_NO_MOVE, WING_OPEN);
@@ -70,7 +70,7 @@ int Fishing::do_action()
 
 	// Sortie d'action: on referme les actionneurs et on retourne l'action (que l'on ait réussi ou non)
 	vTaskDelay(300);
-	if(stratColor == COLOR_GREEN)
+	if(m_stratColor == COLOR_GREEN)
 		Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
 	else
 		Servos::setWingState(WING_NO_MOVE, WING_CLOSE);

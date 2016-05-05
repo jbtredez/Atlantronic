@@ -1,4 +1,5 @@
 star_robot += disco/star/star.o
+star_robot += disco/star/power.o
 star_robot += disco/star/servos.o
 star_robot += kernel/CanMipNode.o
 star_robot += kernel/CanMipMotor.o
@@ -14,3 +15,4 @@ star_robot += disco/star/action/fishing.o
 star_robot += disco/star/action/dropFishes.o
 star_robot += disco/star/action/duneCastle.o
 star_robot += disco/star/action/dropCastle.o
+star_robot += disco/star/action/duneSucker.o

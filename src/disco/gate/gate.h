@@ -51,8 +51,6 @@ extern Motion motion;
 extern Trajectory trajectory;
 extern DynamixelManager ax12;
 extern Dynamixel parasol;
-extern Dynamixel armPump;
-extern Dynamixel pincerPump;
 #endif
 
 #endif
