@@ -76,7 +76,7 @@ void recalage()
 	// pour la prise en compte de la nouvelle position
 	vTaskDelay(ms_to_tick(100));
 
-	trajectory.straight(RECALAGE_WAY(900 + 200 + 145));
+	trajectory.straight(RECALAGE_WAY(900 + 200 + 135));
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 50000) )
 	{
 		goto free;
