@@ -28,11 +28,11 @@ int FellowCastle::do_action()
 {
 	int bresult = 0;
 	Action::do_action();
-	VectPlan checkpoint(1100.0, 100.0, M_PI);
+	VectPlan checkpoint(1100.0, 100.0, 0);
 	checkpoint = checkpoint.symetric(stratColor);
 
 
-	trajectory.goTo(checkpoint, WAY_FORWARD, AVOIDANCE_GRAPH);
+	trajectory.goTo(checkpoint, WAY_ANY, AVOIDANCE_GRAPH);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
 	{
 		bresult = -1;
@@ -44,7 +44,7 @@ int FellowCastle::do_action()
 
 	//Avancer
 	vTaskDelay(300);
-	trajectory.straight(650);
+	trajectory.straight(-650);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
 		bresult = -1;
@@ -52,7 +52,7 @@ int FellowCastle::do_action()
 
 	//Avancer
 	vTaskDelay(300);
-	trajectory.straight(-600);
+	trajectory.straight(600);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
 		bresult = -1;

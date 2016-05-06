@@ -36,12 +36,16 @@ int DropFishes::do_action()
 	int bresult = 0;
 	VectPlan netPos = m_firstcheckpoint.symetric(m_stratColor);
 
+	log_format(LOG_INFO, "Go to net: %d %d", (int)netPos.x, (int)netPos.y);
+	vTaskDelay(100);
+
 	trajectory.goTo(netPos, WAY_FORWARD,AVOIDANCE_STOP);
-//	trajectory.goTo(m_firstcheckpoint, WAY_FORWARD,AVOIDANCE_STOP);
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0)
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 4000) != 0)
 	{
 		bresult = -1;
 	}
+
+	log_format(LOG_INFO, "Leave net");
 
 	if (bresult != -1)
 	{

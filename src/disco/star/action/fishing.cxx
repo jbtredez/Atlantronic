@@ -43,7 +43,7 @@ int Fishing::do_action()
 	}
 
 	// On va a la position de l'action
-	vTaskDelay(100);
+	slowSpeed();
 	trajectory.goTo(dest, WAY_ANY, AVOIDANCE_STOP) ;
 	if ( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0)
 	{
@@ -66,13 +66,35 @@ int Fishing::do_action()
 		}
 	}
 
+	resetSpeed();
 	// Sortie d'action: on referme les actionneurs et on retourne l'action (que l'on ait réussi ou non)
-	vTaskDelay(300);
 	if(m_stratColor == COLOR_GREEN)
 		Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
 	else
 		Servos::setWingState(WING_NO_MOVE, WING_CLOSE);
 
-	vTaskDelay(300);
 	return bresult;
 }
+
+void Fishing::slowSpeed(void)
+{
+	trajectory.getKinematicsParam(&m_linParamOrig, &m_angParamOrig);
+
+	KinematicsParameters linParam = {300, 600, 600};
+	KinematicsParameters angParam = m_angParamOrig;
+	angParam.vMax /= 2;
+	angParam.aMax /= 2;
+	angParam.dMax /= 2;
+
+	trajectory.setKinematicsParam(linParam, angParam);
+
+	vTaskDelay(100);
+}
+
+
+void Fishing::resetSpeed(void)
+{
+	trajectory.setKinematicsParam(m_linParamOrig, m_angParamOrig);
+	vTaskDelay(100);
+}
+

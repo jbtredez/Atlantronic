@@ -29,7 +29,7 @@ Fishes::Fishes(VectPlan firstcheckpoint, const char * name, RobotState * robot):
 	m_stratColor = 0;
 	m_finshingPos[0] = VectPlan(940, -848.5, M_PI);
 	m_finshingPos[1] = VectPlan(840, -848.5, M_PI);
-	m_finshingPos[2] = VectPlan(740, -848.5, M_PI);
+	m_finshingPos[2] = VectPlan(755, -848.5, M_PI);
 	m_droppingPos[0] = VectPlan(400, -848.5, M_PI);
 	m_droppingPos[1] = VectPlan(300, -848.5, M_PI);
 	m_droppingPos[2] = VectPlan(200, -848.5, M_PI);
@@ -58,7 +58,7 @@ int Fishes::do_action()
 				actionStart.x = 1075;
 				actionStart.y = -100;
 				actionStart = actionStart.symetric(m_stratColor);
-				vTaskDelay(100);
+				vTaskDelay(150);
 				trajectory.goToNearXy(actionStart.x, actionStart.y, 100, WAY_ANY, AVOIDANCE_GRAPH);
 				if (trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000))
 				{
@@ -93,7 +93,12 @@ int Fishes::do_action()
 
 			case FISHES_DROP:
 				m_dropFishesAction.m_firstcheckpoint = m_droppingPos[fishesPos];
-				fishesPos = (fishesPos+1)%3;
+				log_format(LOG_INFO, "drop a %d", fishesPos);
+				fishesPos++;
+				if (fishesPos == 3)
+				{
+					fishesPos = 1;
+				}
 
 				result = m_dropFishesAction.do_action();
 				if(result == -1)
@@ -119,7 +124,7 @@ int Fishes::do_action()
 				actionStart.x = 572;
 				actionStart.y = -830;
 				actionStart.theta = M_PI;
-				trajectory.goTo(actionStart.symetric(m_stratColor), WAY_BACKWARD, AVOIDANCE_STOP);
+				trajectory.goTo(actionStart.symetric(m_stratColor), WAY_ANY, AVOIDANCE_STOP);
 				trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000);
 				m_state = FISHES_GRAB;
 				break;
