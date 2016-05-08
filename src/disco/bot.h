@@ -37,7 +37,8 @@ class Bot
 
 		// Parametres moteurs et roues
 		static float voieMot;
-		static float voieOdo;
+		static float voieOdoPositif;
+		static float voieOdoNegatif;
 		static float driving1WheelRadius;
 		static float driving2WheelRadius;
 		static float motorDriving1Red;
@@ -65,7 +66,8 @@ struct Bot_cmd_odo_wheel_radius_arg
 
 struct motion_cmd_odo_voie_arg
 {
-	float voieOdo;
+		float voieOdoPostif;
+		float voieOdoNegatif;
 }  __attribute__((packed));
 
 #ifndef LINUX

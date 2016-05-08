@@ -894,11 +894,12 @@ int RobotInterface::set_odo_wheel_radius(float odo1WheelRadius, float odo2WheelR
 	return usb_write(USB_CMD_ODO_WHEEL, &cmd_arg, sizeof(cmd_arg));
 }
 
-int RobotInterface::set_odo_voie(float voieOdo)
+int RobotInterface::set_odo_voie(float voieOdoPositif,float voieOdoNegatif)
 {
 	struct motion_cmd_odo_voie_arg cmd_arg;
 
-	cmd_arg.voieOdo = voieOdo;
+	cmd_arg.voieOdoPostif = voieOdoPositif;
+	cmd_arg.voieOdoNegatif = voieOdoNegatif;
 
 	return usb_write(USB_CMD_ODO_WAY, &cmd_arg, sizeof(cmd_arg));
 }

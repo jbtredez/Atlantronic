@@ -11,9 +11,10 @@ void Bot::init()
 void Bot::cmd_set_odo_voie(void* arg, void* data)
 {
 	Bot* m = (Bot*) arg;
-	struct motion_cmd_odo_voie_arg* cmd = (struct motion_cmd_odo_voie_arg*) data;
-	m->voieOdo = cmd->voieOdo;
-	odoWheelKinematicsModelDiff.setOdoVoie(cmd->voieOdo);
+struct motion_cmd_odo_voie_arg* cmd = (struct motion_cmd_odo_voie_arg*) data;
+	m->voieOdoPositif = cmd->voieOdoPostif;
+	m->voieOdoNegatif = cmd->voieOdoNegatif;
+	odoWheelKinematicsModelDiff.setOdoVoie(cmd->voieOdoPostif,cmd->voieOdoNegatif);
 }
 void Bot::cmd_set_odo_wheel_radius(void* arg, void* data)
 {
@@ -29,14 +30,13 @@ void Bot::cmd_set_odo_wheel_radius(void* arg, void* data)
 void Bot::cmd_print_odo_wheel_radius(void* arg, void* /*data*/)
 {
 	Bot* m = (Bot*) arg;
-	log_format(LOG_INFO, "Taille roue odo : %d , %d", (int)(m->odo1WheelRadius),(int)(m->odo2WheelRadius));
+	log_format(LOG_INFO, "Taille roue odo : %d (*1000), %d (*1000)", (int)(m->odo1WheelRadius * 1000),(int)(m->odo2WheelRadius * 1000));
 }
 
 void Bot::cmd_print_odo_voie(void* arg, void*/* data*/)
 {
 	Bot* m = (Bot*) arg;
-	log_format(LOG_INFO, "Voie odo : %d", (int)(m->voieOdo));
-
+	log_format(LOG_INFO, "Voie odo (Pos,Neg) : %d (*1000), %d (*1000)", (int)(m->voieOdoPositif * 1000),(int)(m->voieOdoNegatif * 1000));
 }
 
 float Bot::halfLength;
@@ -57,7 +57,8 @@ float Bot::tethaKI;
 float Bot::tethaKD;
 float Bot::tethaMax;
 float Bot::voieMot;
-float Bot::voieOdo;
+float Bot::voieOdoPositif;
+float Bot::voieOdoNegatif;
 float Bot::driving1WheelRadius;
 float Bot::driving2WheelRadius;
 float Bot::motorDriving1Red;
