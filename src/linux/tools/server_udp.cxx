@@ -4,18 +4,29 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
 #include "server_udp.h"
 
 ServerUdp::ServerUdp()
 {
 	started = false;
+
+	log_error("Création serveur UDP");
 }
 
-void ServerUdp::configure(Com* Com, int Port)
+void ServerUdp::configure( int Port)
 {
-	com = Com;
 	port = Port;
+}
+
+void ServerUdp::createclient( Com * pcom, const char* ip)
+{
+	ServerClientUdp* client = new ServerClientUdp;
+	inet_pton(AF_INET, ip, &(client->socket_in.sin_addr));
+	client->id = clientId;
+	client->com = pcom;
+	client->server = this;
+	clientId++;
+	clientList.push_back(client);
 }
 
 bool ServerUdp::start()
@@ -23,7 +34,9 @@ bool ServerUdp::start()
 	struct sockaddr_in addr;
 	clientId = 0;
 
-	socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_UDP);
+	socketFd = socket(AF_INET,SOCK_DGRAM, IPPROTO_UDP);
+
+	log_error("Création socket UDP");
 	if( socketFd < 0)
 	{
 		log_error_errno("socketFd");
@@ -35,6 +48,7 @@ bool ServerUdp::start()
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	addr.sin_port = htons(port);
 
+	log_error("Création Bind");
 	int res = bind(socketFd, (struct sockaddr *) &addr, sizeof(addr));
 	if( res < 0)
 	{
@@ -42,6 +56,7 @@ bool ServerUdp::start()
 		return false;
 	}
 
+	log_error("Création pthread_create");
 	stopTask = 0;
 	res = pthread_create(&tid, NULL, ServerUdp::task_wrapper, this);
 	if( res < 0 )
@@ -64,36 +79,49 @@ void* ServerUdp::task_wrapper(void* arg)
 
 void ServerUdp::task()
 {
-	struct sockaddr_in addr;
-	socklen_t size = sizeof(addr);
 
 	while( ! stopTask )
 	{
-		int res = listen(socketFd, 5);
-		if( res < 0)
+
+		sockaddr from ;
+		int fromsize = sizeof from;
+		int res;
+
+
+		if((res = recvfrom(socketFd, buffer, sizeof(buffer), 0,&from, (socklen_t*)&fromsize)) < 0)
 		{
-			log_error_errno("pthread_create");
-			continue;
+			log_error_errno("recvfrom");
 		}
-
-		int clientSocket = accept(socketFd, (struct sockaddr *) &addr, &size);
-		if( clientSocket < 0 )
+		else if( res < 0)
 		{
-			log_error_errno("accept");
-			continue;
+			stopTask = 1;
+			log_error_errno("read");
 		}
+		if( res > 0)
+		{
 
-		log_info("nouveau client udp  %s", inet_ntoa(addr.sin_addr));
-		ServerClientUdp* client = new ServerClientUdp;
-		client->socket = clientSocket;
-		client->addr = addr;
-		client->id = clientId;
-		client->com = com;
-		client->server = this;
+			int ClientLiseSize = clientList.size();
+			sockaddr_in *sin = ( sockaddr_in *) &from;
+			for(int i =0; i < ClientLiseSize; ++i)
+			{
 
+				if (from.sa_family == AF_INET)
+				{
+					sockaddr_in * clientTP = &(clientList[i]->socket_in);
 
-		clientId++;
-		clientList.push_back(client);
+					if(clientTP->sin_port == sin->sin_port)
+					{
+						ComUdp *comudp = (ComUdp *) clientList[i]->com;
+
+						usb_header *  header =(usb_header *) buffer;
+
+						comudp->save(buffer, header->size +sizeof(usb_header));
+					}
+
+				}
+
+			}
+		}
 	}
 }
 
@@ -102,7 +130,7 @@ void ServerUdp::stop()
 	if( started )
 	{
 		stopTask = 1;
-		std::list<ServerClientUdp*>::iterator it;
+		std::vector<ServerClientUdp*>::iterator it;
 		for(it = clientList.begin(); it != clientList.end(); ++it)
 		{
 			(*it)->stopTask = true;
@@ -112,65 +140,16 @@ void ServerUdp::stop()
 	}
 }
 
-void ServerUdp::deleteClient(ServerClientUdp* client)
+
+void ServerUdp::write(void* buffer, unsigned int size,sockaddr_in addr)
 {
-	std::list<ServerClientUdp*>::iterator it;
+	std::vector<ServerClientUdp*>::iterator it;
 	for(it = clientList.begin(); it != clientList.end(); ++it)
 	{
-		if( (*it) == client )
+		int res = ::write((*it)->socket_in.sin_port, buffer, size);
+		if( res < 0)
 		{
-			clientList.erase(it);
-		}
-		break;
-	}
-}
-
-void ServerUdp::write(void* buffer, unsigned int size,struct sockaddr_in addr)
-{
-	std::list<ServerClientUdp*>::iterator it;
-	for(it = clientList.begin(); it != clientList.end(); ++it)
-	{
-		if((uint32_t) ((*it)->addr.sin_addr.s_addr) !=( (uint32_t) addr.sin_addr.s_addr ))
-		{
-			int res = ::write((*it)->socket, buffer, size);
-			if( res < 0)
-			{
-				log_error_errno("write");
-			}
-		}
-
-	}
-}
-
-void* ServerClientUdp::task_wrapper(void* arg)
-{
-	ServerClientUdp* client = (ServerClientUdp*) arg;
-	client->task();
-	client->server->deleteClient(client);
-	return NULL;
-}
-
-void ServerClientUdp::task()
-{
-	while( ! stopTask )
-	{
-		int res = read(socket, buffer, sizeof(buffer));
-		if( res > 0)
-		{
-			com->write(buffer, res);
-		}
-		else if( res == 0)
-		{
-			stopTask = 1;
-		}
-		else if( res < 0)
-		{
-			stopTask = 1;
-			log_error_errno("read");
+			log_error_errno("write");
 		}
 	}
-
-	log_info("client %d disconnected", id);
-	close(socket);
 }
-

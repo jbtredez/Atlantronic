@@ -93,7 +93,7 @@ static void control_task(void* /*arg*/)
 
 		// en wifi, on diminue la frequence pour la bande passante
 		SPICycleCount++;
-		if( SPICycleCount > 10)
+		if( SPICycleCount > 50)
 		{
 			struct control_usb_data_light* data = &control_usb_data;
 			esp8266_add(USB_CONTROL_LIGHT,data,sizeof(control_usb_data_light));

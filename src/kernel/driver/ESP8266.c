@@ -13,7 +13,7 @@
 #define ESP8266_TX_BUFER_SIZE       	4096
 #define ESP8266_SPI_DATA_SIZE       	32  //32 octets d'un Packet vers le SPI
 #define ESP8266_SPI_TRANSACTION_SIZE    2 + ESP8266_SPI_DATA_SIZE  //2 octets de cmd (cmd+adresse) et 32 octets de msg
-#define ESP8266_USB_HEADER_SIZE			4
+#define ESP8266_USB_HEADER_SIZE			3
 
 static void esp8266_task(void* arg);
 static unsigned char esp8266_tx_buffer_dma[ESP8266_SPI_TRANSACTION_SIZE];
@@ -203,10 +203,15 @@ void esp8266_add(uint16_t type, void* msg, uint16_t size)
 	struct usb_header header = {type, size};
 
 	///Header de traitement du logiciel de L'ESP
+
 	Esp_msg[0] = ESP8266_CMD_DATA;
 	Esp_msg[1] = size + sizeof(header);
-	memcpy(Esp_msg + 2 ,&header, 3);
-	memcpy(Esp_msg + 2 + sizeof(header) , msg, size);
+	uint8_t MsgSize = 2;
+
+	memcpy(Esp_msg + MsgSize,&header, ESP8266_USB_HEADER_SIZE);
+	MsgSize += ESP8266_USB_HEADER_SIZE;
+
+	memcpy(Esp_msg + MsgSize , msg, size);
 	xSemaphoreTake(esp8266_mutex, portMAX_DELAY);
 
 	esp8266_write(Esp_msg, size );

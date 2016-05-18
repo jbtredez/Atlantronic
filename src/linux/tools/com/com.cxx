@@ -50,6 +50,7 @@ int Com::read(int min_buffer_size)
 		goto end;
 	}
 
+
 	while( buffer_size < min_buffer_size )
 	{
 		int max1 = sizeof(buffer) - buffer_size;
@@ -94,7 +95,6 @@ int Com::read_header(struct usb_header* header)
 		res = err;
 		goto end;
 	}
-
 	copy(header, 0, sizeof(*header));
 
 end:

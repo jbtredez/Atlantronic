@@ -39,7 +39,6 @@ int main(int argc, char** argv)
 	int gdb_port[ROBOT_MAX] = {0, 0};
 	bool simulation[ROBOT_MAX] = {false, false};
 	bool serverTcp = false; // TODO option ?
-	bool serverUdp = true; // TODO option ?
 	bool xbee = false;
 
 	setenv("LC_ALL","C",1);
@@ -47,6 +46,9 @@ int main(int argc, char** argv)
 	pthread_mutex_init(&quitMutex, NULL);
 	pthread_cond_init(&quitCond, NULL);
 
+
+	///Préparation de l'ouverture du port udp
+		ServerUdp *serverUdp = NULL;
 	// lecture des options
 	if(argc > 1)
 	{

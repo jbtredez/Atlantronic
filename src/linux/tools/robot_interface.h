@@ -51,7 +51,7 @@ struct dynamixel_data
 class RobotInterface
 {
 	public:
-		int init(const char* _name, Com* _com, bool server_tcp,bool serverUdp, void (*_callback)(void*), void* _callback_arg);
+		int init(const char* _name, Com* _com, bool server_tcp, void (*_callback)(void*), void* _callback_arg);
 		void destroy();
 
 		inline bool isConnected()
@@ -223,7 +223,6 @@ class RobotInterface
 		Com* com; //!< communication
 		bool connected;
 		ServerTcp serverTcp;
-		ServerUdp serverUdp;
 
 		void fault_reset();
 		static void* task_wrapper(void* arg);

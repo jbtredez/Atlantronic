@@ -3,6 +3,7 @@
 
 #include "qemu.h"
 #include "robot_interface.h"
+#include "server_udp.h"
 #include "linux/tools/com/com.h"
 
 class Robot
@@ -15,7 +16,7 @@ class Robot
 				const char* ip,
 				bool xbee,
 				bool serverTcp,
-				bool serverUdp,
+				ServerUdp * pServeurudp,
 				const char* file_stm,
 				void (*_callback)(void*), void* arg);
 

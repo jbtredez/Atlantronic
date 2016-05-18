@@ -4,119 +4,95 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "com_udp.h"
-
-ComUdp::ComUdp(const char* Ip)
+#include "linux/tools/server_udp.h"
+ComUdp::ComUdp(ServerUdp *Serveur,const char * ip):
+	m_rxData(65536)
 {
-	ip = NULL;
-	if(Ip != NULL)
-	{
-		ip = (char*)malloc(strlen (Ip) + 1);
-		strcpy(ip, Ip);
-	}
+	m_pServeur = Serveur;
+	buffer_end = 0;
+	buffer_begin = 0;
+	buffer_size = 0;
+	m_pServeur->createclient(this,ip);
 }
 
 ComUdp::~ComUdp()
 {
-	if( ip )
-	{
-		free(ip);
-	}
+
 }
+
 
 int ComUdp::open()
 {
 	int res = 0;
-	struct sockaddr_in addr;
 
 	close();
 	Com::open();
-
-	if( ip == NULL )
-	{
-		log_error("ip == NULL");
-		goto end;
-	}
-
-	fd = socket(AF_INET, SOCK_STREAM, IPPROTO_UDP);
-	if( fd < 0)
-	{
-		fd = -1;
-		//log_error_errno("socket");
-		close();
-		goto end;
-	}
-
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = inet_addr (ip);
-	addr.sin_port = htons(41666);
-	res = connect(fd, (struct sockaddr *) &addr, sizeof(addr));
-	if( res < 0 )
-	{
-		close();
-		//log_error_errno("connect");
-		fd = -1;
-		goto end;
-	}
-	opened = true;
-	log_info("connected to %s", ip);
-
-end:
 	return res;
 }
-
-int ComUdp::close()
-{
-	int res = -1;
-
-	if(fd == -1)
-	{
-		goto end;
-	}
-
-	res = ::close(fd);
-	if(res)
-	{
-		log_error_errno("close %s", ip);
-	}
-
-	fd = -1;
-
-	log_info("close %s", ip);
-
-end:
-	opened = false;
-	return res;
-}
-
 int ComUdp::write(const void* buf, int size)
 {
-	if(fd == -1)
+	///TODO
+	if(!m_pServeur )
 	{
 		return -1;
 	}
+	if( buf && size)
+	{
+		return 1;
+	}
+	return 0;
+	//sockaddr_in addr;
+	//m_Serveur->write(buffer,size,addr);
 
-	int ret = ::write(fd, buf, size);
-	if( ret != size )
-	{
-		if( ret < 0 )
-		{
-			log_error("write error %d : %s", errno, strerror(errno));
-		}
-		else
-		{
-			log_error("partial write %d / %d", ret, size);
-		}
-		return -1;
-	}
-	else
-	{
-		return 0;
-	}
 }
-
+///Sauvegarde les données dans com
 int ComUdp::read(void* buf, int size)
 {
-	return ::read(fd, buf, size);
+	while( size > 0)
+	{
+		// on prend les donnees dans rxData
+		int nMax = m_rxData.m_count;
+		if( nMax >= size )
+		{
+			nMax = size;
+		}
+
+		if( nMax > 0 )
+		{
+
+			m_rxData.pop((unsigned char*)buf, nMax);
+			return nMax;
+		}
+/*
+		if( size > 0)
+		{
+			// TODO rendre robuste avec buffer circulaire (modifier rs pour qu'il utilise la classe com ?)
+			// on n'a pas assez de donnees, on va en lire
+			int ret = m_rs.read(rxBuffer, 3);
+			if( rxBuffer[0] == 0x7e )
+			{
+				// trame recue
+				uint16_t api_specific_size = (((int)rxBuffer[1]) << 8) + rxBuffer[2];
+				ret = m_rs.read(rxBuffer+3, api_specific_size+1);
+				if( ret > 0 )
+				{
+					decodeApiFrame(api_specific_size);
+				}
+			}
+		}
+		*/
+		return 0;
+	}
+	return 0;
+}
+
+
+void ComUdp::save(unsigned char * msg,int size )
+{
+
+	int res = m_rxData.push(msg, size);
+	if( res )
+	{
+		log_error("rxData buffer full");
+	}
 }
