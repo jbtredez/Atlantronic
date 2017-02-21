@@ -2,6 +2,7 @@
 #include "ui_settingswindow.h"
 #include <QRect>
 #include <QDesktopWidget>
+#include <QDebug>
 
 SettingsWindow::SettingsWindow(QWidget *parent) :
 	QWidget(parent),
@@ -18,4 +19,9 @@ SettingsWindow::SettingsWindow(QWidget *parent) :
 SettingsWindow::~SettingsWindow()
 {
 	delete ui;
+}
+
+void SettingsWindow::closeEvent(QCloseEvent *event)
+{
+	hide();
 }

@@ -16,6 +16,9 @@ public:
 	~SettingsWindow();
 
 private:
+	void closeEvent(QCloseEvent *event);
+
+private:
 	Ui::SettingsWindow *ui;
 };
 
