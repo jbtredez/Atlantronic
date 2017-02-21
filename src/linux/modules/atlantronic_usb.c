@@ -12,6 +12,7 @@
 #include <linux/slab.h>
 #include <linux/ctype.h>
 #include <linux/kthread.h>
+#include <linux/uaccess.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,39)
 #error pas teste avec une version < 2.6.39
