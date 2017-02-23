@@ -68,7 +68,9 @@ int adxrs453_module_init()
 	// activation timer 6
 	RCC->APB1ENR |= RCC_APB1ENR_TIM6EN;
 	TIM6->CR1 = 0x00;//TIM_CR1_ARPE;
-
+#if RCC_PCLK2_MHZ != 84
+#error revoir les timings adxrs453
+#endif
 	// TIM6_CLK = 84MHz / (PSC + 1) = 21Mhz
 	TIM6->PSC = 3;
 
