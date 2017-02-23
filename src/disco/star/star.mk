@@ -5,6 +5,7 @@ star_robot += kernel/CanMipNode.o
 star_robot += kernel/CanMipMotor.o
 star_robot += kernel/driver/StepperDriver.o
 star_robot += disco/star/recalage.o
+star_robot += kernel/driver/esc.o
 
 
 star_robot += disco/action/Move.o

@@ -101,6 +101,7 @@ void isr_exti9_5(void) __attribute__((weak, alias("isr_unexpected") )); //!< int
 void isr_exti15_10(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption exti 10 a 15
 
 void isr_tim6(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption tim6
+void isr_tim7(void) __attribute__((weak, alias("isr_unexpected") )); //!< interruption tim7
 
 extern void __main(void) __attribute__((noreturn)); //!< fonction main à lancer une fois les segments data et bss initialisés en sram
 
@@ -192,7 +193,7 @@ void (* const g_pfnVectors[])(void) =
 	isr_uart4,
 	isr_uart5,
 	isr_tim6,
-	isr_unexpected,
+	isr_tim7,
 	isr_dma2_stream0,
 	isr_dma2_stream1,
 	isr_dma2_stream2,
