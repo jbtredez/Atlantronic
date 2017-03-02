@@ -1,7 +1,7 @@
 #ifndef GATE_ROBOT_3D_H
 #define GATE_ROBOT_3D_H
 
-#include "linux/tools/opengl/object3d.h"
+#include "linux/simulator_ui/opengl/object3d.h"
 
 class GateRobot3d
 {

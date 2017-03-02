@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include "rs.h"
 #include "kernel/driver/xbee.h"
-#include "linux/tools/ring_buffer.h"
+#include "linux/usb_interface_common/ring_buffer.h"
 
 class ComXbee : public Com
 {

@@ -2,7 +2,7 @@
 #define GL_FONT_H
 
 #include <stdio.h>
-#include "linux/tools/opengl/text_shader.h"
+#include "linux/simulator_ui/opengl/text_shader.h"
 #include <algorithm>
 #include <ft2build.h>
 #include FT_FREETYPE_H

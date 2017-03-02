@@ -1,12 +1,12 @@
 #ifndef TABLE_SCENE_H
 #define TABLE_SCENE_H
 
-#include "linux/tools/opengl/table3d.h"
-#include "linux/tools/opengl/StarRobot3d.h"
-#include "linux/tools/opengl/GateRobot3d.h"
-#include "linux/tools/opengl/gl_font.h"
-#include "linux/tools/graphique.h"
-#include "linux/tools/Robot.h"
+#include "linux/simulator_ui/opengl/table3d.h"
+#include "linux/simulator_ui/opengl/StarRobot3d.h"
+#include "linux/simulator_ui/opengl/GateRobot3d.h"
+#include "linux/simulator_ui/opengl/gl_font.h"
+#include "linux/simulator_ui/graphique.h"
+#include "linux/usb_interface_common/Robot.h"
 #include "disco/table.h"
 #include "middleware/trajectory/Graph.h"
 #include "kernel/math/VectPlan.h"

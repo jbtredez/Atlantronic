@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <sys/stat.h>
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/cli.h"
 #include <math.h>
 
 #define  MIN(a, b)      (((a) < (b)) ? (a) : (b))

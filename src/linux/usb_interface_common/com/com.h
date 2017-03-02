@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include "kernel/driver/usb.h"
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/cli.h"
 
 class Com
 {

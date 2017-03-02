@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <locale.h>
 
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/cli.h"
 
 void* cli_task(void* arg);
 

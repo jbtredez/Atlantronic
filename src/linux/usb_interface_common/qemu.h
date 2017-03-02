@@ -1,7 +1,7 @@
 #ifndef QEMU_H
 #define QEMU_H
 
-#include "linux/tools/com/com_usb.h"
+#include "linux/usb_interface_common/com/com_usb.h"
 #include "kernel/math/polyline.h"
 #include "kernel/math/VectPlan.h"
 #include "qemu/hw/arm/atlantronic_model.h"

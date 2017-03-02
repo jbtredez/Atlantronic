@@ -1,10 +1,10 @@
-#include "linux/tools/joystick.h"
+#include "linux/simulator_ui/joystick.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <math.h>
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/cli.h"
 
 void* joystick_task(void* arg);
 

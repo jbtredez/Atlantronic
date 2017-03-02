@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "linux/tools/graphique.h"
+#include "linux/simulator_ui/graphique.h"
 
 void Graphique::init(const char* Name, float Xmin, float Xmax, float Ymin, float Ymax, int Screen_width, int Screen_height, int Bordure_pixel_x, int Bordure_pixel_y)
 {

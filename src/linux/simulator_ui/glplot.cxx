@@ -10,16 +10,17 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "linux/tools/qemu.h"
-#include "linux/tools/cmd.h"
-#include "linux/tools/graphique.h"
-#include "linux/tools/joystick.h"
-#include "linux/tools/opengl/table_scene.h"
-#include "linux/tools/opengl/gl_font.h"
+#include "linux/usb_interface_common/qemu.h"
+#include "linux/usb_interface_common/cmd.h"
+#include "linux/usb_interface_common/Robot.h"
+#include "linux/simulator_ui/graphique.h"
+#include "linux/simulator_ui/joystick.h"
+#include "linux/simulator_ui/opengl/table_scene.h"
+#include "linux/simulator_ui/opengl/gl_font.h"
+#include "linux/simulator_ui/point_texture.h"
 #include "kernel/math/matrix_homogeneous.h"
 #include "opengl/main_shader.h"
-#include "point_texture.h"
-#include "linux/tools/Robot.h"
+
 
 // limitation du rafraichissement
 // hokuyo => 10fps. On met juste un peu plus

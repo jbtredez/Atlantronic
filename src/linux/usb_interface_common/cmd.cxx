@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "linux/tools/com/com.h"
-#include "linux/tools/cmd.h"
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/com/com.h"
+#include "linux/usb_interface_common/cmd.h"
+#include "linux/usb_interface_common/cli.h"
 #include "kernel/driver/usb.h"
 
 static void (*cmd_exit_callback)(void) = NULL;

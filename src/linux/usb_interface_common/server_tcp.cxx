@@ -1,5 +1,5 @@
 #include "server_tcp.h"
-#include "linux/tools/cli.h"
+#include "linux/usb_interface_common/cli.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

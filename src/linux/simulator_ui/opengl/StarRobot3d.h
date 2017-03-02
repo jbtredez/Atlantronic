@@ -1,7 +1,7 @@
 #ifndef STAR_ROBOT_3D_H
 #define STAR_ROBOT_3D_H
 
-#include "linux/tools/opengl/object3d.h"
+#include "linux/simulator_ui/opengl/object3d.h"
 
 class StarRobot3d
 {

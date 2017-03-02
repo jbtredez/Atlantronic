@@ -1,8 +1,8 @@
 #ifndef TABLE_3D_H
 #define TABLE_3D_H
 
-#include "linux/tools/opengl/object3d.h"
-#include "linux/tools/Robot.h"
+#include "linux/simulator_ui/opengl/object3d.h"
+#include "linux/usb_interface_common/Robot.h"
 
 #define NUM_TITANIUM_ORE           40
 #define NUM_MOON_ROCK              16

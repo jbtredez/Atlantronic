@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include "linux/tools/com/com.h"
+#include "linux/usb_interface_common/com/com.h"
 #include "kernel/driver/usb.h"
 
 Com::Com()

@@ -1,7 +1,7 @@
 #include "Robot.h"
-#include "linux/tools/com/com_usb.h"
-#include "linux/tools/com/com_tcp.h"
-#include "linux/tools/com/com_xbee.h"
+#include "linux/usb_interface_common/com/com_usb.h"
+#include "linux/usb_interface_common/com/com_tcp.h"
+#include "linux/usb_interface_common/com/com_xbee.h"
 
 Robot::Robot()
 {

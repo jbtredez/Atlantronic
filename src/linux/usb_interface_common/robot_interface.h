@@ -6,7 +6,7 @@
 #endif
 
 #include <pthread.h>
-#include "linux/tools/com/com.h"
+#include "linux/usb_interface_common/com/com.h"
 #include "kernel/driver/hokuyo.h"
 #include "kernel/driver/rplidar.h"
 #include "kernel/driver/can.h"

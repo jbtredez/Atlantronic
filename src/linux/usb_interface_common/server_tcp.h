@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <list>
-#include "linux/tools/com/com.h"
+#include "linux/usb_interface_common/com/com.h"
 
 class ServerTcp;
 
