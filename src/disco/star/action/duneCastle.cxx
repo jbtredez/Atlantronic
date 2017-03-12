@@ -40,7 +40,7 @@ int DuneCastle::do_action()
 	}
 
 	// Ouvrir les pinces
-	if(stratColor == COLOR_GREEN)
+	if(stratColor == COLOR_BLUE)
 		Servos::setWingState(WING_NO_MOVE, WING_OPEN);
 	else
 		Servos::setWingState(WING_OPEN, WING_NO_MOVE);

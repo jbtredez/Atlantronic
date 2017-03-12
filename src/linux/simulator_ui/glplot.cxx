@@ -19,6 +19,7 @@
 #include "linux/simulator_ui/opengl/gl_font.h"
 #include "linux/simulator_ui/point_texture.h"
 #include "kernel/math/matrix_homogeneous.h"
+#include "kernel/color.h"
 #include "opengl/main_shader.h"
 
 
@@ -90,7 +91,7 @@ static VectPlan qemuStartPos(1200, 0, 0);
 static GlObjectBasic selectionObject;
 static GlObjectBasic axisObject;
 static GlObjectBasic graphPointObject;
-static int color = COLOR_GREEN;
+static int color = COLOR_BLUE;
 static bool ioColor = true;
 static GLuint pointTextureId;
 
@@ -288,11 +289,11 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 	gtk_button_set_relief(GTK_BUTTON(reloadBtn), GTK_RELIEF_NONE);
 
 #ifndef GTK3
-	GdkColor green = {0, 0, 65535, 0};
-	GtkWidget* switchColorBtn = gtk_color_button_new_with_color(&green);
+	GdkColor blue = {0, RGB16_BLUE};
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_color(&blue);
 #else
-	GdkRGBA green = {0, 1, 0, 1};
-	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&green);
+	GdkRGBA blue = {RGB_BLUE, 1};
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&blue);
 #endif
 	GtkColorButtonClass* switchColorBtnClass = GTK_COLOR_BUTTON_GET_CLASS(switchColorBtn);
 	GtkButtonClass* switchColorBtnClass2 = GTK_BUTTON_CLASS(switchColorBtnClass);
@@ -1122,17 +1123,16 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	}
 #endif
 
-	if( color == COLOR_GREEN )
+	if( color == COLOR_BLUE )
 	{
-		color = COLOR_PURPLE;
+		color = COLOR_YELLOW;
 	}
 	else
 	{
-		color = COLOR_GREEN;
+		color = COLOR_BLUE;
 	}
 
 	tableScene.setColor(color);
-
 	ioColor = !ioColor;
 	for(int i = 0; i < robotCount; i++)
 	{
@@ -1153,25 +1153,24 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	}
 
 	GtkColorButton* switchColorBtn = (GtkColorButton*) widget;
-
 	if( ioColor )
 	{
 #ifdef GTK3
-		GdkRGBA green = {0, 1, 0, 1};
-		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &green);
+		GdkRGBA blue = {RGB_BLUE, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &blue);
 #else
-		GdkColor green = {0, 0, 65535, 0};
-		gtk_color_button_set_color(switchColorBtn, &green);
+		GdkColor blue = {0, RGB16_BLUE};
+		gtk_color_button_set_color(switchColorBtn, &blue);
 #endif
 	}
 	else
 	{
 #ifdef GTK3
-		GdkRGBA purple = {1, 0, 1, 1};
-		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &purple);
+		GdkRGBA yellow = {RGB_YELLOW, 1};
+		gtk_color_chooser_set_rgba((GtkColorChooser*)switchColorBtn, &yellow);
 #else
-		GdkColor purple = {0, 65535, 0, 65535};
-		gtk_color_button_set_color(switchColorBtn, &purple);
+		GdkColor yellow = {0, RGB16_YELLOW};
+		gtk_color_button_set_color(switchColorBtn, &yellow);
 #endif
 	}
 }

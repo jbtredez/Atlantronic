@@ -50,7 +50,7 @@ int DropFishes::do_action()
 	if (bresult != -1)
 	{
 		vTaskDelay(300);
-		if(m_stratColor == COLOR_GREEN)
+		if(m_stratColor == COLOR_BLUE)
 		{
 			Servos::setWingState(WING_MIDDLE, WING_NO_MOVE);
 		}
@@ -59,7 +59,7 @@ int DropFishes::do_action()
 			Servos::setWingState(WING_NO_MOVE, WING_MIDDLE);
 		}
 
-		if(m_stratColor == COLOR_GREEN)
+		if(m_stratColor == COLOR_BLUE)
 		{
 			Servos::setFishRemoverState(FISH_REMOVER_SHAKE, FISH_REMOVER_NO_MOVE);
 		}else
@@ -67,7 +67,7 @@ int DropFishes::do_action()
 			Servos::setFishRemoverState(FISH_REMOVER_NO_MOVE, FISH_REMOVER_SHAKE);
 		}
 		vTaskDelay(100);
-		if(m_stratColor == COLOR_GREEN)
+		if(m_stratColor == COLOR_BLUE)
 		{
 			Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
 		}else

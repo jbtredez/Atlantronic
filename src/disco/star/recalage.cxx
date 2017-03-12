@@ -85,7 +85,7 @@ void recalage()
 	}
 
 	vTaskDelay(500);
-	if( color == COLOR_GREEN )
+	if( color == COLOR_BLUE )
 	{
 		trajectory.rotateTo(OPPOSED_ANGLE(M_PI));
 	}

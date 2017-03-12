@@ -72,7 +72,7 @@ bool TableScene::init(GlFont* font, Robot* robot, int robotCount, MainShader* sh
 	{
 		res &= m_table2d[i].init((float*)&table_obj[i].pt[0], 2, table_obj[i].size, shader);
 	}
-	setColor(1);
+	setColor(COLOR_BLUE);
 
 	return res;
 }

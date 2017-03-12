@@ -53,7 +53,7 @@ int Fishing::do_action()
 	// Si on est arrivé à destination
 	if(bresult != -1)
 	{
-		if(m_stratColor == COLOR_GREEN)
+		if(m_stratColor == COLOR_BLUE)
 			Servos::setWingState(WING_OPEN, WING_NO_MOVE);
 		else
 			Servos::setWingState(WING_NO_MOVE, WING_OPEN);
@@ -68,7 +68,7 @@ int Fishing::do_action()
 
 	resetSpeed();
 	// Sortie d'action: on referme les actionneurs et on retourne l'action (que l'on ait réussi ou non)
-	if(m_stratColor == COLOR_GREEN)
+	if(m_stratColor == COLOR_BLUE)
 		Servos::setWingState(WING_CLOSE, WING_NO_MOVE);
 	else
 		Servos::setWingState(WING_NO_MOVE, WING_CLOSE);
