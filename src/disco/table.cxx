@@ -68,22 +68,46 @@ const struct Vect2 yellowMoonBase[] =
 
 const struct Vect2 blueStartCrater[] =
 {
-	// Probleme de cotes sur le reglement
+	Vect2( -965, 526.4 ),
+	Vect2( -850, 592.79 ),
+	Vect2( -735, 526.4 ),
+	Vect2( -735, 393.6 ),
+	Vect2( -850, 327.21 ),
+	Vect2( -965, 393.6 ),
+	Vect2( -965, 526.4 ),
 };
 
 const struct Vect2 yellowStartCrater[] =
 {
-
+	Vect2( 965, 526.4 ),
+	Vect2( 850, 592.79 ),
+	Vect2( 735, 526.4 ),
+	Vect2( 735, 393.6 ),
+	Vect2( 850, 327.21 ),
+	Vect2( 965, 393.6 ),
+	Vect2( 965, 526.4 ),
 };
 
 const struct Vect2 blueBaseCrater[] =
-{
-
+	{
+	Vect2( -545, -803.6 ),
+	Vect2( -430, -737.21 ),
+	Vect2( -315, -803.6 ),
+	Vect2( -315, -936.4 ),
+	Vect2( -430, -1002.79 ),
+	Vect2( -545, -936.4 ),
+	Vect2( -545, -803.6 ),
 };
 
 const struct Vect2 yellowBaseCrater[] =
 {
-
+	Vect2( 545, -803.6 ),
+	Vect2( 430, -737.21 ),
+	Vect2( 315, -803.6 ),
+	Vect2( 315, -936.4 ),
+	Vect2( 430, -1002.79 ),
+	Vect2( 545, -936.4 ),
+	Vect2( 545, -803.6 ),
 };
 
 const struct Vect2 tableBlueStart[] =
@@ -108,6 +132,10 @@ struct polyline table_obj[TABLE_OBJ_SIZE] =
 	{ (Vect2*) centralMoonBase, ARRAY_SIZE(centralMoonBase) },
 	{ (Vect2*) blueMoonBase, ARRAY_SIZE(blueMoonBase) },
 	{ (Vect2*) yellowMoonBase, ARRAY_SIZE(yellowMoonBase) },
+	{ (Vect2*) blueStartCrater, ARRAY_SIZE(blueStartCrater) },
+	{ (Vect2*) yellowStartCrater, ARRAY_SIZE(yellowStartCrater) },
+	{ (Vect2*) blueBaseCrater, ARRAY_SIZE(blueBaseCrater) },
+	{ (Vect2*) yellowBaseCrater, ARRAY_SIZE(yellowBaseCrater) },
 	{ (Vect2*) tableBlueStart, 0 },
 	{ (Vect2*) tableYellowStart, 0 },
 };
@@ -117,22 +145,22 @@ void setTableColor(int color)
 {
 	if( color == COLOR_BLUE )
 	{
-		table_obj[4].size = 0;
-		table_obj[5].size = ARRAY_SIZE(tableYellowStart);
+		table_obj[8].size = 0;
+		table_obj[9].size = ARRAY_SIZE(tableYellowStart);
 	}
 	else if( color == COLOR_YELLOW )
 	{
-		table_obj[4].size = ARRAY_SIZE(tableBlueStart);
-		table_obj[5].size = 0;
+		table_obj[8].size = ARRAY_SIZE(tableBlueStart);
+		table_obj[9].size = 0;
 	}
 	else if( color == COLOR_UNKNOWN )
 	{
-		table_obj[4].size = 0;
-		table_obj[5].size = 0;
+		table_obj[8].size = 0;
+		table_obj[9].size = 0;
 	}
 	else
 	{
-		table_obj[4].size = ARRAY_SIZE(tableBlueStart);
-		table_obj[5].size = ARRAY_SIZE(tableYellowStart);
+		table_obj[8].size = ARRAY_SIZE(tableBlueStart);
+		table_obj[9].size = ARRAY_SIZE(tableYellowStart);
 	}
 }
