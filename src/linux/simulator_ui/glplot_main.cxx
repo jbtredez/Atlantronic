@@ -64,6 +64,19 @@ static QemuRobotParameters robotParam[ROBOT_MAX] =
 
 void robotItfCallback(void* arg);
 
+void printHelp()
+{
+	printf(
+		"Options :\n"
+		"  -g : gdb (port 1235 for main robot and 1236 for PMI)\n"
+		"  -h : help\n"
+		"  -i : ip (distant IHM)\n"
+		"  -p : PMI simulation\n"
+		"  -s : main robot simulation\n"
+		"  -x : xbee (distant IHM)\n"
+	);
+}
+
 int main(int argc, char *argv[])
 {
 	const char* file_stm[ROBOT_MAX] = {"/dev/discovery0", "/dev/discovery1"};
@@ -80,13 +93,17 @@ int main(int argc, char *argv[])
 	if(argc > 1)
 	{
 		int option = -1;
-		while( (option = getopt(argc, argv, "gi:p:s:x")) != -1)
+		while( (option = getopt(argc, argv, "ghi:p:s:x")) != -1)
 		{
 			switch(option)
 			{
 				case 'g':
 					gdb_port[ROBOT_MAIN] = 1235;
 					gdb_port[ROBOT_PMI] = 1236;
+					break;
+				case 'h':
+					printHelp();
+					return 0;
 					break;
 				case 'i':
 					ip = optarg;
