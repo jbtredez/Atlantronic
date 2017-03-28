@@ -23,12 +23,17 @@
 
 void recalage()
 {
-	VectPlan pos(1200, 0, 0);
+	// position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
+	int color = match_get_color();
+	VectPlan pos(GATE_INIT_POS_X, GATE_INIT_POS_Y, GATE_INIT_POS_THETA);
+	location.setPosition(pos.symetric(color));
+
+	// TODO faire le recalage
+#if 0
 	VectPlan posInit(1000, -600, OPPOSED_ANGLE(M_PI_2));
 	VectPlan firstcheckpoint(0, -750, M_PI_2);
 	//posInit.theta = atan2f(firstcheckpoint.y - posInit.y, firstcheckpoint.x - posInit.x);
 
-	int color = match_get_color();
 	// Initialiser les ax 12
 
 #if 1
@@ -146,4 +151,5 @@ free:
 	trajectory.enableHokuyo(true);
 	trajectory.enableStaticCheck(true);
 	motion.enableAntico(true);
+#endif
 }

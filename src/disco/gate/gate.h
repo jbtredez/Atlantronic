@@ -47,6 +47,20 @@
 #define GATE_ODO2_WAY                                -1
 #define GATE_ODO_ENCODER_RESOLUTION                4096
 
+// Parametres lasers
+#define GATE_HOKUYO_1_X                             0.00
+#define GATE_HOKUYO_1_Y                             0.00
+#define GATE_HOKUYO_1_THETA                      -M_PI_2
+
+#define GATE_HOKUYO_2_X                             0.00
+#define GATE_HOKUYO_2_Y                             0.00
+#define GATE_HOKUYO_2_THETA                         0.00
+
+// position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
+#define GATE_INIT_POS_X                          1450.00
+#define GATE_INIT_POS_Y                           820.00
+#define GATE_INIT_POS_THETA                         M_PI
+
 #ifndef LINUX
 extern Location location;
 extern Motion motion;

@@ -9,11 +9,11 @@
 #define SRC_KERNEL_COLOR_H_
 
 // Choix du cote
-#define COLOR_YELLOW     1     //!< couleur avec x negatif (=> -1)
+#define COLOR_BLUE       -1     //!< couleur avec x negatif (=> -1)
 #define COLOR_UNKNOWN     0     //!< couelur inconnue (non choisie)
-#define COLOR_BLUE       -1     //!< couleur avec x positif (=> 1)
+#define COLOR_YELLOW      1     //!< couleur avec x positif (=> 1)
 
-#define DEFAULT_COLOR	COLOR_BLUE
+#define DEFAULT_COLOR	COLOR_YELLOW
 
 
 // Couleur RGB

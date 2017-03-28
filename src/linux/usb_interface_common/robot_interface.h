@@ -27,6 +27,7 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "server_tcp.h"
 #include "disco/star/star.h"
+#include "disco/gate/gate.h"
 
 #define CONTROL_USB_DATA_MAX        120000 //!< 600s (10 mn) de données avec l'asservissement à 200Hz
 

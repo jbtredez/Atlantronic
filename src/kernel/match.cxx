@@ -39,7 +39,7 @@ static void match_wait_recal();
 static int match_module_init()
 {
 	match_end = 0;
-	match_color = COLOR_BLUE;
+	match_color = DEFAULT_COLOR;
 	match_go = 0;
 	match_queue_go = xQueueCreate(1, 0);
 	match_queue_recal = xQueueCreate(1, 0);
@@ -154,14 +154,14 @@ static void match_cmd_color(void* /*arg*/, void* data)
 			//pwm_set(PWM_1, 0.5);
 			//pwm_set(PWM_2, 0);
 			match_color = COLOR_BLUE;
-			log(LOG_INFO, "couleur => vert");
+			log(LOG_INFO, "couleur => bleu");
 		}
 		else
 		{
 			//pwm_set(PWM_1, 0);
 			//pwm_set(PWM_2, 0.5);
 			match_color = COLOR_YELLOW;
-			log(LOG_INFO, "couleur => violet");
+			log(LOG_INFO, "couleur => jaune");
 		}
 	}
 }
@@ -240,13 +240,13 @@ portBASE_TYPE match_set_color_from_isr(void)
 		{
 			//pwm_set(PWM_1, 0.5);
 			//pwm_set(PWM_2, 0);
-			match_color = COLOR_BLUE;
+			match_color = DEFAULT_COLOR;
 		}
 		else
 		{
 			//pwm_set(PWM_1, 0);
 			//pwm_set(PWM_2, 0.5);
-			match_color = COLOR_YELLOW;
+			match_color = -DEFAULT_COLOR;
 		}
 	}
 	return 0;

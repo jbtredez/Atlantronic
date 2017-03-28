@@ -83,15 +83,14 @@ static TableScene tableScene;
 Graphique graph[GRAPH_NUM];
 struct joystick joystick;
 static int glplot_init_done = 0;
-#if 1
-static VectPlan qemuStartPos(1000, -600, -M_PI/2);
-#else
-static VectPlan qemuStartPos(1200, 0, 0);
-#endif
+static VectPlan qemuStartPos[2] = {
+		VectPlan(STAR_INIT_POS_X, STAR_INIT_POS_Y, STAR_INIT_POS_THETA),    // Star
+		VectPlan(GATE_INIT_POS_X, GATE_INIT_POS_Y, GATE_INIT_POS_THETA),    // Gate
+};
 static GlObjectBasic selectionObject;
 static GlObjectBasic axisObject;
 static GlObjectBasic graphPointObject;
-static int color = COLOR_BLUE;
+static int color = DEFAULT_COLOR;
 static bool ioColor = true;
 static GLuint pointTextureId;
 
@@ -289,11 +288,21 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount, int selectRobotId)
 	gtk_button_set_relief(GTK_BUTTON(reloadBtn), GTK_RELIEF_NONE);
 
 #ifndef GTK3
-	GdkColor blue = {0, RGB16_BLUE};
-	GtkWidget* switchColorBtn = gtk_color_button_new_with_color(&blue);
+	GdkColor gdkcolor = {0, RGB16_BLUE};
+	GdkColor gdkcolorYellow = GdkColor{0, RGB16_YELLOW};
+	if( color == COLOR_YELLOW )
+	{
+		gdkcolor = gdkcolorYellow;
+	}
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_color(&gdkcolor);
 #else
-	GdkRGBA blue = {RGB_BLUE, 1};
-	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&blue);
+	GdkRGBA gdkcolor = {RGB_BLUE, 1};
+	GdkRGBA gdkcolorYellow = {RGB_YELLOW, 1};
+	if( color == COLOR_YELLOW )
+	{
+		gdkcolor = gdkcolorYellow;
+	}
+	GtkWidget* switchColorBtn = gtk_color_button_new_with_rgba(&gdkcolor);
 #endif
 	GtkColorButtonClass* switchColorBtnClass = GTK_COLOR_BUTTON_GET_CLASS(switchColorBtn);
 	GtkButtonClass* switchColorBtnClass2 = GTK_BUTTON_CLASS(switchColorBtnClass);
@@ -362,7 +371,7 @@ void qemu_set_parameters()
 	{
 		if( robot[i].m_simulation )
 		{
-			robot[i].m_qemu.setPosition(qemuStartPos.symetric(color));
+			robot[i].m_qemu.setPosition(qemuStartPos[i].symetric(color));
 			robot[i].m_qemu.setIo(GPIO_MASK(IO_COLOR), ioColor);
 		}
 	}
@@ -1113,7 +1122,7 @@ static gboolean keyboard_release(GtkWidget* widget, GdkEventKey* event, gpointer
 
 static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 {
-	printf("toggle color!!\n");
+	log_info("toggle color!!");
 
 #ifndef GTK3
 	if(!gtk_gl_area_make_current (GTK_GL_AREA (opengl_window)))
@@ -1146,7 +1155,7 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 			// simulation : on change l'io
 			if( robot[i].m_robotItf.last_control_usb_data.pos.x == 0 && robot[i].m_robotItf.last_control_usb_data.pos.y == 0 && ! robot[i].m_robotItf.get_gpio(1 << (GPIO_IN_GO+1)))
 			{
-				robot[i].m_qemu.setPosition(qemuStartPos.symetric(color));
+				robot[i].m_qemu.setPosition(qemuStartPos[i].symetric(color));
 			}
 			robot[i].m_qemu.setIo(GPIO_MASK(IO_COLOR), ioColor);
 		}
@@ -1158,7 +1167,7 @@ static void toggle_color(GtkWidget* widget, gpointer /*arg*/)
 	}
 
 	GtkColorButton* switchColorBtn = (GtkColorButton*) widget;
-	if( ioColor )
+	if( color == COLOR_BLUE )
 	{
 #ifdef GTK3
 		GdkRGBA blue = {RGB_BLUE, 1};

@@ -48,6 +48,19 @@
 #define STAR_ODO2_WAY                                -1
 #define STAR_ODO_ENCODER_RESOLUTION                4096
 
+// Parametres lasers
+#define STAR_HOKUYO_1_X                             0.00
+#define STAR_HOKUYO_1_Y                             0.00
+#define STAR_HOKUYO_1_THETA                      -M_PI_2
+
+#define STAR_HOKUYO_2_X                             0.00
+#define STAR_HOKUYO_2_Y                             0.00
+#define STAR_HOKUYO_2_THETA                         0.00
+
+// position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
+#define STAR_INIT_POS_X                           600.00
+#define STAR_INIT_POS_Y                           800.00
+#define STAR_INIT_POS_THETA                      -M_PI_2
 
 #ifndef LINUX
 extern Location location;
