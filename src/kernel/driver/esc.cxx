@@ -14,7 +14,7 @@ static int esc_remain_count = ESP_PERIOD;
 
 int esc_module_init()
 {
-	//////////// TESTS gyro sur timer
+	//////////// TESTS esc sur timer
 	// activation timer 7
 	RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
 	TIM7->CR1 = 0x00;//TIM_CR1_ARPE;
@@ -36,17 +36,15 @@ int esc_module_init()
 
 module_init(esc_module_init, INIT_GYRO);
 
-static Systime esc_t1;
-static Systime esc_t2;
-static Systime esc_dt1;
-static Systime esc_dt2;
-static Systime esc_dt;
-
 extern "C"
 {
 void isr_tim7(void)
 {
 	// generation d'un signal PPM
+	// signal periodique de periode ESP_PERIOD (22.5ms)
+	// 1er esc signal haut pendant entre 0.7ms et 1.7ms (0.7ms = 0% et 1.7ms = 100%)
+	// 2eme a 8eme esc : pas supporte (on laisse le signal bas)
+	// signal bas sur le reste de la periode
 	if( TIM7->SR | TIM_SR_UIF )
  	{
 		esc_val = gpio_get(GPIO_1);
@@ -58,31 +56,25 @@ void isr_tim7(void)
 		{
 			esc_val = 1;
 		}
-		// TODO limitation a 25% pour le moment
-		if( esc_val > 0.25 )
+		// TODO limitation a 45% pour le moment
+		if( esc_val > 0.45 )
 		{
-			esc_val = 0.25;
+			esc_val = 0.45;
 		}
 
 		if( ! esc_remain_count )
 		{
+			gpio_set(GPIO_11);
+
 			int val = 700 + 1000 * esc_val; // entre 0.7 et 1.7 ms
 			TIM7->ARR = val;
 			esc_remain_count = ESP_PERIOD - val;
-			gpio_set(GPIO_11);
-			Systime t = systick_get_time_from_isr();
-			esc_dt1 = t - esc_t1;
-			esc_t1 = t;
 		}
 		else
 		{
+			gpio_reset(GPIO_11);
 			TIM7->ARR = esc_remain_count;
 			esc_remain_count = 0;
-			gpio_reset(GPIO_11);
-			Systime t = systick_get_time_from_isr();
-			esc_dt2 = t - esc_t2;
-			esc_t2 = t;
-			esc_dt = esc_t2 - esc_t1;
 		}
 		TIM7->SR &= ~TIM_SR_UIF;
 	}
