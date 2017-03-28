@@ -3,7 +3,7 @@
 bool GateRobot3d::init(MainShader* shader)
 {
 	m_shader = shader;
-	bool res = m_mobileBase.init("media/2016/GateRobot.obj", shader);
+	bool res = m_mobileBase.init("media/2017/GateRobot.obj", shader);
 
 	return res;
 }
