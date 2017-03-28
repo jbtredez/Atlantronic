@@ -20,7 +20,16 @@ typedef struct
 	const char *doc;      // Documentation for this function
 } COMMAND;
 
+enum
+{
+	CLI_GREEN = 0,
+	CLI_PURPLE,
+	CLI_BLUE,
+	CLI_RED,
+};
+
 int cli_init(COMMAND* cmd);
+int cli_set_prompt(const char* name, int colorId);
 
 void cli_log(const char* msg, ...) __attribute__(( format(printf, 1, 2) ));
 

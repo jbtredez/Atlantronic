@@ -120,7 +120,8 @@ int main(int argc, char** argv)
 	}
 
 	pthread_mutex_lock(&quitMutex);
-	cmd_init(&robot[0].m_robotItf, &robot[0].m_qemu, cli_quit);
+	cmd_init(cli_quit);
+	cmd_add_robot(&robot[0].m_robotItf, &robot[0].m_qemu);
 	pthread_cond_wait(&quitCond, &quitMutex);
 	pthread_mutex_unlock(&quitMutex);
 

@@ -5,9 +5,6 @@
 #include "robot_interface.h"
 #include "linux/usb_interface_common/com/com.h"
 
-//TODO Provisoire
-#define ROBOT_SELECTED 0
-
 class Robot
 {
 	public:

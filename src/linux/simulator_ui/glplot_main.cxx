@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 	bool simulation[ROBOT_MAX] = {false, false};
 	bool serverTcp = false; // TODO option ?
 	bool xbee = false;
+	int selectRobotId = 0;
 
 	setenv("LC_ALL","C",1);
 
@@ -145,6 +146,11 @@ int main(int argc, char *argv[])
 	}
 
 	// init
+	if( simulation[ROBOT_PMI] && ! simulation[ROBOT_MAIN])
+	{
+		selectRobotId = 1;
+	}
+
 	for(int i = 0; i < ROBOT_MAX; i++)
 	{
 		int res = robot[i].init(robotName[i],
@@ -165,7 +171,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	int res = glplot_main(true, robot, ROBOT_MAX);
+	int res = glplot_main(true, robot, ROBOT_MAX, selectRobotId);
 
 	// destruction
 	for(int i = 0; i < ROBOT_MAX; i++)

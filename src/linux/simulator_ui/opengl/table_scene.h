@@ -45,7 +45,7 @@ class TableScene
 		bool init(GlFont* glfont, Robot* robot, int robotCount, MainShader* shader);
 		bool initQemuObjects();
 
-		void draw(Graphique* graph);
+		void draw(Graphique* graph, int selectedRobot);
 		void printInfos(Graphique* graph);
 		VectPlan projectMouseOnTable(int x, int y);
 		void rotateView(float dx, float dy);

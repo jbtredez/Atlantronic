@@ -12,7 +12,7 @@
 void* cli_task(void* arg);
 
 static COMMAND *cli_commands = NULL;
-char cli_prompt[] = "discovery $ ";
+char cli_prompt[256] = "$ ";
 int cli_last_error = 0;
 
 char * stripwhite(char * string)
@@ -181,6 +181,32 @@ int cli_init(COMMAND* cmd)
 	cli_commands = cmd;
 
 	return pthread_create(&tid, NULL, cli_task, NULL);
+}
+
+int cli_set_prompt(const char* name, int colorId)
+{
+	const char* color = "";
+
+	switch(colorId)
+	{
+		case CLI_GREEN:
+			color = "\033[32m";
+			break;
+		case CLI_BLUE:
+			color = "\033[36m";
+			break;
+		case CLI_PURPLE:
+			color = "\033[35m";
+			break;
+		case CLI_RED:
+			color = "\033[31m";
+			break;
+		default:
+			break;
+	}
+
+	snprintf(cli_prompt, sizeof(cli_prompt), "%s%s $ \033[0m", color, name);
+	return 0;
 }
 
 void* cli_task(void* arg)

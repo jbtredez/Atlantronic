@@ -7,9 +7,13 @@
 #include "linux/usb_interface_common/cli.h"
 #include "kernel/driver/usb.h"
 
+#define MAX_ROBOTS        4
+
 static void (*cmd_exit_callback)(void) = NULL;
-static RobotInterface* cmd_robot = NULL;
-static Qemu* cmd_qemu = NULL;
+static RobotInterface* cmd_robot[MAX_ROBOTS];
+static Qemu* cmd_qemu[MAX_ROBOTS];
+static int cmd_robots_count = 0;
+static int cmd_robots_current_id = 0;
 
 int cmd_arm_xyz(const char* arg);
 int cmd_arm_ventouse(const char* arg);
@@ -61,6 +65,7 @@ int cmd_motion_set_speed(const char* arg);
 int cmd_ptask(const char* arg);
 int cmd_reboot(const char* arg);
 int cmd_recalage(const char* arg);
+int cmd_select_robot(const char* arg);
 int cmd_rotate(const char* arg);
 int cmd_rotate_to(const char* arg);
 int cmd_set_color(const char* arg);
@@ -125,6 +130,7 @@ COMMAND usb_commands[] = {
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
 	{ "reboot", cmd_reboot, "reboot" },
 	{ "recalage", cmd_recalage, "recalage"},
+	{ "select_robot", cmd_select_robot, "select_robot id"},
 	{ "set_color", cmd_set_color, "set color"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
@@ -133,12 +139,69 @@ COMMAND usb_commands[] = {
 	{ NULL, NULL, NULL }
 };
 
-int cmd_init(RobotInterface* robot, Qemu* qemu, void (*f)(void))
+int cmd_init(void (*exit_cb)(void))
 {
-	cmd_robot = robot;
-	cmd_qemu = qemu;
-	cmd_exit_callback = f;
-	return cli_init(usb_commands);
+	cmd_exit_callback = exit_cb;
+	return 0;
+}
+
+int cmd_add_robot(RobotInterface* robot, Qemu* qemu)
+{
+	if( cmd_robots_count >= MAX_ROBOTS )
+	{
+		log_error("cmd_add_robot failed : too many robots");
+		return -1;
+	}
+
+	log_info("new robot added id %d : %s", cmd_robots_count, robot->getName());
+	cmd_robot[cmd_robots_count] = robot;
+	cmd_qemu[cmd_robots_count] = qemu;
+	cmd_robots_count++;
+	if( cmd_robots_count == 1 )
+	{
+		log_info("new robot selected id %d : %s. Use select_robot [id] to change robot control", cmd_robots_count, robot->getName());
+		cli_set_prompt(robot->getName(), 0);
+		return cli_init(usb_commands);
+	}
+	return 0;
+}
+
+int cmd_get_selected_robot()
+{
+	return cmd_robots_current_id;
+}
+
+int cmd_select_robot(int id)
+{
+	if( id < 0)
+	{
+		log_error("%s: robot %d not found (max %d)", __FUNCTION__, id, cmd_robots_count-1);
+		return CMD_ERROR;
+	}
+
+	if( id >= cmd_robots_count )
+	{
+		log_error("%s: robot %d not found (max %d)", __FUNCTION__, id, cmd_robots_count-1);
+		return CMD_ERROR;
+	}
+
+	cmd_robots_current_id = id;
+	log_info("new robot selected id %d : %s", cmd_robots_count, cmd_robot[cmd_robots_current_id]->getName());
+	cli_set_prompt(cmd_robot[cmd_robots_current_id]->getName(), cmd_robots_current_id);
+
+	return 0;
+}
+
+int cmd_select_robot(const char* arg)
+{
+	int id = 0;
+	int count = sscanf(arg, "%d", &id);
+
+	if(count != 1 )
+	{
+		return CMD_ERROR;
+	}
+	return cmd_select_robot(id);
 }
 
 int cmd_dynamixel_scan(const char* arg)
@@ -151,7 +214,7 @@ int cmd_dynamixel_scan(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_scan(type);
+	cmd_robot[cmd_robots_current_id]->dynamixel_scan(type);
 	return CMD_SUCCESS;
 }
 
@@ -167,7 +230,7 @@ int cmd_dynamixel_set_id(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_id(type, id, new_id);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_id(type, id, new_id);
 	return CMD_SUCCESS;
 }
 
@@ -183,7 +246,7 @@ int cmd_dynamixel_set_goal_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_goal_position(type, id, alpha);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_goal_position(type, id, alpha);
 	return CMD_SUCCESS;
 }
 
@@ -198,7 +261,7 @@ int cmd_dynamixel_set_op_baudrate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_op_baudrate(type, id);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_op_baudrate(type, id);
 	return CMD_SUCCESS;
 }
 
@@ -213,7 +276,7 @@ int cmd_dynamixel_set_manager_baudrate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_manager_baudrate(type, freq);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_manager_baudrate(type, freq);
 	return CMD_SUCCESS;
 }
 
@@ -229,7 +292,7 @@ int cmd_dynamixel_set_max_torque(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_max_torque(type, id, torque);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_max_torque(type, id, torque);
 	return CMD_SUCCESS;
 }
 
@@ -245,7 +308,7 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_target_reached_threshold(type, id, threshold);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_target_reached_threshold(type, id, threshold);
 	return CMD_SUCCESS;
 }
 
@@ -261,7 +324,7 @@ int cmd_dynamixel_enable_endless_turn_mode(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_enable_endless_turn_mode(type, id);
+	cmd_robot[cmd_robots_current_id]->dynamixel_enable_endless_turn_mode(type, id);
 	return CMD_SUCCESS;
 }
 
@@ -277,7 +340,7 @@ int cmd_dynamixel_disable_endless_turn_mode(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_disable_endless_turn_mode(type, id);
+	cmd_robot[cmd_robots_current_id]->dynamixel_disable_endless_turn_mode(type, id);
 	return CMD_SUCCESS;
 }
 
@@ -294,7 +357,7 @@ int cmd_dynamixel_set_speed(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_set_speed(type, id, speed);
+	cmd_robot[cmd_robots_current_id]->dynamixel_set_speed(type, id, speed);
 	return CMD_SUCCESS;
 }
 
@@ -309,13 +372,13 @@ int cmd_dynamixel_get_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->dynamixel_get_position(type, id);
+	cmd_robot[cmd_robots_current_id]->dynamixel_get_position(type, id);
 	return CMD_SUCCESS;
 }
 
 int cmd_free(const char* /*arg*/)
 {
-	cmd_robot->free();
+	cmd_robot[cmd_robots_current_id]->free();
 	return CMD_SUCCESS;
 }
 
@@ -331,7 +394,7 @@ int cmd_can_set_baudrate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->can_set_baudrate((can_baudrate)id, debug);
+	cmd_robot[cmd_robots_current_id]->can_set_baudrate((can_baudrate)id, debug);
 	return CMD_SUCCESS;
 }
 
@@ -358,7 +421,7 @@ int cmd_can_write(const char* arg)
 	msg.format = CAN_STANDARD_FORMAT;
 	msg.type = CAN_DATA_FRAME;
 
-	cmd_robot->can_write(&msg);
+	cmd_robot[cmd_robots_current_id]->can_write(&msg);
 	return CMD_SUCCESS;
 }
 
@@ -372,7 +435,7 @@ int cmd_can_lss(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->can_lss(on);
+	cmd_robot[cmd_robots_current_id]->can_lss(on);
 	return CMD_SUCCESS;
 }
 
@@ -386,14 +449,14 @@ int cmd_can_lss_set_nodeid(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->can_lss_set_nodeid(id);
+	cmd_robot[cmd_robots_current_id]->can_lss_set_nodeid(id);
 	return CMD_SUCCESS;
 }
 
 int cmd_can_lss_save(const char* arg)
 {
 	(void) arg;
-	cmd_robot->can_lss_save();
+	cmd_robot[cmd_robots_current_id]->can_lss_save();
 	return CMD_SUCCESS;
 }
 
@@ -420,9 +483,9 @@ int cmd_qemu_set_io(const char* arg)
 		return CMD_ERROR;
 	}
 
-	if( cmd_qemu )
+	if( cmd_qemu[cmd_robots_current_id] )
 	{
-		cmd_qemu->setIo(id, val?1:0);
+		cmd_qemu[cmd_robots_current_id]->setIo(id, val?1:0);
 	}
 
 	return CMD_SUCCESS;
@@ -439,9 +502,9 @@ int cmd_qemu_manage_canopen_connexion(const char* arg)
 		return CMD_ERROR;
 	}
 
-	if( cmd_qemu )
+	if( cmd_qemu[cmd_robots_current_id] )
 	{
-		cmd_qemu->manage_canopen_connexion(nodeid, connected);
+		cmd_qemu[cmd_robots_current_id]->manage_canopen_connexion(nodeid, connected);
 	}
 
 	return CMD_SUCCESS;
@@ -478,7 +541,7 @@ int cmd_motion_set_param(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_param(kp_x, ki_x, kd_x, kp_y, ki_y, kd_y, kp_theta, ki_theta, kd_theta);
+	cmd_robot[cmd_robots_current_id]->motion_set_param(kp_x, ki_x, kd_x, kp_y, ki_y, kd_y, kp_theta, ki_theta, kd_theta);
 
 	return CMD_SUCCESS;
 }
@@ -486,7 +549,7 @@ int cmd_motion_set_param(const char* arg)
 int cmd_motion_print_param(const char* arg)
 {
 	(void) arg;
-	cmd_robot->motion_print_param();
+	cmd_robot[cmd_robots_current_id]->motion_print_param();
 
 	return CMD_SUCCESS;
 }
@@ -501,12 +564,12 @@ int cmd_localization_set_position(const char* arg)
 		return CMD_ERROR;
 	}
 
-	if( cmd_qemu )
+	if( cmd_qemu[cmd_robots_current_id] )
 	{
-		cmd_qemu->setPosition(pos);
+		cmd_qemu[cmd_robots_current_id]->setPosition(pos);
 	}
 
-	cmd_robot->set_position(pos);
+	cmd_robot[cmd_robots_current_id]->set_position(pos);
 
 	return CMD_SUCCESS;
 }
@@ -521,7 +584,7 @@ int cmd_straight(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->straight(dist);
+	cmd_robot[cmd_robots_current_id]->straight(dist);
 
 	return CMD_SUCCESS;
 }
@@ -536,7 +599,7 @@ int cmd_rotate(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->rotate(alpha);
+	cmd_robot[cmd_robots_current_id]->rotate(alpha);
 
 	return CMD_SUCCESS;
 }
@@ -551,7 +614,7 @@ int cmd_rotate_to(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->rotate_to(alpha);
+	cmd_robot[cmd_robots_current_id]->rotate_to(alpha);
 
 	return CMD_SUCCESS;
 }
@@ -566,7 +629,7 @@ int cmd_motion_enable(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_enable(enable);
+	cmd_robot[cmd_robots_current_id]->motion_enable(enable);
 
 	return CMD_SUCCESS;
 }
@@ -581,7 +644,7 @@ int cmd_motion_set_max_driving_current(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_max_driving_current(maxCurrent);
+	cmd_robot[cmd_robots_current_id]->motion_set_max_driving_current(maxCurrent);
 
 	return CMD_SUCCESS;
 }
@@ -599,7 +662,7 @@ int cmd_goto(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->goto_near(dest, dist, way, avoidance_type);
+	cmd_robot[cmd_robots_current_id]->goto_near(dest, dist, way, avoidance_type);
 
 	return CMD_SUCCESS;
 }
@@ -618,7 +681,7 @@ int cmd_goto_xy(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->goto_near_xy(x, y, dist, way, avoidance_type);
+	cmd_robot[cmd_robots_current_id]->goto_near_xy(x, y, dist, way, avoidance_type);
 
 	return CMD_SUCCESS;
 }
@@ -636,11 +699,11 @@ int cmd_goto_graph(const char* arg)
 
 	if( node < 0 )
 	{
-		cmd_robot->goto_graph();
+		cmd_robot[cmd_robots_current_id]->goto_graph();
 	}
 	else
 	{
-		cmd_robot->goto_graph_node(node);
+		cmd_robot[cmd_robots_current_id]->goto_graph_node(node);
 	}
 
 	return CMD_SUCCESS;
@@ -649,14 +712,14 @@ int cmd_goto_graph(const char* arg)
 int cmd_gyro_calib_start(const char* arg)
 {
 	(void) arg;
-	cmd_robot->gyro_calibration(GYRO_CALIBRATION_START);
+	cmd_robot[cmd_robots_current_id]->gyro_calibration(GYRO_CALIBRATION_START);
 	return CMD_SUCCESS;
 }
 
 int cmd_gyro_calib_stop(const char* arg)
 {
 	(void) arg;
-	cmd_robot->gyro_calibration(GYRO_CALIBRATION_STOP);
+	cmd_robot[cmd_robots_current_id]->gyro_calibration(GYRO_CALIBRATION_STOP);
 	return CMD_SUCCESS;
 }
 
@@ -669,7 +732,7 @@ int cmd_gyro_set_theta(const char* arg)
 	{
 		return CMD_ERROR;
 	}
-	cmd_robot->gyro_set_position(theta);
+	cmd_robot[cmd_robots_current_id]->gyro_set_position(theta);
 	return CMD_SUCCESS;
 }
 
@@ -685,7 +748,7 @@ int cmd_gyro_set_calibration_values(const char* arg)
 	{
 		return CMD_ERROR;
 	}
-	cmd_robot->gyro_set_calibration_values(scale, bias, dead_zone);
+	cmd_robot[cmd_robots_current_id]->gyro_set_calibration_values(scale, bias, dead_zone);
 	return CMD_SUCCESS;
 }
 
@@ -700,7 +763,7 @@ int cmd_max_speed(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->set_max_speed(v_max_av, v_max_rot);
+	cmd_robot[cmd_robots_current_id]->set_max_speed(v_max_av, v_max_rot);
 
 	return CMD_SUCCESS;
 }
@@ -708,7 +771,7 @@ int cmd_max_speed(const char* arg)
 
 int cmd_ptask(const char*)
 {
-	cmd_robot->ptask();
+	cmd_robot[cmd_robots_current_id]->ptask();
 	return CMD_SUCCESS;
 }
 
@@ -722,7 +785,7 @@ int cmd_odo_wheel_radius(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->set_odo_wheel_radius(r1, r2);
+	cmd_robot[cmd_robots_current_id]->set_odo_wheel_radius(r1, r2);
 	return CMD_SUCCESS;
 }
 
@@ -736,7 +799,7 @@ int cmd_odo_voie(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->set_odo_voie(val1,val2);
+	cmd_robot[cmd_robots_current_id]->set_odo_voie(val1,val2);
 	return CMD_SUCCESS;
 }
 
@@ -750,7 +813,7 @@ int cmd_power_off(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->power_off(val != 0);
+	cmd_robot[cmd_robots_current_id]->power_off(val != 0);
 	return CMD_SUCCESS;
 }
 
@@ -765,7 +828,7 @@ int cmd_pwm_set(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->pwm_set(id, val);
+	cmd_robot[cmd_robots_current_id]->pwm_set(id, val);
 	return CMD_SUCCESS;
 }
 
@@ -780,31 +843,31 @@ int cmd_pump(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->pump(id, val);
+	cmd_robot[cmd_robots_current_id]->pump(id, val);
 	return CMD_SUCCESS;
 }
 
 int cmd_reboot(const char* )
 {
-	cmd_robot->reboot();
+	cmd_robot[cmd_robots_current_id]->reboot();
 	return CMD_SUCCESS;
 }
 
 int cmd_recalage(const char*)
 {
-	cmd_robot->recalage();
+	cmd_robot[cmd_robots_current_id]->recalage();
 	return CMD_SUCCESS;
 }
 
 int cmd_go(const char*)
 {
-	cmd_robot->go();
+	cmd_robot[cmd_robots_current_id]->go();
 	return CMD_SUCCESS;
 }
 
 int cmd_go_enable(const char*)
 {
-	cmd_robot->go_enable();
+	cmd_robot[cmd_robots_current_id]->go_enable();
 	return CMD_SUCCESS;
 }
 
@@ -819,7 +882,7 @@ int cmd_set_match_time(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->set_match_time(time);
+	cmd_robot[cmd_robots_current_id]->set_match_time(time);
 	return CMD_SUCCESS;
 }
 
@@ -834,7 +897,7 @@ int cmd_set_color(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->color((uint8_t) color);
+	cmd_robot[cmd_robots_current_id]->color((uint8_t) color);
 	return CMD_SUCCESS;
 }
 
@@ -850,7 +913,7 @@ int cmd_motion_set_speed(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_speed(u, v);
+	cmd_robot[cmd_robots_current_id]->motion_set_speed(u, v);
 	return CMD_SUCCESS;
 }
 
@@ -867,7 +930,7 @@ int cmd_motion_set_actuator_kinematics(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->motion_set_actuator_kinematics(cmd);
+	cmd_robot[cmd_robots_current_id]->motion_set_actuator_kinematics(cmd);
 	return CMD_SUCCESS;
 }
 
@@ -884,7 +947,7 @@ int cmd_arm_abz(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->arm_abz(a, b, z);
+	cmd_robot[cmd_robots_current_id]->arm_abz(a, b, z);
 	return CMD_SUCCESS;
 }
 
@@ -899,7 +962,7 @@ int cmd_arm_cmd(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->arm_cmd(cmdType);
+	cmd_robot[cmd_robots_current_id]->arm_cmd(cmdType);
 	return CMD_SUCCESS;
 }
 
@@ -917,7 +980,7 @@ int cmd_arm_xyz(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->arm_xyz(x, y, z, (arm_cmd_type)type);
+	cmd_robot[cmd_robots_current_id]->arm_xyz(x, y, z, (arm_cmd_type)type);
 	return CMD_SUCCESS;
 }
 
@@ -937,13 +1000,13 @@ int cmd_arm_ventouse(const char* arg)
 		return CMD_ERROR;
 	}
 
-	cmd_robot->arm_ventouse(x1, y1, x2, y2, z, tool_way);
+	cmd_robot[cmd_robots_current_id]->arm_ventouse(x1, y1, x2, y2, z, tool_way);
 	return CMD_SUCCESS;
 }
 
 int cmd_xbee_set_op_baudrate(const char* /*arg*/)
 {
-	cmd_robot->xbee_set_op_baudrate();
+	cmd_robot[cmd_robots_current_id]->xbee_set_op_baudrate();
 	return CMD_SUCCESS;
 }
 
@@ -957,6 +1020,6 @@ int cmd_xbee_set_manager_baudrate(const char* arg)
 	{
 		return CMD_ERROR;
 	}
-	cmd_robot->xbee_set_manager_baudrate(baudrate);
+	cmd_robot[cmd_robots_current_id]->xbee_set_manager_baudrate(baudrate);
 	return CMD_SUCCESS;
 }

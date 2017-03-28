@@ -121,7 +121,7 @@ static void plot_axes_lines(Graphique* graph);
 static void qemu_set_parameters();
 static void gtk_end();
 
-int glplot_main(bool cli, Robot* _robot, int RobotCount)
+int glplot_main(bool cli, Robot* _robot, int RobotCount, int selectRobotId)
 {
 	robot = _robot;
 	robotCount = RobotCount;
@@ -334,12 +334,17 @@ int glplot_main(bool cli, Robot* _robot, int RobotCount)
 
 	if( cli )
 	{
-		Qemu* qemu = NULL;
-		if( robot[ROBOT_SELECTED].m_qemu.isInitDone() )
+		cmd_init(gtk_end);
+		for(int i = 0; i < robotCount ; i++)
 		{
-			qemu = &robot[ROBOT_SELECTED].m_qemu;
+			Qemu* qemu = NULL;
+			if( robot[i].m_qemu.isInitDone() )
+			{
+				qemu = &robot[i].m_qemu;
+			}
+			cmd_add_robot(&robot[i].m_robotItf, qemu);
+			cmd_select_robot(selectRobotId);
 		}
-		cmd_init(&robot[ROBOT_SELECTED].m_robotItf, qemu, gtk_end);
 	}
 
 	qemu_set_parameters();
@@ -557,7 +562,7 @@ static gboolean config(GtkWidget* widget, GdkEventConfigure* ev, gpointer arg)
 static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg*/)
 {
 	Graphique* g = &graph[current_graph];
-	RobotInterface* robotItf = &robot[ROBOT_SELECTED].m_robotItf;
+	RobotInterface* robotItf = &robot[cmd_get_selected_robot()].m_robotItf;
 
 	// on efface le frame buffer
 	glClearStencil(0);
@@ -572,7 +577,7 @@ static gboolean render(GtkWidget* widget, GdkEventExpose* /*ev*/, gpointer /*arg
 		glEnable(GL_STENCIL_TEST);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 		glStencilFunc(GL_ALWAYS, 0, ~0);
-		tableScene.draw(g);
+		tableScene.draw(g,cmd_get_selected_robot());
 	}
 	else
 	{
@@ -818,7 +823,7 @@ static void plot_hokuyo_hist(Graphique* graph)
 
 static void plot_speed_dist(Graphique* graph)
 {
-	RobotInterface* robotItf = &robot[ROBOT_SELECTED].m_robotItf;
+	RobotInterface* robotItf = &robot[cmd_get_selected_robot()].m_robotItf;
 
 	static Vect2 pt[CONTROL_USB_DATA_MAX];
 	for(int i=1; i < robotItf->control_usb_data_count; i++)
