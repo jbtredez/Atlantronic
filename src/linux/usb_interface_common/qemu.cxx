@@ -85,7 +85,7 @@ void Qemu::startQemu()
 		}
 
 		execv(arg[0], arg);
-		perror("execv");
+		fprintf(stderr, "execv(%s) : %s", arg[0], strerror(errno));
 		exit(-1);
 	}
 
