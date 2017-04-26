@@ -23,7 +23,7 @@ class Path
 		void clear();
 		bool add(PathPoint* pt, uint32_t size);
 
-		void planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam);
+		void planify(VectPlan mes, KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam);
 		VectPlan getNextCommand(VectPlan mes, float dt, KinematicsParameters vParam, KinematicsParameters wParam);
 		void display();
 		VectPlan getLastPoint();
