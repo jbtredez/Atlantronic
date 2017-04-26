@@ -57,7 +57,7 @@
 #define GATE_HOKUYO_2_THETA                         0.00
 
 // position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
-#define GATE_INIT_POS_X                          1450.00
+#define GATE_INIT_POS_X                          1300.00
 #define GATE_INIT_POS_Y                           820.00
 #define GATE_INIT_POS_THETA                         M_PI
 

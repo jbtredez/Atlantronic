@@ -13,6 +13,8 @@ class Bot
 	public:
 		// Dimensions
 		static float halfLength;
+		static float frontLength;
+		static float backLength;
 		static float halfWidth;
 		static int rearOmronRange;
 

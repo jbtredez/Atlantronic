@@ -44,6 +44,7 @@ class Action
 		/// retrun      : none
 		////////////////////////////////////////////////
 		virtual void Initialise(int stratcolor);
+
 		////////////////////////////////////////////////
 		/// function    : do_action()
 		/// descrition  : execute the action

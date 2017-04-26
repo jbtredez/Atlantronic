@@ -7,6 +7,7 @@
 
 #include "kernel/log.h"
 
+// 2016
 #define ACTION_MOVE				1
 #define ACTION_HUT				2
 #define ACTION_FISHES			3
@@ -16,6 +17,8 @@
 #define ACTION_DROP_CASTLE		7
 #define	ACTION_ENDLIST			8
 
+// 2017
+#define ACTION_ESCAPE_BASE		9
 
 class RobotState 
 {

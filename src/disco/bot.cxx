@@ -40,6 +40,8 @@ void Bot::cmd_print_odo_voie(void* arg, void*/* data*/)
 }
 
 float Bot::halfLength;
+float Bot::frontLength;
+float Bot::backLength;
 float Bot::halfWidth;
 int Bot::rearOmronRange;
 int Bot::leftWheel;

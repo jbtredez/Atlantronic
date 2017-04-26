@@ -33,6 +33,7 @@ static int gate_robot_module_init()
 {
 	PramBot.init();
 	Bot::halfLength = GATE_HALF_LENGTH;
+	Bot::frontLength = GATE_HALF_LENGTH;
 	Bot::halfWidth = GATE_HALF_WIDTH;
 	Bot::rearOmronRange = GATE_REAR_OMRON_RANGE;
 	Bot::leftWheel = GATE_LEFT_WHEEL;

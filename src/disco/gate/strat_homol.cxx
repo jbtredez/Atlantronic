@@ -12,9 +12,7 @@
 #include "middleware/stratege_machine/stratege.h"
 
 
-#include "disco/action/Move.h"
-#include "disco/action/fellowCastle.h"
-#include "disco/action/hut.h"
+#include "disco/gate/action/escapeStart.h"
 #include "strat/strat_simple.h"
 
 
@@ -54,19 +52,15 @@ static void strat_task(void* arg)
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint;
 
-	firstcheckpoint.x = -1315;
+	firstcheckpoint.x = 0;
 	firstcheckpoint.y = 0;
 	firstcheckpoint.theta = 0;
 
-	//Chateau ami
-	FellowCastle fellowCastle(firstcheckpoint, "Fellow Castle", &robothomologation);
-
-	// Cabanes
-		Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
+	// Sortir de la zone en passant la bascule
+	EscapeStart escapeBase(firstcheckpoint, "Escape from Base", &robothomologation);
 
 	StratSimple strat;
-	//strat.add_action(&fellowCastle);
-	strat.add_action(&hut1);
+	strat.add_action(&escapeBase);
 
 	match_wait_go();
 	strat_color = match_get_color();
