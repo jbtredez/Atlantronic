@@ -61,7 +61,7 @@ VectPlan Path::getLastPoint()
 	return m_pt[(m_tail + m_count - 1)%PATH_SIZE].pos;
 }
 
-void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam)
+void Path::planify(VectPlan mes, KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTmp, KinematicsParameters vParam, KinematicsParameters wParam)
 {
 	if( m_count < 1)
 	{
@@ -157,6 +157,8 @@ void Path::planify(KinematicsModel* kinematicsModel, Kinematics* kinematicsCmdTm
 		vmax *= k;
 		wmax *= k;
 	}
+
+	project(mes, m_cpCmdId, 50, &m_cpCmd, &m_cpCmdId);
 }
 
 //! mise a jour de la vitesse max pour l'ensemble des points du path
