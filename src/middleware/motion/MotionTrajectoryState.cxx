@@ -73,11 +73,13 @@ void MotionTrajectoryState::run(void* data)
 		float opponentMinDistance = m->m_detection->computeOpponentDistance(Vect2(m->m_posMes.x, m->m_posMes.y));
 		if( opponentMinDistance < 1.5*Bot::halfLength )
 		{
+			log_format(LOG_INFO, "Oponent 1");
 			//reduction de la vitesse max de rotation si l'adversaire est tres proche
 			wParam.vMax = 1;
 		}
 		else if( opponentMinDistance < 2*Bot::halfLength )
 		{
+			log_format(LOG_INFO, "Oponent 2");
 			// reduction de la vitesse max de rotation si l'adversaire est proche
 			wParam.vMax /= 1.5;
 		}
@@ -119,19 +121,23 @@ void MotionTrajectoryState::run(void* data)
 		{
 			dir.theta += M_PI;
 		}
-		float tableBorderDistance = m->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, dir, NULL, NULL) + -Bot::halfLength;
+
+		float tableBorderDistance = m->m_detection->computeFrontObject(DETECTION_STATIC_OBJ, dir, NULL, NULL);// + -Bot::frontLength;
 		if( tableBorderDistance < 10 )
 		{
+			log_format(LOG_INFO, "Border");
 			tableBorderDistance = 10;
 		}
 		float maxDistance = tableBorderDistance;
 		if( opponentMinDistance < maxDistance)
 		{
+			log_format(LOG_INFO, "oppenent < maxDistance");
 			maxDistance = opponentMinDistance;
 		}
 
 		if( maxDistance < 0 )
 		{
+			log_format(LOG_INFO, "maxDistance = 0");
 			maxDistance = 0;
 		}
 
