@@ -18,7 +18,6 @@
 
 #define STRAT_STACK_SIZE       500
 
-//Action : recherche la balle, les pieds puis basse le clapet et fini par déposer le spotlight dans la zone principale
 
 static void strat_task(void* arg);
 static void strat_cmd(void* arg, void* data);

@@ -34,6 +34,7 @@ obj-disco-homologation_star += $(lib-baz)
 obj-disco-homologation_star += $(core_robot)
 obj-disco-homologation_star += $(star_robot)
 obj-disco-homologation_star += disco/strat/strat_simple.o
+obj-disco-homologation_star += disco/strat/strat_priority.o
 obj-disco-homologation_star += disco/star/strat_homol.o
 bin-disco += homologation_star
 
