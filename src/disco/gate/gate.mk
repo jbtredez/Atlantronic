@@ -6,7 +6,4 @@ gate_robot += kernel/driver/encoder/EncoderSimulFromKinematicsModel.o
 gate_robot += disco/gate/recalage.o
 
 gate_robot += disco/gate/action/escapeStart.o
-
-gate_robot += disco/action/fellowCastle.o
-gate_robot += disco/action/hut.o
-gate_robot += disco/action/Move.o
+gate_robot += disco/gate/action/rocket_dismantler.o

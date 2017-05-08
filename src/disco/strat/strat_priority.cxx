@@ -17,9 +17,9 @@ void StratPriority::Initialise(int stratcolor)
 	log_format(LOG_INFO, "couleur %d", (int)stratcolor );
 	for(int i = 0 ; i < m_size_actionlist ; i++)
 	{
-		if( m_list_action[i] != 0 )
+		if( m_list_action_prioritised[i].pAction != NULL )
 		{
-			m_list_action[i]->Initialise(stratcolor);
+			m_list_action_prioritised[i].pAction->Initialise(stratcolor);
 		}
 	}
 }
@@ -40,9 +40,9 @@ int StratPriority::add_action(Action * p_action, uint8_t priority)
 	return 0;
 }
 
-PrioritisedAction StratPriority::getNextAction()
+PrioritisedAction *StratPriority::getNextAction()
 {
-	PrioritisedAction nextAction = {NULL, 0, FAILED};
+	PrioritisedAction *nextAction = NULL;
 	uint8_t currentPriority = 0;
 	int count = 0;
 
@@ -55,7 +55,7 @@ PrioritisedAction StratPriority::getNextAction()
 			{
 				if (m_list_action_prioritised[count].priority > currentPriority)
 				{
-					nextAction = m_list_action_prioritised[count];
+					nextAction = &m_list_action_prioritised[count];
 					currentPriority = m_list_action_prioritised[count].priority;
 				}
 			}
@@ -71,7 +71,7 @@ int StratPriority::run()
 {
 	int result =0;
 	bool allDone = false;
-	PrioritisedAction nextAction;
+	PrioritisedAction *nextAction;
 	int i = 0;
 	if(m_size_actionlist == 0)
 	{
@@ -83,28 +83,28 @@ int StratPriority::run()
 
 	do {
 		 nextAction = getNextAction();
-		 if (nextAction.pAction != NULL)
+		 if (nextAction != NULL)
 		 {
-			 nextAction.state = IN_PROGRESS;
-			 log_format(LOG_INFO , "Action %d (%s), try %d", ++i, nextAction.pAction->get_name(), nextAction.pAction->get_try());
+			nextAction->state = IN_PROGRESS;
+			log_format(LOG_INFO , "Action %d (%s), try %d", ++i, nextAction->pAction->get_name(), nextAction->pAction->get_try());
 
-			 result = nextAction.pAction->do_action();
+			result = nextAction->pAction->do_action();
 
-			 if(result == -1)
+			if(result == -1)
 			{
-				nextAction.pAction->m_retry--;
+				nextAction->pAction->m_retry--;
 				log_format(LOG_INFO,"Action %s failed, decrementing m_retry to %d", m_list_action[i]->m_name, m_list_action[i]->m_retry);
-				nextAction.state = FAILED;
-			}
-			else
+				nextAction->state = FAILED;
+			} else
 			{
-				nextAction.pAction->m_retry = -1;
-				nextAction.state = DONE;
+				nextAction->pAction->m_retry = -1;
+				nextAction->state = DONE;
 			}
 
 		 } else
 		 {
 			 allDone = true;
+			 log_format(LOG_INFO , "No Remaining Action Found");
 		 }
 		 vTaskDelay(1000);
 	}while(! allDone);

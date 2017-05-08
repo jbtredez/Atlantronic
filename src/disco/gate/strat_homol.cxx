@@ -13,7 +13,8 @@
 
 
 #include "disco/gate/action/escapeStart.h"
-#include "strat/strat_simple.h"
+#include "disco/gate/action/rocket_dismantler.h"
+#include "strat/strat_priority.h"
 
 
 #define STRAT_STACK_SIZE       500
@@ -57,9 +58,19 @@ static void strat_task(void* arg)
 
 	// Sortir de la zone en passant la bascule
 	EscapeStart escapeBase(firstcheckpoint, "Escape from Base", &robothomologation);
+	// Recalage
+	// Premiere action
+	firstcheckpoint.x = 150;
+	firstcheckpoint.y = 600;
+	firstcheckpoint.theta = M_PI_2;
+	RocketDismantler topRocket(firstcheckpoint, 0, "Get Top rocket", &robothomologation);
+	firstcheckpoint.theta = 0;
+	RocketDismantler sideRocket(firstcheckpoint, 8, "Get Side rocket", &robothomologation);
 
-	StratSimple strat;
-	strat.add_action(&escapeBase);
+	StratPriority strat;
+	strat.add_action(&escapeBase, 255);
+	strat.add_action(&topRocket, 254);
+	strat.add_action(&sideRocket, 254);
 
 	match_wait_go();
 	strat_color = match_get_color();

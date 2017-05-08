@@ -40,7 +40,7 @@ class StratPriority:
 		int run();
 
 	private:
-		PrioritisedAction getNextAction();
+		PrioritisedAction *getNextAction();
 };
 
 #endif /* SRC_DISCO_STRAT_STRAT_PRIORITY_H_ */
