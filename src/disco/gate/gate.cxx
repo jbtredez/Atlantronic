@@ -8,7 +8,7 @@
 #include "kernel/control.h"
 
 KinematicsParameters paramDriving = {1600, 1500, 1500};
-KinematicsParameters linearParam = {500, 500, 500};
+KinematicsParameters linearParam = {500, 800, 800};
 KinematicsParameters angularParam = {2, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
@@ -28,6 +28,8 @@ KinematicsModelDiff motorKinematicsModelDiff(GATE_VOIE_MOT, GATE_VOIE_MOT, param
 PwmMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderSimulFromKinematicsModel motionMotorEncoder[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
+
+static void cmd_set_motors_pid(void* arg, void* data);
 
 static int gate_robot_module_init()
 {
@@ -94,20 +96,29 @@ static int gate_robot_module_init()
 	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;
 	motionMotors[MOTION_MOTOR_LEFT].inputGain = 60 * GATE_MOTOR_DRIVING1_RED / (float)(2 * M_PI * GATE_DRIVING1_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_LEFT].encoder = &motionMotorEncoder[MOTION_MOTOR_LEFT];
-	motionMotors[MOTION_MOTOR_LEFT].pid.init(5*0, 0.9*0, 0, 1000);
-	//motionMotors[MOTION_MOTOR_LEFT].pid.init(0, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(1, 0.05, 0, 1000);
 
 	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
 	motionMotors[MOTION_MOTOR_RIGHT].pwmId = PWM_2;
 	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
-	motionMotors[MOTION_MOTOR_RIGHT].pid.init(5*0, 0.9*0, 0, 1000);
-	//motionMotors[MOTION_MOTOR_RIGHT].pid.init(0, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(1, 0.05, 0, 1000);
 
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
+
+	usb_add_cmd(USB_CMD_SET_MOTORS_PID, &cmd_set_motors_pid, NULL);
 
 	return 0;
 }
 
 module_init(gate_robot_module_init, INIT_MAIN_ROBOT);
+
+void cmd_set_motors_pid(void* /*arg*/, void* data)
+{
+	GateCmdSetMotorsPidArg* val = (GateCmdSetMotorsPidArg*) data;
+	log_format(LOG_INFO, "left  : kp %d ki %d kd %d", (int)(val->kp1), (int)(val->ki1), (int)(val->kd1));
+	log_format(LOG_INFO, "right : kp %d ki %d kd %d", (int)(val->kp2), (int)(val->ki2), (int)(val->kd2));
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(val->kp1, val->ki1, val->kd1, 1000);
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(val->kp2, val->ki2, val->kd2, 1000);
+}

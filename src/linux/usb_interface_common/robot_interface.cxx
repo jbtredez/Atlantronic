@@ -1039,6 +1039,20 @@ int RobotInterface::motion_set_param(float kp_x, float ki_x, float kd_x, float k
 	return usb_write(USB_CMD_MOTION_PARAM, &cmd_arg, sizeof(cmd_arg));
 }
 
+int RobotInterface::set_motors_pid(float kp1, float ki1, float kd1, float kp2, float ki2, float kd2)
+{
+	GateCmdSetMotorsPidArg cmd_arg;
+
+	cmd_arg.kp1 = kp1;
+	cmd_arg.ki1 = ki1;
+	cmd_arg.kd1 = kd1;
+	cmd_arg.kp2 = kp2;
+	cmd_arg.ki2 = ki2;
+	cmd_arg.kd2 = kd2;
+
+	return usb_write(USB_CMD_SET_MOTORS_PID, &cmd_arg, sizeof(cmd_arg));
+}
+
 int RobotInterface::motion_set_speed(VectPlan u, float v)
 {
 	struct motion_cmd_set_speed_arg cmd_arg;

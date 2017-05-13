@@ -70,6 +70,7 @@ int cmd_rotate(const char* arg);
 int cmd_rotate_to(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
+int cmd_set_motors_pid(const char* arg);
 int cmd_straight(const char* arg);
 int cmd_wing_set_position(const char* arg);
 int cmd_xbee_set_op_baudrate(const char* arg);
@@ -132,6 +133,7 @@ COMMAND usb_commands[] = {
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "select_robot", cmd_select_robot, "select_robot id"},
 	{ "set_color", cmd_set_color, "set color"},
+	{ "set_motors_pid", cmd_set_motors_pid, "set motors pid kp ki kd"},
 	{ "straight", cmd_straight, "straight dist" },
 	{ "xbee_set_op_baudrate", cmd_xbee_set_op_baudrate, "xbee_set_op_baudrate"},
 	{ "xbee_set_manager_baudrate", cmd_xbee_set_manager_baudrate, "xbee_set_manager_baudrate baudrate"},
@@ -898,6 +900,24 @@ int cmd_set_color(const char* arg)
 	}
 
 	cmd_robot[cmd_robots_current_id]->color((uint8_t) color);
+	return CMD_SUCCESS;
+}
+
+int cmd_set_motors_pid(const char* arg)
+{
+	float kp;
+	float ki;
+	float kd;
+
+	int count = sscanf(arg, "%f %f %f", &kp, &ki, &kd);
+
+	if(count != 3)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot[cmd_robots_current_id]->set_motors_pid(kp, ki, kd, kp, ki, kd);
+
 	return CMD_SUCCESS;
 }
 

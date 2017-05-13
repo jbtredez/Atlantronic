@@ -73,6 +73,7 @@ enum usb_cmd
 	USB_CMD_POWER,
 	USB_CMD_ELEVATOR,
 	USB_CMD_FINGER,
+	USB_CMD_SET_MOTORS_PID,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 
