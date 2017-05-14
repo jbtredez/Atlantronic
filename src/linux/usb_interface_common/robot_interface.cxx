@@ -1174,6 +1174,11 @@ int RobotInterface::set_position(VectPlan pos)
 	return usb_write(USB_CMD_LOCATION_SET_POSITION, &pos, sizeof(pos));
 }
 
+int RobotInterface::rotate_cylinder_to(float val)
+{
+	return usb_write(USB_CMD_CYLINDER, &val, sizeof(val));
+}
+
 int RobotInterface::gyro_calibration(enum GyroCalibrationCmd cmd)
 {
 	int32_t cmd_arg = cmd;

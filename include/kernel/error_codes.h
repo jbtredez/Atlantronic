@@ -69,5 +69,6 @@ enum fault
 #define ERR_INIT_ESP8266        0x220
 #define ERR_INIT_TEST           0x221
 #define ERR_INIT_RPLIDAR        0x222
+#define ERR_INIT_STEPPER_DRIVER 0x223
 
 #endif

@@ -195,6 +195,7 @@ portBASE_TYPE match_set_strat_isr(void)
 {
 	if(match_go == 0 )
 	{
+#if 0
 		///On tourne de led Rouge-> Orange1 -> Orange 2-> Vert-> Blue
 		match_strat ++;
 		match_strat = match_strat%5;
@@ -225,7 +226,7 @@ portBASE_TYPE match_set_strat_isr(void)
 				break;
 
 		}
-
+#endif
 	}
 	return 0;
 }

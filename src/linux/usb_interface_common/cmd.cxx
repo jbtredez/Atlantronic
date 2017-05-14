@@ -68,6 +68,7 @@ int cmd_recalage(const char* arg);
 int cmd_select_robot(const char* arg);
 int cmd_rotate(const char* arg);
 int cmd_rotate_to(const char* arg);
+int cmd_rotate_cylinder_to(const char* arg);
 int cmd_set_color(const char* arg);
 int cmd_set_match_time(const char* arg);
 int cmd_set_motors_pid(const char* arg);
@@ -129,6 +130,7 @@ COMMAND usb_commands[] = {
 	{ "quit", cmd_quit, "Quit" },
 	{ "rotate", cmd_rotate, "rotate angle" },
 	{ "rotate_to", cmd_rotate_to, "rotate_to angle" },
+	{ "rotate_cylinder_to", cmd_rotate_cylinder_to, "rotate_cylinder_to angle" },
 	{ "reboot", cmd_reboot, "reboot" },
 	{ "recalage", cmd_recalage, "recalage"},
 	{ "select_robot", cmd_select_robot, "select_robot id"},
@@ -617,6 +619,21 @@ int cmd_rotate_to(const char* arg)
 	}
 
 	cmd_robot[cmd_robots_current_id]->rotate_to(alpha);
+
+	return CMD_SUCCESS;
+}
+
+int cmd_rotate_cylinder_to(const char* arg)
+{
+	float alpha;
+	int count = sscanf(arg, "%f", &alpha);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot[cmd_robots_current_id]->rotate_cylinder_to(alpha);
 
 	return CMD_SUCCESS;
 }

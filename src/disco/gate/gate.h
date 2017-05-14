@@ -4,6 +4,7 @@
 #include "disco/bot.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/driver/DynamixelManager.h"
+#include "kernel/driver/StepperDriver.h"
 #include "kernel/PwmMotor.h"
 
 // Dimensions
@@ -47,6 +48,8 @@
 #define GATE_ODO2_WAY                                 1
 #define GATE_ODO_ENCODER_RESOLUTION                4096
 
+#define GATE_STEPPER_MOTOR_STEP_BY_TURN             200
+
 // Parametres lasers
 #define GATE_HOKUYO_1_X                             0.00
 #define GATE_HOKUYO_1_Y                             0.00
@@ -67,6 +70,7 @@ extern Motion motion;
 extern Trajectory trajectory;
 extern DynamixelManager ax12;
 extern Dynamixel parasol;
+extern StepperDriver cylinder;
 #endif
 
 struct GateCmdSetMotorsPidArg

@@ -28,8 +28,10 @@ KinematicsModelDiff motorKinematicsModelDiff(GATE_VOIE_MOT, GATE_VOIE_MOT, param
 PwmMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderSimulFromKinematicsModel motionMotorEncoder[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
+StepperDriver cylinder;
 
 static void cmd_set_motors_pid(void* arg, void* data);
+static void cmd_rotate_cylinder_to(void* arg, void* data);
 
 static int gate_robot_module_init()
 {
@@ -68,6 +70,8 @@ static int gate_robot_module_init()
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
 
+	cylinder.init(IO_CYLINDER_STEP, IO_CYLINDER_DIR, GATE_STEPPER_MOTOR_STEP_BY_TURN / (2*M_PI), 4*M_PI, 8*M_PI, 8*M_PI);
+
 	parasol.init(&ax12, AX12_GATE_PARASOL);
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
@@ -96,18 +100,19 @@ static int gate_robot_module_init()
 	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;
 	motionMotors[MOTION_MOTOR_LEFT].inputGain = 60 * GATE_MOTOR_DRIVING1_RED / (float)(2 * M_PI * GATE_DRIVING1_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_LEFT].encoder = &motionMotorEncoder[MOTION_MOTOR_LEFT];
-	motionMotors[MOTION_MOTOR_LEFT].pid.init(1, 0.05, 0, 1000);
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(1, 0, 0, 1000);
 
 	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
 	motionMotors[MOTION_MOTOR_RIGHT].pwmId = PWM_2;
 	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
-	motionMotors[MOTION_MOTOR_RIGHT].pid.init(1, 0.05, 0, 1000);
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(1, 0, 0, 1000);
 
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
 
 	usb_add_cmd(USB_CMD_SET_MOTORS_PID, &cmd_set_motors_pid, NULL);
+	usb_add_cmd(USB_CMD_CYLINDER, &cmd_rotate_cylinder_to, NULL);
 
 	return 0;
 }
@@ -121,4 +126,10 @@ void cmd_set_motors_pid(void* /*arg*/, void* data)
 	log_format(LOG_INFO, "right : kp %d ki %d kd %d", (int)(val->kp2), (int)(val->ki2), (int)(val->kd2));
 	motionMotors[MOTION_MOTOR_LEFT].pid.init(val->kp1, val->ki1, val->kd1, 1000);
 	motionMotors[MOTION_MOTOR_RIGHT].pid.init(val->kp2, val->ki2, val->kd2, 1000);
+}
+
+void cmd_rotate_cylinder_to(void* /*arg*/, void* data)
+{
+	float val = *((float*) data);
+	cylinder.setPosition(val);
 }

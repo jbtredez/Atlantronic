@@ -45,7 +45,7 @@
 #define INIT_MAIN_ROBOT               "40"
 #define INIT_CONTROL                  "41"
 #define INIT_WING                     "42"
-//#define INIT_ARM                      "43"
+#define INIT_STEPPER_DRIVER           "43"
 
 #define INIT_PUMP                     "45"
 #define INIT_ELEVATOR                 "46"

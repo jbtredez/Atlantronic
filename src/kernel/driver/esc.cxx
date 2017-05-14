@@ -47,7 +47,7 @@ void isr_tim7(void)
 	// signal bas sur le reste de la periode
 	if( TIM7->SR | TIM_SR_UIF )
  	{
-		esc_val = gpio_get(GPIO_1);
+//		esc_val = gpio_get(GPIO_1); // TODO test a virer et mettre commande usb
 		if( esc_val < 0)
 		{
 			esc_val = 0;
