@@ -1,53 +1,47 @@
 /*
- * rocket_dismantler.cxx
+ * drop_module.cxx
  *
- *  Created on: May 8, 2017
+ *  Created on: May 15, 2017
  *      Author: herzaeone
  */
 
-#include "rocket_dismantler.h"
+#include "drop_module.h"
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
 
-RocketDismantler::RocketDismantler(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
+DropModule::DropModule(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name)
 {
-	m_checkpoint = checkpoint;
+
+
 }
 
-void RocketDismantler::Initialise(int stratColor)
+void DropModule::Initialise(int stratColor)
 {
 	Action::Initialise(stratColor);
 	m_stratColor = stratColor;
 }
 
-int RocketDismantler::do_action()
+int DropModule::do_action()
 {
 	uint32_t actionResult = 0;
 	Action::do_action();
-	vTaskDelay(100);
 
-	// Go to the wall
 	do
 	{
-		if(m_stratColor == COLOR_YELLOW)
-		{
-			m_checkpoint++;
-		}
-
-		// First get to position via graph
-
 		vTaskDelay(100);
-		trajectory.goToGraphNode(m_checkpoint,0,WAY_FORWARD, AVOIDANCE_STOP);
+		trajectory.goToGraphNode(0,0,WAY_FORWARD, AVOIDANCE_STOP);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
 		{
 			break;
 		}
 
+
 		vTaskDelay(100);
+		m_firstcheckpoint.theta = M_PI_4;
 		m_firstcheckpoint = m_firstcheckpoint.symetric(m_stratColor);
 		trajectory.rotateTo(m_firstcheckpoint.theta);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
@@ -55,7 +49,6 @@ int RocketDismantler::do_action()
 			break;
 		}
 
-		// StraighToWall ne passe pas avec linux donc:
 		slowSpeed();
 		vTaskDelay(100);
 		trajectory.straight(200);
@@ -64,19 +57,8 @@ int RocketDismantler::do_action()
 			break;
 		}
 
-		// back of 15 mm
-		vTaskDelay(100);
-		trajectory.straight(-15);
-		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
-		{
-			break;
-		}
-
-
-		// Activate actuators
 	} while(false);
 
-	// extract from the wall
 	vTaskDelay(100);
 	do
 	{
@@ -86,17 +68,15 @@ int RocketDismantler::do_action()
 	resetSpeed();
 	vTaskDelay(100);
 
-
-	return actionResult;
 }
 
-void RocketDismantler::Exit()
+void DropModule::Exit()
 {
 
 }
 
 
-void RocketDismantler::slowSpeed(void)
+void DropModule::slowSpeed(void)
 {
 	trajectory.getKinematicsParam(&m_linParamOrig, &m_angParamOrig);
 
@@ -111,7 +91,7 @@ void RocketDismantler::slowSpeed(void)
 	vTaskDelay(100);
 }
 
-void RocketDismantler::resetSpeed(void)
+void DropModule::resetSpeed(void)
 {
 	trajectory.setKinematicsParam(m_linParamOrig, m_angParamOrig);
 	vTaskDelay(100);

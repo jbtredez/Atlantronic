@@ -14,6 +14,7 @@
 
 #include "disco/gate/action/escapeStart.h"
 #include "disco/gate/action/rocket_dismantler.h"
+#include "disco/gate/action/drop_module.h"
 #include "strat/strat_priority.h"
 
 
@@ -59,18 +60,24 @@ static void strat_task(void* arg)
 	// Sortir de la zone en passant la bascule
 	EscapeStart escapeBase(firstcheckpoint, "Escape from Base", &robothomologation);
 	// Recalage
-	// Premiere action
+	// Premiere action: Vider la premiere fusée
 	firstcheckpoint.x = 150;
 	firstcheckpoint.y = 600;
 	firstcheckpoint.theta = M_PI_2;
 	RocketDismantler topRocket(firstcheckpoint, 0, "Get Top rocket", &robothomologation);
+
+	// Déposer les cylindres à la base
+	DropModule dropModuleBase(firstcheckpoint, 0, "Drop the modules to base", &robothomologation);
+
+	// Aller à la deuxieme fusée
 	firstcheckpoint.theta = 0;
 	RocketDismantler sideRocket(firstcheckpoint, 8, "Get Side rocket", &robothomologation);
 
 	StratPriority strat;
 	strat.add_action(&escapeBase, 255);
 	strat.add_action(&topRocket, 254);
-	strat.add_action(&sideRocket, 254);
+	strat.add_action(&dropModuleBase, 254);
+	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();
 	strat_color = match_get_color();

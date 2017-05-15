@@ -8,3 +8,4 @@ gate_robot += disco/gate/recalage.o
 
 gate_robot += disco/gate/action/escapeStart.o
 gate_robot += disco/gate/action/rocket_dismantler.o
+gate_robot += disco/gate/action/drop_module.o

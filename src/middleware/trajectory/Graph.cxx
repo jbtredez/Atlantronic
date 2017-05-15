@@ -16,8 +16,8 @@ const struct GraphNode Graph::m_graphNode[GRAPH_NUM_NODE] =
 		{Vect2(   835.00f,   150.00f), 18,  4},
 		{Vect2( -1190.00f,    55.00f), 22,  4},
 		{Vect2(  1190.00f,    55.00f), 26,  4},
-		{Vect2( -1195.00f,  -360.00f), 30,  3},
-		{Vect2(  1195.00f,  -360.00f), 33,  3},
+		{Vect2( -1150.00f,  -300.00f), 30,  3},
+		{Vect2(  1150.00f,  -300.00f), 33,  3},
 		{Vect2(  -948.00f,  -480.00f), 36,  3},
 		{Vect2(   948.00f,  -480.00f), 39,  3},
 		{Vect2(  -830.00f,  -135.00f), 42,  5},
@@ -28,6 +28,9 @@ const struct GraphNode Graph::m_graphNode[GRAPH_NUM_NODE] =
 		{Vect2(   220.00f,   310.00f), 68,  6},
 		{Vect2(     0.00f,    50.00f), 255,  0},
 		{Vect2(     0.00f,   730.00f), 74,  4},
+
+
+
 };
 
 //!< liens du graph.
