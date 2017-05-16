@@ -51,6 +51,7 @@ typedef enum io
 //#define IO_LED_ORANGE_2    GPIO_5
 //#define IO_LED_VERTE       GPIO_6
 //#define IO_LED_BLEU        GPIO_7
+#define IO_ESC             GPIO_7
 //#define IO_OMRON_ELEVATOR  GPIO_8
 //#define IO_ELEVATOR_SWITCH GPIO_9
 #define IO_CYLINDER_DIR    GPIO_10

@@ -12,6 +12,8 @@
 static float esc_val = 0;
 static int esc_remain_count = ESP_PERIOD;
 
+static void cmd_esc(void* arg, void* data);
+
 int esc_module_init()
 {
 	//////////// TESTS esc sur timer
@@ -31,10 +33,18 @@ int esc_module_init()
 	// activation
 	TIM7->CR1 |= TIM_CR1_CEN;
 
+	usb_add_cmd(USB_CMD_ESC, &cmd_esc, NULL);
+
 	return 0;
 }
 
 module_init(esc_module_init, INIT_GYRO);
+
+void cmd_esc(void* /*arg*/, void* data)
+{
+	float val = *((float*) data);
+	esc_val = val;
+}
 
 extern "C"
 {
@@ -57,14 +67,14 @@ void isr_tim7(void)
 			esc_val = 1;
 		}
 		// TODO limitation a 45% pour le moment
-		if( esc_val > 0.45 )
+		if( esc_val > 0.75 )
 		{
-			esc_val = 0.45;
+			esc_val = 0.75;
 		}
 
 		if( ! esc_remain_count )
 		{
-			gpio_set(GPIO_11);
+			gpio_set(IO_ESC);
 
 			int val = 700 + 1000 * esc_val; // entre 0.7 et 1.7 ms
 			TIM7->ARR = val;
@@ -72,7 +82,7 @@ void isr_tim7(void)
 		}
 		else
 		{
-			gpio_reset(GPIO_11);
+			gpio_reset(IO_ESC);
 			TIM7->ARR = esc_remain_count;
 			esc_remain_count = 0;
 		}
