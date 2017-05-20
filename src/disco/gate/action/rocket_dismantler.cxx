@@ -29,6 +29,7 @@ int RocketDismantler::do_action()
 	uint32_t actionResult = 0;
 	Action::do_action();
 	vTaskDelay(100);
+	log_format(LOG_INFO, "AAANNNGGGLLLEEE %f", m_firstcheckpoint.theta);
 
 	// Go to the wall
 	do

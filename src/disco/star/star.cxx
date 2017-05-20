@@ -75,16 +75,6 @@ static int star_robot_module_init()
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
 
-	leftFishWing.init(&ax12, AX12_STAR_LEFT_FISH_WING);
-	leftFishRemover.init(&ax12, AX12_STAR_LEFT_FISH_REMOVER);
-	rightFishWing.init(&ax12, AX12_STAR_RIGHT_FISH_WING);
-	rightFishRemover.init(&ax12, AX12_STAR_RIGHT_FISH_REMOVER);
-	leftDoor.init(&ax12, AX12_STAR_LEFT_DOOR);
-	rightDoor.init(&ax12, AX12_STAR_RIGHT_DOOR);
-	towerPliers.init(&ax12, AX12_STAR_TOWER_PLIERS);
-	towerPliersTidier.init(&ax12, AX12_STAR_TOWER_PLIERS_TIDIER);
-	parasol.init(&ax12, AX12_STAR_PARASOL);
-
 	Servos::setTorque(true);
 
 

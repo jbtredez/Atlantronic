@@ -12,9 +12,12 @@ KinematicsParameters linearParam = {500, 800, 800};
 KinematicsParameters angularParam = {2, 5, 5};
 
 Hokuyo hokuyo[HOKUYO_MAX];
-Dynamixel parasol;
-Dynamixel armPump;
-Dynamixel pincerPump;
+Dynamixel missileLeft;
+Dynamixel missileRight;
+Dynamixel pusher;
+Dynamixel clampLeft;
+Dynamixel clampRight;
+
 DynamixelManager ax12;
 //DynamixelManager rx24;
 
@@ -72,7 +75,27 @@ static int gate_robot_module_init()
 
 	cylinder.init(IO_CYLINDER_STEP, IO_CYLINDER_DIR, GATE_STEPPER_MOTOR_STEP_BY_TURN / (2*M_PI), 4*M_PI, 8*M_PI, 8*M_PI);
 
-	parasol.init(&ax12, AX12_GATE_PARASOL);
+	// Init AX12
+	missileLeft.init(&ax12, AX12_GATE_MISSILE_LEFT);
+	missileRight.init(&ax12, AX12_GATE_MISSILE_LEFT);
+	pusher.init(&ax12, AX12_GATE_PUSHER);
+	clampLeft.init(&ax12, AX12_GATE_CLAMP_LEFT);
+	clampRight.init(&ax12, AX12_GATE_CLAMP_RIGHT);
+
+	// Set torque value
+	missileLeft.setTorqueLimit(0.85);
+	missileRight.setTorqueLimit(0.85);
+	pusher.setTorqueLimit(0.85);
+
+	// Set AX12 limit angles
+	missileLeft.setGoalLimits( -M_PI_2, 0 );
+	missileRight.setGoalLimits( 0, M_PI_2 );
+	pusher.setGoalLimits( -M_PI_2, 0 );
+
+
+	pusher.setTorqueEnable(1);
+
+
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
 	hokuyo[0].setPosition(VectPlan( GATE_HOKUYO_1_X, GATE_HOKUYO_1_Y, GATE_HOKUYO_1_THETA), 1);

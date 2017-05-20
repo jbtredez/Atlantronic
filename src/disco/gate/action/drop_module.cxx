@@ -33,15 +33,14 @@ int DropModule::do_action()
 	do
 	{
 		vTaskDelay(100);
-		trajectory.goToGraphNode(0,0,WAY_FORWARD, AVOIDANCE_STOP);
+		trajectory.goToGraphNode((m_stratColor == COLOR_BLUE)? 0: 1,0,WAY_FORWARD, AVOIDANCE_STOP);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
 		{
 			break;
 		}
 
-
 		vTaskDelay(100);
-		m_firstcheckpoint.theta = M_PI_4;
+		m_firstcheckpoint.theta = M_PI_4/2;
 		m_firstcheckpoint = m_firstcheckpoint.symetric(m_stratColor);
 		trajectory.rotateTo(m_firstcheckpoint.theta);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )

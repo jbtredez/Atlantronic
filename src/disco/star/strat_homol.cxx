@@ -12,16 +12,6 @@
 #include "middleware/stratege_machine/stratege.h"
 
 
-#include "disco/action/Move.h"
-#include "disco/action/hut.h"
-#include "disco/star/action/fishes.h"
-#include "disco/action/fellowCastle.h"
-#include "disco/star/action/duneCastle.h"
-#include "disco/star/action/dropCastle.h"
-
-
-#include "disco/star/action/duneSucker.h"
-
 
 #include "strat/strat_simple.h"
 
@@ -57,6 +47,7 @@ static void strat_task(void* arg)
 {
 	(void) arg;
 
+#if 0
 	RobotState robothomologation;
 
 	//création et chargement des actions à faire
@@ -99,7 +90,7 @@ static void strat_task(void* arg)
 	strat.Initialise(strat_color);
 	strat.affiche();
 	strat.run();
-
+#endif
 
 	while(1)
 	{

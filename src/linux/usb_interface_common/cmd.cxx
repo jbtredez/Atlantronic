@@ -813,7 +813,7 @@ int cmd_odo_voie(const char* arg)
 	float val1, val2;
 	int count = sscanf(arg, "%f %f", &val1,&val2);
 
-	if(count != 1)
+	if(count != 2)
 	{
 		return CMD_ERROR;
 	}

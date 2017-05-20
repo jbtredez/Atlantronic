@@ -35,15 +35,15 @@
 
 // Parametres des roues
 #define GATE_VOIE_MOT                           122.32f
-#define GATE_VOIE_ODO_POSITIF                    77.00f
-#define GATE_VOIE_ODO_NEGATIF                    77.00f
+#define GATE_VOIE_ODO_POSITIF                    77.20f		// VOIE
+#define GATE_VOIE_ODO_NEGATIF                    77.20f
 #define GATE_DRIVING1_WHEEL_RADIUS               30.16f
 #define GATE_DRIVING2_WHEEL_RADIUS               30.16f
 #define GATE_MOTOR_DRIVING1_RED                 -19.00f  //!< reduction moteur 1
 #define GATE_MOTOR_DRIVING2_RED                  19.00f  //!< reduction moteur 2
 #define GATE_MOTOR_RPM_TO_VOLT             (24.0f/9842.0f)
-#define GATE_ODO1_WHEEL_RADIUS                   29.00f
-#define GATE_ODO2_WHEEL_RADIUS                   29.00f
+#define GATE_ODO1_WHEEL_RADIUS                   29.08f		// ROUES
+#define GATE_ODO2_WHEEL_RADIUS                   29.08f
 #define GATE_ODO1_WAY                                -1
 #define GATE_ODO2_WAY                                 1
 #define GATE_ODO_ENCODER_RESOLUTION                4096

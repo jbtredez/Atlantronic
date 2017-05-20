@@ -70,7 +70,7 @@ static void strat_task(void* arg)
 	DropModule dropModuleBase(firstcheckpoint, 0, "Drop the modules to base", &robothomologation);
 
 	// Aller à la deuxieme fusée
-	firstcheckpoint.theta = 0;
+	firstcheckpoint.theta = M_PI;
 	RocketDismantler sideRocket(firstcheckpoint, 8, "Get Side rocket", &robothomologation);
 
 	StratPriority strat;

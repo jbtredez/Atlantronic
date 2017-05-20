@@ -241,24 +241,25 @@ void TableScene::drawRobot(Graphique* graph)
 			dynamixel_data* dynamixel = &robotItf->ax12[i];
 			switch(dynamixel->id)
 			{
-				case AX12_STAR_LEFT_FISH_WING:
-					m_mainRobot3d.leftFishWingTheta = dynamixel->pos;
-					break;
-				case AX12_STAR_LEFT_FISH_REMOVER:
-					m_mainRobot3d.leftFishRemoverTheta = dynamixel->pos;
-					break;
-				case AX12_STAR_RIGHT_FISH_WING:
-					m_mainRobot3d.rightFishWingTheta = dynamixel->pos;
-					break;
-				case AX12_STAR_RIGHT_FISH_REMOVER:
-					m_mainRobot3d.rightFishRemoverTheta = dynamixel->pos;
-					break;
-				case AX12_STAR_RIGHT_DOOR:
-					m_mainRobot3d.rightDoorTheta = dynamixel->pos;
-					break;
-				case AX12_STAR_LEFT_DOOR:
-					m_mainRobot3d.leftDoorTheta = dynamixel->pos;
-					break;
+//
+//				case AX12_STAR_LEFT_FISH_WING:
+//					m_mainRobot3d.leftFishWingTheta = dynamixel->pos;
+//					break;
+//				case AX12_STAR_LEFT_FISH_REMOVER:
+//					m_mainRobot3d.leftFishRemoverTheta = dynamixel->pos;
+//					break;
+//				case AX12_STAR_RIGHT_FISH_WING:
+//					m_mainRobot3d.rightFishWingTheta = dynamixel->pos;
+//					break;
+//				case AX12_STAR_RIGHT_FISH_REMOVER:
+//					m_mainRobot3d.rightFishRemoverTheta = dynamixel->pos;
+//					break;
+//				case AX12_STAR_RIGHT_DOOR:
+//					m_mainRobot3d.rightDoorTheta = dynamixel->pos;
+//					break;
+//				case AX12_STAR_LEFT_DOOR:
+//					m_mainRobot3d.leftDoorTheta = dynamixel->pos;
+//					break;
 			}
 		}
 #if 0

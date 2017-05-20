@@ -93,7 +93,7 @@ void printHelp()
 
 int main(int argc, char *argv[])
 {
-	const char* file_stm[ROBOT_MAX] = {"/dev/discovery0", "/dev/discovery1"};
+	const char* file_stm[ROBOT_MAX] = {"/dev/discovery1", "/dev/discovery0"};
 	const char* prog_stm[ROBOT_MAX];
 	const char* ip = NULL;
 	int gdb_port[ROBOT_MAX] = {0, 0};
