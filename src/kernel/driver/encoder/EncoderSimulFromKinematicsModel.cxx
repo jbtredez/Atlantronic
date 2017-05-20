@@ -10,18 +10,7 @@ void EncoderSimulFromKinematicsModel::init(Location* location, KinematicsModelDi
 void EncoderSimulFromKinematicsModel::update(float dt)
 {
 	VectPlan v = m_location->getSpeed();
-	VectPlan u;
-	float n = v.norm();
-	if( n > EPSILON )
-	{
-		u = v / n;
-	}
-	else
-	{
-		n = v.theta;
-		u = VectPlan(0, 0, 1);
-	}
-	m_model->computeActuatorCmd(u, n, dt, m_kinematics, false);
+	m_model->computeActuatorCmd(v, 1, dt, m_kinematics, false);
 }
 
 float EncoderSimulFromKinematicsModel::getPosition()

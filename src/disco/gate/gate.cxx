@@ -123,13 +123,13 @@ static int gate_robot_module_init()
 	motionMotors[MOTION_MOTOR_LEFT].pwmId = PWM_1;
 	motionMotors[MOTION_MOTOR_LEFT].inputGain = 60 * GATE_MOTOR_DRIVING1_RED / (float)(2 * M_PI * GATE_DRIVING1_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_LEFT].encoder = &motionMotorEncoder[MOTION_MOTOR_LEFT];
-	motionMotors[MOTION_MOTOR_LEFT].pid.init(1, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_LEFT].pid.init(1, 4, 0, 1000);
 
 	motionMotors[MOTION_MOTOR_RIGHT].name = "moteur droit";
 	motionMotors[MOTION_MOTOR_RIGHT].pwmId = PWM_2;
 	motionMotors[MOTION_MOTOR_RIGHT].inputGain = 60 * GATE_MOTOR_DRIVING2_RED / (float)(2 * M_PI * GATE_DRIVING2_WHEEL_RADIUS) * GATE_MOTOR_RPM_TO_VOLT;
 	motionMotors[MOTION_MOTOR_RIGHT].encoder = &motionMotorEncoder[MOTION_MOTOR_RIGHT];
-	motionMotors[MOTION_MOTOR_RIGHT].pid.init(1, 0, 0, 1000);
+	motionMotors[MOTION_MOTOR_RIGHT].pid.init(1, 4, 0, 1000);
 
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionEncoders[MOTION_MOTOR_LEFT], &motionEncoders[MOTION_MOTOR_RIGHT]);
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);

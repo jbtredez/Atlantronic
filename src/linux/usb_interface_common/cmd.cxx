@@ -35,6 +35,7 @@ int cmd_dynamixel_set_target_reached_threshold(const char* arg);
 int cmd_dynamixel_enable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_disable_endless_turn_mode(const char* arg);
 int cmd_dynamixel_set_speed(const char* arg);
+int cmd_esc_set(const char* arg);
 int cmd_free(const char* arg);
 int cmd_odo_wheel_radius(const char* arg);
 int cmd_odo_voie(const char* arg);
@@ -98,6 +99,7 @@ COMMAND usb_commands[] = {
 	{ "dynamixel_enable_endless_turn_mode", cmd_dynamixel_enable_endless_turn_mode, "dynamixel_enable_endless_turn_mode  id type"},
 	{ "dynamixel_disable_endless_turn_mode", cmd_dynamixel_disable_endless_turn_mode, "dynamixel_disable_endless_turn_mode  id type"},
 	{ "dynamixel_set_speed", cmd_dynamixel_set_speed, "dynamixel_set_speed  id type speed"},
+	{ "esc_set", cmd_esc_set, "esc_set val"},
 	{ "free", cmd_free, "free"},
 	{ "set_match_time", cmd_set_match_time, "set match time"},
 	{ "go", cmd_go, "go" },
@@ -377,6 +379,21 @@ int cmd_dynamixel_get_position(const char* arg)
 	}
 
 	cmd_robot[cmd_robots_current_id]->dynamixel_get_position(type, id);
+	return CMD_SUCCESS;
+}
+
+int cmd_esc_set(const char* arg)
+{
+	float val;
+	int count = sscanf(arg, "%f", &val);
+
+	if(count != 1)
+	{
+		return CMD_ERROR;
+	}
+
+	cmd_robot[cmd_robots_current_id]->esc_set(val);
+
 	return CMD_SUCCESS;
 }
 

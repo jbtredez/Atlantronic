@@ -74,6 +74,7 @@ enum usb_cmd
 	USB_CMD_CYLINDER,
 	USB_CMD_FINGER,
 	USB_CMD_SET_MOTORS_PID,
+	USB_CMD_ESC,
 	USB_CMD_NUM       //!< nombre de commandes, laisser en dernier
 };
 

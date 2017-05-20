@@ -151,8 +151,10 @@ class RobotInterface
 		// ---------- localisation ------------------------------------------------------
 		int set_position(VectPlan pos);
 
-		// ---------- gate 2017 ------------------------------------------------------
+		// ---------- 2017 ------------------------------------------------------
 		int rotate_cylinder_to(float val);
+		int esc_set(float val);
+
 
 		// ---------- gestion du bras --------------------------------------------------
 		int arm_cmd(uint32_t cmdType);
