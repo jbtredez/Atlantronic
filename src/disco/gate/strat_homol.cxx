@@ -85,7 +85,7 @@ static void strat_task(void* arg)
 	strat.add_action(&escapeBase, 255);
 	strat.add_action(&modHarvest, 128);
 //	strat.add_action(&topRocket, 254);
-//	strat.add_action(&dropModuleBase, 254);
+	strat.add_action(&dropModuleBase, 127);
 //	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();

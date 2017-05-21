@@ -11,6 +11,7 @@
 #include "kernel/match.h"
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
+#include "disco/gate/gate.h"
 
 ModuleHarvest::ModuleHarvest(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name)
@@ -30,26 +31,40 @@ int ModuleHarvest::do_action()
 {
 	uint32_t actionResult = 0;
 	Action::do_action();
-	vTaskDelay(100);
 	m_firstcheckpoint.x = 500;
 	m_firstcheckpoint.y = 600;
 	m_firstcheckpoint.theta = -M_PI_2;
 	m_firstcheckpoint = m_firstcheckpoint.symetric(m_stratColor);
 
+	log_format(LOG_INFO, "YOLOOOOO debut action");
+
+	VectPlan pos = location.getPosition();
+	log_format(LOG_INFO, "goto ====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
+
+	vTaskDelay(1000);
 	trajectory.goTo(m_firstcheckpoint, WAY_FORWARD, AVOIDANCE_STOP);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
 
 	}
 
-	slowSpeed();
 
+	//slowSpeed();
+
+	pos = location.getPosition();
+	log_format(LOG_INFO, "straight 100 ====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
 	trajectory.straight(100);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
 
 	}
-	resetSpeed();
+	//resetSpeed();
+
+	float cylinderPos = cylinder.getCurrentPosition();
+	cylinder.setPosition(cylinderPos - M_PI_2);
+
+	pos = location.getPosition();
+	log_format(LOG_INFO, " End goto====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
 
 	return actionResult;
 }

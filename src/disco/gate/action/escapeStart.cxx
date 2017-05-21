@@ -31,10 +31,12 @@ int EscapeStart::do_action()
 	Action::do_action();
 	float angle;
 
-	slowSpeed();
+	//slowSpeed();
 	vTaskDelay(2000);	// On attends que Star sorte de la zone de départ pour éviter les collisions
 
 
+	VectPlan pos = location.getPosition();
+	log_format(LOG_INFO, "rotate to mpi/2+1====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
 	do
 	{
 		if (m_stratColor == COLOR_BLUE)
@@ -47,15 +49,20 @@ int EscapeStart::do_action()
 		trajectory.rotateTo(angle);
 	} while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0);
 
-	vTaskDelay(100);
 
+	pos = location.getPosition();
+		log_format(LOG_INFO, "straight 200 ====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
 	do
 	{
+		// TODO mettre un goTo
 		trajectory.straight( 200.0f );
 	} while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0);
 
-	resetSpeed();
-	vTaskDelay(100);
+	//resetSpeed();
+
+	pos = location.getPosition();
+	log_format(LOG_INFO, "end straight 200====================================> pos = %d, %d, %d", (int) pos.x, (int) pos.y, (int) (pos.theta * 180/M_PI));
+
 
 	return actionResult;
 }

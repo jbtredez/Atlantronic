@@ -7,6 +7,11 @@ void PwmMotor::set_speed(float v)
 	float vBat = adc_filtered_data.vBat;
 	float cmd = 0;
 
+/*	if (fabs(v) > 0 && pwmId == 0)
+	{
+		log_format(LOG_INFO, "V = %d", (int)v);
+	}
+*/
 	encoder->update(CONTROL_DT);
 	float error = v - encoder->getSpeed();
 	v += pid.compute(error, CONTROL_DT);

@@ -106,7 +106,6 @@ int StratPriority::run()
 			 allDone = true;
 			 log_format(LOG_INFO , "No Remaining Action Found");
 		 }
-		 vTaskDelay(1000);
 	}while(! allDone);
 
 	return 0;

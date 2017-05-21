@@ -30,16 +30,15 @@ void recalage()
 	location.setPosition(pos.symetric(color));
 
 	// VERSION 2017
-
 	KinematicsParameters linParamOrig;
 	KinematicsParameters angParamOrig;
 	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
 
-	KinematicsParameters linParam = {300, 600, 600};
+	KinematicsParameters linParam = {100, 300, 300};
 	KinematicsParameters angParam = angParamOrig;
-	angParam.vMax /= 8;
-	angParam.aMax /= 8;
-	angParam.dMax /= 8;
+	angParam.vMax /= 2;
+	angParam.aMax /= 2;
+	angParam.dMax /= 2;
 
 	trajectory.setKinematicsParam(linParam, angParam);
 	motion.enable(true);
@@ -54,15 +53,17 @@ void recalage()
 
 	vTaskDelay(1000);
 
-	pos.x = 1000 - 30;
+	pos.y = 1000 - 30;
 	pos.theta = -M_PI_2;
-	location.setPosition(pos);
+	location.setPosition(pos.symetric(color));
 
 	trajectory.straight(140);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
 	{
 		// Error?
 	}
+
+	trajectory.setKinematicsParam(linParamOrig, angParamOrig);
 
 
 		// VERSION 2016

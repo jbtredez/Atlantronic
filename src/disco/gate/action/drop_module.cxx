@@ -11,6 +11,8 @@
 #include "kernel/match.h"
 #include "disco/star/star.h"
 #include "disco/star/servos.h"
+#include "disco/gate/gate.h"
+
 
 DropModule::DropModule(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name)
@@ -32,14 +34,12 @@ int DropModule::do_action()
 
 	do
 	{
-		vTaskDelay(100);
-		trajectory.goToGraphNode((m_stratColor == COLOR_BLUE)? 0: 1,0,WAY_FORWARD, AVOIDANCE_STOP);
+		trajectory.goToGraphNode((m_stratColor == COLOR_BLUE)? 0: 1,0,WAY_BACKWARD, AVOIDANCE_STOP);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
 		{
 			break;
 		}
 
-		vTaskDelay(100);
 		m_firstcheckpoint.theta = M_PI_4/2;
 		m_firstcheckpoint = m_firstcheckpoint.symetric(m_stratColor);
 		trajectory.rotateTo(m_firstcheckpoint.theta);
@@ -49,7 +49,6 @@ int DropModule::do_action()
 		}
 
 		slowSpeed();
-		vTaskDelay(100);
 		trajectory.straight(200);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 		{
@@ -57,6 +56,9 @@ int DropModule::do_action()
 		}
 
 	} while(false);
+
+	float cylinderPos = cylinder.getCurrentPosition();
+	cylinder.setPosition(cylinderPos + M_PI_2);
 
 	vTaskDelay(100);
 	do

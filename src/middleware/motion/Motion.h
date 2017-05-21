@@ -23,8 +23,8 @@
 #define WEAK_MOTION __attribute__((weak, alias("nop_function") ))
 #endif
 
-#define MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE          (10*10)
-#define MOTION_TARGET_REACHED_ANG_THRESHOLD                  0.02f
+#define MOTION_TARGET_REACHED_LIN_THRESHOLD_SQUARE          (15*15)//(10*10)
+#define MOTION_TARGET_REACHED_ANG_THRESHOLD                  0.02f*2
 #define MOTION_TARGET_NOT_REACHED_TIMEOUT                      300
 
 enum motion_state
