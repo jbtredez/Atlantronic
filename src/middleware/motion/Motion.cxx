@@ -220,6 +220,17 @@ void Motion::enable(bool enable)
 	xSemaphoreGive(m_mutex);
 }
 
+bool Motion::isEnabled( void )
+{
+	if (m_motionStateMachine.getCurrentState() == MOTION_ENABLED )
+	{
+		return true;
+	} else
+	{
+		return false;
+	}
+}
+
 void Motion::setMaxDrivingCurrent(float maxCurrent)
 {
 	m_motionMotor[0]->set_max_current(maxCurrent);

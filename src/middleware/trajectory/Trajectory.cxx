@@ -852,23 +852,18 @@ int Trajectory::wait(enum trajectory_state wanted_state, uint32_t timeout)
 {
 	enum trajectory_state state = m_trajectoryState;
 
-	int testLog = 0;
 	while(state != TRAJECTORY_STATE_COLISION && state != TRAJECTORY_STATE_TARGET_REACHED && state != TRAJECTORY_STATE_TARGET_NOT_REACHED && timeout)
 	{
 		vTaskDelay(1);
 		timeout --;
 		state = m_trajectoryState;
-		testLog++;
-		VectPlan error  = m_dest - m_pos;
-		if( testLog == 20 )
-		{
-			log_format(LOG_INFO, "wait pos = %d, %d, %d dest %d %d %d, error %d %d %d",
-				(int) m_pos.x, (int) m_pos.y, (int) (m_pos.theta * 180/M_PI),
-				(int) m_dest.x, (int) m_dest.y, (int) (m_dest.theta * 180/M_PI),
-				(int) error.x, (int) error.y, (int) (error.theta * 180/M_PI));
-			testLog = 0;
-		}
 	}
+
+	while(!motion.isEnabled())
+	{
+		vTaskDelay(1);
+	}
+
 
 	if( state != wanted_state )
 	{

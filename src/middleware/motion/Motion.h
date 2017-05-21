@@ -103,6 +103,7 @@ class Motion
 		void getState(enum motion_state* state, enum motion_status* status, enum motion_state* wanted_state);
 
 		void enable(bool enable);
+		bool isEnabled(void);
 
 		//!< demande de trajectoire
 		void clearTrajectory();
