@@ -46,6 +46,10 @@ void cmd_esc(void* /*arg*/, void* data)
 	esc_val = val;
 }
 
+void Esc::SetVal(float cmd)
+{
+	esc_val = cmd;
+}
 extern "C"
 {
 void isr_tim7(void)

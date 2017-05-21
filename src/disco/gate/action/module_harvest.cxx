@@ -9,9 +9,9 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
-#include "disco/star/star.h"
-#include "disco/star/servos.h"
+
 #include "disco/gate/gate.h"
+#include "disco/gate/servos.h"
 
 ModuleHarvest::ModuleHarvest(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name,(void*) robot)

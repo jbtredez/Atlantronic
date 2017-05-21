@@ -3,42 +3,14 @@
 
 #include "star.h"
 
-enum Wing_state
+
+enum Net_Trap_state
 {
-	WING_OPEN,		// Ouvert 90 degrés
-	WING_CLOSE,		// Fermé sur le flanc du robot
-	WING_MIDDLE,	// Ouvert 45 degrés
-	WING_NO_MOVE,	// Pas bouger
+	NET_TRAP_CLOSE,		// Fermé dans le robot
+	NET_TRAP_OPEN,		// Ouvert
+
 };
 
-enum FishRemover_state
-{
-	FISH_REMOVER_TIDY,		// Position milieux collé à l'aile
-	FISH_REMOVER_SHAKE,		// Rotation vers l'avant du robot
-	FISH_REMOVER_NO_MOVE,
-};
-
-enum Door_state
-{
-	DOOR_CLOSE,		// Fermé dans le robot
-	DOOR_OPEN,		// Ouvert à 90 degrés de la face avant
-	DOOR_OPEN_WIDE,	// Ouvert large à 180 degrés de la face avant
-	DOOR_GRIP,		// Position de serrage
-};
-
-enum Parasol_state
-{
-	PARASOL_CLOSE,
-	PARASOL_OPEN,
-};
-
-enum TowerPlier_state
-{
-	TOWER_PLIER_TIDY,		// Position rangée
-	TOWER_PLIER_CLOSE,		// Fermé dans le robot
-	TOWER_PLIER_OPEN,		// Ouvert
-	TOWER_PLIER_GRIP,		// Position de serrage
-};
 
 enum ServosWaitPolicy
 {
@@ -53,11 +25,7 @@ class Servos
 	static void setTorque(bool enable);
 	static void closeAll(void);
 	static int setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy);
-	static void setWingState(enum Wing_state left, enum Wing_state right);
-	static void setFishRemoverState(enum FishRemover_state left, enum FishRemover_state right);
-	static void setParasolState(enum Parasol_state parasolState);
-	static void setDoorsState(enum Door_state doorState);
-	static void setTowerPlierState(enum TowerPlier_state plierState);
-};
+	static void setNetState(enum Net_Trap_state NetState);
+	};
 
 #endif /* SRC_DISCO_STAR_SERVOS_H_ */

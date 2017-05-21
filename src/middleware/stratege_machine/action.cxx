@@ -27,6 +27,7 @@ void Action::Initialise(int stratcolor)
 {
 	if( ! initialized )
 	{
+		m_stratColor = stratcolor;
 		m_firstcheckpoint = m_firstcheckpoint.symetric(stratcolor);
 		initialized = true;
 	}

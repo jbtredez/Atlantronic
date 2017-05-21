@@ -21,5 +21,5 @@ void cutServosOff(void)
 }
 void funnyAction(void)
 {
-	Servos::setParasolState(PARASOL_OPEN);
+
 }
