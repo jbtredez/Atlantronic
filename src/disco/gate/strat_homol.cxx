@@ -9,6 +9,7 @@
 #include "kernel/match.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "disco/gate/robot_state.h"
+#include "disco/gate/servos.h"
 #include "middleware/stratege_machine/stratege.h"
 
 
@@ -16,6 +17,7 @@
 #include "disco/gate/action/rocket_dismantler.h"
 #include "disco/gate/action/drop_module.h"
 #include "strat/strat_priority.h"
+#include "disco/gate/action/module_harvest.h"
 
 
 #define STRAT_STACK_SIZE       500
@@ -50,6 +52,9 @@ static void strat_task(void* arg)
 
 	RobotState robothomologation;
 
+	// Set Servo torque
+	Servos::setTorque(true);
+
 	//création et chargement des actions à faire
 	VectPlan firstcheckpoint;
 
@@ -73,11 +78,15 @@ static void strat_task(void* arg)
 	firstcheckpoint.theta = M_PI;
 	RocketDismantler sideRocket(firstcheckpoint, 8, "Get Side rocket", &robothomologation);
 
+	// Récupere les module isolés
+	ModuleHarvest modHarvest(firstcheckpoint, 0, "Get isolates modules", &robothomologation);
+
 	StratPriority strat;
 	strat.add_action(&escapeBase, 255);
-	strat.add_action(&topRocket, 254);
-	strat.add_action(&dropModuleBase, 254);
-	strat.add_action(&sideRocket, 253);
+	strat.add_action(&modHarvest, 128);
+//	strat.add_action(&topRocket, 254);
+//	strat.add_action(&dropModuleBase, 254);
+//	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();
 	strat_color = match_get_color();

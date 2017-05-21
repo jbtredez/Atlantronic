@@ -182,8 +182,6 @@ int main(int argc, char *argv[])
 		if( robot[i].m_qemu.isInitDone() )
 		{
 			robot[i].m_qemu.setQemuRobotParameters(robotParam[i]);
-			// desactivatin des pid moteurs en simu (pose pb)
-			robot[i].m_robotItf.set_motors_pid(0,0,0,0,0,0);
 		}
 	}
 

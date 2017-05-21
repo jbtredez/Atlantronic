@@ -50,6 +50,11 @@ class MotorInterface
 			(void) val;
 		}
 
+		virtual void stop_on_collision()
+		{
+
+		}
+
 		const char* name;
 		float inputGain;    //!< gain pour convertir la vitesse en unites moteurs (rpm ou V)
 		float current;

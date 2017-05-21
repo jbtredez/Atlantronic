@@ -60,16 +60,20 @@
 #define GATE_HOKUYO_2_THETA                         0.00
 
 // position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
-#define GATE_INIT_POS_X                          1450.00
-#define GATE_INIT_POS_Y                           820.00
-#define GATE_INIT_POS_THETA                         M_PI
+#define GATE_INIT_POS_X                          690.00
+#define GATE_INIT_POS_Y                           860.00
+#define GATE_INIT_POS_THETA                         -M_PI_2
 
 #ifndef LINUX
 extern Location location;
 extern Motion motion;
 extern Trajectory trajectory;
 extern DynamixelManager ax12;
-extern Dynamixel parasol;
+extern Dynamixel missileLeft;
+extern Dynamixel missileRight;
+extern Dynamixel pusher;
+extern Dynamixel clampLeft;
+extern Dynamixel clampRight;
 extern StepperDriver cylinder;
 #endif
 

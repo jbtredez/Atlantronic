@@ -16,6 +16,7 @@ class PwmMotor : public MotorInterface
 		void set_speed(float v);
 		bool is_in_motion();
 		void disable();
+		void stop_on_collision();
 		int pwmId;
 		Pid pid;
 		EncoderInterface* encoder;

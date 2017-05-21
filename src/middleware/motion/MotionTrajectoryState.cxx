@@ -65,6 +65,11 @@ void MotionTrajectoryState::run(void* data)
 		log_format(LOG_INFO, "MOTION_COLSISION");
 		m->m_status = MOTION_COLSISION;
 		stop(m);
+		for(int i = 0; i < MOTION_MOTOR_MAX; i++)
+		{
+			m->m_motionMotor[i]->stop_on_collision();
+		}
+
 		return;
 	}
 

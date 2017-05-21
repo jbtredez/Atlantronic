@@ -1200,6 +1200,9 @@ static void toggle_go(GtkWidget* /*widget*/, gpointer /*arg*/)
 		{
 			// simulation
 			robot[i].m_qemu.setIo(GPIO_MASK_IN_GO, go);
+
+			// desactivatin des pid moteurs en simu (pose pb)
+			robot[i].m_robotItf.set_motors_pid(0,0,0,0,0,0);
 		}
 		else
 		{

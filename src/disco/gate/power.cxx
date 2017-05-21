@@ -21,5 +21,13 @@ void cutServosOff(void)
 }
 void funnyAction(void)
 {
-
+	vTaskDelay(200);
+	missileLeft.setTorqueEnable(1);
+//	missileRight.setTorqueEnable(1);
+	vTaskDelay(200);
+	missileLeft.setGoalPosition( -M_PI_2 );
+//	missileLeft.setGoalPosition( M_PI_2 );
+	vTaskDelay(1000);
+	missileLeft.setTorqueEnable(0);
+	//	missileRight.setTorqueEnable(0);
 }

@@ -5,15 +5,31 @@ void Servos::setTorque(bool enable)
 {
 	if (enable == true)
 	{
-		// Mise sous tension
-		parasol.setTorqueLimit(0.85);
+		// Set torque value
+		missileLeft.setTorqueLimit(0.85);
+		missileRight.setTorqueLimit(0.85);
+		pusher.setTorqueLimit(0.85);
 
-		// Angles limites
-		parasol.setGoalLimits(0, M_PI_4);
+		// Set AX12 limit angles
+		missileLeft.setGoalLimits( -M_PI_2, -0.2 );
+		missileRight.setGoalLimits( 0.2, M_PI_2 );
+		pusher.setGoalLimits( -M_PI_2, 0 );
+
+		pusher.setTorqueEnable(1);
+		//missileLeft.setTorqueEnable(1);	// Pas pour les missiles: asservissement seulement avant la funny action
+		//missileRight.setTorqueEnable(1);	// Pas pour les missiles: asservissement seulement avant la funny action
+
+
+		// Set default angles
+		missileLeft.setGoalPosition(-0.3);
+		//missileRight.setGoalPosition(0.3);
+
 	}else
 	{
 		// Mise Hors tension
-		parasol.setTorqueLimit(0);
+		//missileLeft.setTorqueLimit(0); 	// Fin de match: pas de hors tension
+		//missileRight.setTorqueLimit(0);
+		pusher.setTorqueLimit(0);
 	}
 }
 
@@ -21,7 +37,7 @@ void Servos::setTorque(bool enable)
 void Servos::closeAll(void)
 {
 	// Fermeture de tous les servos (position rangée)
-	parasol.setGoalPosition(0);
+
 }
 
 int Servos::setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy wait)
@@ -50,20 +66,4 @@ int Servos::setAngle(Dynamixel *servo, float angle, enum ServosWaitPolicy wait)
 		}
 	}
 	return result;
-}
-
-
-void Servos::setParasolState(enum Parasol_state parasolState)
-{
-	switch(parasolState)
-	{
-		case PARASOL_CLOSE:
-			Servos::setAngle(&parasol, 0, SERVO_POLICY_NON_BLOCKING);
-			break;
-		case PARASOL_OPEN:
-			Servos::setAngle(&parasol, 0.5, SERVO_POLICY_WAIT_END);
-			break;
-		default:
-			break;
-	}
 }

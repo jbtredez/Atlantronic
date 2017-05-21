@@ -82,19 +82,6 @@ static int gate_robot_module_init()
 	clampLeft.init(&ax12, AX12_GATE_CLAMP_LEFT);
 	clampRight.init(&ax12, AX12_GATE_CLAMP_RIGHT);
 
-	// Set torque value
-	missileLeft.setTorqueLimit(0.85);
-	missileRight.setTorqueLimit(0.85);
-	pusher.setTorqueLimit(0.85);
-
-	// Set AX12 limit angles
-	missileLeft.setGoalLimits( -M_PI_2, 0 );
-	missileRight.setGoalLimits( 0, M_PI_2 );
-	pusher.setGoalLimits( -M_PI_2, 0 );
-
-
-	pusher.setTorqueEnable(1);
-
 
 
 	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);

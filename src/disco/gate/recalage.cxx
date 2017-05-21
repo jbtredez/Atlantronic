@@ -21,6 +21,7 @@
 #define RECALAGE_WAY(x) (x)
 #endif
 
+
 void recalage()
 {
 	// position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
@@ -28,7 +29,43 @@ void recalage()
 	VectPlan pos(GATE_INIT_POS_X, GATE_INIT_POS_Y, GATE_INIT_POS_THETA);
 	location.setPosition(pos.symetric(color));
 
-	// TODO faire le recalage
+	// VERSION 2017
+
+	KinematicsParameters linParamOrig;
+	KinematicsParameters angParamOrig;
+	trajectory.getKinematicsParam(&linParamOrig, &angParamOrig);
+
+	KinematicsParameters linParam = {300, 600, 600};
+	KinematicsParameters angParam = angParamOrig;
+	angParam.vMax /= 8;
+	angParam.aMax /= 8;
+	angParam.dMax /= 8;
+
+	trajectory.setKinematicsParam(linParam, angParam);
+	motion.enable(true);
+
+
+	trajectory.straight(-500);
+	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 5000) )
+	{
+
+
+	}
+
+	vTaskDelay(1000);
+
+	pos.x = 1000 - 30;
+	pos.theta = -M_PI_2;
+	location.setPosition(pos);
+
+	trajectory.straight(140);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
+	{
+		// Error?
+	}
+
+
+		// VERSION 2016
 #if 0
 	VectPlan posInit(1000, -600, OPPOSED_ANGLE(M_PI_2));
 	VectPlan firstcheckpoint(0, -750, M_PI_2);
@@ -153,3 +190,4 @@ free:
 	motion.enableAntico(true);
 #endif
 }
+

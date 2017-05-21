@@ -32,3 +32,8 @@ void PwmMotor::disable()
 	pwm_disable();
 }
 
+void PwmMotor::stop_on_collision()
+{
+	pid.reset();
+}
+

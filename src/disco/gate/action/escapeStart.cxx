@@ -29,19 +29,33 @@ int EscapeStart::do_action()
 {
 	uint32_t actionResult = 0;
 	Action::do_action();
+	float angle;
 
 	slowSpeed();
-	vTaskDelay(300);
+	vTaskDelay(2000);	// On attends que Star sorte de la zone de départ pour éviter les collisions
 
-	trajectory.straight( 800.0f );
-	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
+
+	do
 	{
-		actionResult = -1;
-	}
+		if (m_stratColor == COLOR_BLUE)
+		{
+			angle = - M_PI_2 + 1;
+		} else
+		{
+			angle = - M_PI_2 - 1;
+		}
+		trajectory.rotateTo(angle);
+	} while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0);
+
+	vTaskDelay(100);
+
+	do
+	{
+		trajectory.straight( 200.0f );
+	} while( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0);
 
 	resetSpeed();
 	vTaskDelay(100);
-
 
 	return actionResult;
 }
