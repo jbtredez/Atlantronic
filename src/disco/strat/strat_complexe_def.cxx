@@ -36,7 +36,7 @@ int stratcomplexedef::run()
 {
 		//light 1 drop
 
-	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
+/*	firstcheckpoint.x = 1285 + LIGHT_APPROX_DIST;
 	firstcheckpoint.y = 0;
 	light light1(firstcheckpoint,robot);
 
@@ -182,7 +182,7 @@ int stratcomplexedef::run()
 	//drop gobelt green lower
 	m_list_action[7]->do_action();
 
-	m_list_action[9]->do_action();
+	m_list_action[9]->do_action();*/
 	return 0;
 
 }

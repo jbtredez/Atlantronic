@@ -57,7 +57,7 @@ static void strat_task(void* arg)
 	Hut hut1(firstcheckpoint, "Pull huts", &robothomologation);
 
 	// Poissons
-	Fishes fishes(firstcheckpoint, "Fishes", &robothomologation);
+	//Fishes fishes(firstcheckpoint, "Fishes", &robothomologation);
 
 	//Chateau ami
 	FellowCastle fellowCastle(firstcheckpoint, "Fellow Castle", &robothomologation);

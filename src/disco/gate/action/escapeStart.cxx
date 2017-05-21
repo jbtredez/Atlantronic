@@ -13,7 +13,7 @@
 #include "disco/star/servos.h"
 
 EscapeStart::EscapeStart(VectPlan firstcheckpoint, const char * name, RobotState * robot):
-	Action(firstcheckpoint, name)
+	Action(firstcheckpoint, name,(void*) robot)
 {
 	m_actiontype = ACTION_ESCAPE_BASE;
 

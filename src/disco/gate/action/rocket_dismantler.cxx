@@ -13,7 +13,7 @@
 #include "disco/star/servos.h"
 
 RocketDismantler::RocketDismantler(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
-	Action(firstcheckpoint, name)
+	Action(firstcheckpoint, name,(void*) robot)
 {
 	m_checkpoint = checkpoint;
 }
@@ -95,6 +95,8 @@ void RocketDismantler::Exit()
 {
 
 }
+
+
 
 
 void RocketDismantler::slowSpeed(void)
