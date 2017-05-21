@@ -15,7 +15,7 @@
 
 
 DropModule::DropModule(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
-	Action(firstcheckpoint, name)
+	Action(firstcheckpoint, name,(void*) robot)
 {
 
 

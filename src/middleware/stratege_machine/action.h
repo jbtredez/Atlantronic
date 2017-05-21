@@ -10,6 +10,15 @@
 
 #define ACTION_NONE		-1
 
+typedef enum
+{
+	ACTION_NOT_DONE = 0,
+	ACTION_IN_PROGRESS,
+	ACTION_DONE,
+	ACTION_FAILED
+} ActionState;
+
+
 class Action
 {
 	public:
@@ -26,7 +35,7 @@ class Action
 		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 		/// retrun      : none
 		////////////////////////////////////////////////
-		Action(VectPlan firstcheckpoint, const char * name);
+		Action(VectPlan firstcheckpoint, const char * name,void * robot = NULL);
 
 		////////////////////////////////////////////////
 		/// function    : Exit()
@@ -53,11 +62,22 @@ class Action
 		////////////////////////////////////////////////
 		virtual int do_action();
 
+
+		////////////////////////////////////////////////
+		/// function    : Ready()
+		/// descrition  :
+		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
+		/// retrun      : none
+		////////////////////////////////////////////////
+		bool Ready();
+
+
 		// Nombre de re-tentative en cas d'échec: 0: on retente pas, 1 on retente une fois,...
 		// Strat décrémente à chaque essai, arrivé à -1 elle n'est plus appelée
 		int m_retry;
 		VectPlan m_firstcheckpoint;
-
+		ActionState m_state;
+		void * m_robotState;
 		int m_actiontype;
 		const char * m_name;
 		bool initialized;

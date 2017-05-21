@@ -12,19 +12,13 @@
 #include "middleware/stratege_machine/action.h"
 
 
-typedef enum
-{
-	WAIT = 0,
-	IN_PROGRESS,
-	DONE,
-	FAILED
-} ActionState;
+
 
 typedef struct
 {
 		Action *pAction;
 		uint8_t priority;	// 255 is highest
-		ActionState state;
+
 } PrioritisedAction;
 
 class StratPriority:

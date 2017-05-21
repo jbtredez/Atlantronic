@@ -35,7 +35,7 @@ int StratPriority::add_action(Action * p_action, uint8_t priority)
 
 	m_list_action_prioritised[m_size_actionlist].pAction = p_action;
 	m_list_action_prioritised[m_size_actionlist].priority = priority;
-	m_list_action_prioritised[m_size_actionlist].state = WAIT;
+
 	m_size_actionlist++;
 	return 0;
 }
@@ -50,8 +50,7 @@ PrioritisedAction *StratPriority::getNextAction()
 	{
 		if(m_list_action_prioritised[count].pAction)
 		{
-			if (m_list_action_prioritised[count].state == WAIT ||
-					(m_list_action_prioritised[count].state == FAILED && m_list_action_prioritised[count].pAction->m_retry >= 0))
+			if ( m_list_action_prioritised[count].pAction->Ready())
 			{
 				if (m_list_action_prioritised[count].priority > currentPriority)
 				{
@@ -85,7 +84,7 @@ int StratPriority::run()
 		 nextAction = getNextAction();
 		 if (nextAction != NULL)
 		 {
-			nextAction->state = IN_PROGRESS;
+			nextAction->pAction->m_state = ACTION_IN_PROGRESS;
 			log_format(LOG_INFO , "Action %d (%s), try %d", ++i, nextAction->pAction->get_name(), nextAction->pAction->get_try());
 
 			result = nextAction->pAction->do_action();
@@ -94,11 +93,11 @@ int StratPriority::run()
 			{
 				nextAction->pAction->m_retry--;
 				log_format(LOG_INFO,"Action %s failed, decrementing m_retry to %d", m_list_action[i]->m_name, m_list_action[i]->m_retry);
-				nextAction->state = FAILED;
+				nextAction->pAction->m_state = ACTION_FAILED;
 			} else
 			{
 				nextAction->pAction->m_retry = -1;
-				nextAction->state = DONE;
+				nextAction->pAction->m_state = ACTION_DONE;
 			}
 
 		 } else
