@@ -51,9 +51,9 @@
 #define GATE_STEPPER_MOTOR_STEP_BY_TURN             200
 
 // Parametres lasers
-#define GATE_HOKUYO_1_X                             0.00
+#define GATE_HOKUYO_1_X                            60.00
 #define GATE_HOKUYO_1_Y                             0.00
-#define GATE_HOKUYO_1_THETA                      -M_PI_2
+#define GATE_HOKUYO_1_THETA                       M_PI_2
 
 #define GATE_HOKUYO_2_X                             0.00
 #define GATE_HOKUYO_2_Y                             0.00
