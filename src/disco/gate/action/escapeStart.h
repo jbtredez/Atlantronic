@@ -19,7 +19,6 @@ class EscapeStart:
 	public:
 		KinematicsParameters m_linParamOrig;
 		KinematicsParameters m_angParamOrig;
-		int32_t m_stratColor;
 
 	public:
 		EscapeStart(VectPlan firstcheckpoint, const char * name, RobotState * robot);

@@ -66,7 +66,7 @@ class Action
 		////////////////////////////////////////////////
 		/// function    : Ready()
 		/// descrition  :
-		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
+		/// param       :
 		/// retrun      : none
 		////////////////////////////////////////////////
 		bool Ready();
@@ -81,6 +81,9 @@ class Action
 		int m_actiontype;
 		const char * m_name;
 		bool initialized;
+
+		uint32_t m_stratColor;
+
 };
 
 #endif

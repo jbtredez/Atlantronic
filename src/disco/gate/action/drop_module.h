@@ -18,7 +18,6 @@ class DropModule:
 	private:
 		KinematicsParameters m_linParamOrig;
 		KinematicsParameters m_angParamOrig;
-		uint32_t m_stratColor;
 		uint32_t m_checkpoint;
 
 	public:

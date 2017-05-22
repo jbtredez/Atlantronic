@@ -14,15 +14,7 @@ KinematicsParameters angularParam = {5, 5, 5}; // ne pas modifier, robot calibre
 
 //Hokuyo hokuyo[HOKUYO_MAX];
 Rplidar rplidar;
-Dynamixel leftFishWing;
-Dynamixel leftFishRemover;
-Dynamixel rightFishWing;
-Dynamixel rightFishRemover;
-Dynamixel leftDoor;
-Dynamixel rightDoor;
-Dynamixel towerPliers;
-Dynamixel towerPliersTidier;
-Dynamixel parasol;
+Dynamixel NetTrap;
 DynamixelManager ax12;
 //DynamixelManager rx24;
 Bot PramBot;
@@ -34,7 +26,7 @@ KinematicsModelDiff motorKinematicsModelDiff(STAR_VOIE_MOT, STAR_VOIE_MOT, param
 //Trajectory trajectory;
 CanMipMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
-
+int BemptyTrap;
 // test odometrie sur roues motrice (tests sur cale par exemple)
 //#define TEST_ODO_MOT
 
@@ -73,24 +65,10 @@ static int star_robot_module_init()
 	Bot::odoEncoderResolution = STAR_ODO_ENCODER_RESOLUTION;
 
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
-	//rx24.init("rx24", UART4_FULL_DUPLEX, 200000, RX24_MAX_ID, DYNAMIXEL_TYPE_RX24);
+
+	NetTrap.init(&ax12, AX12_NET_TRAP);
 
 	Servos::setTorque(true);
-
-
-//	hokuyo[0].init(USART3_FULL_DUPLEX, "hokuyo1", HOKUYO1, &location);
-//	hokuyo[0].setPosition(VectPlan( 0, 0, 0), 1);
-//	hokuyo[0].scan.theta_min = -M_PI;
-//	hokuyo[0].scan.theta_max = M_PI;
-//	hokuyo[0].scan.min_object_size = 1;
-//	hokuyo[0].scan.min_distance = 125;
-//
-//	hokuyo[1].init(USART1_FULL_DUPLEX, "hokuyo2", HOKUYO2, &location);
-//	hokuyo[1].setPosition(VectPlan(0, 0, 0), 1);
-//	hokuyo[1].scan.theta_min = -M_PI;
-//	hokuyo[1].scan.theta_max = M_PI;
-//	hokuyo[1].scan.min_object_size = 1;
-//	hokuyo[1].scan.min_distance = 100;
 
 	rplidar.init(USART6_FULL_DUPLEX, "rplidar", &location);
 	rplidar.scan.min_object_size = 1;
@@ -131,7 +109,7 @@ static int star_robot_module_init()
 	motion.init(&detection, &location, &motorKinematicsModelDiff, &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT], &motionMotors[MOTION_MOTOR_LEFT], &motionMotors[MOTION_MOTOR_RIGHT]);
 #endif
 	trajectory.init(&detection, &motion, &location, linearParam, angularParam);
-
+	BemptyTrap = true;
 	return 0;
 }
 

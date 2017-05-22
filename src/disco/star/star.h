@@ -65,15 +65,10 @@
 #ifndef LINUX
 extern Location location;
 extern DynamixelManager ax12;
-extern Dynamixel leftFishWing;
-extern Dynamixel leftFishRemover;
-extern Dynamixel rightFishWing;
-extern Dynamixel rightFishRemover;
-extern Dynamixel leftDoor;
-extern Dynamixel rightDoor;
-extern Dynamixel towerPliers;
-extern Dynamixel towerPliersTidier;
-extern Dynamixel parasol;
+extern Dynamixel NetTrap;
+extern int BemptyTrap;
+
+
 #endif
 
 #endif
