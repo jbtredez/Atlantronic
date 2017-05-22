@@ -9,7 +9,6 @@
 #include "kernel/log.h"
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/match.h"
-#include "disco/star/star.h"
 #include "disco/star/servos.h"
 #include "disco/gate/gate.h"
 

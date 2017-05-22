@@ -6,20 +6,21 @@
 #include "kernel/location/location.h"
 
 
-AvoidanceTest::AvoidanceTest(VectPlan firstcheckpoint,const char  * name):Action(firstcheckpoint, name)
+
+AvoidanceTest::AvoidanceTest(VectPlan firstcheckpoint,const char  * name, RobotState * robot):Action(firstcheckpoint, name, (void*) robot)
 {
 	set_actiontype(ACTION_MOVE);
-	pts[0].x = 1200;
-	pts[0].y = 650;
+	pts[0].x = 500;
+	pts[0].y = 700;
 	pts[0].theta = 0;
-	pts[1].x = -1200;
-	pts[1].y = 650;
+	pts[1].x = 0;
+	pts[1].y = 700;
 	pts[1].theta = 0;
-	pts[2].x = -1200;
-	pts[2].y =  -650;
+	pts[2].x = 0;
+	pts[2].y =  100;
 	pts[2].theta = 0;
-	pts[3].x = 1200;
-	pts[3].y = -650;
+	pts[3].x = 500;
+	pts[3].y = 0;
 	pts[3].theta = 0;
 
 	m_sens = true;

@@ -18,6 +18,7 @@
 #include "disco/gate/action/drop_module.h"
 #include "strat/strat_priority.h"
 #include "disco/gate/action/module_harvest.h"
+#include "disco/action/avoidanceTest.h"
 
 
 #define STRAT_STACK_SIZE       500
@@ -81,11 +82,17 @@ static void strat_task(void* arg)
 	// Récupere les module isolés
 	ModuleHarvest modHarvest(firstcheckpoint, 0, "Get isolates modules", &robothomologation);
 
+
+	// Test d'évitement pour l'homologation
+	AvoidanceTest avoidance(firstcheckpoint, "Avoidance test", &robothomologation);
+
 	StratPriority strat;
 	strat.add_action(&escapeBase, 255);
 	strat.add_action(&modHarvest, 128);
 //	strat.add_action(&topRocket, 254);
 	strat.add_action(&dropModuleBase, 127);
+	strat.add_action(&avoidance, 126);
+
 //	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();

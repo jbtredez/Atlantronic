@@ -2,18 +2,20 @@
 #define MOVE_H
 
 #include "middleware/stratege_machine/action.h"
+#include "disco/robot_state.h"
+#include "middleware/trajectory/Trajectory.h"
 
-class Move : public Action
+class AvoidanceTest : public Action
 {
 	public:
+		AvoidanceTest(VectPlan firstcheckpoint,const char  * name, RobotState * robot);
 		////////////////////////////////////////////////
 		/// function    : Idle()
 		/// descrition  : constructor
 		/// param       : firstcheckpoint : VectPlan first checkpoint of the action
 		/// retrun      : none
 		////////////////////////////////////////////////
-		Move(VectPlan firstcheckpoint, const char  * name);
-		Move(VectPlan firstcheckpoint, const char  * name, int nretry);
+		//AvoidanceTest(VectPlan firstcheckpoint, const char  * name, int nretry);
 
 		////////////////////////////////////////////////
 		/// function    : do_action()
@@ -32,4 +34,4 @@ class Move : public Action
 };
 
 #endif /* SRC_DISCO_ACTION_AVOIDANCETEST_H_ */
->>>>>>> -Mise à Jour:src/disco/action/avoidanceTest.h
+
