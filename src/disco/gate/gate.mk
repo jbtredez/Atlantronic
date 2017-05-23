@@ -11,3 +11,5 @@ gate_robot += disco/gate/action/escapeStart.o
 gate_robot += disco/gate/action/rocket_dismantler.o
 gate_robot += disco/gate/action/drop_module.o
 gate_robot += disco/gate/action/module_harvest.o
+gate_robot += disco/gate/action/nul.o
+gate_robot += disco/gate/action/harvest2.o

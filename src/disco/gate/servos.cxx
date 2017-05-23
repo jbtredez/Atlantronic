@@ -16,8 +16,8 @@ void Servos::setTorque(bool enable)
 		pusher.setGoalLimits( -M_PI_2, 0 );
 
 		pusher.setTorqueEnable(1);
-		//missileLeft.setTorqueEnable(1);	// Pas pour les missiles: asservissement seulement avant la funny action
-		//missileRight.setTorqueEnable(1);	// Pas pour les missiles: asservissement seulement avant la funny action
+		missileLeft.setTorqueEnable(0);	// Pas pour les missiles: asservissement seulement avant la funny action
+		missileRight.setTorqueEnable(0);	// Pas pour les missiles: asservissement seulement avant la funny action
 
 
 		// Set default angles

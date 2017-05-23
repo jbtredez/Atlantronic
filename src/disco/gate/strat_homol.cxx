@@ -18,6 +18,7 @@
 #include "disco/gate/action/drop_module.h"
 #include "strat/strat_priority.h"
 #include "disco/gate/action/module_harvest.h"
+#include "disco/gate/action/nul.h"
 #include "disco/action/avoidanceTest.h"
 
 
@@ -64,35 +65,57 @@ static void strat_task(void* arg)
 	firstcheckpoint.theta = 0;
 
 	// Sortir de la zone en passant la bascule
-	EscapeStart escapeBase(firstcheckpoint, "Escape from Base", &robothomologation);
+//	EscapeStart escapeBase(firstcheckpoint, "Escape from Base", &robothomologation);
 	// Recalage
 	// Premiere action: Vider la premiere fusée
-	firstcheckpoint.x = 150;
-	firstcheckpoint.y = 600;
-	firstcheckpoint.theta = M_PI_2;
-	RocketDismantler topRocket(firstcheckpoint, 0, "Get Top rocket", &robothomologation);
-
-	// Déposer les cylindres à la base
-	DropModule dropModuleBase(firstcheckpoint, 0, "Drop the modules to base", &robothomologation);
+//	firstcheckpoint.x = 150;
+//	firstcheckpoint.y = 600;
+//	firstcheckpoint.theta = M_PI_2;
+//	RocketDismantler topRocket(firstcheckpoint, 0, "Get Top rocket", &robothomologation);
 
 	// Aller à la deuxieme fusée
 	firstcheckpoint.theta = M_PI;
 	RocketDismantler sideRocket(firstcheckpoint, 8, "Get Side rocket", &robothomologation);
 
 	// Récupere les module isolés
-	ModuleHarvest modHarvest(firstcheckpoint, 0, "Get isolates modules", &robothomologation);
+	firstcheckpoint.x = 500;
+	firstcheckpoint.y = 600;
+	firstcheckpoint.theta = -M_PI_2;
+	ModuleHarvest modHarvest1(firstcheckpoint, 0, "Get first module", &robothomologation);
+
+	firstcheckpoint.x = 800;
+	firstcheckpoint.y = 0;
+	firstcheckpoint.theta = -0.5;
+	ModuleHarvest modHarvest2(firstcheckpoint, 0, "Get second modules", &robothomologation);
+
+	firstcheckpoint.x = 800;
+	firstcheckpoint.y = -200;
+	firstcheckpoint.theta = -3*M_PI_4;
+	ModuleHarvest modHarvest3(firstcheckpoint, 0, "Get third modules", &robothomologation, true);
+
+	// Déposer les cylindres à la base
+	DropModule dropModuleBase(firstcheckpoint, 0, "Drop the modules to base", &robothomologation);
+
+	firstcheckpoint.x = 800;
+	firstcheckpoint.y = -600;
+	firstcheckpoint.theta = M_PI+1.2;
+	ModuleHarvest modHarvest4(firstcheckpoint, 0, "Get fourth modules", &robothomologation, true);
+
+	//Nul nulForHomologation(firstcheckpoint, 0, "Get isolates modules", &robothomologation);
 
 
 	// Test d'évitement pour l'homologation
 	AvoidanceTest avoidance(firstcheckpoint, "Avoidance test", &robothomologation);
 
 	StratPriority strat;
-	strat.add_action(&escapeBase, 255);
-	strat.add_action(&modHarvest, 128);
+//	strat.add_action(&escapeBase, 255);
+	strat.add_action(&modHarvest1, 128);
+	strat.add_action(&modHarvest2, 127);
+	strat.add_action(&modHarvest3, 126);
 //	strat.add_action(&topRocket, 254);
-	strat.add_action(&dropModuleBase, 127);
-	strat.add_action(&avoidance, 126);
-
+	strat.add_action(&dropModuleBase, 125);
+	strat.add_action(&modHarvest4, 124);
+//	strat.add_action(&avoidance, 126);
 //	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();

@@ -8,9 +8,9 @@
 #include "kernel/PwmMotor.h"
 
 // Dimensions
-#define GATE_HALF_LENGTH                        112.50f
+#define GATE_HALF_LENGTH                        116.50f
 #define GATE_HALF_WIDTH                          90.00f
-#define GATE_NP_X                               -82.50f
+#define GATE_NP_X                               -86.50f
 #define GATE_REAR_OMRON_RANGE                       400
 
 // Numero de moteur
@@ -60,9 +60,9 @@
 #define GATE_HOKUYO_2_THETA                         0.00
 
 // position initiale estimee (endroit ou on pose le robot pour le recalage) couleur bleu
-#define GATE_INIT_POS_X                          690.00
-#define GATE_INIT_POS_Y                           860.00
-#define GATE_INIT_POS_THETA                         -M_PI_2
+#define GATE_INIT_POS_X                          521.00
+#define GATE_INIT_POS_Y                           760.00
+#define GATE_INIT_POS_THETA                       M_PI_2
 
 #ifndef LINUX
 extern Location location;

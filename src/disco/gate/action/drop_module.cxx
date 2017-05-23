@@ -34,7 +34,7 @@ int DropModule::do_action()
 
 	do
 	{
-		trajectory.goToGraphNode((m_stratColor == COLOR_BLUE)? 0: 1,0,WAY_BACKWARD, AVOIDANCE_STOP);
+		trajectory.goToGraphNode((m_stratColor == COLOR_BLUE)? 0: 1,0,WAY_ANY, AVOIDANCE_STOP);
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0 )
 		{
 			break;
@@ -58,7 +58,7 @@ int DropModule::do_action()
 	} while(false);
 
 	float cylinderPos = cylinder.getCurrentPosition();
-	cylinder.setPosition(cylinderPos + M_PI_2);
+	cylinder.setPosition(cylinderPos + 3*M_PI_4);
 
 	vTaskDelay(100);
 	do

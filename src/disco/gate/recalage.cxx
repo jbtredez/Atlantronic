@@ -44,20 +44,37 @@ void recalage()
 	motion.enable(true);
 
 
-	trajectory.straight(-500);
+	trajectory.straight(500);
 	if( trajectory.wait(TRAJECTORY_STATE_COLISION, 5000) )
 	{
 
 
 	}
 
-	vTaskDelay(1000);
+	vTaskDelay(500);
 
-	pos.y = 1000 - 30;
-	pos.theta = -M_PI_2;
+	pos.y = 1000-203;
+	pos.theta = M_PI_2;
 	location.setPosition(pos.symetric(color));
 
-	trajectory.straight(140);
+
+	trajectory.straight(-200);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
+	{
+		// Error?
+	}
+
+	vTaskDelay(500);
+
+	float angle = (color == COLOR_YELLOW)? M_PI : -M_PI;
+
+	trajectory.rotate(angle);
+	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
+	{
+		// Error?
+	}
+
+	trajectory.straight(-300);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
 	{
 		// Error?

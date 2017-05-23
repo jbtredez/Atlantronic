@@ -5,23 +5,22 @@
  *      Author: herzaeone
  */
 
-#ifndef SRC_DISCO_GATE_ACTION_MODULE_HARVEST_H_
-#define SRC_DISCO_GATE_ACTION_MODULE_HARVEST_H_
+#ifndef SRC_DISCO_GATE_ACTION_HARVEST2_H_
+#define SRC_DISCO_GATE_ACTION_HARVEST2_H_
 
 #include "middleware/stratege_machine/action.h"
 #include "disco/robot_state.h"
 #include "middleware/trajectory/Trajectory.h"
 
-class ModuleHarvest: public Action
+class Harvest2: public Action
 {
 	public:
 		KinematicsParameters m_linParamOrig;
 		KinematicsParameters m_angParamOrig;
 		uint32_t m_checkpoint;
-		bool m_backAtEnd;
 
 	public:
-		ModuleHarvest(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot, bool backAtEnd = false);
+		Harvest2(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot);
 		void Initialise(int stratColor);
 		int do_action();
 		void Exit();
