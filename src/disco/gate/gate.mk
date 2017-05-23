@@ -5,8 +5,9 @@ gate_robot += kernel/PwmMotor.o
 gate_robot += kernel/driver/encoder/EncoderSimulFromKinematicsModel.o
 gate_robot += kernel/driver/StepperDriver.o
 gate_robot += disco/gate/recalage.o
-
 gate_robot += disco/action/avoidanceTest.o
+gate_robot += kernel/driver/esc.o
+
 gate_robot += disco/gate/action/escapeStart.o
 gate_robot += disco/gate/action/rocket_dismantler.o
 gate_robot += disco/gate/action/drop_module.o
