@@ -21,6 +21,7 @@
 #include "disco/gate/action/nul.h"
 #include "disco/action/avoidanceTest.h"
 #include "disco/gate/action/jetPackSuck.h"
+#include "disco/gate/action/jetPackSpread.h"
 
 
 #define STRAT_STACK_SIZE       500
@@ -111,21 +112,30 @@ static void strat_task(void* arg)
 	firstcheckpoint.theta = -M_PI / 3;
 	JetPackSuck suckBalls1(firstcheckpoint, " Suck the first crater", &robothomologation);
 
+	firstcheckpoint.x = 1100;
+	firstcheckpoint.y = 200;
+	firstcheckpoint.theta = M_PI/4;
+	ModuleHarvest modHarvest5(firstcheckpoint, 0, "Get fourth modules", &robothomologation, true);
+
+	firstcheckpoint.x = 1250;
+	firstcheckpoint.y = 400;
+	firstcheckpoint.theta = -M_PI_2;
+	JetPackSpread spreadBalls1(firstcheckpoint, "Release balls", &robothomologation);
+
 
 	// Test d'évitement pour l'homologation
 	AvoidanceTest avoidance(firstcheckpoint, "Avoidance test", &robothomologation);
 
 	StratPriority strat;
-//	strat.add_action(&escapeBase, 255);
 //	strat.add_action(&modHarvest1, 128);
 //	strat.add_action(&modHarvest2, 127);
 //	strat.add_action(&modHarvest3, 126);
-//	strat.add_action(&topRocket, 254);
 //	strat.add_action(&dropModuleBase, 125);
 //	strat.add_action(&modHarvest4, 124);
 	strat.add_action(&suckBalls1, 123);
+	strat.add_action(&modHarvest5, 122);
+	strat.add_action(&spreadBalls1, 121);
 //	strat.add_action(&avoidance, 126);
-//	strat.add_action(&sideRocket, 253);
 
 	match_wait_go();
 	strat_color = match_get_color();

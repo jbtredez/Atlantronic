@@ -15,3 +15,4 @@ gate_robot += disco/gate/action/module_harvest.o
 gate_robot += disco/gate/action/nul.o
 gate_robot += disco/gate/action/harvest2.o
 gate_robot += disco/gate/action/jetPackSuck.o
+gate_robot += disco/gate/action/jetPackSpread.o
