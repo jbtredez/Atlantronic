@@ -33,7 +33,7 @@ int Nul::do_action()
 	uint32_t actionResult = 0;
 	Action::do_action();
 
-	VectPlan pos = location.getPosition();
+//	VectPlan pos = location.getPosition();
 
 	for(int i = 0; i < 4; i++ )
 	{
