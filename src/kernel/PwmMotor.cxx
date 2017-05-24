@@ -2,6 +2,11 @@
 #include "kernel/driver/adc.h"
 #include "kernel/control.h"
 
+PwmMotor::PwmMotor()
+{
+	disabled = false;
+}
+
 void PwmMotor::set_speed(float v)
 {
 	float vBat = adc_filtered_data.vBat;
@@ -12,7 +17,7 @@ void PwmMotor::set_speed(float v)
 	v += pid.compute(error, CONTROL_DT);
 	cmd = v * inputGain / vBat;
 
-	if( vBat < ADC_VBAT_UNDERVOLTAGE )
+	if( vBat < ADC_VBAT_UNDERVOLTAGE || disabled )
 	{
 		cmd = 0;
 		pid.reset();
@@ -29,6 +34,8 @@ bool PwmMotor::is_in_motion()
 
 void PwmMotor::disable()
 {
+	disabled = true;
+	pid.reset();
 	pwm_disable();
 }
 

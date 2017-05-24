@@ -24,6 +24,8 @@
 #include "disco/gate/action/jetPackSpread.h"
 
 
+#define HOMOLOGATION
+
 #define STRAT_STACK_SIZE       500
 
 
@@ -127,15 +129,27 @@ static void strat_task(void* arg)
 	AvoidanceTest avoidance(firstcheckpoint, "Avoidance test", &robothomologation);
 
 	StratPriority strat;
-//	strat.add_action(&modHarvest1, 128);
-//	strat.add_action(&modHarvest2, 127);
-//	strat.add_action(&modHarvest3, 126);
-//	strat.add_action(&dropModuleBase, 125);
-//	strat.add_action(&modHarvest4, 124);
+
+#ifndef HOMOLOGATION
+
+	strat.add_action(&suckBalls1, 123);
+	strat.add_action(&modHarvest5, 122);
+	strat.add_action(&spreadBalls1, 121);
+
+	strat.add_action(&avoidance, 120);
+
+#else
+	strat.add_action(&modHarvest1, 128);
+	strat.add_action(&modHarvest2, 127);
+	strat.add_action(&modHarvest3, 126);
+	strat.add_action(&dropModuleBase, 125);
+	strat.add_action(&modHarvest4, 124);
 	strat.add_action(&suckBalls1, 123);
 	strat.add_action(&modHarvest5, 122);
 	strat.add_action(&spreadBalls1, 121);
 //	strat.add_action(&avoidance, 126);
+
+#endif
 
 	match_wait_go();
 	strat_color = match_get_color();

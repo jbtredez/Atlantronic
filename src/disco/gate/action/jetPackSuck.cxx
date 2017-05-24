@@ -55,7 +55,7 @@ int JetPackSuck::do_action()
 
 
 	// Start vent
-	jetPack.setVal(0.5);
+	jetPack.setVal(0.6);
 	vTaskDelay(3000);
 	// Slow vent
 	jetPack.setVal(0.1);

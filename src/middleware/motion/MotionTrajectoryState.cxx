@@ -5,6 +5,9 @@
 #include "kernel/control.h"
 #include "kernel/math/findRotation.h"
 
+#warning a retirer
+#include "disco/gate/gate.h"
+
 MotionTrajectoryState::MotionTrajectoryState() :
 	MotionMoveState("MOTION_TRAJECTORY",MOTION_TRAJECTORY)
 {
@@ -117,7 +120,8 @@ void MotionTrajectoryState::run(void* data)
 	{
 		VectPlan u = m->m_u;
 		float opponentMinDistance = m->m_detection->computeOpponentInRangeDistance(Vect2(m->m_posMes.x, m->m_posMes.y), Vect2(u.x, u.y));
-		opponentMinDistance = opponentMinDistance - Bot::halfLength;
+#warning A changer apres 2017
+		opponentMinDistance = opponentMinDistance - GATE_HALF_LENGTH + GATE_NP_X;//Bot::halfLength;
 		opponentMinDistance /= 2; // facteur de securite
 
 		// detection statique

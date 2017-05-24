@@ -61,7 +61,7 @@ int AvoidanceTest::do_action()
 		log_format(LOG_INFO, "Avoidance test: Go to point: %d [%d ; %d]",i, (int)nextPoint.x, (int)nextPoint.y);
 
 		vTaskDelay(1000);
-		trajectory.goToNear(nextPoint, 0, WAY_ANY, AVOIDANCE_STOP) ;
+		trajectory.goToNear(nextPoint, 0, WAY_FORWARD, AVOIDANCE_STOP) ;
 
 		if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 10000) != 0)
 		{
