@@ -82,7 +82,7 @@ class Action
 		const char * m_name;
 		bool initialized;
 
-		uint32_t m_stratColor;
+		int m_stratColor;
 
 };
 

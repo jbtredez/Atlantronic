@@ -14,7 +14,7 @@
 #include "disco/gate/gate.h"
 
 
-DropModule::DropModule(VectPlan firstcheckpoint, uint32_t checkpoint, const char * name, RobotState * robot):
+DropModule::DropModule(VectPlan firstcheckpoint, uint32_t /*checkpoint*/, const char * name, RobotState * robot):
 	Action(firstcheckpoint, name,(void*) robot)
 {
 
@@ -69,6 +69,7 @@ int DropModule::do_action()
 	resetSpeed();
 	vTaskDelay(100);
 
+	return actionResult;
 }
 
 void DropModule::Exit()
