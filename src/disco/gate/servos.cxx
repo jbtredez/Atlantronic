@@ -9,19 +9,23 @@ void Servos::setTorque(bool enable)
 		missileLeft.setTorqueLimit(0.85);
 		missileRight.setTorqueLimit(0.85);
 		pusher.setTorqueLimit(0.85);
+		jetPackGrid.setTorqueLimit(0.85);
 
 		// Set AX12 limit angles
 		missileLeft.setGoalLimits( -M_PI_2, -0.2 );
 		missileRight.setGoalLimits( 0.2, M_PI_2 );
 		pusher.setGoalLimits( -M_PI_2, 0 );
+		jetPackGrid.setGoalLimits(-M_PI_2, M_PI_2);
 
 		pusher.setTorqueEnable(1);
+		jetPackGrid.setTorqueEnable(1);
 		missileLeft.setTorqueEnable(0);	// Pas pour les missiles: asservissement seulement avant la funny action
 		missileRight.setTorqueEnable(0);	// Pas pour les missiles: asservissement seulement avant la funny action
 
 
 		// Set default angles
-		missileLeft.setGoalPosition(-0.3);
+		//missileLeft.setGoalPosition(-0.3);
+		jetPackGrid.setGoalPosition(M_PI_2);
 		//missileRight.setGoalPosition(0.3);
 
 	}else

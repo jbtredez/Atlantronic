@@ -5,7 +5,9 @@
 #include "middleware/trajectory/Trajectory.h"
 #include "kernel/driver/DynamixelManager.h"
 #include "kernel/driver/StepperDriver.h"
+#include "kernel/driver/esc.h"
 #include "kernel/PwmMotor.h"
+
 
 // Dimensions
 #define GATE_HALF_LENGTH                        116.50f
@@ -74,7 +76,10 @@ extern Dynamixel missileRight;
 extern Dynamixel pusher;
 extern Dynamixel clampLeft;
 extern Dynamixel clampRight;
+extern Dynamixel jetPackGrid;
 extern StepperDriver cylinder;
+extern Esc jetPack;
+
 #endif
 
 struct GateCmdSetMotorsPidArg

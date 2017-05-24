@@ -1,16 +1,18 @@
-#include "esc.h"
 
+#include "esc.h"
 #include "kernel/module.h"
 #include "kernel/rcc.h"
 #include "kernel/FreeRTOS.h"
 #include "kernel/systick.h"
 #include "kernel/log.h"
+#include "kernel/driver/power.h"
 #include "io.h"
 
 #define ESP_PERIOD           22500  // 22.5ms
-
 static float esc_val = 0;
 static int esc_remain_count = ESP_PERIOD;
+static bool esc_enabled = false;
+
 
 static void cmd_esc(void* arg, void* data);
 
@@ -51,6 +53,11 @@ void Esc::setVal(float cmd)
 	esc_val = cmd;
 }
 
+void escs_enable(bool enabled)
+{
+	esc_enabled = enabled;
+}
+
 extern "C"
 {
 void isr_tim7(void)
@@ -70,10 +77,20 @@ void isr_tim7(void)
 		{
 			esc_val = 1;
 		}
-		// TODO limitation a 45% pour le moment
+		// TODO limitation a 75% pour le moment
 		if( esc_val > 0.75 )
 		{
 			esc_val = 0.75;
+		}
+
+		if( !esc_enabled )
+		{
+			esc_val = 0;
+		}
+
+		if (power_get() != 0)
+		{
+			esc_val = 0;
 		}
 
 		if( ! esc_remain_count )
@@ -94,3 +111,6 @@ void isr_tim7(void)
 	}
 }
 }
+
+
+

@@ -66,7 +66,7 @@ static int star_robot_module_init()
 
 	ax12.init("ax12", UART5_HALF_DUPLEX, 200000, AX12_MAX_ID, DYNAMIXEL_TYPE_AX12);
 
-	NetTrap.init(&ax12, AX12_NET_TRAP);
+	//NetTrap.init(&ax12, AX12_NET_TRAP);
 
 	Servos::setTorque(true);
 

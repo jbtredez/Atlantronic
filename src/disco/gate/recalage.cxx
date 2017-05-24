@@ -41,7 +41,11 @@ void recalage()
 	angParam.dMax /= 2;
 
 	trajectory.setKinematicsParam(linParam, angParam);
+	trajectory.enableHokuyo(false);
+	trajectory.enableStaticCheck(false);
+	motion.enableAntico(false);
 	motion.enable(true);
+
 
 
 	trajectory.straight(500);
@@ -74,13 +78,18 @@ void recalage()
 		// Error?
 	}
 
-	trajectory.straight(-300);
+	VectPlan startPos(520, 850, 3*M_PI_2);
+
+	trajectory.goTo(startPos.symetric(color), WAY_BACKWARD, AVOIDANCE_STOP);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) )
 	{
 		// Error?
 	}
 
 	trajectory.setKinematicsParam(linParamOrig, angParamOrig);
+	trajectory.enableHokuyo(true);
+	trajectory.enableStaticCheck(true);
+	motion.enableAntico(true);
 
 
 		// VERSION 2016

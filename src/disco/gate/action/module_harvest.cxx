@@ -32,9 +32,6 @@ int ModuleHarvest::do_action()
 	Action::do_action();
 
 
-	VectPlan pos = location.getPosition();
-
-	vTaskDelay(1000);
 	trajectory.goTo(m_firstcheckpoint, WAY_FORWARD, AVOIDANCE_STOP);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{
@@ -44,7 +41,6 @@ int ModuleHarvest::do_action()
 
 	slowSpeed();
 
-	pos = location.getPosition();
 	trajectory.straight(150);
 	if( trajectory.wait(TRAJECTORY_STATE_TARGET_REACHED, 5000) != 0 )
 	{

@@ -17,6 +17,7 @@ Dynamixel missileRight;
 Dynamixel pusher;
 Dynamixel clampLeft;
 Dynamixel clampRight;
+Dynamixel jetPackGrid;
 
 DynamixelManager ax12;
 //DynamixelManager rx24;
@@ -32,6 +33,7 @@ PwmMotor motionMotors[MOTION_MOTOR_MAX];
 EncoderSimulFromKinematicsModel motionMotorEncoder[MOTION_MOTOR_MAX];
 EncoderAB motionEncoders[MOTION_MOTOR_MAX];
 StepperDriver cylinder;
+Esc jetPack;
 
 static void cmd_set_motors_pid(void* arg, void* data);
 static void cmd_rotate_cylinder_to(void* arg, void* data);
@@ -81,6 +83,7 @@ static int gate_robot_module_init()
 	pusher.init(&ax12, AX12_GATE_PUSHER);
 	clampLeft.init(&ax12, AX12_GATE_CLAMP_LEFT);
 	clampRight.init(&ax12, AX12_GATE_CLAMP_RIGHT);
+	jetPackGrid.init(&ax12, AX12_JETPACK_GRID);
 
 
 
